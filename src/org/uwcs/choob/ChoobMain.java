@@ -12,6 +12,10 @@ package org.uwcs.choob;
 
 import org.jibble.pircbot.*;
 
+/**
+ * Main class in the Choob project, simply creates a Choob instance and sets it
+ * running.
+ */
 public class ChoobMain
 {
     

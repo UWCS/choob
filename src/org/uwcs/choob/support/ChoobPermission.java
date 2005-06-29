@@ -9,21 +9,34 @@ package org.uwcs.choob.support;
 import java.security.*;
 
 /**
- *
- * @author  sadiq
+ * Skeleton Permission for integration into modules that have priviledged access.
+ * @author sadiq
  */
 public class ChoobPermission extends BasicPermission
 {
+    /**
+     *
+     * @param name
+     */    
     public ChoobPermission( String name )
     {
         super(name);
     }
     
+    /**
+     *
+     * @param obj
+     * @throws SecurityException
+     */    
     public void checkGuard(Object obj) throws java.lang.SecurityException
     {
         super.checkGuard(obj);
     }
     
+    /**
+     *
+     * @return
+     */    
     public String getActions()
     {
         String retValue;
@@ -32,6 +45,11 @@ public class ChoobPermission extends BasicPermission
         return retValue;
     }
     
+    /**
+     *
+     * @param permission
+     * @return
+     */    
     public boolean implies(java.security.Permission permission)
     {
         boolean retValue;

@@ -15,11 +15,18 @@ import java.util.*;
 import java.lang.reflect.*;
 
 /**
- *
- * @author  sadiq
+ * Set of utilities that are used to load/interogate Beanshell plugins.
+ * @author sadiq
  */
 public class BeanshellPluginUtils
 {
+    /**
+     * Creates a plugin from a given URL and plugin name.
+     * @param URL URL to plugin's source.
+     * @param pluginName Class name of plugin.
+     * @throws Exception Thrown if there's a syntactical error in the plugin's source.
+     * @return Returns an instance of the new plugin.
+     */    
         public static Object createBeanshellPlugin(String URL, String pluginName) throws Exception
     {
         Class coreClass;
@@ -70,6 +77,13 @@ public class BeanshellPluginUtils
         }
     }
     
+        /**
+         * Calls a given command*, filter*, interval* method in the plugin.
+         * @param plugin Plugin to call.
+         * @param func Function to call.
+         * @param con Context from IRC.
+         * @param mods Group of modules available.
+         */        
     static private void callFunc(Object plugin, String func, Context con, Modules mods)
     {
         Class coreClass = plugin.getClass();
@@ -96,6 +110,11 @@ public class BeanshellPluginUtils
         }
     }
     
+    /**
+     * Calls the create() / destroy() methods in a plugin.
+     * @param plugin Plugin to call.
+     * @param func Function to call.
+     */    
     static private void callSpecialFunc(Object plugin, String func)
     {
         Class coreClass = plugin.getClass();
@@ -123,37 +142,74 @@ public class BeanshellPluginUtils
         }
     }
     
+    /**
+     * Call the destroy() method in a plugin.
+     * @param plugin
+     */    
     static public void callPluginDestroy(Object plugin)
     {
         callSpecialFunc(plugin, "destroy");
     }
     
+    /**
+     * Call the create() method in a plugin.
+     * @param plugin
+     */    
     static public void callPluginCreate(Object plugin)
     {
         callSpecialFunc(plugin, "create");
     }    
     
+    /**
+     * Attempts to call a method in the plugin, triggered by a line from IRC.
+     * @param plugin
+     * @param command Command to call.
+     * @param con Context from IRC.
+     * @param mods Group of modules.
+     */    
     static public void doCommand(Object plugin, String command, Context con, Modules mods)
     {
         System.out.println("Calling method command" + command);
         callFunc(plugin, "command" + command,con,mods);
     }
     
+    /**
+     *
+     * @param plugin
+     * @param filter
+     * @param con
+     * @param mods
+     */    
     static public void doFilter(Object plugin, String filter, Context con, Modules mods)
     {
         callFunc(plugin, "filter" + filter,con,mods);
     }
     
+    /**
+     *
+     * @param plugin
+     * @param interval
+     * @param con
+     * @param mods
+     */    
     static public void doInterval(Object plugin, String interval, Context con, Modules mods)
     {
         callFunc(plugin, "interval" + interval,con,mods);
     }
     
+    /**
+     *
+     * @return
+     */    
     static public List getFilters()
     {
         return null;
     }
     
+    /**
+     *
+     * @return
+     */    
     static public List getIntervals()
     {
         return null;

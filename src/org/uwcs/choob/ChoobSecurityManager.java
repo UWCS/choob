@@ -12,19 +12,29 @@ import org.uwcs.choob.support.*;
 import java.sql.*;
 
 /**
- *
- * @author  sadiq
+ * Security manager for the bot, controls access to anything requiring/checking
+ * for a permission.
+ * @author sadiq
  */
 public class ChoobSecurityManager extends SecurityManager
 {
     DbConnectionBroker dbBroker;
     
-    /** Creates a new instance of ChoobSecurityManager */
+    /**
+     * Creates a new instance of ChoobSecurityManager
+     * @param dbBroker Database connection pool/broker.
+     */
     public ChoobSecurityManager(DbConnectionBroker dbBroker)
     {
         this.dbBroker = dbBroker;
     }
     
+    /**
+     * Checks for whether the call to this class came from a scripted Beanshell class
+     * (so, a plugin) and then checks to see whether that plugin has permission via
+     * a database select.
+     * @param permission
+     */    
     public void checkPermission(java.security.Permission permission)
     {
         Class[] callStackClasses = getClassContext();

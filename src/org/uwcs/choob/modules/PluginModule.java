@@ -10,18 +10,30 @@ import org.uwcs.choob.plugins.*;
 import java.lang.*;
 import java.util.*;
 /**
- *
- * @author  sadiq
+ * Module that performs functions relating to the plugin architecture of the bot.
+ * @author sadiq
  */
 public class PluginModule
 {
     Map pluginMap;
     
+    /**
+     * Creates a new instance of the PluginModule.
+     * @param pluginMap Map containing currently loaded plugins.
+     */    
     public PluginModule(Map pluginMap)
     {
         this.pluginMap = pluginMap;
     }
     
+    /**
+     * Adds a plugin to the loaded plugin map but first unloads any plugin already there.
+     *
+     * This method also calls the create() method on any new plugin.
+     * @param URL URL to the source of the plugin.
+     * @param pluginName Name for the class of the new plugin.
+     * @throws Exception Thrown if there's a syntactical error in the plugin's source.
+     */    
     public void addPlugin(String URL,String pluginName) throws Exception
     {
         Object plugin = pluginMap.get(pluginName);

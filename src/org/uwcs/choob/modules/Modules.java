@@ -12,8 +12,8 @@ import org.uwcs.choob.*;
 import java.util.*;
 
 /**
- *
- * @author  sadiq
+ * Wrapper for the group of Modules in the bot.
+ * @author sadiq
  */
 public class Modules
 {
@@ -26,7 +26,11 @@ public class Modules
     LoggerModule loggerModule;
     Map pluginMap;
     
-    /** Creates a new instance of ModuleGroup */
+    /**
+     * Creates a new instance of ModuleGroup
+     * @param dbBroker
+     * @param pluginMap
+     */
     public Modules( DbConnectionBroker dbBroker, Map pluginMap )
     {
         pluginModule = new PluginModule(pluginMap);
@@ -36,14 +40,20 @@ public class Modules
     }
     
     /**
-     * Getter for property pluginModule.
+     * Getter for PluginModule.
      * @return Value of property pluginModule.
+     * @throws Exception
      */
     public PluginModule getPluginModule() throws Exception
     {
         return this.pluginModule;
     }
     
+    /**
+     * Getter for the LoggerModule.
+     * @throws Exception
+     * @return
+     */    
     public LoggerModule getLoggerModule() throws Exception
     {
         return loggerModule;

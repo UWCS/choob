@@ -20,6 +20,9 @@ import java.lang.reflect.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.modules.*;
 
+/**
+ * Core class of the Choob bot, main interaction with IRC.
+ */
 public class Choob extends PircBot
 {
     DbConnectionBroker broker;
@@ -27,18 +30,32 @@ public class Choob extends PircBot
     List choobThreads;
     Modules modules;
     
-    /** Creates a new instance of Choob */
+    /**
+     * Constructor for Choob, initialises vital variables.
+     * @throws IOException Possibly arises from the database connection pool creation.
+     */    
     public Choob() throws IOException
     {
+        // We wrap the pluginMap with a synchronizedMap in order to prevent
+        // concurrent modication of it and a possible race condition.
         pluginMap = Collections.synchronizedMap(new HashMap());
-        
+
+        // Set the bot's nickname.
         this.setName("Choob");
         
+        // Set the bot's hostname.
+        this.setLogin("Choob");
+        
+        // Create a new database connection broker using the MySQL drivers
         broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", "choob", "choob", 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
         
+        // Initialise our modules.
         modules = new Modules(broker, pluginMap);
     }
     
+    /**
+     * Initialises the Choob thread poll as well as loading the few core plugins that ought to be present at start.
+     */    
     public void init()
     {
         // Create our list of threads
@@ -46,6 +63,7 @@ public class Choob extends PircBot
         
         int c;
         
+        // Step through list of threads, construct them and star them running.
         for( c = 0 ; c < 5 ; c++ )
         {
             ChoobThread tempThread = new ChoobThread(broker,modules,pluginMap);
@@ -55,28 +73,65 @@ public class Choob extends PircBot
         
         try
         {
+            // We need to have an initial set of plugins that ought to be loaded
+            // as core. This needs to be done in a cleaner more-confiugurable
+            // fashion.
             modules.getPluginModule().addPlugin("http://sadiq.uwcs.co.uk/Test.java","Test");
             modules.getPluginModule().addPlugin("http://sadiq.uwcs.co.uk/Plugin.java","Plugin");
         }
         catch( Exception e ) 
         { 
+            // If we failed to load the core plugins, we've got issues.
             System.out.println(e); 
             e.printStackTrace(); 
         }
         
+        // Now we've finished most of the stuff we need high access priviledges
+        // to do, we can set up our security manager that checks all priviledged
+        // accesses from a Beanshell plugin with their permissions in the MySQL
+        // table.
         System.setSecurityManager( new ChoobSecurityManager(broker) );
     }
     
+    // Since Choob extends pircbot, we need to implement the following two methods
+    // in order to receive IRC channel and private messages. There'll be some
+    // more of these methods when Events are implemented.
+    /**
+     * Over-ridden method from the Pircbot class receives message events from IRC.
+     * @param channel
+     * @param sender
+     * @param login
+     * @param hostname
+     * @param message
+     */    
     protected void onMessage(String channel, String sender, String login, String hostname, String message)
     {
+        // Spin off the appropriate thread to handle this.
         spinThread( channel, sender, login, hostname, message, false );
     }
     
+    /**
+     * Over-ridden method from the Pircbot class receives private message events from IRC.
+     * @param sender
+     * @param login
+     * @param hostname
+     * @param message
+     */    
     protected void onPrivateMessage(String sender, String login, String hostname, String message)
     {
+        // Spin off the appropriate thread to handle this.
         spinThread( "", sender, login, hostname, message, true );
     }
     
+    /**
+     * Starts off a waiting worker thread to work on an incoming line from IRC.
+     * @param channel
+     * @param sender
+     * @param login
+     * @param hostname
+     * @param message
+     * @param privMessage
+     */    
     private synchronized void spinThread(String channel, String sender, String login, String hostname, String message, boolean privMessage)
     {
         int c;
@@ -117,7 +172,14 @@ public class Choob extends PircBot
                 }
             }
             
-            //this.wait(1000);
+            try
+            {
+                this.wait(1000);
+            }
+            catch( Exception e )
+            {
+                // Oh noes! We've been interrupted.
+            }
         }
     }
 }

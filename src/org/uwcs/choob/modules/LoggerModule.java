@@ -10,8 +10,8 @@ import org.uwcs.choob.*;
 import java.sql.*;
 import org.uwcs.choob.support.*;
 /**
- *
- * @author  sadiq
+ * Logs lines from IRC to the database.
+ * @author sadiq
  */
 public class LoggerModule
 {
@@ -23,6 +23,11 @@ public class LoggerModule
         this.dbBroker = dbBroker;
     }
     
+    /**
+     * Logs a line from IRC to the database.
+     * @param con {@link Context} object representing the line from IRC.
+     * @throws Exception Thrown from the database access, potential SQL or IO exceptions.
+     */    
     public void addLog( Context con ) throws Exception
     {
         try

@@ -13,11 +13,13 @@ import org.uwcs.choob.support.*;
 import java.util.*;
 
 /**
- *
- * @author  sadiq
+ * Worker thread. Waits on it's waitObject and then wakes, performs the operations
+ * required on the line from IRC and then goes back to sleep.
+ * @author sadiq
  */
 public class ChoobThread extends Thread
 {
+    boolean running;
     Object waitObject;
     DbConnectionBroker dbBroker;
     Connection dbConnection;
@@ -34,11 +36,6 @@ public class ChoobThread extends Thread
      * Holds value of property busy.
      */
     private boolean busy;
-    
-    /**
-     * Holds value of property running.
-     */
-    private boolean running;
     
     /** Creates a new instance of ChoobThread */
     public ChoobThread(DbConnectionBroker dbBroker, Modules modules, Map pluginMap)
@@ -121,7 +118,7 @@ public class ChoobThread extends Thread
     }
     
     /**
-     * Getter for property context.
+     * Getter method for the thread's current Context object.
      * @return Value of property context.
      */
     public Context getContext()
@@ -130,7 +127,7 @@ public class ChoobThread extends Thread
     }
     
     /**
-     * Setter for property context.
+     * Setter method for the thread's current Context object.
      * @param context New value of property context.
      */
     public void setContext(Context context)
@@ -140,7 +137,7 @@ public class ChoobThread extends Thread
     }
     
     /**
-     * Getter for property busy.
+     * Checks whether the thread is busy or not.
      * @return Value of property busy.
      */
     public boolean isBusy()
@@ -149,25 +146,7 @@ public class ChoobThread extends Thread
     }
     
     /**
-     * Getter for property running.
-     * @return Value of property running.
-     */
-    public boolean isRunning()
-    {
-        return this.running;
-    }
-    
-    /**
-     * Setter for property running.
-     * @param running New value of property running.
-     */
-    public void setRunning(boolean running)
-    {
-        this.running = running;
-    }
-    
-    /**
-     * Getter for property waitObject.
+     * Getter for waitObject.
      * @return Value of property waitObject.
      */
     public Object getWaitObject()
@@ -176,12 +155,20 @@ public class ChoobThread extends Thread
     }
     
     /**
-     * Setter for property waitObject.
+     * Setter for waitObject.
      * @param waitObject New value of property waitObject.
      */
     public void setWaitObject(Object waitObject)
     {
         this.waitObject = waitObject;
     }
-    
+
+    /**
+     * Stops the thread performing another processing loop. Does not immediately terminate
+     * thread execution.
+     */    
+    public void stopRunning()
+    {
+        running = false;
+    }
 }

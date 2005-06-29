@@ -7,13 +7,13 @@
 package org.uwcs.choob;
 
 /**
- *
- * @author  sadiq
+ * Context object wraps a line from IRC.
+ * @author sadiq
  */
 public class Context
 {
     /**
-     * Holds value of property millis.
+     * Holds the timestamp for the line from IRC.
      */
     private long millis;
     
@@ -33,7 +33,8 @@ public class Context
     private boolean privMessage;
     
     /**
-     * Holds value of property random.
+     * Random number used to differentiate two lines from IRC sent in quick succession
+     * on systems with a crap timer.
      */
     private int random;
     
@@ -47,6 +48,14 @@ public class Context
      */
     private Choob bot;
     
+    /**
+     * Constructs a Context object.
+     * @param nick
+     * @param channel
+     * @param text
+     * @param privMessage
+     * @param bot
+     */    
     public Context(String nick, String channel, String text, boolean privMessage, Choob bot)
     {
         this.nick = nick;
@@ -59,7 +68,7 @@ public class Context
     }
     
     /**
-     * Getter for property millis.
+     * Getter for property {@link millis}.
      * @return Value of property millis.
      */
     public long getMillis()
@@ -68,7 +77,7 @@ public class Context
     }
     
     /**
-     * Setter for property millis.
+     * Setter for property {@link millis}.
      * @param millis New value of property millis.
      */
     public void setMillis(long millis)
@@ -131,7 +140,7 @@ public class Context
     }
     
     /**
-     * Getter for property random.
+     * Getter for property {@link random}.
      * @return Value of property random.
      */
     public int getRandom()
@@ -166,6 +175,11 @@ public class Context
         this.text = text;
     }
     
+    /**
+     * Sends a message to IRC in the appropriate context.
+     * @param message
+     * @deprecated This method will <U>not</U> be present in future production releases, as there will be a new IrcInterface class that contains appropriate methods for sending messages, notices, etc..
+     */    
     public void sendMessage(String message)
     {
         if( privMessage )
