@@ -76,8 +76,8 @@ public class Choob extends PircBot
             // We need to have an initial set of plugins that ought to be loaded
             // as core. This needs to be done in a cleaner more-confiugurable
             // fashion.
-            modules.getPluginModule().addPlugin("http://sadiq.uwcs.co.uk/Test.java","Test");
-            modules.getPluginModule().addPlugin("http://sadiq.uwcs.co.uk/Plugin.java","Plugin");
+            modules.plugin.addPlugin("http://sadiq.uwcs.co.uk/Test.java","Test");
+            modules.plugin.addPlugin("http://sadiq.uwcs.co.uk/Plugin.java","Plugin");
         }
         catch( Exception e ) 
         { 
@@ -153,7 +153,7 @@ public class Choob extends PircBot
                     
                     try
                     {
-                        modules.getLoggerModule().addLog(newCon);
+                        modules.logger.addLog(newCon);
                     }
                     catch( Exception e )
                     {
