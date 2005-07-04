@@ -24,6 +24,7 @@ public class Modules
     DbConnectionBroker dbBroker;
     PluginModule pluginModule;
     LoggerModule loggerModule;
+    UtilModule utilModule;
     Map pluginMap;
     
     /**
@@ -35,8 +36,18 @@ public class Modules
     {
         pluginModule = new PluginModule(pluginMap);
         loggerModule = new LoggerModule(dbBroker);
+        utilModule = new UtilModule();
         this.dbBroker = dbBroker;
         this.pluginMap = pluginMap;
+    }
+    
+    /**
+     * Getter for UtilModule
+     *
+     */
+    public UtilModule getUtilModule()
+    {
+        return this.utilModule;
     }
     
     /**
@@ -44,7 +55,7 @@ public class Modules
      * @return Value of property pluginModule.
      * @throws Exception
      */
-    public PluginModule getPluginModule() throws Exception
+    public PluginModule getPluginModule()
     {
         return this.pluginModule;
     }
@@ -54,7 +65,7 @@ public class Modules
      * @throws Exception
      * @return
      */    
-    public LoggerModule getLoggerModule() throws Exception
+    public LoggerModule getLoggerModule()
     {
         return loggerModule;
     }

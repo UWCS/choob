@@ -1,0 +1,64 @@
+-- MySQL dump 9.11
+--
+-- Host: localhost    Database: choob
+-- ------------------------------------------------------
+-- Server version	4.0.20
+
+--
+-- Table structure for table `History`
+--
+
+CREATE TABLE History (
+  LineID int(10) unsigned NOT NULL auto_increment,
+  Nick tinytext NOT NULL,
+  Channel tinytext NOT NULL,
+  Text text NOT NULL,
+  Time timestamp(14) NOT NULL,
+  Random tinyint(4) NOT NULL default '0',
+  PRIMARY KEY  (LineID)
+) TYPE=MyISAM;
+
+--
+-- Dumping data for table `History`
+--
+
+
+CREATE TABLE User (
+  UserNick varchar(32) NOT NULL default '',
+  PRIMARY KEY  (UserNick)
+) TYPE=MyISAM COMMENT='Table which will be filled with stuff but isn''t for now.';
+
+--
+-- Dumping data for table `User`
+--
+
+
+--
+-- Table structure for table `UserPluginPermissions`
+--
+
+CREATE TABLE UserPluginPermissions (
+  UserNick varchar(32) NOT NULL default '',
+  Permission tinytext NOT NULL,
+  Action tinytext NOT NULL
+) TYPE=MyISAM COMMENT='Table storing plugin permissions';
+
+--
+-- Dumping data for table `UserPluginPermissions`
+--
+
+
+--
+-- Table structure for table `UserPlugins`
+--
+
+CREATE TABLE UserPlugins (
+  UserNick varchar(32) NOT NULL default '',
+  PluginName tinytext NOT NULL
+) TYPE=MyISAM;
+
+--
+-- Dumping data for table `UserPlugins`
+--
+
+

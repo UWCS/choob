@@ -11,6 +11,7 @@ import org.uwcs.choob.modules.*;
 import java.sql.*;
 import org.uwcs.choob.support.*;
 import java.util.*;
+import java.util.regex.*;
 
 /**
  * Worker thread. Waits on it's waitObject and then wakes, performs the operations
