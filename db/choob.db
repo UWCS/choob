@@ -22,6 +22,11 @@ CREATE TABLE History (
 -- Dumping data for table `History`
 --
 
+INSERT INTO History VALUES (1,'Faux','#bots','Ah, nothing.',20050704233357,91);
+
+--
+-- Table structure for table `User`
+--
 
 CREATE TABLE User (
   UserNick varchar(32) NOT NULL default '',
@@ -47,6 +52,8 @@ CREATE TABLE UserPluginPermissions (
 -- Dumping data for table `UserPluginPermissions`
 --
 
+INSERT INTO UserPluginPermissions VALUES ('Sadiq','getCookieHandler','');
+INSERT INTO UserPluginPermissions VALUES ('Sadiq','sadiq.uwcs.co.uk:80','connect,resolve');
 
 --
 -- Table structure for table `UserPlugins`
@@ -61,4 +68,5 @@ CREATE TABLE UserPlugins (
 -- Dumping data for table `UserPlugins`
 --
 
+INSERT INTO UserPlugins VALUES ('Sadiq','Plugin');
 
