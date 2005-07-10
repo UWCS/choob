@@ -102,8 +102,6 @@ public class ChoobThread extends Thread
                     }
                     
                     dbBroker.freeConnection( dbConnection );
-                    
-                    //System.setSecurityManager( new ChoobLaxSecurityManager() );
                 }
             }
             catch( Exception e )
