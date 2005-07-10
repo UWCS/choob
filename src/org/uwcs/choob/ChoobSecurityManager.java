@@ -43,7 +43,7 @@ public class ChoobSecurityManager extends SecurityManager {
             // The above is there to stop circular security checks. Oh the agony.
             
             ClassLoader tempClassLoader = callStackClasses[c].getClassLoader();
-            
+
             if( tempClassLoader != null && tempClassLoader.getClass() == DiscreteFilesClassLoader.class ) {
                 Connection dbConnection = dbBroker.getConnection();
                 System.out.println("Priviledged call from plugin " + callStackClasses[c] + ". Permission type " + permission.getClass().getName() + " needed: " + permission.getName() + " (Action: '" + permission.getActions() + "')");
@@ -60,7 +60,12 @@ public class ChoobSecurityManager extends SecurityManager {
                     
                     if( permissionsResults.first() ) {
                         do {
-                            if(( permissionsResults.getString("Type").compareTo(permission.getClass().toString()) == 0 )
+                            // The following three cases are hacks, till I can find a better way
+                            // to do permissions. Maybe some form of system that'll list all the permissions
+                            // one would need for an operation?
+                            if( permissionsResults.getString("Type").compareTo("*") == 0 ) return;
+                            
+                            if(( permissionsResults.getString("Type").compareTo(permission.getClass().getName()) == 0 )
                             && (permissionsResults.getString("Permission").compareTo("*") == 0)) {
                                 return;
                             }

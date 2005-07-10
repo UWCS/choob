@@ -7,6 +7,7 @@
 package org.uwcs.choob.modules;
 
 import org.uwcs.choob.plugins.*;
+import org.uwcs.choob.support.ChoobPermission;
 import java.lang.*;
 import java.util.*;
 /**
@@ -36,6 +37,8 @@ public class PluginModule
      */    
     public void addPlugin(String URL,String pluginName) throws Exception
     {
+        if( System.getSecurityManager() != null ) System.getSecurityManager().checkPermission(new ChoobPermission("canAddPlugins"));
+        
         Object plugin = pluginMap.get(pluginName);
         
         if( plugin != null )

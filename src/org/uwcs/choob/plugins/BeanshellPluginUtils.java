@@ -104,6 +104,10 @@ public class BeanshellPluginUtils
         }
         catch( Exception e )
         {
+            if( e.getCause().getClass() == SecurityException.class )
+            {
+                con.sendMessage("Security exception: " + e.getCause());
+            }
             System.out.println("Exception in calling plugin function: " + e);
             e.printStackTrace();
             // What exactly do we do here? We _know_ we'return going to get these.
