@@ -20,156 +20,153 @@ import java.util.regex.*;
  */
 public class ChoobThread extends Thread
 {
-    boolean running;
-    Object waitObject;
-    DbConnectionBroker dbBroker;
-    Connection dbConnection;
-    Modules modules;
-    int threadID;
-    Map pluginMap;
+	boolean running;
+	Object waitObject;
+	DbConnectionBroker dbBroker;
+	Connection dbConnection;
+	Modules modules;
+	int threadID;
+	Map pluginMap;
 
-    /**
-     * Holds value of property context.
-     */
-    private Context context;
+	/**
+	 * Holds value of property context.
+	 */
+	private Context context;
 
-    /**
-     * Holds value of property busy.
-     */
-    private boolean busy;
+	/**
+	 * Holds value of property busy.
+	 */
+	private boolean busy;
 
-    /** Creates a new instance of ChoobThread */
-    public ChoobThread(DbConnectionBroker dbBroker, Modules modules, Map pluginMap)
-    {
-        waitObject = new Object();
+	/** Creates a new instance of ChoobThread */
+	public ChoobThread(DbConnectionBroker dbBroker, Modules modules, Map pluginMap)
+	{
+		waitObject = new Object();
 
-        this.dbBroker = dbBroker;
+		this.dbBroker = dbBroker;
 
-        this.modules = modules;
+		this.modules = modules;
 
-        threadID = (int)(Math.random() * 1000);
+		threadID = (int)(Math.random() * 1000);
 
-        this.pluginMap = pluginMap;
-    }
+		this.pluginMap = pluginMap;
+	}
 
-    public void run()
-    {
-        running = true;
+	public void run()
+	{
+		running = true;
 
-        while( running )
-        {
-            try
-            {
-                synchronized( waitObject )
-                {
-                    dbConnection = dbBroker.getConnection();
+		while( running )
+		{
+			try
+			{
+				synchronized( waitObject )
+				{
+					dbConnection = dbBroker.getConnection();
 
-                    busy = false;
+					busy = false;
 
-                    waitObject.wait();
+					waitObject.wait();
 
-                    System.out.println("Thread("+threadID+") handed line " + context.getText());
+					System.out.println("Thread("+threadID+") handed line " + context.getText());
 
-                    busy = true;
+					busy = true;
 
-                    if( context.getText().indexOf("~") == 0 && context.getText().indexOf(".") != -1 )
-                    {
-                        // Namespace alias code would go here
+					Pattern pa;
+					Matcher ma;
 
-                        String pluginName = context.getText().substring(context.getText().indexOf("~")+1, context.getText().indexOf("."));
-                        int endPos = 0;
+					// The .* in this pattern is required, java wants the entire string to match.
+					pa = Pattern.compile("^\\~([a-zA-Z0-9_-]+)\\.([a-zA-Z0-9_-]+).*");
+					ma = pa.matcher(context.getText());
 
-                        if( context.getText().indexOf(" ") < 0 )
-                        {
-                            endPos = context.getText().length();
-                        }
-                        else
-                        {
-                            endPos = context.getText().indexOf(" ");
-                        }
+					if( ma.matches() == true )
+					{
 
-                        String commandName = context.getText().substring(context.getText().indexOf(".")+1,endPos);
+						// Namespace alias code would go here
 
-                        System.out.println("Looking for plugin " + pluginName + " and command " + commandName);
+						String pluginName  = ma.group(1);
+						String commandName = ma.group(2);
 
-                        if( pluginMap.get(pluginName) != null )
-                        {
-                            System.out.println("Map for " + pluginName + " is not null, calling.");
-                            Object tempPlugin = ((Object)pluginMap.get(pluginName));
+						System.out.println("Looking for plugin " + pluginName + " and command " + commandName);
 
-                            BeanshellPluginUtils.doCommand(tempPlugin, commandName, context, modules);
-                        }
-                        else
-                        	System.out.println("Plugin not found.");
-                    }
+						if( pluginMap.get(pluginName) != null )
+						{
+							System.out.println("Map for " + pluginName + " is not null, calling.");
+							Object tempPlugin = ((Object)pluginMap.get(pluginName));
 
-                    dbBroker.freeConnection( dbConnection );
-                }
-            }
-            catch( Exception e )
-            {
-                System.out.println("Exception: " + e);
-                e.printStackTrace();
-            }
-            finally
-            {
-                busy = false;
-            }
-        }
-    }
+							BeanshellPluginUtils.doCommand(tempPlugin, commandName, context, modules);
+						}
+						else
+							System.out.println("Plugin not found.");
+					}
 
-    /**
-     * Getter method for the thread's current Context object.
-     * @return Value of property context.
-     */
-    public Context getContext()
-    {
-        return this.context;
-    }
+					dbBroker.freeConnection( dbConnection );
+				}
+			}
+			catch( Exception e )
+			{
+				System.out.println("Exception: " + e);
+				e.printStackTrace();
+			}
+			finally
+			{
+				busy = false;
+			}
+		}
+	}
 
-    /**
-     * Setter method for the thread's current Context object.
-     * @param context New value of property context.
-     */
-    public void setContext(Context context)
-    {
-        System.out.println("Context set for thread("+threadID+")");
-        this.context = context;
-    }
+	/**
+	 * Getter method for the thread's current Context object.
+	 * @return Value of property context.
+	 */
+	public Context getContext()
+	{
+		return this.context;
+	}
 
-    /**
-     * Checks whether the thread is busy or not.
-     * @return Value of property busy.
-     */
-    public boolean isBusy()
-    {
-        return this.busy;
-    }
+	/**
+	 * Setter method for the thread's current Context object.
+	 * @param context New value of property context.
+	 */
+	public void setContext(Context context)
+	{
+		System.out.println("Context set for thread("+threadID+")");
+		this.context = context;
+	}
 
-    /**
-     * Getter for waitObject.
-     * @return Value of property waitObject.
-     */
-    public Object getWaitObject()
-    {
-        return this.waitObject;
-    }
+	/**
+	 * Checks whether the thread is busy or not.
+	 * @return Value of property busy.
+	 */
+	public boolean isBusy()
+	{
+		return this.busy;
+	}
 
-    /**
-     * Setter for waitObject.
-     * @param waitObject New value of property waitObject.
-     */
-    public void setWaitObject(Object waitObject)
-    {
-        this.waitObject = waitObject;
-    }
+	/**
+	 * Getter for waitObject.
+	 * @return Value of property waitObject.
+	 */
+	public Object getWaitObject()
+	{
+		return this.waitObject;
+	}
 
-    /**
-     * Stops the thread performing another processing loop. Does not immediately terminate
-     * thread execution.
-     */
-    public void stopRunning()
-    {
-        running = false;
-    }
+	/**
+	 * Setter for waitObject.
+	 * @param waitObject New value of property waitObject.
+	 */
+	public void setWaitObject(Object waitObject)
+	{
+		this.waitObject = waitObject;
+	}
+
+	/**
+	 * Stops the thread performing another processing loop. Does not immediately terminate
+	 * thread execution.
+	 */
+	public void stopRunning()
+	{
+		running = false;
+	}
 }
