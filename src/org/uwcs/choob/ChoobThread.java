@@ -27,59 +27,59 @@ public class ChoobThread extends Thread
     Modules modules;
     int threadID;
     Map pluginMap;
-    
+
     /**
      * Holds value of property context.
      */
     private Context context;
-    
+
     /**
      * Holds value of property busy.
      */
     private boolean busy;
-    
+
     /** Creates a new instance of ChoobThread */
     public ChoobThread(DbConnectionBroker dbBroker, Modules modules, Map pluginMap)
     {
         waitObject = new Object();
-        
+
         this.dbBroker = dbBroker;
-        
+
         this.modules = modules;
-        
+
         threadID = (int)(Math.random() * 1000);
-        
+
         this.pluginMap = pluginMap;
     }
-    
+
     public void run()
     {
         running = true;
-        
+
         while( running )
         {
             try
             {
                 synchronized( waitObject )
                 {
-                    dbConnection = dbBroker.getConnection();                    
-                    
+                    dbConnection = dbBroker.getConnection();
+
                     busy = false;
-                    
+
                     waitObject.wait();
-                    
+
                     System.out.println("Thread("+threadID+") handed line " + context.getText());
-                    
+
                     busy = true;
-                    
-                    if( context.getText().indexOf("~") == 0 )
+
+                    if( context.getText().indexOf("~") == 0 && context.getText().indexOf(".") != -1 )
                     {
                         // Namespace alias code would go here
-                        
+
                         String pluginName = context.getText().substring(context.getText().indexOf("~")+1, context.getText().indexOf("."));
                         int endPos = 0;
-                        
-                        if( context.getText().indexOf(" ") < 0 ) 
+
+                        if( context.getText().indexOf(" ") < 0 )
                         {
                             endPos = context.getText().length();
                         }
@@ -87,20 +87,22 @@ public class ChoobThread extends Thread
                         {
                             endPos = context.getText().indexOf(" ");
                         }
-                        
+
                         String commandName = context.getText().substring(context.getText().indexOf(".")+1,endPos);
-                        
+
                         System.out.println("Looking for plugin " + pluginName + " and command " + commandName);
-                        
-                        if( pluginMap.get(pluginName) != null ) 
+
+                        if( pluginMap.get(pluginName) != null )
                         {
                             System.out.println("Map for " + pluginName + " is not null, calling.");
                             Object tempPlugin = ((Object)pluginMap.get(pluginName));
-                            
+
                             BeanshellPluginUtils.doCommand(tempPlugin, commandName, context, modules);
                         }
+                        else
+                        	System.out.println("Plugin not found.");
                     }
-                    
+
                     dbBroker.freeConnection( dbConnection );
                 }
             }
@@ -112,10 +114,10 @@ public class ChoobThread extends Thread
             finally
             {
                 busy = false;
-            }            
+            }
         }
     }
-    
+
     /**
      * Getter method for the thread's current Context object.
      * @return Value of property context.
@@ -124,7 +126,7 @@ public class ChoobThread extends Thread
     {
         return this.context;
     }
-    
+
     /**
      * Setter method for the thread's current Context object.
      * @param context New value of property context.
@@ -134,7 +136,7 @@ public class ChoobThread extends Thread
         System.out.println("Context set for thread("+threadID+")");
         this.context = context;
     }
-    
+
     /**
      * Checks whether the thread is busy or not.
      * @return Value of property busy.
@@ -143,7 +145,7 @@ public class ChoobThread extends Thread
     {
         return this.busy;
     }
-    
+
     /**
      * Getter for waitObject.
      * @return Value of property waitObject.
@@ -152,7 +154,7 @@ public class ChoobThread extends Thread
     {
         return this.waitObject;
     }
-    
+
     /**
      * Setter for waitObject.
      * @param waitObject New value of property waitObject.
@@ -165,7 +167,7 @@ public class ChoobThread extends Thread
     /**
      * Stops the thread performing another processing loop. Does not immediately terminate
      * thread execution.
-     */    
+     */
     public void stopRunning()
     {
         running = false;
