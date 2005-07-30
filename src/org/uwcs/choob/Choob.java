@@ -102,7 +102,7 @@ public class Choob extends PircBot
 			// We need to have an initial set of plugins that ought to be loaded as core.
 
 			Connection dbConnection = broker.getConnection();
-			PreparedStatement coreplugSmt = dbConnection.prepareStatement("SELECT * FROM coreplugins;");
+			PreparedStatement coreplugSmt = dbConnection.prepareStatement("SELECT * FROM CorePlugins;");
 			ResultSet coreplugResults = coreplugSmt.executeQuery();
 			if ( coreplugResults.first() )
 				do

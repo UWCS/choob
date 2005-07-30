@@ -25,7 +25,7 @@
 -- Table structure for table `coreplugins`
 -- 
 
-CREATE TABLE IF NOT EXISTS `Coreplugins` (
+CREATE TABLE IF NOT EXISTS `CorePlugins` (
   `PluginName` varchar(64) NOT NULL default '',
   `URL` mediumtext NOT NULL,
   PRIMARY KEY  (`pluginName`)
@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS `Coreplugins` (
 -- Dumping data for table `Coreplugins`
 -- 
 
-INSERT INTO `Coreplugins` VALUES ('Test', 'http://localhost/Test.java');
-INSERT INTO `Coreplugins` VALUES ('Plugin', 'http://localhost/Plugin.java');
+INSERT INTO `CorePlugins` VALUES ('Test', 'http://localhost/Test.java');
+INSERT INTO `CorePlugins` VALUES ('Plugin', 'http://localhost/Plugin.java');
 
 -- --------------------------------------------------------
 
