@@ -22,7 +22,7 @@
 -- --------------------------------------------------------
 
 -- 
--- Table structure for table `coreplugins`
+-- Table structure for table `CorePlugins`
 -- 
 
 CREATE TABLE IF NOT EXISTS `CorePlugins` (
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `CorePlugins` (
 ) TYPE=MyISAM;
 
 -- 
--- Dumping data for table `Coreplugins`
+-- Dumping data for table `CorePlugins`
 -- 
 
 INSERT INTO `CorePlugins` VALUES ('Test', 'http://localhost/Test.java');
@@ -41,7 +41,7 @@ INSERT INTO `CorePlugins` VALUES ('Plugin', 'http://localhost/Plugin.java');
 -- --------------------------------------------------------
 
 -- 
--- Table structure for table `history`
+-- Table structure for table `History`
 -- 
 
 CREATE TABLE IF NOT EXISTS `History` (
@@ -55,9 +55,8 @@ CREATE TABLE IF NOT EXISTS `History` (
 ) TYPE=MyISAM AUTO_INCREMENT=1 ;
 
 -- 
--- Dumping data for table `history`
+-- Dumping data for table `History`
 -- 
-
 
 -- --------------------------------------------------------
 
@@ -66,14 +65,20 @@ CREATE TABLE IF NOT EXISTS `History` (
 -- 
 
 CREATE TABLE IF NOT EXISTS `User` (
+  `UserID` int(11) NOT NULL auto_increment,
   `UserNick` varchar(32) NOT NULL default '',
-  PRIMARY KEY  (`UserNick`)
-) TYPE=MyISAM COMMENT='Table which will be filled with stuff but isn''t for now.';
+  PRIMARY KEY  (`UserID`),
+  UNIQUE KEY `UserNick` (`UserNick`)
+) TYPE=MyISAM COMMENT='Table which will be filled with stuff but isn''t for now.' ;
 
 -- 
--- Dumping data for table `user`
+-- Dumping data for table `User`
 -- 
 
+INSERT INTO `User` VALUES (1, 'nobody');
+INSERT INTO `User` VALUES (2, 'root');
+INSERT INTO `User` VALUES (3, 'Faux');
+INSERT INTO `User` VALUES (4, 'Sadiq');
 
 -- --------------------------------------------------------
 
@@ -82,27 +87,29 @@ CREATE TABLE IF NOT EXISTS `User` (
 -- 
 
 CREATE TABLE IF NOT EXISTS `UserPluginPermissions` (
-  `UserNick` varchar(32) NOT NULL default '',
+  `UserID` int(11) NOT NULL default '0',
   `Permission` tinytext NOT NULL,
-  `Type` tinytext NOT NULL,
- `Action` tinytext NOT NULL
+  `Type` tinytext NOT NULL
+  `Action` tinytext NOT NULL,
 ) TYPE=MyISAM COMMENT='Table storing plugin permissions';
 
 -- 
 -- Dumping data for table `UserPluginPermissions`
 -- 
 
-INSERT INTO `UserPluginPermissions` VALUES ('Faux', 'getCookieHandler', '*', '');
-INSERT INTO `UserPluginPermissions` VALUES ('Faux', 'localhost:80', '*', 'connect,resolve');
-INSERT INTO `UserPluginPermissions` VALUES ('Sadiq', 'sadiq.uwcs.co.uk:80', '*', 'connect,resolve');
-INSERT INTO `UserPluginPermissions` VALUES ('Sadiq', 'getCookieHandler', '*', '');
+INSERT INTO `UserPluginPermissions` VALUES (3, 'getCookieHandler', '', '*');
+INSERT INTO `UserPluginPermissions` VALUES (3, 'localhost:80', 'connect,resolve', '*');
+INSERT INTO `UserPluginPermissions` VALUES (4, 'sadiq.uwcs.co.uk:80', 'connect,resolve', '*');
+INSERT INTO `UserPluginPermissions` VALUES (4, 'getCookieHandler', '', '*');
+INSERT INTO `UserPluginPermissions` VALUES (1, 'localhost:80', 'connect,resolve', '*');
 
-INSERT INTO UserPluginPermissions VALUES ('Sadiq','java.lang.RuntimePermission','createClassLoader','');
-INSERT INTO UserPluginPermissions VALUES ('Sadiq','java.net.NetPermission','*','');
-INSERT INTO UserPluginPermissions VALUES ('Sadiq','org.uwcs.choob.support.ChoobPermission','canAddPlugins','');
-INSERT INTO UserPluginPermissions VALUES ('Sadiq','java.util.PropertyPermission','*','');
-INSERT INTO UserPluginPermissions VALUES ('Sadiq','java.net.SocketPermission','*','');
-INSERT INTO UserPluginPermissions VALUES ('Sadiq','*','','');
+INSERT INTO UserPluginPermissions VALUES (4,'java.lang.RuntimePermission','createClassLoader','');
+INSERT INTO UserPluginPermissions VALUES (4,'java.net.NetPermission','*','');
+INSERT INTO UserPluginPermissions VALUES (4,'org.uwcs.choob.support.ChoobPermission','canAddPlugins','');
+INSERT INTO UserPluginPermissions VALUES (4,'java.util.PropertyPermission','*','');
+INSERT INTO UserPluginPermissions VALUES (4,'java.net.SocketPermission','*','');
+INSERT INTO UserPluginPermissions VALUES (4,'*','','');
+
 
 -- --------------------------------------------------------
 
@@ -111,7 +118,7 @@ INSERT INTO UserPluginPermissions VALUES ('Sadiq','*','','');
 -- 
 
 CREATE TABLE IF NOT EXISTS `UserPlugins` (
-  `UserNick` varchar(32) NOT NULL default '',
+  `UserID` int(11) NOT NULL default '0',
   `PluginName` tinytext NOT NULL
 ) TYPE=MyISAM;
 
@@ -119,16 +126,37 @@ CREATE TABLE IF NOT EXISTS `UserPlugins` (
 -- Dumping data for table `UserPlugins`
 -- 
 
-INSERT INTO `UserPlugins` VALUES ('Faux', 'Plugin');
-INSERT INTO `UserPlugins` VALUES ('Sadiq', 'Plugin');
+INSERT INTO `UserPlugins` VALUES (1, 'Plugin');
+INSERT INTO `UserPlugins` VALUES (1, 'Test');
 
---
+-- --------------------------------------------------------
+
+-- 
 -- Table structure for table `LoadedPlugins`
---
+-- 
 
-CREATE TABLE LoadedPlugins (
+CREATE TABLE IF NOT EXISTS `LoadedPlugins` (
   Name varchar(255) NOT NULL default '',
   Source longtext NOT NULL,
   UNIQUE KEY Name (Name)
 ) TYPE=MyISAM;
 
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `Aliases`
+-- 
+
+CREATE TABLE IF NOT EXISTS `Aliases` (
+  `Name` varchar(64) NOT NULL default '',
+  `Converted` tinytext NOT NULL,
+  `UserID` int(11) NOT NULL default '0',
+  PRIMARY KEY  (`Name`)
+) TYPE=MyISAM;
+
+-- 
+-- Dumping data for table `Aliases`
+-- 
+
+INSERT INTO `Aliases` VALUES ('say', 'Faux.Say', 0);
+INSERT INTO `Aliases` VALUES ('reply', 'Faux.Reply', 0);

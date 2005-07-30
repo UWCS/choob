@@ -30,7 +30,7 @@ public class Choob extends PircBot
 	Map pluginMap;
 	List choobThreads;
 	Modules modules;
-  IRCInterface irc;
+	IRCInterface irc;
 
 	/**
 	 * Constructor for Choob, initialises vital variables.
@@ -194,6 +194,7 @@ public class Choob extends PircBot
 					}
 
 					tempThread.setContext( newCon );
+					tempThread.setIRC( irc );
 
 					synchronized( tempThread.getWaitObject() )
 					{

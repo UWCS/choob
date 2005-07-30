@@ -27,7 +27,7 @@ public class ChoobThread extends Thread
 	Modules modules;
 	int threadID;
 	Map pluginMap;
-  IRCInterface irc;
+	IRCInterface irc;
 
 	/**
 	 * Holds value of property context.
@@ -76,8 +76,27 @@ public class ChoobThread extends Thread
 					Pattern pa;
 					Matcher ma;
 
+					final String Trigger="~";
+
+					// First, try and pick up aliased commands.
+					pa = Pattern.compile("^" + Trigger + "([a-zA-Z0-9_-]+)(?!\\.)(.*)$");
+					ma = pa.matcher(context.getText());
+
+					if ( ma.matches() == true )
+					{
+						PreparedStatement aliasesSmt = dbConnection.prepareStatement("SELECT `Converted` FROM `Aliases` WHERE `Name` = ?;");
+						aliasesSmt.setString(1, ma.group(1).toLowerCase());
+
+						ResultSet aliasesResults = aliasesSmt.executeQuery();
+						if ( aliasesResults.first() )
+							context.setText(Trigger + aliasesResults.getString("Converted") + ma.group(2));
+					}
+
+					// Now, continue as if nothing has happened..
+
+
 					// The .* in this pattern is required, java wants the entire string to match.
-					pa = Pattern.compile("^\\~([a-zA-Z0-9_-]+)\\.([a-zA-Z0-9_-]+).*");
+					pa = Pattern.compile("^" + Trigger + "([a-zA-Z0-9_-]+)\\.([a-zA-Z0-9_-]+).*");
 					ma = pa.matcher(context.getText());
 
 					if( ma.matches() == true )
@@ -133,6 +152,24 @@ public class ChoobThread extends Thread
 	{
 		System.out.println("Context set for thread("+threadID+")");
 		this.context = context;
+	}
+
+	/**
+	 * Getter method for the thread's current IRCInterface object.
+	 * @return Value of property irc.
+	 */
+	public IRCInterface getIRC()
+	{
+		return this.irc;
+	}
+
+	/**
+	 * Setter method for the thread's current IRCInterface object.
+	 * @param context New value of property irc.
+	 */
+	public void setIRC(IRCInterface irc)
+	{
+		this.irc = irc;
 	}
 
 	/**
