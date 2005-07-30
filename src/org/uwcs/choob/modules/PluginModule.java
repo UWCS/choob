@@ -23,7 +23,7 @@ import java.sql.*;
 public class PluginModule {
     Map pluginMap;
     DbConnectionBroker broker;
-    
+
     /**
      * Creates a new instance of the PluginModule.
      * @param pluginMap Map containing currently loaded plugins.
@@ -32,7 +32,7 @@ public class PluginModule {
         this.pluginMap = pluginMap;
         this.broker = broker;
     }
-    
+
     /**
      * Adds a plugin to the loaded plugin map but first unloads any plugin already there.
      *
@@ -43,66 +43,69 @@ public class PluginModule {
      */
     public void addPlugin(String URL,String pluginName) throws Exception {
         if( System.getSecurityManager() != null ) System.getSecurityManager().checkPermission(new ChoobPermission("canAddPlugins"));
-        
+
         Object plugin = pluginMap.get(pluginName);
-        
+
         if( plugin != null ) {
             BeanshellPluginUtils.callPluginDestroy(plugin);
         }
-        
+
         String srcContent = "";
-        
+
         URL srcURL = new URL(URL);
-        
+
         HttpURLConnection srcURLCon = (HttpURLConnection)srcURL.openConnection();
-        
+
         srcURLCon.connect();
-        
+
         BufferedReader srcReader = new BufferedReader(new InputStreamReader( srcURLCon.getInputStream() ));
-        
+
         while( srcReader.ready() ) {
             srcContent = srcContent + srcReader.readLine() + "\n";
         }
-        
+
+        if ( srcContent.length() == 0)
+        	throw new Exception("No data read from " + URL + ".");
+
         plugin = BeanshellPluginUtils.createBeanshellPlugin(srcContent, pluginName);
-        
+
         BeanshellPluginUtils.callPluginCreate(plugin);
 
         addPluginToDb(srcContent, pluginName);
-        
+
         pluginMap.put(pluginName,plugin);
     }
-    
+
     public void loadDbPlugins() throws Exception
     {
         if( System.getSecurityManager() != null ) System.getSecurityManager().checkPermission(new ChoobPermission("canLoadSavedPlugins"));
-        
+
         Connection dbCon = broker.getConnection();
-        
+
         PreparedStatement getSavedPlugins = dbCon.prepareStatement("SELECT * FROM LoadedPlugins");
-        
+
         ResultSet savedPlugins = getSavedPlugins.executeQuery();
-        
+
         savedPlugins.first();
-        
+
         do
         {
             addPlugin( savedPlugins.getString("Source"), savedPlugins.getString("PluginName") );
         }
         while( savedPlugins.next() );
     }
-    
-    private void addPluginToDb(String source, String pluginName) throws SQLException 
+
+    private void addPluginToDb(String source, String pluginName) throws SQLException
     {
         Connection dbCon = broker.getConnection();
-        
+
         PreparedStatement pluginReplace = dbCon.prepareStatement("REPLACE INTO LoadedPlugins VALUES(?,?)");
-        
+
         pluginReplace.setString(1,pluginName);
         pluginReplace.setString(2,source);
-        
+
         pluginReplace.executeUpdate();
-        
+
         broker.freeConnection( dbCon );
     }
 }
