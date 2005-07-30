@@ -44,17 +44,23 @@ public class Choob extends PircBot
 
 		// Set the bot's nickname.
 
-		String botName;
-		BufferedReader fl;
+		String botName="Choob";
+		String dbUser="";
+		String dbPass="";
+
 		try
-    	{
-			fl = new BufferedReader(new FileReader("./botname.conf"));
-			botName = fl.readLine();
-			fl.close();
-		}
-		catch (IOException e)
 		{
-			botName="Choob";
+			Properties p = new Properties();
+			p.load(new FileInputStream("bot.conf"));
+			botName = p.getProperty("botName");
+			dbUser = p.getProperty("dbUser");
+			dbPass = p.getProperty("dbPass");
+		}
+		catch (Exception e)
+		{
+			System.out.println(e);
+			System.out.println("Fatal error reading bot.conf. Exiting.");
+			System.exit(2);
 		}
 
 		this.setName(botName);
@@ -63,7 +69,7 @@ public class Choob extends PircBot
 		this.setLogin("Choob");
 
 		// Create a new database connection broker using the MySQL drivers
-		broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", "choob", "choob", 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
+		broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", dbUser, dbPass, 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
 
 		// Initialise our modules.
 		modules = new Modules(broker, pluginMap);

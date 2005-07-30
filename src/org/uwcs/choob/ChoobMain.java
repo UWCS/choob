@@ -32,9 +32,6 @@ public class ChoobMain
 			// Enable debugging output.
 			bot.setVerbose(true);
 
-			// Change nick
-			bot.changeNick("Choob");
-
 			// Connect to the IRC server.
 			bot.connect("irc.uwcs.co.uk");
 
