@@ -44,19 +44,20 @@ public class Choob extends PircBot
 
 		// Set the bot's nickname.
 
-		String Name;
+		String botName;
 		BufferedReader fl;
-		try {
+		try 
+    {
 			fl = new BufferedReader(new FileReader("./botname.conf"));
-			Name=fl.readLine();
+			botName = fl.readLine();
 			fl.close();
 		}
 		catch (IOException e)
 		{
-			Name="Choob";
+			botName="Choob";
 		}
 
-		this.setName(Name);
+		this.setName(botName);
 
 		// Set the bot's hostname.
 		this.setLogin("Choob");
@@ -99,7 +100,7 @@ public class Choob extends PircBot
 			ResultSet coreplugResults = coreplugSmt.executeQuery();
 			if ( coreplugResults.first() )
 				do
-					modules.plugin.addPlugin(coreplugResults.getString("URL"), coreplugResults.getString("pluginName"));
+					modules.plugin.addPlugin(coreplugResults.getString("URL"), coreplugResults.getString("PluginName"));
 				while ( coreplugResults.next() );
 
 			broker.freeConnection(dbConnection);
