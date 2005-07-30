@@ -18,35 +18,38 @@ import org.jibble.pircbot.*;
  */
 public class ChoobMain
 {
-    
-    public static void main(String[] args)
-    {
-        
-        // Now start our bot up.
-        try
-        {
-            Choob bot = new Choob();
-            
-            bot.init();
-            
-            // Enable debugging output.
-            bot.setVerbose(true);
-            
-            // Change nick
-            bot.changeNick("Choob");
-            
-            // Connect to the IRC server.
-            bot.connect("irc.uwcs.co.uk");
-            
-            // Join the #pircbot channel.
-            bot.joinChannel("#bots");
-        }
-        catch( Exception e )
-        {
-            e.printStackTrace();
-            System.out.println("Fatal exception in setting up bot. Exiting.");
-        }
-        
-    }
-    
+
+	public static void main(String[] args)
+	{
+
+		// Now start our bot up.
+		try
+		{
+			Choob bot = new Choob();
+
+			bot.init();
+
+			// Enable debugging output.
+			bot.setVerbose(true);
+
+			// Change nick
+			bot.changeNick("Choob");
+
+			// Connect to the IRC server.
+			bot.connect("irc.uwcs.co.uk");
+
+			// Set mode +B (is a bot)
+			bot.sendRawLineViaQueue("MODE " + bot.getName() + " +B");
+
+			// Join the #pircbot channel.
+			bot.joinChannel("#bots");
+		}
+		catch( Exception e )
+		{
+			e.printStackTrace();
+			System.out.println("Fatal exception in setting up bot. Exiting.");
+		}
+
+	}
+
 }
