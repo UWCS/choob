@@ -174,7 +174,7 @@ public class Choob extends PircBot
 
 					ChoobThread tempThread = ((ChoobThread)choobThreads.get(c));
 
-					Context newCon = new Context(sender,channel,message,privMessage,this);
+					Context newCon = new Context(sender,channel,message,privMessage);
 
 					try
 					{
