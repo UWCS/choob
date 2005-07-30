@@ -30,7 +30,8 @@ public class Choob extends PircBot
 	Map pluginMap;
 	List choobThreads;
 	Modules modules;
-
+  IRCInterface irc;
+  
 	/**
 	 * Constructor for Choob, initialises vital variables.
 	 * @throws IOException Possibly arises from the database connection pool creation.
@@ -65,6 +66,10 @@ public class Choob extends PircBot
 
 		// Initialise our modules.
 		modules = new Modules(broker, pluginMap);
+    
+    // Create a new IRC interface
+    irc = new IRCInterface( this );
+
 	}
 
 	/**

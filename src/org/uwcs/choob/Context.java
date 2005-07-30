@@ -44,11 +44,6 @@ public class Context
     private String text;
     
     /**
-     * Holds value of property bot.
-     */
-    private Choob bot;
-    
-    /**
      * Constructs a Context object.
      * @param nick
      * @param channel
@@ -56,13 +51,12 @@ public class Context
      * @param privMessage
      * @param bot
      */    
-    public Context(String nick, String channel, String text, boolean privMessage, Choob bot)
+    public Context(String nick, String channel, String text, boolean privMessage)
     {
         this.nick = nick;
         this.channel = channel;
         this.text = text;
         this.privMessage = privMessage;
-        this.bot = bot;
         this.random = ((int)(Math.random()*127));
         this.millis = System.currentTimeMillis();
     }
@@ -173,22 +167,5 @@ public class Context
     public void setText(String text)
     {
         this.text = text;
-    }
-    
-    /**
-     * Sends a message to IRC in the appropriate context.
-     * @param message
-     * @deprecated This method will <U>not</U> be present in future production releases, as there will be a new IrcInterface class that contains appropriate methods for sending messages, notices, etc..
-     */    
-    public void sendMessage(String message)
-    {
-        if( privMessage )
-        {
-            bot.sendMessage(nick,message);
-        }
-        else
-        {
-            bot.sendMessage(channel,message);
-        }
     }
 }

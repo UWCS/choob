@@ -34,7 +34,7 @@ public class Modules
      */
     public Modules( DbConnectionBroker dbBroker, Map pluginMap )
     {
-        plugin = new PluginModule(pluginMap);
+        plugin = new PluginModule(pluginMap, dbBroker);
         logger = new LoggerModule(dbBroker);
         util = new UtilModule();
         this.dbBroker = dbBroker;

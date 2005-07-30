@@ -27,6 +27,7 @@ public class ChoobThread extends Thread
 	Modules modules;
 	int threadID;
 	Map pluginMap;
+  IRCInterface irc;
 
 	/**
 	 * Holds value of property context.
@@ -94,7 +95,7 @@ public class ChoobThread extends Thread
 							System.out.println("Map for " + pluginName + " is not null, calling.");
 							Object tempPlugin = ((Object)pluginMap.get(pluginName));
 
-							BeanshellPluginUtils.doCommand(tempPlugin, commandName, context, modules);
+							BeanshellPluginUtils.doCommand(tempPlugin, commandName, context, modules, irc);
 						}
 						else
 							System.out.println("Plugin not found.");
