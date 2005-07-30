@@ -1,72 +1,116 @@
--- MySQL dump 9.11
---
+-- phpMyAdmin SQL Dump, version 2.6.2-pl1
+-- 
 -- Host: localhost    Database: choob
--- ------------------------------------------------------
--- Server version	4.0.20
+-- Server version	4.1.10
+-- 
 
---
--- Table structure for table `History`
---
+-- --------------------------------------------------------
 
-CREATE TABLE History (
-  LineID int(10) unsigned NOT NULL auto_increment,
-  Nick tinytext NOT NULL,
-  Channel tinytext NOT NULL,
-  Text text NOT NULL,
-  Time timestamp(14) NOT NULL,
-  Random tinyint(4) NOT NULL default '0',
-  PRIMARY KEY  (LineID)
+-- phpMyAdmin Settings used for export:
+
+-- Export All as SQL
+-- Structure: 
+-- -- [x] Add IF NOT EXISTS.
+-- -- [x] Add AUTO_INCREMENT value.
+-- -- [x] Enclose table and field names with backquotes.
+-- SQL export compat. MYSQL40
+
+-- Data:
+-- -- [x] Use hexidecimal for binary fields.
+-- Export type: INSERT
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `coreplugins`
+-- 
+
+CREATE TABLE IF NOT EXISTS `coreplugins` (
+  `pluginName` varchar(64) NOT NULL default '',
+  `URL` mediumtext NOT NULL,
+  PRIMARY KEY  (`pluginName`)
 ) TYPE=MyISAM;
 
---
--- Dumping data for table `History`
---
+-- 
+-- Dumping data for table `coreplugins`
+-- 
 
-INSERT INTO History VALUES (1,'Faux','#bots','Ah, nothing.',20050704233357,91);
+INSERT INTO `coreplugins` VALUES ('Test', 'http://localhost/Test.java');
+INSERT INTO `coreplugins` VALUES ('Plugin', 'http://localhost/Plugin.java');
 
---
--- Table structure for table `User`
---
+-- --------------------------------------------------------
 
-CREATE TABLE User (
-  UserNick varchar(32) NOT NULL default '',
-  PRIMARY KEY  (UserNick)
+-- 
+-- Table structure for table `history`
+-- 
+
+CREATE TABLE IF NOT EXISTS `history` (
+  `LineID` int(10) unsigned NOT NULL auto_increment,
+  `Nick` tinytext NOT NULL,
+  `Channel` tinytext NOT NULL,
+  `Text` text NOT NULL,
+  `Time` timestamp NOT NULL,
+  `Random` tinyint(4) NOT NULL default '0',
+  PRIMARY KEY  (`LineID`)
+) TYPE=MyISAM AUTO_INCREMENT=1 ;
+
+-- 
+-- Dumping data for table `history`
+-- 
+
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `user`
+-- 
+
+CREATE TABLE IF NOT EXISTS `user` (
+  `UserNick` varchar(32) NOT NULL default '',
+  PRIMARY KEY  (`UserNick`)
 ) TYPE=MyISAM COMMENT='Table which will be filled with stuff but isn''t for now.';
 
---
--- Dumping data for table `User`
---
+-- 
+-- Dumping data for table `user`
+-- 
 
 
---
--- Table structure for table `UserPluginPermissions`
---
+-- --------------------------------------------------------
 
-CREATE TABLE UserPluginPermissions (
-  UserNick varchar(32) NOT NULL default '',
-  Permission tinytext NOT NULL,
-  Action tinytext NOT NULL
+-- 
+-- Table structure for table `userpluginpermissions`
+-- 
+
+CREATE TABLE IF NOT EXISTS `userpluginpermissions` (
+  `UserNick` varchar(32) NOT NULL default '',
+  `Permission` tinytext NOT NULL,
+  `Action` tinytext NOT NULL,
+  `Type` tinytext NOT NULL
 ) TYPE=MyISAM COMMENT='Table storing plugin permissions';
 
---
--- Dumping data for table `UserPluginPermissions`
---
+-- 
+-- Dumping data for table `userpluginpermissions`
+-- 
 
-INSERT INTO UserPluginPermissions VALUES ('Sadiq','getCookieHandler','');
-INSERT INTO UserPluginPermissions VALUES ('Sadiq','sadiq.uwcs.co.uk:80','connect,resolve');
+INSERT INTO `userpluginpermissions` VALUES ('Faux', 'getCookieHandler', '', '*');
+INSERT INTO `userpluginpermissions` VALUES ('Faux', 'localhost:80', 'connect,resolve', '*');
+INSERT INTO `userpluginpermissions` VALUES ('Sadiq', 'sadiq.uwcs.co.uk:80', 'connect,resolve', '*');
+INSERT INTO `userpluginpermissions` VALUES ('Sadiq', 'getCookieHandler', '', '*');
 
---
--- Table structure for table `UserPlugins`
---
+-- --------------------------------------------------------
 
-CREATE TABLE UserPlugins (
-  UserNick varchar(32) NOT NULL default '',
-  PluginName tinytext NOT NULL
+-- 
+-- Table structure for table `userplugins`
+-- 
+
+CREATE TABLE IF NOT EXISTS `userplugins` (
+  `UserNick` varchar(32) NOT NULL default '',
+  `PluginName` tinytext NOT NULL
 ) TYPE=MyISAM;
 
---
--- Dumping data for table `UserPlugins`
---
+-- 
+-- Dumping data for table `userplugins`
+-- 
 
-INSERT INTO UserPlugins VALUES ('Sadiq','Plugin');
-
+INSERT INTO `userplugins` VALUES ('Faux', 'Plugin');
+INSERT INTO `userplugins` VALUES ('Sadiq', 'Plugin');
