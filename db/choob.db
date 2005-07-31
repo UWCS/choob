@@ -25,6 +25,12 @@
 -- Table structure for table `CorePlugins`
 -- 
 
+DROP DATABASE IF EXISTS Choob;
+
+CREATE DATABASE Choob;
+
+USE Choob;
+
 CREATE TABLE IF NOT EXISTS `CorePlugins` (
   `PluginName` varchar(64) NOT NULL default '',
   `URL` mediumtext NOT NULL,
