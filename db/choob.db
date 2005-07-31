@@ -95,8 +95,8 @@ INSERT INTO `User` VALUES (4, 'Sadiq');
 CREATE TABLE IF NOT EXISTS `UserPluginPermissions` (
   `UserID` int(11) NOT NULL default '0',
   `Permission` tinytext NOT NULL,
-  `Type` tinytext NOT NULL
-  `Action` tinytext NOT NULL,
+  `Type` tinytext NOT NULL,
+  `Action` tinytext NOT NULL
 ) TYPE=MyISAM COMMENT='Table storing plugin permissions';
 
 -- 
