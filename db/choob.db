@@ -6,35 +6,14 @@
 
 -- --------------------------------------------------------
 
--- phpMyAdmin Settings used for export:
-
--- Export All as SQL
--- Structure: 
--- -- [x] Add IF NOT EXISTS.
--- -- [x] Add AUTO_INCREMENT value.
--- -- [x] Enclose table and field names with backquotes.
--- SQL export compat. MYSQL40
-
--- Data:
--- -- [x] Use hexidecimal for binary fields.
--- Export type: INSERT
-
--- --------------------------------------------------------
-
 -- 
 -- Table structure for table `CorePlugins`
 -- 
 
-DROP DATABASE IF EXISTS Choob;
-
-CREATE DATABASE Choob;
-
-USE Choob;
-
 CREATE TABLE IF NOT EXISTS `CorePlugins` (
   `PluginName` varchar(64) NOT NULL default '',
   `URL` mediumtext NOT NULL,
-  PRIMARY KEY  (`pluginName`)
+  PRIMARY KEY  (`PluginName`)
 ) TYPE=MyISAM;
 
 -- 
@@ -81,8 +60,8 @@ CREATE TABLE IF NOT EXISTS `User` (
 -- Dumping data for table `User`
 -- 
 
-INSERT INTO `User` VALUES (1, 'nobody');
-INSERT INTO `User` VALUES (2, 'root');
+INSERT INTO `User` VALUES (0, 'nobody');
+INSERT INTO `User` VALUES (1, 'root');
 INSERT INTO `User` VALUES (3, 'Faux');
 INSERT INTO `User` VALUES (4, 'Sadiq');
 
@@ -108,14 +87,13 @@ INSERT INTO `UserPluginPermissions` VALUES (3, 'localhost:80', 'connect,resolve'
 INSERT INTO `UserPluginPermissions` VALUES (4, 'sadiq.uwcs.co.uk:80', 'connect,resolve', '*');
 INSERT INTO `UserPluginPermissions` VALUES (4, 'getCookieHandler', '', '*');
 INSERT INTO `UserPluginPermissions` VALUES (1, 'localhost:80', 'connect,resolve', '*');
-
-INSERT INTO UserPluginPermissions VALUES (4,'java.lang.RuntimePermission','createClassLoader','');
-INSERT INTO UserPluginPermissions VALUES (4,'java.net.NetPermission','*','');
-INSERT INTO UserPluginPermissions VALUES (4,'org.uwcs.choob.support.ChoobPermission','canAddPlugins','');
-INSERT INTO UserPluginPermissions VALUES (4,'java.util.PropertyPermission','*','');
-INSERT INTO UserPluginPermissions VALUES (4,'java.net.SocketPermission','*','');
-INSERT INTO UserPluginPermissions VALUES (4,'*','','');
-
+INSERT INTO `UserPluginPermissions` VALUES (4, 'java.lang.RuntimePermission', 'createClassLoader', '');
+INSERT INTO `UserPluginPermissions` VALUES (4, 'java.net.NetPermission', '*', '');
+INSERT INTO `UserPluginPermissions` VALUES (4, 'org.uwcs.choob.support.ChoobPermission', 'canAddPlugins', '');
+INSERT INTO `UserPluginPermissions` VALUES (4, 'java.util.PropertyPermission', '*', '');
+INSERT INTO `UserPluginPermissions` VALUES (4, 'java.net.SocketPermission', '*', '');
+INSERT INTO `UserPluginPermissions` VALUES (4, '*', '', '');
+INSERT INTO `UserPluginPermissions` VALUES (1, 'org.uwcs.choob.support.ChoobPermission', '*', '');
 
 -- --------------------------------------------------------
 
@@ -142,9 +120,9 @@ INSERT INTO `UserPlugins` VALUES (1, 'Test');
 -- 
 
 CREATE TABLE IF NOT EXISTS `LoadedPlugins` (
-  Name varchar(255) NOT NULL default '',
-  Source longtext NOT NULL,
-  UNIQUE KEY Name (Name)
+  `Name` varchar(255) NOT NULL default '',
+  `Source` longtext NOT NULL,
+  UNIQUE KEY `Name` (`Name`)
 ) TYPE=MyISAM;
 
 -- --------------------------------------------------------
@@ -166,3 +144,22 @@ CREATE TABLE IF NOT EXISTS `Aliases` (
 
 INSERT INTO `Aliases` VALUES ('say', 'Faux.Say', 0);
 INSERT INTO `Aliases` VALUES ('reply', 'Faux.Reply', 0);
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `AddNicks`
+-- 
+
+CREATE TABLE IF NOT EXISTS `AddNicks` (
+  `UserID` int(11) NOT NULL default '0',
+  `Nick` varchar(64) NOT NULL default '',
+  UNIQUE KEY `Nick` (`Nick`)
+) TYPE=MyISAM;
+
+-- 
+-- Dumping data for table `AddNicks`
+-- 
+
+INSERT INTO `AddNicks` VALUES (3, 'Faux%');
+INSERT INTO `AddNicks` VALUES (3, 'YourMum|%');

@@ -17,7 +17,7 @@ import java.util.*;
  */
 public class Modules
 {
-    
+
     /**
      * Holds value of property pluginModule.
      */
@@ -25,8 +25,9 @@ public class Modules
     public PluginModule plugin;
     public LoggerModule logger;
     public UtilModule util;
+    public NickModule nick;
     Map pluginMap;
-    
+
     /**
      * Creates a new instance of ModuleGroup
      * @param dbBroker
@@ -37,6 +38,7 @@ public class Modules
         plugin = new PluginModule(pluginMap, dbBroker);
         logger = new LoggerModule(dbBroker);
         util = new UtilModule();
+        nick = new NickModule(dbBroker);
         this.dbBroker = dbBroker;
         this.pluginMap = pluginMap;
     }
