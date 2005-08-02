@@ -63,8 +63,6 @@ public class ChoobThread extends Thread
 			{
 				synchronized( waitObject )
 				{
-					dbConnection = dbBroker.getConnection();
-
 					busy = false;
 
 					waitObject.wait();
@@ -82,14 +80,20 @@ public class ChoobThread extends Thread
 					pa = Pattern.compile("^" + Trigger + "([a-zA-Z0-9_-]+)(?!\\.)(.*)$");
 					ma = pa.matcher(context.getText());
 
+                                        
+                                        
 					if ( ma.matches() == true )
 					{
+                                                dbConnection = dbBroker.getConnection();
+                                                
 						PreparedStatement aliasesSmt = dbConnection.prepareStatement("SELECT `Converted` FROM `Aliases` WHERE `Name` = ?;");
 						aliasesSmt.setString(1, ma.group(1).toLowerCase());
 
 						ResultSet aliasesResults = aliasesSmt.executeQuery();
 						if ( aliasesResults.first() )
 							context.setText(Trigger + aliasesResults.getString("Converted") + ma.group(2));
+                                                
+                                                dbBroker.freeConnection( dbConnection );
 					}
 
 					// Now, continue as if nothing has happened..
@@ -99,6 +103,8 @@ public class ChoobThread extends Thread
 					pa = Pattern.compile("^" + Trigger + "([a-zA-Z0-9_-]+)\\.([a-zA-Z0-9_-]+).*");
 					ma = pa.matcher(context.getText());
 
+                                        
+                                        
 					if( ma.matches() == true )
 					{
 
@@ -109,18 +115,20 @@ public class ChoobThread extends Thread
 
 						System.out.println("Looking for plugin " + pluginName + " and command " + commandName);
 
-						if( pluginMap.get(pluginName) != null )
+                                                
+                                                
+                                                if( pluginMap.get(pluginName) != null )
 						{
 							System.out.println("Map for " + pluginName + " is not null, calling.");
 							Object tempPlugin = ((Object)pluginMap.get(pluginName));
-
+                                                        
 							BeanshellPluginUtils.doCommand(tempPlugin, commandName, context, modules, irc);
 						}
 						else
 							System.out.println("Plugin not found.");
 					}
 
-					dbBroker.freeConnection( dbConnection );
+					
 				}
 			}
 			catch( Exception e )
