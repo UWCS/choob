@@ -130,13 +130,8 @@ public class ChoobThread extends Thread
 							System.out.println("Plugin not found.");
 					}
                                         
-                                        // This needs to be fixed as it's quite broken.
-                                        // At the moment nobody else can get access to the list while
-                                        // executing a filter.
-                                        //
-                                        // This needs to be changed so a list of matching filters
-                                        // is created and then executed _after_ we come out of the
-                                        // synchronized block.
+                                        List matchedFilters = new ArrayList();
+                                        
                                         synchronized( filterList )
                                         {
                                             Iterator tempIt = filterList.iterator();
@@ -153,11 +148,19 @@ public class ChoobThread extends Thread
                                                 
                                                 if( filterMatcher.matches() )
                                                 {
-                                                    BeanshellPluginUtils.doFilter(pluginMap.get( tempFilter.getPlugin() ), tempFilter.getName(), context, modules, irc);
+                                                    matchedFilters.add( tempFilter );
                                                 }
                                             }
                                         }
-
+                                        
+                                        Iterator tempIt = matchedFilters.iterator();
+                                        
+                                        while( tempIt.hasNext() )
+                                        {
+                                            Filter tempFilter = (Filter)tempIt.next();
+                                            
+                                            BeanshellPluginUtils.doFilter(pluginMap.get( tempFilter.getPlugin() ), tempFilter.getName(), context, modules, irc);
+                                        }
 					
 				}
 			}

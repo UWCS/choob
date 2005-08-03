@@ -223,7 +223,7 @@ public class BeanshellPluginUtils
                 try
                 {
                     Field filterRegexField = coreClass.getDeclaredField("filter" + filterName + "Regex");
-                
+                   
                     filterRegex = (String)filterRegexField.get( plugin );
                 }
                 catch( Exception e ) 
