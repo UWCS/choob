@@ -52,7 +52,7 @@ public class Choob extends PircBot
 		try
 		{
 			Properties botProps = new Properties();
-			botProps.load(new FileInputStream("bot.conf"));
+			botProps.load(this.getClass().getClassLoader().getResourceAsStream ("bot.conf"));
 			botName = botProps.getProperty("botName");
 			dbUser = botProps.getProperty("dbUser");
 			dbPass = botProps.getProperty("dbPass");
@@ -62,6 +62,7 @@ public class Choob extends PircBot
 		{
 			System.out.println(e);
 			System.out.println("Fatal error reading bot.conf. Exiting.");
+                        e.printStackTrace(System.out);
 			System.exit(2);
 		}
 
