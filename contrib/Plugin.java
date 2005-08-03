@@ -14,8 +14,22 @@ class Plugin
 			return;
 		}
 
+		if ( parms.get(1).indexOf("/") != -1 )
+		{
+			irc.sendContextMessage(con, "Arguments the other way around, you spoon.");
+			return;
+		}
+
 		irc.sendContextMessage(con, "Loading plugin.. " + parms.get(1));
-		modules.plugin.addPlugin(parms.get(2), parms.get(1));
-		irc.sendContextMessage(con, "Plugin parsed, compiled and loaded!");
+		try
+		{
+			modules.plugin.addPlugin(parms.get(2), parms.get(1));
+			irc.sendContextMessage(con, "Plugin parsed, compiled and loaded!");
+		}
+		catch (Exception e)
+		{
+			irc.sendContextMessage(con, "Error parsing plugin, see log for details.");
+			e.printStackTrace();
+		}
 	}
 }
