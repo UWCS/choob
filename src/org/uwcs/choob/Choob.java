@@ -31,6 +31,7 @@ public class Choob extends PircBot
 	List choobThreads;
 	Modules modules;
 	IRCInterface irc;
+        String trigger;
 
 	/**
 	 * Constructor for Choob, initialises vital variables.
@@ -50,11 +51,12 @@ public class Choob extends PircBot
 
 		try
 		{
-			Properties p = new Properties();
-			p.load(new FileInputStream("bot.conf"));
-			botName = p.getProperty("botName");
-			dbUser = p.getProperty("dbUser");
-			dbPass = p.getProperty("dbPass");
+			Properties botProps = new Properties();
+			botProps.load(new FileInputStream("bot.conf"));
+			botName = botProps.getProperty("botName");
+			dbUser = botProps.getProperty("dbUser");
+			dbPass = botProps.getProperty("dbPass");
+                        trigger = botProps.getProperty("botTrigger");
 		}
 		catch (Exception e)
 		{
@@ -92,7 +94,7 @@ public class Choob extends PircBot
 		// Step through list of threads, construct them and star them running.
 		for( c = 0 ; c < 5 ; c++ )
 		{
-			ChoobThread tempThread = new ChoobThread(broker,modules,pluginMap);
+			ChoobThread tempThread = new ChoobThread(broker,modules,pluginMap,trigger);
 			choobThreads.add(tempThread);
 			tempThread.start();
 		}

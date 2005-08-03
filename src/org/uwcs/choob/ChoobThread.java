@@ -24,6 +24,7 @@ public class ChoobThread extends Thread
 	Object waitObject;
 	DbConnectionBroker dbBroker;
 	Connection dbConnection;
+        String trigger;
 	Modules modules;
 	int threadID;
 	Map pluginMap;
@@ -40,13 +41,15 @@ public class ChoobThread extends Thread
 	private boolean busy;
 
 	/** Creates a new instance of ChoobThread */
-	public ChoobThread(DbConnectionBroker dbBroker, Modules modules, Map pluginMap)
+	public ChoobThread(DbConnectionBroker dbBroker, Modules modules, Map pluginMap, String trigger)
 	{
 		waitObject = new Object();
 
 		this.dbBroker = dbBroker;
 
 		this.modules = modules;
+                
+                this.trigger = trigger;
 
 		threadID = (int)(Math.random() * 1000);
 
@@ -74,10 +77,8 @@ public class ChoobThread extends Thread
 					Pattern pa;
 					Matcher ma;
 
-					final String Trigger="~";
-
 					// First, try and pick up aliased commands.
-					pa = Pattern.compile("^" + Trigger + "([a-zA-Z0-9_-]+)(?!\\.)(.*)$");
+					pa = Pattern.compile("^" + trigger + "([a-zA-Z0-9_-]+)(?!\\.)(.*)$");
 					ma = pa.matcher(context.getText());
 
                                         
@@ -91,7 +92,7 @@ public class ChoobThread extends Thread
 
 						ResultSet aliasesResults = aliasesSmt.executeQuery();
 						if ( aliasesResults.first() )
-							context.setText(Trigger + aliasesResults.getString("Converted") + ma.group(2));
+							context.setText(trigger + aliasesResults.getString("Converted") + ma.group(2));
                                                 
                                                 dbBroker.freeConnection( dbConnection );
 					}
@@ -100,11 +101,9 @@ public class ChoobThread extends Thread
 
 
 					// The .* in this pattern is required, java wants the entire string to match.
-					pa = Pattern.compile("^" + Trigger + "([a-zA-Z0-9_-]+)\\.([a-zA-Z0-9_-]+).*");
+					pa = Pattern.compile("^" + trigger + "([a-zA-Z0-9_-]+)\\.([a-zA-Z0-9_-]+).*");
 					ma = pa.matcher(context.getText());
 
-                                        
-                                        
 					if( ma.matches() == true )
 					{
 
