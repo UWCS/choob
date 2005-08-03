@@ -32,6 +32,7 @@ public class Choob extends PircBot
 	Modules modules;
 	IRCInterface irc;
         String trigger;
+        List filterList;
 
 	/**
 	 * Constructor for Choob, initialises vital variables.
@@ -42,6 +43,9 @@ public class Choob extends PircBot
 		// We wrap the pluginMap with a synchronizedMap in order to prevent
 		// concurrent modication of it and a possible race condition.
 		pluginMap = Collections.synchronizedMap(new HashMap());
+                
+                // Create a our (sychronised dammit) list of filters
+                filterList = Collections.synchronizedList(new ArrayList());
 
 		// Set the bot's nickname.
 
@@ -75,7 +79,7 @@ public class Choob extends PircBot
 		broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", dbUser, dbPass, 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
 
 		// Initialise our modules.
-		modules = new Modules(broker, pluginMap);
+		modules = new Modules(broker, pluginMap, filterList);
 
 		// Create a new IRC interface
 		irc = new IRCInterface( this );
@@ -95,7 +99,7 @@ public class Choob extends PircBot
 		// Step through list of threads, construct them and star them running.
 		for( c = 0 ; c < 5 ; c++ )
 		{
-			ChoobThread tempThread = new ChoobThread(broker,modules,pluginMap,trigger);
+			ChoobThread tempThread = new ChoobThread(broker,modules,pluginMap,filterList,trigger);
 			choobThreads.add(tempThread);
 			tempThread.start();
 		}

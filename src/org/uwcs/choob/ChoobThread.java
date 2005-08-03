@@ -29,6 +29,7 @@ public class ChoobThread extends Thread
 	int threadID;
 	Map pluginMap;
 	IRCInterface irc;
+        List filterList;
 
 	/**
 	 * Holds value of property context.
@@ -41,7 +42,7 @@ public class ChoobThread extends Thread
 	private boolean busy;
 
 	/** Creates a new instance of ChoobThread */
-	public ChoobThread(DbConnectionBroker dbBroker, Modules modules, Map pluginMap, String trigger)
+	public ChoobThread(DbConnectionBroker dbBroker, Modules modules, Map pluginMap, List filterList, String trigger)
 	{
 		waitObject = new Object();
 
@@ -54,6 +55,8 @@ public class ChoobThread extends Thread
 		threadID = (int)(Math.random() * 1000);
 
 		this.pluginMap = pluginMap;
+                
+                this.filterList = filterList;
 	}
 
 	public void run()
@@ -126,6 +129,34 @@ public class ChoobThread extends Thread
 						else
 							System.out.println("Plugin not found.");
 					}
+                                        
+                                        // This needs to be fixed as it's quite broken.
+                                        // At the moment nobody else can get access to the list while
+                                        // executing a filter.
+                                        //
+                                        // This needs to be changed so a list of matching filters
+                                        // is created and then executed _after_ we come out of the
+                                        // synchronized block.
+                                        synchronized( filterList )
+                                        {
+                                            Iterator tempIt = filterList.iterator();
+                                            
+                                            while( tempIt.hasNext() )
+                                            {
+                                                Filter tempFilter = (Filter)tempIt.next();
+                                                
+                                                Pattern filterPattern = Pattern.compile( tempFilter.getRegex() );
+                                                
+                                                Matcher filterMatcher = filterPattern.matcher(context.getText());
+                                                
+                                                System.out.println("Testing line against " + tempFilter.getRegex());
+                                                
+                                                if( filterMatcher.matches() )
+                                                {
+                                                    BeanshellPluginUtils.doFilter(pluginMap.get( tempFilter.getPlugin() ), tempFilter.getName(), context, modules, irc);
+                                                }
+                                            }
+                                        }
 
 					
 				}

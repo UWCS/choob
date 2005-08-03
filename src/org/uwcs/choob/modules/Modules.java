@@ -33,9 +33,9 @@ public class Modules
      * @param dbBroker
      * @param pluginMap
      */
-    public Modules( DbConnectionBroker dbBroker, Map pluginMap )
+    public Modules( DbConnectionBroker dbBroker, Map pluginMap, List filterList )
     {
-        plugin = new PluginModule(pluginMap, dbBroker);
+        plugin = new PluginModule(pluginMap, dbBroker, filterList);
         logger = new LoggerModule(dbBroker);
         util = new UtilModule();
         nick = new NickModule(dbBroker);

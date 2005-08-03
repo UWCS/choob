@@ -22,15 +22,17 @@ import java.sql.*;
  */
 public class PluginModule {
     Map pluginMap;
+    List filterList;
     DbConnectionBroker broker;
 
     /**
      * Creates a new instance of the PluginModule.
      * @param pluginMap Map containing currently loaded plugins.
      */
-    public PluginModule(Map pluginMap, DbConnectionBroker broker) {
+    public PluginModule(Map pluginMap, DbConnectionBroker broker, List filterList) {
         this.pluginMap = pluginMap;
         this.broker = broker;
+        this.filterList = filterList;
     }
 
     /**
@@ -74,6 +76,29 @@ public class PluginModule {
         addPluginToDb(srcContent, pluginName);
 
         pluginMap.put(pluginName,plugin);
+        
+        reloadFilters();
+    }
+    
+    private void reloadFilters()
+    {
+        List newFilters = Collections.synchronizedList(new ArrayList());
+        Set pluginSet = pluginMap.keySet();
+        
+        Iterator tempIt = pluginSet.iterator();
+        
+        while( tempIt.hasNext() )
+        {
+            newFilters.addAll(BeanshellPluginUtils.getFilters( pluginMap.get( tempIt.next() ) ));
+        }
+        
+        synchronized( filterList )
+        {
+            filterList.clear();
+            filterList.addAll( newFilters );
+        }
+        
+        System.out.println("Filters list now contains: " + filterList.size() + " filters");
     }
 
     public void loadDbPlugins() throws Exception

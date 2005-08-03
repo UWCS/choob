@@ -13,25 +13,12 @@ package org.uwcs.choob;
 public class Interval
 {
     
+    private String name;
+    
+    private int interval;
+    
     /** Creates a new instance of Interval */
     public Interval()
-    {
-    }
-    
-    /**
-     * Getter for property name.
-     * @return Value of property name.
-     */
-    public String getName()
-    {
-        return  null;
-    }
-    
-    /**
-     * Setter for property name.
-     * @param name New value of property name.
-     */
-    public void setName(String name)
     {
     }
     
@@ -41,7 +28,7 @@ public class Interval
      */
     public int getInterval()
     {
-        return 0;
+        return interval;
     }
     
     /**
@@ -50,6 +37,25 @@ public class Interval
      */
     public void setInterval(int interval)
     {
+        this.interval = interval;
+    }
+    
+    /**
+     * Getter for property name.
+     * @return Value of property name.
+     */
+    public java.lang.String getName()
+    {
+        return name;
+    }
+    
+    /**
+     * Setter for property name.
+     * @param name New value of property name.
+     */
+    public void setName(java.lang.String name)
+    {
+        this.name = name;
     }
     
 }
