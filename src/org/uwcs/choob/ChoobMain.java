@@ -45,6 +45,7 @@ public class ChoobMain
 		{
 			e.printStackTrace();
 			System.out.println("Fatal exception in setting up bot. Exiting.");
+			System.exit(1);
 		}
 
 	}

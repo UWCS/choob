@@ -21,192 +21,193 @@ import java.lang.reflect.*;
  */
 public class BeanshellPluginUtils
 {
-    /**
-     * Creates a plugin from a given URL and plugin name.
-     * @param URL URL to plugin's source.
-     * @param pluginName Class name of plugin.
-     * @throws Exception Thrown if there's a syntactical error in the plugin's source.
-     * @return Returns an instance of the new plugin.
-     */
-        public static Object createBeanshellPlugin(String srcContent, String pluginName) throws Exception
-    {
-        Class coreClass;
-        Interpreter i;
+	/**
+	 * Creates a plugin from a given URL and plugin name.
+	 * @param URL URL to plugin's source.
+	 * @param pluginName Class name of plugin.
+	 * @throws Exception Thrown if there's a syntactical error in the plugin's source.
+	 * @return Returns an instance of the new plugin.
+	 */
+		public static Object createBeanshellPlugin(String srcContent, String pluginName) throws Exception
+	{
+		Class coreClass;
+		Interpreter i;
 
-        i = new Interpreter();
+		i = new Interpreter();
 
-        try
-        {
-            System.out.println(i.eval(srcContent));
+		try
+		{
+			System.out.println(i.eval(srcContent));
 
-            String classname = pluginName;
+			String classname = pluginName;
 
-            Class newPlugin = i.getNameSpace().getClass(classname);
+			Class newPlugin = i.getNameSpace().getClass(classname);
 
-            if( newPlugin != null )
-            {
-                Object newPluginObject = newPlugin.newInstance();
+			if( newPlugin != null )
+			{
+				Object newPluginObject = newPlugin.newInstance();
 
-                return newPluginObject;
-            }
-            else
-            {
-                throw new Exception("Could not load new plugin.");
-            }
-        }
-        catch( bsh.EvalError e )
-        {
-            throw new Exception("Beanshell: Could not compile plugin: " + e.getMessage(), e);
-        }
-        catch( Exception e )
-        {
-            throw new Exception("Exception: Could not compile plugin: " + e.getMessage(), e);
-        }
-    }
+				return newPluginObject;
+			}
+			else
+			{
+				throw new Exception("Could not load new plugin.");
+			}
+		}
+		catch( bsh.EvalError e )
+		{
+			throw new Exception("Beanshell: Could not compile plugin: " + e.getMessage(), e);
+		}
+		catch( Exception e )
+		{
+			throw new Exception("Exception: Could not compile plugin: " + e.getMessage(), e);
+		}
+	}
 
-        /**
-         * Calls a given command*, filter*, interval* method in the plugin.
-         * @param plugin Plugin to call.
-         * @param func Function to call.
-         * @param con Context from IRC.
-         * @param mods Group of modules available.
-         */
-    static private void callFunc(Object plugin, String func, Context con, Modules mods, IRCInterface irc)
-    {
-        Class coreClass = plugin.getClass();
-        try
-        {
-            if( coreClass != null )
-            {
-                Method tempMethod = coreClass.getDeclaredMethod(func,new Class[]
-                { Context.class, Modules.class, IRCInterface.class });
+		/**
+		 * Calls a given command*, filter*, interval* method in the plugin.
+		 * @param plugin Plugin to call.
+		 * @param func Function to call.
+		 * @param con Context from IRC.
+		 * @param mods Group of modules available.
+		 */
+	static private void callFunc(Object plugin, String func, Context con, Modules mods, IRCInterface irc)
+	{
+		Class coreClass = plugin.getClass();
+		try
+		{
+			if( coreClass != null )
+			{
+				Method tempMethod = coreClass.getDeclaredMethod(func,new Class[]
+				{ Context.class, Modules.class, IRCInterface.class });
 
-                Object[] objectArray = new Object[3];
+				Object[] objectArray = new Object[3];
 
-                objectArray[0] = con;
-                objectArray[1] = mods;
-                objectArray[2] = irc;
+				objectArray[0] = con;
+				objectArray[1] = mods;
+				objectArray[2] = irc;
 
-                tempMethod.invoke(plugin,objectArray);
-            }
-        }
-        catch( Exception e )
-        {
-                // Cause can apparently be null in some situations.
-          if( e.getCause() != null && e.getCause().getClass() == SecurityException.class )
-          {
-            irc.sendContextMessage(con,"Security exception: " + e.getCause());
-          }
-          System.out.println("Exception in calling plugin function: " + e);
-          e.printStackTrace();
-            e.printStackTrace();
-            // What exactly do we do here? We _know_ we'return going to get these.
-        }
-    }
+				tempMethod.invoke(plugin,objectArray);
+			}
+		}
+		catch( Exception e )
+		{
+			// Cause can apparently be null in some situations.
+			if( e.getCause() != null && e.getCause().getClass() == SecurityException.class )
+			{
+				irc.sendContextMessage(con,"Security exception: " + e.getCause());
+			}
 
-    /**
-     * Calls the create() / destroy() methods in a plugin.
-     * @param plugin Plugin to call.
-     * @param func Function to call.
-     */
-    static private void callSpecialFunc(Object plugin, String func)
-    {
-        Class coreClass = plugin.getClass();
-        try
-        {
-            if( coreClass != null )
-            {
-                Method tempMethod = coreClass.getDeclaredMethod(func,new Class[]{});
+			System.out.println("Exception in calling plugin function: " + e);
 
-                Object[] objectArray = new Object[0];
+			e.printStackTrace();
+			// What exactly do we do here? We _know_ we'return going to get these.
+		}
+	}
 
-                tempMethod.invoke(plugin,objectArray);
-            }
-        }
-        catch( NoSuchMethodException e )
-        {
-            // Here we just shrug our shoulders and go 'meh' in a Skumby-esque fashion
-            // If people don't want to provide a create/destroy method, we can't force
-            // them.
-        }
-        catch( Exception e )
-        {
-            System.out.println("Exception in calling plugin function: " + e);
-            e.printStackTrace();
-        }
-    }
+	/**
+	 * Calls the create() / destroy() methods in a plugin.
+	 * @param plugin Plugin to call.
+	 * @param func Function to call.
+	 */
+	static private void callSpecialFunc(Object plugin, String func)
+	{
+		Class coreClass = plugin.getClass();
+		try
+		{
+			if( coreClass != null )
+			{
+				Method tempMethod = coreClass.getDeclaredMethod(func,new Class[]{});
 
-    /**
-     * Call the destroy() method in a plugin.
-     * @param plugin
-     */
-    static public void callPluginDestroy(Object plugin)
-    {
-        callSpecialFunc(plugin, "destroy");
-    }
+				Object[] objectArray = new Object[0];
 
-    /**
-     * Call the create() method in a plugin.
-     * @param plugin
-     */
-    static public void callPluginCreate(Object plugin)
-    {
-        callSpecialFunc(plugin, "create");
-    }
+				tempMethod.invoke(plugin,objectArray);
+			}
+		}
+		catch( NoSuchMethodException e )
+		{
+			// Here we just shrug our shoulders and go 'meh' in a Skumby-esque fashion
+			// If people don't want to provide a create/destroy method, we can't force
+			// them.
+		}
+		catch( Exception e )
+		{
+			System.out.println("Exception in calling plugin function: " + e);
+			e.printStackTrace();
+		}
+	}
 
-    /**
-     * Attempts to call a method in the plugin, triggered by a line from IRC.
-     * @param plugin
-     * @param command Command to call.
-     * @param con Context from IRC.
-     * @param mods Group of modules.
-     */
-    static public void doCommand(Object plugin, String command, Context con, Modules mods, IRCInterface irc)
-    {
-        System.out.println("Calling method command" + command);
-        callFunc(plugin, "command" + command,con,mods,irc);
-    }
+	/**
+	 * Call the destroy() method in a plugin.
+	 * @param plugin
+	 */
+	static public void callPluginDestroy(Object plugin)
+	{
+		callSpecialFunc(plugin, "destroy");
+	}
 
-    /**
-     *
-     * @param plugin
-     * @param filter
-     * @param con
-     * @param mods
-     */
-    static public void doFilter(Object plugin, String filter, Context con, Modules mods, IRCInterface irc)
-    {
-        callFunc(plugin, "filter" + filter,con,mods, irc);
-    }
+	/**
+	 * Call the create() method in a plugin.
+	 * @param plugin
+	 */
+	static public void callPluginCreate(Object plugin)
+	{
+		callSpecialFunc(plugin, "create");
+	}
 
-    /**
-     *
-     * @param plugin
-     * @param interval
-     * @param con
-     * @param mods
-     */
-    static public void doInterval(Object plugin, String interval, Context con, Modules mods, IRCInterface irc)
-    {
-        callFunc(plugin, "interval" + interval,con,mods,irc);
-    }
+	/**
+	 * Attempts to call a method in the plugin, triggered by a line from IRC.
+	 * @param plugin
+	 * @param command Command to call.
+	 * @param con Context from IRC.
+	 * @param mods Group of modules.
+	 */
+	static public void doCommand(Object plugin, String command, Context con, Modules mods, IRCInterface irc)
+	{
+		System.out.println("Calling method command" + command);
+		callFunc(plugin, "command" + command,con,mods,irc);
+	}
 
-    /**
-     *
-     * @return
-     */
-    static public List getFilters()
-    {
-        return null;
-    }
+	/**
+	 *
+	 * @param plugin
+	 * @param filter
+	 * @param con
+	 * @param mods
+	 */
+	static public void doFilter(Object plugin, String filter, Context con, Modules mods, IRCInterface irc)
+	{
+		callFunc(plugin, "filter" + filter,con,mods, irc);
+	}
 
-    /**
-     *
-     * @return
-     */
-    static public List getIntervals()
-    {
-        return null;
-    }
+	/**
+	 *
+	 * @param plugin
+	 * @param interval
+	 * @param con
+	 * @param mods
+	 */
+	static public void doInterval(Object plugin, String interval, Context con, Modules mods, IRCInterface irc)
+	{
+		callFunc(plugin, "interval" + interval,con,mods,irc);
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	static public List getFilters()
+	{
+		return null;
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	static public List getIntervals()
+	{
+		return null;
+	}
 
 }
