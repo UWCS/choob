@@ -33,6 +33,8 @@ public class Choob extends PircBot
 	IRCInterface irc;
         String trigger;
         List filterList;
+        List intervalList;
+        ChoobWatcherThread watcher;
 
 	/**
 	 * Constructor for Choob, initialises vital variables.
@@ -46,9 +48,11 @@ public class Choob extends PircBot
                 
                 // Create a our (sychronised dammit) list of filters
                 filterList = Collections.synchronizedList(new ArrayList());
+                
+                // Create a shiny synchronised (americans--) list
+                intervalList = Collections.synchronizedList(new ArrayList());
 
 		// Set the bot's nickname.
-
 		String botName="Choob";
 		String dbUser="";
 		String dbPass="";
@@ -79,7 +83,7 @@ public class Choob extends PircBot
 		broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", dbUser, dbPass, 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
 
 		// Initialise our modules.
-		modules = new Modules(broker, pluginMap, filterList);
+		modules = new Modules(broker, pluginMap, filterList, intervalList);
 
 		// Create a new IRC interface
 		irc = new IRCInterface( this );
@@ -104,6 +108,10 @@ public class Choob extends PircBot
 			tempThread.start();
 		}
 
+                watcher = new ChoobWatcherThread(intervalList, irc, pluginMap, modules);
+
+                watcher.start();
+                
 		try
 		{
 			// We need to have an initial set of plugins that ought to be loaded as core.
@@ -113,7 +121,9 @@ public class Choob extends PircBot
 			ResultSet coreplugResults = coreplugSmt.executeQuery();
 			if ( coreplugResults.first() )
 				do
+                                {
 					modules.plugin.addPlugin(coreplugResults.getString("URL"), coreplugResults.getString("PluginName"));
+                                }
 				while ( coreplugResults.next() );
 
 			broker.freeConnection(dbConnection);

@@ -6,16 +6,19 @@
 
 package org.uwcs.choob.support;
 
+import java.util.*;
+
 /**
  *
  * @author  sadiq
  */
 public class Interval
 {
+    private String plugin;
     
-    private String name;
+    private Date trigger;
     
-    private int interval;
+    private Object parameter;
     
     /** Creates a new instance of Interval */
     public Interval()
@@ -23,39 +26,62 @@ public class Interval
     }
     
     /**
-     * Getter for property interval.
-     * @return Value of property interval.
+     * Getter for property trigger.
+     * @return Value of property trigger.
      */
-    public int getInterval()
+    public java.util.Date getTrigger()
     {
-        return interval;
+        return trigger;
     }
     
     /**
-     * Setter for property interval.
-     * @param interval New value of property interval.
+     * Setter for property trigger.
+     * @param trigger New value of property trigger.
      */
-    public void setInterval(int interval)
+    public void setTrigger(java.util.Date trigger)
     {
-        this.interval = interval;
+        this.trigger = trigger;
     }
     
     /**
-     * Getter for property name.
-     * @return Value of property name.
+     * Getter for property plugin.
+     * @return Value of property plugin.
      */
-    public java.lang.String getName()
+    public java.lang.String getPlugin()
     {
-        return name;
+        return plugin;
     }
     
     /**
-     * Setter for property name.
-     * @param name New value of property name.
+     * Setter for property plugin.
+     * @param plugin New value of property plugin.
      */
-    public void setName(java.lang.String name)
+    public void setPlugin(java.lang.String plugin)
     {
-        this.name = name;
+        this.plugin = plugin;
+    }
+    
+    /**
+     * Getter for property parameter.
+     * @return Value of property parameter.
+     */
+    public java.lang.Object getParameter()
+    {
+        return parameter;
+    }
+    
+    /**
+     * Setter for property parameter.
+     * @param parameter New value of property parameter.
+     */
+    public void setParameter(java.lang.Object parameter)
+    {
+        this.parameter = parameter;
+    }
+    
+    public String toString()
+    {
+        return "Interval( Date: " + getTrigger() + ", Plugin: " + getPlugin() +" )";
     }
     
 }

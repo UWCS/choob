@@ -26,20 +26,26 @@ public class Modules
     public LoggerModule logger;
     public UtilModule util;
     public NickModule nick;
+    public IntervalModule interval;
     Map pluginMap;
+    List intervalList;
+    List filterList;
 
     /**
      * Creates a new instance of ModuleGroup
      * @param dbBroker
      * @param pluginMap
      */
-    public Modules( DbConnectionBroker dbBroker, Map pluginMap, List filterList )
+    public Modules( DbConnectionBroker dbBroker, Map pluginMap, List filterList, List intervalList )
     {
         plugin = new PluginModule(pluginMap, dbBroker, filterList);
         logger = new LoggerModule(dbBroker);
         util = new UtilModule();
         nick = new NickModule(dbBroker);
+        interval = new IntervalModule( intervalList );
         this.dbBroker = dbBroker;
         this.pluginMap = pluginMap;
+        this.intervalList = intervalList;
+        this.filterList = filterList;
     }
 }

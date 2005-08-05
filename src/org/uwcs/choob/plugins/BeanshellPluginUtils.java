@@ -189,9 +189,38 @@ public class BeanshellPluginUtils
      * @param con
      * @param mods
      */
-    static public void doInterval(Object plugin, String interval, Context con, Modules mods, IRCInterface irc)
+    static public void doInterval(Object plugin, Object parameter, Modules mods, IRCInterface irc)
     {
-        callFunc(plugin, "interval" + interval,con,mods,irc);
+        Class coreClass = plugin.getClass();
+        
+        try
+        {
+            if( coreClass != null )
+            {
+                Method tempMethod = coreClass.getDeclaredMethod("interval",new Class[]
+                { Object.class, Modules.class, IRCInterface.class });
+                
+                Object[] objectArray = new Object[3];
+                
+                objectArray[0] = parameter;
+                objectArray[1] = mods;
+                objectArray[2] = irc;
+                
+                tempMethod.invoke(plugin,objectArray);
+            }
+        }
+        catch( Exception e )
+        {
+            // Cause can apparently be null in some situations.
+            if( e.getCause() != null && e.getCause().getClass() == SecurityException.class )
+            {
+                System.out.println("Security exception: " + e.getCause());
+            }
+            System.out.println("Exception in calling plugin function: " + e);
+            e.printStackTrace();
+            e.printStackTrace();
+            // What exactly do we do here? We _know_ we'return going to get these.
+        }
     }
     
     /**
@@ -240,13 +269,5 @@ public class BeanshellPluginUtils
         
         return filters;
     }
-    
-    /**
-     *
-     * @return
-     */
-    static public List getIntervals(Object plugin)
-    {
-        return null;
-    }
+
 }
