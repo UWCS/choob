@@ -4,7 +4,7 @@
  * Created on June 16, 2005, 3:05 PM
  */
 
-package org.uwcs.choob;
+package org.uwcs.choob.support;
 
 /**
  *
