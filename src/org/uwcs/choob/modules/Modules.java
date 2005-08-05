@@ -30,22 +30,24 @@ public class Modules
     Map pluginMap;
     List intervalList;
     List filterList;
+    private Choob bot;
 
     /**
      * Creates a new instance of ModuleGroup
      * @param dbBroker
      * @param pluginMap
      */
-    public Modules( DbConnectionBroker dbBroker, Map pluginMap, List filterList, List intervalList )
+    public Modules( DbConnectionBroker dbBroker, Map pluginMap, List filterList, List intervalList, Choob bot )
     {
-        plugin = new PluginModule(pluginMap, dbBroker, filterList);
+        plugin = new PluginModule(pluginMap, dbBroker, filterList, this);
         logger = new LoggerModule(dbBroker);
-        util = new UtilModule();
+        util = new UtilModule( bot );
         nick = new NickModule(dbBroker);
         interval = new IntervalModule( intervalList );
         this.dbBroker = dbBroker;
         this.pluginMap = pluginMap;
         this.intervalList = intervalList;
         this.filterList = filterList;
+        this.bot = bot;
     }
 }

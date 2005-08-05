@@ -110,7 +110,7 @@ public class BeanshellPluginUtils
      * @param plugin Plugin to call.
      * @param func Function to call.
      */
-    static private void callSpecialFunc(Object plugin, String func)
+    static private void callSpecialFunc(Object plugin, String func, Modules mods)
     {
         Class coreClass = plugin.getClass();
         try
@@ -118,9 +118,11 @@ public class BeanshellPluginUtils
             if( coreClass != null )
             {
                 Method tempMethod = coreClass.getDeclaredMethod(func,new Class[]
-                {});
+                { Modules.class });
                 
-                Object[] objectArray = new Object[0];
+                Object[] objectArray = new Object[1];
+                
+                objectArray[0] = mods;
                 
                 tempMethod.invoke(plugin,objectArray);
             }
@@ -142,18 +144,18 @@ public class BeanshellPluginUtils
      * Call the destroy() method in a plugin.
      * @param plugin
      */
-    static public void callPluginDestroy(Object plugin)
+    static public void callPluginDestroy(Object plugin, Modules mods)
     {
-        callSpecialFunc(plugin, "destroy");
+        callSpecialFunc(plugin, "destroy", mods);
     }
     
     /**
      * Call the create() method in a plugin.
      * @param plugin
      */
-    static public void callPluginCreate(Object plugin)
+    static public void callPluginCreate(Object plugin, Modules mods)
     {
-        callSpecialFunc(plugin, "create");
+        callSpecialFunc(plugin, "create", mods);
     }
     
     /**

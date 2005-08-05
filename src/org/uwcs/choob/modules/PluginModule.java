@@ -24,15 +24,17 @@ public class PluginModule {
     Map pluginMap;
     List filterList;
     DbConnectionBroker broker;
-
+    Modules mods;
+    
     /**
      * Creates a new instance of the PluginModule.
      * @param pluginMap Map containing currently loaded plugins.
      */
-    public PluginModule(Map pluginMap, DbConnectionBroker broker, List filterList) {
+    public PluginModule(Map pluginMap, DbConnectionBroker broker, List filterList, Modules mods) {
         this.pluginMap = pluginMap;
         this.broker = broker;
         this.filterList = filterList;
+        this.mods = mods;
     }
 
     /**
@@ -43,13 +45,13 @@ public class PluginModule {
      * @param pluginName Name for the class of the new plugin.
      * @throws Exception Thrown if there's a syntactical error in the plugin's source.
      */
-    public void addPlugin(String URL,String pluginName) throws Exception {
+    public void addPlugin(String URL,String pluginName ) throws Exception {
         if( System.getSecurityManager() != null ) System.getSecurityManager().checkPermission(new ChoobPermission("canAddPlugins"));
 
         Object plugin = pluginMap.get(pluginName);
 
         if( plugin != null ) {
-            BeanshellPluginUtils.callPluginDestroy(plugin);
+            BeanshellPluginUtils.callPluginDestroy(plugin, mods);
         }
 
         String srcContent = "";
@@ -71,7 +73,7 @@ public class PluginModule {
 
         plugin = BeanshellPluginUtils.createBeanshellPlugin(srcContent, pluginName);
 
-        BeanshellPluginUtils.callPluginCreate(plugin);
+        BeanshellPluginUtils.callPluginCreate(plugin, mods);
 
         addPluginToDb(srcContent, pluginName);
 
@@ -101,7 +103,7 @@ public class PluginModule {
         System.out.println("Filters list now contains: " + filterList.size() + " filters");
     }
 
-    public void loadDbPlugins() throws Exception
+    public void loadDbPlugins( Modules modules ) throws Exception
     {
         if( System.getSecurityManager() != null ) System.getSecurityManager().checkPermission(new ChoobPermission("canLoadSavedPlugins"));
 

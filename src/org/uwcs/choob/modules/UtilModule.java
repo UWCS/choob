@@ -19,11 +19,11 @@ import java.util.regex.*;
  * @author  sadiq
  */
 public class UtilModule {
-    
+
     /** Creates a new instance of UtilModule */
-    public UtilModule() {
-        
+    public UtilModule( Choob bot ) {
     }
+
     
     public List getParms( Context con )
     {

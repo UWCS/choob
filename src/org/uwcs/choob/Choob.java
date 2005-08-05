@@ -83,7 +83,7 @@ public class Choob extends PircBot
 		broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", dbUser, dbPass, 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
 
 		// Initialise our modules.
-		modules = new Modules(broker, pluginMap, filterList, intervalList);
+		modules = new Modules(broker, pluginMap, filterList, intervalList, this);
 
 		// Create a new IRC interface
 		irc = new IRCInterface( this );
