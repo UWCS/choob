@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS `CorePlugins` (
 -- Dumping data for table `CorePlugins`
 -- 
 
-INSERT INTO `CorePlugins` VALUES ('Test', 'http://localhost/Test.java');
-INSERT INTO `CorePlugins` VALUES ('Plugin', 'http://localhost/Plugin.java');
+INSERT INTO `CorePlugins` VALUES ('Test', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Test.java');
+INSERT INTO `CorePlugins` VALUES ('Plugin', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Plugin.java');
 
 -- --------------------------------------------------------
 
