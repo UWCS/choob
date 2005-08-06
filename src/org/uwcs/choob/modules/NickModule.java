@@ -97,4 +97,23 @@ public class NickModule
 		}
 	}
 
+	/**
+	 * Guesses the user's primary nick.
+	 * @param nick String representing the Nick.
+	 * @return User's primary nick, a guess at their primary nick, or the supplied nick.
+	 */
+	public String getBestPrimaryNick(String nick) throws Exception
+	{
+		String gpn=getPrimaryNick(nick);
+		if (!gpn.equals(""))
+			return gpn;
+
+		Pattern pa = Pattern.compile("^([a-zA-Z0-9_-]+?)(?:\\||\\`).*$");
+		Matcher ma = pa.matcher(nick);
+
+		if (ma.matches())
+			return ma.group(1);
+
+		return nick;
+	}
 }
