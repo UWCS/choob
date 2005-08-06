@@ -30,7 +30,7 @@ public class IntervalModule
         
         newInt.setPlugin(plugin.getClass().getName());
         newInt.setTrigger( interval );
-        newInt.setParameter( plugin );
+        newInt.setParameter( parameter );
         
         intervalList.add( newInt );
     }
