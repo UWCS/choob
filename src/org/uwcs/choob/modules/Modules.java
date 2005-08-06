@@ -21,7 +21,7 @@ public class Modules
     /**
      * Holds value of property pluginModule.
      */
-    DbConnectionBroker dbBroker;
+    public DbConnectionBroker dbBroker;
     public PluginModule plugin;
     public LoggerModule logger;
     public UtilModule util;
