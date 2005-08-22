@@ -60,7 +60,6 @@ CREATE TABLE IF NOT EXISTS `User` (
 -- Dumping data for table `User`
 -- 
 
-INSERT INTO `User` VALUES (0, 'nobody');
 INSERT INTO `User` VALUES (1, 'root');
 INSERT INTO `User` VALUES (3, 'Faux');
 INSERT INTO `User` VALUES (4, 'Sadiq');
@@ -163,3 +162,28 @@ CREATE TABLE IF NOT EXISTS `AddNicks` (
 
 INSERT INTO `AddNicks` VALUES (3, 'Faux%');
 INSERT INTO `AddNicks` VALUES (3, 'YourMum|%');
+
+
+--
+-- Table structure for table `ObjectStore`
+--
+
+CREATE TABLE ObjectStore (
+  ObjectID int(11) NOT NULL auto_increment,
+  UserID int(11) NOT NULL default '0',
+  ClassName varchar(128) NOT NULL default '',
+  ClassID int(11) NOT NULL default '0',
+  PRIMARY KEY  (ObjectID),
+  UNIQUE KEY Composite (UserID,ClassName,ClassID)
+) TYPE=MyISAM;
+
+--
+-- Table structure for table `ObjectStoreData`
+--
+
+CREATE TABLE ObjectStoreData (
+  ObjectID int(11) NOT NULL default '0',
+  FieldName varchar(128) NOT NULL default '',
+  FieldType varchar(32) NOT NULL default '',
+  FieldValue text NOT NULL
+) TYPE=MyISAM;
