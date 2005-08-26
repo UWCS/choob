@@ -30,10 +30,10 @@ public class NickModule
 	}
 
 	/**
-     * Gets the User's ID number from a (possibly linked) nick.
-     * @param nick String representing the Nick.
-     * @return User's ID, or 0 if not found.
-     */
+	 * Gets the User's ID number from a (possibly linked) nick.
+	 * @param nick String representing the Nick.
+	 * @return User's ID, or 0 if not found.
+	 */
 
 	public int getUserID(String nick) throws Exception
 	{
@@ -65,10 +65,10 @@ public class NickModule
 	}
 
 	/**
-     * Gets the User's primary nick from a (possibly linked) nick.
-     * @param nick String representing the Nick.
-     * @return User's primary nick, or "" if not found.
-     */
+	 * Gets the User's primary nick from a (possibly linked) nick.
+	 * @param nick String representing the Nick.
+	 * @return User's primary nick, or "" if not found.
+	 */
 	public String getPrimaryNick(String nick) throws Exception
 	{
 		try

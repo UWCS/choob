@@ -4,12 +4,12 @@ import org.uwcs.choob.support.*;
 
 class Test
 {
-	public void commandPirate( Context con, Modules mods, IRCInterface irc )
+	public void commandPirate( Message con, Modules mods, IRCInterface irc )
 	{
 		irc.sendContextMessage(con, "Yarr!");
 	}
 
-	public void commandExit( Context con, Modules mods, IRCInterface irc )
+	public void commandExit( Message con, Modules mods, IRCInterface irc )
 	{
 		System.exit(1);
 	}
@@ -17,15 +17,26 @@ class Test
 	// Define the regex for the KarmaPlus filter.
 	public String filterFauxRegex = "^Faux sucks";
 
-	public void filterFaux( Context con, Modules modules, IRCInterface irc )
+	public void filterFaux( Message con, Modules modules, IRCInterface irc )
 	{
 		irc.sendContextMessage( con, "I would almost certainly concurr.");
 	}
 
 	public String filterBouncyRegex = "^bouncy bouncy";
 
-	public void filterBouncy( Context con, Modules modules, IRCInterface irc )
+	public void filterBouncy( Message con, Modules modules, IRCInterface irc )
 	{
 		irc.sendContextMessage( con, "Ooh, yes please.");
 	}
+
+	public void onJoin( ChannelEvent ev, Modules mod, IRCInterface irc )
+	{
+		irc.sendMessage(ev.getChannel(), "Hello, " + ev.getSender() + "!");
+	}
+
+	public void onPart( ChannelEvent ev, Modules mod, IRCInterface irc )
+	{
+		irc.sendMessage(ev.getChannel(), "Bye, " + ev.getSender() + "!");
+	}
+
 }

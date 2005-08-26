@@ -4,12 +4,12 @@ import org.uwcs.choob.support.*;
 
 class Say
 {
-	public void commandSay( Context con, Modules modules, IRCInterface irc )
+	public void commandSay( Message con, Modules modules, IRCInterface irc )
 	{
 		irc.sendContextMessage(con, modules.util.getParmString(con));
 	}
 
-	public void commandMe( Context con, Modules modules, IRCInterface irc )
+	public void commandMe( Message con, Modules modules, IRCInterface irc )
 	{
 		irc.sendContextAction(con, modules.util.getParmString(con));
 	}

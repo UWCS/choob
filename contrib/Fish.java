@@ -10,7 +10,7 @@ import java.io.*;
 
 class Fish
 {
-	public void commandRepeatMe( Context con, Modules mods, IRCInterface irc )
+	public void commandRepeatMe( Message con, Modules mods, IRCInterface irc )
 	{
 		DbConnectionBroker broker = mods.dbBroker;
 		Connection dbConnection = broker.getConnection();
@@ -36,7 +36,7 @@ class Fish
 	}
 
 
-	public void commandWUBRS( Context con, Modules mods, IRCInterface irc )
+	public void commandWUBRS( Message con, Modules mods, IRCInterface irc )
 	{
 		URL yahoo = new URL("http://www.wubrs.org.uk/quote.php");
         URLConnection yc = yahoo.openConnection();

@@ -31,10 +31,10 @@ public class Choob extends PircBot
 	List choobThreads;
 	Modules modules;
 	IRCInterface irc;
-        String trigger;
-        List filterList;
-        List intervalList;
-        ChoobWatcherThread watcher;
+	String trigger;
+	List filterList;
+	List intervalList;
+	ChoobWatcherThread watcher;
 
 	/**
 	 * Constructor for Choob, initialises vital variables.
@@ -45,12 +45,12 @@ public class Choob extends PircBot
 		// We wrap the pluginMap with a synchronizedMap in order to prevent
 		// concurrent modication of it and a possible race condition.
 		pluginMap = Collections.synchronizedMap(new HashMap());
-                
-                // Create a our (sychronised dammit) list of filters
-                filterList = Collections.synchronizedList(new ArrayList());
-                
-                // Create a shiny synchronised (americans--) list
-                intervalList = Collections.synchronizedList(new ArrayList());
+
+		// Create a our (sychronised dammit) list of filters
+		filterList = Collections.synchronizedList(new ArrayList());
+
+		// Create a shiny synchronised (americans--) list
+		intervalList = Collections.synchronizedList(new ArrayList());
 
 		// Set the bot's nickname.
 		String botName="Choob";
@@ -108,10 +108,10 @@ public class Choob extends PircBot
 			tempThread.start();
 		}
 
-                watcher = new ChoobWatcherThread(intervalList, irc, pluginMap, modules);
+		watcher = new ChoobWatcherThread(intervalList, irc, pluginMap, modules);
 
-                watcher.start();
-                
+		watcher.start();
+
 		try
 		{
 			// We need to have an initial set of plugins that ought to be loaded as core.
@@ -121,9 +121,9 @@ public class Choob extends PircBot
 			ResultSet coreplugResults = coreplugSmt.executeQuery();
 			if ( coreplugResults.first() )
 				do
-                                {
+				{
 					modules.plugin.addPlugin(coreplugResults.getString("URL"), coreplugResults.getString("PluginName"));
-                                }
+				}
 				while ( coreplugResults.next() );
 
 			broker.freeConnection(dbConnection);
@@ -173,15 +173,76 @@ public class Choob extends PircBot
 	}
 
 	/**
-	 * Starts off a waiting worker thread to work on an incoming line from IRC.
-	 * @param channel
-	 * @param sender
+	 * Over-ridden method from the Pircbot class receives nick-change events from IRC.
+	 * @param oldNick
 	 * @param login
 	 * @param hostname
-	 * @param message
-	 * @param privMessage
+	 * @param newNick
 	 */
-	private synchronized void spinThread(String channel, String sender, String login, String hostname, String message, boolean privMessage)
+/*
+	protected void onNickChange(String oldNick, String login, String hostname, String newNick)
+	{
+		// Spin off the appropriate thread to handle this.
+		spinThread( new anEvent(oldNick) );
+	}
+*/
+
+
+	/* Handled internally in pircBot, overriding causes breakage, don't let it happen:
+	protected void onFinger(String sourceNick, String sourceLogin, String sourceHostname, String target) { spinThread(new ChannelEvent(ChannelEvent.ce_Finger, new String[] {sourceNick, sourceLogin, sourceHostname, target })); }
+	protected void onPing(String sourceNick, String sourceLogin, String sourceHostname, String target, String pingValue) { spinThread(new ChannelEvent(ChannelEvent.ce_Ping, new String[] {sourceNick, sourceLogin, sourceHostname, target, pingValue})); }
+	protected void onServerPing(String response) { spinThread(new ChannelEvent(ChannelEvent.ce_ServerPing, new String[] {response  })); }
+	protected void onServerResponse(int code, String response) { spinThread(new ChannelEvent(ChannelEvent.ce_ServerResponse, new String[] {Integer.toString(code), response  })); }
+	protected void onTime(String sourceNick, String sourceLogin, String sourceHostname, String target) { spinThread(new ChannelEvent(ChannelEvent.ce_Time, new String[] {sourceNick, sourceLogin, sourceHostname, target })); }
+	protected void onVersion(String sourceNick, String sourceLogin, String sourceHostname, String target) { spinThread(new ChannelEvent(ChannelEvent.ce_Version, new String[] {sourceNick, sourceLogin, sourceHostname, target })); }
+	*/
+
+	/* Protect against RFC breakage.
+	protected void onNotice(String sourceNick, String sourceLogin, String sourceHostname, String target, String notice) { spinThread(new ChannelEvent(ChannelEvent.ce_Notice, new String[] {sourceNick, sourceLogin, sourceHostname, target, notice})); }
+	*/
+
+	/* Handled elsewhere in this file, for now:
+	protected void onMessage(String channel, String sender, String login, String hostname, String message) { spinThread(new ChannelEvent(ChannelEvent.ce_Message, new String[] {channel, sender, login, hostname, message})); }
+	protected void onPrivateMessage(String sender, String login, String hostname, String message) { spinThread(new ChannelEvent(ChannelEvent.ce_PrivateMessage, new String[] {sender, login, hostname, message })); }
+	*/
+
+	protected void onAction(String sender, String login, String hostname, String target, String action) { spinThread(new ChannelEvent(ChannelEvent.ce_Action, new String[] {sender, login, hostname, target, action})); }
+	protected void onChannelInfo(String channel, int userCount, String topic) { spinThread(new ChannelEvent(ChannelEvent.ce_ChannelInfo, new String[] {channel, Integer.toString(userCount), topic })); }
+	protected void onDeVoice(String channel, String sourceNick, String sourceLogin, String sourceHostname, String recipient) { spinThread(new ChannelEvent(ChannelEvent.ce_DeVoice, new String[] {channel, sourceNick, sourceLogin, sourceHostname, recipient})); }
+	protected void onDeop(String channel, String sourceNick, String sourceLogin, String sourceHostname, String recipient) { spinThread(new ChannelEvent(ChannelEvent.ce_Deop, new String[] {channel, sourceNick, sourceLogin, sourceHostname, recipient})); }
+	protected void onInvite(String targetNick, String sourceNick, String sourceLogin, String sourceHostname, String channel) { spinThread(new ChannelEvent(ChannelEvent.ce_Invite, new String[] {targetNick, sourceNick, sourceLogin, sourceHostname, channel})); }
+	protected void onJoin(String channel, String sender, String login, String hostname) { spinThread(new ChannelEvent(ChannelEvent.ce_Join, new String[] {channel, sender, login, hostname })); }
+	protected void onKick(String channel, String kickerNick, String kickerLogin, String kickerHostname, String recipientNick, String reason) { spinThread(new ChannelEvent(ChannelEvent.ce_Kick, new String[] {channel, kickerNick, kickerLogin, kickerHostname, recipientNick, reason})); }
+	protected void onMode(String channel, String sourceNick, String sourceLogin, String sourceHostname, String mode) { spinThread(new ChannelEvent(ChannelEvent.ce_Mode, new String[] {channel, sourceNick, sourceLogin, sourceHostname, mode})); }
+	protected void onNickChange(String oldNick, String login, String hostname, String newNick) { spinThread(new ChannelEvent(ChannelEvent.ce_NickChange, new String[] {oldNick, login, hostname, newNick })); }
+	protected void onOp(String channel, String sourceNick, String sourceLogin, String sourceHostname, String recipient) { spinThread(new ChannelEvent(ChannelEvent.ce_Op, new String[] {channel, sourceNick, sourceLogin, sourceHostname, recipient})); }
+	protected void onPart(String channel, String sender, String login, String hostname) { spinThread(new ChannelEvent(ChannelEvent.ce_Part, new String[] {channel, sender, login, hostname })); }
+	protected void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) { spinThread(new ChannelEvent(ChannelEvent.ce_Quit, new String[] {sourceNick, sourceLogin, sourceHostname, reason })); }
+	protected void onRemoveChannelBan(String channel, String sourceNick, String sourceLogin, String sourceHostname, String hostmask) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveChannelBan, new String[] {channel, sourceNick, sourceLogin, sourceHostname, hostmask})); }
+	protected void onRemoveChannelKey(String channel, String sourceNick, String sourceLogin, String sourceHostname, String key) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveChannelKey, new String[] {channel, sourceNick, sourceLogin, sourceHostname, key})); }
+	protected void onRemoveChannelLimit(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveChannelLimit, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onRemoveInviteOnly(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveInviteOnly, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onRemoveModerated(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveModerated, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onRemoveNoExternalMessages(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveNoExternalMessages, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onRemovePrivate(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemovePrivate, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onRemoveSecret(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveSecret, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onRemoveTopicProtection(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveTopicProtection, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onSetChannelBan(String channel, String sourceNick, String sourceLogin, String sourceHostname, String hostmask) { spinThread(new ChannelEvent(ChannelEvent.ce_SetChannelBan, new String[] {channel, sourceNick, sourceLogin, sourceHostname, hostmask})); }
+	protected void onSetChannelKey(String channel, String sourceNick, String sourceLogin, String sourceHostname, String key) { spinThread(new ChannelEvent(ChannelEvent.ce_SetChannelKey, new String[] {channel, sourceNick, sourceLogin, sourceHostname, key})); }
+	protected void onSetChannelLimit(String channel, String sourceNick, String sourceLogin, String sourceHostname, int limit) { spinThread(new ChannelEvent(ChannelEvent.ce_SetChannelLimit, new String[] {channel, sourceNick, sourceLogin, sourceHostname, Integer.toString(limit)})); }
+	protected void onSetInviteOnly(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_SetInviteOnly, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onSetModerated(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_SetModerated, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onSetNoExternalMessages(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_SetNoExternalMessages, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onSetPrivate(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_SetPrivate, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onSetSecret(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_SetSecret, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onSetTopicProtection(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_SetTopicProtection, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
+	protected void onTopic(String channel, String topic, String setBy, long date, boolean changed) { spinThread(new ChannelEvent(ChannelEvent.ce_Topic, new String[] {channel, topic, setBy, Long.toString(date), Boolean.toString(changed)})); }
+	protected void onUnknown(String line) { spinThread(new ChannelEvent(ChannelEvent.ce_Unknown, new String[] {line  })); }
+	protected void onUserMode(String targetNick, String sourceNick, String sourceLogin, String sourceHostname, String mode) { spinThread(new ChannelEvent(ChannelEvent.ce_UserMode, new String[] {targetNick, sourceNick, sourceLogin, sourceHostname, mode})); }
+	protected void onVoice(String channel, String sourceNick, String sourceLogin, String sourceHostname, String recipient) { spinThread(new ChannelEvent(ChannelEvent.ce_Voice, new String[] {channel, sourceNick, sourceLogin, sourceHostname, recipient})); }
+
+
+	private synchronized void spinThread(anEvent ev)
 	{
 		int c;
 		boolean done = false;
@@ -198,11 +259,9 @@ public class Choob extends PircBot
 
 					ChoobThread tempThread = ((ChoobThread)choobThreads.get(c));
 
-					Context newCon = new Context(sender,channel,message,privMessage);
-
 					try
 					{
-						modules.logger.addLog(newCon);
+//						modules.logger.addLog(newCon);
 					}
 					catch( Exception e )
 					{
@@ -210,7 +269,7 @@ public class Choob extends PircBot
 						e.printStackTrace();
 					}
 
-					tempThread.setContext( newCon );
+					tempThread.setEvent( ev );
 					tempThread.setIRC( irc );
 
 					synchronized( tempThread.getWaitObject() )
@@ -231,5 +290,19 @@ public class Choob extends PircBot
 				// Oh noes! We've been interrupted.
 			}
 		}
+	}
+
+	/**
+	 * Starts off a waiting worker thread to work on an incoming line from IRC.
+	 * @param channel
+	 * @param sender
+	 * @param login
+	 * @param hostname
+	 * @param message
+	 * @param privMessage
+	 */
+	private synchronized void spinThread(String channel, String sender, String login, String hostname, String message, boolean privMessage)
+	{
+		spinThread(new Message(sender,channel,message,privMessage));
 	}
 }

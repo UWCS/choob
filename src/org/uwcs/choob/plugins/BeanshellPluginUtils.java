@@ -72,23 +72,36 @@ public class BeanshellPluginUtils
 	 * @param con Context from IRC.
 	 * @param mods Group of modules available.
 	 */
-	static private void callFunc(Object plugin, String func, Context con, Modules mods, IRCInterface irc)
+	static private void callFunc(Object plugin, String func, anEvent ev, Modules mods, IRCInterface irc)
 	{
 		Class coreClass = plugin.getClass();
+		System.out.println(ev.getClass().toString());
+
 		try
 		{
 			if( coreClass != null )
 			{
-				Method tempMethod = coreClass.getDeclaredMethod(func,new Class[]
-						{ Context.class, Modules.class, IRCInterface.class });
+				try
+				{
+					System.out.println("The method \"" + func + "\" (" + ev.getClass().toString() + ", " + Modules.class.toString() + ", " + IRCInterface.class.toString() + ") in the plugin " + plugin.toString() + "..");
+					Method tempMethod = coreClass.getDeclaredMethod(func, new Class[] { ev.getClass(), Modules.class, IRCInterface.class });
 
-				Object[] objectArray = new Object[3];
+					Object[] objectArray = new Object[3];
 
-				objectArray[0] = con;
-				objectArray[1] = mods;
-				objectArray[2] = irc;
+					objectArray[0] = ev;
+					objectArray[1] = mods;
+					objectArray[2] = irc;
 
-				tempMethod.invoke(plugin,objectArray);
+					tempMethod.invoke(plugin,objectArray);
+					System.out.println("Got called!");
+
+				}
+				catch (NoSuchMethodException e)
+				{
+					System.out.println("Oh noes, method not found!");
+					//omgwtfhaxCallCache.put(identifier, null);
+					//System.out.println(identifier + " will be ignored from now on.");
+				}
 			}
 		}
 		catch( Exception e )
@@ -96,7 +109,7 @@ public class BeanshellPluginUtils
 			// Cause can apparently be null in some situations.
 			if( e.getCause() != null && e.getCause().getClass() == SecurityException.class )
 			{
-				irc.sendContextMessage(con,"Security exception: " + e.getCause());
+				//irc.sendContextMessage(ev, "Security exception: " + e.getCause());
 			}
 			System.out.println("Exception in calling plugin function: " + e);
 			e.printStackTrace();
@@ -118,7 +131,7 @@ public class BeanshellPluginUtils
 			if( coreClass != null )
 			{
 				Method tempMethod = coreClass.getDeclaredMethod(func,new Class[]
-						{ Modules.class });
+				{ Modules.class });
 
 				Object[] objectArray = new Object[1];
 
@@ -165,10 +178,23 @@ public class BeanshellPluginUtils
 	 * @param con Context from IRC.
 	 * @param mods Group of modules.
 	 */
-	static public void doCommand(Object plugin, String command, Context con, Modules mods, IRCInterface irc)
+	static public void doCommand(Object plugin, String command, anEvent ev, Modules mods, IRCInterface irc)
 	{
 		System.out.println("Calling method command" + command);
-		callFunc(plugin, "command" + command,con,mods,irc);
+		callFunc(plugin, "command" + command,ev,mods,irc);
+	}
+
+	/**
+	 * Attempts to call a method in the plugin, triggered by an event from IRC.
+	 * @param plugin
+	 * @param eventname Event method name to call.
+	 * @param con Context from IRC.
+	 * @param mods Group of modules.
+	 */
+	static public void doEvent(Object plugin, String eventname, anEvent ev, Modules mods, IRCInterface irc)
+	{
+		System.out.println("Calling method " + eventname);
+		callFunc(plugin, eventname, ev,mods,irc);
 	}
 
 	/**
@@ -179,9 +205,9 @@ public class BeanshellPluginUtils
 	 * @param mods
 	 * @param irc
 	 */
-	static public void doFilter(Object plugin, String filter, Context con, Modules mods, IRCInterface irc)
+	static public void doFilter(Object plugin, String filter, anEvent ev, Modules mods, IRCInterface irc)
 	{
-		callFunc(plugin, "filter" + filter,con,mods, irc);
+		callFunc(plugin, "filter" + filter,ev,mods, irc);
 	}
 
 	/**
@@ -190,6 +216,7 @@ public class BeanshellPluginUtils
 	 * @param APIName
 	 * @param params
 	 */
+
 	static public Object doAPI(Object plugin, String APIName, Object... params)
 	{
 		Class coreClass = plugin.getClass();
@@ -239,7 +266,7 @@ public class BeanshellPluginUtils
 			if( coreClass != null )
 			{
 				Method tempMethod = coreClass.getDeclaredMethod("interval",new Class[]
-						{ Object.class, Modules.class, IRCInterface.class });
+				{ Object.class, Modules.class, IRCInterface.class });
 
 				Object[] objectArray = new Object[3];
 
@@ -316,8 +343,8 @@ public class BeanshellPluginUtils
 
 				filterRegex = (String)filterRegexField.get( plugin );
 			}
-			catch( Exception e ) 
-			{ 
+			catch( Exception e )
+			{
 				System.out.println("No filter regex found for filter " + filterName + " in plugin " + coreClass.getName() );
 			}
 

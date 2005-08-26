@@ -4,7 +4,7 @@ import org.uwcs.choob.support.*;
 
 class Plugin
 {
-	public void commandLoadPlugin( Context con, Modules modules, IRCInterface irc )
+	public void commandLoadPlugin( Message con, Modules modules, IRCInterface irc )
 	{
 		List parms = modules.util.getParms( con );
 

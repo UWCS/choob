@@ -24,17 +24,15 @@ public class ChoobThread extends Thread
 	Object waitObject;
 	DbConnectionBroker dbBroker;
 	Connection dbConnection;
-        String trigger;
+	String trigger;
 	Modules modules;
 	int threadID;
 	Map pluginMap;
 	IRCInterface irc;
-        List filterList;
+	List filterList;
 
-	/**
-	 * Holds value of property context.
-	 */
-	private Context context;
+	private anEvent tevent;
+	private Message mes;
 
 	/**
 	 * Holds value of property busy.
@@ -49,14 +47,14 @@ public class ChoobThread extends Thread
 		this.dbBroker = dbBroker;
 
 		this.modules = modules;
-                
-                this.trigger = trigger;
+
+		this.trigger = trigger;
 
 		threadID = (int)(Math.random() * 1000);
 
 		this.pluginMap = pluginMap;
-                
-                this.filterList = filterList;
+
+		this.filterList = filterList;
 	}
 
 	public void run()
@@ -69,99 +67,122 @@ public class ChoobThread extends Thread
 			{
 				synchronized( waitObject )
 				{
+
 					busy = false;
 
 					waitObject.wait();
 
-					System.out.println("Thread("+threadID+") handed line " + context.getText());
-
 					busy = true;
 
-					Pattern pa;
-					Matcher ma;
-
-					// First, try and pick up aliased commands.
-					pa = Pattern.compile("^" + trigger + "([a-zA-Z0-9_-]+)(?!\\.)(.*)$");
-					ma = pa.matcher(context.getText());
-
-                                        
-                                        
-					if ( ma.matches() == true )
+					if (tevent.getClass() == Message.class)
 					{
-                                                dbConnection = dbBroker.getConnection();
-                                                
-						PreparedStatement aliasesSmt = dbConnection.prepareStatement("SELECT `Converted` FROM `Aliases` WHERE `Name` = ?;");
-						aliasesSmt.setString(1, ma.group(1).toLowerCase());
+						mes=(Message)tevent;
+						tevent=null;
 
-						ResultSet aliasesResults = aliasesSmt.executeQuery();
-						if ( aliasesResults.first() )
-							context.setText(trigger + aliasesResults.getString("Converted") + ma.group(2));
-                                                
-                                                dbBroker.freeConnection( dbConnection );
-					}
+						System.out.println("Thread("+threadID+") handled line " + mes.getText());
+						Pattern pa;
+						Matcher ma;
 
-					// Now, continue as if nothing has happened..
+						// First, try and pick up aliased commands.
+						pa = Pattern.compile("^" + trigger + "([a-zA-Z0-9_-]+)(?!\\.)(.*)$");
+						ma = pa.matcher(mes.getText());
 
-
-					// The .* in this pattern is required, java wants the entire string to match.
-					pa = Pattern.compile("^" + trigger + "([a-zA-Z0-9_-]+)\\.([a-zA-Z0-9_-]+).*");
-					ma = pa.matcher(context.getText());
-
-					if( ma.matches() == true )
-					{
-
-						// Namespace alias code would go here
-
-						String pluginName  = ma.group(1);
-						String commandName = ma.group(2);
-
-						System.out.println("Looking for plugin " + pluginName + " and command " + commandName);
-
-                                                
-                                                
-                                                if( pluginMap.get(pluginName) != null )
+						if ( ma.matches() == true )
 						{
-							System.out.println("Map for " + pluginName + " is not null, calling.");
-							Object tempPlugin = ((Object)pluginMap.get(pluginName));
-                                                        
-							BeanshellPluginUtils.doCommand(tempPlugin, commandName, context, modules, irc);
+							dbConnection = dbBroker.getConnection();
+
+							PreparedStatement aliasesSmt = dbConnection.prepareStatement("SELECT `Converted` FROM `Aliases` WHERE `Name` = ?;");
+							aliasesSmt.setString(1, ma.group(1).toLowerCase());
+
+							ResultSet aliasesResults = aliasesSmt.executeQuery();
+							if ( aliasesResults.first() )
+								mes.setText(trigger + aliasesResults.getString("Converted") + ma.group(2));
+
+							dbBroker.freeConnection( dbConnection );
 						}
-						else
-							System.out.println("Plugin not found.");
+
+						// Now, continue as if nothing has happened..
+
+
+						// The .* in this pattern is required, java wants the entire string to match.
+						pa = Pattern.compile("^" + trigger + "([a-zA-Z0-9_-]+)\\.([a-zA-Z0-9_-]+).*");
+						ma = pa.matcher(mes.getText());
+
+						if( ma.matches() == true )
+						{
+
+							// Namespace alias code would go here
+
+							String pluginName  = ma.group(1);
+							String commandName = ma.group(2);
+
+							System.out.println("Looking for plugin " + pluginName + " and command " + commandName);
+
+							if( pluginMap.get(pluginName) != null )
+							{
+								System.out.println("Map for " + pluginName + " is not null, calling.");
+								Object tempPlugin = ((Object)pluginMap.get(pluginName));
+
+								BeanshellPluginUtils.doCommand(tempPlugin, commandName, mes, modules, irc);
+							}
+							else
+								System.out.println("Plugin not found.");
+						}
+
+						List matchedFilters = new ArrayList();
+
+						synchronized( filterList )
+						{
+							Iterator tempIt = filterList.iterator();
+
+							while( tempIt.hasNext() )
+							{
+								Filter tempFilter = (Filter)tempIt.next();
+
+								Pattern filterPattern = Pattern.compile( tempFilter.getRegex() );
+
+								Matcher filterMatcher = filterPattern.matcher(mes.getText());
+
+								System.out.println("Testing line against " + tempFilter.getRegex());
+
+								if( filterMatcher.matches() )
+								{
+									matchedFilters.add( tempFilter );
+								}
+							}
+						}
+
+						Iterator tempIt = matchedFilters.iterator();
+
+						while( tempIt.hasNext() )
+						{
+							Filter tempFilter = (Filter)tempIt.next();
+
+							BeanshellPluginUtils.doFilter(pluginMap.get( tempFilter.getPlugin() ), tempFilter.getName(), mes, modules, irc);
+						}
 					}
-                                        
-                                        List matchedFilters = new ArrayList();
-                                        
-                                        synchronized( filterList )
-                                        {
-                                            Iterator tempIt = filterList.iterator();
-                                            
-                                            while( tempIt.hasNext() )
-                                            {
-                                                Filter tempFilter = (Filter)tempIt.next();
-                                                
-                                                Pattern filterPattern = Pattern.compile( tempFilter.getRegex() );
-                                                
-                                                Matcher filterMatcher = filterPattern.matcher(context.getText());
-                                                
-                                                System.out.println("Testing line against " + tempFilter.getRegex());
-                                                
-                                                if( filterMatcher.matches() )
-                                                {
-                                                    matchedFilters.add( tempFilter );
-                                                }
-                                            }
-                                        }
-                                        
-                                        Iterator tempIt = matchedFilters.iterator();
-                                        
-                                        while( tempIt.hasNext() )
-                                        {
-                                            Filter tempFilter = (Filter)tempIt.next();
-                                            
-                                            BeanshellPluginUtils.doFilter(pluginMap.get( tempFilter.getPlugin() ), tempFilter.getName(), context, modules, irc);
-                                        }
-					
+					else
+					{
+						// Oh, god, please.. no..
+
+						System.out.println("Thread("+threadID+") handled an event.");
+						Object plugins[] = pluginMap.values().toArray();
+						for (int i=0; i<plugins.length; i++)
+							try
+							{
+								BeanshellPluginUtils.doEvent(plugins[i], ((ChannelEvent)tevent).getMethodName(), (ChannelEvent)tevent, modules, irc);
+							}
+							catch (Exception e)
+							{
+								System.out.println("OH NOES");
+								e.printStackTrace();
+							}
+
+
+
+					}
+
+
 				}
 			}
 			catch( Exception e )
@@ -176,23 +197,15 @@ public class ChoobThread extends Thread
 		}
 	}
 
-	/**
-	 * Getter method for the thread's current Context object.
-	 * @return Value of property context.
-	 */
-	public Context getContext()
+	public anEvent getEvent()
 	{
-		return this.context;
+		return this.tevent;
 	}
 
-	/**
-	 * Setter method for the thread's current Context object.
-	 * @param context New value of property context.
-	 */
-	public void setContext(Context context)
+	public void setEvent(anEvent tevent)
 	{
-		System.out.println("Context set for thread("+threadID+")");
-		this.context = context;
+		System.out.println("Event set for thread("+threadID+")");
+		this.tevent = tevent;
 	}
 
 	/**

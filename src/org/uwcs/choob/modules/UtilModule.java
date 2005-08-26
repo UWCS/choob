@@ -24,18 +24,18 @@ public class UtilModule {
     public UtilModule( Choob bot ) {
     }
 
-    
-    public List getParms( Context con )
+
+    public List getParms( Message mes )
     {
         List tempList = new ArrayList();
-        
-        StringTokenizer tokens = new StringTokenizer(con.getText()," ");
-        
+
+        StringTokenizer tokens = new StringTokenizer(mes.getText()," ");
+
         while( tokens.hasMoreTokens() )
         {
             tempList.add( tokens.nextToken() );
         }
-        
+
         return tempList;
     }
 }

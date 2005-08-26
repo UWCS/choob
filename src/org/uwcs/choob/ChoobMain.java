@@ -34,6 +34,7 @@ public class ChoobMain
 
 			// Connect to the IRC server.
 			bot.connect("irc.uwcs.co.uk");
+//			bot.connect("localhost");
 
 			// Set mode +B (is a bot)
 			bot.sendRawLineViaQueue("MODE " + bot.getName() + " +B");

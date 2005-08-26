@@ -4,12 +4,12 @@ import org.uwcs.choob.support.*;
 
 class Faux
 {
-	public void commandWhoAmI( Context con, Modules mods, IRCInterface irc )
+	public void commandWhoAmI( Message con, Modules mods, IRCInterface irc )
 	{
 		irc.sendContextMessage(con, mods.nick.getPrimaryNick(con.getNick()));
 	}
 
-	public void commandSay( Context con, Modules mods, IRCInterface irc )
+	public void commandSay( Message con, Modules mods, IRCInterface irc )
 	{
 		int a=con.getText().indexOf(" ");
 		if ( a!=-1 )
@@ -18,7 +18,7 @@ class Faux
 			irc.sendContextMessage(con, "Dotwhore!");
 	}
 
-	public void commandReply( Context con, Modules mods, IRCInterface irc )
+	public void commandReply( Message con, Modules mods, IRCInterface irc )
 		{
 			int a=con.getText().indexOf(" ");
 			if ( a!=-1 )
@@ -27,7 +27,7 @@ class Faux
 				irc.sendContextMessage(con, con.getNick() + "!");
 	}
 
-	public void commandGame( Context con, Modules mods, IRCInterface irc )
+	public void commandGame( Message con, Modules mods, IRCInterface irc )
 	{
 		irc.sendContextMessage(con, "You just lost the game!");
 	}
