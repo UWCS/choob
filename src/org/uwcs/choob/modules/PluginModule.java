@@ -21,119 +21,141 @@ import java.sql.*;
  * @author sadiq
  */
 public class PluginModule {
-    Map pluginMap;
-    List filterList;
-    DbConnectionBroker broker;
-    Modules mods;
-    
-    /**
-     * Creates a new instance of the PluginModule.
-     * @param pluginMap Map containing currently loaded plugins.
-     */
-    public PluginModule(Map pluginMap, DbConnectionBroker broker, List filterList, Modules mods) {
-        this.pluginMap = pluginMap;
-        this.broker = broker;
-        this.filterList = filterList;
-        this.mods = mods;
-    }
+	Map pluginMap;
+	List filterList;
+	DbConnectionBroker broker;
+	Modules mods;
 
-    /**
-     * Adds a plugin to the loaded plugin map but first unloads any plugin already there.
-     *
-     * This method also calls the create() method on any new plugin.
-     * @param URL URL to the source of the plugin.
-     * @param pluginName Name for the class of the new plugin.
-     * @throws Exception Thrown if there's a syntactical error in the plugin's source.
-     */
-    public void addPlugin(String URL,String pluginName ) throws Exception {
-        if( System.getSecurityManager() != null ) System.getSecurityManager().checkPermission(new ChoobPermission("canAddPlugins"));
+	/**
+	 * Creates a new instance of the PluginModule.
+	 * @param pluginMap Map containing currently loaded plugins.
+	 */
+	public PluginModule(Map pluginMap, DbConnectionBroker broker, List filterList, Modules mods) {
+		this.pluginMap = pluginMap;
+		this.broker = broker;
+		this.filterList = filterList;
+		this.mods = mods;
+	}
 
-        Object plugin = pluginMap.get(pluginName);
+	/**
+	 * Adds a plugin to the loaded plugin map but first unloads any plugin already there.
+	 *
+	 * This method also calls the create() method on any new plugin.
+	 * @param URL URL to the source of the plugin.
+	 * @param pluginName Name for the class of the new plugin.
+	 * @throws Exception Thrown if there's a syntactical error in the plugin's source.
+	 */
+	public void addPlugin(String URL,String pluginName ) throws Exception {
+		if( System.getSecurityManager() != null ) System.getSecurityManager().checkPermission(new ChoobPermission("canAddPlugins"));
 
-        if( plugin != null ) {
-            BeanshellPluginUtils.callPluginDestroy(plugin, mods);
-        }
+		Object plugin = pluginMap.get(pluginName);
 
-        String srcContent = "";
+		if( plugin != null ) {
+			BeanshellPluginUtils.callPluginDestroy(plugin, mods);
+		}
 
-        URL srcURL = new URL(URL);
+		String srcContent = "";
 
-        HttpURLConnection srcURLCon = (HttpURLConnection)srcURL.openConnection();
+		URL srcURL = new URL(URL);
 
-        srcURLCon.connect();
+		URLConnection srcURLCon = (URLConnection)srcURL.openConnection();
 
-        BufferedReader srcReader = new BufferedReader(new InputStreamReader( srcURLCon.getInputStream() ));
+		srcURLCon.connect();
 
-        while( srcReader.ready() ) {
-            srcContent = srcContent + srcReader.readLine() + "\n";
-        }
+		BufferedReader srcReader = new BufferedReader(new InputStreamReader( srcURLCon.getInputStream() ));
 
-        if ( srcContent.length() == 0)
-        	throw new Exception("No data read from " + URL + ".");
+		while( srcReader.ready() ) {
+			srcContent = srcContent + srcReader.readLine() + "\n";
+		}
 
-        plugin = BeanshellPluginUtils.createBeanshellPlugin(srcContent, pluginName);
+		if ( srcContent.length() == 0)
+			throw new Exception("No data read from " + URL + ".");
 
-        BeanshellPluginUtils.callPluginCreate(plugin, mods);
+		plugin = BeanshellPluginUtils.createBeanshellPlugin(srcContent, pluginName);
 
-        addPluginToDb(srcContent, pluginName);
+		BeanshellPluginUtils.callPluginCreate(plugin, mods);
 
-        pluginMap.put(pluginName,plugin);
-        
-        reloadFilters();
-    }
-    
-    private void reloadFilters()
-    {
-        List newFilters = Collections.synchronizedList(new ArrayList());
-        Set pluginSet = pluginMap.keySet();
-        
-        Iterator tempIt = pluginSet.iterator();
-        
-        while( tempIt.hasNext() )
-        {
-            newFilters.addAll(BeanshellPluginUtils.getFilters( pluginMap.get( tempIt.next() ) ));
-        }
-        
-        synchronized( filterList )
-        {
-            filterList.clear();
-            filterList.addAll( newFilters );
-        }
-        
-        System.out.println("Filters list now contains: " + filterList.size() + " filters");
-    }
+		addPluginToDb(srcContent, pluginName);
 
-    public void loadDbPlugins( Modules modules ) throws Exception
-    {
-        if( System.getSecurityManager() != null ) System.getSecurityManager().checkPermission(new ChoobPermission("canLoadSavedPlugins"));
+		pluginMap.put(pluginName,plugin);
 
-        Connection dbCon = broker.getConnection();
+		reloadFilters();
+	}
 
-        PreparedStatement getSavedPlugins = dbCon.prepareStatement("SELECT * FROM LoadedPlugins");
+	public Object callAPI(String APIString, Object... params)
+	{
+		// TODO - Permissions here? Or should they be in the plugin API call?
+		String APIName, pluginName;
 
-        ResultSet savedPlugins = getSavedPlugins.executeQuery();
+		int dotIndex = APIString.indexOf(".");
+		if (dotIndex > -1) {
+			// plugin.hook
+			pluginName = APIString.substring(0, dotIndex);
+			APIName = APIString.substring(dotIndex + 1);
+		} else {
+			// expecting an alias
+			// TODO
+			throw new RuntimeException("Ooops, unimplemented API alias called");
+		}
+		Object plugin = pluginMap.get(pluginName);
+		if (plugin == null)
+			throw new RuntimeException("No plugin named " + pluginName + "exists.");
 
-        savedPlugins.first();
+		return BeanshellPluginUtils.doAPI(plugin, APIName, params);
+	}
 
-        do
-        {
-            addPlugin( savedPlugins.getString("Source"), savedPlugins.getString("PluginName") );
-        }
-        while( savedPlugins.next() );
-    }
+	private void reloadFilters()
+	{
+		List newFilters = Collections.synchronizedList(new ArrayList());
+		Set pluginSet = pluginMap.keySet();
 
-    private void addPluginToDb(String source, String pluginName) throws SQLException
-    {
-        Connection dbCon = broker.getConnection();
+		Iterator tempIt = pluginSet.iterator();
 
-        PreparedStatement pluginReplace = dbCon.prepareStatement("REPLACE INTO LoadedPlugins VALUES(?,?)");
+		while( tempIt.hasNext() )
+		{
+			newFilters.addAll(BeanshellPluginUtils.getFilters( pluginMap.get( tempIt.next() ) ));
+		}
 
-        pluginReplace.setString(1,pluginName);
-        pluginReplace.setString(2,source);
+		synchronized( filterList )
+		{
+			filterList.clear();
+			filterList.addAll( newFilters );
+		}
 
-        pluginReplace.executeUpdate();
+		System.out.println("Filters list now contains: " + filterList.size() + " filters");
+	}
 
-        broker.freeConnection( dbCon );
-    }
+	public void loadDbPlugins( Modules modules ) throws Exception
+	{
+		if( System.getSecurityManager() != null ) System.getSecurityManager().checkPermission(new ChoobPermission("canLoadSavedPlugins"));
+
+		Connection dbCon = broker.getConnection();
+
+		PreparedStatement getSavedPlugins = dbCon.prepareStatement("SELECT * FROM LoadedPlugins");
+
+		ResultSet savedPlugins = getSavedPlugins.executeQuery();
+
+		savedPlugins.first();
+
+		do
+		{
+			addPlugin( savedPlugins.getString("Source"), savedPlugins.getString("PluginName") );
+		}
+		while( savedPlugins.next() );
+	}
+
+	private void addPluginToDb(String source, String pluginName) throws SQLException
+	{
+		Connection dbCon = broker.getConnection();
+
+		PreparedStatement pluginReplace = dbCon.prepareStatement("REPLACE INTO LoadedPlugins VALUES(?,?)");
+
+		pluginReplace.setString(1,pluginName);
+		pluginReplace.setString(2,source);
+
+		pluginReplace.executeUpdate();
+
+		broker.freeConnection( dbCon );
+	}
 }
 
