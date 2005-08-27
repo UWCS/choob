@@ -11,12 +11,12 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 	/**
 	 * set
 	 */
-	private boolean set;
+	private final boolean set;
 
 	/**
 	 * target
 	 */
-	private String target;
+	private final String target;
 
 
 	/**
@@ -39,6 +39,14 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 		this.set = old.set;
 		this.target = old.target;
 
+	}
+
+	/**
+	 * Synthesize a new ChannelUserMode from this one.
+	 * @returns The new ChannelUserMode object.
+	 */
+	public IRCEvent cloneEvent() {
+		return new ChannelUserMode(this);
 	}
 
 	/**

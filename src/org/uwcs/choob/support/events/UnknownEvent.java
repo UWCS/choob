@@ -27,6 +27,14 @@ public class UnknownEvent extends IRCEvent
 
 	}
 
+	/**
+	 * Synthesize a new UnknownEvent from this one.
+	 * @returns The new UnknownEvent object.
+	 */
+	public IRCEvent cloneEvent() {
+		return new UnknownEvent(this);
+	}
+
 
 
 }

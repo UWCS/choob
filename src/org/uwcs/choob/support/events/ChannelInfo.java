@@ -11,7 +11,7 @@ public class ChannelInfo extends IRCEvent implements ChannelEvent
 	/**
 	 * channel
 	 */
-	private String channel;
+	private final String channel;
 
 
 	/**
@@ -32,6 +32,14 @@ public class ChannelInfo extends IRCEvent implements ChannelEvent
 		super(old);
 		this.channel = old.channel;
 
+	}
+
+	/**
+	 * Synthesize a new ChannelInfo from this one.
+	 * @returns The new ChannelInfo object.
+	 */
+	public IRCEvent cloneEvent() {
+		return new ChannelInfo(this);
 	}
 
 	/**

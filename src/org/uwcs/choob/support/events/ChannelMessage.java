@@ -11,7 +11,7 @@ public class ChannelMessage extends Message implements ChannelEvent
 	/**
 	 * channel
 	 */
-	private String channel;
+	private final String channel;
 
 
 	/**
@@ -27,11 +27,19 @@ public class ChannelMessage extends Message implements ChannelEvent
 	/**
 	 * Synthesize a new ChannelMessage from an old one.
 	 */
-	public ChannelMessage(ChannelMessage old)
+	public ChannelMessage(ChannelMessage old, String message)
 	{
-		super(old);
+		super(old, message);
 		this.channel = old.channel;
 
+	}
+
+	/**
+	 * Synthesize a new ChannelMessage from this one.
+	 * @returns The new ChannelMessage object.
+	 */
+	public IRCEvent cloneEvent(String message) {
+		return new ChannelMessage(this, message);
 	}
 
 	/**

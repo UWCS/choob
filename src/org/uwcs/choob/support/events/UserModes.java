@@ -11,7 +11,7 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 	/**
 	 * modes
 	 */
-	private String modes;
+	private final String modes;
 
 
 	/**
@@ -32,6 +32,14 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 		super(old);
 		this.modes = old.modes;
 
+	}
+
+	/**
+	 * Synthesize a new UserModes from this one.
+	 * @returns The new UserModes object.
+	 */
+	public IRCEvent cloneEvent() {
+		return new UserModes(this);
 	}
 
 	/**

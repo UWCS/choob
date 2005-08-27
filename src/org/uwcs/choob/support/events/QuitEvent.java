@@ -11,22 +11,22 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 	/**
 	 * message
 	 */
-	private String message;
+	private final String message;
 
 	/**
 	 * nick
 	 */
-	private String nick;
+	private final String nick;
 
 	/**
 	 * login
 	 */
-	private String login;
+	private final String login;
 
 	/**
 	 * hostname
 	 */
-	private String hostname;
+	private final String hostname;
 
 
 	/**
@@ -45,14 +45,22 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 	/**
 	 * Synthesize a new QuitEvent from an old one.
 	 */
-	public QuitEvent(QuitEvent old)
+	public QuitEvent(QuitEvent old, String message)
 	{
 		super(old);
-		this.message = old.message;
+		this.message = message;
 		this.nick = old.nick;
 		this.login = old.login;
 		this.hostname = old.hostname;
 
+	}
+
+	/**
+	 * Synthesize a new QuitEvent from this one.
+	 * @returns The new QuitEvent object.
+	 */
+	public IRCEvent cloneEvent(String message) {
+		return new QuitEvent(this, message);
 	}
 
 	/**

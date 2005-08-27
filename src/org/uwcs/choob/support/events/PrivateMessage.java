@@ -21,10 +21,18 @@ public class PrivateMessage extends Message implements PrivateEvent
 	/**
 	 * Synthesize a new PrivateMessage from an old one.
 	 */
-	public PrivateMessage(PrivateMessage old)
+	public PrivateMessage(PrivateMessage old, String message)
 	{
-		super(old);
+		super(old, message);
 
+	}
+
+	/**
+	 * Synthesize a new PrivateMessage from this one.
+	 * @returns The new PrivateMessage object.
+	 */
+	public IRCEvent cloneEvent(String message) {
+		return new PrivateMessage(this, message);
 	}
 
 

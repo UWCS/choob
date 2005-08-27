@@ -11,12 +11,12 @@ public class ChannelTopic extends IRCEvent implements ChannelEvent, ContextEvent
 	/**
 	 * channel
 	 */
-	private String channel;
+	private final String channel;
 
 	/**
 	 * message
 	 */
-	private String message;
+	private final String message;
 
 
 	/**
@@ -33,12 +33,20 @@ public class ChannelTopic extends IRCEvent implements ChannelEvent, ContextEvent
 	/**
 	 * Synthesize a new ChannelTopic from an old one.
 	 */
-	public ChannelTopic(ChannelTopic old)
+	public ChannelTopic(ChannelTopic old, String message)
 	{
 		super(old);
 		this.channel = old.channel;
-		this.message = old.message;
+		this.message = message;
 
+	}
+
+	/**
+	 * Synthesize a new ChannelTopic from this one.
+	 * @returns The new ChannelTopic object.
+	 */
+	public IRCEvent cloneEvent(String message) {
+		return new ChannelTopic(this, message);
 	}
 
 	/**

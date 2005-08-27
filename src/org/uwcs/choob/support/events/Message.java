@@ -11,27 +11,27 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 	/**
 	 * message
 	 */
-	private String message;
+	private final String message;
 
 	/**
 	 * nick
 	 */
-	private String nick;
+	private final String nick;
 
 	/**
 	 * login
 	 */
-	private String login;
+	private final String login;
 
 	/**
 	 * hostname
 	 */
-	private String hostname;
+	private final String hostname;
 
 	/**
 	 * target
 	 */
-	private String target;
+	private final String target;
 
 
 	/**
@@ -51,15 +51,23 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 	/**
 	 * Synthesize a new Message from an old one.
 	 */
-	public Message(Message old)
+	public Message(Message old, String message)
 	{
 		super(old);
-		this.message = old.message;
+		this.message = message;
 		this.nick = old.nick;
 		this.login = old.login;
 		this.hostname = old.hostname;
 		this.target = old.target;
 
+	}
+
+	/**
+	 * Synthesize a new Message from this one.
+	 * @returns The new Message object.
+	 */
+	public IRCEvent cloneEvent(String message) {
+		return new Message(this, message);
 	}
 
 	/**

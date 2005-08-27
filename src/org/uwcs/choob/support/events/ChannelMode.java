@@ -11,17 +11,17 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 	/**
 	 * channel
 	 */
-	private String channel;
+	private final String channel;
 
 	/**
 	 * mode
 	 */
-	private String mode;
+	private final String mode;
 
 	/**
 	 * set
 	 */
-	private boolean set;
+	private final boolean set;
 
 
 	/**
@@ -46,6 +46,14 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 		this.mode = old.mode;
 		this.set = old.set;
 
+	}
+
+	/**
+	 * Synthesize a new ChannelMode from this one.
+	 * @returns The new ChannelMode object.
+	 */
+	public IRCEvent cloneEvent() {
+		return new ChannelMode(this);
 	}
 
 	/**

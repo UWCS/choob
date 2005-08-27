@@ -11,22 +11,22 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	/**
 	 * nick
 	 */
-	private String nick;
+	private final String nick;
 
 	/**
 	 * login
 	 */
-	private String login;
+	private final String login;
 
 	/**
 	 * hostname
 	 */
-	private String hostname;
+	private final String hostname;
 
 	/**
 	 * newNick
 	 */
-	private String newNick;
+	private final String newNick;
 
 
 	/**
@@ -53,6 +53,14 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 		this.hostname = old.hostname;
 		this.newNick = old.newNick;
 
+	}
+
+	/**
+	 * Synthesize a new NickChange from this one.
+	 * @returns The new NickChange object.
+	 */
+	public IRCEvent cloneEvent() {
+		return new NickChange(this);
 	}
 
 	/**

@@ -11,27 +11,27 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	/**
 	 * channel
 	 */
-	private String channel;
+	private final String channel;
 
 	/**
 	 * nick
 	 */
-	private String nick;
+	private final String nick;
 
 	/**
 	 * login
 	 */
-	private String login;
+	private final String login;
 
 	/**
 	 * hostname
 	 */
-	private String hostname;
+	private final String hostname;
 
 	/**
 	 * target
 	 */
-	private String target;
+	private final String target;
 
 
 	/**
@@ -60,6 +60,14 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 		this.hostname = old.hostname;
 		this.target = old.target;
 
+	}
+
+	/**
+	 * Synthesize a new ChannelInvite from this one.
+	 * @returns The new ChannelInvite object.
+	 */
+	public IRCEvent cloneEvent() {
+		return new ChannelInvite(this);
 	}
 
 	/**

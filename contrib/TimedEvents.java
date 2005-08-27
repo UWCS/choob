@@ -26,11 +26,9 @@ class TimedEvents
 	public void commandIn( Message mes, Modules mods, IRCInterface irc )
 	{
 		// Stop recursion
-		if (mes instanceof SyntheticMessage) {
-			if (((SyntheticMessage)mes).getSynthLevel() > 1) {
-				irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
-				return;
-			}
+		if (mes.getSynthLevel() > 1) {
+			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
+			return;
 		}
 
 		List params = mods.util.getParms( mes, 2 );
@@ -52,8 +50,7 @@ class TimedEvents
 			return;
 		}
 
-		SyntheticMessage newMes = new SyntheticMessage(mes);
-		newMes.setText( "~" + command ); // XXX hack
+		IRCEvent newMes = mes.cloneEvent( "~" + command ); // XXX hack
 
 		Date callbackTime = new Date( (new Date().getTime()) + period * 1000);
 
@@ -97,7 +94,7 @@ class TimedEvents
 	{
 		if (parameter != null && parameter instanceof Message) {
 			// It's a message to be redelivered
-			mods.synthetic.doSyntheticMessage((SyntheticMessage) parameter);
+			mods.synthetic.doSyntheticMessage(parameter);
 		}
 	}
 }

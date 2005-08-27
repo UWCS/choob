@@ -64,6 +64,11 @@ our %params = (
 	ParamEvent => [qw/param/],
 );
 
+# Stuff that can be overridden in created of a synthetic event
+our %overrides = (
+	MessageEvent => [qw/message/],
+);
+
 while ($_ = <DATA>) {
 	if (/^(\w+)\(([\w, ]+)\)(?:\[([\w, "=(]+)\])? (\w+), (.*)/) {
 		my ($name, $params, $extraparams, $class, $desc) = ($1, $2, $3||"", $4, $5);
@@ -145,7 +150,11 @@ foreach my $class (keys %inheritance) {
 	my $implements = "";
 	my $super1 = "\t\tsuper();";
 	my $super2 = "\t\tsuper(old);";
+	my $overrideProto = "$class old";
+	my (@myOverrides, @underOverrides, @allOverrides);
 	my @superOrder;
+	my $cloneProto = "";
+	my $cloneCall = "this";
 	my $extra = "";
 	if ($inheritance{$class}) {
 		my @i = @{$inheritance{$class}};
@@ -179,6 +188,19 @@ END
 				}
 			}
 		}
+
+		# Now for synthetic overrides
+		@allOverrides = map { my @a=(); if ($overrides{$_}) { @a = @{$overrides{$_}} } (@a) } @inherit;
+		@myOverrides = map { my @a=(); if ($overrides{$_}) { @a = @{$overrides{$_}} } (@a) } @i[1..$#i];
+		@underOverrides = map { my @a=(); if ($overrides{$_}) { @a = @{$overrides{$_}} } (@a) } @sInherit;
+		if (@underOverrides) {
+			$super2 = "\t\tsuper(old, ".join(', ', @underOverrides).");";
+		}
+		if (@allOverrides) {
+			$overrideProto = "$class old, ".join(', ', map { "$paramType{$_} $_" } @allOverrides);
+			$cloneProto = join(', ', map { "$paramType{$_} $_" } @allOverrides);
+			$cloneCall = 'this, '.join(', ', @allOverrides);
+		}
 	}
 
 	if ($class eq "IRCEvent") {
@@ -197,24 +219,31 @@ END
 	my $memberInit1 = "";
 	my $memberInit2 = "";
 	my $getters = "";
-	foreach (grep { my$a=$_;!scalar(grep {$a eq $_} @superOrder) } @constOrder) {
+	foreach my $field (grep { my$a=$_;!scalar(grep {$a eq $_} @superOrder) } @constOrder) {
 		$members .= <<END;
 	/**
-	 * $_
+	 * $field
 	 */
-	private $paramType{$_} $_;
+	private final $paramType{$field} $field;
 
 END
-		$memberInit1 .= "\t\tthis.$_ = $_;\n";
-		$memberInit2 .= "\t\tthis.$_ = old.$_;\n";
-		my $get = ($paramType{$_} eq 'boolean') ? 'is' : 'get';
+		$memberInit1 .= "\t\tthis.$field = $field;\n";
+
+		# Is it overridden?
+		if (grep { $field eq $_ } @myOverrides) {
+			$memberInit2 .= "\t\tthis.$field = $field;\n";
+		} else {
+			$memberInit2 .= "\t\tthis.$field = old.$field;\n";
+		}
+
+		my $get = ($paramType{$field} eq 'boolean') ? 'is' : 'get';
 		$getters .= <<END;
 	/**
-	 * Get the value of $_
-	 * \@returns The value of $_
+	 * Get the value of $field
+	 * \@returns The value of $field
 	 */
-	public $paramType{$_} $get\u$_() {
-		return $_;
+	public $paramType{$field} $get\u$field() {
+		return $field;
 	}
 
 END
@@ -259,10 +288,18 @@ $memberInit1
 	/**
 	 * Synthesize a new $class from an old one.
 	 */
-	public $class($class old)
+	public $class($overrideProto)
 	{
 $super2
 $memberInit2
+	}
+
+	/**
+	 * Synthesize a new $class from this one.
+	 * \@returns The new $class object.
+	 */
+	public IRCEvent cloneEvent($cloneProto) {
+		return new $class($cloneCall);
 	}
 
 $getters

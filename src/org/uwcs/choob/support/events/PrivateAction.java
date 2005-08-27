@@ -21,10 +21,18 @@ public class PrivateAction extends Message implements PrivateEvent
 	/**
 	 * Synthesize a new PrivateAction from an old one.
 	 */
-	public PrivateAction(PrivateAction old)
+	public PrivateAction(PrivateAction old, String message)
 	{
-		super(old);
+		super(old, message);
 
+	}
+
+	/**
+	 * Synthesize a new PrivateAction from this one.
+	 * @returns The new PrivateAction object.
+	 */
+	public IRCEvent cloneEvent(String message) {
+		return new PrivateAction(this, message);
 	}
 
 

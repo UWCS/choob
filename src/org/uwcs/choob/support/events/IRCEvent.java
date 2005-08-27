@@ -11,22 +11,22 @@ public class IRCEvent
 	/**
 	 * methodName
 	 */
-	private String methodName;
+	private final String methodName;
 
 	/**
 	 * synthLevel
 	 */
-	private int synthLevel;
+	private final int synthLevel;
 
 	/**
 	 * millis
 	 */
-	private long millis;
+	private final long millis;
 
 	/**
 	 * random
 	 */
-	private int random;
+	private final int random;
 
 
 	/**
@@ -53,6 +53,14 @@ public class IRCEvent
 		this.millis = System.currentTimeMillis();
 		this.random = ((int)(Math.random()*127));
 
+	}
+
+	/**
+	 * Synthesize a new IRCEvent from this one.
+	 * @returns The new IRCEvent object.
+	 */
+	public IRCEvent cloneEvent() {
+		return new IRCEvent(this);
 	}
 
 	/**

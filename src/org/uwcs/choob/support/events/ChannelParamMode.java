@@ -11,12 +11,12 @@ public class ChannelParamMode extends ChannelMode implements ParamEvent
 	/**
 	 * set
 	 */
-	private boolean set;
+	private final boolean set;
 
 	/**
 	 * param
 	 */
-	private String param;
+	private final String param;
 
 
 	/**
@@ -39,6 +39,14 @@ public class ChannelParamMode extends ChannelMode implements ParamEvent
 		this.set = old.set;
 		this.param = old.param;
 
+	}
+
+	/**
+	 * Synthesize a new ChannelParamMode from this one.
+	 * @returns The new ChannelParamMode object.
+	 */
+	public IRCEvent cloneEvent() {
+		return new ChannelParamMode(this);
 	}
 
 	/**

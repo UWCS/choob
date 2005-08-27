@@ -11,22 +11,22 @@ public class ChannelPart extends IRCEvent implements ChannelEvent, ContextEvent,
 	/**
 	 * channel
 	 */
-	private String channel;
+	private final String channel;
 
 	/**
 	 * nick
 	 */
-	private String nick;
+	private final String nick;
 
 	/**
 	 * login
 	 */
-	private String login;
+	private final String login;
 
 	/**
 	 * hostname
 	 */
-	private String hostname;
+	private final String hostname;
 
 
 	/**
@@ -53,6 +53,14 @@ public class ChannelPart extends IRCEvent implements ChannelEvent, ContextEvent,
 		this.login = old.login;
 		this.hostname = old.hostname;
 
+	}
+
+	/**
+	 * Synthesize a new ChannelPart from this one.
+	 * @returns The new ChannelPart object.
+	 */
+	public IRCEvent cloneEvent() {
+		return new ChannelPart(this);
 	}
 
 	/**

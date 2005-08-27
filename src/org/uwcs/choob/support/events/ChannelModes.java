@@ -11,12 +11,12 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 	/**
 	 * channel
 	 */
-	private String channel;
+	private final String channel;
 
 	/**
 	 * modes
 	 */
-	private String modes;
+	private final String modes;
 
 
 	/**
@@ -39,6 +39,14 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 		this.channel = old.channel;
 		this.modes = old.modes;
 
+	}
+
+	/**
+	 * Synthesize a new ChannelModes from this one.
+	 * @returns The new ChannelModes object.
+	 */
+	public IRCEvent cloneEvent() {
+		return new ChannelModes(this);
 	}
 
 	/**
