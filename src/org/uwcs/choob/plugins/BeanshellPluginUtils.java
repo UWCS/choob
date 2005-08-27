@@ -67,6 +67,62 @@ public class BeanshellPluginUtils
 	}
 
 	/**
+	 * Go through the horror of method reolution.
+	 *
+	 * @param plugin The plugin to use.
+	 * @param methodName The name of the method to resolve.
+	 * @param args The arguments to resolve the method onto.
+	 */
+	static private Object javaHorrorMethodCall(Object plugin, String methodName, Object[] args)
+		throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
+	{
+		Method[] methods = plugin.getClass().getDeclaredMethods();
+		ArrayList filtered = new ArrayList();
+		for(int i=0; i<methods.length; i++)
+		{
+			System.out.println(methods[i].getName());
+			if (methods[i].getName().equals(methodName))
+				filtered.add(methods[i]);
+		}
+
+		if (filtered.size() == 0)
+			throw new NoSuchMethodException("No method named " + methodName + " in plugin " + plugin.getClass().getName());
+
+		// Do any of them have the right signature?
+		ArrayList secondPass = new ArrayList();
+		for(int i=0; i<filtered.size(); i++)
+		{
+			Method method = (Method)filtered.get(i);
+			Class[] types = method.getParameterTypes();
+			int paramlength = types.length;
+			if (paramlength != args.length)
+				continue;
+
+			boolean okness = true;
+			for(int j=0; j<paramlength; j++)
+			{
+				if (!types[i].isInstance(args[i]))
+				{
+					okness = false;
+					break;
+				}
+			}
+			secondPass.add(method);
+		}
+
+		// Right, have a bunch of applicable methods.
+		// TODO: Technically should pick most specific.
+
+		if (secondPass.size() == 0)
+			throw new NoSuchMethodException("No method named " + methodName + " matches signature in plugin " + plugin.getClass().getName());
+
+		Method method = (Method)secondPass.get(0);
+
+		// OK, have all methods of the correct name...
+		return method.invoke(plugin, args);
+	}
+
+	/**
 	 * Calls a given command*, filter*, interval* method in the plugin.
 	 * @param plugin Plugin to call.
 	 * @param func Function to call.
@@ -84,32 +140,18 @@ public class BeanshellPluginUtils
 			{
 				try
 				{
-					// XXX
-					Class evType;
-					if (ev instanceof Message) {
-						evType = Message.class;
-					} else {
-						evType = ev.getClass();
-					}
-
-					System.out.println("The method \"" + func + "\" (" + evType.toString() + ", " + Modules.class.toString() + ", " + IRCInterface.class.toString() + ") in the plugin " + plugin.toString() + "..");
-					Method tempMethod = coreClass.getDeclaredMethod(func, new Class[] { evType, Modules.class, IRCInterface.class });
-
-					Object[] objectArray = new Object[3];
-
-					objectArray[0] = ev;
-					objectArray[1] = mods;
-					objectArray[2] = irc;
-
-					tempMethod.invoke(plugin,objectArray);
-					System.out.println("Got called!");
-
+					javaHorrorMethodCall(plugin, func, new Object[] { ev, mods, irc });
 				}
 				catch (NoSuchMethodException e)
 				{
 					System.out.println("Oh noes, method not found!");
 					//omgwtfhaxCallCache.put(identifier, null);
 					//System.out.println(identifier + " will be ignored from now on.");
+				}
+				catch (InvocationTargetException e)
+				{
+					// The horror!
+					System.out.println("Exception in calling plugin function: " + e);
 				}
 			}
 		}
@@ -225,23 +267,11 @@ public class BeanshellPluginUtils
 	 * @param APIName
 	 * @param params
 	 */
-
 	static public Object doAPI(Object plugin, String APIName, Object... params)
 	{
-		Class coreClass = plugin.getClass();
 		try
 		{
-			if( coreClass != null )
-			{
-				// What class is everything?
-				Class[] classes = new Class[params.length];
-				for(int i=0; i<params.length; i++)
-					classes[i] = params[i].getClass();
-
-				Method tempMethod = coreClass.getDeclaredMethod("api"+APIName,classes);
-
-				return tempMethod.invoke(plugin, params);
-			}
+			javaHorrorMethodCall(plugin, "api"+APIName, params);
 		}
 		catch( Exception e )
 		{
