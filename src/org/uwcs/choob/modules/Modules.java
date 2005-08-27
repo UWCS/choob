@@ -18,36 +18,38 @@ import java.util.*;
 public class Modules
 {
 
-    /**
-     * Holds value of property pluginModule.
-     */
-    public DbConnectionBroker dbBroker;
-    public PluginModule plugin;
-    public LoggerModule logger;
-    public UtilModule util;
-    public NickModule nick;
-    public IntervalModule interval;
-    Map pluginMap;
-    List intervalList;
-    List filterList;
-    private Choob bot;
+	/**
+	 * Holds value of property pluginModule.
+	 */
+	public DbConnectionBroker dbBroker;
+	public PluginModule plugin;
+	public LoggerModule logger;
+	public UtilModule util;
+	public NickModule nick;
+	public IntervalModule interval;
+	public SyntheticModule synthetic;
+	Map pluginMap;
+	List intervalList;
+	List filterList;
+	private Choob bot;
 
-    /**
-     * Creates a new instance of ModuleGroup
-     * @param dbBroker
-     * @param pluginMap
-     */
-    public Modules( DbConnectionBroker dbBroker, Map pluginMap, List filterList, List intervalList, Choob bot )
-    {
-        plugin = new PluginModule(pluginMap, dbBroker, filterList, this);
-        logger = new LoggerModule(dbBroker);
-        util = new UtilModule( bot );
-        nick = new NickModule(dbBroker);
-        interval = new IntervalModule( intervalList );
-        this.dbBroker = dbBroker;
-        this.pluginMap = pluginMap;
-        this.intervalList = intervalList;
-        this.filterList = filterList;
-        this.bot = bot;
-    }
+	/**
+	 * Creates a new instance of ModuleGroup
+	 * @param dbBroker
+	 * @param pluginMap
+	 */
+	public Modules( DbConnectionBroker dbBroker, Map pluginMap, List filterList, List intervalList, Choob bot )
+	{
+		plugin = new PluginModule(pluginMap, dbBroker, filterList, this);
+		logger = new LoggerModule(dbBroker);
+		util = new UtilModule( bot );
+		nick = new NickModule(dbBroker);
+		interval = new IntervalModule( intervalList );
+		synthetic = new SyntheticModule( bot );
+		this.dbBroker = dbBroker;
+		this.pluginMap = pluginMap;
+		this.intervalList = intervalList;
+		this.filterList = filterList;
+		this.bot = bot;
+	}
 }

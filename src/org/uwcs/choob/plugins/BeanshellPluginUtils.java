@@ -83,8 +83,16 @@ public class BeanshellPluginUtils
 			{
 				try
 				{
-					System.out.println("The method \"" + func + "\" (" + ev.getClass().toString() + ", " + Modules.class.toString() + ", " + IRCInterface.class.toString() + ") in the plugin " + plugin.toString() + "..");
-					Method tempMethod = coreClass.getDeclaredMethod(func, new Class[] { ev.getClass(), Modules.class, IRCInterface.class });
+					// XXX
+					Class evType;
+					if (ev instanceof Message) {
+						evType = Message.class;
+					} else {
+						evType = ev.getClass();
+					}
+
+					System.out.println("The method \"" + func + "\" (" + evType.toString() + ", " + Modules.class.toString() + ", " + IRCInterface.class.toString() + ") in the plugin " + plugin.toString() + "..");
+					Method tempMethod = coreClass.getDeclaredMethod(func, new Class[] { evType, Modules.class, IRCInterface.class });
 
 					Object[] objectArray = new Object[3];
 

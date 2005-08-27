@@ -74,7 +74,7 @@ public class ChoobThread extends Thread
 
 					busy = true;
 
-					if (tevent.getClass() == Message.class)
+					if (tevent instanceof Message)
 					{
 						mes=(Message)tevent;
 						tevent=null;

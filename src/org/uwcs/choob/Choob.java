@@ -173,6 +173,14 @@ public class Choob extends PircBot
 	}
 
 	/**
+	 * Allows recursing of events, for example in aliases
+	 * @param mes
+	 */
+	public void onSyntheticMessage(SyntheticMessage mes) {
+		spinThread( mes );
+	}
+
+	/**
 	 * Over-ridden method from the Pircbot class receives nick-change events from IRC.
 	 * @param oldNick
 	 * @param login
