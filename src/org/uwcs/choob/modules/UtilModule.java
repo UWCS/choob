@@ -20,22 +20,30 @@ import java.util.regex.*;
  */
 public class UtilModule {
 
-    /** Creates a new instance of UtilModule */
-    public UtilModule( Choob bot ) {
-    }
+	/** Creates a new instance of UtilModule */
+	public UtilModule( Choob bot ) {
+	}
 
+	public String getParamString( Message mes )
+	{
+		int spacePos = mes.getText().indexOf(' ');
+		if (spacePos != -1)
+			return mes.getText().substring(spacePos + 1);
 
-    public List getParms( Message mes )
-    {
-        List tempList = new ArrayList();
+		return "";
+	}
 
-        StringTokenizer tokens = new StringTokenizer(mes.getText()," ");
+	public List getParms( Message mes )
+	{
+		List tempList = new ArrayList();
 
-        while( tokens.hasMoreTokens() )
-        {
-            tempList.add( tokens.nextToken() );
-        }
+		StringTokenizer tokens = new StringTokenizer(mes.getText()," ");
 
-        return tempList;
-    }
+		while( tokens.hasMoreTokens() )
+		{
+			tempList.add( tokens.nextToken() );
+		}
+
+		return tempList;
+	}
 }
