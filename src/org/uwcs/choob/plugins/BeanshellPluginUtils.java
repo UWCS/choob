@@ -7,6 +7,7 @@ package org.uwcs.choob.plugins;
 
 import org.uwcs.choob.*;
 import org.uwcs.choob.support.*;
+import org.uwcs.choob.support.events.*;
 import org.uwcs.choob.modules.*;
 import java.util.*;
 import bsh.*;
@@ -72,7 +73,7 @@ public class BeanshellPluginUtils
 	 * @param con Context from IRC.
 	 * @param mods Group of modules available.
 	 */
-	static private void callFunc(Object plugin, String func, anEvent ev, Modules mods, IRCInterface irc)
+	static private void callFunc(Object plugin, String func, IRCEvent ev, Modules mods, IRCInterface irc)
 	{
 		Class coreClass = plugin.getClass();
 		System.out.println(ev.getClass().toString());
@@ -186,7 +187,7 @@ public class BeanshellPluginUtils
 	 * @param con Context from IRC.
 	 * @param mods Group of modules.
 	 */
-	static public void doCommand(Object plugin, String command, anEvent ev, Modules mods, IRCInterface irc)
+	static public void doCommand(Object plugin, String command, Message ev, Modules mods, IRCInterface irc)
 	{
 		System.out.println("Calling method command" + command);
 		callFunc(plugin, "command" + command,ev,mods,irc);
@@ -199,7 +200,7 @@ public class BeanshellPluginUtils
 	 * @param con Context from IRC.
 	 * @param mods Group of modules.
 	 */
-	static public void doEvent(Object plugin, String eventname, anEvent ev, Modules mods, IRCInterface irc)
+	static public void doEvent(Object plugin, String eventname, IRCEvent ev, Modules mods, IRCInterface irc)
 	{
 		System.out.println("Calling method " + eventname);
 		callFunc(plugin, eventname, ev,mods,irc);
@@ -213,7 +214,7 @@ public class BeanshellPluginUtils
 	 * @param mods
 	 * @param irc
 	 */
-	static public void doFilter(Object plugin, String filter, anEvent ev, Modules mods, IRCInterface irc)
+	static public void doFilter(Object plugin, String filter, Message ev, Modules mods, IRCInterface irc)
 	{
 		callFunc(plugin, "filter" + filter,ev,mods, irc);
 	}

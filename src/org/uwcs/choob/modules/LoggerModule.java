@@ -9,6 +9,7 @@ package org.uwcs.choob.modules;
 import org.uwcs.choob.*;
 import java.sql.*;
 import org.uwcs.choob.support.*;
+import org.uwcs.choob.support.events.*;
 /**
  * Logs lines from IRC to the database.
  * @author sadiq
@@ -37,8 +38,12 @@ public class LoggerModule
         PreparedStatement insertLine = dbConnection.prepareStatement("INSERT INTO History VALUES(NULL,?,?,?,?,?)");
 
         insertLine.setString(1, mes.getNick());
-        insertLine.setString(2, mes.getChannel());
-        insertLine.setString(3, mes.getText());
+        String chan = "";
+        if (mes instanceof ChannelEvent) {
+            chan = ((ChannelEvent)mes).getChannel();
+        }
+        insertLine.setString(2, chan);
+        insertLine.setString(3, mes.getMessage());
         insertLine.setTimestamp(4, new Timestamp(mes.getMillis()));
         insertLine.setInt(5, mes.getRandom());
 

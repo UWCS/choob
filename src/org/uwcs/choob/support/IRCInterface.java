@@ -8,6 +8,7 @@ package org.uwcs.choob.support;
 
 import org.uwcs.choob.*;
 import org.uwcs.choob.support.*;
+import org.uwcs.choob.support.events.*;
 
 /**
  *
@@ -23,37 +24,23 @@ public class IRCInterface {
 
 	public void sendContextMessage(Message ev, String message)
 	{
-		if( ev.isPrivMessage() )
-		{
-			bot.sendMessage(ev.getNick(), message);
-		}
-		else
-		{
-			bot.sendMessage(ev.getChannel(), message);
-		}
+		bot.sendMessage(ev.getContext(), message);
 	}
 
 	public void sendContextAction(Message ev, String message)
 	{
-		if( ev.isPrivMessage() )
-		{
-			bot.sendAction(ev.getNick(), message);
-		}
-		else
-		{
-			bot.sendAction(ev.getChannel(), message);
-		}
+		bot.sendAction(ev.getContext(), message);
 	}
 
 	public void sendContextReply(Message ev, String message)
 	{
-		if( ev.isPrivMessage() )
+		if( ev instanceof PrivateEvent )
 		{
-			bot.sendMessage(ev.getNick(),message);
+			bot.sendMessage(ev.getContext(),message);
 		}
 		else
 		{
-			bot.sendMessage(ev.getChannel(),ev.getNick() + ": " + message);
+			bot.sendMessage(ev.getContext(),ev.getNick() + ": " + message);
 		}
 	}
 

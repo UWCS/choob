@@ -1,6 +1,7 @@
 import org.uwcs.choob.*;
 import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
+import org.uwcs.choob.support.events.*;
 
 class Test
 {
@@ -29,14 +30,14 @@ class Test
 		irc.sendContextMessage( con, "Ooh, yes please.");
 	}
 
-	public void onJoin( ChannelEvent ev, Modules mod, IRCInterface irc )
+	public void onJoin( ChannelJoin ev, Modules mod, IRCInterface irc )
 	{
-		irc.sendMessage(ev.getChannel(), "Hello, " + ev.getSender() + "!");
+		irc.sendMessage(ev.getChannel(), "Hello, " + ev.getNick() + "!");
 	}
 
-	public void onPart( ChannelEvent ev, Modules mod, IRCInterface irc )
+	public void onPart( ChannelPart ev, Modules mod, IRCInterface irc )
 	{
-		irc.sendMessage(ev.getChannel(), "Bye, " + ev.getSender() + "!");
+		irc.sendMessage(ev.getChannel(), "Bye, " + ev.getNick() + "!");
 	}
 
 }

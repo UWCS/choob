@@ -18,6 +18,7 @@ import java.net.*;
 import java.util.*;
 import java.lang.reflect.*;
 import org.uwcs.choob.support.*;
+import org.uwcs.choob.support.events.*;
 import org.uwcs.choob.modules.*;
 import java.sql.*;
 
@@ -142,115 +143,157 @@ public class Choob extends PircBot
 		System.setSecurityManager( new ChoobSecurityManager(broker) );
 	}
 
-	// Since Choob extends pircbot, we need to implement the following two methods
-	// in order to receive IRC channel and private messages. There'll be some
-	// more of these methods when Events are implemented.
-	/**
-	 * Over-ridden method from the Pircbot class receives message events from IRC.
-	 * @param channel
-	 * @param sender
-	 * @param login
-	 * @param hostname
-	 * @param message
-	 */
-	protected void onMessage(String channel, String sender, String login, String hostname, String message)
-	{
-		// Spin off the appropriate thread to handle this.
-		spinThread( channel, sender, login, hostname, message, false );
-	}
-
-	/**
-	 * Over-ridden method from the Pircbot class receives private message events from IRC.
-	 * @param sender
-	 * @param login
-	 * @param hostname
-	 * @param message
-	 */
-	protected void onPrivateMessage(String sender, String login, String hostname, String message)
-	{
-		// Spin off the appropriate thread to handle this.
-		spinThread( "", sender, login, hostname, message, true );
-	}
-
-	/**
-	 * Allows recursing of events, for example in aliases
-	 * @param mes
-	 */
-	public void onSyntheticMessage(SyntheticMessage mes) {
+	public void onSyntheticMessage(IRCEvent mes) {
 		spinThread( mes );
 	}
 
-	/**
-	 * Over-ridden method from the Pircbot class receives nick-change events from IRC.
-	 * @param oldNick
-	 * @param login
-	 * @param hostname
-	 * @param newNick
-	 */
-/*
-	protected void onNickChange(String oldNick, String login, String hostname, String newNick)
-	{
-		// Spin off the appropriate thread to handle this.
-		spinThread( new anEvent(oldNick) );
+	// BEGIN PASTE!
+	protected void onMessage(String target, String nick, String login, String hostname, String message) {
+		spinThread(new ChannelMessage("onMessage", message, nick, login, hostname, target, target));
 	}
-*/
 
+	protected void onPrivateMessage(String nick, String login, String hostname, String message) {
+		spinThread(new PrivateMessage("onPrivateMessage", message, nick, login, hostname, null));
+	}
 
-	/* Handled internally in pircBot, overriding causes breakage, don't let it happen:
-	protected void onFinger(String sourceNick, String sourceLogin, String sourceHostname, String target) { spinThread(new ChannelEvent(ChannelEvent.ce_Finger, new String[] {sourceNick, sourceLogin, sourceHostname, target })); }
-	protected void onPing(String sourceNick, String sourceLogin, String sourceHostname, String target, String pingValue) { spinThread(new ChannelEvent(ChannelEvent.ce_Ping, new String[] {sourceNick, sourceLogin, sourceHostname, target, pingValue})); }
-	protected void onServerPing(String response) { spinThread(new ChannelEvent(ChannelEvent.ce_ServerPing, new String[] {response  })); }
-	protected void onServerResponse(int code, String response) { spinThread(new ChannelEvent(ChannelEvent.ce_ServerResponse, new String[] {Integer.toString(code), response  })); }
-	protected void onTime(String sourceNick, String sourceLogin, String sourceHostname, String target) { spinThread(new ChannelEvent(ChannelEvent.ce_Time, new String[] {sourceNick, sourceLogin, sourceHostname, target })); }
-	protected void onVersion(String sourceNick, String sourceLogin, String sourceHostname, String target) { spinThread(new ChannelEvent(ChannelEvent.ce_Version, new String[] {sourceNick, sourceLogin, sourceHostname, target })); }
-	*/
+	protected void onAction(String nick, String login, String hostname, String target, String message) {
+		if (target.indexOf('#') == 0)
+			spinThread(new PrivateAction("onAction", message, nick, login, hostname, target));
+		else
+			spinThread(new ChannelAction("onAction", message, nick, login, hostname, target, target));
+	}
 
-	/* Protect against RFC breakage.
-	protected void onNotice(String sourceNick, String sourceLogin, String sourceHostname, String target, String notice) { spinThread(new ChannelEvent(ChannelEvent.ce_Notice, new String[] {sourceNick, sourceLogin, sourceHostname, target, notice})); }
-	*/
+	protected void onChannelInfo(String channel, int userCount, String topic) {
+		spinThread(new ChannelInfo("onChannelInfo", channel));
+	}
 
-	/* Handled elsewhere in this file, for now:
-	protected void onMessage(String channel, String sender, String login, String hostname, String message) { spinThread(new ChannelEvent(ChannelEvent.ce_Message, new String[] {channel, sender, login, hostname, message})); }
-	protected void onPrivateMessage(String sender, String login, String hostname, String message) { spinThread(new ChannelEvent(ChannelEvent.ce_PrivateMessage, new String[] {sender, login, hostname, message })); }
-	*/
+	protected void onDeVoice(String channel, String nick, String login, String hostname, String target) {
+		spinThread(new ChannelUserMode("onDeVoice", channel, "v", true, target));
+	}
 
-	protected void onAction(String sender, String login, String hostname, String target, String action) { spinThread(new ChannelEvent(ChannelEvent.ce_Action, new String[] {sender, login, hostname, target, action})); }
-	protected void onChannelInfo(String channel, int userCount, String topic) { spinThread(new ChannelEvent(ChannelEvent.ce_ChannelInfo, new String[] {channel, Integer.toString(userCount), topic })); }
-	protected void onDeVoice(String channel, String sourceNick, String sourceLogin, String sourceHostname, String recipient) { spinThread(new ChannelEvent(ChannelEvent.ce_DeVoice, new String[] {channel, sourceNick, sourceLogin, sourceHostname, recipient})); }
-	protected void onDeop(String channel, String sourceNick, String sourceLogin, String sourceHostname, String recipient) { spinThread(new ChannelEvent(ChannelEvent.ce_Deop, new String[] {channel, sourceNick, sourceLogin, sourceHostname, recipient})); }
-	protected void onInvite(String targetNick, String sourceNick, String sourceLogin, String sourceHostname, String channel) { spinThread(new ChannelEvent(ChannelEvent.ce_Invite, new String[] {targetNick, sourceNick, sourceLogin, sourceHostname, channel})); }
-	protected void onJoin(String channel, String sender, String login, String hostname) { spinThread(new ChannelEvent(ChannelEvent.ce_Join, new String[] {channel, sender, login, hostname })); }
-	protected void onKick(String channel, String kickerNick, String kickerLogin, String kickerHostname, String recipientNick, String reason) { spinThread(new ChannelEvent(ChannelEvent.ce_Kick, new String[] {channel, kickerNick, kickerLogin, kickerHostname, recipientNick, reason})); }
-	protected void onMode(String channel, String sourceNick, String sourceLogin, String sourceHostname, String mode) { spinThread(new ChannelEvent(ChannelEvent.ce_Mode, new String[] {channel, sourceNick, sourceLogin, sourceHostname, mode})); }
-	protected void onNickChange(String oldNick, String login, String hostname, String newNick) { spinThread(new ChannelEvent(ChannelEvent.ce_NickChange, new String[] {oldNick, login, hostname, newNick })); }
-	protected void onOp(String channel, String sourceNick, String sourceLogin, String sourceHostname, String recipient) { spinThread(new ChannelEvent(ChannelEvent.ce_Op, new String[] {channel, sourceNick, sourceLogin, sourceHostname, recipient})); }
-	protected void onPart(String channel, String sender, String login, String hostname) { spinThread(new ChannelEvent(ChannelEvent.ce_Part, new String[] {channel, sender, login, hostname })); }
-	protected void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) { spinThread(new ChannelEvent(ChannelEvent.ce_Quit, new String[] {sourceNick, sourceLogin, sourceHostname, reason })); }
-	protected void onRemoveChannelBan(String channel, String sourceNick, String sourceLogin, String sourceHostname, String hostmask) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveChannelBan, new String[] {channel, sourceNick, sourceLogin, sourceHostname, hostmask})); }
-	protected void onRemoveChannelKey(String channel, String sourceNick, String sourceLogin, String sourceHostname, String key) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveChannelKey, new String[] {channel, sourceNick, sourceLogin, sourceHostname, key})); }
-	protected void onRemoveChannelLimit(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveChannelLimit, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onRemoveInviteOnly(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveInviteOnly, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onRemoveModerated(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveModerated, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onRemoveNoExternalMessages(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveNoExternalMessages, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onRemovePrivate(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemovePrivate, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onRemoveSecret(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveSecret, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onRemoveTopicProtection(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_RemoveTopicProtection, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onSetChannelBan(String channel, String sourceNick, String sourceLogin, String sourceHostname, String hostmask) { spinThread(new ChannelEvent(ChannelEvent.ce_SetChannelBan, new String[] {channel, sourceNick, sourceLogin, sourceHostname, hostmask})); }
-	protected void onSetChannelKey(String channel, String sourceNick, String sourceLogin, String sourceHostname, String key) { spinThread(new ChannelEvent(ChannelEvent.ce_SetChannelKey, new String[] {channel, sourceNick, sourceLogin, sourceHostname, key})); }
-	protected void onSetChannelLimit(String channel, String sourceNick, String sourceLogin, String sourceHostname, int limit) { spinThread(new ChannelEvent(ChannelEvent.ce_SetChannelLimit, new String[] {channel, sourceNick, sourceLogin, sourceHostname, Integer.toString(limit)})); }
-	protected void onSetInviteOnly(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_SetInviteOnly, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onSetModerated(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_SetModerated, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onSetNoExternalMessages(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_SetNoExternalMessages, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onSetPrivate(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_SetPrivate, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onSetSecret(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_SetSecret, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onSetTopicProtection(String channel, String sourceNick, String sourceLogin, String sourceHostname) { spinThread(new ChannelEvent(ChannelEvent.ce_SetTopicProtection, new String[] {channel, sourceNick, sourceLogin, sourceHostname })); }
-	protected void onTopic(String channel, String topic, String setBy, long date, boolean changed) { spinThread(new ChannelEvent(ChannelEvent.ce_Topic, new String[] {channel, topic, setBy, Long.toString(date), Boolean.toString(changed)})); }
-	protected void onUnknown(String line) { spinThread(new ChannelEvent(ChannelEvent.ce_Unknown, new String[] {line  })); }
-	protected void onUserMode(String targetNick, String sourceNick, String sourceLogin, String sourceHostname, String mode) { spinThread(new ChannelEvent(ChannelEvent.ce_UserMode, new String[] {targetNick, sourceNick, sourceLogin, sourceHostname, mode})); }
-	protected void onVoice(String channel, String sourceNick, String sourceLogin, String sourceHostname, String recipient) { spinThread(new ChannelEvent(ChannelEvent.ce_Voice, new String[] {channel, sourceNick, sourceLogin, sourceHostname, recipient})); }
+	protected void onDeop(String channel, String nick, String login, String hostname, String target) {
+		spinThread(new ChannelUserMode("onDeop", channel, "o", true, target));
+	}
 
+	protected void onInvite(String target, String nick, String login, String hostname, String channel) {
+		spinThread(new ChannelInvite("onInvite", channel, nick, login, hostname, target));
+	}
 
-	private synchronized void spinThread(anEvent ev)
+	protected void onJoin(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelJoin("onJoin", channel, nick, login, hostname));
+	}
+
+	protected void onKick(String channel, String nick, String login, String hostname, String target, String reason) {
+		spinThread(new ChannelKick("onKick", channel, nick, login, hostname, target));
+	}
+
+	protected void onMode(String channel, String nick, String login, String hostname, String modes) {
+		spinThread(new ChannelModes("onMode", channel, modes));
+	}
+
+	protected void onNickChange(String nick, String login, String hostname, String newNick) {
+		spinThread(new NickChange("onNickChange", nick, login, hostname, newNick));
+	}
+
+	protected void onOp(String channel, String nick, String login, String hostname, String target) {
+		spinThread(new ChannelUserMode("onOp", channel, "o", true, target));
+	}
+
+	protected void onPart(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelPart("onPart", channel, nick, login, hostname));
+	}
+
+	protected void onQuit(String nick, String login, String hostname, String message) {
+		spinThread(new QuitEvent("onQuit", message, nick, login, hostname));
+	}
+
+	protected void onRemoveChannelBan(String channel, String nick, String login, String hostname, String param) {
+		spinThread(new ChannelParamMode("onRemoveChannelBan", channel, "b", false, param));
+	}
+
+	protected void onRemoveChannelKey(String channel, String nick, String login, String hostname, String param) {
+		spinThread(new ChannelParamMode("onRemoveChannelKey", channel, "k", false, param));
+	}
+
+	protected void onRemoveChannelLimit(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onRemoveChannelLimit", channel, "l", false));
+	}
+
+	protected void onRemoveInviteOnly(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onRemoveInviteOnly", channel, "i", false));
+	}
+
+	protected void onRemoveModerated(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onRemoveModerated", channel, "m", false));
+	}
+
+	protected void onRemoveNoExternalMessages(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onRemoveNoExternalMessages", channel, "n", false));
+	}
+
+	protected void onRemovePrivate(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onRemovePrivate", channel, "p", false));
+	}
+
+	protected void onRemoveSecret(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onRemoveSecret", channel, "s", false));
+	}
+
+	protected void onRemoveTopicProtection(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onRemoveTopicProtection", channel, "t", false));
+	}
+
+	protected void onSetChannelBan(String channel, String nick, String login, String hostname, String param) {
+		spinThread(new ChannelParamMode("onSetChannelBan", channel, "b", true, param));
+	}
+
+	protected void onSetChannelKey(String channel, String nick, String login, String hostname, String param) {
+		spinThread(new ChannelParamMode("onSetChannelKey", channel, "k", true, param));
+	}
+
+	protected void onSetInviteOnly(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onSetInviteOnly", channel, "i", true));
+	}
+
+	protected void onSetModerated(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onSetModerated", channel, "m", true));
+	}
+
+	protected void onSetNoExternalMessages(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onSetNoExternalMessages", channel, "n", true));
+	}
+
+	protected void onSetPrivate(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onSetPrivate", channel, "p", true));
+	}
+
+	protected void onSetSecret(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onSetSecret", channel, "s", true));
+	}
+
+	protected void onSetTopicProtection(String channel, String nick, String login, String hostname) {
+		spinThread(new ChannelMode("onSetTopicProtection", channel, "t", true));
+	}
+
+	protected void onTopic(String channel, String message, String nick, long date, boolean changed) {
+		spinThread(new ChannelTopic("onTopic", channel, message));
+	}
+
+	protected void onUnknown(String line) {
+		spinThread(new UnknownEvent("onUnknown"));
+	}
+
+	protected void onUserMode(String targetNick, String nick, String login, String hostname, String modes) {
+		spinThread(new UserModes("onUserMode", modes));
+	}
+
+	protected void onVoice(String channel, String nick, String login, String hostname, String target) {
+		spinThread(new ChannelUserMode("onVoice", channel, "v", true, target));
+	}
+
+	// END PASTE!
+
+	private synchronized void spinThread(IRCEvent ev)
 	{
 		int c;
 		boolean done = false;
@@ -309,8 +352,9 @@ public class Choob extends PircBot
 	 * @param message
 	 * @param privMessage
 	 */
+	/*
 	private synchronized void spinThread(String channel, String sender, String login, String hostname, String message, boolean privMessage)
 	{
 		spinThread(new Message(sender,channel,message,privMessage));
-	}
+	}*/
 }

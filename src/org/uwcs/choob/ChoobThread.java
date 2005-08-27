@@ -10,6 +10,7 @@ import org.uwcs.choob.plugins.*;
 import org.uwcs.choob.modules.*;
 import java.sql.*;
 import org.uwcs.choob.support.*;
+import org.uwcs.choob.support.events.*;
 import java.util.*;
 import java.util.regex.*;
 
@@ -31,7 +32,7 @@ public class ChoobThread extends Thread
 	IRCInterface irc;
 	List filterList;
 
-	private anEvent tevent;
+	private IRCEvent tevent;
 	private Message mes;
 
 	/**
@@ -79,13 +80,17 @@ public class ChoobThread extends Thread
 						mes=(Message)tevent;
 						tevent=null;
 
-						System.out.println("Thread("+threadID+") handled line " + mes.getText());
+						System.out.println("Thread("+threadID+") handled line " + mes.getMessage());
 						Pattern pa;
 						Matcher ma;
 
 						// First, try and pick up aliased commands.
+						String matchAgainst = mes.getMessage();
+						if (matchAgainst.indexOf(' ') >= 0)
+							matchAgainst = matchAgainst.substring(0, matchAgainst.indexOf(' '));
+
 						pa = Pattern.compile("^" + trigger + "([a-zA-Z0-9_-]+)(?!\\.)(.*)$");
-						ma = pa.matcher(mes.getText());
+						ma = pa.matcher(matchAgainst);
 
 						if ( ma.matches() == true )
 						{
@@ -96,7 +101,7 @@ public class ChoobThread extends Thread
 
 							ResultSet aliasesResults = aliasesSmt.executeQuery();
 							if ( aliasesResults.first() )
-								mes.setText(trigger + aliasesResults.getString("Converted") + ma.group(2));
+								matchAgainst = trigger + aliasesResults.getString("Converted");
 
 							dbBroker.freeConnection( dbConnection );
 						}
@@ -106,7 +111,7 @@ public class ChoobThread extends Thread
 
 						// The .* in this pattern is required, java wants the entire string to match.
 						pa = Pattern.compile("^" + trigger + "([a-zA-Z0-9_-]+)\\.([a-zA-Z0-9_-]+).*");
-						ma = pa.matcher(mes.getText());
+						ma = pa.matcher(matchAgainst);
 
 						if( ma.matches() == true )
 						{
@@ -141,7 +146,7 @@ public class ChoobThread extends Thread
 
 								Pattern filterPattern = Pattern.compile( tempFilter.getRegex() );
 
-								Matcher filterMatcher = filterPattern.matcher(mes.getText());
+								Matcher filterMatcher = filterPattern.matcher(mes.getMessage());
 
 								System.out.println("Testing line against " + tempFilter.getRegex());
 
@@ -170,7 +175,7 @@ public class ChoobThread extends Thread
 						for (int i=0; i<plugins.length; i++)
 							try
 							{
-								BeanshellPluginUtils.doEvent(plugins[i], ((ChannelEvent)tevent).getMethodName(), (ChannelEvent)tevent, modules, irc);
+								BeanshellPluginUtils.doEvent(plugins[i], tevent.getMethodName(), tevent, modules, irc);
 							}
 							catch (Exception e)
 							{
@@ -197,12 +202,12 @@ public class ChoobThread extends Thread
 		}
 	}
 
-	public anEvent getEvent()
+	public IRCEvent getEvent()
 	{
 		return this.tevent;
 	}
 
-	public void setEvent(anEvent tevent)
+	public void setEvent(IRCEvent tevent)
 	{
 		System.out.println("Event set for thread("+threadID+")");
 		this.tevent = tevent;

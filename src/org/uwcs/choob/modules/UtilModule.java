@@ -11,6 +11,7 @@ import org.uwcs.choob.plugins.*;
 import org.uwcs.choob.modules.*;
 import java.sql.*;
 import org.uwcs.choob.support.*;
+import org.uwcs.choob.support.events.*;
 import java.util.*;
 import java.util.regex.*;
 
@@ -26,9 +27,9 @@ public class UtilModule {
 
 	public String getParamString( Message mes )
 	{
-		int spacePos = mes.getText().indexOf(' ');
+		int spacePos = mes.getMessage().indexOf(' ');
 		if (spacePos != -1)
-			return mes.getText().substring(spacePos + 1);
+			return mes.getMessage().substring(spacePos + 1);
 
 		return "";
 	}
@@ -37,7 +38,7 @@ public class UtilModule {
 	{
 		List tempList = new ArrayList();
 
-		StringTokenizer tokens = new StringTokenizer(mes.getText()," ");
+		StringTokenizer tokens = new StringTokenizer(mes.getMessage()," ");
 
 		while( tokens.hasMoreTokens() )
 		{
@@ -57,7 +58,7 @@ public class UtilModule {
 	{
 		List tempList = new ArrayList();
 
-		String text = mes.getText();
+		String text = mes.getMessage();
 
 		int currentPos = text.indexOf(' ');
 		int lastPos = 0;
