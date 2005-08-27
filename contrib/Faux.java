@@ -1,6 +1,7 @@
 import org.uwcs.choob.*;
 import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
+import org.uwcs.choob.support.events.*;
 
 class Faux
 {
@@ -11,18 +12,18 @@ class Faux
 
 	public void commandSay( Message con, Modules mods, IRCInterface irc )
 	{
-		int a=con.getText().indexOf(" ");
+		int a=con.getMessage().indexOf(" ");
 		if ( a!=-1 )
-			irc.sendContextMessage(con, con.getText().substring(a+1));
+			irc.sendContextMessage(con, con.getMessage().substring(a+1));
 		else
 			irc.sendContextMessage(con, "Dotwhore!");
 	}
 
 	public void commandReply( Message con, Modules mods, IRCInterface irc )
 		{
-			int a=con.getText().indexOf(" ");
+			int a=con.getMessage().indexOf(" ");
 			if ( a!=-1 )
-				irc.sendContextMessage(con, con.getNick() + ": " + con.getText().substring(a+1));
+				irc.sendContextMessage(con, con.getNick() + ": " + con.getMessage().substring(a+1));
 			else
 				irc.sendContextMessage(con, con.getNick() + "!");
 	}

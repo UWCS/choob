@@ -1,5 +1,6 @@
 import org.uwcs.choob.*;
 import org.uwcs.choob.support.*;
+import org.uwcs.choob.support.events.*;
 import org.uwcs.choob.modules.*;
 import java.net.*;
 import java.io.*;
