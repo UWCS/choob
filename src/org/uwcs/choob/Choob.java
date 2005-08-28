@@ -83,6 +83,8 @@ public class Choob extends PircBot
 		// Set the bot's hostname.
 		this.setLogin("Choob");
 
+		this.setVersion("Choob SVN - http://svn.uwcs.co.uk/repos/choob/");
+
 		// Create a new database connection broker using the MySQL drivers
 		broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", dbUser, dbPass, 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
 

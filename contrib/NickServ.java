@@ -54,7 +54,7 @@ class NickServ
 
 		synchronized(result)
 		{
-			result.wait();
+			result.wait(30000);
 		}
 		int status = result.getResult();
 		return status;
