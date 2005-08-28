@@ -147,7 +147,15 @@ public class Choob extends PircBot
 		spinThread( mes );
 	}
 
+	/*
+	 * DO NOT EDIT THE CODE IN THE PASTE BLOCK MANUALLY
+	 *
+	 * This code is automatically replaced by HorriblePerlScript when it is
+	 * run. Make your modifications there.
+	 */
+
 	// BEGIN PASTE!
+
 	protected void onMessage(String target, String nick, String login, String hostname, String message) {
 		spinThread(new ChannelMessage("onMessage", message, nick, login, hostname, target, target));
 	}

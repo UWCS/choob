@@ -21,8 +21,8 @@ our %inheritance = (
 
 	Message => [qw/IRCEvent MessageEvent ContextEvent UserEvent AimedEvent/],
 
-	PrivateMessage => [qw/Message PrivateEvent/],
-	ChannelMessage => [qw/Message ChannelEvent/],
+	PrivateMessage => [qw/Message PrivateEvent CommandEvent/],
+	ChannelMessage => [qw/Message ChannelEvent CommandEvent/],
 	Action => "__HORRORMUNGER__",
 	PrivateAction => [qw/Message PrivateEvent/],
 	ChannelAction => [qw/Message ChannelEvent/],
@@ -54,6 +54,7 @@ our %params = (
 	IRCEvent => [qw/methodName/],
 	ChannelEvent => [qw/channel/],
 	PrivateEvent => [qw//],
+	CommandEvent => [qw//],
 	UserEvent => [qw/nick login hostname/],
 	MessageEvent => [qw/message/],
 	ModeEvent => [qw/mode (boolean)set/],
@@ -69,6 +70,7 @@ our %overrides = (
 	MessageEvent => [qw/message/],
 );
 
+my $eventHandlers = '';
 while ($_ = <DATA>) {
 	if (/^(\w+)\(([\w, ]+)\)(?:\[([\w, "=(]+)\])? (\w+), (.*)/) {
 		my ($name, $params, $extraparams, $class, $desc) = ($1, $2, $3||"", $4, $5);
@@ -128,9 +130,17 @@ END
 
 			$eventHandler .= qq|\t\tspinThread(new $class($constParams));\n\t}\n\n|;
 		}
-		print $eventHandler;
+		$eventHandlers .= $eventHandler;
 	}
 }
+
+open CHOOB, "org/uwcs/choob/Choob.java";
+my $choob = do { local $/; <CHOOB> };
+close CHOOB;
+$choob =~ s[(?<=// BEGIN PASTE!).*?(?=// END PASTE!)][\n\n$eventHandlers\t]s;
+open CHOOB, ">org/uwcs/choob/Choob.java";
+print CHOOB $choob;
+close CHOOB;
 
 foreach my $class (keys %inheritance) {
 	next if $inheritance{$class} && $inheritance{$class} =~ /^_/;
