@@ -12,148 +12,179 @@ import org.uwcs.choob.support.*;
 import java.sql.*;
 import java.security.*;
 import java.lang.reflect.*;
+import java.util.*;
 
 /**
  * Security manager for the bot, controls access to anything requiring/checking
  * for a permission.
  * @author sadiq
  */
-public class ChoobSecurityManager extends SecurityManager {
-    DbConnectionBroker dbBroker;
+public class ChoobSecurityManager extends SecurityManager
+{
+	DbConnectionBroker dbBroker;
+	Map pluginMap;
 
-    /**
-     * Creates a new instance of ChoobSecurityManager
-     * @param dbBroker Database connection pool/broker.
-     */
-    public ChoobSecurityManager(DbConnectionBroker dbBroker) {
-        this.dbBroker = dbBroker;
-    }
+	/**
+	 * Creates a new instance of ChoobSecurityManager
+	 * @param dbBroker Database connection pool/broker.
+	 */
+	public ChoobSecurityManager(DbConnectionBroker dbBroker)
+	{
+		this.dbBroker = dbBroker;
+		this.pluginMap = new HashMap();
+	}
 
-    public PermissionCollection getPluginPermissions(String plugin) {
-        Connection dbConnection = dbBroker.getConnection();
+	/**
+	 * Force plugin permissions to be reloaded at some later point.
+	 */
+	public void invalidatePluginPermissions(String pluginName)
+	{
+		synchronized(pluginMap) {
+			pluginMap.remove(pluginName);
+		}
+	}
 
-        Permissions permissions = new Permissions();
+	private PermissionCollection getPluginPermissions(String pluginName)
+	{
+		PermissionCollection perms;
+		synchronized(pluginMap) {
+			perms = (PermissionCollection)pluginMap.get(pluginName);
+		}
+		if (perms == null)
+			updatePluginPermissions(pluginName);
+		synchronized(pluginMap) {
+			perms = (PermissionCollection)pluginMap.get(pluginName);
+		}
+		return perms;
+	}
+	
+	private void updatePluginPermissions(String plugin) {
+		System.out.println("Loading permissions for " + plugin + ".");
+		Connection dbConnection = dbBroker.getConnection();
 
-        try {
-            PreparedStatement permissionsSmt = dbConnection.prepareStatement("SELECT Type, Permission, Action FROM UserPlugins, UserPluginPermissions WHERE UserPlugins.UserID = UserPluginPermissions.UserID AND UserPlugins.PluginName = ?");
+		Permissions permissions = new Permissions();
 
-            permissionsSmt.setString(1, plugin);
+		try {
+			PreparedStatement permissionsSmt = dbConnection.prepareStatement("SELECT Type, Permission, Action FROM UserPlugins, UserPluginPermissions WHERE UserPlugins.UserID = UserPluginPermissions.UserID AND UserPlugins.PluginName = ?");
 
-            ResultSet permissionsResults = permissionsSmt.executeQuery();
+			permissionsSmt.setString(1, plugin);
 
-            if ( permissionsResults.first() ) {
-                do
-                {
-                    String className = permissionsResults.getString(1);
-                    String permissionName = permissionsResults.getString(2);
-                    String actions = permissionsResults.getString(3);
+			ResultSet permissionsResults = permissionsSmt.executeQuery();
 
-                    Class clas;
-                    try
-                    {
-                        clas = this.getClass().getClassLoader().loadClass( className );
-                    }
-                    catch (ClassNotFoundException e)
-                    {
-                        System.out.println("Permission class not found: " + className);
-                        continue; // XXX I guess this is OK?
-                    }
+			if ( permissionsResults.first() ) {
+				do
+				{
+					String className = permissionsResults.getString(1);
+					String permissionName = permissionsResults.getString(2);
+					String actions = permissionsResults.getString(3);
 
-                    if (!Permission.class.isAssignableFrom(clas))
-                    {
-                        System.out.println("Class " + className + " is not a Permission!");
-                        continue; // XXX
-                    }
+					Class clas;
+					try
+					{
+						clas = this.getClass().getClassLoader().loadClass( className );
+					}
+					catch (ClassNotFoundException e)
+					{
+						System.out.println("Permission class not found: " + className);
+						continue; // XXX I guess this is OK?
+					}
 
-                    Constructor con;
-                    try
-                    {
-                        con = clas.getDeclaredConstructor(String.class, String.class);
-                    }
-                    catch (NoSuchMethodException e)
-                    {
-                        System.out.println("Permission class had no valid constructor: " + className);
-                        continue; // XXX I guess this is OK?
-                    }
+					if (!Permission.class.isAssignableFrom(clas))
+					{
+						System.out.println("Class " + className + " is not a Permission!");
+						continue; // XXX
+					}
 
-                    Permission perm;
-                    try
-                    {
-                        perm = (Permission)con.newInstance(permissionName, actions);
-                    }
-                    catch (IllegalAccessException e)
-                    {
-                        System.out.println("Permission class constructor for " + className + " failed: " + e.getMessage());
-                        e.printStackTrace();
-                        continue; // XXX
-                    }
-                    catch (InstantiationException e)
-                    {
-                        System.out.println("Permission class constructor for " + className + " failed: " + e.getMessage());
-                        e.printStackTrace();
-                        continue; // XXX
-                    }
-                    catch (InvocationTargetException e)
-                    {
-                        System.out.println("Permission class constructor for " + className + " failed: " + e.getMessage());
-                        e.printStackTrace();
-                        continue; // XXX
-                    }
+					Constructor con;
+					try
+					{
+						con = clas.getDeclaredConstructor(String.class, String.class);
+					}
+					catch (NoSuchMethodException e)
+					{
+						System.out.println("Permission class had no valid constructor: " + className);
+						continue; // XXX I guess this is OK?
+					}
 
-                    System.out.println("Adding new permission " + className + " of name \""
-                            + permissionName + "\" and actions \"" + actions + "\" --> " + perm);
+					Permission perm;
+					try
+					{
+						perm = (Permission)con.newInstance(permissionName, actions);
+					}
+					catch (IllegalAccessException e)
+					{
+						System.out.println("Permission class constructor for " + className + " failed: " + e.getMessage());
+						e.printStackTrace();
+						continue; // XXX
+					}
+					catch (InstantiationException e)
+					{
+						System.out.println("Permission class constructor for " + className + " failed: " + e.getMessage());
+						e.printStackTrace();
+						continue; // XXX
+					}
+					catch (InvocationTargetException e)
+					{
+						System.out.println("Permission class constructor for " + className + " failed: " + e.getMessage());
+						e.printStackTrace();
+						continue; // XXX
+					}
 
-                    permissions.add(perm);
-                } while ( permissionsResults.next() );
-            }
-            dbBroker.freeConnection(dbConnection);
-            return permissions;
-        }
-        catch ( SQLException e )
-        {
-            dbBroker.freeConnection(dbConnection);
-            System.out.println("Could not load DB permissions for " + plugin + " (assuming none): " + e.getMessage());
-            e.printStackTrace();
-            return permissions;
-        }
+					System.out.println("Adding new permission for " + plugin + ": " + perm);
 
-    }
+					permissions.add(perm);
+				} while ( permissionsResults.next() );
+			}
+		}
+		catch ( SQLException e )
+		{
+			System.out.println("Could not load DB permissions for " + plugin + " (assuming none): " + e.getMessage());
+			e.printStackTrace();
+		}
+		dbBroker.freeConnection(dbConnection);
 
-    /**
-     * Checks for whether the call to this class came from a scripted Beanshell class
-     * (so, a plugin) and then checks to see whether that plugin has permission via
-     * a database select.
-     * @param permission
-     */
-    public void checkPermission(Permission permission) {
-        Class[] callStackClasses = getClassContext();
+		System.out.println("All permissions for " + plugin + " done.");
+		synchronized(pluginMap) {
+			pluginMap.put(plugin, permissions);
+		}
+	}
 
-        int c;
 
-        for( c = 0; c < callStackClasses.length; c++ ) {
-            if( c != 0 && callStackClasses[c] == ChoobSecurityManager.class ) return;
-            // The above is there to stop circular security checks. Oh the agony.
+	/**
+	 * Checks for whether the call to this class came from a scripted Beanshell class
+	 * (so, a plugin) and then checks to see whether that plugin has permission via
+	 * a database select.
+	 * @param permission
+	 */
+	public void checkPermission(Permission permission) {
+		Class[] callStackClasses = getClassContext();
 
-            ClassLoader tempClassLoader = callStackClasses[c].getClassLoader();
+		int c;
 
-            if( tempClassLoader != null && tempClassLoader.getClass() == DiscreteFilesClassLoader.class ) {
-                //                System.out.println("Priviledged call from plugin " + callStackClasses[c] + ". Permission type " + permission.getClass().getName() + " needed: " + permission.getName() + " (Action: '" + permission.getActions() + "')");
+		for( c = 0; c < callStackClasses.length; c++ ) {
+			if( c != 0 && callStackClasses[c] == ChoobSecurityManager.class ) return;
+			// The above is there to stop circular security checks. Oh the agony.
 
-                if( permission.getName().compareTo("accessDeclaredMembers") == 0 ) return;
+			ClassLoader tempClassLoader = callStackClasses[c].getClassLoader();
 
-                if( permission.getName().compareTo("suppressAccessChecks") == 0 ) return;
+			if( tempClassLoader != null && tempClassLoader.getClass() == DiscreteFilesClassLoader.class ) {
+				//System.out.println("Priviledged call from plugin " + callStackClasses[c] + ". Permission type: " + permission);
 
-                PermissionCollection perms = getPluginPermissions(callStackClasses[c].getName());
+				if( permission.getName().compareTo("accessDeclaredMembers") == 0 ) return;
 
-                if (perms.implies(permission))
-                    return;
+				if( permission.getName().compareTo("suppressAccessChecks") == 0 ) return;
 
-                System.out.println("Access denied for plugin " + callStackClasses[c] + " on permission (" + permission.toString() + ")\n");
-                System.out.flush();
-                throw new SecurityException("Access denied for plugin " + callStackClasses[c] + " on permission (" + permission.toString() + ")");
+				PermissionCollection perms = getPluginPermissions(callStackClasses[c].getName());
 
-            }
-        }
-    }
+				if (perms != null && perms.implies(permission))
+					return;
+
+				System.out.println("Access denied for plugin " + callStackClasses[c] + " on permission (" + permission.toString() + ")\n");
+				System.out.flush();
+				throw new SecurityException("Access denied for plugin " + callStackClasses[c] + " on permission (" + permission.toString() + ")");
+
+			}
+		}
+	}
 
 }

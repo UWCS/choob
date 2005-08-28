@@ -11,26 +11,38 @@ class Plugin
 
 		if( parms.size() < 3 )
 		{
-			irc.sendContextMessage(con, "Incorrect syntax! Dyooooooh!");
+			irc.sendContextReply(con, "Incorrect syntax! Dyooooooh!");
 			return;
 		}
 
 		if ( parms.get(1).indexOf("/") != -1 )
 		{
-			irc.sendContextMessage(con, "Arguments the other way around, you spoon.");
+			irc.sendContextReply(con, "Arguments the other way around, you spoon.");
 			return;
 		}
 
-		irc.sendContextMessage(con, "Loading plugin.. " + parms.get(1));
+		irc.sendContextReply(con, "Loading plugin.. " + parms.get(1));
 		try
 		{
 			modules.plugin.addPlugin(parms.get(2), parms.get(1));
-			irc.sendContextMessage(con, "Plugin parsed, compiled and loaded!");
+			irc.sendContextReply(con, "Plugin parsed, compiled and loaded!");
 		}
 		catch (Exception e)
 		{
-			irc.sendContextMessage(con, "Error parsing plugin, see log for details.");
+			irc.sendContextReply(con, "Error parsing plugin, see log for details.");
 			e.printStackTrace();
 		}
+	}
+
+	public void commandReloadPluginPermissions( Message mes, Modules modules, IRCInterface irc )
+	{
+		List parms = modules.util.getParms( mes );
+		if (parms.size() != 2)
+		{
+			irc.sendContextReply(mes, "You must specify a plugin name and only that.");
+			return;
+		}
+		modules.plugin.reloadPluginPermissions((String) parms.get(1));
+		irc.sendContextReply(mes, "OK, permissions reloaded for " + parms.get(1) + ".");
 	}
 }

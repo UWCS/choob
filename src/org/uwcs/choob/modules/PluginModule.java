@@ -8,7 +8,7 @@ package org.uwcs.choob.modules;
 
 import org.uwcs.choob.plugins.*;
 import org.uwcs.choob.support.*;
-import org.uwcs.choob.support.ChoobPermission;
+import org.uwcs.choob.*;
 import java.lang.*;
 import java.util.*;
 import java.io.*;
@@ -46,7 +46,15 @@ public class PluginModule {
 	 * @throws Exception Thrown if there's a syntactical error in the plugin's source.
 	 */
 	public void addPlugin(String URL,String pluginName ) throws Exception {
-		if( System.getSecurityManager() != null ) System.getSecurityManager().checkPermission(new ChoobPermission("canAddPlugins"));
+		ChoobSecurityManager sec = null;
+
+		{
+			SecurityManager s = System.getSecurityManager();
+			if( s != null && s instanceof ChoobSecurityManager ) {
+				sec = (ChoobSecurityManager)s;
+				sec.checkPermission(new ChoobPermission("canAddPlugins"));
+			}
+		}
 
 		Object plugin = pluginMap.get(pluginName);
 
@@ -79,7 +87,24 @@ public class PluginModule {
 
 		pluginMap.put(pluginName,plugin);
 
+		if ( sec != null )
+			sec.invalidatePluginPermissions(pluginName);
+
 		reloadFilters();
+	}
+
+	/**
+	 * Cause the plugin permissions to be reloaded from the database.
+	 */
+	public void reloadPluginPermissions(String pluginName)
+	{
+		ChoobSecurityManager sec = null;
+
+		SecurityManager s = System.getSecurityManager();
+		if( s != null && s instanceof ChoobSecurityManager ) {
+			sec = (ChoobSecurityManager)s;
+			sec.invalidatePluginPermissions(pluginName);
+		}
 	}
 
 	public Object callAPI(String APIString, Object... params)
