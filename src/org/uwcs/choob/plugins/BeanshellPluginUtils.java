@@ -80,7 +80,6 @@ public class BeanshellPluginUtils
 		ArrayList filtered = new ArrayList();
 		for(int i=0; i<methods.length; i++)
 		{
-			System.out.println(methods[i].getName());
 			if (methods[i].getName().equals(methodName))
 				filtered.add(methods[i]);
 		}
@@ -144,7 +143,7 @@ public class BeanshellPluginUtils
 				}
 				catch (NoSuchMethodException e)
 				{
-					System.out.println("Oh noes, method not found!");
+					System.out.println("Oh noes, method " + func + " not found in " + plugin.getClass().getName() + "!");
 					//omgwtfhaxCallCache.put(identifier, null);
 					//System.out.println(identifier + " will be ignored from now on.");
 				}
@@ -152,6 +151,7 @@ public class BeanshellPluginUtils
 				{
 					// The horror!
 					System.out.println("Exception in calling plugin function: " + e);
+					e.printStackTrace();
 				}
 			}
 		}
@@ -271,7 +271,7 @@ public class BeanshellPluginUtils
 	{
 		try
 		{
-			javaHorrorMethodCall(plugin, "api"+APIName, params);
+			return javaHorrorMethodCall(plugin, "api"+APIName, params);
 		}
 		catch( Exception e )
 		{

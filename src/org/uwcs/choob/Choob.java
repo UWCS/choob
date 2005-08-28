@@ -37,6 +37,9 @@ public class Choob extends PircBot
 	List intervalList;
 	ChoobWatcherThread watcher;
 
+	private static final int INITTHREADS = 5;
+	private static final int MAXTHREADS = 20;
+
 	/**
 	 * Constructor for Choob, initialises vital variables.
 	 * @throws IOException Possibly arises from the database connection pool creation.
@@ -92,6 +95,15 @@ public class Choob extends PircBot
 	}
 
 	/**
+	 * Adds a new ChoobThread
+	 */
+	private void addChoobThread() {
+		ChoobThread tempThread = new ChoobThread(broker,modules,pluginMap,filterList,trigger);
+		tempThread.start();
+		choobThreads.add(tempThread);
+	}
+
+	/**
 	 * Initialises the Choob thread poll as well as loading the few core plugins that ought to be present at start.
 	 */
 	public void init()
@@ -102,11 +114,9 @@ public class Choob extends PircBot
 		int c;
 
 		// Step through list of threads, construct them and star them running.
-		for( c = 0 ; c < 5 ; c++ )
+		for( c = 0 ; c < INITTHREADS ; c++ )
 		{
-			ChoobThread tempThread = new ChoobThread(broker,modules,pluginMap,filterList,trigger);
-			choobThreads.add(tempThread);
-			tempThread.start();
+			addChoobThread();
 		}
 
 		watcher = new ChoobWatcherThread(intervalList, irc, pluginMap, modules);
@@ -156,6 +166,13 @@ public class Choob extends PircBot
 
 	// BEGIN PASTE!
 
+	protected void onNotice(String nick, String login, String hostname, String target, String message) {
+		if (target.indexOf('#') == 0)
+			spinThread(new ChannelNotice("onNotice", message, nick, login, hostname, target, target));
+		else
+			spinThread(new PrivateNotice("onNotice", message, nick, login, hostname, target));
+	}
+
 	protected void onMessage(String target, String nick, String login, String hostname, String message) {
 		spinThread(new ChannelMessage("onMessage", message, nick, login, hostname, target, target));
 	}
@@ -166,9 +183,9 @@ public class Choob extends PircBot
 
 	protected void onAction(String nick, String login, String hostname, String target, String message) {
 		if (target.indexOf('#') == 0)
-			spinThread(new PrivateAction("onAction", message, nick, login, hostname, target));
-		else
 			spinThread(new ChannelAction("onAction", message, nick, login, hostname, target, target));
+		else
+			spinThread(new PrivateAction("onAction", message, nick, login, hostname, target));
 	}
 
 	protected void onChannelInfo(String channel, int userCount, String topic) {
@@ -305,14 +322,27 @@ public class Choob extends PircBot
 	{
 		int c;
 		boolean done = false;
+		int count = 0;
 
 		while( !done )
 		{
-			for( c = 0; c < 5 ; c++ )
+			for( c = 0; c < choobThreads.size() ; c++ )
 			{
 				System.out.println("Looking for threads.. " + c);
 
-				if( !((ChoobThread)choobThreads.get(c)).isBusy() )
+				/*
+				 * TODO
+				 * Potential race condition here. Since synthesized events can
+				 * be sent down through here, this is significant:
+				 * The assumption is that if a thread is not busy it will only
+				 * be grabbed by the currently running thread. We need a lock()
+				 * type call to lock the thread - which returns true if the
+				 * lock succeeded.
+				 *
+				 * Fix attempted -- bucko
+				 */
+				//if( !((ChoobThread)choobThreads.get(c)).isBusy() )
+				if( ((ChoobThread)choobThreads.get(c)).lock() )
 				{
 					done = true;
 
@@ -338,6 +368,17 @@ public class Choob extends PircBot
 
 					break;
 				}
+			}
+
+			if (done) break;
+
+			count++;
+			if (count > 3 && choobThreads.size() < MAXTHREADS ) {
+				// I guess we'll never be getting a thread!
+				// But we can make more! ^.^
+				count = 0;
+				addChoobThread();
+				continue;
 			}
 
 			try

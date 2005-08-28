@@ -46,7 +46,7 @@ public class ChoobSecurityManager extends SecurityManager {
 
             if( tempClassLoader != null && tempClassLoader.getClass() == DiscreteFilesClassLoader.class ) {
                 Connection dbConnection = dbBroker.getConnection();
-                System.out.println("Priviledged call from plugin " + callStackClasses[c] + ". Permission type " + permission.getClass().getName() + " needed: " + permission.getName() + " (Action: '" + permission.getActions() + "')");
+//                System.out.println("Priviledged call from plugin " + callStackClasses[c] + ". Permission type " + permission.getClass().getName() + " needed: " + permission.getName() + " (Action: '" + permission.getActions() + "')");
 
                 try {
                     PreparedStatement permissionsSmt = dbConnection.prepareStatement("SELECT Permission, Action, Type FROM UserPlugins, UserPluginPermissions WHERE UserPlugins.UserID = UserPluginPermissions.UserID AND UserPlugins.PluginName = ?");

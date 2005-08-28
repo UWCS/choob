@@ -7,6 +7,6 @@ class Hook2
 {
 	public void commandHook( Message con, Modules modules, IRCInterface irc )
 	{
-		modules.plugin.callAPI("Hook1.Hooker", new Object[] { new Message(con), modules, irc });
+		modules.plugin.callAPI("Hook1.Hooker", new Object[] { con, modules, irc });
 	}
 }

@@ -23,6 +23,7 @@ public class ChoobThread extends Thread
 {
 	boolean running;
 	Object waitObject;
+	Object lockObject;
 	DbConnectionBroker dbBroker;
 	Connection dbConnection;
 	String trigger;
@@ -44,6 +45,7 @@ public class ChoobThread extends Thread
 	public ChoobThread(DbConnectionBroker dbBroker, Modules modules, Map pluginMap, List filterList, String trigger)
 	{
 		waitObject = new Object();
+		lockObject = new Object();
 
 		this.dbBroker = dbBroker;
 
@@ -56,6 +58,17 @@ public class ChoobThread extends Thread
 		this.pluginMap = pluginMap;
 
 		this.filterList = filterList;
+
+		/*
+		Interesting race problem:
+		When the bot is flooded with commands and a new thread is fired up
+		  which is immediately checked, we get a bizarre race in which busy
+		  was set to false, but the thread was not yet waiting on its wait
+		  object.
+		With any luck, setting a thread as busy until its first lock should
+		  fix this.
+		*/
+		this.busy = true; // Prevent weird race condition of doom?
 	}
 
 	public void run()
@@ -75,7 +88,24 @@ public class ChoobThread extends Thread
 
 					busy = true;
 
-					if (tevent instanceof Message)
+					// Oh, god, please.. no..
+
+					// Process event calls first
+					System.out.println("Thread("+threadID+") handled an event.");
+					Object plugins[] = pluginMap.values().toArray();
+					for (int i=0; i<plugins.length; i++)
+						try
+						{
+							BeanshellPluginUtils.doEvent(plugins[i], tevent.getMethodName(), tevent, modules, irc);
+						}
+						catch (Exception e)
+						{
+							System.out.println("OH NOES");
+							e.printStackTrace();
+						}
+
+					// Now if it's a message, deal with that too
+					if (tevent instanceof CommandEvent)
 					{
 						mes=(Message)tevent;
 						tevent=null;
@@ -168,20 +198,6 @@ public class ChoobThread extends Thread
 					}
 					else
 					{
-						// Oh, god, please.. no..
-
-						System.out.println("Thread("+threadID+") handled an event.");
-						Object plugins[] = pluginMap.values().toArray();
-						for (int i=0; i<plugins.length; i++)
-							try
-							{
-								BeanshellPluginUtils.doEvent(plugins[i], tevent.getMethodName(), tevent, modules, irc);
-							}
-							catch (Exception e)
-							{
-								System.out.println("OH NOES");
-								e.printStackTrace();
-							}
 
 
 
@@ -233,11 +249,43 @@ public class ChoobThread extends Thread
 
 	/**
 	 * Checks whether the thread is busy or not.
+	 * @deprecated Use lock()
 	 * @return Value of property busy.
 	 */
 	public boolean isBusy()
 	{
 		return this.busy;
+	}
+
+
+	// XXX need better implementation of subsequent 2 methods
+	/**
+	 * Checks whether the thread is busy or not, locking it if it's not.
+	 * @return Whether a lock was obtained.
+	 */
+	public boolean lock()
+	{
+		synchronized(lockObject)
+		{
+			if (this.busy)
+			{
+				return false;
+			}
+			else
+			{
+				this.busy = true;
+				return true;
+			}
+		}
+	}
+
+	/**
+	 * Removes a lock on the thread, in case it was locked without being given
+	 * work.
+	 */
+	public void unlock()
+	{
+		this.busy = false;
 	}
 
 	/**

@@ -26,6 +26,9 @@ our %inheritance = (
 	Action => "__HORRORMUNGER__",
 	PrivateAction => [qw/Message PrivateEvent/],
 	ChannelAction => [qw/Message ChannelEvent/],
+	Notice => "__HORRORMUNGER__",
+	PrivateNotice => [qw/Message PrivateEvent/],
+	ChannelNotice => [qw/Message ChannelEvent/],
 
 	ChannelInfo => [qw/IRCEvent ChannelEvent/],
 
@@ -114,9 +117,9 @@ while ($_ = <DATA>) {
 			}
 			$eventHandler .= <<END;
 		if (target.indexOf('#') == 0)
-			$handlers{Private};
-		else
 			$handlers{Channel};
+		else
+			$handlers{Private};
 	}
 
 END
@@ -386,7 +389,6 @@ sub getInherit {
 #protected void onVersion(String sourceNick, String sourceLogin, String sourceHostname, String target) { spinThread(new ChannelEvent(ChannelEvent.ce_Version, new String[] {sourceNick, sourceLogin, sourceHostname, target })); }
 
 # Protect against RFC breakage.
-#protected void onNotice(String sourceNick, String sourceLogin, String sourceHostname, String target, String notice) { spinThread(new ChannelEvent(ChannelEvent.ce_Notice, new String[] {sourceNick, sourceLogin, sourceHostname, target, notice})); }
 
 # Handled elsewhere in this file, for now:
 #protected void onMessage(String channel, String sender, String login, String hostname, String message) { spinThread(new ChannelEvent(ChannelEvent.ce_Message, new String[] {channel, sender, login, hostname, message})); }
@@ -395,6 +397,7 @@ sub getInherit {
 
 # THESE EVENTS ARE REAL
 __DATA__
+Notice(nick, login, hostname, String target, message) Notice, Notice (public or private)
 Message(target, nick, login, hostname, message)[channel = target] ChannelMessage, Public message
 PrivateMessage(nick, login, hostname, message)[target = null] PrivateMessage, Private message
 Action(nick, login, hostname, target, message) Action, Action (public or private) !!!
