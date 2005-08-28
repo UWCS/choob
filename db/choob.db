@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS `User` (
 INSERT INTO `User` VALUES (1, 'root');
 INSERT INTO `User` VALUES (3, 'Faux');
 INSERT INTO `User` VALUES (4, 'Sadiq');
+INSERT INTO `User` VALUES (5, 'bucko');
 
 -- --------------------------------------------------------
 
@@ -72,8 +73,8 @@ INSERT INTO `User` VALUES (4, 'Sadiq');
 
 CREATE TABLE IF NOT EXISTS `UserPluginPermissions` (
   `UserID` int(11) NOT NULL default '0',
-  `Permission` tinytext NOT NULL,
   `Type` tinytext NOT NULL,
+  `Permission` tinytext NOT NULL,
   `Action` tinytext NOT NULL
 ) TYPE=MyISAM COMMENT='Table storing plugin permissions';
 
@@ -81,18 +82,10 @@ CREATE TABLE IF NOT EXISTS `UserPluginPermissions` (
 -- Dumping data for table `UserPluginPermissions`
 -- 
 
-INSERT INTO `UserPluginPermissions` VALUES (3, 'getCookieHandler', '', '*');
-INSERT INTO `UserPluginPermissions` VALUES (3, 'localhost:80', 'connect,resolve', '*');
-INSERT INTO `UserPluginPermissions` VALUES (4, 'sadiq.uwcs.co.uk:80', 'connect,resolve', '*');
-INSERT INTO `UserPluginPermissions` VALUES (4, 'getCookieHandler', '', '*');
-INSERT INTO `UserPluginPermissions` VALUES (1, 'localhost:80', 'connect,resolve', '*');
-INSERT INTO `UserPluginPermissions` VALUES (4, 'java.lang.RuntimePermission', 'createClassLoader', '');
-INSERT INTO `UserPluginPermissions` VALUES (4, 'java.net.NetPermission', '*', '');
-INSERT INTO `UserPluginPermissions` VALUES (4, 'org.uwcs.choob.support.ChoobPermission', 'canAddPlugins', '');
-INSERT INTO `UserPluginPermissions` VALUES (4, 'java.util.PropertyPermission', '*', '');
-INSERT INTO `UserPluginPermissions` VALUES (4, 'java.net.SocketPermission', '*', '');
-INSERT INTO `UserPluginPermissions` VALUES (4, '*', '', '');
-INSERT INTO `UserPluginPermissions` VALUES (1, 'org.uwcs.choob.support.ChoobPermission', '*', '');
+INSERT INTO `UserPluginPermissions` VALUES (1, 'java.security.AllPermission', '', '');
+INSERT INTO `UserPluginPermissions` VALUES (3, 'java.security.AllPermission', '', '');
+INSERT INTO `UserPluginPermissions` VALUES (4, 'java.security.AllPermission', '', '');
+INSERT INTO `UserPluginPermissions` VALUES (5, 'java.security.AllPermission', '', '');
 
 -- --------------------------------------------------------
 
