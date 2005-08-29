@@ -22,7 +22,15 @@ public class ChoobPermission extends BasicPermission
     {
         super(name);
     }
-    
+
+    /**
+     *
+     * @param name
+     * @param actions
+     */    
+    public ChoobPermission( String name, String actions ) {
+        this(name);
+    }
     /**
      *
      * @param obj

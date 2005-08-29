@@ -159,9 +159,23 @@ public class ChoobSecurityManager extends SecurityManager
 	public void checkPermission(Permission permission) {
 		Class[] callStackClasses = getClassContext();
 
-		int c;
+		int c = 0;
 
+		/*
+		 * Attempted fix for Beanshell sillyness:
+		 * It seems any method invocation on Beanshell's side passes through a
+		 * BSHMethod. Hence we just check for its presence, prior to the
+		 * plugin, in the call stack. Then we can deny access to
+		 * suppressAccessChecks. Yay.
+		 */
+		boolean isMethod = false;
 		for( c = 0; c < callStackClasses.length; c++ ) {
+
+			if ( callStackClasses[c].equals(bsh.BshMethod.class) ) {
+				//System.out.println("Is a Beanshell interpreted method!");
+				isMethod = true;
+			}
+
 			if( c != 0 && callStackClasses[c] == ChoobSecurityManager.class ) return;
 			// The above is there to stop circular security checks. Oh the agony.
 
@@ -170,9 +184,13 @@ public class ChoobSecurityManager extends SecurityManager
 			if( tempClassLoader != null && tempClassLoader.getClass() == DiscreteFilesClassLoader.class ) {
 				//System.out.println("Priviledged call from plugin " + callStackClasses[c] + ". Permission type: " + permission);
 
-				if( permission.getName().compareTo("accessDeclaredMembers") == 0 ) return;
+				// If it's not a method, it's a part of Beanshell. It can do
+				// what it wants.
+				if ( !isMethod )
+					return;
+//					if( permission.getName().compareTo("suppressAccessChecks") == 0 ) return;
 
-				if( permission.getName().compareTo("suppressAccessChecks") == 0 ) return;
+				if( permission.getName().compareTo("accessDeclaredMembers") == 0 ) return;
 
 				PermissionCollection perms = getPluginPermissions(callStackClasses[c].getName());
 
@@ -180,11 +198,22 @@ public class ChoobSecurityManager extends SecurityManager
 					return;
 
 				System.out.println("Access denied for plugin " + callStackClasses[c] + " on permission (" + permission.toString() + ")\n");
+				if (!(permission instanceof java.io.FilePermission)) // Lots of these!
+					for(int d=0; d<c; d++)
+						System.out.println("Call Stack: " + callStackClasses[d]);
 				System.out.flush();
 				throw new SecurityException("Access denied for plugin " + callStackClasses[c] + " on permission (" + permission.toString() + ")");
 
 			}
 		}
+	}
+
+	// With bsh.Capabilities.haveAccessibility(), and suppressAccessChecks
+	// defaulting to allowed, this method can be called from a plugin.
+	// I'd argue that this is kinda bad. :)
+	//   -- bucko
+	private static void test() {
+		System.out.println("This is a security test!");
 	}
 
 }

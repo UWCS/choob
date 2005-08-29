@@ -35,6 +35,8 @@ public class BeanshellPluginUtils
 		Class coreClass;
 		Interpreter i;
 
+		bsh.Capabilities.setAccessibility(false);
+
 		i = new Interpreter();
 
 		try
@@ -117,6 +119,20 @@ public class BeanshellPluginUtils
 
 		Method method = (Method)secondPass.get(0);
 
+		// XXX
+		// Oh, the increased horror of it all!
+		// Not only does bsh set this true by default, it also sets it true
+		// on random occasions!
+		// I can't seem to figure out exactly what's being set to accessible
+		// in the security manager so for now, I'm forbidding BeanShell to
+		// try it on. :)
+		//   -- bucko
+		try
+		{
+			bsh.Capabilities.setAccessibility(false);
+		}
+		catch (Exception e) {}
+
 		// OK, have all methods of the correct name...
 		return method.invoke(plugin, args);
 	}
@@ -179,23 +195,19 @@ public class BeanshellPluginUtils
 		Class coreClass = plugin.getClass();
 		try
 		{
-			if( coreClass != null )
-			{
-				Method tempMethod = coreClass.getDeclaredMethod(func,new Class[]
-				{ Modules.class });
-
-				Object[] objectArray = new Object[1];
-
-				objectArray[0] = mods;
-
-				tempMethod.invoke(plugin,objectArray);
-			}
+			javaHorrorMethodCall(plugin, func, new Object[] { mods });
 		}
 		catch( NoSuchMethodException e )
 		{
 			// Here we just shrug our shoulders and go 'meh' in a Skumby-esque fashion
 			// If people don't want to provide a create/destroy method, we can't force
 			// them.
+		}
+		catch (InvocationTargetException e)
+		{
+			// The horror!
+			System.out.println("Exception in calling plugin function: " + e);
+			e.printStackTrace();
 		}
 		catch( Exception e )
 		{
