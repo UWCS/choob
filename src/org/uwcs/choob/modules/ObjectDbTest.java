@@ -67,7 +67,7 @@ public class ObjectDbTest
 	
 	Pattern andSplitter = Pattern.compile("and\\s*", Pattern.CASE_INSENSITIVE);
 	
-	Pattern expParser = Pattern.compile("(\\p{Alpha}+)\\s*([=><~])\\s*(\\'\\w+\\')\\s*", Pattern.CASE_INSENSITIVE);
+	Pattern expParser = Pattern.compile("(\\p{Alpha}+)\\s*([=><~])\\s*((?:\\'\\w+\\')|(?:\\d+))\\s*", Pattern.CASE_INSENSITIVE);
 	
 	for( int c = 0; c < clauses.length; c++ )
 	{
