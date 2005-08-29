@@ -1,0 +1,13 @@
+# This is an example bot.conf file. You _must_ have one for your Choob instance or it won't run.
+
+# Name of your bot
+botName=SomeName
+
+# Username for the MySQL database running on localhost named Choob
+dbUser=choob
+
+# Password for the MySQL database.. yada yada.
+dbPass=choob
+
+# Trigger that commands should be prefixed with.
+botTrigger=~
