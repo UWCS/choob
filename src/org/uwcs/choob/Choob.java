@@ -60,6 +60,7 @@ public class Choob extends PircBot
 		String botName="Choob";
 		String dbUser="";
 		String dbPass="";
+		String dbServer="localhost";
 
 		try
 		{
@@ -68,13 +69,13 @@ public class Choob extends PircBot
 			botName = botProps.getProperty("botName");
 			dbUser = botProps.getProperty("dbUser");
 			dbPass = botProps.getProperty("dbPass");
-                        trigger = botProps.getProperty("botTrigger");
+			trigger = botProps.getProperty("botTrigger");
+			dbServer = botProps.getProperty("dbServer");
 		}
 		catch (Exception e)
 		{
 			System.out.println(e);
-			System.out.println("Fatal error reading bot.conf. Exiting.");
-                        e.printStackTrace(System.out);
+			System.out.println("\n\nFatal error reading bot.conf, check the readme file. Exiting.");
 			System.exit(2);
 		}
 
@@ -86,7 +87,7 @@ public class Choob extends PircBot
 		this.setVersion("Choob SVN - http://svn.uwcs.co.uk/repos/choob/");
 
 		// Create a new database connection broker using the MySQL drivers
-		broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", dbUser, dbPass, 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
+		broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://" + dbServer + "/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", dbUser, dbPass, 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
 
 		// Initialise our modules.
 		modules = new Modules(broker, pluginMap, filterList, intervalList, this);
