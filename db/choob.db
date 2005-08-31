@@ -53,8 +53,8 @@ CREATE TABLE `CorePlugins` (
 -- Dumping data for table `CorePlugins`
 --
 
-INSERT INTO `CorePlugins` VALUES ('Test','file:///home/bucko/projects/choob/trunk/contrib/Test.java');
-INSERT INTO `CorePlugins` VALUES ('Plugin','file:///home/bucko/projects/choob/trunk/contrib/Plugin.java');
+INSERT INTO `CorePlugins` VALUES ('Test','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Test.java');
+INSERT INTO `CorePlugins` VALUES ('Plugin','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Plugin.java');
 
 --
 -- Table structure for table `GroupMembers`
