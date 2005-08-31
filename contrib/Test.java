@@ -5,6 +5,21 @@ import org.uwcs.choob.support.events.*;
 
 class Test
 {
+	public void commandSecurity( Message con, Modules mods, IRCInterface irc )
+	{
+		List params = mods.util.getParms( con );
+
+		String priv = params.get(1);
+		if ( mods.security.hasPerm( new ChoobPermission(priv), con.getNick() ) )
+			irc.sendContextReply(con, "You do indeed have " + priv + "!" );
+		else
+			irc.sendContextReply(con, "You don't have " + priv + "!" );
+	}
+
+	private void test() {
+		throw new NoSuchMethodException("Test3");
+	}
+
 	public void commandPirate( Message con, Modules mods, IRCInterface irc )
 	{
 		irc.sendContextMessage(con, "Yarr!");

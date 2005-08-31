@@ -18,6 +18,7 @@ import java.net.*;
 import java.util.*;
 import java.lang.reflect.*;
 import org.uwcs.choob.support.*;
+import org.uwcs.choob.plugins.*;
 import org.uwcs.choob.support.events.*;
 import org.uwcs.choob.modules.*;
 import java.sql.*;
@@ -94,7 +95,6 @@ public class Choob extends PircBot
 
 		// Create a new IRC interface
 		irc = new IRCInterface( this );
-
 	}
 
 	/**
@@ -126,6 +126,47 @@ public class Choob extends PircBot
 
 		watcher.start();
 
+		// TODO - make this a proper class
+		java.security.Policy.setPolicy( new java.security.Policy()
+		{
+			// I think this is all that's ever really needed...
+			public boolean implies(java.security.ProtectionDomain d, java.security.Permission p)
+			{
+				if ( !(d instanceof ChoobProtectionDomain) )
+					return true;
+				else
+					return false;
+			}
+			public java.security.PermissionCollection getPermissions(java.security.ProtectionDomain d)
+			{
+				java.security.PermissionCollection p = new java.security.Permissions();
+				//if ( !(d instanceof ChoobProtectionDomain) )
+				//	p.add( new java.security.AllPermission() );
+				return p;
+			}
+			public java.security.PermissionCollection getPermissions(java.security.CodeSource s)
+			{
+				java.security.PermissionCollection p = new java.security.Permissions();
+				//if ( !(d instanceof ChoobCodeSource) )
+				//	p.add( new java.security.AllPermission() );
+				return p;
+			}
+			public void refresh() {}
+		});
+
+		// Now we've finished most of the stuff we need high access priviledges
+		// to do, we can set up our security manager that checks all priviledged
+		// accesses from a Beanshell plugin with their permissions in the MySQL
+		// table.
+
+		// Note to self: Install security AFTER making sure we have permissions
+		// to grant ourselves permissions. :( -- bucko
+		if ( System.getSecurityManager() == null )
+			System.setSecurityManager(new SecurityManager());
+
+		// This is needed to properly initialise a ChoobProtectionDomain.
+		BeanshellPluginUtils.setMods( modules );
+
 		try
 		{
 			// We need to have an initial set of plugins that ought to be loaded as core.
@@ -136,6 +177,7 @@ public class Choob extends PircBot
 			if ( coreplugResults.first() )
 				do
 				{
+					System.out.println("Plugin loading: " + coreplugResults.getString("PluginName"));
 					modules.plugin.addPlugin(coreplugResults.getString("URL"), coreplugResults.getString("PluginName"));
 				}
 				while ( coreplugResults.next() );
@@ -148,12 +190,6 @@ public class Choob extends PircBot
 			System.out.println(e);
 			e.printStackTrace();
 		}
-
-		// Now we've finished most of the stuff we need high access priviledges
-		// to do, we can set up our security manager that checks all priviledged
-		// accesses from a Beanshell plugin with their permissions in the MySQL
-		// table.
-		System.setSecurityManager( new ChoobSecurityManager(broker) );
 	}
 
 	public void onSyntheticMessage(IRCEvent mes) {

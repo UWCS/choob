@@ -13,6 +13,7 @@ import java.sql.*;
 import java.security.*;
 import java.lang.reflect.*;
 import java.util.*;
+import org.uwcs.choob.modules.*;
 
 /**
  * Security manager for the bot, controls access to anything requiring/checking
@@ -23,13 +24,19 @@ public class ChoobSecurityManager extends SecurityManager
 {
 	DbConnectionBroker dbBroker;
 	Map pluginMap;
+	Modules modules;
 
 	/**
 	 * Creates a new instance of ChoobSecurityManager
 	 * @param dbBroker Database connection pool/broker.
 	 */
-	public ChoobSecurityManager(DbConnectionBroker dbBroker)
+	public ChoobSecurityManager(DbConnectionBroker dbBroker, Modules modules)
 	{
+		// Make sure these classes is preloaded!
+		// This avoids circular security checks. Oh, the horror!
+		Class throwAway = bsh.BshMethod.class;
+		throwAway = DiscreteFilesClassLoader.class;
+
 		this.dbBroker = dbBroker;
 		this.pluginMap = new HashMap();
 	}

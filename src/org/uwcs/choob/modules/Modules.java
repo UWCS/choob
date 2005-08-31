@@ -28,6 +28,7 @@ public class Modules
 	public NickModule nick;
 	public IntervalModule interval;
 	public SyntheticModule synthetic;
+	public SecurityModule security;
 	Map pluginMap;
 	List intervalList;
 	List filterList;
@@ -46,6 +47,7 @@ public class Modules
 		nick = new NickModule(dbBroker);
 		interval = new IntervalModule( intervalList );
 		synthetic = new SyntheticModule( bot );
+		security = new SecurityModule( dbBroker );
 		this.dbBroker = dbBroker;
 		this.pluginMap = pluginMap;
 		this.intervalList = intervalList;

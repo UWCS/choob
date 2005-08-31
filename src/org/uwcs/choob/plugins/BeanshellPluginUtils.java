@@ -16,6 +16,7 @@ import java.net.*;
 import java.util.*;
 import java.lang.reflect.*;
 import java.util.regex.*;
+import java.security.*;
 
 /**
  * Set of utilities that are used to load/interogate Beanshell plugins.
@@ -23,6 +24,15 @@ import java.util.regex.*;
  */
 public class BeanshellPluginUtils
 {
+	/**
+	 * Hack the modules reference in
+	 */
+	private static Modules mods = null;
+	public static void setMods(Modules newMods)
+	{
+		if (mods == null)
+			mods = newMods;
+	}
 	/**
 	 * Creates a plugin from a given URL and plugin name.
 	 * @param URL URL to plugin's source.
@@ -41,6 +51,9 @@ public class BeanshellPluginUtils
 
 		try
 		{
+			// XXX Security flaw here; someone could just stick some horrible
+			// method call in the source and it'd be executed as if it were
+			// system.
 			System.out.println(i.eval(srcContent));
 
 			String classname = pluginName;
@@ -69,7 +82,7 @@ public class BeanshellPluginUtils
 	}
 
 	/**
-	 * Go through the horror of method reolution.
+	 * Go through the horror of method resolution.
 	 *
 	 * @param plugin The plugin to use.
 	 * @param methodName The name of the method to resolve.
@@ -122,7 +135,7 @@ public class BeanshellPluginUtils
 		// XXX
 		// Oh, the increased horror of it all!
 		// Not only does bsh set this true by default, it also sets it true
-		// on random occasions!
+		// on random occasions! I expect during class loading.
 		// I can't seem to figure out exactly what's being set to accessible
 		// in the security manager so for now, I'm forbidding BeanShell to
 		// try it on. :)
@@ -131,10 +144,31 @@ public class BeanshellPluginUtils
 		{
 			bsh.Capabilities.setAccessibility(false);
 		}
-		catch (Exception e) {}
+		catch (Exception e) {} // Can't throw anything when we set false.
 
 		// OK, have all methods of the correct name...
-		return method.invoke(plugin, args);
+		AccessControlContext acc = mods.security.getContext( plugin.getClass().getName() );
+
+		// Hax to make the call be of appropriate privs using doPrivileged:
+
+		// These need to be final...
+		final Object plugin2 = plugin;
+		final Object[] args2 = args;
+		final Method method2 = method;
+		try {
+			return AccessController.doPrivileged(new PrivilegedExceptionAction() {
+				public Object run() throws IllegalAccessException, InvocationTargetException {
+					return method2.invoke(plugin2, args2);
+				}
+			}, acc );
+		}
+		catch (PrivilegedActionException e)
+		{
+			// This will be one of the two listed
+			if ( e.getCause() instanceof IllegalAccessException )
+				throw (IllegalAccessException)e.getCause();
+			throw (InvocationTargetException)e.getCause();
+		}
 	}
 
 	/**

@@ -2,6 +2,7 @@ import org.uwcs.choob.*;
 import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
+import bsh.*;
 
 /**
  * Choob nickserv checker
@@ -37,7 +38,6 @@ class NickServ
 	{
 		String nick = modules.util.getParamString( con );
 		int check1 = (int)modules.plugin.callAPI("NickServ.NickServCheck", new Object[] { irc, nick });
-		//if ( apiNickServCheck( irc, nick ) )
 		if ( check1 > 0 )
 		{
 			irc.sendContextReply(con, nick + " is authed (" + check1 + ")!");

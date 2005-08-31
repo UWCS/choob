@@ -1,182 +1,178 @@
--- phpMyAdmin SQL Dump, version 2.6.2-pl1
--- 
+-- MySQL dump 9.11
+--
 -- Host: localhost    Database: choob
--- Server version	4.1.10
--- 
+-- ------------------------------------------------------
+-- Server version	4.0.24_Debian-10-log
 
--- --------------------------------------------------------
+--
+-- Table structure for table `AddNicks`
+--
 
--- 
--- Table structure for table `CorePlugins`
--- 
-
-CREATE TABLE IF NOT EXISTS `CorePlugins` (
-  `PluginName` varchar(64) NOT NULL default '',
-  `URL` mediumtext NOT NULL,
-  PRIMARY KEY  (`PluginName`)
-) TYPE=MyISAM;
-
--- 
--- Dumping data for table `CorePlugins`
--- 
-
-INSERT INTO `CorePlugins` VALUES ('Test', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Test.java');
-INSERT INTO `CorePlugins` VALUES ('Plugin', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Plugin.java');
-
--- --------------------------------------------------------
-
--- 
--- Table structure for table `History`
--- 
-
-CREATE TABLE IF NOT EXISTS `History` (
-  `LineID` int(10) unsigned NOT NULL auto_increment,
-  `Nick` tinytext NOT NULL,
-  `Channel` tinytext NOT NULL,
-  `Text` text NOT NULL,
-  `Time` timestamp NOT NULL,
-  `Random` tinyint(4) NOT NULL default '0',
-  PRIMARY KEY  (`LineID`)
-) TYPE=MyISAM AUTO_INCREMENT=1 ;
-
--- 
--- Dumping data for table `History`
--- 
-
--- --------------------------------------------------------
-
--- 
--- Table structure for table `User`
--- 
-
-CREATE TABLE IF NOT EXISTS `User` (
-  `UserID` int(11) NOT NULL auto_increment,
-  `UserNick` varchar(32) NOT NULL default '',
-  PRIMARY KEY  (`UserID`),
-  UNIQUE KEY `UserNick` (`UserNick`)
-) TYPE=MyISAM COMMENT='Table which will be filled with stuff but isn''t for now.' ;
-
--- 
--- Dumping data for table `User`
--- 
-
-INSERT INTO `User` VALUES (1, 'root');
-INSERT INTO `User` VALUES (3, 'Faux');
-INSERT INTO `User` VALUES (4, 'Sadiq');
-INSERT INTO `User` VALUES (5, 'bucko');
-
--- --------------------------------------------------------
-
--- 
--- Table structure for table `UserPluginPermissions`
--- 
-
-CREATE TABLE IF NOT EXISTS `UserPluginPermissions` (
+CREATE TABLE `AddNicks` (
   `UserID` int(11) NOT NULL default '0',
-  `Type` tinytext NOT NULL,
-  `Permission` tinytext NOT NULL,
-  `Action` tinytext NOT NULL
-) TYPE=MyISAM COMMENT='Table storing plugin permissions';
-
--- 
--- Dumping data for table `UserPluginPermissions`
--- 
-
-INSERT INTO `UserPluginPermissions` VALUES (1, 'java.security.AllPermission', '', '');
-INSERT INTO `UserPluginPermissions` VALUES (3, 'java.security.AllPermission', '', '');
-INSERT INTO `UserPluginPermissions` VALUES (4, 'java.security.AllPermission', '', '');
-INSERT INTO `UserPluginPermissions` VALUES (5, 'java.security.AllPermission', '', '');
-
--- --------------------------------------------------------
-
--- 
--- Table structure for table `UserPlugins`
--- 
-
-CREATE TABLE IF NOT EXISTS `UserPlugins` (
-  `UserID` int(11) NOT NULL default '0',
-  `PluginName` tinytext NOT NULL
+  `Nick` varchar(64) NOT NULL default '',
+  UNIQUE KEY `Nick` (`Nick`)
 ) TYPE=MyISAM;
 
--- 
--- Dumping data for table `UserPlugins`
--- 
+--
+-- Dumping data for table `AddNicks`
+--
 
-INSERT INTO `UserPlugins` VALUES (1, 'Plugin');
-INSERT INTO `UserPlugins` VALUES (1, 'Test');
+INSERT INTO `AddNicks` VALUES (3,'Faux%');
+INSERT INTO `AddNicks` VALUES (3,'YourMum|%');
 
--- --------------------------------------------------------
-
--- 
--- Table structure for table `LoadedPlugins`
--- 
-
-CREATE TABLE IF NOT EXISTS `LoadedPlugins` (
-  `Name` varchar(255) NOT NULL default '',
-  `Source` longtext NOT NULL,
-  UNIQUE KEY `Name` (`Name`)
-) TYPE=MyISAM;
-
--- --------------------------------------------------------
-
--- 
+--
 -- Table structure for table `Aliases`
--- 
+--
 
-CREATE TABLE IF NOT EXISTS `Aliases` (
+CREATE TABLE `Aliases` (
   `Name` varchar(64) NOT NULL default '',
   `Converted` tinytext NOT NULL,
   `UserID` int(11) NOT NULL default '0',
   PRIMARY KEY  (`Name`)
 ) TYPE=MyISAM;
 
--- 
+--
 -- Dumping data for table `Aliases`
--- 
+--
 
-INSERT INTO `Aliases` VALUES ('say', 'Faux.Say', 0);
-INSERT INTO `Aliases` VALUES ('reply', 'Faux.Reply', 0);
+INSERT INTO `Aliases` VALUES ('say','Faux.Say',0);
+INSERT INTO `Aliases` VALUES ('reply','Faux.Reply',0);
 
--- --------------------------------------------------------
+--
+-- Table structure for table `CorePlugins`
+--
 
--- 
--- Table structure for table `AddNicks`
--- 
-
-CREATE TABLE IF NOT EXISTS `AddNicks` (
-  `UserID` int(11) NOT NULL default '0',
-  `Nick` varchar(64) NOT NULL default '',
-  UNIQUE KEY `Nick` (`Nick`)
+CREATE TABLE `CorePlugins` (
+  `PluginName` varchar(64) NOT NULL default '',
+  `URL` mediumtext NOT NULL,
+  PRIMARY KEY  (`PluginName`)
 ) TYPE=MyISAM;
 
--- 
--- Dumping data for table `AddNicks`
--- 
+--
+-- Dumping data for table `CorePlugins`
+--
 
-INSERT INTO `AddNicks` VALUES (3, 'Faux%');
-INSERT INTO `AddNicks` VALUES (3, 'YourMum|%');
+INSERT INTO `CorePlugins` VALUES ('Test','file:///home/bucko/projects/choob/trunk/contrib/Test.java');
+INSERT INTO `CorePlugins` VALUES ('Plugin','file:///home/bucko/projects/choob/trunk/contrib/Plugin.java');
 
+--
+-- Table structure for table `GroupMembers`
+--
+
+CREATE TABLE `GroupMembers` (
+  `GroupID` int(10) unsigned default NULL,
+  `MemberID` int(10) unsigned default NULL,
+  UNIQUE KEY `GroupID` (`GroupID`,`MemberID`),
+  KEY `MemberID` (`MemberID`),
+  KEY `GroupID_2` (`GroupID`)
+) TYPE=MyISAM;
+
+--
+-- Dumping data for table `GroupMembers`
+--
+
+INSERT INTO `GroupMembers` VALUES (2,1);
+INSERT INTO `GroupMembers` VALUES (3,2);
+INSERT INTO `GroupMembers` VALUES (4,3);
+
+--
+-- Table structure for table `History`
+--
+
+CREATE TABLE `History` (
+  `LineID` int(10) unsigned NOT NULL auto_increment,
+  `Nick` tinytext NOT NULL,
+  `Channel` tinytext NOT NULL,
+  `Text` text NOT NULL,
+  `Time` timestamp(14) NOT NULL,
+  `Random` tinyint(4) NOT NULL default '0',
+  PRIMARY KEY  (`LineID`)
+) TYPE=MyISAM;
+
+--
+-- Table structure for table `LoadedPlugins`
+--
+
+CREATE TABLE `LoadedPlugins` (
+  `Name` varchar(255) NOT NULL default '',
+  `Source` longtext NOT NULL,
+  UNIQUE KEY `Name` (`Name`)
+) TYPE=MyISAM;
 
 --
 -- Table structure for table `ObjectStore`
 --
 
-CREATE TABLE ObjectStore (
-  ObjectID int(11) NOT NULL auto_increment,
-  UserID int(11) NOT NULL default '0',
-  ClassName varchar(128) NOT NULL default '',
-  ClassID int(11) NOT NULL default '0',
-  PRIMARY KEY  (ObjectID),
-  UNIQUE KEY Composite (UserID,ClassName,ClassID)
+CREATE TABLE `ObjectStore` (
+  `ObjectID` int(11) NOT NULL auto_increment,
+  `UserID` int(11) NOT NULL default '0',
+  `ClassName` varchar(128) NOT NULL default '',
+  `ClassID` int(11) NOT NULL default '0',
+  PRIMARY KEY  (`ObjectID`),
+  UNIQUE KEY `Composite` (`UserID`,`ClassName`,`ClassID`)
 ) TYPE=MyISAM;
 
 --
 -- Table structure for table `ObjectStoreData`
 --
 
-CREATE TABLE ObjectStoreData (
-  ObjectID int(11) NOT NULL default '0',
-  FieldName varchar(128) NOT NULL default '',
-  FieldType varchar(32) NOT NULL default '',
-  FieldValue text NOT NULL
+CREATE TABLE `ObjectStoreData` (
+  `ObjectID` int(11) NOT NULL default '0',
+  `FieldName` varchar(128) NOT NULL default '',
+  `FieldType` varchar(32) NOT NULL default '',
+  `FieldValue` text NOT NULL
 ) TYPE=MyISAM;
+
+--
+-- Table structure for table `UserNodePermissions`
+--
+
+CREATE TABLE `UserNodePermissions` (
+  `NodeID` int(11) NOT NULL default '0',
+  `Type` tinytext NOT NULL,
+  `Permission` tinytext NOT NULL,
+  `Action` tinytext NOT NULL
+) TYPE=MyISAM COMMENT='Table storing plugin permissions';
+
+--
+-- Dumping data for table `UserNodePermissions`
+--
+
+INSERT INTO `UserNodePermissions` VALUES (2,'java.security.AllPermission','','');
+
+--
+-- Table structure for table `UserNodes`
+--
+
+CREATE TABLE `UserNodes` (
+  `NodeID` int(10) unsigned NOT NULL auto_increment,
+  `NodeName` varchar(32) NOT NULL default '',
+  `NodeClass` tinyint(3) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`NodeID`),
+  UNIQUE KEY `NodeName` (`NodeName`,`NodeClass`)
+) TYPE=MyISAM;
+
+--
+-- Dumping data for table `UserNodes`
+--
+
+INSERT INTO `UserNodes` VALUES (1,'bucko',0);
+INSERT INTO `UserNodes` VALUES (2,'bucko',1);
+
+--
+-- Table structure for table `UserPlugins`
+--
+
+CREATE TABLE `UserPlugins` (
+  `UserID` int(11) NOT NULL default '0',
+  `PluginName` tinytext NOT NULL
+) TYPE=MyISAM;
+
+--
+-- Dumping data for table `UserPlugins`
+--
+
+INSERT INTO `UserPlugins` VALUES (1,'Plugin');
+INSERT INTO `UserPlugins` VALUES (1,'Test');
+

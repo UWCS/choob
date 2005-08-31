@@ -15,6 +15,7 @@ import java.io.*;
 import java.net.*;
 import java.lang.reflect.*;
 import java.sql.*;
+import java.security.AccessController;
 
 /**
  * Module that performs functions relating to the plugin architecture of the bot.
@@ -46,15 +47,7 @@ public class PluginModule {
 	 * @throws Exception Thrown if there's a syntactical error in the plugin's source.
 	 */
 	public void addPlugin(String URL,String pluginName ) throws Exception {
-		ChoobSecurityManager sec = null;
-
-		{
-			SecurityManager s = System.getSecurityManager();
-			if( s != null && s instanceof ChoobSecurityManager ) {
-				sec = (ChoobSecurityManager)s;
-				sec.checkPermission(new ChoobPermission("canAddPlugins"));
-			}
-		}
+		AccessController.checkPermission(new ChoobPermission("plugin.add."+pluginName));
 
 		Object plugin = pluginMap.get(pluginName);
 
@@ -87,8 +80,8 @@ public class PluginModule {
 
 		pluginMap.put(pluginName,plugin);
 
-		if ( sec != null )
-			sec.invalidatePluginPermissions(pluginName);
+		//if ( sec != null )
+		//	sec.invalidatePluginPermissions(pluginName);
 
 		reloadFilters();
 	}
@@ -98,6 +91,7 @@ public class PluginModule {
 	 */
 	public void reloadPluginPermissions(String pluginName)
 	{
+		// XXX needs updating
 		ChoobSecurityManager sec = null;
 
 		SecurityManager s = System.getSecurityManager();

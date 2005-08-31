@@ -9,6 +9,7 @@ package org.uwcs.choob.support;
 import org.uwcs.choob.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
+import java.security.AccessController;
 
 /**
  *
@@ -46,27 +47,15 @@ public class IRCInterface {
 
 	public void sendMessage(String target, String message)
 	{
-		if( System.getSecurityManager() != null )
-		{
-			System.getSecurityManager().checkPermission(new ChoobPermission("canSendMessage"));
-		}
+		AccessController.checkPermission(new ChoobPermission("message.send.privmsg"));
 
 		bot.sendMessage(target, message);
 	}
 
 	public void sendAction(String target, String message)
 	{
-		if( System.getSecurityManager() != null )
-		{
-			System.getSecurityManager().checkPermission(new ChoobPermission("canSendMessage"));
-		}
+		AccessController.checkPermission(new ChoobPermission("message.send.action"));
 
 		bot.sendAction(target, message);
 	}
-
-/* See sendMessage.
-	public void sendPrivateMessage(String nick,String message)
-	{
-		bot.sendMessage(nick,message);
-	}*/
 }
