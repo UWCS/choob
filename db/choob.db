@@ -1,3 +1,8 @@
+drop database choob;
+create database choob;
+
+use choob;
+
 -- MySQL dump 9.11
 --
 -- Host: localhost    Database: choob
