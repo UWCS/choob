@@ -9,5 +9,8 @@ dbUser=choob
 # Password for the MySQL database.. yada yada.
 dbPass=choob
 
+# Server for the MySQL database.. yada yada.
+dbServer=localhost
+
 # Trigger that commands should be prefixed with.
 botTrigger=~
