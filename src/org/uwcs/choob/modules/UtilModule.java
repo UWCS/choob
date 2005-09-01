@@ -62,25 +62,28 @@ public class UtilModule {
 
 		int currentPos = text.indexOf(' ');
 		int lastPos = 0;
-		for(int i=0; i<count; i++) {
-			tempList.add( text.substring( lastPos, currentPos ) );
-			while (true) { // How do I do an "until" loop? --bucko
-				lastPos = currentPos + 1;
-				currentPos = text.indexOf(' ', lastPos);
+		if (currentPos != -1)
+			for(int i=0; i<count; i++) {
+				tempList.add( text.substring( lastPos, currentPos ) );
+				while (true) { // How do I do an "until" loop? --bucko
+					lastPos = currentPos + 1;
+					currentPos = text.indexOf(' ', lastPos);
 
-				// I don't think there's a possible race condition here.
-				// Also note that lastPos can't be -1, so an indexOf fail
-				//   doesn't break this, either.
-				// Make sure we skip "empty" parameters.
-				if (currentPos != lastPos)
+					// I don't think there's a possible race condition here.
+					// Also note that lastPos can't be -1, so an indexOf fail
+					//   doesn't break this, either.
+					// Make sure we skip "empty" parameters.
+					if (currentPos != lastPos)
+						break;
+				}
+				if (currentPos == -1) {
+					// Last parameter!
+					tempList.add( text.substring( lastPos ) );
 					break;
+				}
 			}
-			if (currentPos == -1) {
-				// Last parameter!
-				tempList.add( text.substring( lastPos ) );
-				break;
-			}
-		}
+		else
+			tempList.add( text );
 
 		if (currentPos != -1) {
 			// Above loop finished without already slurping the final

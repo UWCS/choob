@@ -41,6 +41,7 @@ public class SecurityModule
 
 		this.dbBroker = dbBroker;
 		this.nodeMap = new HashMap();
+		this.nodeDbLock = new Object();
 	}
 
 	/* =====================
@@ -438,6 +439,7 @@ public class SecurityModule
 		if (pluginName == null)
 			return true; // XXX should this be true?
 
+		// Should prevent circular checks...
 		return ((Boolean)AccessController.doPrivileged(new PrivilegedAction() {
 			public Object run() {
 				int nodeID = getNodeFromPluginName( pluginName );
@@ -447,7 +449,7 @@ public class SecurityModule
 					return false;
 
 				// Now just check on this node!
-				return new Boolean(hasPerm( permission, nodeID ));
+				return hasPerm( permission, nodeID );
 			}
 		})).booleanValue();
 	}
@@ -457,284 +459,229 @@ public class SecurityModule
 	 * ===============================
 	 */
 
+	private Object nodeDbLock;
+
 	/**
 	 * Add a user to the database
-	 * @return Success status, since BeanShell hates exceptions!
 	 */
-	public boolean addUser(String userName)
+	public void addUser(String userName) throws ChoobException
 	{
-		if( System.getSecurityManager() != null )
-			System.getSecurityManager().checkPermission(new ChoobPermission("user.add"));
+		AccessController.checkPermission(new ChoobPermission("user.add"));
 
 		Connection dbConn = dbBroker.getConnection();
-		try
+		synchronized(nodeDbLock)
 		{
-			// First, make sure no user exists...
-			PreparedStatement stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND (NodeType = 0 OR NodeType = 1)");
-			stat.setString(1, userName);
-			ResultSet results = stat.executeQuery();
-			if ( results.first() )
+			try
 			{
-				System.out.println("Ack! User already existed!");
-				dbBroker.freeConnection(dbConn);
-				return false;
+				// First, make sure no user exists...
+				PreparedStatement stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND (NodeClass = 0 OR NodeClass = 1)");
+				stat.setString(1, userName);
+				ResultSet results = stat.executeQuery();
+				if ( results.first() )
+				{
+					dbBroker.freeConnection(dbConn);
+					throw new ChoobException ("User " + userName + " already exists!");
+				}
+
+				// Add user and group
+				stat = dbConn.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
+				stat.setString(1, userName);
+				stat.setInt(2, 0);
+				if (stat.executeUpdate() == 0)
+					System.err.println("Ack! No rows updated in user insert!");
+				int userID = getLastInsertID(dbConn);
+				stat = dbConn.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
+				stat.setString(1, userName);
+				stat.setInt(2, 1);
+				if (stat.executeUpdate() == 0)
+					System.err.println("Ack! No rows updated in user group insert!");
+				int groupID = getLastInsertID(dbConn);
+
+				// Now bind them.
+				stat = dbConn.prepareStatement("INSERT INTO GroupMembers (GroupID, MemberID) VALUES (?, ?)");
+				stat.setInt(1, groupID);
+				stat.setInt(2, userID);
+				if (stat.executeUpdate() == 0)
+					System.err.println("Ack! No rows updated in user group member insert!");
+
+				// Done!
 			}
-
-			// Add user and group
-			stat = dbConn.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
-			stat.setString(1, userName);
-			stat.setInt(1, 0);
-			if (stat.executeUpdate() == 0)
-				System.out.println("Ack! No rows updated in user insert!");
-			int userID = getLastInsertID(dbConn);
-			stat = dbConn.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
-			stat.setString(1, userName);
-			stat.setInt(1, 1);
-			if (stat.executeUpdate() == 0)
-				System.out.println("Ack! No rows updated in user group insert!");
-			int groupID = getLastInsertID(dbConn);
-
-			// Now bind them.
-			stat = dbConn.prepareStatement("INSERT INTO GroupMembers (GroupID, MemberID) VALUES (?, ?)");
-			stat.setInt(1, groupID);
-			stat.setInt(2, userID);
-			if (stat.executeUpdate() == 0)
-				System.out.println("Ack! No rows updated in user group member insert!");
-
-			// Done!
-			dbBroker.freeConnection(dbConn);
-			return true;
-		}
-		catch (SQLException e)
-		{
-			System.out.println("Ack! SQL exception when adding user " + userName + ": " + e);
+			catch (SQLException e)
+			{
+				dbBroker.freeConnection(dbConn);
+				System.err.println("Ack! SQL exception when adding user " + userName + ": " + e);
+				throw new ChoobException("SQL exception occurred when adding user. Ask an admin to check the log.");
+			}
 		}
 		dbBroker.freeConnection(dbConn);
-		return false;
 	}
 	// Must check (system) user.add
 
 	/**
 	 * Add a user to the database
-	 * @return Success status, since BeanShell hates exceptions!
 	 */
-	public boolean addGroup(String groupName)
+	public void addGroup(String groupName) throws ChoobException
 	{
-		String[] parts = groupName.split("\\.");
+		UserNode group = new UserNode(groupName);
 
-		if (parts.length < 2) {
-			System.out.println("Tried to add a group with no name: " + groupName);
-			return false;
-		}
-
-		int type;
-		if (parts[0].toLowerCase().equals("user"))
-			type = 1;
-		else if (parts[0].toLowerCase().equals("plugin"))
-			type = 2;
-		else if (parts[0].toLowerCase().equals("system"))
-			type = 3;
-		else
-		{
-			System.out.println("Tried to add an invalid type of group: " + groupName);
-			return false;
-		}
-
-		if (type == 2) // plugins can add their own groups!
+		if (group.getType() == 2) // plugins can add their own groups!
 		{
 			String pluginName = getPluginName(0);
-			if (!parts[1].toLowerCase().equals(pluginName.toLowerCase()))
-				if( System.getSecurityManager() != null )
-					System.getSecurityManager().checkPermission(
-							new ChoobPermission("group.add."+groupName));
+			if (!group.getRootName().toLowerCase().equals(pluginName.toLowerCase()))
+				AccessController.checkPermission(new ChoobPermission("group.add."+groupName));
 		}
 		else
 		{
-			if( System.getSecurityManager() != null )
-				System.getSecurityManager().checkPermission(
-						new ChoobPermission("group.add."+groupName));
+			AccessController.checkPermission(new ChoobPermission("group.add."+groupName));
 		}
-
-		String nodeName = parts[1];
-		for(int i=2; i<parts.length; i++)
-			nodeName = nodeName.concat("." + parts[i]);
 
 		// OK, we're allowed to add.
 		Connection dbConn = dbBroker.getConnection();
-		try
+		synchronized(nodeDbLock)
 		{
-			PreparedStatement stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeType = ?");
-			stat.setString(1, nodeName);
-			stat.setInt(2, type);
-			ResultSet results = stat.executeQuery();
-			if ( results.first() )
+			try
 			{
-				System.out.println("Ack! Group already existed: " + groupName);
-				dbBroker.freeConnection(dbConn);
-				return false;
-			}
+				PreparedStatement stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = ?");
+				stat.setString(1, group.getName());
+				stat.setInt(2, group.getType());
+				ResultSet results = stat.executeQuery();
+				if ( results.first() )
+				{
+					dbBroker.freeConnection(dbConn);
+					throw new ChoobException("Group " + groupName + " already exists!");
+				}
 
-			stat = dbConn.prepareStatement("INSERT INTO UserNodes (NodeName, NodeType) VALUES (?, ?)");
-			stat.setString(1, nodeName);
-			stat.setInt(2, type);
-			if ( stat.executeUpdate() == 0 )
-			{
-				System.out.println("Ack! Group add modified nothing: " + groupName);
-				dbBroker.freeConnection(dbConn);
-				return false;
+				stat = dbConn.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
+				stat.setString(1, group.getName());
+				stat.setInt(2, group.getType());
+				if (stat.executeUpdate() == 0)
+					System.err.println("Ack! No rows updated in group " + groupName + " insert!");
 			}
-			return true;
-		}
-		catch (SQLException e)
-		{
-			System.out.println("Ack! SQL exception when adding group " + groupName + ": " + e);
+			catch (SQLException e)
+			{
+				dbBroker.freeConnection(dbConn);
+				System.out.println("Ack! SQL exception when adding group " + groupName + ": " + e);
+				throw new ChoobException("SQL exception occurred when adding group. Ask an admin to check the log.");
+			}
 		}
 		dbBroker.freeConnection(dbConn);
-		return false;
 	}
 
-	public boolean addUserToGroup(String parentName, String childName)
+	public void addUserToGroup(String parentName, String childName) throws ChoobException
 	{
 		UserNode parent = new UserNode(parentName);
 		UserNode child = new UserNode(childName, true);
-		return addNodeToNode(parent, child);
+		addNodeToNode(parent, child);
 	}
 
-	public boolean addGroupToGroup(String parentName, String childName)
+	public void addGroupToGroup(String parentName, String childName) throws ChoobException
 	{
 		UserNode parent = new UserNode(parentName);
 		UserNode child = new UserNode(childName);
-		return addNodeToNode(parent, child);
+		addNodeToNode(parent, child);
 	}
 
-	public boolean addNodeToNode(UserNode parent, UserNode child)
+	public void addNodeToNode(UserNode parent, UserNode child) throws ChoobException
 	{
 		if (parent.getType() == 2) // plugins can add their own groups!
 		{
 			String pluginName = getPluginName(0);
 			if (!parent.getRootName().toLowerCase().equals(pluginName.toLowerCase()))
-				if( System.getSecurityManager() != null )
-					System.getSecurityManager().checkPermission(
-							new ChoobPermission("group.addMember."+parent));
+				AccessController.checkPermission(new ChoobPermission("group.addMember."+parent));
 		}
 		else
 		{
-			if( System.getSecurityManager() != null )
-				System.getSecurityManager().checkPermission(
-						new ChoobPermission("group.addMember."+parent));
+			AccessController.checkPermission(new ChoobPermission("group.addMember."+parent));
 		}
 
 		// OK, we're allowed to add.
-		Connection dbConn = dbBroker.getConnection();
-		int parentID = getNodeIDFromNode(child);
-		int childID = getNodeIDFromNode(parent);
+		int parentID = getNodeIDFromNode(parent);
+		int childID = getNodeIDFromNode(child);
 		if (parentID == -1)
-		{
-			System.out.println("Node " + parent + " did not exist!");
-			dbBroker.freeConnection(dbConn);
-			return false;
-		}
+			throw new ChoobException("Group " + parent + " does not exist!");
 		if (childID == -1)
-		{
-			System.out.println("Node " + child + " did not exist!");
-			dbBroker.freeConnection(dbConn);
-			return false;
-		}
+			throw new ChoobException("Group " + child + " does not exist!");
 
-		try
+		Connection dbConn = dbBroker.getConnection();
+		synchronized(nodeDbLock)
 		{
-			PreparedStatement stat = dbConn.prepareStatement("SELECT NodeID FROM GroupMembers WHERE GroupID = ? AND MemberID = ?");
-			stat.setInt(1, parentID);
-			stat.setInt(2, childID);
-			ResultSet results = stat.executeQuery();
-			if ( results.first() )
+			try
 			{
-				System.out.println("Ack! Group already had that member: " + parent + ", member " + child);
-				dbBroker.freeConnection(dbConn);
-				return false;
-			}
+				PreparedStatement stat = dbConn.prepareStatement("SELECT MemberID FROM GroupMembers WHERE GroupID = ? AND MemberID = ?");
+				stat.setInt(1, parentID);
+				stat.setInt(2, childID);
+				ResultSet results = stat.executeQuery();
+				if ( results.first() )
+				{
+					dbBroker.freeConnection(dbConn);
+					throw new ChoobException("Group " + parent + " already had member " + child);
+				}
 
-			stat = dbConn.prepareStatement("INSERT INTO GroupMembers (GroupID, MemberID) VALUES (?, ?)");
-			stat.setInt(1, parentID);
-			stat.setInt(2, childID);
-			if ( stat.executeUpdate() == 0 )
-			{
-				System.out.println("Ack! Group member add did nothing: " + parent + ", member " + child);
-				dbBroker.freeConnection(dbConn);
-				return false;
+				stat = dbConn.prepareStatement("INSERT INTO GroupMembers (GroupID, MemberID) VALUES (?, ?)");
+				stat.setInt(1, parentID);
+				stat.setInt(2, childID);
+				if ( stat.executeUpdate() == 0 )
+					System.err.println("Ack! Group member add did nothing: " + parent + ", member " + child);
 			}
-			dbBroker.freeConnection(dbConn);
-			return true;
-		}
-		catch (SQLException e)
-		{
-			System.out.println("Ack! SQL exception when adding member to group: " + parent + ", member " + child + ": " + e);
+			catch (SQLException e)
+			{
+				dbBroker.freeConnection(dbConn);
+				System.err.println("Ack! SQL exception when adding member to group: " + parent + ", member " + child + ": " + e);
+				throw new ChoobException("SQL exception occurred when adding member to group. Ask an admin to check the log.");
+			}
 		}
 		dbBroker.freeConnection(dbConn);
-		return false;
 	}
 
-	public boolean grantUserPermission(String groupName, Permission permission)
+	public void grantUserPermission(String groupName, Permission permission) throws ChoobException
 	{
 		UserNode group = new UserNode(groupName);
 		if (group.getType() == 2) // plugins can add their own permissions (kinda)
 		{
 			String pluginName = getPluginName(0);
 			if (!group.getRootName().toLowerCase().equals(pluginName.toLowerCase()))
-				if( System.getSecurityManager() != null )
-					System.getSecurityManager().checkPermission(
-							new ChoobPermission("permission.grant.subset."+group));
-			// OK, that's all find, BUT:
+				AccessController.checkPermission(new ChoobPermission("permission.grant."+group));
+			// OK, that's all fine, BUT:
 			if (!hasPluginPerm(permission))
 			{
-				System.out.println("Plugin tried to grant permission it didn't have!");
-				return false;
+				System.err.println("Plugin " + pluginName + " tried to grant permission " + permission + " it didn't have!");
+				throw new ChoobException("A plugin may only grant permssions which it is entitled to.");
 			}
 		}
 		else
 		{
-			if( System.getSecurityManager() != null )
-				System.getSecurityManager().checkPermission(
-						new ChoobPermission("permission.grant.any."+group));
+			AccessController.checkPermission(new ChoobPermission("permission.grant."+group));
 		}
 
 
 		// OK, we're allowed to add.
 		int groupID = getNodeIDFromNode(group);
 		if (groupID == -1)
-		{
-			System.out.println("Node " + group + " did not exist!");
-			return false;
-		}
+			throw new ChoobException("Group " + group + " does not exist!");
 
 		if (hasPerm(permission, groupID))
-		{
-			System.out.println("Node " + group + " already had this permission: " + permission);
-			return true;
-		}
+			throw new ChoobException("Group " + group + " already has permission " + permission + "!");
 
 		Connection dbConn = dbBroker.getConnection();
-		try
+		synchronized(nodeDbLock)
 		{
-			PreparedStatement stat = dbConn.prepareStatement("INSERT INTO UserNodePermissions (NodeID, Type, Permission, Action) VALUES (?, ?, ?, ?)");
-			stat.setInt(1, groupID);
-			stat.setString(2, permission.getClass().getName());
-			stat.setString(3, permission.getName());
-			stat.setString(4, permission.getActions());
-			if ( stat.executeUpdate() == 0 )
+			try
 			{
-				System.out.println("Ack! Permission add did nothing: " + group + " " + permission);
-				dbBroker.freeConnection(dbConn);
-				return false;
+				PreparedStatement stat = dbConn.prepareStatement("INSERT INTO UserNodePermissions (NodeID, Type, Permission, Action) VALUES (?, ?, ?, ?)");
+				stat.setInt(1, groupID);
+				stat.setString(2, permission.getClass().getName());
+				stat.setString(3, permission.getName());
+				stat.setString(4, permission.getActions());
+				if ( stat.executeUpdate() == 0 )
+					System.err.println("Ack! Permission add did nothing: " + group + " " + permission);
 			}
-			dbBroker.freeConnection(dbConn);
-			return true;
-		}
-		catch (SQLException e)
-		{
-			System.out.println("Ack! SQL exception when adding permission to group: " + group + " " + permission + ": " + e);
+			catch (SQLException e)
+			{
+				dbBroker.freeConnection(dbConn);
+				System.err.println("Ack! SQL exception when adding permission to group: " + group + " " + permission + ": " + e);
+				throw new ChoobException("SQL exception occurred when adding permission to group. Ask an admin to check the log.");
+			}
 		}
 		dbBroker.freeConnection(dbConn);
-		return false;
 	}
 }
