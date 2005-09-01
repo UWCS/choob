@@ -34,7 +34,7 @@ public class UtilModule {
 		return "";
 	}
 
-	public List getParms( Message mes )
+	public List getParams( Message mes )
 	{
 		List tempList = new ArrayList();
 
@@ -54,7 +54,7 @@ public class UtilModule {
 	 *
 	 * Note that the command token /IS/ included in the count.
 	 */
-	public List getParms( Message mes, int count )
+	public List getParams( Message mes, int count )
 	{
 		List tempList = new ArrayList();
 

@@ -7,7 +7,7 @@ class Test
 {
 	public void commandSecurity( Message con, Modules mods, IRCInterface irc )
 	{
-		List params = mods.util.getParms( con );
+		List params = mods.util.getParams( con );
 
 		String priv = params.get(1);
 		if ( mods.security.hasPerm( new ChoobPermission(priv), con.getNick() ) )

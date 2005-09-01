@@ -101,7 +101,7 @@ class NickServ
 		if ( ! mes.getNick().equals( "NickServ" ) )
 			return; // Not from NickServ --> also don't care
 
-		List params = modules.util.getParms( mes );
+		List params = modules.util.getParams( mes );
 
 		if ( ! ((String)params.get(0)).equals("STATUS") )
 			return; // Wrong type of message!

@@ -7,7 +7,7 @@ class Plugin
 {
 	public void commandLoadPlugin( Message con, Modules modules, IRCInterface irc )
 	{
-		List parms = modules.util.getParms( con );
+		List parms = modules.util.getParams( con );
 
 		if( parms.size() < 3 )
 		{
@@ -36,7 +36,7 @@ class Plugin
 
 	public void commandReloadPluginPermissions( Message mes, Modules modules, IRCInterface irc )
 	{
-		List parms = modules.util.getParms( mes );
+		List parms = modules.util.getParams( mes );
 		if (parms.size() != 2)
 		{
 			irc.sendContextReply(mes, "You must specify a plugin name and only that.");

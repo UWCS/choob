@@ -31,7 +31,7 @@ class TimedEvents
 			return;
 		}
 
-		List params = mods.util.getParms( mes, 2 );
+		List params = mods.util.getParams( mes, 2 );
 
 		if (params.size() <= 2) {
 			irc.sendContextReply(mes, "Syntax is: in <time> <command>");
