@@ -23,14 +23,14 @@ class Tell
 	public void commandSend( Message con, Modules mods, IRCInterface irc )
 	{
 		int targets = 0;
-		Connection dbConnection = modules.dbBroker.getConnection();
+		Connection dbConnection = mods.dbBroker.getConnection();
 		PreparedStatement insertLine = dbConnection.prepareStatement("INSERT INTO `Tells` VALUES(NOW(),?,?,?);");
 
 		// Note: This is intentionally not translated to a primary nick.
 		insertLine.setString(1, con.getNick()); // 'From'.
 
 		Pattern pa = Pattern.compile("^[^ ]+? ([a-zA-Z0-9_,|-]+) (.*)$");
-		Matcher ma = pa.matcher(con.getText());
+		Matcher ma = pa.matcher(con.getMessage());
 
 		if (!ma.matches())
 		{
@@ -44,7 +44,7 @@ class Tell
 		while( tokens.hasMoreTokens() )
 		{
 			// Note: This call to getBestPrimaryNick is not optimal, discussed above.
-			insertLine.setString(2, modules.nick.getBestPrimaryNick(tokens.nextToken())); // 'Target'.
+			insertLine.setString(2, mods.nick.getBestPrimaryNick(tokens.nextToken())); // 'Target'.
 			insertLine.executeUpdate();
 			targets++;
 		}

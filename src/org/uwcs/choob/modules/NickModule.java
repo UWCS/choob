@@ -104,9 +104,13 @@ public class NickModule
 	 */
 	public String getBestPrimaryNick(String nick) throws Exception
 	{
-		String gpn=getPrimaryNick(nick);
-		if (!gpn.equals(""))
-			return gpn;
+		try
+		{
+			String gpn=getPrimaryNick(nick);
+			if (!gpn.equals(""))
+				return gpn;
+		}
+		catch (Exception e) {}
 
 		Pattern pa = Pattern.compile("^([a-zA-Z0-9_-]+?)(?:\\||\\`).*$");
 		Matcher ma = pa.matcher(nick);

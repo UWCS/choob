@@ -194,8 +194,6 @@ public class BeanshellPluginUtils
 				catch (NoSuchMethodException e)
 				{
 					System.out.println("Oh noes, method " + func + " not found in " + plugin.getClass().getName() + "!");
-					//omgwtfhaxCallCache.put(identifier, null);
-					//System.out.println(identifier + " will be ignored from now on.");
 				}
 				catch (InvocationTargetException e)
 				{
