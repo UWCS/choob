@@ -94,7 +94,7 @@ public class Choob extends PircBot
 		modules = new Modules(broker, pluginMap, filterList, intervalList, this);
 
 		// Create a new IRC interface
-		irc = new IRCInterface( this );
+		irc = new IRCInterface( this, modules );
 	}
 
 	/**

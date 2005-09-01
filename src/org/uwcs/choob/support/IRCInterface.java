@@ -8,6 +8,7 @@ package org.uwcs.choob.support;
 
 import org.uwcs.choob.*;
 import org.uwcs.choob.support.*;
+import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.events.*;
 import java.security.AccessController;
 
@@ -17,15 +18,20 @@ import java.security.AccessController;
  */
 public class IRCInterface {
 	private Choob bot;
+	private Modules mods;
 
 	/** Creates a new instance of IRCInterface */
-	public IRCInterface(Choob bot) {
+	public IRCInterface(Choob bot, Modules mods) {
 		this.bot = bot;
+		this.mods = mods;
 	}
 
 	public void sendContextMessage(Message ev, String message)
 	{
-		bot.sendMessage(ev.getContext(), message);
+		if ( !mods.pc.isProtected(ev.getContext()) )
+			sendMessage(ev.getContext(), message);
+		else
+			sendMessage(ev.getNick(), message);
 	}
 
 	public void sendContextAction(Message ev, String message)
@@ -37,11 +43,11 @@ public class IRCInterface {
 	{
 		if( ev instanceof PrivateEvent )
 		{
-			bot.sendMessage(ev.getContext(),message);
+			sendMessage(ev.getContext(),message);
 		}
 		else
 		{
-			bot.sendMessage(ev.getContext(),ev.getNick() + ": " + message);
+			sendContextMessage(ev,ev.getNick() + ": " + message);
 		}
 	}
 
