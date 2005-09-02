@@ -25,247 +25,369 @@ import java.sql.*;
  */
 public class ObjectDbTest
 {
-	DbConnectionBroker broker;
-
-	/** Creates a new instance of ObjectDbTest */
-	public ObjectDbTest() throws Exception
+    DbConnectionBroker broker;
+    
+    /** Creates a new instance of ObjectDbTest */
+    public ObjectDbTest() throws Exception
+    {
+	broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", "choob", "choob", 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
+    }
+    
+    public void init() throws Exception
+    {
+	StoreObject testObject = new StoreObject();
+	
+	testObject.setName("Test name");
+	testObject.setPosition("M.D");
+	testObject.setKarma(100);
+	
+	save( testObject );
+	
+	List<StoreObject> results = retrive( StoreObject.class, "position = 'M.D'");
+	
+	System.out.println("Returned " + results.size() + " results.");
+	
+	testObject = results.get(0);
+	
+	System.out.println("Name: " + testObject.getName() + " Position: " + testObject.getPosition());
+	
+	testObject.setPosition("Fired!");
+	
+	update( testObject );
+	
+	results = retrive( StoreObject.class, "position = 'Fired!'");
+	
+	System.out.println("Returned " + results.size() + " results.");
+	
+	testObject = results.get(0);
+	
+	System.out.println("Name: " + testObject.getName() + " Position: " + testObject.getPosition());
+	
+	delete( testObject );
+	
+	results = retrive( StoreObject.class, "position = 'Fired!'");
+	
+	System.out.println("Returned " + results.size() + " results.");
+    }
+    
+    public List retrive(Class storedClass, String... clauses) throws Exception
+    {
+	ArrayList objects = new ArrayList();
+	
+	Connection dbConnection = broker.getConnection();
+	
+	StringBuffer sqlQuery = new StringBuffer("SELECT ObjectStore.ClassID FROM ObjectStore ");
+	
+	Pattern andSplitter = Pattern.compile("and\\s*", Pattern.CASE_INSENSITIVE);
+	
+	Pattern expParser = Pattern.compile("(\\p{Alpha}+)\\s*([=><~])\\s*((?:\\'.+\\')|(?:\\d+))\\s*", Pattern.CASE_INSENSITIVE);
+	
+	for( int c = 0; c < clauses.length; c++ )
 	{
-		broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", "choob", "choob", 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
+	    Matcher expMatcher = expParser.matcher( clauses[c] );
+	    
+	    if( expMatcher.matches() )
+	    {
+		String variable = expMatcher.group(1);
+		String operator = expMatcher.group(2);
+		String value = expMatcher.group(3);
+		
+		sqlQuery.append("INNER JOIN ObjectStoreData o" + c + " ON o"+c+".ObjectID = ObjectStore.ObjectID AND o"+c+".FieldName = '" + variable + "' AND o"+c+".FieldValue " + operator + " " + value + " ");
+	    }
+	    else
+	    {
+		throw new Exception("Clause: " + clauses[c] + " is syntactically incorrect. Please check your pants.");
+	    }
 	}
-
-	public void init() throws Exception
+	
+	Statement objStat = dbConnection.createStatement();
+	
+	ResultSet results = objStat.executeQuery( sqlQuery.toString() + " WHERE ClassName = '" + storedClass.toString() + "';");
+	
+	if( results.first() )
 	{
-		/*for( int c = 0; c < 20; c++ )
-		{
-			StoreObject strObj = new StoreObject();
-
-			strObj.setID( (int)(Math.random() * 100000) );
-
-			strObj.setName( Integer.toHexString((int)(Math.random() * 100)) );
-			strObj.setPosition( "Moo!" );
-			save( strObj );
-
-			System.out.println("Added " + c + " objects..");
-		}
-
-		StoreObject storedObject = (StoreObject)retriveById(StoreObject.class, 86895);
-
-		System.out.println("Retrived object! "  + storedObject.toString());*/
-
-		List results = retrive( StoreObject.class, "position = 'soviet'");
-
-		System.out.println("Returned " + results.size() + " results.");
+	    do
+	    {
+		objects.add( retriveById( storedClass, results.getInt("ClassID")) );
+	    }
+	    while(results.next());
 	}
-
-	public List retrive(Class storedClass, String... clauses) throws Exception
+	
+	return objects;
+    }
+    
+    public Object retriveById(Class storedClass, int id) throws Exception
+    {
+	Object tempObject = null;
+	
+	Connection dbConnection = broker.getConnection();
+	
+	PreparedStatement retriveObject = dbConnection.prepareStatement("SELECT * FROM ObjectStore LEFT JOIN ObjectStoreData ON ObjectStore.ObjectID = ObjectStoreData.ObjectID WHERE ClassName = ? AND ClassID = ?;");
+	
+	retriveObject.setString(1, storedClass.toString() );
+	retriveObject.setInt(2, id);
+	
+	ResultSet objSet = retriveObject.executeQuery();
+	
+	if( objSet.first() )
 	{
-		ArrayList objects = new ArrayList();
-
-		Connection dbConnection = broker.getConnection();
-
-		StringBuffer sqlQuery = new StringBuffer("SELECT ObjectStore.ClassID FROM ObjectStore ");
-
-		Pattern andSplitter = Pattern.compile("and\\s*", Pattern.CASE_INSENSITIVE);
-
-		Pattern expParser = Pattern.compile("(\\p{Alpha}+)\\s*([=><~])\\s*((?:\\'\\w+\\')|(?:\\d+))\\s*", Pattern.CASE_INSENSITIVE);
-
-		for( int c = 0; c < clauses.length; c++ )
-		{
-			Matcher expMatcher = expParser.matcher( clauses[c] );
-
-			if( expMatcher.matches() )
-			{
-				String variable = expMatcher.group(1);
-				String operator = expMatcher.group(2);
-				String value = expMatcher.group(3);
-
-				sqlQuery.append("INNER JOIN ObjectStoreData o" + c + " ON o"+c+".ObjectID = ObjectStore.ObjectID AND o"+c+".FieldName = '" + variable + "' AND o"+c+".FieldValue " + operator + " " + value + " ");
-			}
-			else
-			{
-				throw new Exception("Clause: " + clauses[c] + " is syntactically incorrect. Please check your pants.");
-			}
-		}
-
-		Statement objStat = dbConnection.createStatement();
-
-		System.out.println( sqlQuery.toString() );
-
-		ResultSet results = objStat.executeQuery( sqlQuery.toString() + " WHERE ClassName = '" + storedClass.toString() + "';");
-
-		if( results.first() )
-		{
-			do
-			{
-				objects.add( retriveById( storedClass, results.getInt("ClassID")) );
-			}
-			while(results.next());
-		}
-
-		return objects;
+	    
+	    tempObject = storedClass.newInstance();
+	    
+	    populateObject( tempObject, objSet );
 	}
-
-	public Object retriveById(Class storedClass, int id) throws Exception
+	
+	return tempObject;
+    }
+    
+    private void populateObject( Object tempObject, ResultSet result ) throws Exception
+    {
+	Field idField = tempObject.getClass().getDeclaredField("id");
+	
+	idField.setInt( tempObject, result.getInt("ClassID") );
+	
+	do
 	{
-		Connection dbConnection = broker.getConnection();
-
-		PreparedStatement retriveObject = dbConnection.prepareStatement("SELECT * FROM ObjectStore LEFT JOIN ObjectStoreData ON ObjectStore.ObjectID = ObjectStoreData.ObjectID WHERE ClassName = ? AND ClassID = ?;");
-
-		retriveObject.setString(1, storedClass.toString() );
-		retriveObject.setInt(2, id);
-
-		ResultSet objSet = retriveObject.executeQuery();
-
-		if( objSet.first() )
+	    try
+	    {
+		Field tempField = tempObject.getClass().getDeclaredField( result.getString("FieldName") );
+		
+		if( result.getString("FieldType").equals("String") )
 		{
-
-			Object tempObject = storedClass.newInstance();
-
-			populateObject( tempObject, objSet );
-
-			broker.freeConnection( dbConnection );
-
-			return tempObject;
+		    tempField.set( tempObject, result.getString("FieldValue") );
 		}
-		else
+		
+		if( result.getString("FieldType").equals("int") )
 		{
-			broker.freeConnection( dbConnection );
-
-			return null;
+		    tempField.setInt( tempObject, Integer.parseInt( result.getString("FieldValue")) );
 		}
+		
+		if( result.getString("FieldType").equals("float") )
+		{
+		    tempField.setFloat( tempObject, Float.parseFloat( result.getString("FieldValue")) );
+		}
+	    }
+	    catch( NoSuchFieldException e )
+	    {
+		// Ignore this, as per spec.
+	    }
 	}
-
-	private void populateObject( Object tempObject, ResultSet result ) throws Exception
+	while( result.next() );
+    }
+    
+    public void delete( Object strObject ) throws Exception
+    {
+	Connection dbCon = broker.getConnection();
+	
+	try
 	{
-		do
-		{
-			try
-			{
-				Field tempField = tempObject.getClass().getDeclaredField( result.getString("FieldName") );
-
-				if( result.getString("FieldType").equals("String") )
-				{
-					tempField.set( tempObject, result.getString("FieldValue") );
-				}
-
-				if( result.getString("FieldType").equals("int") )
-				{
-					tempField.setInt( tempObject, Integer.parseInt( result.getString("FieldValue")) );
-				}
-
-				if( result.getString("FieldType").equals("float") )
-				{
-					tempField.setFloat( tempObject, Float.parseFloat( result.getString("FieldValue")) );
-				}
-			}
-			catch( NoSuchFieldException e )
-			{
-				// Ignore this, as per spec.
-			}
-		}
-		while( result.next() );
+	    dbCon.setAutoCommit( false );
+	    
+	    delete( dbCon, strObject );
+	    
+	    dbCon.commit();
 	}
-
-	public void delete( Object strObject ) throws Exception
+	catch( Exception e )
 	{
-
+	    dbCon.rollback();
+	    
+	    broker.freeConnection( dbCon );
+	    throw new Exception("An error occured while trying to delete.", e);
 	}
-
-	public void update( Object strObject ) throws Exception
+    }
+    
+    private void delete( Connection dbCon, Object strObj ) throws Exception
+    {
+	Field idField;
+	
+	try
 	{
-	delete( strObject );
-	save( strObject );
+	    idField = strObj.getClass().getDeclaredField("id");
 	}
-
-	public void save( Object strObj ) throws Exception
+	catch( NoSuchFieldException e )
 	{
-		Field idField;
-
-		try
-		{
-			idField = strObj.getClass().getDeclaredField("id");
-		}
-		catch( NoSuchFieldException e )
-		{
-			throw new Exception("Class " + strObj.getClass() + " does not have a unique 'id' property. Please add one.");
-		}
-
-		Connection dbConnection = broker.getConnection();
-
-		PreparedStatement insertObject = dbConnection.prepareStatement("INSERT INTO ObjectStore VALUES(NULL,?,?,?);");
-
-		insertObject.setInt(1, 1); // CHANGE THIS
-		insertObject.setString(2, strObj.getClass().toString());
-		insertObject.setInt(3, idField.getInt( strObj ));
-
-		insertObject.execute();
-
-		ResultSet generatedKeys = insertObject.getGeneratedKeys();
-
-		generatedKeys.first();
-
-		int generatedID = generatedKeys.getInt(1);
-
-		PreparedStatement insertField = dbConnection.prepareStatement("INSERT INTO ObjectStoreData VALUES(?,?,?,?);");
-
-		Field[] fields = strObj.getClass().getDeclaredFields();
-
-		for( int c = 0 ; c < fields.length ; c++ )
-		{
-			Field tempField = fields[c];
-
-			if( !tempField.getName().equals("id") )
-			{
-				boolean foundType = false;
-
-				insertField.setInt(1, generatedID);
-
-				if( tempField.getType() == java.lang.Integer.TYPE )
-				{
-					foundType = true;
-					insertField.setString(2, tempField.getName());
-					insertField.setString(3, "int");
-					insertField.setString(4, Integer.toString(tempField.getInt(strObj)));
-
-					//System.out.println("Found integer field: " + tempField);
-				}
-
-				if( tempField.getType() == java.lang.Float.TYPE )
-				{
-					foundType = true;
-					insertField.setString(2, tempField.getName());
-					insertField.setString(3, "float");
-					insertField.setString(4, Float.toString(tempField.getFloat(strObj)));
-
-					//System.out.println("Found float field: " + tempField);
-				}
-
-				if( tempField.getType() == String.class )
-				{
-					foundType = true;
-					insertField.setString(2, tempField.getName());
-					insertField.setString(3, "String");
-					insertField.setString(4, (String)tempField.get(strObj));
-
-					System.out.println("Found string field: " + tempField + " with value " + tempField.get(strObj));
-				}
-
-				if( foundType )
-				{
-					System.out.println("Inserting field: " + tempField.getName());
-					insertField.executeUpdate();
-				}
-			}
-		}
-
-		broker.freeConnection( dbConnection );
+	    throw new Exception("Class " + strObj.getClass() + " does not have a unique 'id' property. Please add one.", e);
 	}
-
-	/**
-	 * @param args the command line arguments
-	 */
-	public static void main(String[] args) throws Exception
+	
+	int id = idField.getInt( strObj );
+	
+	PreparedStatement retriveID = dbCon.prepareStatement("SELECT ObjectID FROM ObjectStore WHERE ClassName = ? AND ClassID = ?;");
+	
+	retriveID.setString(1, strObj.getClass().toString() );
+	retriveID.setInt(2, id);
+	
+	ResultSet resultID = retriveID.executeQuery();
+	
+	int objectID;
+	
+	if( resultID.first() )
 	{
-		(new ObjectDbTest()).init();
+	    objectID = resultID.getInt("ObjectID");
 	}
+	else
+	{
+	    System.out.println(retriveID.toString());
+	    
+	    throw new Exception("Object for deletion does not exist.");
+	}
+	
+	PreparedStatement delete = dbCon.prepareStatement("DELETE FROM ObjectStore WHERE ObjectID = ?");
+	
+	delete.setInt(1, objectID);
+	
+	PreparedStatement deleteData = dbCon.prepareStatement("DELETE FROM ObjectStoreData WHERE ObjectID = ?");
+	
+	deleteData.setInt(1, objectID);
+	
+	delete.executeUpdate();
+	
+	deleteData.executeUpdate();
+    }
+    
+    public void update( Object strObject ) throws Exception
+    {
+	Connection dbCon = broker.getConnection();
+	
+	try
+	{
+	    dbCon.setAutoCommit( false );
+	    
+	    delete( dbCon, strObject );
+	    save( dbCon, strObject );
+	    
+	    dbCon.commit();
+	}
+	catch( Exception e )
+	{
+	    dbCon.rollback();
+	    
+	    broker.freeConnection( dbCon );
+	    throw new Exception("An error occured while trying to update.", e);
+	}
+    }
+    
+    public void save( Object strObject ) throws Exception
+    {
+	Connection dbCon = broker.getConnection();
+	
+	try
+	{
+	    dbCon.setAutoCommit(false);
+	    
+	    save( dbCon, strObject );
+	    
+	    dbCon.commit();
+	}
+	catch( Exception e )
+	{
+	    dbCon.rollback();
+	    
+	    broker.freeConnection( dbCon );
+	    
+	    throw new Exception("An error occured while trying to save.", e);
+	}
+    }
+    
+    private void save( Connection dbCon, Object strObj ) throws Exception
+    {
+	Field idField;
+	
+	try
+	{
+	    idField = strObj.getClass().getDeclaredField("id");
+	}
+	catch( NoSuchFieldException e )
+	{
+	    throw new Exception("Class " + strObj.getClass() + " does not have a unique 'id' property. Please add one.", e);
+	}
+	
+	if( idField.getInt(strObj) == 0 )
+	{
+	    PreparedStatement highestID = dbCon.prepareStatement("SELECT MAX(ClassID) FROM ObjectStore WHERE ClassName = ?;");
+	    
+	    highestID.setString(1, strObj.getClass().toString());
+	    
+	    ResultSet ids = highestID.executeQuery();
+	    
+	    if( ids.first() )
+	    {
+		idField.setInt( strObj, ids.getInt(1)+1 );
+	    }
+	    else
+	    {
+		idField.setInt( strObj, 1 );
+	    }
+	}
+	
+	PreparedStatement insertObject = dbCon.prepareStatement("INSERT INTO ObjectStore VALUES(NULL,?,?,?);");
+	
+	insertObject.setInt(1, 1); // CHANGE THIS
+	insertObject.setString(2, strObj.getClass().toString());
+	insertObject.setInt(3, idField.getInt( strObj ));
+	
+	insertObject.execute();
+	
+	ResultSet generatedKeys = insertObject.getGeneratedKeys();
+	
+	generatedKeys.first();
+	
+	int generatedID = generatedKeys.getInt(1);
+	
+	PreparedStatement insertField = dbCon.prepareStatement("INSERT INTO ObjectStoreData VALUES(?,?,?,?);");
+	
+	Field[] fields = strObj.getClass().getDeclaredFields();
+	
+	for( int c = 0 ; c < fields.length ; c++ )
+	{
+	    Field tempField = fields[c];
+	    
+	    if( !tempField.getName().equals("id") )
+	    {
+		boolean foundType = false;
+		
+		insertField.setInt(1, generatedID);
+		
+		if( tempField.getType() == java.lang.Integer.TYPE )
+		{
+		    foundType = true;
+		    insertField.setString(2, tempField.getName());
+		    insertField.setString(3, "int");
+		    insertField.setString(4, Integer.toString(tempField.getInt(strObj)));
+		    
+		    //System.out.println("Found integer field: " + tempField);
+		}
+		
+		if( tempField.getType() == java.lang.Float.TYPE )
+		{
+		    foundType = true;
+		    insertField.setString(2, tempField.getName());
+		    insertField.setString(3, "float");
+		    insertField.setString(4, Float.toString(tempField.getFloat(strObj)));
+		    
+		    //System.out.println("Found float field: " + tempField);
+		}
+		
+		if( tempField.getType() == String.class )
+		{
+		    foundType = true;
+		    insertField.setString(2, tempField.getName());
+		    insertField.setString(3, "String");
+		    insertField.setString(4, (String)tempField.get(strObj));
+		}
+		
+		if( foundType )
+		{
+		    insertField.executeUpdate();
+		}
+	    }
+	}
+    }
+    
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) throws Exception
+    {
+	(new ObjectDbTest()).init();
+    }
 }

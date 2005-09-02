@@ -5,6 +5,7 @@ public class StoreObject
     public int id;
     public String name;
     public String position;
+    public int karma;
     
     public StoreObject()
     {
@@ -73,6 +74,24 @@ public class StoreObject
     public void setID(int id)
     {
         this.id = id;
+    }
+    
+    /**
+     * Getter for property karma.
+     * @return Value of property karma.
+     */
+    public int getKarma()
+    {
+	return karma;
+    }
+    
+    /**
+     * Setter for property karma.
+     * @param karma New value of property karma.
+     */
+    public void setKarma(int karma)
+    {
+	this.karma = karma;
     }
     
 }
