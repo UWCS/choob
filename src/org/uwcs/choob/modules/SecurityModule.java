@@ -250,7 +250,12 @@ public class SecurityModule
 	 */
 	private boolean hasPerm(Permission permission, int userNode)
 	{
-		Iterator<Integer> allNodes = getAllNodes(userNode);
+		return hasPerm(permission, userNode, false);
+	}
+
+	private boolean hasPerm(Permission permission, int userNode, boolean includeThis)
+	{
+		Iterator<Integer> allNodes = getAllNodes(userNode, includeThis);
 
 		if ( ! allNodes.hasNext() )
 		{
@@ -650,7 +655,7 @@ public class SecurityModule
 		if (group.getType() == 2) // plugins can poke their own groups!
 		{
 			String pluginName = getPluginName(0);
-			if (!group.getRootName().toLowerCase().equals(pluginName.toLowerCase()))
+			if (!(group.getRootName().compareToIgnoreCase(pluginName)==0))
 				AccessController.checkPermission(new ChoobPermission("group.add."+groupName));
 		}
 		else
@@ -711,7 +716,7 @@ public class SecurityModule
 		if (parent.getType() == 2) // plugins can poke their own groups!
 		{
 			String pluginName = getPluginName(0);
-			if (!parent.getRootName().toLowerCase().equals(pluginName.toLowerCase()))
+			if (!(parent.getRootName().compareToIgnoreCase(pluginName)==0))
 				AccessController.checkPermission(new ChoobPermission("group.members."+parent));
 		}
 		else
@@ -780,7 +785,7 @@ public class SecurityModule
 		if (parent.getType() == 2) // plugins can poke their own groups!
 		{
 			String pluginName = getPluginName(0);
-			if (!parent.getRootName().toLowerCase().equals(pluginName.toLowerCase()))
+			if (!(parent.getRootName().compareToIgnoreCase(pluginName)==0))
 				AccessController.checkPermission(new ChoobPermission("group.members."+parent));
 		}
 		else
@@ -836,8 +841,8 @@ public class SecurityModule
 		if (group.getType() == 2) // plugins can add their own permissions (kinda)
 		{
 			String pluginName = getPluginName(0);
-			if (!group.getRootName().toLowerCase().equals(pluginName.toLowerCase()))
-				AccessController.checkPermission(new ChoobPermission("permission.grant."+group));
+			if (!(group.getRootName().compareToIgnoreCase(pluginName)==0))
+				AccessController.checkPermission(new ChoobPermission("group.grant."+group));
 			// OK, that's all fine, BUT:
 			if (!hasPluginPerm(permission))
 			{
@@ -847,7 +852,7 @@ public class SecurityModule
 		}
 		else
 		{
-			AccessController.checkPermission(new ChoobPermission("permission.grant."+group));
+			AccessController.checkPermission(new ChoobPermission("group.grant."+group));
 		}
 
 
@@ -856,7 +861,7 @@ public class SecurityModule
 		if (groupID == -1)
 			throw new ChoobException("Group " + group + " does not exist!");
 
-		if (hasPerm(permission, groupID))
+		if (hasPerm(permission, groupID, true))
 			throw new ChoobException("Group " + group + " already has permission " + permission + "!");
 
 		Connection dbConn = dbBroker.getConnection();
@@ -867,8 +872,16 @@ public class SecurityModule
 				PreparedStatement stat = dbConn.prepareStatement("INSERT INTO UserNodePermissions (NodeID, Type, Permission, Action) VALUES (?, ?, ?, ?)");
 				stat.setInt(1, groupID);
 				stat.setString(2, permission.getClass().getName());
-				stat.setString(3, permission.getName());
-				stat.setString(4, permission.getActions());
+				if (permission instanceof AllPermission)
+				{
+					stat.setString(3, "");
+					stat.setString(4, "");
+				}
+				else
+				{
+					stat.setString(3, permission.getName());
+					stat.setString(4, permission.getActions());
+				}
 				if ( stat.executeUpdate() == 0 )
 					System.err.println("Ack! Permission add did nothing: " + group + " " + permission);
 
@@ -929,5 +942,98 @@ public class SecurityModule
 		}
 		String[] retVal = new String[foundPerms.size()];
 		return (String[])foundPerms.toArray(retVal);
+	}
+
+	/**
+	 * Attempt to work out from whence a group's permissions come.
+	 */
+	public String[] getPermissions(String groupName) throws ChoobException
+	{
+		UserNode group = new UserNode(groupName);
+		int groupID = getNodeIDFromNode(group);
+		if (groupID == -1)
+			throw new ChoobException("Group " + group + " does not exist!");
+
+		List<String> foundPerms = new LinkedList();
+
+		PermissionCollection perms = getNodePermissions( groupID );
+		// Be careful to avoid invalid groups and stuff.
+		if (perms != null)
+		{
+			// Which element?
+			Enumeration<Permission> allPerms = perms.elements();
+			while( allPerms.hasMoreElements() )
+			{
+				Permission perm = allPerms.nextElement();
+				foundPerms.add(perm.toString());
+			}
+		}
+		String[] retVal = new String[foundPerms.size()];
+		return (String[])foundPerms.toArray(retVal);
+	}
+
+	public void revokePermission(String groupName, Permission permission) throws ChoobException
+	{
+		UserNode group = new UserNode(groupName);
+		if (group.getType() == 2) // plugins can revoke their own permissions
+		{
+			String pluginName = getPluginName(0);
+			if (!(group.getRootName().compareToIgnoreCase(pluginName)==0))
+				AccessController.checkPermission(new ChoobPermission("group.revoke."+group));
+		}
+		else
+		{
+			AccessController.checkPermission(new ChoobPermission("group.revoke."+group));
+		}
+
+
+		// OK, we're allowed to add.
+		int groupID = getNodeIDFromNode(group);
+		if (groupID == -1)
+			throw new ChoobException("Group " + group + " does not exist!");
+
+		if (!hasPerm(permission, groupID, true))
+			throw new ChoobException("Group " + group + " does not have permission " + permission + "!");
+
+		Connection dbConn = dbBroker.getConnection();
+		synchronized(nodeDbLock)
+		{
+			try
+			{
+				PreparedStatement stat;
+				if (permission instanceof AllPermission)
+				{
+					stat = dbConn.prepareStatement("DELETE FROM UserNodePermissions WHERE NodeID = ? AND Type = ?");
+					stat.setInt(1, groupID);
+					stat.setString(2, permission.getClass().getName());
+				}
+				else
+				{
+					stat = dbConn.prepareStatement("DELETE FROM UserNodePermissions WHERE NodeID = ? AND Type = ? AND Permission = ? AND Action = ?");
+					stat.setInt(1, groupID);
+					stat.setString(2, permission.getClass().getName());
+					stat.setString(3, permission.getName());
+					stat.setString(4, permission.getActions());
+				}
+				if ( stat.executeUpdate() == 0 )
+				{
+					// This is an ERROR here, not a warning
+					throw new ChoobException("The given permission wasn't explicily assigned in the form you attempted to revoke. Try using the find permission command to locate it.");
+				}
+
+				dbConn.commit();
+
+				invalidateNodePermissions(groupID);
+			}
+			catch (SQLException e)
+			{
+				sqlErr("revoking permission " + permission + " from group " + group, e);
+			}
+			finally
+			{
+				rollback(dbConn); // If success, this does nothing
+				dbBroker.freeConnection(dbConn);
+			}
+		}
 	}
 }

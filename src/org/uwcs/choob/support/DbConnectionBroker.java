@@ -549,6 +549,8 @@ public class DbConnectionBroker implements Runnable {
 
 			connPool[i] = DriverManager.getConnection(dbServer, dbLogin, dbPassword);
 
+			connPool[i].setAutoCommit(false);
+
 			connStatus[i]=0;
 			connID[i]=connPool[i].toString();
 			connLockTime[i]=0;
