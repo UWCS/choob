@@ -23,51 +23,14 @@ import java.sql.*;
  *
  * @author  sadiq
  */
-public class ObjectDbTest
+public class ObjectDbModule
 {
     DbConnectionBroker broker;
     
     /** Creates a new instance of ObjectDbTest */
-    public ObjectDbTest() throws Exception
+    public ObjectDbModule(DbConnectionBroker broker)
     {
-	broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", "choob", "choob", 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
-    }
-    
-    public void init() throws Exception
-    {
-	StoreObject testObject = new StoreObject();
-	
-	testObject.setName("Test name");
-	testObject.setPosition("M.D");
-	testObject.setKarma(100);
-	
-	save( testObject );
-	
-	List<StoreObject> results = retrive( StoreObject.class, "position = 'M.D'");
-	
-	System.out.println("Returned " + results.size() + " results.");
-	
-	testObject = results.get(0);
-	
-	System.out.println("Name: " + testObject.getName() + " Position: " + testObject.getPosition());
-	
-	testObject.setPosition("Fired!");
-	
-	update( testObject );
-	
-	results = retrive( StoreObject.class, "position = 'Fired!'");
-	
-	System.out.println("Returned " + results.size() + " results.");
-	
-	testObject = results.get(0);
-	
-	System.out.println("Name: " + testObject.getName() + " Position: " + testObject.getPosition());
-	
-	delete( testObject );
-	
-	results = retrive( StoreObject.class, "position = 'Fired!'");
-	
-	System.out.println("Returned " + results.size() + " results.");
+	this.broker = broker;
     }
     
     public List retrive(Class storedClass, String... clauses) throws Exception
@@ -381,13 +344,5 @@ public class ObjectDbTest
 		}
 	    }
 	}
-    }
-    
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) throws Exception
-    {
-	(new ObjectDbTest()).init();
     }
 }

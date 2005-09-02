@@ -30,6 +30,7 @@ public class Modules
 	public SyntheticModule synthetic;
 	public SecurityModule security;
 	public ProtectedChannels pc;
+	public ObjectDbModule odb;
 	Map pluginMap;
 	List intervalList;
 	List filterList;
@@ -50,6 +51,8 @@ public class Modules
 		synthetic = new SyntheticModule( bot );
 		security = new SecurityModule( dbBroker );
 		pc = new ProtectedChannels();
+		odb = new ObjectDbModule( dbBroker );
+		
 		this.dbBroker = dbBroker;
 		this.pluginMap = pluginMap;
 		this.intervalList = intervalList;
