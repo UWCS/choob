@@ -97,22 +97,19 @@ public class SecurityModule
 			ResultSet results = stat.executeQuery();
 			if ( results.first() )
 			{
-				dbBroker.freeConnection(dbConn);
 				return results.getInt(1);
 			}
-			System.out.println("Ack! Plugin name " + pluginName + " not found!");
+			System.err.println("Ack! Plugin name " + pluginName + " not found!");
 		}
 		catch (SQLException e)
 		{
-			System.out.println("Ack! SQL exception when getting node from plugin name " + pluginName + ": " + e);
+			System.err.println("Ack! SQL exception when getting node from plugin name " + pluginName + ": " + e);
 		}
-		dbBroker.freeConnection(dbConn);
+		finally
+		{
+			dbBroker.freeConnection(dbConn);
+		}
 		return -1;
-	}
-
-	public void test() throws NoSuchMethodException
-	{
-		throw new NoSuchMethodException("Test");
 	}
 
 	/**
@@ -168,19 +165,25 @@ public class SecurityModule
 					Class clas;
 					try
 					{
-						clas = this.getClass().getClassLoader().loadClass( className );
+						clas = this.getClass().forName( className );
 					}
 					catch (ClassNotFoundException e)
 					{
-						System.out.println("Permission class not found: " + className);
+						System.err.println("Permission class not found: " + className);
 						continue; // XXX I guess this is OK?
 					}
 
 					// Perhaps more strict checking here?
+					// TODO - is this check enough to be secure?
 					if (!Permission.class.isAssignableFrom(clas))
 					{
-						System.out.println("Class " + className + " is not a Permission!");
+						System.err.println("Class " + className + " is not a Permission!");
 						continue; // XXX
+					}
+					else if (clas.getClassLoader() instanceof DiscreteFilesClassLoader)
+					{
+						System.err.println("Class " + className + " is an insecure Permission!");
+						continue;
 					}
 
 					Constructor con;
@@ -190,7 +193,7 @@ public class SecurityModule
 					}
 					catch (NoSuchMethodException e)
 					{
-						System.out.println("Permission class had no valid constructor: " + className);
+						System.err.println("Permission class had no valid constructor: " + className);
 						continue; // XXX I guess this is OK?
 					}
 
@@ -201,19 +204,19 @@ public class SecurityModule
 					}
 					catch (IllegalAccessException e)
 					{
-						System.out.println("Permission class constructor for " + className + " failed: " + e.getMessage());
+						System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
 						e.printStackTrace();
 						continue; // XXX
 					}
 					catch (InstantiationException e)
 					{
-						System.out.println("Permission class constructor for " + className + " failed: " + e.getMessage());
+						System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
 						e.printStackTrace();
 						continue; // XXX
 					}
 					catch (InvocationTargetException e)
 					{
-						System.out.println("Permission class constructor for " + className + " failed: " + e.getMessage());
+						System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
 						e.printStackTrace();
 						continue; // XXX
 					}
@@ -226,10 +229,13 @@ public class SecurityModule
 		}
 		catch ( SQLException e )
 		{
-			System.out.println("Could not load DB permissions for user node " + nodeID + " (probably now incomplete permissions): " + e.getMessage());
+			System.err.println("Could not load DB permissions for user node " + nodeID + " (probably now incomplete permissions): " + e.getMessage());
 			e.printStackTrace();
 		}
-		dbBroker.freeConnection(dbConnection);
+		finally
+		{
+			dbBroker.freeConnection(dbConnection);
+		}
 
 		System.out.println("All permissions for " + nodeID + " done.");
 		synchronized(nodeMap) {
@@ -271,11 +277,27 @@ public class SecurityModule
 	 */
 	private Iterator<Integer> getAllNodes(int nodeID)
 	{
+		return getAllNodes(nodeID, false);
+	}
+
+	/**
+	 * Get all nodes linked to the passed node.
+	 */
+	private Iterator<Integer> getAllNodes(int nodeID, boolean addThis)
+	{
 		Connection dbConn = dbBroker.getConnection();
 		List list = new LinkedList<Integer>();
-		getAllNodesRecursive(dbConn, list, nodeID, 0);
-		System.out.println("List length is " + list.size());
-		dbBroker.freeConnection(dbConn);
+		if (addThis)
+			list.add(nodeID);
+		try
+		{
+			getAllNodesRecursive(dbConn, list, nodeID, 0);
+			System.out.println("List length is " + list.size());
+		}
+		finally
+		{
+			dbBroker.freeConnection(dbConn);
+		}
 		return list.listIterator();
 	}
 
@@ -284,7 +306,7 @@ public class SecurityModule
 		System.out.println("Searching nodes for " + nodeID);
 		if (recurseDepth >= 5)
 		{
-			System.out.println("Ack! Recursion depth succeeded when trying to process user node " + nodeID);
+			System.err.println("Ack! Recursion depth succeeded when trying to process user node " + nodeID);
 			return;
 		}
 		try
@@ -311,8 +333,7 @@ public class SecurityModule
 		}
 		catch (SQLException e)
 		{
-			System.out.println("Ack! SQL exception when fetching groups for node " + nodeID + ": " + e);
-			return;
+			System.err.println("Ack! SQL exception when fetching groups for node " + nodeID + ": " + e);
 		}
 	}
 
@@ -346,17 +367,48 @@ public class SecurityModule
 			ResultSet results = stat.executeQuery();
 			if ( results.first() )
 			{
-				dbBroker.freeConnection(dbConn);
 				return results.getInt(1);
 			}
-			System.out.println("Ack! Node name " + nodeName + "(" + nodeType + ") not found!");
+			System.err.println("Ack! Node name " + nodeName + "(" + nodeType + ") not found!");
 		}
 		catch (SQLException e)
 		{
-			System.out.println("Ack! SQL exception when getting node from node name " + nodeName + "(" + nodeType + "): " + e);
+			System.err.println("Ack! SQL exception when getting node from node name " + nodeName + "(" + nodeType + "): " + e);
 		}
-		dbBroker.freeConnection(dbConn);
+		finally
+		{
+			dbBroker.freeConnection(dbConn);
+		}
 		return -1;
+	}
+
+	/**
+	 * Get the node ID that corresponds to a node name
+	 */
+	private UserNode getNodeFromNodeID(int nodeID)
+	{
+		Connection dbConn = dbBroker.getConnection();
+		try
+		{
+			PreparedStatement stat = dbConn.prepareStatement("SELECT NodeName, NodeClass FROM UserNodes WHERE NodeID = ?");
+			stat.setInt(1, nodeID);
+			ResultSet results = stat.executeQuery();
+			if ( results.first() )
+			{
+				dbBroker.freeConnection(dbConn);
+				return new UserNode(results.getString(1), results.getInt(2));
+			}
+			System.err.println("Ack! Node " + nodeID + ") not found!");
+		}
+		catch (SQLException e)
+		{
+			System.err.println("Ack! SQL exception when getting node from node ID " + nodeID + ": " + e);
+		}
+		finally
+		{
+			dbBroker.freeConnection(dbConn);
+		}
+		return null;
 	}
 
 	/**
@@ -384,16 +436,18 @@ public class SecurityModule
 			ResultSet results = stat.executeQuery();
 			if ( results.first() )
 			{
-				dbBroker.freeConnection(dbConn);
 				return results.getInt(1);
 			}
-			System.out.println("Ack! Plugin name " + pluginName + " not found!");
+			System.err.println("Ack! Plugin name " + pluginName + " not found!");
 		}
 		catch (SQLException e)
 		{
-			System.out.println("Ack! SQL exception when getting node from plugin name " + pluginName + ": " + e);
+			System.err.println("Ack! SQL exception when getting node from plugin name " + pluginName + ": " + e);
 		}
-		dbBroker.freeConnection(dbConn);
+		finally
+		{
+			dbBroker.freeConnection(dbConn);
+		}
 		return -1;
 	}
 
@@ -473,7 +527,7 @@ public class SecurityModule
 		catch (SQLException e)
 		{
 			// XXX WTF to do here?
-			sqlErr("rolling back", e);
+			sqlErr("dealing with dealing with SQL error", e);
 		}
 	}
 
@@ -593,7 +647,7 @@ public class SecurityModule
 	{
 		UserNode group = new UserNode(groupName);
 
-		if (group.getType() == 2) // plugins can add their own groups!
+		if (group.getType() == 2) // plugins can poke their own groups!
 		{
 			String pluginName = getPluginName(0);
 			if (!group.getRootName().toLowerCase().equals(pluginName.toLowerCase()))
@@ -654,7 +708,7 @@ public class SecurityModule
 
 	public void addNodeToNode(UserNode parent, UserNode child) throws ChoobException
 	{
-		if (parent.getType() == 2) // plugins can add their own groups!
+		if (parent.getType() == 2) // plugins can poke their own groups!
 		{
 			String pluginName = getPluginName(0);
 			if (!parent.getRootName().toLowerCase().equals(pluginName.toLowerCase()))
@@ -707,9 +761,23 @@ public class SecurityModule
 		}
 	}
 
+	public void removeUserFromGroup(String parentName, String childName) throws ChoobException
+	{
+		UserNode parent = new UserNode(parentName);
+		UserNode child = new UserNode(childName, true);
+		removeNodeFromNode(parent, child);
+	}
+
+	public void removeGroupFromGroup(String parentName, String childName) throws ChoobException
+	{
+		UserNode parent = new UserNode(parentName);
+		UserNode child = new UserNode(childName);
+		removeNodeFromNode(parent, child);
+	}
+
 	public void removeNodeFromNode(UserNode parent, UserNode child) throws ChoobException
 	{
-		if (parent.getType() == 2) // plugins can add their own groups!
+		if (parent.getType() == 2) // plugins can poke their own groups!
 		{
 			String pluginName = getPluginName(0);
 			if (!parent.getRootName().toLowerCase().equals(pluginName.toLowerCase()))
@@ -762,7 +830,7 @@ public class SecurityModule
 		}
 	}
 
-	public void grantUserPermission(String groupName, Permission permission) throws ChoobException
+	public void grantPermission(String groupName, Permission permission) throws ChoobException
 	{
 		UserNode group = new UserNode(groupName);
 		if (group.getType() == 2) // plugins can add their own permissions (kinda)
@@ -805,6 +873,8 @@ public class SecurityModule
 					System.err.println("Ack! Permission add did nothing: " + group + " " + permission);
 
 				dbConn.commit();
+
+				invalidateNodePermissions(groupID);
 			}
 			catch (SQLException e)
 			{
@@ -816,5 +886,48 @@ public class SecurityModule
 				dbBroker.freeConnection(dbConn);
 			}
 		}
+	}
+
+	/**
+	 * Attempt to work out from whence a group's permissions come.
+	 */
+	public String[] findPermission(String groupName, Permission permission) throws ChoobException
+	{
+		UserNode group = new UserNode(groupName);
+		int groupID = getNodeIDFromNode(group);
+		if (groupID == -1)
+			throw new ChoobException("Group " + group + " does not exist!");
+
+		List<String> foundPerms = new LinkedList();
+
+		Iterator<Integer> allNodes = getAllNodes(groupID, true);
+
+		if ( ! allNodes.hasNext() )
+		{
+			return new String[0];
+		}
+
+		int nodeID;
+		while( allNodes.hasNext() )
+		{
+			nodeID = allNodes.next();
+			PermissionCollection perms = getNodePermissions( nodeID );
+			// Be careful to avoid invalid groups and stuff.
+			if (perms != null && perms.implies(permission))
+			{
+				// Which element?
+				Enumeration<Permission> allPerms = perms.elements();
+				while( allPerms.hasMoreElements() )
+				{
+					Permission perm = allPerms.nextElement();
+					if (perm.implies(permission))
+					{
+						foundPerms.add(getNodeFromNodeID(nodeID).toString() + perm);
+					}
+				}
+			}
+		}
+		String[] retVal = new String[foundPerms.size()];
+		return (String[])foundPerms.toArray(retVal);
 	}
 }

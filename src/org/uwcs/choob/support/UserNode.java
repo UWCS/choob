@@ -15,6 +15,31 @@ public class UserNode
 		this(groupName, false);
 	}
 
+	public UserNode(String nodeName, int nodeType)
+	{
+		this.nodeType = nodeType;
+		if ( nodeType == 0 )
+		{
+			this.rootName = null;
+			this.nodeName = nodeName;
+		}
+		else if (nodeType < 0 || nodeType > 3)
+		{
+			throw new IllegalArgumentException("Invalid node type: " + nodeType);
+		}
+		else
+		{
+			int pos = nodeName.indexOf('.');
+
+			if (pos != -1)
+				this.rootName = nodeName.substring(0, pos);
+			else
+				this.rootName = nodeName;
+
+			this.nodeName = nodeName;
+		}
+	}
+
 	public UserNode(String groupName, boolean isUser)
 	{
 		if ( isUser )
@@ -39,10 +64,7 @@ public class UserNode
 			else
 				throw new IllegalArgumentException("Invalid group name: " + groupName);
 
-			if (nodeType == 2)
-				rootName = parts[1];
-			else
-				rootName = null;
+			rootName = parts[1];
 
 			String nodeTmp = parts[1];
 			for(int i=2; i<parts.length; i++)
