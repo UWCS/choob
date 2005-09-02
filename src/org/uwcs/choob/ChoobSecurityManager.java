@@ -18,7 +18,7 @@ import org.uwcs.choob.modules.*;
 /**
  * Security manager for the bot, controls access to anything requiring/checking
  * for a permission.
- * @author sadiq
+ * @author	sadiq
  */
 public class ChoobSecurityManager extends SecurityManager
 {
@@ -64,7 +64,7 @@ public class ChoobSecurityManager extends SecurityManager
 		}
 		return perms;
 	}
-	
+
 	private void updatePluginPermissions(String plugin) {
 		System.out.println("Loading permissions for " + plugin + ".");
 		Connection dbConnection = dbBroker.getConnection();
@@ -218,7 +218,7 @@ public class ChoobSecurityManager extends SecurityManager
 	// With bsh.Capabilities.haveAccessibility(), and suppressAccessChecks
 	// defaulting to allowed, this method can be called from a plugin.
 	// I'd argue that this is kinda bad. :)
-	//   -- bucko
+	//	-- bucko
 	private static void test() {
 		System.out.println("This is a security test!");
 	}

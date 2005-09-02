@@ -20,7 +20,7 @@ import java.security.*;
 
 /**
  * Set of utilities that are used to load/interogate Beanshell plugins.
- * @author sadiq
+ * @author	sadiq
  */
 public class BeanshellPluginUtils
 {
@@ -139,7 +139,7 @@ public class BeanshellPluginUtils
 		// I can't seem to figure out exactly what's being set to accessible
 		// in the security manager so for now, I'm forbidding BeanShell to
 		// try it on. :)
-		//   -- bucko
+		//	-- bucko
 		try
 		{
 			bsh.Capabilities.setAccessibility(false);

@@ -14,7 +14,7 @@ import java.security.AccessController;
 
 /**
  *
- * @author  sadiq
+ * @author	sadiq
  */
 public class IRCInterface {
 	private Choob bot;

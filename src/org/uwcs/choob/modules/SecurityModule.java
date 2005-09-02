@@ -20,7 +20,7 @@ import java.util.*;
  *
  * Also manages user, groups etc.
  *
- * @author bucko
+ * @author	bucko
  */
 public class SecurityModule
 //	extends SecurityManager

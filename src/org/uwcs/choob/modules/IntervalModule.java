@@ -11,27 +11,26 @@ import org.uwcs.choob.support.*;
 
 /**
  *
- * @author  sadiq
+ * @author	sadiq
  */
 public class IntervalModule
 {
-    List intervalList;
-    
-    
-    /** Creates a new instance of IntervalModule */
-    public IntervalModule( List intervalList )
-    {
-        this.intervalList = intervalList;
-    }
-    
-    public void callBack( Object plugin, Object parameter, Date interval )
-    {
-        Interval newInt = new Interval();
-        
-        newInt.setPlugin(plugin.getClass().getName());
-        newInt.setTrigger( interval );
-        newInt.setParameter( parameter );
-        
-        intervalList.add( newInt );
-    }
+	List intervalList;
+
+	/** Creates a new instance of IntervalModule */
+	public IntervalModule( List intervalList )
+	{
+		this.intervalList = intervalList;
+	}
+
+	public void callBack( Object plugin, Object parameter, Date interval )
+	{
+		Interval newInt = new Interval();
+
+		newInt.setPlugin(plugin.getClass().getName());
+		newInt.setTrigger( interval );
+		newInt.setParameter( parameter );
+
+		intervalList.add( newInt );
+	}
 }

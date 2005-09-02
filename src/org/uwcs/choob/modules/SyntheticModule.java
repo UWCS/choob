@@ -13,7 +13,7 @@ import org.uwcs.choob.*;
 
 /**
  *
- * @author  sadiq
+ * @author	sadiq
  */
 public class SyntheticModule
 {

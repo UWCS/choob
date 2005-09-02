@@ -16,7 +16,7 @@ import java.util.regex.*;
 
 /**
  *
- * @author  Faux
+ * @author	Faux
  */
 
 public class NickModule

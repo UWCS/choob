@@ -8,7 +8,7 @@ import org.uwcs.choob.*;
 /**
  * Module that currently only exists for shutup, but should be expandable for any other controls that are needed over channels.
  *
- * @author  Faux
+ * @author	Faux
  */
 public class ProtectedChannels
 {

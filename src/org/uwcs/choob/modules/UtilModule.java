@@ -17,7 +17,7 @@ import java.util.regex.*;
 
 /**
  *
- * @author  sadiq
+ * @author	sadiq
  */
 public class UtilModule {
 
@@ -70,8 +70,7 @@ public class UtilModule {
 					currentPos = text.indexOf(' ', lastPos);
 
 					// I don't think there's a possible race condition here.
-					// Also note that lastPos can't be -1, so an indexOf fail
-					//   doesn't break this, either.
+					// Also note that lastPos can't be -1, so an indexOf fail doesn't break this, either.
 					// Make sure we skip "empty" parameters.
 					if (currentPos != lastPos)
 						break;

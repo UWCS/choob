@@ -17,7 +17,7 @@ import java.util.regex.*;
 /**
  * Worker thread. Waits on it's waitObject and then wakes, performs the operations
  * required on the line from IRC and then goes back to sleep.
- * @author sadiq
+ * @author	sadiq
  */
 public class ChoobThread extends Thread
 {

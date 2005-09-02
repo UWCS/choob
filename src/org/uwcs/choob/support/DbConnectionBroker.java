@@ -40,17 +40,17 @@ public class DbConnectionBroker implements Runnable {
 
 	/**
 	 * Creates a new Connection Broker<br>
-	 * dbDriver:        JDBC driver. e.g. 'oracle.jdbc.driver.OracleDriver'<br>
-	 * dbServer:        JDBC connect string. e.g. 'jdbc:oracle:thin:@203.92.21.109:1526:orcl'<br>
-	 * dbLogin:         Database login name.  e.g. 'Scott'<br>
-	 * dbPassword:      Database password.    e.g. 'Tiger'<br>
-	 * minConns:        Minimum number of connections to start with.<br>
-	 * maxConns:        Maximum number of connections in dynamic pool.<br>
-	 * logFileString:   Absolute path name for log file. e.g. 'c:/temp/mylog.log' <br>
-	 * maxConnTime:     Time in days between connection resets. (Reset does a basic cleanup)<br>
-	 * logAppend:       Append to logfile (optional)<br>
-	 * maxCheckoutSeconds:       Max time a connection can be checked out before being recycled. Zero value turns option off, default is 60 seconds.
-	 * debugLevel:      Level of debug messages output to the log file.  0 -> no messages, 1 -> Errors, 2 -> Warnings, 3 -> Information
+	 * dbDriver:			JDBC driver. e.g. 'oracle.jdbc.driver.OracleDriver'<br>
+	 * dbServer:			JDBC connect string. e.g. 'jdbc:oracle:thin:@203.92.21.109:1526:orcl'<br>
+	 * dbLogin:				Database login name.  e.g. 'Scott'<br>
+	 * dbPassword:			Database password.	e.g. 'Tiger'<br>
+	 * minConns:			Minimum number of connections to start with.<br>
+	 * maxConns:			Maximum number of connections in dynamic pool.<br>
+	 * logFileString:		Absolute path name for log file. e.g. 'c:/temp/mylog.log' <br>
+	 * maxConnTime:			Time in days between connection resets. (Reset does a basic cleanup)<br>
+	 * logAppend:			Append to logfile (optional)<br>
+	 * maxCheckoutSeconds:	Max time a connection can be checked out before being recycled. Zero value turns option off, default is 60 seconds.
+	 * debugLevel:			Level of debug messages output to the log file.  0 -> no messages, 1 -> Errors, 2 -> Warnings, 3 -> Information
 	 */
 	public DbConnectionBroker(String dbDriver, String dbServer, String dbLogin, String dbPassword, int minConns, int maxConns, String logFileString, double maxConnTime) throws IOException {
 		setupBroker(dbDriver, dbServer, dbLogin, dbPassword, minConns, maxConns, logFileString, maxConnTime, false, DEFAULTMAXCHECKOUTSECONDS, DEFAULTDEBUGLEVEL);
@@ -68,7 +68,8 @@ public class DbConnectionBroker implements Runnable {
 	/*
 	 * Special constructor to handle connection checkout expiration
 	 */
-	public DbConnectionBroker(String dbDriver, String dbServer, String dbLogin, String dbPassword, int minConns, int maxConns, String logFileString, double maxConnTime, boolean logAppend, int maxCheckoutSeconds, int debugLevel) throws IOException {
+	public DbConnectionBroker(String dbDriver, String dbServer, String dbLogin, String dbPassword, int minConns, int maxConns, String logFileString, double maxConnTime, boolean logAppend, int maxCheckoutSeconds, int debugLevel) throws IOException
+	{
 		setupBroker(dbDriver, dbServer, dbLogin, dbPassword, minConns, maxConns, logFileString, maxConnTime, logAppend, maxCheckoutSeconds, debugLevel);
 	}
 
@@ -150,9 +151,9 @@ public class DbConnectionBroker implements Runnable {
 
 		// Initialize the pool of connections with the mininum connections:
 		// Problems creating connections may be caused during reboot when the
-		//    servlet is started before the database is ready.  Handle this
-		//    by waiting and trying again.  The loop allows 5 minutes for
-		//    db reboot.
+		//	servlet is started before the database is ready.  Handle this
+		//	by waiting and trying again.  The loop allows 5 minutes for
+		//	db reboot.
 		boolean connectionsSucceeded=false;
 		int dbLoop=20;
 
@@ -310,7 +311,7 @@ public class DbConnectionBroker implements Runnable {
 					stmt = connPool[i].createStatement();
 					connStatus[i] = 0;  // Connection is O.K.
 					//log.println("Connection confirmed for conn = " +
-					//             String.valueOf(i));
+					//String.valueOf(i));
 
 					// Some DBs return an object even if DB is shut down
 					if(connPool[i].isClosed()) {
@@ -521,7 +522,7 @@ public class DbConnectionBroker implements Runnable {
 			connStatus[thisconn]=0;
 			res = "freed " + conn.toString();
 			//log.println("Freed connection " + String.valueOf(thisconn) +
-			//            " normal exit: ");
+			//" normal exit: ");
 		} else {
 		if(debugLevel > 0) {
 		log.println("----> Error: Could not free connection!!!");
@@ -574,19 +575,19 @@ public class DbConnectionBroker implements Runnable {
 	 * <OL>
 	 * <LI><code>getConnection()</code> will refuse to return connections.
 	 * <LI>The housekeeping thread is shut down.<br>
-	 *    Up to the time of <code>millis</code> milliseconds after shutdown of
-	 *    the housekeeping thread, <code>freeConnection()</code> can still be
-	 *    called to return used connections.
+	 *	Up to the time of <code>millis</code> milliseconds after shutdown of
+	 *	the housekeeping thread, <code>freeConnection()</code> can still be
+	 *	called to return used connections.
 	 * <LI>After <code>millis</code> milliseconds after the shutdown of the
-	 *    housekeeping thread, all connections in the pool are closed.
+	 *	housekeeping thread, all connections in the pool are closed.
 	 * <LI>If any connections were in use while being closed then a
-	 *    <code>SQLException</code> is thrown.
+	 *	<code>SQLException</code> is thrown.
 	 * <LI>The log is closed.
 	 * </OL><br>
 	 * Call this method from a servlet destroy() method.
 	 *
-	 * @param      millis   the time to wait in milliseconds.
-	 * @exception  SQLException if connections were in use after
+	 * @param		millis   the time to wait in milliseconds.
+	 * @exception	SQLException if connections were in use after
 	 * <code>millis</code>.
 	 */
 	public void destroy(int millis) throws SQLException {
@@ -654,7 +655,7 @@ public class DbConnectionBroker implements Runnable {
 	 * with a <code>millis</code>
 	 * value of 10000 (10 seconds) and ignores <code>SQLException</code>
 	 * thrown by that method.
-	 * @see     #destroy(int)
+	 * @see		#destroy(int)
 	 */
 	public void destroy() {
 		try {
