@@ -13,11 +13,27 @@ use choob;
 -- Table structure for table `AddNicks`
 --
 
+
+CREATE TABLE `UserNodes` (
+  `NodeID` int(11) unsigned NOT NULL auto_increment,
+  `NodeName` varchar(32) NOT NULL default '',
+  `NodeClass` tinyint(3) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`NodeID`),
+  UNIQUE KEY `NodeName` (`NodeName`,`NodeClass`)
+) Type=InnoDB;
+
+--
+-- Dumping data for table `UserNodes`
+--
+
+INSERT INTO `UserNodes` VALUES (1,'bucko',0);
+INSERT INTO `UserNodes` VALUES (2,'bucko',1);
+
 CREATE TABLE `AddNicks` (
   `UserID` int(11) NOT NULL default '0',
   `Nick` varchar(64) NOT NULL default '',
   UNIQUE KEY `Nick` (`Nick`)
-) TYPE=MyISAM;
+) Type=InnoDB;
 
 --
 -- Dumping data for table `AddNicks`
@@ -35,7 +51,7 @@ CREATE TABLE `Aliases` (
   `Converted` tinytext NOT NULL,
   `UserID` int(11) NOT NULL default '0',
   PRIMARY KEY  (`Name`)
-) TYPE=MyISAM;
+) Type=InnoDB;
 
 --
 -- Dumping data for table `Aliases`
@@ -52,7 +68,7 @@ CREATE TABLE `CorePlugins` (
   `PluginName` varchar(64) NOT NULL default '',
   `URL` mediumtext NOT NULL,
   PRIMARY KEY  (`PluginName`)
-) TYPE=MyISAM;
+) Type=InnoDB;
 
 --
 -- Dumping data for table `CorePlugins`
@@ -67,11 +83,11 @@ INSERT INTO `CorePlugins` VALUES ('Plugin','http://svn.uwcs.co.uk/repos/choob/tr
 
 CREATE TABLE `GroupMembers` (
   `GroupID` int(10) unsigned default NULL,
-  `MemberID` int(10) unsigned default NULL,
+  `MemberID` int(11) unsigned default NULL,
   UNIQUE KEY `GroupID` (`GroupID`,`MemberID`),
   KEY `MemberID` (`MemberID`),
   KEY `GroupID_2` (`GroupID`)
-) TYPE=MyISAM;
+) Type=InnoDB;
 
 --
 -- Dumping data for table `GroupMembers`
@@ -93,7 +109,7 @@ CREATE TABLE `History` (
   `Time` timestamp(14) NOT NULL,
   `Random` tinyint(4) NOT NULL default '0',
   PRIMARY KEY  (`LineID`)
-) TYPE=MyISAM;
+) Type=InnoDB;
 
 --
 -- Table structure for table `LoadedPlugins`
@@ -103,7 +119,7 @@ CREATE TABLE `LoadedPlugins` (
   `Name` varchar(255) NOT NULL default '',
   `Source` longtext NOT NULL,
   UNIQUE KEY `Name` (`Name`)
-) TYPE=MyISAM;
+) Type=InnoDB;
 
 --
 -- Table structure for table `ObjectStore`
@@ -116,7 +132,7 @@ CREATE TABLE `ObjectStore` (
   `ClassID` int(11) NOT NULL default '0',
   PRIMARY KEY  (`ObjectID`),
   UNIQUE KEY `Composite` (`UserID`,`ClassName`,`ClassID`)
-) TYPE=MyISAM;
+) Type=InnoDB;
 
 --
 -- Table structure for table `ObjectStoreData`
@@ -127,7 +143,7 @@ CREATE TABLE `ObjectStoreData` (
   `FieldName` varchar(128) NOT NULL default '',
   `FieldType` varchar(32) NOT NULL default '',
   `FieldValue` text NOT NULL
-) TYPE=MyISAM;
+) Type=InnoDB;
 
 --
 -- Table structure for table `UserNodePermissions`
@@ -138,7 +154,7 @@ CREATE TABLE `UserNodePermissions` (
   `Type` tinytext NOT NULL,
   `Permission` tinytext NOT NULL,
   `Action` tinytext NOT NULL
-) TYPE=MyISAM COMMENT='Table storing plugin permissions';
+) Type=InnoDB COMMENT='Table storing plugin permissions';
 
 --
 -- Dumping data for table `UserNodePermissions`
@@ -147,32 +163,13 @@ CREATE TABLE `UserNodePermissions` (
 INSERT INTO `UserNodePermissions` VALUES (2,'java.security.AllPermission','','');
 
 --
--- Table structure for table `UserNodes`
---
-
-CREATE TABLE `UserNodes` (
-  `NodeID` int(10) unsigned NOT NULL auto_increment,
-  `NodeName` varchar(32) NOT NULL default '',
-  `NodeClass` tinyint(3) unsigned NOT NULL default '0',
-  PRIMARY KEY  (`NodeID`),
-  UNIQUE KEY `NodeName` (`NodeName`,`NodeClass`)
-) TYPE=MyISAM;
-
---
--- Dumping data for table `UserNodes`
---
-
-INSERT INTO `UserNodes` VALUES (1,'bucko',0);
-INSERT INTO `UserNodes` VALUES (2,'bucko',1);
-
---
 -- Table structure for table `UserPlugins`
 --
 
 CREATE TABLE `UserPlugins` (
   `UserID` int(11) NOT NULL default '0',
   `PluginName` tinytext NOT NULL
-) TYPE=MyISAM;
+) Type=InnoDB;
 
 --
 -- Dumping data for table `UserPlugins`
