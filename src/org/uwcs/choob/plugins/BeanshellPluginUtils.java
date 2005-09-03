@@ -34,8 +34,8 @@ public class BeanshellPluginUtils
 			mods = newMods;
 	}
 	/**
-	 * Creates a plugin from a given URL and plugin name.
-	 * @param URL URL to plugin's source.
+	 * Creates a plugin from a String and plugin name.
+	 * @param srcContent String comprising of the plugin's source.
 	 * @param pluginName Class name of plugin.
 	 * @throws Exception Thrown if there's a syntactical error in the plugin's source.
 	 * @return Returns an instance of the new plugin.
@@ -175,8 +175,9 @@ public class BeanshellPluginUtils
 	 * Calls a given command*, filter*, interval* method in the plugin.
 	 * @param plugin Plugin to call.
 	 * @param func Function to call.
-	 * @param con Context from IRC.
+	 * @param ev Event from IRC.
 	 * @param mods Group of modules available.
+	 * @param irc Instance of IRCInterface.
 	 */
 	static private void callFunc(Object plugin, String func, IRCEvent ev, Modules mods, IRCInterface irc)
 	{
@@ -269,10 +270,11 @@ public class BeanshellPluginUtils
 
 	/**
 	 * Attempts to call a method in the plugin, triggered by a line from IRC.
-	 * @param plugin
+	 * @param plugin Plugin to call the method in.
 	 * @param command Command to call.
-	 * @param con Context from IRC.
+	 * @param ev Message object from IRC.
 	 * @param mods Group of modules.
+	 * @param irc Instance of IRCInterface to pass along.
 	 */
 	static public void doCommand(Object plugin, String command, Message ev, Modules mods, IRCInterface irc)
 	{
@@ -284,8 +286,9 @@ public class BeanshellPluginUtils
 	 * Attempts to call a method in the plugin, triggered by an event from IRC.
 	 * @param plugin
 	 * @param eventname Event method name to call.
-	 * @param con Context from IRC.
+	 * @param ev IRCEvent to pass along.
 	 * @param mods Group of modules.
+	 * @param irc Instance of IRCInterface to pass along.
 	 */
 	static public void doEvent(Object plugin, String eventname, IRCEvent ev, Modules mods, IRCInterface irc)
 	{
@@ -297,7 +300,7 @@ public class BeanshellPluginUtils
 	 *
 	 * @param plugin
 	 * @param filter
-	 * @param con
+	 * @param ev
 	 * @param mods
 	 * @param irc
 	 */
@@ -336,10 +339,6 @@ public class BeanshellPluginUtils
 
 	/**
 	 *
-	 * @param plugin
-	 * @param interval
-	 * @param con
-	 * @param mods
 	 */
 	static public void doInterval(Object plugin, Object parameter, Modules mods, IRCInterface irc)
 	{
@@ -377,7 +376,6 @@ public class BeanshellPluginUtils
 
 	/**
 	 *
-	 * @return
 	 */
 	static public List getExportedMethods(Object plugin, String prefix)
 	{
@@ -405,7 +403,6 @@ public class BeanshellPluginUtils
 
 	/**
 	 *
-	 * @return
 	 */
 	static public List getFilters(Object plugin)
 	{

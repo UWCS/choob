@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 {
 	/**
@@ -57,7 +57,7 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 
 	/**
 	 * Synthesize a new NickChange from this one.
-	 * @returns The new NickChange object.
+	 * @return The new NickChange object.
 	 */
 	public IRCEvent cloneEvent() {
 		return new NickChange(this);
@@ -65,7 +65,7 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 
 	/**
 	 * Get the value of nick
-	 * @returns The value of nick
+	 * @return The value of nick
 	 */
 	public String getNick() {
 		return nick;
@@ -73,7 +73,7 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 
 	/**
 	 * Get the value of login
-	 * @returns The value of login
+	 * @return The value of login
 	 */
 	public String getLogin() {
 		return login;
@@ -81,7 +81,7 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 
 	/**
 	 * Get the value of hostname
-	 * @returns The value of hostname
+	 * @return The value of hostname
 	 */
 	public String getHostname() {
 		return hostname;
@@ -89,7 +89,7 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 
 	/**
 	 * Get the value of newNick
-	 * @returns The value of newNick
+	 * @return The value of newNick
 	 */
 	public String getNewNick() {
 		return newNick;

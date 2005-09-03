@@ -43,7 +43,6 @@ public class ChoobPermission extends BasicPermission
 
 	/**
 	 *
-	 * @return
 	 */
 	public String getActions()
 	{
@@ -56,7 +55,6 @@ public class ChoobPermission extends BasicPermission
 	/**
 	 *
 	 * @param permission
-	 * @return
 	 */
 	public boolean implies(java.security.Permission permission)
 	{

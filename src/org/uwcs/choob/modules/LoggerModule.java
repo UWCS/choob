@@ -26,7 +26,7 @@ public class LoggerModule
 
 	/**
 	 * Logs a line from IRC to the database.
-	 * @param con {@link Context} object representing the line from IRC.
+	 * @param mes {@link Message} object representing the line from IRC.
 	 * @throws Exception Thrown from the database access, potential SQL or IO exceptions.
 	 */
 	public void addLog( Message mes ) throws Exception

@@ -5,8 +5,8 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
-public class UnknownEvent extends IRCEvent 
+
+public class UnknownEvent extends IRCEvent
 {
 
 	/**
@@ -29,7 +29,7 @@ public class UnknownEvent extends IRCEvent
 
 	/**
 	 * Synthesize a new UnknownEvent from this one.
-	 * @returns The new UnknownEvent object.
+	 * @return The new UnknownEvent object.
 	 */
 	public IRCEvent cloneEvent() {
 		return new UnknownEvent(this);

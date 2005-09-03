@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class UserModes extends IRCEvent implements MultiModeEvent
 {
 	/**
@@ -36,7 +36,7 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 
 	/**
 	 * Synthesize a new UserModes from this one.
-	 * @returns The new UserModes object.
+	 * @return The new UserModes object.
 	 */
 	public IRCEvent cloneEvent() {
 		return new UserModes(this);
@@ -44,7 +44,7 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 
 	/**
 	 * Get the value of modes
-	 * @returns The value of modes
+	 * @return The value of modes
 	 */
 	public String getModes() {
 		return modes;

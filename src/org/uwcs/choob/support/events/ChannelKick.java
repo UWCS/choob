@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class ChannelKick extends IRCEvent implements ChannelEvent, ContextEvent, UserEvent, AimedEvent
 {
 	/**
@@ -64,7 +64,7 @@ public class ChannelKick extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Synthesize a new ChannelKick from this one.
-	 * @returns The new ChannelKick object.
+	 * @return The new ChannelKick object.
 	 */
 	public IRCEvent cloneEvent() {
 		return new ChannelKick(this);
@@ -72,7 +72,7 @@ public class ChannelKick extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of channel
-	 * @returns The value of channel
+	 * @return The value of channel
 	 */
 	public String getChannel() {
 		return channel;
@@ -80,7 +80,7 @@ public class ChannelKick extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of nick
-	 * @returns The value of nick
+	 * @return The value of nick
 	 */
 	public String getNick() {
 		return nick;
@@ -88,7 +88,7 @@ public class ChannelKick extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of login
-	 * @returns The value of login
+	 * @return The value of login
 	 */
 	public String getLogin() {
 		return login;
@@ -96,7 +96,7 @@ public class ChannelKick extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of hostname
-	 * @returns The value of hostname
+	 * @return The value of hostname
 	 */
 	public String getHostname() {
 		return hostname;
@@ -104,7 +104,7 @@ public class ChannelKick extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of target
-	 * @returns The value of target
+	 * @return The value of target
 	 */
 	public String getTarget() {
 		return target;
@@ -113,7 +113,7 @@ public class ChannelKick extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the reply context in which this event resides
-	 * @returns The context
+	 * @return The context
 	 */
 	public String getContext() {
 		return getChannel();

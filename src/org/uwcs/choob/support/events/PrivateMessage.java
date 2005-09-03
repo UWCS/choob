@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class PrivateMessage extends Message implements PrivateEvent, CommandEvent
 {
 
@@ -29,7 +29,7 @@ public class PrivateMessage extends Message implements PrivateEvent, CommandEven
 
 	/**
 	 * Synthesize a new PrivateMessage from this one.
-	 * @returns The new PrivateMessage object.
+	 * @return The new PrivateMessage object.
 	 */
 	public IRCEvent cloneEvent(String message) {
 		return new PrivateMessage(this, message);

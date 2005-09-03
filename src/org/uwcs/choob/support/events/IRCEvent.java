@@ -57,7 +57,7 @@ public class IRCEvent
 
 	/**
 	 * Synthesize a new IRCEvent from this one.
-	 * @returns The new IRCEvent object.
+	 * @return The new IRCEvent object.
 	 */
 	public IRCEvent cloneEvent() {
 		return new IRCEvent(this);
@@ -65,7 +65,7 @@ public class IRCEvent
 
 	/**
 	 * Get the value of methodName
-	 * @returns The value of methodName
+	 * @return The value of methodName
 	 */
 	public String getMethodName() {
 		return methodName;
@@ -73,7 +73,7 @@ public class IRCEvent
 
 	/**
 	 * Get the value of synthLevel
-	 * @returns The value of synthLevel
+	 * @return The value of synthLevel
 	 */
 	public int getSynthLevel() {
 		return synthLevel;
@@ -81,7 +81,7 @@ public class IRCEvent
 
 	/**
 	 * Get the value of millis
-	 * @returns The value of millis
+	 * @return The value of millis
 	 */
 	public long getMillis() {
 		return millis;
@@ -89,7 +89,7 @@ public class IRCEvent
 
 	/**
 	 * Get the value of random
-	 * @returns The value of random
+	 * @return The value of random
 	 */
 	public int getRandom() {
 		return random;

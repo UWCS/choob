@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class ChannelNotice extends Message implements ChannelEvent
 {
 	/**
@@ -36,7 +36,7 @@ public class ChannelNotice extends Message implements ChannelEvent
 
 	/**
 	 * Synthesize a new ChannelNotice from this one.
-	 * @returns The new ChannelNotice object.
+	 * @return The new ChannelNotice object.
 	 */
 	public IRCEvent cloneEvent(String message) {
 		return new ChannelNotice(this, message);
@@ -44,7 +44,7 @@ public class ChannelNotice extends Message implements ChannelEvent
 
 	/**
 	 * Get the value of channel
-	 * @returns The value of channel
+	 * @return The value of channel
 	 */
 	public String getChannel() {
 		return channel;
@@ -53,7 +53,7 @@ public class ChannelNotice extends Message implements ChannelEvent
 
 	/**
 	 * Get the reply context in which this event resides
-	 * @returns The context
+	 * @return The context
 	 */
 	public String getContext() {
 		return getChannel();

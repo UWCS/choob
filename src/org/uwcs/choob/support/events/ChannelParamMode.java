@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class ChannelParamMode extends ChannelMode implements ParamEvent
 {
 	/**
@@ -43,7 +43,7 @@ public class ChannelParamMode extends ChannelMode implements ParamEvent
 
 	/**
 	 * Synthesize a new ChannelParamMode from this one.
-	 * @returns The new ChannelParamMode object.
+	 * @return The new ChannelParamMode object.
 	 */
 	public IRCEvent cloneEvent() {
 		return new ChannelParamMode(this);
@@ -51,7 +51,7 @@ public class ChannelParamMode extends ChannelMode implements ParamEvent
 
 	/**
 	 * Get the value of set
-	 * @returns The value of set
+	 * @return The value of set
 	 */
 	public boolean isSet() {
 		return set;
@@ -59,7 +59,7 @@ public class ChannelParamMode extends ChannelMode implements ParamEvent
 
 	/**
 	 * Get the value of param
-	 * @returns The value of param
+	 * @return The value of param
 	 */
 	public String getParam() {
 		return param;

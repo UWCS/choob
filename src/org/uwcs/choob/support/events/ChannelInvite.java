@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, AimedEvent
 {
 	/**
@@ -64,7 +64,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 
 	/**
 	 * Synthesize a new ChannelInvite from this one.
-	 * @returns The new ChannelInvite object.
+	 * @return The new ChannelInvite object.
 	 */
 	public IRCEvent cloneEvent() {
 		return new ChannelInvite(this);
@@ -72,7 +72,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 
 	/**
 	 * Get the value of channel
-	 * @returns The value of channel
+	 * @return The value of channel
 	 */
 	public String getChannel() {
 		return channel;
@@ -80,7 +80,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 
 	/**
 	 * Get the value of nick
-	 * @returns The value of nick
+	 * @return The value of nick
 	 */
 	public String getNick() {
 		return nick;
@@ -88,7 +88,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 
 	/**
 	 * Get the value of login
-	 * @returns The value of login
+	 * @return The value of login
 	 */
 	public String getLogin() {
 		return login;
@@ -96,7 +96,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 
 	/**
 	 * Get the value of hostname
-	 * @returns The value of hostname
+	 * @return The value of hostname
 	 */
 	public String getHostname() {
 		return hostname;
@@ -104,7 +104,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 
 	/**
 	 * Get the value of target
-	 * @returns The value of target
+	 * @return The value of target
 	 */
 	public String getTarget() {
 		return target;

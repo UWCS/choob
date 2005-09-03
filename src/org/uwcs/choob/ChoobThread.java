@@ -240,7 +240,7 @@ public class ChoobThread extends Thread
 
 	/**
 	 * Setter method for the thread's current IRCInterface object.
-	 * @param context New value of property irc.
+	 * @param irc New value of property irc.
 	 */
 	public void setIRC(IRCInterface irc)
 	{

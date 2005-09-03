@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent, UserEvent
 {
 	/**
@@ -57,7 +57,7 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Synthesize a new ChannelJoin from this one.
-	 * @returns The new ChannelJoin object.
+	 * @return The new ChannelJoin object.
 	 */
 	public IRCEvent cloneEvent() {
 		return new ChannelJoin(this);
@@ -65,7 +65,7 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of channel
-	 * @returns The value of channel
+	 * @return The value of channel
 	 */
 	public String getChannel() {
 		return channel;
@@ -73,7 +73,7 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of nick
-	 * @returns The value of nick
+	 * @return The value of nick
 	 */
 	public String getNick() {
 		return nick;
@@ -81,7 +81,7 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of login
-	 * @returns The value of login
+	 * @return The value of login
 	 */
 	public String getLogin() {
 		return login;
@@ -89,7 +89,7 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of hostname
-	 * @returns The value of hostname
+	 * @return The value of hostname
 	 */
 	public String getHostname() {
 		return hostname;
@@ -98,7 +98,7 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the reply context in which this event resides
-	 * @returns The context
+	 * @return The context
 	 */
 	public String getContext() {
 		return getChannel();

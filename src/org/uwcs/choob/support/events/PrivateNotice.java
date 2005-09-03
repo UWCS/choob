@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class PrivateNotice extends Message implements PrivateEvent
 {
 
@@ -29,7 +29,7 @@ public class PrivateNotice extends Message implements PrivateEvent
 
 	/**
 	 * Synthesize a new PrivateNotice from this one.
-	 * @returns The new PrivateNotice object.
+	 * @return The new PrivateNotice object.
 	 */
 	public IRCEvent cloneEvent(String message) {
 		return new PrivateNotice(this, message);

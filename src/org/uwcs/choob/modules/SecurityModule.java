@@ -72,7 +72,7 @@ public class SecurityModule
 
 	/**
 	 * Gets the name of the nth plugin in the stack (0th = plugin #1).
-	 * @param permission
+	 * @param skip
 	 * @return null if there is no plugin that far back. Otherwise the plugin
 	 *         name.
 	 */

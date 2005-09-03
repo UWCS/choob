@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class ChannelUserMode extends ChannelMode implements AimedEvent
 {
 	/**
@@ -43,7 +43,7 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 
 	/**
 	 * Synthesize a new ChannelUserMode from this one.
-	 * @returns The new ChannelUserMode object.
+	 * @return The new ChannelUserMode object.
 	 */
 	public IRCEvent cloneEvent() {
 		return new ChannelUserMode(this);
@@ -51,7 +51,7 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 
 	/**
 	 * Get the value of set
-	 * @returns The value of set
+	 * @return The value of set
 	 */
 	public boolean isSet() {
 		return set;
@@ -59,7 +59,7 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 
 	/**
 	 * Get the value of target
-	 * @returns The value of target
+	 * @return The value of target
 	 */
 	public String getTarget() {
 		return target;

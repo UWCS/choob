@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 {
 	/**
@@ -57,7 +57,7 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 
 	/**
 	 * Synthesize a new QuitEvent from this one.
-	 * @returns The new QuitEvent object.
+	 * @return The new QuitEvent object.
 	 */
 	public IRCEvent cloneEvent(String message) {
 		return new QuitEvent(this, message);
@@ -65,7 +65,7 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 
 	/**
 	 * Get the value of message
-	 * @returns The value of message
+	 * @return The value of message
 	 */
 	public String getMessage() {
 		return message;
@@ -73,7 +73,7 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 
 	/**
 	 * Get the value of nick
-	 * @returns The value of nick
+	 * @return The value of nick
 	 */
 	public String getNick() {
 		return nick;
@@ -81,7 +81,7 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 
 	/**
 	 * Get the value of login
-	 * @returns The value of login
+	 * @return The value of login
 	 */
 	public String getLogin() {
 		return login;
@@ -89,7 +89,7 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 
 	/**
 	 * Get the value of hostname
-	 * @returns The value of hostname
+	 * @return The value of hostname
 	 */
 	public String getHostname() {
 		return hostname;

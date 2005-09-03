@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEvent
 {
 	/**
@@ -43,7 +43,7 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 
 	/**
 	 * Synthesize a new ChannelModes from this one.
-	 * @returns The new ChannelModes object.
+	 * @return The new ChannelModes object.
 	 */
 	public IRCEvent cloneEvent() {
 		return new ChannelModes(this);
@@ -51,7 +51,7 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 
 	/**
 	 * Get the value of channel
-	 * @returns The value of channel
+	 * @return The value of channel
 	 */
 	public String getChannel() {
 		return channel;
@@ -59,7 +59,7 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 
 	/**
 	 * Get the value of modes
-	 * @returns The value of modes
+	 * @return The value of modes
 	 */
 	public String getModes() {
 		return modes;
