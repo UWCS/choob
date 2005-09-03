@@ -57,7 +57,7 @@ class Tell
 
 	private void spew(String nick, Modules mods, IRCInterface irc)
 	{
-		List results = mods.odb.retrieve (TellObject.class, "target = '" + nick + "'");
+		List results = mods.odb.retrieve (TellObject.class, "target = '" + mods.nick.getBestPrimaryNick(nick) + "'");
 
 		if (results.size()!=0)
 			for (int i=0; i < results.size(); i++ )
