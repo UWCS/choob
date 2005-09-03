@@ -79,6 +79,8 @@ public class ObjectDbModule
 			while(results.next());
 		}
 
+		broker.freeConnection( dbConnection );
+		
 		return objects;
 	}
 
@@ -103,6 +105,8 @@ public class ObjectDbModule
 			populateObject( tempObject, objSet );
 		}
 
+		broker.freeConnection( dbConnection );
+		
 		return tempObject;
 	}
 
@@ -156,10 +160,15 @@ public class ObjectDbModule
 		catch( Exception e )
 		{
 			dbCon.rollback();
+			
+			dbCon.setAutoCommit( true );
 
 			broker.freeConnection( dbCon );
 			throw new Exception("An error occured while trying to delete.", e);
 		}
+		
+		dbCon.setAutoCommit( true );
+		broker.freeConnection( dbCon );
 	}
 
 	private void delete( Connection dbCon, Object strObj ) throws Exception
@@ -227,9 +236,14 @@ public class ObjectDbModule
 		{
 			dbCon.rollback();
 
+			dbCon.setAutoCommit( true );
+			
 			broker.freeConnection( dbCon );
 			throw new Exception("An error occured while trying to update.", e);
 		}
+		
+		dbCon.setAutoCommit( true );
+		broker.freeConnection( dbCon );
 	}
 
 	public void save( Object strObject ) throws Exception
@@ -248,10 +262,15 @@ public class ObjectDbModule
 		{
 			dbCon.rollback();
 
+			dbCon.setAutoCommit( true );			
+
 			broker.freeConnection( dbCon );
 
 			throw new Exception("An error occured while trying to save.", e);
 		}
+		
+		dbCon.setAutoCommit( true );
+		broker.freeConnection( dbCon );
 	}
 
 	private void save( Connection dbCon, Object strObj ) throws Exception
