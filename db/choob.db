@@ -26,21 +26,30 @@ CREATE TABLE `UserNodes` (
 -- Dumping data for table `UserNodes`
 --
 
-INSERT INTO `UserNodes` VALUES (1,'bucko',0);
-INSERT INTO `UserNodes` VALUES (2,'bucko',1);
+INSERT INTO `UserNodes` VALUES (1,'root',3);
+INSERT INTO `UserNodes` VALUES (2,'bucko',0);
+INSERT INTO `UserNodes` VALUES (3,'bucko',1);
 
-CREATE TABLE `AddNicks` (
-  `UserID` int(11) NOT NULL default '0',
-  `Nick` varchar(64) NOT NULL default '',
-  UNIQUE KEY `Nick` (`Nick`)
-) Type=InnoDB;
+--
+-- Table structure for table `AddNicks`
+--
+
+--
+-- I believe this table should not be used. It's insecure. --bucko
+--
+
+-- CREATE TABLE `AddNicks` (
+--   `UserID` int(11) NOT NULL default '0',
+--   `Nick` varchar(64) NOT NULL default '',
+--   UNIQUE KEY `Nick` (`Nick`)
+-- ) Type=InnoDB;
 
 --
 -- Dumping data for table `AddNicks`
 --
 
-INSERT INTO `AddNicks` VALUES (3,'Faux%');
-INSERT INTO `AddNicks` VALUES (3,'YourMum|%');
+-- INSERT INTO `AddNicks` VALUES (3,'Faux%');
+-- INSERT INTO `AddNicks` VALUES (3,'YourMum|%');
 
 --
 -- Table structure for table `Aliases`
@@ -49,7 +58,8 @@ INSERT INTO `AddNicks` VALUES (3,'YourMum|%');
 CREATE TABLE `Aliases` (
   `Name` varchar(64) NOT NULL default '',
   `Converted` tinytext NOT NULL,
-  `UserID` int(11) NOT NULL default '0',
+--  What's the point of this value?
+--  `UserID` int(11) NOT NULL default '0',
   PRIMARY KEY  (`Name`)
 ) Type=InnoDB;
 
@@ -57,8 +67,8 @@ CREATE TABLE `Aliases` (
 -- Dumping data for table `Aliases`
 --
 
-INSERT INTO `Aliases` VALUES ('say','Faux.Say',0);
-INSERT INTO `Aliases` VALUES ('reply','Faux.Reply',0);
+INSERT INTO `Aliases` VALUES ('say','Faux.Say');
+INSERT INTO `Aliases` VALUES ('reply','Faux.Reply');
 
 --
 -- Table structure for table `CorePlugins`
@@ -82,33 +92,37 @@ INSERT INTO `CorePlugins` VALUES ('Plugin','http://svn.uwcs.co.uk/repos/choob/tr
 --
 
 CREATE TABLE `GroupMembers` (
-  `GroupID` int(10) unsigned default NULL,
+  `GroupID` int(11) unsigned default NULL,
   `MemberID` int(11) unsigned default NULL,
   UNIQUE KEY `GroupID` (`GroupID`,`MemberID`),
   KEY `MemberID` (`MemberID`),
-  KEY `GroupID_2` (`GroupID`)
+  KEY `GroupID_2` (`GroupID`),
+  FOREIGN KEY (`GroupID`) REFERENCES UserNodes (`NodeID`),
+  FOREIGN KEY (`MemberID`) REFERENCES UserNodes (`NodeID`)
 ) Type=InnoDB;
 
 --
 -- Dumping data for table `GroupMembers`
 --
 
-INSERT INTO `GroupMembers` VALUES (2,1);
+INSERT INTO `GroupMembers` VALUES (1,2);
 INSERT INTO `GroupMembers` VALUES (3,2);
-INSERT INTO `GroupMembers` VALUES (4,3);
 
 --
 -- Table structure for table `History`
 --
 
 CREATE TABLE `History` (
-  `LineID` int(10) unsigned NOT NULL auto_increment,
-  `Nick` tinytext NOT NULL,
-  `Channel` tinytext NOT NULL,
+  `LineID` int(11) unsigned NOT NULL auto_increment,
+  `Nick` VARCHAR(32) NOT NULL,
+  `Channel` VARCHAR(32) NOT NULL,
   `Text` text NOT NULL,
   `Time` timestamp(14) NOT NULL,
   `Random` tinyint(4) NOT NULL default '0',
-  PRIMARY KEY  (`LineID`)
+  PRIMARY KEY  (`LineID`),
+  KEY (`Nick`),
+  KEY (`Channel`),
+  KEY (`Time`)
 ) Type=InnoDB;
 
 --
@@ -118,7 +132,7 @@ CREATE TABLE `History` (
 CREATE TABLE `LoadedPlugins` (
   `Name` varchar(255) NOT NULL default '',
   `Source` longtext NOT NULL,
-  UNIQUE KEY `Name` (`Name`)
+  PRIMARY KEY `Name` (`Name`)
 ) Type=InnoDB;
 
 --
@@ -127,11 +141,12 @@ CREATE TABLE `LoadedPlugins` (
 
 CREATE TABLE `ObjectStore` (
   `ObjectID` int(11) NOT NULL auto_increment,
-  `UserID` int(11) NOT NULL default '0',
+  `UserID` int(11) UNSIGNED NOT NULL default '0',
   `ClassName` varchar(128) NOT NULL default '',
   `ClassID` int(11) NOT NULL default '0',
   PRIMARY KEY  (`ObjectID`),
-  UNIQUE KEY `Composite` (`UserID`,`ClassName`,`ClassID`)
+  UNIQUE KEY `Composite` (`UserID`,`ClassName`,`ClassID`),
+  FOREIGN KEY (`UserID`) REFERENCES `UserNodes` (`NodeID`)
 ) Type=InnoDB;
 
 --
@@ -142,7 +157,11 @@ CREATE TABLE `ObjectStoreData` (
   `ObjectID` int(11) NOT NULL default '0',
   `FieldName` varchar(128) NOT NULL default '',
   `FieldType` varchar(32) NOT NULL default '',
-  `FieldValue` text NOT NULL
+  `FieldValue` text NOT NULL,
+  PRIMARY KEY (`ObjectID`),
+  KEY (`FieldName`),
+  KEY (`FieldType`),
+  FOREIGN KEY (`ObjectID`) REFERENCES `ObjectStore` (`ObjectID`)
 ) Type=InnoDB;
 
 --
@@ -150,31 +169,38 @@ CREATE TABLE `ObjectStoreData` (
 --
 
 CREATE TABLE `UserNodePermissions` (
-  `NodeID` int(11) NOT NULL default '0',
-  `Type` tinytext NOT NULL,
-  `Permission` tinytext NOT NULL,
-  `Action` tinytext NOT NULL
+  `NodeID` int(11) UNSIGNED NOT NULL default '0',
+  `Type` VARCHAR(50) NOT NULL,
+  `Permission` VARCHAR(80) NOT NULL,
+  `Action` VARCHAR(30) NOT NULL,
+  KEY (`NodeID`),
+  UNIQUE KEY (`NodeID`, `Type`, `Permission`, `Action`),
+  FOREIGN KEY (`NodeID`) REFERENCES `UserNodes` (`NodeID`)
 ) Type=InnoDB COMMENT='Table storing plugin permissions';
 
 --
 -- Dumping data for table `UserNodePermissions`
 --
 
-INSERT INTO `UserNodePermissions` VALUES (2,'java.security.AllPermission','','');
+INSERT INTO `UserNodePermissions` VALUES (1,'java.security.AllPermission','','');
 
 --
 -- Table structure for table `UserPlugins`
 --
 
 CREATE TABLE `UserPlugins` (
-  `UserID` int(11) NOT NULL default '0',
-  `PluginName` tinytext NOT NULL
+  `UserID` int(11) UNSIGNED NOT NULL DEFAULT '0',
+  `PluginName` VARCHAR(32) NOT NULL,
+  KEY (`UserID`),
+  UNIQUE KEY (`UserID`, `PluginName`),
+  KEY (`PluginName`),
+  FOREIGN KEY (`UserID`) REFERENCES `UserNodes` (`NodeID`)
 ) Type=InnoDB;
 
 --
 -- Dumping data for table `UserPlugins`
 --
 
-INSERT INTO `UserPlugins` VALUES (1,'Plugin');
-INSERT INTO `UserPlugins` VALUES (1,'Test');
+INSERT INTO `UserPlugins` VALUES (2,'Plugin');
+INSERT INTO `UserPlugins` VALUES (2,'Test');
 
