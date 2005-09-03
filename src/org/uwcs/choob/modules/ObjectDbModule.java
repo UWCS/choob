@@ -18,6 +18,7 @@ import java.lang.reflect.*;
 import java.lang.reflect.Constructor;
 import java.util.regex.*;
 import java.sql.*;
+import java.lang.String;
 
 /**
  *
@@ -33,8 +34,10 @@ public class ObjectDbModule
 		this.broker = broker;
 	}
 
-	public List retrive(Class storedClass, String... clauses) throws Exception
+	public List retrieve(Class storedClass, String clause) throws Exception
 	{
+		String[] clauses = clause.split("\\s*[^\\\\],\\s*");
+	    
 		ArrayList objects = new ArrayList();
 
 		Connection dbConnection = broker.getConnection();
@@ -71,7 +74,7 @@ public class ObjectDbModule
 		{
 			do
 			{
-				objects.add( retriveById( storedClass, results.getInt("ClassID")) );
+				objects.add( retrieveById( storedClass, results.getInt("ClassID")) );
 			}
 			while(results.next());
 		}
@@ -79,7 +82,7 @@ public class ObjectDbModule
 		return objects;
 	}
 
-	public Object retriveById(Class storedClass, int id) throws Exception
+	public Object retrieveById(Class storedClass, int id) throws Exception
 	{
 		Object tempObject = null;
 
