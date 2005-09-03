@@ -183,7 +183,7 @@ foreach my $class (keys %inheritance) {
 				$extra .= <<END;
 	/**
 	 * Get the reply context in which this event resides
-	 * \@returns The context
+	 * \@return The context
 	 */
 END
 				if (grep /ChannelEvent/, @inherit) {
@@ -253,7 +253,7 @@ END
 		$getters .= <<END;
 	/**
 	 * Get the value of $field
-	 * \@returns The value of $field
+	 * \@return The value of $field
 	 */
 	public $paramType{$field} $get\u$field() {
 		return $field;
@@ -309,7 +309,7 @@ $memberInit2
 
 	/**
 	 * Synthesize a new $class from this one.
-	 * \@returns The new $class object.
+	 * \@return The new $class object.
 	 */
 	public IRCEvent cloneEvent($cloneProto) {
 		return new $class($cloneCall);
@@ -340,7 +340,7 @@ foreach my $interface (keys %params) {
 		$getters .= <<END;
 	/**
 	 * Get the value of $_
-	 * \@returns The value of $_
+	 * \@return The value of $_
 	 */
 	public $paramType $get\u$_();
 
