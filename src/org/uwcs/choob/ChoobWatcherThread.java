@@ -48,8 +48,6 @@ public class ChoobWatcherThread extends Thread
 				{
 					Interval tempInterval = (Interval)tempIt.next();
 
-					System.out.println("Checking against trigger: " + tempInterval);
-
 					if( Math.abs( tempInterval.getTrigger().getTime() / 1000 ) == Math.abs( timeNow.getTime() / 1000 ) )
 					{
 						toRun.add( tempInterval );

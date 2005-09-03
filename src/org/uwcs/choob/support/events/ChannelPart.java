@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
-
+ 
 public class ChannelPart extends IRCEvent implements ChannelEvent, ContextEvent, UserEvent
 {
 	/**

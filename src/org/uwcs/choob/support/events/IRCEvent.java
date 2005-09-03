@@ -5,8 +5,8 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
-
-public class IRCEvent
+ 
+public class IRCEvent  
 {
 	/**
 	 * methodName
