@@ -26,31 +26,59 @@ public class IRCInterface {
 		this.mods = mods;
 	}
 
-	public void sendContextMessage(Message ev, String message)
-	{
-		if ( !mods.pc.isProtected(ev.getContext()) )
-			sendMessage(ev.getContext(), message);
-		else
-			sendMessage(ev.getNick(), message);
-	}
-
+	/**
+	 * Similar to the sendContextReply function, except sends an action instead of a message.
+	 * @param ev The Message object to target the reply at.
+	 * @param message A String of the /me you want to send.
+	 */
 	public void sendContextAction(Message ev, String message)
 	{
 		bot.sendAction(ev.getContext(), message);
 	}
 
-	public void sendContextReply(Message ev, String message)
+	/**
+	 * Sends an in-context response to an event. Automatically decides between replying in the channel the event was triggered from, and private messaging the response.
+	 * This is the best function to call, unless you never want the reply to appear in the channel.
+	 * @param ev The Message object to target the reply at.
+	 * @param message A String of the message you want to send.
+	 * @param prefix If in a channel, should the reply be prefixed with "{Nick}: "?
+	 */
+	public void sendContextReply(Message ev, String message, boolean prefix)
 	{
-		if( ev instanceof PrivateEvent )
+		if( ev instanceof PrivateEvent || mods.pc.isProtected(ev.getContext()) )
 		{
-			sendMessage(ev.getContext(),message);
+			sendMessage(ev.getNick(),message);
 		}
 		else
 		{
-			sendContextMessage(ev,ev.getNick() + ": " + message);
+			if (prefix)
+				sendMessage(ev.getContext(), ev.getNick() + ": " + message);
+			else
+				sendMessage(ev.getContext(), message);
 		}
 	}
+	/**
+	 * Facilitate the optional third parameter to sendContextReply.
+	 */
+	public void sendContextReply(Message ev, String message)
+	{
+		sendContextReply(ev, message, true);
+	}
 
+	/**
+	 * Alias of sendContextReply that doesn't prefix the message with "{Nick}: "
+	 */
+	public void sendContextMessage(Message ev, String message)
+	{
+		sendContextReply(ev, message, false);
+	}
+
+	/**
+	 * Sends a message to the target you specify, may be a #channel.
+	 * It is better to use sendContextReply, if possible.
+	 * @param target A String of the target you want to recive the message.
+	 * @param message A String of the message you want to send.
+	 */
 	public void sendMessage(String target, String message)
 	{
 		AccessController.checkPermission(new ChoobPermission("message.send.privmsg"));
@@ -58,6 +86,12 @@ public class IRCInterface {
 		bot.sendMessage(target, message);
 	}
 
+	/**
+	 * Sends an action to the target you specify, may be a #channel.
+	 * It is better to use sendContextReply, if possible.
+	 * @param target A String of the target you want to recive the message.
+	 * @param message A String of the /me you want to send.
+	 */
 	public void sendAction(String target, String message)
 	{
 		AccessController.checkPermission(new ChoobPermission("message.send.action"));

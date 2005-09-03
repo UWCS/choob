@@ -22,7 +22,12 @@ class Test
 
 	public void commandPirate( Message con, Modules mods, IRCInterface irc )
 	{
-		irc.sendContextMessage(con, "Yarr!");
+		irc.sendContextReply(con, "Yarr!");
+	}
+
+	public void commandInMy( Message con, Modules mods, IRCInterface irc )
+	{
+		irc.sendContextMessage(con, "..Pants!");
 	}
 
 	public void commandExit( Message con, Modules mods, IRCInterface irc )
@@ -35,14 +40,14 @@ class Test
 
 	public void filterFaux( Message con, Modules modules, IRCInterface irc )
 	{
-		irc.sendContextMessage( con, "I would almost certainly concurr.");
+		irc.sendContextReply( con, "I would almost certainly concurr.");
 	}
 
 	public String filterBouncyRegex = "^bouncy bouncy";
 
 	public void filterBouncy( Message con, Modules modules, IRCInterface irc )
 	{
-		irc.sendContextMessage( con, "Ooh, yes please.");
+		irc.sendContextReply( con, "Ooh, yes please.");
 	}
 
 	public void onJoin( ChannelJoin ev, Modules mod, IRCInterface irc )
@@ -54,5 +59,4 @@ class Test
 	{
 		irc.sendMessage(ev.getChannel(), "Bye, " + ev.getNick() + "!");
 	}
-
 }

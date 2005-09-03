@@ -5,9 +5,9 @@ import org.uwcs.choob.support.events.*;
 
 /**
  * Choob talky talky plugin
- * 
+ *
  * @author bucko
- * 
+ *
  * Anyone who needs further docs for this module has some serious Java issues.
  * :)
  */
@@ -16,7 +16,7 @@ class Talk
 {
 	public void commandSay( Message con, Modules modules, IRCInterface irc )
 	{
-		irc.sendContextMessage(con, modules.util.getParamString(con));
+		irc.sendContextReply(con, modules.util.getParamString(con));
 	}
 
 	public void commandMsg( Message con, Modules modules, IRCInterface irc )

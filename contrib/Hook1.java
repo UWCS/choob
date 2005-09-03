@@ -7,6 +7,6 @@ class Hook1
 {
 	public void apiHooker( Message con, Modules modules, IRCInterface irc )
 	{
-		irc.sendContextMessage(con, modules.util.getParamString(con));
+		irc.sendContextReply(con, modules.util.getParamString(con));
 	}
 }

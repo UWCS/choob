@@ -208,7 +208,8 @@ public class BeanshellPluginUtils
 			// Cause can apparently be null in some situations.
 			if( e.getCause() != null && e.getCause().getClass() == SecurityException.class )
 			{
-				//irc.sendContextMessage(ev, "Security exception: " + e.getCause());
+				if (ev instanceof Message)
+					irc.sendContextReply((Message)ev, "Security exception: " + e.getCause());
 			}
 			System.out.println("Exception in calling plugin function: " + e);
 			e.printStackTrace();
