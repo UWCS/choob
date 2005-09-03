@@ -523,11 +523,13 @@ public class SecurityModule
 	/**
 	 * Convenience method
 	 */
-	private void rollback(Connection dbConn) throws ChoobException
+	private void dbCleanup(Connection dbConn) throws ChoobException
 	{
 		try
 		{
 			dbConn.rollback(); // If success, this does nothing
+			dbConn.setAutoCommit(true);
+			dbBroker.freeConnection(dbConn);
 		}
 		catch (SQLException e)
 		{
@@ -580,8 +582,7 @@ public class SecurityModule
 			}
 			finally
 			{
-				rollback(dbConn);
-				dbBroker.freeConnection(dbConn);
+				dbCleanup(dbConn);
 			}
 		}
 	}
@@ -599,6 +600,7 @@ public class SecurityModule
 		{
 			try
 			{
+				dbConn.setAutoCommit(false);
 				// First, make sure no user exists...
 				PreparedStatement stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND (NodeClass = 0 OR NodeClass = 1)");
 				stat.setString(1, userName);
@@ -638,8 +640,7 @@ public class SecurityModule
 			}
 			finally
 			{
-				rollback(dbConn); // If success, this does nothing
-				dbBroker.freeConnection(dbConn);
+				dbCleanup(dbConn); // If success, this does nothing
 			}
 		}
 	}
@@ -669,6 +670,7 @@ public class SecurityModule
 		{
 			try
 			{
+				dbConn.setAutoCommit(false);
 				PreparedStatement stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = ?");
 				stat.setString(1, group.getName());
 				stat.setInt(2, group.getType());
@@ -691,8 +693,7 @@ public class SecurityModule
 				sqlErr("adding group " + groupName, e);
 			}
 			finally {
-				rollback(dbConn); // If success, this does nothing
-				dbBroker.freeConnection(dbConn);
+				dbCleanup(dbConn); // If success, this does nothing
 			}
 		}
 	}
@@ -737,6 +738,7 @@ public class SecurityModule
 		{
 			try
 			{
+				dbConn.setAutoCommit(false);
 				PreparedStatement stat = dbConn.prepareStatement("SELECT MemberID FROM GroupMembers WHERE GroupID = ? AND MemberID = ?");
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
@@ -760,8 +762,7 @@ public class SecurityModule
 			}
 			finally
 			{
-				rollback(dbConn); // If success, this does nothing
-				dbBroker.freeConnection(dbConn);
+				dbCleanup(dbConn); // If success, this does nothing
 			}
 		}
 	}
@@ -829,8 +830,7 @@ public class SecurityModule
 			}
 			finally
 			{
-				rollback(dbConn); // If success, this does nothing
-				dbBroker.freeConnection(dbConn);
+				dbCleanup(dbConn); // If success, this does nothing
 			}
 		}
 	}
@@ -895,8 +895,7 @@ public class SecurityModule
 			}
 			finally
 			{
-				rollback(dbConn); // If success, this does nothing
-				dbBroker.freeConnection(dbConn);
+				dbCleanup(dbConn); // If success, this does nothing
 			}
 		}
 	}
@@ -1031,8 +1030,7 @@ public class SecurityModule
 			}
 			finally
 			{
-				rollback(dbConn); // If success, this does nothing
-				dbBroker.freeConnection(dbConn);
+				dbCleanup(dbConn); // If success, this does nothing
 			}
 		}
 	}

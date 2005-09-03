@@ -31,7 +31,6 @@ class Security
 				"You need a ChoobPermission of group.members.<groupname> to remove from <groupname>, unless the group is named user.<nickname>.<name> where <nickname> is your nickname."); */
 	}
 
-	//public ChoobHelp helpAddUser;
 	public void commandAddUser( Message mes, Modules mods, IRCInterface irc )
 	{
 		List params = mods.util.getParams( mes );
@@ -79,7 +78,6 @@ class Security
 		irc.sendContextReply( mes, "OK, user added!" );
 	}
 
-	//public ChoobHelp helpAddGroup;
 	public void commandAddGroup( Message mes, Modules mods, IRCInterface irc )
 	{
 		List params = mods.util.getParams( mes );
@@ -287,5 +285,56 @@ class Security
 			return;
 		}
 		irc.sendContextReply( mes, "OK, permission changed!" );
+	}
+
+	public void commandFindPermission( Message mes, Modules mods, IRCInterface irc )
+	{
+		List params = mods.util.getParams( mes );
+
+		String actions = null;
+		if (params.size() < 4 || params.size() > 5)
+		{
+			irc.sendContextReply( mes, "You must specify a child user/group and a parent group!" );
+			return;
+		}
+		else if (params.size() == 5)
+		{
+			actions = (String)params.get(4);
+		}
+		String groupName = (String)params.get(1);
+		String permType = (String)params.get(2);
+		String permName = (String)params.get(3);
+
+		Permission permission = makePermission(permType, permName, actions);
+		if (permission == null)
+		{
+			irc.sendContextReply( mes, "Unknown permission type: " + permType );
+			return;
+		}
+
+		try
+		{
+			String[] perms = mods.security.findPermission( groupName, permission );
+			if (perms.length == 0)
+				irc.sendContextReply(mes, "The given group does not have this permission.");
+			else
+			{
+				String reply = "Found permissions: ";
+				for(int i=0; i<perms.length - 1; i++)
+					reply += perms[i] + ",";
+				reply += perms[perms.length - 1] + ".";
+				irc.sendContextReply(mes, reply);
+			}
+		}
+		catch ( ChoobException e )
+		{
+			irc.sendContextReply( mes, "The permission could not be found: " + e );
+			return;
+		}
+		catch ( SecurityException e )
+		{
+			irc.sendContextReply( mes, "Urgh. We got a security exception." );
+			return;
+		}
 	}
 }

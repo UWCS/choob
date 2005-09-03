@@ -165,16 +165,38 @@ public class PluginModule {
 
 	private void addPluginToDb(String source, String pluginName) throws SQLException
 	{
+		boolean done = false;
 		Connection dbCon = broker.getConnection();
+		try {
+			dbCon.setAutoCommit(false);
+			PreparedStatement pluginReplace = dbCon.prepareStatement("REPLACE INTO LoadedPlugins VALUES(?,?)");
 
-		PreparedStatement pluginReplace = dbCon.prepareStatement("REPLACE INTO LoadedPlugins VALUES(?,?)");
+			pluginReplace.setString(1,pluginName);
+			pluginReplace.setString(2,source);
 
-		pluginReplace.setString(1,pluginName);
-		pluginReplace.setString(2,source);
+			pluginReplace.executeUpdate();
 
-		pluginReplace.executeUpdate();
-
-		broker.freeConnection( dbCon );
+			dbCon.commit();
+			done = true;
+		}
+		finally
+		{
+			try {
+				if (!done)
+					dbCon.rollback();
+			}
+			finally
+			{
+				try
+				{
+					dbCon.setAutoCommit(true);
+				}
+				finally
+				{
+					broker.freeConnection(dbCon);
+				}
+			}
+		}
 	}
 }
 
