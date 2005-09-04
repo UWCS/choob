@@ -73,13 +73,5 @@ class Tell
 	public void onPrivateMessage( PrivateMessage ev, Modules mod, IRCInterface irc ) { spew(ev.getNick(), mod, irc); }
 	public void onJoin( ChannelJoin ev, Modules mod, IRCInterface irc ) { spew(ev.getNick(), mod, irc); }
 
-
-	/*
-		onJoin()
-		{
-			Do as filterWatch does();
-			Mark the user as having received all their tells?();
-		}
-	*/
 }
 
