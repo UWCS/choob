@@ -158,7 +158,7 @@ CREATE TABLE `ObjectStoreData` (
   `FieldName` varchar(128) NOT NULL default '',
   `FieldType` varchar(32) NOT NULL default '',
   `FieldValue` text NOT NULL,
-  PRIMARY KEY (`ObjectID`),
+  UNIQUE KEY (`ObjectID`, `FieldName`),
   KEY (`FieldName`),
   KEY (`FieldType`),
   FOREIGN KEY (`ObjectID`) REFERENCES `ObjectStore` (`ObjectID`)

@@ -47,14 +47,14 @@ public class IRCInterface {
 	{
 		if( ev instanceof PrivateEvent || mods.pc.isProtected(ev.getContext()) )
 		{
-			sendMessage(ev.getNick(),message);
+			bot.sendMessage(ev.getNick(), message);
 		}
 		else
 		{
 			if (prefix)
-				sendMessage(ev.getContext(), ev.getNick() + ": " + message);
+				bot.sendMessage(ev.getContext(), ev.getNick() + ": " + message);
 			else
-				sendMessage(ev.getContext(), message);
+				bot.sendMessage(ev.getContext(), message);
 		}
 	}
 	/**
