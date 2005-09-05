@@ -26,9 +26,9 @@ public class HaxSunPluginManager extends ChoobPluginManager
 	private final static String prefix = "pluginData";
 	private final ChoobPluginMap allPlugins;
 
-	public HaxSunPluginManager(URL toolsPath, Modules mods, IRCInterface irc) throws ChoobException
+	public HaxSunPluginManager(Modules mods, IRCInterface irc) throws ChoobException
 	{
-		this.toolsPath = toolsPath;
+		this.toolsPath = getToolsPath();
 		this.mods = mods;
 		this.irc = irc;
 		this.allPlugins = new ChoobPluginMap();
@@ -45,6 +45,27 @@ public class HaxSunPluginManager extends ChoobPluginManager
 		catch (NoSuchMethodException e)
 		{
 			throw new ChoobException("Compiler method not found: " + e);
+		}
+	}
+
+	private URL getToolsPath()
+	{
+		String libPath = System.getProperty("sun.boot.library.path");
+		char fSep = File.separatorChar;
+		String toolsString = libPath + fSep + ".." + fSep + ".." + fSep + ".." + fSep + "lib" + fSep + "tools.jar";
+		File toolsFile = new File(toolsString);
+		if (!toolsFile.exists())
+		{
+			System.err.println("File does not exist: " + toolsFile);
+			throw new RuntimeException("Choob must currently be run by a working JDK (not just JRE).");
+		}
+		try
+		{
+			return toolsFile.toURI().toURL();
+		}
+		catch (MalformedURLException e)
+		{
+			throw new RuntimeException("Internal error: Cannot find URL for tools.jar: " + e);
 		}
 	}
 
