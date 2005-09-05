@@ -56,8 +56,13 @@ public class HaxSunPluginManager extends ChoobPluginManager
 		File toolsFile = new File(toolsString);
 		if (!toolsFile.exists())
 		{
-			System.err.println("File does not exist: " + toolsFile);
-			throw new RuntimeException("Choob must currently be run by a working JDK (not just JRE).");
+			toolsString = libPath + fSep + ".." + fSep + ".." + fSep + "lib" + fSep + "tools.jar";
+			toolsFile = new File(toolsString);
+			if (!toolsFile.exists())
+			{
+				System.err.println("File does not exist: " + toolsFile);
+				throw new RuntimeException("Choob must currently be run by a working JDK (not just JRE).");
+			}
 		}
 		try
 		{
