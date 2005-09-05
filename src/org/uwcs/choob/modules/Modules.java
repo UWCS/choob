@@ -41,17 +41,24 @@ public class Modules
 	 * @param dbBroker
 	 * @param pluginMap
 	 */
-	public Modules( DbConnectionBroker dbBroker, Map pluginMap, List filterList, List intervalList, Choob bot )
+	public Modules( DbConnectionBroker dbBroker, Map pluginMap, List filterList, List intervalList, Choob bot, IRCInterface irc )
 	{
-		plugin = new PluginModule(pluginMap, dbBroker, filterList, this);
-		logger = new LoggerModule(dbBroker);
-		util = new UtilModule( bot );
-		nick = new NickModule(dbBroker);
-		interval = new IntervalModule( intervalList );
-		synthetic = new SyntheticModule( bot );
-		security = new SecurityModule( dbBroker );
-		pc = new ProtectedChannels();
-		odb = new ObjectDbModule( dbBroker );
+		try
+		{
+			plugin = new PluginModule(pluginMap, dbBroker, filterList, this, irc);
+			logger = new LoggerModule(dbBroker);
+			util = new UtilModule( bot );
+			nick = new NickModule(dbBroker);
+			interval = new IntervalModule( intervalList );
+			synthetic = new SyntheticModule( bot );
+			security = new SecurityModule( dbBroker );
+			pc = new ProtectedChannels();
+			odb = new ObjectDbModule( dbBroker );
+		}
+		catch (ChoobException e)
+		{
+			throw new RuntimeException("Could not instantiate modules: " + e);
+		}
 		
 		this.dbBroker = dbBroker;
 		this.pluginMap = pluginMap;

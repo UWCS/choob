@@ -2,22 +2,19 @@ import org.uwcs.choob.*;
 import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
+import java.util.*;
 
-class Test
+public class Test
 {
 	public void commandSecurity( Message con, Modules mods, IRCInterface irc )
 	{
-		List params = mods.util.getParams( con );
+		List<String> params = mods.util.getParams( con );
 
 		String priv = params.get(1);
 		if ( mods.security.hasPerm( new ChoobPermission(priv), con.getNick() ) )
 			irc.sendContextReply(con, "You do indeed have " + priv + "!" );
 		else
 			irc.sendContextReply(con, "You don't have " + priv + "!" );
-	}
-
-	private void test() {
-		throw new NoSuchMethodException("Test3");
 	}
 
 	public void commandPirate( Message con, Modules mods, IRCInterface irc )

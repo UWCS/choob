@@ -11,6 +11,10 @@ public class ChoobException extends Exception
 	{
 		super(text);
 	}
+	public ChoobException(String text, Throwable e)
+	{
+		super(text, e);
+	}
 	public String toString()
 	{
 		return getMessage();

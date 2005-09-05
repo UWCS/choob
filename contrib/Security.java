@@ -3,12 +3,13 @@ import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 import java.security.*;
+import java.util.*;
 
 /**
  * Choob plugin for fiddling with security privs
  * @author bucko
  */
-class Security
+public class Security
 {
 	//public ChoobHelp help;
 	public void create() {
@@ -41,7 +42,7 @@ class Security
 		else if (params.size() == 3)
 		{
 			// Hacky alias
-			commandAddUserToGroup( mes, mods, irc );
+			commandAddToGroup( mes, mods, irc );
 			return;
 		}
 		else if (params.size() > 2)
@@ -95,7 +96,7 @@ class Security
 
 			// Sure, this will be checked for us. But what about the user who called us?
 			int len = mes.getNick().length() + 6;
-			if (groupName.length() > offset && groupName.regionMatches(true, 0, "user." + mes.getNick() + ".", 0, len))
+			if (groupName.length() > len && groupName.regionMatches(true, 0, "user." + mes.getNick() + ".", 0, len))
 			{
 				// OK to add
 			}
@@ -159,7 +160,7 @@ class Security
 			{
 				// OK to add
 			}
-			else if (! mods.security.hasPerm( new ChoobPermission("group.members." + groupName) , mes.getNick() ) )
+			else if (! mods.security.hasPerm( new ChoobPermission("group.members." + parentName) , mes.getNick() ) )
 			{
 				irc.sendContextReply( mes, "You don't have permission to alter members of arbitrary groups!" );
 				return;

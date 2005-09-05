@@ -21,8 +21,13 @@ public class IRCInterface {
 	private Modules mods;
 
 	/** Creates a new instance of IRCInterface */
-	public IRCInterface(Choob bot, Modules mods) {
+	public IRCInterface(Choob bot) {
 		this.bot = bot;
+		this.mods = null; // Fixes dependency problem
+	}
+
+	public void setMods(Modules mods)
+	{
 		this.mods = mods;
 	}
 
@@ -45,6 +50,9 @@ public class IRCInterface {
 	 */
 	public void sendContextReply(Message ev, String message, boolean prefix)
 	{
+		System.out.println("ev: " + ev);
+		System.out.println("pc: " + mods.pc);
+		System.out.println("con: " + ev.getContext());
 		if( ev instanceof PrivateEvent || mods.pc.isProtected(ev.getContext()) )
 		{
 			bot.sendMessage(ev.getNick(), message);

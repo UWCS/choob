@@ -62,10 +62,8 @@ public class ChoobWatcherThread extends Thread
 			{
 				Interval runningInterval = (Interval)runIt.next();
 
-				if( pluginMap.get( runningInterval.getPlugin() ) != null )
-				{
-					(new ChoobIntervalThread(runningInterval,pluginMap.get(runningInterval.getPlugin()),mods,irc)).start();
-				}
+				ChoobTask t = mods.plugin.doInterval(runningInterval.getPlugin(), runningInterval.getParameter());
+				ChoobThreadManager.queueTask(t);
 			}
 
 			synchronized( this )

@@ -21,11 +21,11 @@ our %inheritance = (
 
 	Message => [qw/IRCEvent MessageEvent ContextEvent UserEvent AimedEvent/],
 
-	PrivateMessage => [qw/Message PrivateEvent CommandEvent/],
-	ChannelMessage => [qw/Message ChannelEvent CommandEvent/],
+	PrivateMessage => [qw/Message PrivateEvent CommandEvent FilterEvent/],
+	ChannelMessage => [qw/Message ChannelEvent CommandEvent FilterEvent/],
 	Action => "__HORRORMUNGER__",
-	PrivateAction => [qw/Message PrivateEvent/],
-	ChannelAction => [qw/Message ChannelEvent/],
+	PrivateAction => [qw/Message PrivateEvent FilterEvent/],
+	ChannelAction => [qw/Message ChannelEvent FilterEvent/],
 	Notice => "__HORRORMUNGER__",
 	PrivateNotice => [qw/Message PrivateEvent/],
 	ChannelNotice => [qw/Message ChannelEvent/],
@@ -58,6 +58,7 @@ our %params = (
 	ChannelEvent => [qw/channel/],
 	PrivateEvent => [qw//],
 	CommandEvent => [qw//],
+	FilterEvent => [qw//],
 	UserEvent => [qw/nick login hostname/],
 	MessageEvent => [qw/message/],
 	ModeEvent => [qw/mode (boolean)set/],

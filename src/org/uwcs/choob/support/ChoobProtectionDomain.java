@@ -14,25 +14,16 @@ public class ChoobProtectionDomain extends ProtectionDomain
 {
 	private SecurityModule mod;
 	private String pluginName;
-	private List domainStack;
 
-	public ChoobProtectionDomain( SecurityModule mod, String pluginName, List domainStack )
+	public ChoobProtectionDomain( SecurityModule mod, String pluginName )
 	{
 		super( null, null );
 		this.mod = mod;
 		this.pluginName = pluginName;
-		this.domainStack = domainStack;
 	}
 
 	public boolean implies( Permission perm )
 	{
-		// XXX HAX ATTACK XXX
-		if ( perm instanceof ChoobSpecialStackPermission )
-		{
-			List toStack = ((ChoobSpecialStackPermission)perm).getHaxList();
-			toStack.addAll(domainStack);
-			return true;
-		}
 		return mod.hasPluginPerm( perm, pluginName );
 	}
 }

@@ -6,7 +6,7 @@
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
  
-public class PrivateAction extends Message implements PrivateEvent
+public class PrivateAction extends Message implements PrivateEvent, FilterEvent
 {
 
 	/**

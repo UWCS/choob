@@ -6,7 +6,7 @@
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
  
-public class ChannelAction extends Message implements ChannelEvent
+public class ChannelAction extends Message implements ChannelEvent, FilterEvent
 {
 	/**
 	 * channel

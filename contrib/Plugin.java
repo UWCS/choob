@@ -3,12 +3,13 @@ import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 import java.util.regex.*;
+import java.util.*;
 
-class Plugin
+public class Plugin
 {
 	public void commandLoadPlugin( Message con, Modules modules, IRCInterface irc )
 	{
-		List params = modules.util.getParams( con );
+		List<String> params = modules.util.getParams( con );
 
 		String url="";
 		String classname="";
@@ -23,7 +24,10 @@ class Plugin
 			if (ma.matches())
 				classname=ma.group(1);
 			else
+			{
 				irc.sendContextReply(con, "Unable to parse url (" + url + ") -> classname, please specify.");
+				return;
+			}
 		}
 		else
 		{
@@ -41,7 +45,6 @@ class Plugin
 					irc.sendContextReply(con, "Arguments the other way around, you spoon.");
 					return;
 				}
-
 			}
 		}
 
@@ -50,7 +53,7 @@ class Plugin
 
 		try
 		{
-			modules.plugin.addPlugin(url, classname);
+			modules.plugin.addPlugin(classname, url);
 			irc.sendContextReply(con, "Plugin parsed, compiled and loaded!");
 		}
 		catch (Exception e)
@@ -58,17 +61,5 @@ class Plugin
 			irc.sendContextReply(con, "Error parsing plugin, see log for details.");
 			e.printStackTrace();
 		}
-	}
-
-	public void commandReloadPluginPermissions( Message mes, Modules modules, IRCInterface irc )
-	{
-		List params = modules.util.getParams( mes );
-		if (params.size() != 2)
-		{
-			irc.sendContextReply(mes, "You must specify a plugin name and only that.");
-			return;
-		}
-		modules.plugin.reloadPluginPermissions((String) params.get(1));
-		irc.sendContextReply(mes, "OK, permissions reloaded for " + params.get(1) + ".");
 	}
 }

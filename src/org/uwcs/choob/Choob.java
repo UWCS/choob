@@ -30,7 +30,6 @@ public class Choob extends PircBot
 {
 	DbConnectionBroker broker;
 	Map pluginMap;
-	List choobThreads;
 	Modules modules;
 	IRCInterface irc;
 	String trigger;
@@ -47,13 +46,6 @@ public class Choob extends PircBot
 	 */
 	public Choob() throws IOException
 	{
-		// We wrap the pluginMap with a synchronizedMap in order to prevent
-		// concurrent modication of it and a possible race condition.
-		pluginMap = Collections.synchronizedMap(new HashMap());
-
-		// Create a our (sychronised dammit) list of filters
-		filterList = Collections.synchronizedList(new ArrayList());
-
 		// Create a shiny synchronised (americans--) list
 		intervalList = Collections.synchronizedList(new ArrayList());
 
@@ -90,20 +82,18 @@ public class Choob extends PircBot
 		// Create a new database connection broker using the MySQL drivers
 		broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://" + dbServer + "/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", dbUser, dbPass, 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
 
-		// Initialise our modules.
-		modules = new Modules(broker, pluginMap, filterList, intervalList, this);
-
 		// Create a new IRC interface
-		irc = new IRCInterface( this, modules );
+		irc = new IRCInterface( this );
+
+		// Initialise our modules.
+		modules = new Modules(broker, pluginMap, filterList, intervalList, this, irc );
+
+		irc.setMods(modules);
 	}
 
-	/**
-	 * Adds a new ChoobThread
-	 */
-	private void addChoobThread() {
-		ChoobThread tempThread = new ChoobThread(broker,modules,pluginMap,filterList,trigger);
-		tempThread.start();
-		choobThreads.add(tempThread);
+	public IRCInterface getIRC()
+	{
+		return irc;
 	}
 
 	/**
@@ -112,15 +102,7 @@ public class Choob extends PircBot
 	public void init()
 	{
 		// Create our list of threads
-		choobThreads = new ArrayList();
-
 		int c;
-
-		// Step through list of threads, construct them and star them running.
-		for( c = 0 ; c < INITTHREADS ; c++ )
-		{
-			addChoobThread();
-		}
 
 		watcher = new ChoobWatcherThread(intervalList, irc, pluginMap, modules);
 
@@ -132,6 +114,7 @@ public class Choob extends PircBot
 			// I think this is all that's ever really needed...
 			public boolean implies(java.security.ProtectionDomain d, java.security.Permission p)
 			{
+//				System.err.println("Checking pd " + d + " and perm " + p);
 				if ( !(d instanceof ChoobProtectionDomain) )
 					return true;
 				else
@@ -139,6 +122,7 @@ public class Choob extends PircBot
 			}
 			public java.security.PermissionCollection getPermissions(java.security.ProtectionDomain d)
 			{
+//				System.err.println("Checking pd " + d);
 				java.security.PermissionCollection p = new java.security.Permissions();
 				//if ( !(d instanceof ChoobProtectionDomain) )
 				//	p.add( new java.security.AllPermission() );
@@ -146,6 +130,7 @@ public class Choob extends PircBot
 			}
 			public java.security.PermissionCollection getPermissions(java.security.CodeSource s)
 			{
+//				System.err.println("Checking cs " + s);
 				java.security.PermissionCollection p = new java.security.Permissions();
 				//if ( !(d instanceof ChoobCodeSource) )
 				//	p.add( new java.security.AllPermission() );
@@ -165,7 +150,11 @@ public class Choob extends PircBot
 			System.setSecurityManager(new SecurityManager());
 
 		// This is needed to properly initialise a ChoobProtectionDomain.
-		BeanshellPluginUtils.setMods( modules );
+		ChoobPluginManager.initialise( modules );
+
+		// Initialise the thread manager, too
+		ChoobThreadManager.initialise( );
+		ChoobDecoderTask.initialise( broker, modules, irc, trigger );
 
 		try
 		{
@@ -178,7 +167,7 @@ public class Choob extends PircBot
 				do
 				{
 					System.out.println("Plugin loading: " + coreplugResults.getString("PluginName"));
-					modules.plugin.addPlugin(coreplugResults.getString("URL"), coreplugResults.getString("PluginName"));
+					modules.plugin.addPlugin(coreplugResults.getString("PluginName"), coreplugResults.getString("URL"));
 				}
 				while ( coreplugResults.next() );
 
@@ -359,76 +348,9 @@ public class Choob extends PircBot
 
 	private synchronized void spinThread(IRCEvent ev)
 	{
-		int c;
-		boolean done = false;
-		int count = 0;
+		ChoobTask task = new ChoobDecoderTask(ev);
 
-		while( !done )
-		{
-			for( c = 0; c < choobThreads.size() ; c++ )
-			{
-				System.out.println("Looking for threads.. " + c);
-
-				/*
-				 * TODO
-				 * Potential race condition here. Since synthesized events can
-				 * be sent down through here, this is significant:
-				 * The assumption is that if a thread is not busy it will only
-				 * be grabbed by the currently running thread. We need a lock()
-				 * type call to lock the thread - which returns true if the
-				 * lock succeeded.
-				 *
-				 * Fix attempted -- bucko
-				 */
-				//if( !((ChoobThread)choobThreads.get(c)).isBusy() )
-				if( ((ChoobThread)choobThreads.get(c)).lock() )
-				{
-					done = true;
-
-					ChoobThread tempThread = ((ChoobThread)choobThreads.get(c));
-
-					try
-					{
-//						modules.logger.addLog(newCon);
-					}
-					catch( Exception e )
-					{
-						System.out.println("Exception: " + e + " Cause: " + e.getCause());
-						e.printStackTrace();
-					}
-
-					tempThread.setEvent( ev );
-					tempThread.setIRC( irc );
-
-					synchronized( tempThread.getWaitObject() )
-					{
-						tempThread.getWaitObject().notify();
-					}
-
-					break;
-				}
-			}
-
-			if (done) break;
-
-			count++;
-			if (count > 3 && choobThreads.size() < MAXTHREADS ) {
-				// I guess we'll never be getting a thread!
-				// But we can make more! ^.^
-				count = 0;
-				addChoobThread();
-				continue;
-			}
-
-			try
-			{
-				this.wait(1000);
-			}
-			catch( Exception e )
-			{
-				// Oh noes! We've been interrupted.
-			}
-		}
+		ChoobThreadManager.queueTask(task);
 	}
 
 	/**

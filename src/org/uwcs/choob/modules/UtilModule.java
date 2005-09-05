@@ -34,9 +34,9 @@ public class UtilModule {
 		return "";
 	}
 
-	public List getParams( Message mes )
+	public List<String> getParams( Message mes )
 	{
-		List tempList = new ArrayList();
+		List<String> tempList = new LinkedList<String>();
 
 		StringTokenizer tokens = new StringTokenizer(mes.getMessage()," ");
 
@@ -54,9 +54,9 @@ public class UtilModule {
 	 *
 	 * Note that the command token /IS/ included in the count.
 	 */
-	public List getParams( Message mes, int count )
+	public List<String> getParams( Message mes, int count )
 	{
-		List tempList = new ArrayList();
+		List<String> tempList = new LinkedList<String>();
 
 		String text = mes.getMessage();
 

@@ -4,25 +4,15 @@ import org.uwcs.choob.support.events.*;
 import org.uwcs.choob.modules.*;
 import java.net.*;
 import java.io.*;
+import java.util.*;
 
 /**
  * Timed events plugin for Choob
  *
  * @author bucko
  */
-class TimedEvents
+public class TimedEvents
 {
-	public void create( Modules mods )
-	{
-		/* Loader shell
-		Object[] saved = mods.db.get(SavedTimedEvent.class, blah);
-		for(Object event: saved)
-		{
-			SavedTimedEvent foo = (SavedTimedEvent)saved;
-			addTimedEvent(foo);
-		} */
-	}
-
 	public void commandIn( Message mes, Modules mods, IRCInterface irc )
 	{
 		// Stop recursion
@@ -31,15 +21,15 @@ class TimedEvents
 			return;
 		}
 
-		List params = mods.util.getParams( mes, 2 );
+		List<String> params = mods.util.getParams( mes, 2 );
 
 		if (params.size() <= 2) {
 			irc.sendContextReply(mes, "Syntax is: in <time> <command>");
 			return;
 		}
 
-		String time = (String)params.get(1);
-		String command = (String)params.get(2);
+		String time = params.get(1);
+		String command = params.get(2);
 
 		int period;
 		try {
@@ -94,7 +84,7 @@ class TimedEvents
 	{
 		if (parameter != null && parameter instanceof Message) {
 			// It's a message to be redelivered
-			mods.synthetic.doSyntheticMessage(parameter);
+			mods.synthetic.doSyntheticMessage( (Message)parameter);
 		}
 	}
 }

@@ -57,8 +57,13 @@ public class SecurityModule
 		LinkedList pluginStack = getPluginNames();
 		if ( pluginName != null )
 			pluginStack.add( pluginName );
-		ProtectionDomain domain = new ChoobProtectionDomain(this, pluginName, pluginStack);
+		ProtectionDomain domain = new ChoobProtectionDomain(this, pluginName);
 		return new AccessControlContext(new ProtectionDomain[] { domain });
+	}
+
+	public ProtectionDomain getProtectionDomain( String pluginName )
+	{
+		return new ChoobProtectionDomain(this, pluginName);
 	}
 
 	private LinkedList getPluginNames()
@@ -267,7 +272,6 @@ public class SecurityModule
 		while( allNodes.hasNext() )
 		{
 			nodeID = allNodes.next();
-			System.out.println(userNode + " -> " + nodeID + ": " + permission);
 			PermissionCollection perms = getNodePermissions( nodeID );
 			// Be careful to avoid invalid groups and stuff.
 			if (perms != null && perms.implies(permission))
@@ -297,7 +301,6 @@ public class SecurityModule
 		try
 		{
 			getAllNodesRecursive(dbConn, list, nodeID, 0);
-			System.out.println("List length is " + list.size());
 		}
 		finally
 		{
@@ -308,7 +311,6 @@ public class SecurityModule
 
 	private void getAllNodesRecursive(Connection dbConn, List list, int nodeID, int recurseDepth)
 	{
-		System.out.println("Searching nodes for " + nodeID);
 		if (recurseDepth >= 5)
 		{
 			System.err.println("Ack! Recursion depth succeeded when trying to process user node " + nodeID);
@@ -326,10 +328,8 @@ public class SecurityModule
 				do
 				{
 					int newNode = results.getInt(1);
-					System.out.println("Got " + newNode);
 					if ( !list.contains( newNode ) )
 					{
-						System.out.println("Added " + newNode);
 						list.add( newNode );
 					}
 					getAllNodesRecursive(dbConn, list, newNode, recurseDepth + 1);
