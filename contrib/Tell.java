@@ -2,7 +2,6 @@ import org.uwcs.choob.*;
 import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
-import java.sql.*;
 import java.util.*;
 import java.util.regex.*;
 
@@ -10,7 +9,7 @@ import java.util.regex.*;
 // Note: This send/watch couple will break if someone changes their primary nick between the send and the receive, assuming they change their base nick.. it could be done otherwise, but Faux can't think of a way that doesn't involve mass database rapeage on every line sent by irc.
 // This entire plugin could do with some caching.
 
-private class TellObject
+public class TellObject
 {
 	public int id;
 	public String date;
@@ -19,7 +18,7 @@ private class TellObject
 	public String target;
 }
 
-class Tell
+public class Tell
 {
 	public void commandSend( Message con, Modules mods, IRCInterface irc )
 	{
@@ -46,10 +45,17 @@ class Tell
 		while( tokens.hasMoreTokens() )
 		{
 			// Note: This call to getBestPrimaryNick is not optimal, discussed above.
+			tO.id=0;
 			tO.target=mods.nick.getBestPrimaryNick(tokens.nextToken());
 			System.out.println("Going to save!");
-			mods.odb.save(tO);
-			targets++;
+			try {
+				mods.odb.save(tO);
+				targets++;
+			}
+			catch (ChoobException e)
+			{
+				irc.sendContextReply(con, "Ack, could not send to " + tO.target + ": " + e);
+			}
 		}
 
 		irc.sendContextMessage(con, "Okay, will tell upon next speaking. (Sent to " + targets + " " + (targets == 1 ? "person" : "people") + ").");
@@ -57,16 +63,23 @@ class Tell
 
 	private void spew(String nick, Modules mods, IRCInterface irc)
 	{
-		List results = mods.odb.retrieve (TellObject.class, "target = '" + mods.nick.getBestPrimaryNick(nick) + "'");
+		try
+		{
+			List results = mods.odb.retrieve (TellObject.class, "target = '" + mods.nick.getBestPrimaryNick(nick) + "'");
 
-		if (results.size()!=0)
-			for (int i=0; i < results.size(); i++ )
-			{
-				irc.sendMessage(nick, "At " + results.get(i).date + ", " + results.get(i).from + " told me to tell you: " + results.get(i).message);
-				mods.odb.delete(results.get(i));
-			}
-
-
+			if (results.size()!=0)
+				for (int i=0; i < results.size(); i++ )
+				{
+					TellObject r = (TellObject)results.get(i);
+					irc.sendMessage(nick, "At " + r.date + ", " + r.from + " told me to tell you: " + r.message);
+					mods.odb.delete(results.get(i));
+				}
+		}
+		catch (ChoobException e)
+		{
+			System.out.println("ChoobException in spew() in Tell: " + e);
+			e.printStackTrace();
+		}
 	}
 
 	public void onMessage( ChannelMessage ev, Modules mod, IRCInterface irc ) { spew(ev.getNick(), mod, irc); }

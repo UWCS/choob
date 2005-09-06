@@ -69,12 +69,12 @@ public class NickModule
 	 * @param nick String representing the Nick.
 	 * @return User's primary nick, or "" if not found.
 	 */
-	public String getPrimaryNick(String nick) throws Exception
+	public String getPrimaryNick(String nick) throws ChoobException
 	{
+		Connection dbConnection = dbBroker.getConnection();
+
 		try
 		{
-			Connection dbConnection = dbBroker.getConnection();
-
 			PreparedStatement insertLine = dbConnection.prepareStatement("SELECT `User`.`UserNick` FROM `AddNicks`,`User` WHERE ? LIKE `Nick` AND `User`.`UserID`=`AddNicks`.`UserId` LIMIT 1;");
 
 			insertLine.setString(1, nick);
@@ -83,17 +83,18 @@ public class NickModule
 
 			if ( nickSet.first() )
 			{
-				dbBroker.freeConnection( dbConnection );
 				return nickSet.getString("UserNick");
 			}
 
-			dbBroker.freeConnection( dbConnection );
-
-			return ""; // Better way to handle this?
+			return "";
 		}
 		catch( Exception e )
 		{
-			throw new Exception("Could not read nick information from database.", e);
+			throw new ChoobException("Could not read nick information from database.", e);
+		}
+		finally
+		{
+			dbBroker.freeConnection( dbConnection );
 		}
 	}
 
@@ -102,7 +103,7 @@ public class NickModule
 	 * @param nick String representing the Nick.
 	 * @return User's primary nick, a guess at their primary nick, or the supplied nick.
 	 */
-	public String getBestPrimaryNick(String nick) throws Exception
+	public String getBestPrimaryNick(String nick)
 	{
 		try
 		{
@@ -110,7 +111,8 @@ public class NickModule
 			if (!gpn.equals(""))
 				return gpn;
 		}
-		catch (Exception e) {}
+		catch (ChoobException e)
+		{}
 
 		Pattern pa = Pattern.compile("^([a-zA-Z0-9_-]+?)(?:\\||\\`).*$");
 		Matcher ma = pa.matcher(nick);

@@ -16,7 +16,7 @@ import org.uwcs.choob.support.events.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.modules.*;
 
-public class HaxSunPluginManager extends ChoobPluginManager
+public final class HaxSunPluginManager extends ChoobPluginManager
 {
 	private final Modules mods;
 	private final IRCInterface irc;
@@ -76,7 +76,7 @@ public class HaxSunPluginManager extends ChoobPluginManager
 		}
 	}
 
-	private String compile(final String fileName, final String classPath) throws ChoobException
+	private String compile(final String[] fileNames, final String classPath) throws ChoobException
 	{
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		final PrintWriter output = new PrintWriter(baos);
@@ -87,7 +87,12 @@ public class HaxSunPluginManager extends ChoobPluginManager
 				public Object run() throws ChoobException {
 					try
 					{
-						return (Integer)compileMethod.invoke(null, new String[] { "-d", classPath, fileName }, output);
+						String[] newNames = new String[fileNames.length + 2];
+						newNames[0] = "-d";
+						newNames[1] = classPath;
+						for(int i=0; i<fileNames.length; i++)
+							newNames[i+2] = fileNames[i];
+						return (Integer)compileMethod.invoke(null, newNames, output);
 					}
 					catch (IllegalAccessException e)
 					{
@@ -111,15 +116,56 @@ public class HaxSunPluginManager extends ChoobPluginManager
 			throw new ChoobException("Compile failed: " + baos.toString());
 	}
 
+	private String[] makeJavaFiles(String outDir, InputStream in) throws IOException
+	{
+		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+		String line;
+		StringBuffer imps = new StringBuffer();
+		PrintStream classOut = null;
+		List<String> fileNames = new ArrayList<String>();
+		while((line = reader.readLine()) != null)
+		{
+			System.out.println("Read: " + line);
+			if (line.startsWith("import "))
+			{
+				System.out.println("Is import.");
+				imps.append(line + "\n");
+			}
+			else if (line.startsWith("public class "))
+			{
+				String[] bits = line.split(" ");
+				String className = bits[2];
+				String fileName = outDir + className + ".java";
+				System.out.println("Outputting to " + fileName);
+				fileNames.add(fileName);
+				File javaFile = new File(fileName);
+				if (classOut != null)
+				{
+					classOut.flush();
+					classOut.close();
+				}
+				classOut = new PrintStream(new FileOutputStream(javaFile));
+				classOut.print(imps);
+			}
+			if (classOut != null)
+				classOut.println(line);
+		}
+		if (classOut != null)
+		{
+			classOut.flush();
+			classOut.close();
+		}
+		return (String[])fileNames.toArray(new String[fileNames.size()]);
+	}
+
 	protected Object createPlugin(String pluginName, URL source) throws ChoobException
 	{
 		String classPath = prefix + File.separator + pluginName + File.separator;
-		File javaFile = null;
 		if (source != null)
 		{
 			File javaDir = new File(classPath);
 			String javaFileName = classPath + pluginName + ".java";
-			javaFile = new File(javaFileName);
+			File javaFile = new File(javaFileName);
 			URLConnection sourceConn;
 			URLConnection localConn;
 			try
@@ -140,18 +186,10 @@ public class HaxSunPluginManager extends ChoobPluginManager
 				try
 				{
 					javaDir.mkdirs();
-					out = new FileOutputStream(javaFile);
 					in = sourceConn.getInputStream();
-					int amount;
-					byte[] buf = new byte[65536];
-					while ((amount = in.available()) > 0)
-					{
-						if (amount > 65536)
-							amount = 65536;
-						amount = in.read(buf, 0, amount);
-						out.write(buf, 0, amount);
-					}
-					compile(javaFileName, classPath);
+					String[] names = makeJavaFiles(classPath, in);
+					compile(names, classPath);
+					// This should help to aleviate timezone differences.
 					javaFile.setLastModified( sourceConn.getLastModified() );
 					success = true;
 				}
@@ -164,7 +202,6 @@ public class HaxSunPluginManager extends ChoobPluginManager
 					if (!success)
 					{
 						try { if (in != null) in.close(); } catch (IOException e) {}
-						try { if (out != null) out.close(); } catch (IOException e) {}
 						javaFile.delete();
 					}
 				}
@@ -177,8 +214,6 @@ public class HaxSunPluginManager extends ChoobPluginManager
 		}
 		catch (ClassNotFoundException e)
 		{
-			if (javaFile != null)
-				javaFile.delete();
 			throw new ChoobException("Could not find plugin class for " + pluginName + ": " + e);
 		}
 	}

@@ -111,26 +111,42 @@ public class Choob extends PircBot
 		// TODO - make this a proper class
 		java.security.Policy.setPolicy( new java.security.Policy()
 		{
+			boolean f = false;
 			// I think this is all that's ever really needed...
-			public boolean implies(java.security.ProtectionDomain d, java.security.Permission p)
+			public synchronized boolean implies(java.security.ProtectionDomain d, java.security.Permission p)
 			{
-//				System.err.println("Checking pd " + d + " and perm " + p);
+				if (!f)
+				{
+					f = true;
+//					System.err.println("Checking pd " + d + " and perm " + p);
+					f = false;
+				}
 				if ( !(d instanceof ChoobProtectionDomain) )
 					return true;
 				else
 					return false;
 			}
-			public java.security.PermissionCollection getPermissions(java.security.ProtectionDomain d)
+			public synchronized java.security.PermissionCollection getPermissions(java.security.ProtectionDomain d)
 			{
-//				System.err.println("Checking pd " + d);
+				if (!f)
+				{
+					f = true;
+//					System.err.println("Checking pd " + d);
+					f = false;
+				}
 				java.security.PermissionCollection p = new java.security.Permissions();
-				//if ( !(d instanceof ChoobProtectionDomain) )
-				//	p.add( new java.security.AllPermission() );
+				if ( !(d instanceof ChoobProtectionDomain) )
+					p.add( new java.security.AllPermission() );
 				return p;
 			}
-			public java.security.PermissionCollection getPermissions(java.security.CodeSource s)
+			public synchronized java.security.PermissionCollection getPermissions(java.security.CodeSource s)
 			{
-//				System.err.println("Checking cs " + s);
+				if (!f)
+				{
+					f = true;
+//					System.err.println("Checking cs " + s);
+					f = false;
+				}
 				java.security.PermissionCollection p = new java.security.Permissions();
 				//if ( !(d instanceof ChoobCodeSource) )
 				//	p.add( new java.security.AllPermission() );
