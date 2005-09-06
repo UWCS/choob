@@ -150,7 +150,7 @@ public class Choob extends PircBot
 			System.setSecurityManager(new SecurityManager());
 
 		// This is needed to properly initialise a ChoobProtectionDomain.
-		ChoobPluginManager.initialise( modules );
+		ChoobPluginManager.initialise( modules, irc );
 
 		// Initialise the thread manager, too
 		ChoobThreadManager.initialise( );

@@ -50,13 +50,15 @@ public class HaxSunPluginManager extends ChoobPluginManager
 
 	private URL getToolsPath()
 	{
-		String libPath = System.getProperty("sun.boot.library.path");
+		String libPath = System.getProperty("java.home");
 		char fSep = File.separatorChar;
-		String toolsString = libPath + fSep + ".." + fSep + ".." + fSep + ".." + fSep + "lib" + fSep + "tools.jar";
+		// If JRE
+		String toolsString = libPath + fSep + ".." + fSep + "lib" + fSep + "tools.jar";
 		File toolsFile = new File(toolsString);
 		if (!toolsFile.exists())
 		{
-			toolsString = libPath + fSep + ".." + fSep + ".." + fSep + "lib" + fSep + "tools.jar";
+			// If JDK
+			toolsString = libPath + fSep + "lib" + fSep + "tools.jar";
 			toolsFile = new File(toolsString);
 			if (!toolsFile.exists())
 			{
@@ -229,10 +231,25 @@ public class HaxSunPluginManager extends ChoobPluginManager
 			throw new ChoobException("Plugin " + newClass.getName() + "'s create() threw an exception: " + e.getCause(), e.getCause());
 		}
 
+		String[] newCommands = new String[0];
+		String[] oldCommands = new String[0];
 		synchronized(allPlugins)
 		{
+			List<String> coms = allPlugins.getCommands(pluginName);
+			if (coms != null)
+				oldCommands = (String[])coms.toArray(oldCommands);
+
 			allPlugins.resetPlugin(pluginName, pluginObj);
+
+			coms = allPlugins.getCommands(pluginName);
+			if (coms != null)
+				newCommands = (String[])coms.toArray(newCommands);
 		}
+
+		for(int i=0; i<oldCommands.length; i++)
+			removeCommand(oldCommands[i]);
+		for(int i=0; i<newCommands.length; i++)
+			addCommand(newCommands[i]);
 
 		return pluginObj;
 	}
@@ -392,22 +409,17 @@ public class HaxSunPluginManager extends ChoobPluginManager
 		Class[] params = meth.getParameterTypes();
 		if (params.length == 1)
 		{
-			System.out.println("1 param");
 			if (!Message.class.isAssignableFrom(params[0]))
 				return false;
 		}
 		else if (params.length == 3)
 		{
-			System.out.println("3 params: " + params[0]);
 			if (!Message.class.isAssignableFrom(params[0]))
 				return false;
-			System.out.println("1 pass: " + params[1]);
 			if (!params[1].isAssignableFrom(Modules.class))
 				return false;
-			System.out.println("2 pass: " + params[2]);
 			if (!params[2].isAssignableFrom(IRCInterface.class))
 				return false;
-			System.out.println("3 pass");
 		}
 		else
 			return false;
@@ -456,6 +468,11 @@ public class HaxSunPluginManager extends ChoobPluginManager
 		else
 			return false;
 
+		return true;
+	}
+
+	static boolean checkAPISignature(Method meth)
+	{
 		return true;
 	}
 
@@ -570,29 +587,36 @@ final class ChoobPluginMap
 		System.out.println("Loading methods...");
 		for(Method meth: meths)
 		{
-			System.out.println("Method: " + meth);
 			String name = meth.getName();
 			if (name.length() > 7 && name.substring(0, 7).equals("command"))
 			{
 				String commandName = lname + "." + name.substring(7).toLowerCase();
-				System.out.println("Is command: " + commandName);
 				// Command
 				if (HaxSunPluginManager.checkCommandSignature(meth))
 				{
-					System.out.println("Signature matches!");
+					System.out.println("Adding command " + commandName);
 					coms.add(commandName);
 					commands.put(commandName, meth);
+				}
+				else
+				{
+					System.out.println("Command " + commandName + " had invalid signature.");
 				}
 			}
 			else if (name.length() > 3 && name.substring(0, 3).equals("api"))
 			{
 				String apiName = lname + "." + name.substring(3).toLowerCase();
-				if (HaxSunPluginManager.checkCommandSignature(meth))
+				if (HaxSunPluginManager.checkAPISignature(meth))
 				{
+					System.out.println("Adding API call " + apiName);
 					apis.add(apiName);
 					if (apiCalls.get(apiName) == null)
 						apiCalls.put(apiName, new LinkedList<Method>());
 					apiCalls.get(apiName).add(meth);
+				}
+				else
+				{
+					System.out.println("API call " + apiName + " had invalid signature.");
 				}
 			}
 			else if (name.length() > 6 && name.substring(0, 6).equals("filter"))
@@ -629,27 +653,42 @@ final class ChoobPluginMap
 				}
 				if (HaxSunPluginManager.checkCommandSignature(meth))
 				{
+					System.out.println("Adding filter " + lname + "." + name + ": " + pattern);
 					fils.add(pattern);
 					if (filters.get(pattern) == null)
 						filters.put(pattern, new LinkedList<Method>());
 					filters.get(pattern).add(meth);
+				}
+				else
+				{
+					System.out.println("Filter " + lname + "." + name + " had invalid signature.");
 				}
 			}
 			else if (name.length() > 2 && name.substring(0, 2).equals("on"))
 			{
 				if (HaxSunPluginManager.checkEventSignature(meth))
 				{
+					System.out.println("Adding event " + lname + "." + name);
 					evs.add(meth);
 					if (events.get(name) == null)
 						events.put(name, new LinkedList<Method>());
 					events.get(name).add(meth);
+				}
+				else
+				{
+					System.out.println("Event " + lname + "." + name + " had invalid signature.");
 				}
 			}
 			else if (name.equals("interval"))
 			{
 				if (HaxSunPluginManager.checkIntervalSignature(meth))
 				{
+					System.out.println("Adding interval " + lname + "." + name);
 					pluginInterval.put(lname, meth);
+				}
+				else
+				{
+					System.out.println("Interval " + lname + "." + name + " had invalid signature.");
 				}
 			} // Ignore anything else
 		}
@@ -668,6 +707,11 @@ final class ChoobPluginMap
 	synchronized Method getCommand(String commandName)
 	{
 		return commands.get(commandName.toLowerCase());
+	}
+
+	synchronized List<String> getCommands(String pluginName)
+	{
+		return pluginCommands.get(pluginName.toLowerCase());
 	}
 
 	synchronized Method getAPI(String apiName)

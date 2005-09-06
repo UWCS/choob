@@ -25,8 +25,10 @@ import java.security.*;
 public abstract class ChoobPluginManager
 {
 	static Modules mods;
+	static IRCInterface irc;
 	static Map<String,ChoobPluginManager> pluginMap;
 	static List<ChoobPluginManager> pluginManagers;
+	static SpellDictionaryChoob phoneticCommands;
 
 	// Ensure derivative classes have permissions...
 	public ChoobPluginManager()
@@ -36,13 +38,24 @@ public abstract class ChoobPluginManager
 			sm.checkPermission(new ChoobPermission("pluginmanager"));
 	}
 
-	public final static void initialise(Modules modules)
+	public final static void initialise(Modules modules, IRCInterface irc)
 	{
 		if (mods != null)
 			return;
 		mods = modules;
+		ChoobPluginManager.irc = irc;
 		pluginManagers = new LinkedList<ChoobPluginManager>();
 		pluginMap = new HashMap<String,ChoobPluginManager>();
+		File transFile = new File("lib/en_phonet.dat");
+		try
+		{
+			phoneticCommands = new SpellDictionaryChoob(transFile);
+		}
+		catch (IOException e)
+		{
+			System.err.println("Could not load phonetics file: " + transFile);
+			throw new RuntimeException("Couldn't load phonetics file", e);
+		}
 	}
 
 	protected abstract Object createPlugin(String pluginName, URL fromLocation) throws ChoobException;
@@ -80,7 +93,7 @@ public abstract class ChoobPluginManager
 			if (!pluginManagers.contains(this))
 				pluginManagers.add(this);
 		}
-		if (man != null)
+		if (man != null && man != this)
 			man.destroyPlugin(pluginName);
 	}
 
@@ -97,6 +110,28 @@ public abstract class ChoobPluginManager
 		}
 		if (man != null)
 			man.destroyPlugin(pluginName);
+	}
+
+	/**
+	 * Adds a command to the internal database.
+	 */
+	public final void addCommand(String commandName)
+	{
+		synchronized(phoneticCommands)
+		{
+			phoneticCommands.addWord(commandName.toLowerCase());
+		}
+	}
+
+	/**
+	 * Removes a command from the internal database.
+	 */
+	public final void removeCommand(String commandName)
+	{
+		synchronized(phoneticCommands)
+		{
+			phoneticCommands.removeWord(commandName.toLowerCase());
+		}
 	}
 
 	public final static ProtectionDomain getProtectionDomain( String pluginName )

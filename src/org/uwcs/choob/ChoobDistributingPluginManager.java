@@ -46,17 +46,51 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 	public ChoobTask commandTask(String plugin, String command, Message ev)
 	{
 		ChoobPluginManager man;
+		ChoobTask task = null;
 		synchronized(pluginMap)
 		{
-			man = pluginMap.get(plugin);
+			man = pluginMap.get(plugin.toLowerCase());
 		}
 		if (man != null)
+			task = man.commandTask(plugin, command, ev);
+
+		if (task == null)
 		{
-			System.out.println("Shelling to " + man);
-			return man.commandTask(plugin, command, ev);
+			// Suggest a task instead?
+
+			List suggestions;
+			synchronized(phoneticCommands)
+			{
+				suggestions = phoneticCommands.getSuggestions(plugin + "." + command, 200);
+			}
+			if (suggestions != null && suggestions.size() > 0)
+			{
+				if (suggestions.size() == 1)
+					irc.sendContextReply(ev, "Command not found. Perhaps you meant " + suggestions.get(0) + "?");
+				else
+				{
+					StringBuffer buf = new StringBuffer("Command not found. Perhaps you meant one of: ");
+					Iterator<String> it = suggestions.iterator();
+					buf.append((String)it.next());
+					while(it.hasNext())
+					{
+						String sug = (String)it.next();
+						if (it.hasNext())
+							buf.append(", ");
+						else
+							buf.append(" or ");
+						buf.append(sug);
+					}
+					buf.append("?");
+					irc.sendContextReply(ev, buf.toString());
+				}
+			}
+			else
+			{
+				irc.sendContextReply(ev, "Command not found. Can't find any suggestions either.");
+			}
 		}
-		System.out.println("No manager for " + plugin);
-		return null;
+		return task;
 	}
 
 	/**
@@ -67,7 +101,7 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 		ChoobPluginManager man;
 		synchronized(pluginMap)
 		{
-			man = pluginMap.get(pluginName);
+			man = pluginMap.get(pluginName.toLowerCase());
 		}
 		if (man != null)
 			return man.intervalTask(pluginName, param);
@@ -120,7 +154,7 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 		ChoobPluginManager man;
 		synchronized(pluginMap)
 		{
-			man = pluginMap.get(pluginName);
+			man = pluginMap.get(pluginName.toLowerCase());
 		}
 		if (man != null)
 			return man.doAPI(pluginName, APIName, params);
