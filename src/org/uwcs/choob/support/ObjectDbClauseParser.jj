@@ -7,22 +7,24 @@ PARSER_BEGIN(ObjectDbClauseParser)
 	package org.uwcs.choob.support;
 	import java.util.Map;
 	import java.util.List;
-	import java.util.LinkedList;
+	import java.util.ArrayList;
 	import java.util.HashMap;
 	import java.util.Iterator;
 	import java.io.StringReader;
 
 	public class ObjectDbClauseParser {
-		private Map nameMap;
-		private int joins;
-		private List joinList;
+		private Map nameMap = new HashMap();
+		private int joins = 0;
+		private List joinList = new ArrayList();
+		private String sortOrder = "";
+		private String limitTo = "";
 
 		public static void main(String args[])
 		{
 			try
 			{
 				for(int i=0; i<args.length; i++)
-					System.out.println(getSQL(args[i]));
+					System.out.println(getSQL(args[i], null));
 			}
 			catch (ParseException e)
 			{
@@ -31,12 +33,8 @@ PARSER_BEGIN(ObjectDbClauseParser)
 			}
 		}
 
-		public static String getSQL(String clause) throws ParseException {
+		public static String getSQL(String clause, String className) throws ParseException {
 			ObjectDbClauseParser parser = new ObjectDbClauseParser (new StringReader(clause));
-
-			parser.joins = 0;
-			parser.nameMap = new HashMap();
-			parser.joinList = new LinkedList();
 
 			String whereClause = parser.ClauseList();
 			StringBuffer joinText = new StringBuffer();
@@ -48,7 +46,8 @@ PARSER_BEGIN(ObjectDbClauseParser)
 				joinText.append("INNER JOIN ObjectStoreData o" + i + " ON ObjectStore.ObjectID = o" + i + ".ObjectID AND o" + i + ".FieldName = \"" + fieldName + "\" ");
 				i++;
 			}
-			return joinText.toString() + "WHERE " + whereClause;
+			String classQuery = (className == null) ? "" : " AND ClassName = \"" + className + "\" ";
+			return joinText.toString() + "WHERE " + whereClause + classQuery + parser.sortOrder + parser.limitTo;
 		}
 
 		public String getFieldName(String name)
@@ -69,25 +68,58 @@ PARSER_END(ObjectDbClauseParser)
 <*>
 SKIP: { " " | "\n" | "\t" }
 
+// Definitions
 TOKEN: {
-	<OPENBRACKET: "("> : DEFAULT
+	<#NUMVALUE: ( ["0"-"9"] ) + ( "." ( ["0"-"9"] ) + )?>
+|	<#GENVALUE: <NUMVALUE> | <TEXTVALUE>>
+|	<#TEXTVALUE: "\"" ( ~ ["\"", "\\"] | "\\" ~[] ) * "\"" | "'" ( ~ ["'", "\\"] | "\\" ~[] ) * "'">
+|	<#NAME: ["a"-"z"] ( ["a"-"z", "0"-"9", "_"] )* >
+}
+
+TOKEN: {
+	<_OPENBRACKET: "("> : DEFAULT
 |	<NOT: "!" | "NOT"> : DEFAULT
-|	<NAME: ["a"-"z"] ( ["a"-"z", "0"-"9", "_"] )* > : S_OP
+|	<SORT: "SORT" ( " BY" )?> : S_SORT
+|	<LIMIT: "LIMIT"> : S_LIMIT
+|	<_NAME: <NAME>> : S_OP
+}
+
+<S_SORT>
+TOKEN: {
+	<ASC: "ASC"> : S_SORT
+|	<DESC: "DESC"> : S_SORT
+|	<SORT_NAME: <NAME>> : S_NEXT
+}
+
+<S_LIMIT>
+TOKEN: {
+	<LIMIT_OPENBRACKET: "("> : S_LIMIT2
+}
+
+<S_LIMIT2>
+TOKEN: {
+	<LIMIT_NUMVALUE: <NUMVALUE>> : S_LIMIT3
+}
+
+<S_LIMIT3>
+TOKEN: {
+	<LIMIT_COMMA: ","> : S_LIMIT2
+|	<LIMIT_CLOSEBRACKET: ")"> : S_NEXT
 }
 
 <S_NUMVALUE>
 TOKEN: {
-	<NUMVALUE: ( ["0"-"9"] ) + > : S_NEXT
+	<_NUMVALUE: <NUMVALUE>> : S_NEXT
 }
 
 <S_GENVALUE>
 TOKEN: {
-	<GENVALUE: ( ["0"-"9"] ) + | "\"" ( ~ ["\"", "\\"] | "\\" ~[] ) * "\"" | "'" ( ~ ["'", "\\"] | "\\" ~[] ) * "'"> : S_NEXT
+	<_GENVALUE: <GENVALUE>> : S_NEXT
 }
 
 <S_TEXTVALUE>
 TOKEN: {
-	<TEXTVALUE: "\"" ( ~ ["\"", "\\"] | "\\" ~[] ) * "\"" | "'" ( ~ ["'", "\\"] | "\\" ~[] ) * "'"> : S_NEXT
+	<_TEXTVALUE: <TEXTVALUE>> : S_NEXT
 }
 
 <S_OP>
@@ -100,7 +132,7 @@ TOKEN: {
 
 <S_NEXT>
 TOKEN: {
-	<CLOSEBRACKET: ")"> : S_NEXT
+	<_CLOSEBRACKET: ")"> : S_NEXT
 |	<AND: "AND" | "&&"> : DEFAULT
 |	<OR: "OR" | "||"> : DEFAULT
 }
@@ -154,15 +186,21 @@ String Clause() :
 			return "NOT " + s;
 		}
 	|
-		t = <NAME> s = OperatorAndValue(t.image)
+		t = <_NAME> s = OperatorAndValue(t.image)
 		{
 			return s;
 		}
 	|
-		<OPENBRACKET> s = ClauseList() <CLOSEBRACKET>
+		<_OPENBRACKET> s = ClauseList() <_CLOSEBRACKET>
 		{
 			return "(" + s + ")";
 		}
+	|
+		<SORT> ParseSort()
+		{ return "1"; }
+	|
+		<LIMIT> ParseLimit()
+		{ return "1"; }
 	}
 
 String OperatorAndValue(String name) :
@@ -171,23 +209,59 @@ String OperatorAndValue(String name) :
 		Token s, t;
 	}
 	{
-		s = <NUMOP> t = <NUMVALUE>
+		s = <NUMOP> t = <_NUMVALUE>
 		{
 			return realName + " " + s.image + " " + t.image;
 		}
 	|
-		s = <GENOP> t = <GENVALUE>
+		s = <GENOP> t = <_GENVALUE>
 		{
 			return realName + " " + s.image + " " + t.image;
 		}
 	|
-		<RLIKE> s = <TEXTVALUE>
+		<RLIKE> s = <_TEXTVALUE>
 		{
 			return realName + " REGEXP " + s.image;
 		}
 	|
-		<LIKE> s = <TEXTVALUE>
+		<LIKE> s = <_TEXTVALUE>
 		{
 			return realName + " LIKE " + s.image;
 		}
+	}
+
+void ParseSort() :
+	{
+		Token t;
+		String order = "ASC";
+	}
+	{
+		(
+			<ASC> { }
+		|
+			<DESC> { order = "DESC"; }
+		)?
+		t = <SORT_NAME>
+		{
+			sortOrder = " ORDER BY " + getFieldName(t.image) + " " + order;
+		}
+	}
+
+void ParseLimit() :
+	{
+		Token t1, t2;
+	}
+	{
+		<LIMIT_OPENBRACKET> t1= <LIMIT_NUMVALUE>
+		(
+			<LIMIT_COMMA> t2 = <LIMIT_NUMVALUE> <LIMIT_CLOSEBRACKET>
+			{
+				limitTo = " LIMIT " + t1.image + ", " + t2.image;
+			}
+		|
+			<LIMIT_CLOSEBRACKET>
+			{
+				limitTo = " LIMIT " + t1.image;
+			}
+		)
 	}

@@ -4,38 +4,68 @@ package org.uwcs.choob.support;
 public interface ObjectDbClauseParserConstants {
 
   int EOF = 0;
-  int OPENBRACKET = 4;
-  int NOT = 5;
-  int NAME = 6;
-  int NUMVALUE = 7;
-  int GENVALUE = 8;
-  int TEXTVALUE = 9;
-  int NUMOP = 10;
-  int GENOP = 11;
-  int RLIKE = 12;
-  int LIKE = 13;
-  int CLOSEBRACKET = 14;
-  int AND = 15;
-  int OR = 16;
+  int NUMVALUE = 4;
+  int GENVALUE = 5;
+  int TEXTVALUE = 6;
+  int NAME = 7;
+  int _OPENBRACKET = 8;
+  int NOT = 9;
+  int SORT = 10;
+  int LIMIT = 11;
+  int _NAME = 12;
+  int ASC = 13;
+  int DESC = 14;
+  int SORT_NAME = 15;
+  int LIMIT_OPENBRACKET = 16;
+  int LIMIT_NUMVALUE = 17;
+  int LIMIT_COMMA = 18;
+  int LIMIT_CLOSEBRACKET = 19;
+  int _NUMVALUE = 20;
+  int _GENVALUE = 21;
+  int _TEXTVALUE = 22;
+  int NUMOP = 23;
+  int GENOP = 24;
+  int RLIKE = 25;
+  int LIKE = 26;
+  int _CLOSEBRACKET = 27;
+  int AND = 28;
+  int OR = 29;
 
   int S_NEXT = 0;
   int S_OP = 1;
   int S_TEXTVALUE = 2;
   int S_GENVALUE = 3;
   int S_NUMVALUE = 4;
-  int DEFAULT = 5;
+  int S_LIMIT3 = 5;
+  int S_LIMIT2 = 6;
+  int S_LIMIT = 7;
+  int S_SORT = 8;
+  int DEFAULT = 9;
 
   String[] tokenImage = {
     "<EOF>",
     "\" \"",
     "\"\\n\"",
     "\"\\t\"",
-    "\"(\"",
-    "<NOT>",
-    "<NAME>",
     "<NUMVALUE>",
     "<GENVALUE>",
     "<TEXTVALUE>",
+    "<NAME>",
+    "\"(\"",
+    "<NOT>",
+    "<SORT>",
+    "\"LIMIT\"",
+    "<_NAME>",
+    "\"ASC\"",
+    "\"DESC\"",
+    "<SORT_NAME>",
+    "\"(\"",
+    "<LIMIT_NUMVALUE>",
+    "\",\"",
+    "\")\"",
+    "<_NUMVALUE>",
+    "<_GENVALUE>",
+    "<_TEXTVALUE>",
     "<NUMOP>",
     "<GENOP>",
     "<RLIKE>",

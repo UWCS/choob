@@ -80,7 +80,7 @@ public class ObjectDbModule
 		{
 			try
 			{
-				sqlQuery += ObjectDbClauseParser.getSQL(clause);
+				sqlQuery += ObjectDbClauseParser.getSQL(clause, storedClass.toString());
 			}
 			catch (ParseException e)
 			{
@@ -89,7 +89,6 @@ public class ObjectDbModule
 				System.err.println("Error was: " + e);
 				throw new ChoobException("Parse error in clause string.");
 			}
-			sqlQuery += " AND ClassName = '" + storedClass.toString() + "';";
 		}
 		else
 		{
