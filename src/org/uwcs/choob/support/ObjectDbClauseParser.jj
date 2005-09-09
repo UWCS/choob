@@ -88,6 +88,7 @@ TOKEN: {
 TOKEN: {
 	<ASC: "ASC"> : S_SORT
 |	<DESC: "DESC"> : S_SORT
+|	<INTEGER: "INTEGER"> : S_SORT
 |	<SORT_NAME: <NAME>> : S_NEXT
 }
 
@@ -234,6 +235,8 @@ void ParseSort() :
 	{
 		Token t;
 		String order = "ASC";
+		String modpre = "";
+		String modpost = "";
 	}
 	{
 		(
@@ -241,9 +244,12 @@ void ParseSort() :
 		|
 			<DESC> { order = "DESC"; }
 		)?
+		(
+			<INTEGER> { modpre = " CAST( "; modpost = " AS SIGNED) "; }
+		)?
 		t = <SORT_NAME>
 		{
-			sortOrder = " ORDER BY " + getFieldName(t.image) + " " + order;
+			sortOrder = " ORDER BY " + modpre + getFieldName(t.image) + modpost + " " + order;
 		}
 	}
 

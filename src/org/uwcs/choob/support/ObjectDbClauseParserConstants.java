@@ -15,21 +15,22 @@ public interface ObjectDbClauseParserConstants {
   int _NAME = 12;
   int ASC = 13;
   int DESC = 14;
-  int SORT_NAME = 15;
-  int LIMIT_OPENBRACKET = 16;
-  int LIMIT_NUMVALUE = 17;
-  int LIMIT_COMMA = 18;
-  int LIMIT_CLOSEBRACKET = 19;
-  int _NUMVALUE = 20;
-  int _GENVALUE = 21;
-  int _TEXTVALUE = 22;
-  int NUMOP = 23;
-  int GENOP = 24;
-  int RLIKE = 25;
-  int LIKE = 26;
-  int _CLOSEBRACKET = 27;
-  int AND = 28;
-  int OR = 29;
+  int INTEGER = 15;
+  int SORT_NAME = 16;
+  int LIMIT_OPENBRACKET = 17;
+  int LIMIT_NUMVALUE = 18;
+  int LIMIT_COMMA = 19;
+  int LIMIT_CLOSEBRACKET = 20;
+  int _NUMVALUE = 21;
+  int _GENVALUE = 22;
+  int _TEXTVALUE = 23;
+  int NUMOP = 24;
+  int GENOP = 25;
+  int RLIKE = 26;
+  int LIKE = 27;
+  int _CLOSEBRACKET = 28;
+  int AND = 29;
+  int OR = 30;
 
   int S_NEXT = 0;
   int S_OP = 1;
@@ -58,6 +59,7 @@ public interface ObjectDbClauseParserConstants {
     "<_NAME>",
     "\"ASC\"",
     "\"DESC\"",
+    "\"INTEGER\"",
     "<SORT_NAME>",
     "\"(\"",
     "<LIMIT_NUMVALUE>",
