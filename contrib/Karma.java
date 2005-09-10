@@ -270,6 +270,12 @@ public class Karma
 
 	public void commandSet( Message con, Modules mods, IRCInterface irc )
 	{
+		if (!mods.security.hasPerm(new ChoobPermission("plugins.karma.set"), con.getNick()))
+		{
+			irc.sendContextReply(con, "You lack authority!");
+			return;
+		}
+
 		List params = mods.util.getParams( con );
 		ArrayList<KarmaObject> kos=new ArrayList();
 
