@@ -20,14 +20,140 @@ public class KarmaReasonObject
 {
 	public int id;
 	public String string;
-	public int up;
+	public int direction;
 	public String reason;
 }
 
 public class Karma
 {
 	// Java-- A better regex would be: (")?((?(1)(?:[ \\./a-zA-Z0-9_-]{2,})|(?:[\\./a-zA-Z0-9_-]{2,})))(?(1)")((?:\\+\\+)|(?:\\-\\-))
-	public String filterKarmaRegex = ".*?(?:((?:[\\./a-zA-Z0-9_-]{3,})|(?:^[\\./a-zA-Z0-9_-]+))((?:\\+\\+)|(?:\\-\\-))).*?";
+	public String filterKarmaRegex = ".*?(?:((?:[\\./a-zA-Z0-9_-]{3,})|(?:^[\\./a-zA-Z0-9_-]+))((?:\\+\\+)|(?:\\-\\-)))(?:(?:[^+-])|$).*?";
+
+	public void commandReason( Message con, Modules mods, IRCInterface irc )
+	{
+		Pattern pa;
+		Matcher ma;
+
+		pa=Pattern.compile(".*(?:(?:do)|(?:does))? ([\\./a-zA-Z0-9_-]+) ((?:suck)|(?:rulz0r))\\?$");
+		ma=pa.matcher(con.getMessage());
+		if (ma.matches())
+		{
+			List<KarmaReasonObject> results;
+			try
+			{
+				results=mods.odb.retrieve(KarmaReasonObject.class, "string = '" + ma.group(1) + "' AND direction = '" + (ma.group(2).equals("suck") ? -1 : 1) + "'");
+			}
+			catch (ChoobException e) { return; }
+			if (results.size()==0)
+				return;
+
+			KarmaReasonObject kr=results.get((new Random()).nextInt(results.size()));
+
+			irc.sendContextReply(con, kr.string + " " + ma.group(2) + (kr.string.endsWith("s") ? "" : "s") + " " + kr.reason);
+			return;
+		}
+	}
+
+	public void filterKarma( Message con, Modules mods, IRCInterface irc )
+	{
+		String special="";
+
+		Pattern pa;
+		Matcher ma;
+
+		ArrayList<KarmaObject> kos = new ArrayList();
+		HashSet used = new HashSet();
+
+		pa=Pattern.compile("^([\\./a-zA-Z0-9_-]+)((?:\\+\\+)|(?:\\-\\-)) (because .+)$");
+		ma = pa.matcher(con.getMessage());
+
+		if (ma.matches())
+		{
+			KarmaReasonObject kr=new KarmaReasonObject();
+			kr.string=ma.group(1);
+			kr.direction=(ma.group(2).equals("++") ? 1 : -1);
+			kr.reason=ma.group(3);
+			try { mods.odb.save(kr); } catch (ChoobException e) {}
+			special="*";
+		}
+
+		pa = Pattern.compile(filterKarmaRegex);
+		ma = pa.matcher(con.getMessage());
+
+
+
+		while (ma.find())
+		{
+			KarmaObject ko;
+			String st=ma.group(1);
+			if (used.contains(st))
+				continue;
+			used.add(st);
+
+			boolean dup=ma.group(2).equals("++");
+
+			List<KarmaObject> results = retrieveKarmaObjects("string = '" + st + "'", mods);
+			if (results.size()==0)
+			{
+				ko=new KarmaObject();
+				ko.string=st;
+				if (dup)
+				{
+					ko.up=1;
+					ko.value=1;
+				}
+				else
+				{
+					ko.down=1;
+					ko.value=-1;
+				}
+			}
+			else
+			{
+				ko=results.get(0);
+				if (dup)
+				{
+					ko.up++;
+					ko.value++;
+				}
+				else
+				{
+					ko.down++;
+					ko.value--;
+				}
+			}
+			ko.dup=dup;
+			kos.add(ko);
+		}
+
+		saveKarmaObjects(kos, mods);
+
+
+		// Generate a pretty reply, all actual processing is done now:
+
+		if (kos.size()==1)
+		{
+			irc.sendContextReply(con, (kos.get(0).dup ? "Karma" : "Less karma") + " to " + kos.get(0).string + special + ", " + (kos.get(0).dup ? "giving" : "leaving") + " a karma of " + kos.get(0).value + ".");
+			return;
+		}
+
+		String t="Karma adjustments: ";
+
+		for (int i=0; i<kos.size(); i++)
+		{
+
+			t+=kos.get(i).string + ( kos.get(i).dup ? "++" : "--") + " (now " + kos.get(i).value + ")";
+			if (i!=kos.size()-1)
+			{
+				if (i==kos.size()-2)
+					t+=" and ";
+				else
+					t+=", ";
+			}
+		}
+		irc.sendContextReply( con, t + ".");
+
+	}
 
 	private String postfix(int n)
 	{
@@ -194,90 +320,6 @@ public class Karma
 	public void commandList (Message con, Modules mods, IRCInterface irc)
 	{
 		irc.sendContextReply(con, "No chance, matey.");
-	}
-
-	public void filterKarma( Message con, Modules mods, IRCInterface irc )
-	{
-		Pattern pa;
-		Matcher ma;
-
-		ArrayList<KarmaObject> kos = new ArrayList();
-		HashSet used = new HashSet();
-
-		pa = Pattern.compile(filterKarmaRegex);
-		ma = pa.matcher(con.getMessage());
-
-		while (ma.find())
-		{
-			KarmaObject ko;
-			String st=ma.group(1);
-			if (used.contains(st))
-				continue;
-			used.add(st);
-
-			boolean dup=ma.group(2).equals("++");
-
-			List<KarmaObject> results = retrieveKarmaObjects("string = '" + st + "'", mods);
-			if (results.size()==0)
-			{
-				ko=new KarmaObject();
-				ko.string=st;
-				if (dup)
-				{
-					ko.up=1;
-					ko.value=1;
-				}
-				else
-				{
-					ko.down=1;
-					ko.value=-1;
-				}
-			}
-			else
-			{
-				ko=results.get(0);
-				if (dup)
-				{
-					ko.up++;
-					ko.value++;
-				}
-				else
-				{
-					ko.down++;
-					ko.value--;
-				}
-			}
-			ko.dup=dup;
-			kos.add(ko);
-		}
-
-		saveKarmaObjects(kos, mods);
-
-
-		// Generate a pretty reply, all actual processing is done now:
-
-		if (kos.size()==1)
-		{
-			irc.sendContextReply(con, (kos.get(0).dup ? "Karma" : "Less karma") + " to " + kos.get(0).string + ", " + (kos.get(0).dup ? "giving" : "leaving") + " a karma of " + kos.get(0).value + ".");
-			return;
-		}
-
-		String t="Karma adjustments: ";
-
-		for (int i=0; i<kos.size(); i++)
-		{
-
-			t+=kos.get(i).string + ( kos.get(i).dup ? "++" : "--") + " (now " + kos.get(i).value + ")";
-			if (i!=kos.size()-1)
-			{
-				if (i==kos.size()-2)
-					t+=" and ";
-				else
-					t+=", ";
-			}
-		}
-		irc.sendContextReply( con, t + ".");
-
 	}
 }
 
