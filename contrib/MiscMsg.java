@@ -9,7 +9,11 @@ public class MiscMsg
 	private static boolean hascoin=true;
 	public void commandCT( Message con, Modules mods, IRCInterface irc )
 	{
-		final String[] s = { "Yes, your connection is working fine.", "No, your connection seems really broken." };
+		randomReply(con, irc, new String[] { "Yes, your connection is working fine.", "No, your connection seems really broken." });
+	}
+
+	private void randomReply( Message con, IRCInterface irc, final String[] s)
+	{
 		irc.sendContextReply(con, s[(new Random()).nextInt(s.length)]);
 	}
 
@@ -63,4 +67,11 @@ public class MiscMsg
 		}
 		irc.sendContextReply(mes, "Answer to \"" + t + "\" is " + v.get((new Random()).nextInt(v.size())) + ".");
 	}
+
+	public void command8Ball( Message con, Modules mods, IRCInterface irc )
+	{
+		// http://r.wesley.edwards.net/writes/JavaScript/magic8ball.js
+		randomReply(con, irc, new String[] {"Signs point to yes.", "Yes.", "Reply hazy, try again.", "Without a doubt.", "My sources say no.", "As I see it, yes.", "You may rely on it.", "Concentrate and ask again.", "Outlook not so good.", "It is decidedly so.", "Better not tell you now.", "Very doubtful.", "Yes - definitely.", "It is certain.", "Cannot predict now.", "Most likely.", "Ask again later.", "My reply is no.", "Outlook good.", "Don't count on it." });
+	}
+
 }
