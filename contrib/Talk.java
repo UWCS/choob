@@ -12,7 +12,7 @@ import org.uwcs.choob.support.events.*;
  * :)
  */
 
-class Talk
+public class Talk
 {
 	public void commandSay( Message con, Modules modules, IRCInterface irc )
 	{
@@ -28,7 +28,7 @@ class Talk
 		} else {
 			String target = params.substring(0, spacePos);
 			String message = params.substring(spacePos + 1);
-			irc.sendMessage(target, message);
+			irc.sendTaggedMessage(target, message, con);
 		}
 	}
 
@@ -46,7 +46,7 @@ class Talk
 		} else {
 			String target = params.substring(0, spacePos);
 			String message = params.substring(spacePos + 1);
-			irc.sendAction(target, message);
+			irc.sendTaggedAction(target, message, con);
 		}
 	}
 }

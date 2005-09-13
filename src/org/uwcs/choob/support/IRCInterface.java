@@ -95,6 +95,36 @@ public class IRCInterface {
 	}
 
 	/**
+	 * Sends a message to the target you specify, may be a #channel, having post-fixed it with the user's nick.
+	 * This should be more-avaliable than sendMessage(), so it can be used in commands like !msg.
+	 * The security of this function relies on plugins not being able to construct events...
+	 * @param target A String of the target you want to recive the message.
+	 * @param message A String of the message you want to send.
+	 * @param ev The UserEvent that the Nick is to be pulled from.
+	 */
+	public void sendTaggedMessage(String target, String message, UserEvent ev)
+	{
+		AccessController.checkPermission(new ChoobPermission("message.send.tagged.privmsg"));
+
+		bot.sendMessage(target, message + " (" + ev.getNick() + ")");
+	}
+	/**
+	 * Sends an action to the target you specify, may be a #channel, having post-fixed it with the user's nick.
+	 * This should be more-avaliable than sendAction(), so it can be used in commands like !describe.
+	 * The security of this function relies on plugins not being able to construct events...
+	 * @param target A String of the target you want to recive the message.
+	 * @param message A String of the message you want to send.
+	 * @param ev The UserEvent that the Nick is to be pulled from.
+	 */
+	public void sendTaggedAction(String target, String message, UserEvent ev)
+	{
+		AccessController.checkPermission(new ChoobPermission("message.send.tagged.action"));
+
+		bot.sendAction(target, message + " (" + ev.getNick() + ")");
+	}
+
+
+	/**
 	 * Sends an action to the target you specify, may be a #channel.
 	 * It is better to use sendContextReply, if possible.
 	 * @param target A String of the target you want to recive the message.
