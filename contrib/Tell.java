@@ -40,7 +40,7 @@ public class Tell
 
 		StringTokenizer tokens = new StringTokenizer(ma.group(1), ",");
 
-		tO.date=(new Date()).toString();
+		tO.date=(new Date(con.getMillis())).toString();
 
 		while( tokens.hasMoreTokens() )
 		{

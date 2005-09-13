@@ -13,6 +13,7 @@ import java.util.*;
  */
 public class TimedEvents
 {
+	private static String lastDelivery=null;
 	public void commandIn( Message mes, Modules mods, IRCInterface irc )
 	{
 		// Stop recursion
@@ -40,7 +41,7 @@ public class TimedEvents
 			return;
 		}
 
-		IRCEvent newMes = mes.cloneEvent( "~" + command ); // XXX hack
+		IRCEvent newMes = mes.cloneEvent( command ); // XXX hack
 
 		Date callbackTime = new Date( (new Date().getTime()) + period * 1000);
 
@@ -84,7 +85,16 @@ public class TimedEvents
 	{
 		if (parameter != null && parameter instanceof Message) {
 			// It's a message to be redelivered
+
+			lastDelivery=((Message)parameter).getNick() + " queued the following command on " + new Date(((Message)parameter).getMillis()).toString() + ": " + ((Message)parameter).getMessage();
+
 			mods.synthetic.doSyntheticMessage( (Message)parameter);
 		}
 	}
+
+	public void commandWQT( Message mes, Modules mods, IRCInterface irc )
+	{
+		irc.sendContextReply(mes, (lastDelivery != null ? lastDelivery : "Nobody queued nuffin', gov'ner."));
+	}
+
 }
