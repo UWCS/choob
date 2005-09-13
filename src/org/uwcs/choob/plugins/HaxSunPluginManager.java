@@ -109,7 +109,10 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		{
 			throw (ChoobException)(e.getCause());
 		}
-		System.out.println("Compiler output: " + baos.toString());
+
+		// If you're getting crack-headed errors, and have no idea why, it's because you forgot to have a "public class".
+
+		System.out.println("Compiler output (" + ret + "): '" + baos.toString() + "'");
 		if (ret == 0)
 			return baos.toString(); // success
 		else
@@ -220,29 +223,40 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 	protected Object instantiatePlugin(Class newClass, String pluginName) throws ChoobException
 	{
-		Object pluginObj;
-		try {
-			// Locate a suitable constructor.
-			// TODO maybe we should have one with IRCInterface etc. parameters?
-			Constructor cons = newClass.getConstructor();
-			pluginObj = cons.newInstance();
-		}
-		catch (NoSuchMethodException e)
-		{
-			throw new ChoobException("Plugin " + newClass.getName() + " had no constructor: " + e);
-		}
-		catch (IllegalAccessException e)
-		{
-			throw new ChoobException("Plugin " + newClass.getName() + " had no constructor: " + e);
-		}
-		catch (InvocationTargetException e)
-		{
-			throw new ChoobException("Plugin " + newClass.getName() + "'s constructor threw an exception: " + e.getCause(), e.getCause());
-		}
-		catch (InstantiationException e)
-		{
-			throw new ChoobException("Plugin " + newClass.getName() + "'s constructor threw an exception: " + e.getCause(), e.getCause());
-		}
+		Object pluginObj=null;
+
+		// Squiggly brackets are for the weak.
+
+		Constructor c[] = newClass.getConstructors();
+
+		for (int i=0; i<c.length; i++)
+			try
+			{
+				Class[] t=c[i].getParameterTypes();
+				Object[] arg=new Object[t.length];
+
+				for (int j=0; j<t.length; j++)
+					if (t[j] == IRCInterface.class)
+						arg[j]=irc;
+					else
+						if (t[j] == Modules.class)
+							arg[j]=mods;
+						else
+							throw new ChoobException("Unknown parameter in constructor.");
+				pluginObj = c[i].newInstance((Object [])arg);
+			}
+			catch (IllegalAccessException e)
+			{
+				throw new ChoobException("Plugin " + newClass.getName() + " had no constructor (this error shouldn't occour, something serious is wrong): " + e);
+			}
+			catch (InvocationTargetException e)
+			{
+				throw new ChoobException("Plugin " + newClass.getName() + "'s constructor threw an exception: " + e.getCause(), e.getCause());
+			}
+			catch (InstantiationException e)
+			{
+				throw new ChoobException("Plugin " + newClass.getName() + "'s constructor threw an exception: " + e.getCause(), e.getCause());
+			}
 
 		try
 		{
