@@ -37,7 +37,7 @@ public class Test
 
 	public void filterFaux( Message con, Modules modules, IRCInterface irc )
 	{
-		irc.sendContextReply( con, "I would almost certainly concurr.");
+		irc.sendContextReply( con, "I would almost certainly concur.");
 	}
 
 	public String filterBouncyRegex = "^bouncy bouncy";
