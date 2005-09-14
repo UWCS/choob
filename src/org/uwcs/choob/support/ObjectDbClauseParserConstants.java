@@ -8,40 +8,49 @@ public interface ObjectDbClauseParserConstants {
   int GENVALUE = 5;
   int TEXTVALUE = 6;
   int NAME = 7;
-  int _OPENBRACKET = 8;
-  int NOT = 9;
+  int FIELDNAME = 8;
+  int WHERE = 9;
   int SORT = 10;
   int LIMIT = 11;
-  int _NAME = 12;
-  int ASC = 13;
-  int DESC = 14;
-  int INTEGER = 15;
-  int SORT_NAME = 16;
-  int LIMIT_OPENBRACKET = 17;
-  int LIMIT_NUMVALUE = 18;
-  int LIMIT_COMMA = 19;
-  int LIMIT_CLOSEBRACKET = 20;
-  int _NUMVALUE = 21;
-  int _GENVALUE = 22;
-  int _TEXTVALUE = 23;
-  int NUMOP = 24;
-  int GENOP = 25;
-  int RLIKE = 26;
-  int LIKE = 27;
-  int _CLOSEBRACKET = 28;
-  int AND = 29;
-  int OR = 30;
+  int WITH = 12;
+  int _OPENBRACKET = 13;
+  int NOT = 14;
+  int WHERE_NAME = 15;
+  int _CLOSEBRACKET = 16;
+  int AND = 17;
+  int OR = 18;
+  int ASC = 19;
+  int DESC = 20;
+  int INTEGER = 21;
+  int SORT_NAME = 22;
+  int LIMIT_OPENBRACKET = 23;
+  int LIMIT_NUMVALUE = 24;
+  int LIMIT_COMMA = 25;
+  int LIMIT_CLOSEBRACKET = 26;
+  int WITH_NAME = 27;
+  int _NUMVALUE = 28;
+  int NUM_FIELDNAME = 29;
+  int _GENVALUE = 30;
+  int GEN_FIELDNAME = 31;
+  int _TEXTVALUE = 32;
+  int TEXT_FIELDNAME = 33;
+  int NUMOP = 34;
+  int GENOP = 35;
+  int RLIKE = 36;
+  int LIKE = 37;
 
-  int S_NEXT = 0;
-  int S_OP = 1;
-  int S_TEXTVALUE = 2;
-  int S_GENVALUE = 3;
-  int S_NUMVALUE = 4;
+  int S_OP = 0;
+  int S_TEXTVALUE = 1;
+  int S_GENVALUE = 2;
+  int S_NUMVALUE = 3;
+  int S_WITH = 4;
   int S_LIMIT3 = 5;
   int S_LIMIT2 = 6;
   int S_LIMIT = 7;
   int S_SORT = 8;
-  int DEFAULT = 9;
+  int S_NEXT = 9;
+  int S_WHERE = 10;
+  int DEFAULT = 11;
 
   String[] tokenImage = {
     "<EOF>",
@@ -52,11 +61,17 @@ public interface ObjectDbClauseParserConstants {
     "<GENVALUE>",
     "<TEXTVALUE>",
     "<NAME>",
-    "\"(\"",
-    "<NOT>",
+    "<FIELDNAME>",
+    "\"WHERE\"",
     "<SORT>",
     "\"LIMIT\"",
-    "<_NAME>",
+    "\"WITH\"",
+    "\"(\"",
+    "<NOT>",
+    "<WHERE_NAME>",
+    "\")\"",
+    "<AND>",
+    "<OR>",
     "\"ASC\"",
     "\"DESC\"",
     "\"INTEGER\"",
@@ -65,16 +80,17 @@ public interface ObjectDbClauseParserConstants {
     "<LIMIT_NUMVALUE>",
     "\",\"",
     "\")\"",
+    "<WITH_NAME>",
     "<_NUMVALUE>",
+    "<NUM_FIELDNAME>",
     "<_GENVALUE>",
+    "<GEN_FIELDNAME>",
     "<_TEXTVALUE>",
+    "<TEXT_FIELDNAME>",
     "<NUMOP>",
     "<GENOP>",
     "<RLIKE>",
     "\"LIKE\"",
-    "\")\"",
-    "<AND>",
-    "<OR>",
   };
 
 }

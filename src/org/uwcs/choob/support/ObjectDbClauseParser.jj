@@ -13,18 +13,23 @@ PARSER_BEGIN(ObjectDbClauseParser)
 	import java.io.StringReader;
 
 	public class ObjectDbClauseParser {
-		private Map nameMap = new HashMap();
 		private int joins = 0;
 		private List joinList = new ArrayList();
+		private Map nameMap = new HashMap();
 		private String sortOrder = "";
 		private String limitTo = "";
+		private List classList = new ArrayList();
+		private Map classMap = new HashMap();
+		private Map fieldClass = new HashMap();
 
 		public static void main(String args[])
 		{
 			try
 			{
 				for(int i=0; i<args.length; i++)
-					System.out.println(getSQL(args[i], null));
+				{
+					System.out.println(getSQL(args[i], args[++i]));
+				}
 			}
 			catch (ParseException e)
 			{
@@ -34,32 +39,59 @@ PARSER_BEGIN(ObjectDbClauseParser)
 		}
 
 		public static String getSQL(String clause, String className) throws ParseException {
+			if (className == null)
+				throw new IllegalArgumentException("Null class name passed to getSQL...");
+
 			ObjectDbClauseParser parser = new ObjectDbClauseParser (new StringReader(clause));
 
-			String whereClause = parser.ClauseList();
+			parser.classList.add(className);
+			parser.classMap.put(className, new Integer(0));
+
+			StringBuffer whereClause = new StringBuffer("("+parser.SQL()+")");
 			StringBuffer joinText = new StringBuffer();
-			Iterator l = parser.joinList.listIterator();
-			int i = 0;
-			while( l.hasNext() )
+			for (int i=0; i<parser.classList.size(); i++)
 			{
-				String fieldName = (String)l.next();
-				joinText.append("INNER JOIN ObjectStoreData o" + i + " ON ObjectStore.ObjectID = o" + i + ".ObjectID AND o" + i + ".FieldName = \"" + fieldName + "\" ");
-				i++;
+				String classN = (String)parser.classList.get(i);
+				joinText.append("ObjectStore s"+i+" INNER JOIN ");
+				whereClause.append(" && s"+i+".ClassName = \"" + classN + "\"");
 			}
-			String classQuery = (className == null) ? "" : " AND ClassName = \"" + className + "\" ";
-			return joinText.toString() + "WHERE " + whereClause + classQuery + parser.sortOrder + parser.limitTo;
+			for(int i=0; i<parser.joinList.size(); i++)
+			{
+				if (i != 0)
+					joinText.append(" INNER JOIN ");
+				String fullName = (String)parser.joinList.get(i);
+				int pos = fullName.indexOf('.');
+				String fieldName = fullName.substring(pos + 1);
+				joinText.append("ObjectStoreData o" + i + " ON s"+parser.fieldClass.get(fullName)+".ObjectID = o" + i + ".ObjectID AND o" + i + ".FieldName = \"" + fieldName + "\"");
+			}
+			return "SELECT s0.ObjectID FROM " + joinText.toString() + " WHERE " + whereClause.toString() + parser.sortOrder + parser.limitTo;
 		}
 
-		public String getFieldName(String name)
+		public String getFieldName(String name) throws ParseException
 		{
-			String realName = (String)nameMap.get(name.toLowerCase());
+			String fullName;
+			if (name.indexOf('.') == -1)
+				fullName = classList.get(0) + "." + name;
+			else
+				fullName = name;
+
+			String realName = (String)nameMap.get(fullName.toLowerCase());
 			if (realName != null)
 				return realName;
+
 			// Need to add!
-			realName = "o"+joins+".FieldValue";
-			joinList.add(name.toLowerCase());
-			joins++;
-			nameMap.put(name.toLowerCase(), realName);
+			int pos = fullName.indexOf('.');
+			String className = fullName.substring(0, pos);
+			String fieldName = fullName.substring(pos + 1);
+
+			Integer classID = (Integer)classMap.get(className);
+			if (classID == null)
+				throw new ParseException("Attempted to use a class not in a WITH clause...");
+
+			realName = "o"+joinList.size()+".FieldValue";
+			joinList.add(fullName.toLowerCase());
+			fieldClass.put(fullName.toLowerCase(), classID);
+			nameMap.put(fullName.toLowerCase(), realName);
 			return realName;
 		}
 	}
@@ -74,14 +106,29 @@ TOKEN: {
 |	<#GENVALUE: <NUMVALUE> | <TEXTVALUE>>
 |	<#TEXTVALUE: "\"" ( ~ ["\"", "\\"] | "\\" ~[] ) * "\"" | "'" ( ~ ["'", "\\"] | "\\" ~[] ) * "'">
 |	<#NAME: ["a"-"z"] ( ["a"-"z", "0"-"9", "_"] )* >
+|	<#FIELDNAME: <NAME> ("." <NAME>)* >
 }
 
+// Generic
 TOKEN: {
-	<_OPENBRACKET: "("> : DEFAULT
-|	<NOT: "!" | "NOT"> : DEFAULT
+	<WHERE: "WHERE"> : S_WHERE
 |	<SORT: "SORT" ( " BY" )?> : S_SORT
 |	<LIMIT: "LIMIT"> : S_LIMIT
-|	<_NAME: <NAME>> : S_OP
+|	<WITH: "WITH"> : S_WITH
+}
+
+<S_WHERE>
+TOKEN: {
+	<_OPENBRACKET: "("> : S_WHERE
+|	<NOT: "!" | "NOT"> : S_WHERE
+|	<WHERE_NAME: <FIELDNAME>> : S_OP
+}
+
+<S_NEXT>
+TOKEN: {
+	<_CLOSEBRACKET: ")"> : S_NEXT
+|	<AND: "AND" | "&&"> : S_WHERE
+|	<OR: "OR" | "||"> : S_WHERE
 }
 
 <S_SORT>
@@ -89,7 +136,7 @@ TOKEN: {
 	<ASC: "ASC"> : S_SORT
 |	<DESC: "DESC"> : S_SORT
 |	<INTEGER: "INTEGER"> : S_SORT
-|	<SORT_NAME: <NAME>> : S_NEXT
+|	<SORT_NAME: <NAME>> : DEFAULT
 }
 
 <S_LIMIT>
@@ -105,22 +152,30 @@ TOKEN: {
 <S_LIMIT3>
 TOKEN: {
 	<LIMIT_COMMA: ","> : S_LIMIT2
-|	<LIMIT_CLOSEBRACKET: ")"> : S_NEXT
+|	<LIMIT_CLOSEBRACKET: ")"> : DEFAULT
+}
+
+<S_WITH>
+TOKEN: {
+	<WITH_NAME: <NAME>> : DEFAULT
 }
 
 <S_NUMVALUE>
 TOKEN: {
 	<_NUMVALUE: <NUMVALUE>> : S_NEXT
+|	<NUM_FIELDNAME: <FIELDNAME>> : S_NEXT
 }
 
 <S_GENVALUE>
 TOKEN: {
 	<_GENVALUE: <GENVALUE>> : S_NEXT
+|	<GEN_FIELDNAME: <FIELDNAME>> : S_NEXT
 }
 
 <S_TEXTVALUE>
 TOKEN: {
 	<_TEXTVALUE: <TEXTVALUE>> : S_NEXT
+|	<TEXT_FIELDNAME: <FIELDNAME>> : S_NEXT
 }
 
 <S_OP>
@@ -131,12 +186,27 @@ TOKEN: {
 |	<LIKE: "LIKE"> : S_TEXTVALUE
 }
 
-<S_NEXT>
-TOKEN: {
-	<_CLOSEBRACKET: ")"> : S_NEXT
-|	<AND: "AND" | "&&"> : DEFAULT
-|	<OR: "OR" | "||"> : DEFAULT
-}
+String SQL () :
+	{
+		String s;
+		StringBuffer b = new StringBuffer();
+	}
+	{
+		(
+			<WITH> ParseWith()
+			{ }
+		|
+			<SORT> ParseSort()
+			{ }
+		|
+			<LIMIT> ParseLimit()
+			{ }
+		|
+			<WHERE> s = ClauseList()
+			{ b.append(s); }
+		)*
+		{ return b.toString(); }
+	}
 
 /*
 	ClauseList() = Clause() ClauseExtra()
@@ -187,7 +257,7 @@ String Clause() :
 			return "NOT " + s;
 		}
 	|
-		t = <_NAME> s = OperatorAndValue(t.image)
+		t = <WHERE_NAME> s = OperatorAndValue(t.image)
 		{
 			return s;
 		}
@@ -196,38 +266,49 @@ String Clause() :
 		{
 			return "(" + s + ")";
 		}
-	|
-		<SORT> ParseSort()
-		{ return "1"; }
-	|
-		<LIMIT> ParseLimit()
-		{ return "1"; }
 	}
 
 String OperatorAndValue(String name) :
 	{
 		String realName = getFieldName(name);
 		Token s, t;
+		String n;
 	}
 	{
-		s = <NUMOP> t = <_NUMVALUE>
+		s = <NUMOP>
+		(
+			t = <_NUMVALUE> { n = t.image; }
+		|	t = <NUM_FIELDNAME> { n = getFieldName(t.image); }
+		)
 		{
-			return realName + " " + s.image + " " + t.image;
+			return realName + " " + s.image + " " + n;
 		}
 	|
-		s = <GENOP> t = <_GENVALUE>
+		s = <GENOP>
+		(
+			t = <_GENVALUE> { n = t.image; }
+		|	t = <GEN_FIELDNAME> { n = getFieldName(t.image); }
+		)
 		{
-			return realName + " " + s.image + " " + t.image;
+			return realName + " " + s.image + " " + n;
 		}
 	|
-		<RLIKE> s = <_TEXTVALUE>
+		<RLIKE>
+		(
+			t = <_TEXTVALUE> { n = t.image; }
+		|	t = <TEXT_FIELDNAME> { n = getFieldName(t.image); }
+		)
 		{
-			return realName + " REGEXP " + s.image;
+			return realName + " REGEXP " + n;
 		}
 	|
-		<LIKE> s = <_TEXTVALUE>
+		<LIKE>
+		(
+			t = <_TEXTVALUE> { n = t.image; }
+		|	t = <TEXT_FIELDNAME> { n = getFieldName(t.image); }
+		)
 		{
-			return realName + " LIKE " + s.image;
+			return realName + " LIKE " + n;
 		}
 	}
 
@@ -258,7 +339,7 @@ void ParseLimit() :
 		Token t1, t2;
 	}
 	{
-		<LIMIT_OPENBRACKET> t1= <LIMIT_NUMVALUE>
+		<LIMIT_OPENBRACKET> t1 = <LIMIT_NUMVALUE>
 		(
 			<LIMIT_COMMA> t2 = <LIMIT_NUMVALUE> <LIMIT_CLOSEBRACKET>
 			{
@@ -270,4 +351,18 @@ void ParseLimit() :
 				limitTo = " LIMIT " + t1.image;
 			}
 		)
+	}
+
+void ParseWith() :
+	{
+		Token t;
+	}
+	{
+		t = <WITH_NAME> {
+			if (classMap.get(t.image) == null)
+			{
+				classMap.put(t.image, classList.size());
+				classList.add(t.image);
+			}
+		}
 	}
