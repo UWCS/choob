@@ -55,7 +55,7 @@
                                 if (i != 0)
                                         joinText.append(" INNER JOIN ");
                                 String fullName = (String)parser.joinList.get(i);
-                                int pos = fullName.indexOf('.');
+                                int pos = fullName.lastIndexOf('.');
                                 String fieldName = fullName.substring(pos + 1);
                                 joinText.append("ObjectStoreData o" + i + " ON s"+parser.fieldClass.get(fullName)+".ObjectID = o" + i + ".ObjectID AND o" + i + ".FieldName = \"" + fieldName + "\"");
                         }
@@ -65,7 +65,7 @@
                 public String getFieldName(String name) throws ParseException
                 {
                         String fullName;
-                        if (name.indexOf('.') == -1)
+                        if (name.lastIndexOf('.') == -1)
                                 fullName = classList.get(0) + "." + name;
                         else
                                 fullName = name;
@@ -75,7 +75,7 @@
                                 return realName;
 
                         // Need to add!
-                        int pos = fullName.indexOf('.');
+                        int pos = fullName.lastIndexOf('.');
                         String className = fullName.substring(0, pos);
                         String fieldName = fullName.substring(pos + 1);
 
@@ -83,9 +83,16 @@
                         if (classID == null)
                                 throw new ParseException("Attempted to use a class not in a WITH clause...");
 
-                        realName = "o"+joinList.size()+".FieldValue";
-                        joinList.add(fullName.toLowerCase());
-                        fieldClass.put(fullName.toLowerCase(), classID);
+                        if (fieldName.equals("id"))
+                                // Special case, no join required...
+                                realName = "s"+classID+".ClassID";
+                        else
+                        {
+                                realName = "o"+joinList.size()+".FieldValue";
+                                joinList.add(fullName.toLowerCase());
+                                fieldClass.put(fullName.toLowerCase(), classID);
+                        }
+
                         nameMap.put(fullName.toLowerCase(), realName);
                         return realName;
                 }
