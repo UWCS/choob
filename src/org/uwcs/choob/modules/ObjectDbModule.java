@@ -92,7 +92,7 @@ public class ObjectDbModule
 		}
 		else
 		{
-			String sqlQuery = "SELECT ObjectStore.ClassID FROM ObjectStore WHERE ClassName = '" + storedClass.toString() + "';";
+			sqlQuery = "SELECT ObjectStore.ClassID FROM ObjectStore WHERE ClassName = '" + storedClass.toString() + "';";
 		}
 
 		Connection dbConnection = broker.getConnection();
