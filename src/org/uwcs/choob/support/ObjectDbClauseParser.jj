@@ -64,7 +64,7 @@ PARSER_BEGIN(ObjectDbClauseParser)
 				String fieldName = fullName.substring(pos + 1);
 				joinText.append("ObjectStoreData o" + i + " ON s"+parser.fieldClass.get(fullName)+".ObjectID = o" + i + ".ObjectID AND o" + i + ".FieldName = \"" + fieldName + "\"");
 			}
-			return "SELECT s0.ObjectID FROM " + joinText.toString() + " WHERE " + whereClause.toString() + parser.sortOrder + parser.limitTo;
+			return "SELECT s0.ClassID FROM " + joinText.toString() + " WHERE " + whereClause.toString() + parser.sortOrder + parser.limitTo;
 		}
 
 		public String getFieldName(String name) throws ParseException

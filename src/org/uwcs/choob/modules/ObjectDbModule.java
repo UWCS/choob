@@ -74,13 +74,13 @@ public class ObjectDbModule
 
 	public List retrieve(Class storedClass, String clause) throws ChoobException
 	{
-		String sqlQuery = new String("SELECT ObjectStore.ClassID FROM ObjectStore ");
+		String sqlQuery;
 
 		if ( clause != null )
 		{
 			try
 			{
-				sqlQuery += ObjectDbClauseParser.getSQL(clause, storedClass.toString());
+				sqlQuery = ObjectDbClauseParser.getSQL(clause, storedClass.toString());
 			}
 			catch (ParseException e)
 			{
@@ -92,7 +92,7 @@ public class ObjectDbModule
 		}
 		else
 		{
-			sqlQuery += "WHERE ClassName = '" + storedClass.toString() + "';";
+			String sqlQuery = "SELECT ObjectStore.ClassID FROM ObjectStore WHERE ClassName = '" + storedClass.toString() + "';";
 		}
 
 		Connection dbConnection = broker.getConnection();
