@@ -24,21 +24,21 @@ final class ChoobDecoderTask extends ChoobTask
 	private static DbConnectionBroker dbBroker;
 	private static Modules modules;
 	private static IRCInterface irc;
-	private static String trigger;
+	private static Pattern triggerPattern;
 	private static Pattern aliasPattern;
 	private static Pattern commandPattern;
 	private IRCEvent event;
 
-	static void initialise(DbConnectionBroker dbBroker, Modules modules, IRCInterface irc, String trigger)
+	static void initialise(DbConnectionBroker dbBroker, Modules modules, IRCInterface irc)
 	{
 		if (ChoobDecoderTask.dbBroker != null)
 			return;
 		ChoobDecoderTask.dbBroker = dbBroker;
 		ChoobDecoderTask.modules = modules;
 		ChoobDecoderTask.irc = irc;
-		ChoobDecoderTask.trigger = trigger;
-		aliasPattern = Pattern.compile("^" + trigger + "([a-zA-Z0-9_]+)$");
-		commandPattern = Pattern.compile("^" + trigger + "([a-zA-Z0-9_]+)\\.([a-zA-Z0-9_]+)$");
+		triggerPattern = Pattern.compile("^(?:" + irc.getTriggerRegex() + ")", Pattern.CASE_INSENSITIVE);
+		aliasPattern = Pattern.compile("^([a-zA-Z0-9_]+)$");
+		commandPattern = Pattern.compile("^([a-zA-Z0-9_]+)\\.([a-zA-Z0-9_]+)$");
 	}
 
 	/** Creates a new instance of ChoobThread */
@@ -73,53 +73,63 @@ final class ChoobDecoderTask extends ChoobTask
 			Message mes = (Message) event;
 			Matcher ma;
 
-			// First, try and pick up aliased commands.
+			// First, is does it have a trigger?
 			String matchAgainst = mes.getMessage();
-			if (matchAgainst.indexOf(' ') >= 0)
-				matchAgainst = matchAgainst.substring(0, matchAgainst.indexOf(' '));
-
-			ma = aliasPattern.matcher(matchAgainst);
-
-			if ( ma.matches() == true )
+			ma = triggerPattern.matcher(matchAgainst);
+			if (ma.find())
 			{
-				Connection dbConnection = dbBroker.getConnection();
-				try
+				// OK, it's a command!
+				int commandStart = ma.end();
+				int commandEnd = matchAgainst.indexOf(' ');
+				if (commandEnd != -1)
+					matchAgainst = matchAgainst.substring(commandStart, commandEnd);
+				else
+					matchAgainst = matchAgainst.substring(commandStart);
+
+				// Try and pick up aliased commands.
+				if (matchAgainst.indexOf(' ') >= 0)
+					matchAgainst = matchAgainst.substring(0, matchAgainst.indexOf(' '));
+
+				ma = aliasPattern.matcher(matchAgainst);
+				if ( ma.find() )
 				{
-					PreparedStatement aliasesSmt = dbConnection.prepareStatement("SELECT `Converted` FROM `Aliases` WHERE `Name` = ?;");
-					aliasesSmt.setString(1, ma.group(1).toLowerCase());
+					// TODO This should really use a module called AliasModule or something.
+					Connection dbConnection = dbBroker.getConnection();
+					try
+					{
+						PreparedStatement aliasesSmt = dbConnection.prepareStatement("SELECT `Converted` FROM `Aliases` WHERE `Name` = ?;");
+						aliasesSmt.setString(1, ma.group(1).toLowerCase());
 
-					ResultSet aliasesResults = aliasesSmt.executeQuery();
-					if ( aliasesResults.first() )
-						matchAgainst = trigger + aliasesResults.getString("Converted");
+						ResultSet aliasesResults = aliasesSmt.executeQuery();
+						if ( aliasesResults.first() )
+							matchAgainst = aliasesResults.getString("Converted");
+					}
+					catch (SQLException e)
+					{
+						System.err.println("SQL exception looking up an alias: " + e);
+					}
+					finally
+					{
+						dbBroker.freeConnection( dbConnection );
+					}
 				}
-				catch (SQLException e)
+
+				// Now, continue as if nothing has happened..
+
+				ma = commandPattern.matcher(matchAgainst);
+				if( ma.matches() )
 				{
-					System.out.println("SQL exception looking up an alias: " + e);
+					// Namespace alias code would go here
+
+					String pluginName  = ma.group(1);
+					String commandName = ma.group(2);
+
+					System.out.println("Plugin name: " + pluginName + ", Command name: " + commandName + ".");
+
+					ChoobTask task = modules.plugin.getPlugMan().commandTask(pluginName, commandName, mes);
+					if (task != null)
+						tasks.add(task);
 				}
-				finally
-				{
-					dbBroker.freeConnection( dbConnection );
-				}
-			}
-
-			// Now, continue as if nothing has happened..
-
-
-			// The .* in this pattern is required, java wants the entire string to match.
-			ma = commandPattern.matcher(matchAgainst);
-
-			if( ma.matches() == true )
-			{
-				// Namespace alias code would go here
-
-				String pluginName  = ma.group(1);
-				String commandName = ma.group(2);
-
-				System.out.println("Looking for plugin " + pluginName + " and command " + commandName);
-
-				ChoobTask task = modules.plugin.getPlugMan().commandTask(pluginName, commandName, mes);
-				if (task != null)
-					tasks.add(task);
 			}
 		}
 

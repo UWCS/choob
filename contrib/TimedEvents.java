@@ -5,6 +5,7 @@ import org.uwcs.choob.modules.*;
 import java.net.*;
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
 
 /**
  * Timed events plugin for Choob
@@ -41,7 +42,12 @@ public class TimedEvents
 			return;
 		}
 
-		IRCEvent newMes = mes.cloneEvent( command ); // XXX hack
+		// Does the command have a trigger?
+		if (!Pattern.compile(irc.getTriggerRegex()).matcher(command).find())
+			// No.
+			command = irc.getTrigger() + command;
+
+		IRCEvent newMes = mes.cloneEvent( command );
 
 		Date callbackTime = new Date( (new Date().getTime()) + period * 1000);
 

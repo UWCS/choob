@@ -20,25 +20,43 @@ import java.util.regex.*;
  * @author	sadiq
  */
 public class UtilModule {
+	private IRCInterface irc;
+	private Pattern triggerPattern;
 
 	/** Creates a new instance of UtilModule */
-	public UtilModule( Choob bot ) {
+	public UtilModule( IRCInterface irc ) {
+		this.irc = irc;
+		this.triggerPattern = Pattern.compile(irc.getTriggerRegex());
+	}
+
+	private int getTriggerOffset( String text )
+	{
+		Matcher ma = triggerPattern.matcher(text);
+		if (ma.find())
+			return ma.end() + 1;
+
+		return 0;
 	}
 
 	public String getParamString( Message mes )
 	{
-		int spacePos = mes.getMessage().indexOf(' ');
+		String text = mes.getMessage();
+		int offset = getTriggerOffset(text);
+		int spacePos = text.indexOf(' ', offset);
 		if (spacePos != -1)
-			return mes.getMessage().substring(spacePos + 1);
+			return text.substring(spacePos + 1);
 
 		return "";
 	}
 
 	public List<String> getParams( Message mes )
 	{
+		String text = mes.getMessage();
+		int offset = getTriggerOffset(text);
+
 		List<String> tempList = new LinkedList<String>();
 
-		StringTokenizer tokens = new StringTokenizer(mes.getMessage()," ");
+		StringTokenizer tokens = new StringTokenizer(text.substring(offset)," ");
 
 		while( tokens.hasMoreTokens() )
 		{
@@ -56,12 +74,13 @@ public class UtilModule {
 	 */
 	public List<String> getParams( Message mes, int count )
 	{
+		String text = mes.getMessage();
+		int offset = getTriggerOffset(text);
+
 		List<String> tempList = new LinkedList<String>();
 
-		String text = mes.getMessage();
-
-		int currentPos = text.indexOf(' ');
-		int lastPos = 0;
+		int currentPos = text.indexOf(' ', offset);
+		int lastPos = offset;
 		if (currentPos != -1)
 			for(int i=0; i<count; i++) {
 				tempList.add( text.substring( lastPos, currentPos ) );

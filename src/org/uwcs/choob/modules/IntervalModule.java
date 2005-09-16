@@ -27,7 +27,7 @@ public class IntervalModule
 	{
 		Interval newInt = new Interval();
 
-		newInt.setPlugin(plugin.getClass().getName());
+		newInt.setPlugin(plugin.getClass().getSimpleName());
 		newInt.setTrigger( interval );
 		newInt.setParameter( parameter );
 

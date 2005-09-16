@@ -19,23 +19,6 @@ public class HaxSunPluginClassLoader extends ClassLoader
 		this.domain = domain;
 //		super.definePackage("plugins", "", "", "", "", "", "", null);
 		pack = definePackage("plugins." + pluginName, "", "", "", "", "", "", null);
-		System.out.println("Constructed");
-	}
-
-	protected Package getPackage(String name)
-	{
-		System.out.println("Asked for package: " + name);
-		System.out.println("super gives: " + super.getPackage(name));
-		if (name.equals("plugins." + pluginName))
-			return pack;
-		System.out.println("Delegating to super.");
-		return super.getPackage(name);
-	}
-
-	protected Package definePackage(String name, String specTitle, String specVersion, String specVendor, String implTitle, String implVersion, String implVendor, URL sealBase)
-	{
-		System.out.println("definePackage(" +name+", "+specTitle+", "+specVersion+", "+specVendor+", "+implTitle+", "+implVersion+", "+implVendor+", "+sealBase);
-		return super.definePackage(name, specTitle, specVersion, specVendor, implTitle, implVersion, implVendor, sealBase);
 	}
 
 	public Class findClass(final String name) throws ClassNotFoundException
@@ -49,7 +32,6 @@ public class HaxSunPluginClassLoader extends ClassLoader
 							try
 							{
 								String fileName = path + name.replace('.', File.separatorChar) + ".class";
-								System.out.println("Attempting to load class from file " + fileName);
 								File classFile = new File(fileName);
 								if (!classFile.isFile())
 								{
@@ -77,9 +59,7 @@ public class HaxSunPluginClassLoader extends ClassLoader
 								if (read != size)
 									throw new ClassNotFoundException("Class " + name + " has was not fully read; not loaded.");
 
-								System.out.println("Defining class now...");
 								Class theClass = defineClass(name, classData, 0, classData.length, domain);
-								System.out.println("Defined. Package is: " + theClass.getPackage());
 								return theClass;
 							}
 							catch (IOException e)

@@ -37,7 +37,7 @@ public class ChoobWatcherThread extends Thread
 
 		do
 		{
-			List toRun = new ArrayList();
+			List<Interval> toRun = new ArrayList();
 
 			synchronized( intervalList )
 			{
@@ -56,11 +56,11 @@ public class ChoobWatcherThread extends Thread
 				}
 			}
 
-			Iterator runIt = toRun.iterator();
+			Iterator<Interval> runIt = toRun.iterator();
 
 			while( runIt.hasNext() )
 			{
-				Interval runningInterval = (Interval)runIt.next();
+				Interval runningInterval = runIt.next();
 
 				ChoobTask t = mods.plugin.doInterval(runningInterval.getPlugin(), runningInterval.getParameter());
 				ChoobThreadManager.queueTask(t);

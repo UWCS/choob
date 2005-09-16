@@ -112,7 +112,6 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 		// If you're getting crack-headed errors, and have no idea why, it's because you forgot to have a "public class".
 
-		System.out.println("Compiler output (" + ret + "): '" + baos.toString() + "'");
 		if (ret == 0)
 			return baos.toString(); // success
 		else
@@ -128,10 +127,8 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		List<String> fileNames = new ArrayList<String>();
 		while((line = reader.readLine()) != null)
 		{
-			System.out.println("Read: " + line);
 			if (line.startsWith("import "))
 			{
-				System.out.println("Is import.");
 				imps.append(line + "\n");
 			}
 			else if (line.startsWith("package "))
@@ -143,7 +140,6 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				String[] bits = line.split(" ");
 				String className = bits[2];
 				String fileName = outDir + className + ".java";
-				System.out.println("Outputting to " + fileName);
 				fileNames.add(fileName);
 				File javaFile = new File(fileName);
 				if (classOut != null)
@@ -359,7 +355,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return filtered.get(0);
 	}
 
-	private ChoobTask callCommand(final Method meth, Object param)
+	private ChoobTask callCommand(final Method meth, final Object param)
 	{
 		String pluginName = meth.getDeclaringClass().getSimpleName();
 		final Object plugin = allPlugins.getPluginObj(pluginName);
@@ -374,11 +370,16 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			public void run() {
 				try
 				{
-					System.out.println("About to invoke method " + meth + " on plugin " + plugin + " with params " + params2);
 					meth.invoke(plugin, params2);
 				}
 				catch (InvocationTargetException e)
 				{
+					// Let the user know what happened.
+					if (param instanceof Message)
+					{
+						irc.sendContextReply((Message)param,
+								"An exception occurred while running this command: " + e);
+					}
 					System.err.println("Exception invoking method " + meth);
 					e.printStackTrace();
 				}
@@ -640,7 +641,6 @@ final class ChoobPluginMap
 
 		Class pluginClass = pluginObj.getClass();
 		Method[] meths = pluginClass.getMethods();
-		System.out.println("Loading methods...");
 		for(Method meth: meths)
 		{
 			String name = meth.getName();
@@ -650,13 +650,12 @@ final class ChoobPluginMap
 				// Command
 				if (HaxSunPluginManager.checkCommandSignature(meth))
 				{
-					System.out.println("Adding command " + commandName);
 					coms.add(commandName);
 					commands.put(commandName, meth);
 				}
 				else
 				{
-					System.out.println("Command " + commandName + " had invalid signature.");
+					System.err.println("Command " + commandName + " had invalid signature.");
 				}
 			}
 			else if (name.length() > 3 && name.substring(0, 3).equals("api"))
@@ -664,7 +663,6 @@ final class ChoobPluginMap
 				String apiName = lname + "." + name.substring(3).toLowerCase();
 				if (HaxSunPluginManager.checkAPISignature(meth))
 				{
-					System.out.println("Adding API call " + apiName);
 					apis.add(apiName);
 					if (apiCalls.get(apiName) == null)
 						apiCalls.put(apiName, new LinkedList<Method>());
@@ -672,7 +670,7 @@ final class ChoobPluginMap
 				}
 				else
 				{
-					System.out.println("API call " + apiName + " had invalid signature.");
+					System.err.println("API call " + apiName + " had invalid signature.");
 				}
 			}
 			else if (name.length() > 6 && name.substring(0, 6).equals("filter"))
@@ -709,7 +707,6 @@ final class ChoobPluginMap
 				}
 				if (HaxSunPluginManager.checkCommandSignature(meth))
 				{
-					System.out.println("Adding filter " + lname + "." + name + ": " + pattern);
 					fils.add(pattern);
 					if (filters.get(pattern) == null)
 						filters.put(pattern, new LinkedList<Method>());
@@ -717,14 +714,13 @@ final class ChoobPluginMap
 				}
 				else
 				{
-					System.out.println("Filter " + lname + "." + name + " had invalid signature.");
+					System.err.println("Filter " + lname + "." + name + " had invalid signature.");
 				}
 			}
 			else if (name.length() > 2 && name.substring(0, 2).equals("on"))
 			{
 				if (HaxSunPluginManager.checkEventSignature(meth))
 				{
-					System.out.println("Adding event " + lname + "." + name);
 					evs.add(meth);
 					if (events.get(name) == null)
 						events.put(name, new LinkedList<Method>());
@@ -732,19 +728,18 @@ final class ChoobPluginMap
 				}
 				else
 				{
-					System.out.println("Event " + lname + "." + name + " had invalid signature.");
+					System.err.println("Event " + lname + "." + name + " had invalid signature.");
 				}
 			}
 			else if (name.equals("interval"))
 			{
 				if (HaxSunPluginManager.checkIntervalSignature(meth))
 				{
-					System.out.println("Adding interval " + lname + "." + name);
 					pluginInterval.put(lname, meth);
 				}
 				else
 				{
-					System.out.println("Interval " + lname + "." + name + " had invalid signature.");
+					System.err.println("Interval " + lname + "." + name + " had invalid signature.");
 				}
 			} // Ignore anything else
 		}

@@ -62,6 +62,24 @@ public class IRCInterface {
 				bot.sendMessage(ev.getContext(), message);
 		}
 	}
+
+
+	/**
+	 * See getTriggerRegex in Choob.
+	 */
+	public String getTriggerRegex()
+	{
+		return bot.getTriggerRegex();
+	}
+
+	/**
+	 * See getTrigger in Choob.
+	 */
+	public String getTrigger()
+	{
+		return bot.getTrigger();
+	}
+
 	/**
 	 * Facilitate the optional third parameter to sendContextReply.
 	 */

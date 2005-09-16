@@ -170,7 +170,7 @@ public class Choob extends PircBot
 
 		// Initialise the thread manager, too
 		ChoobThreadManager.initialise( );
-		ChoobDecoderTask.initialise( broker, modules, irc, trigger );
+		ChoobDecoderTask.initialise( broker, modules, irc );
 
 		try
 		{
@@ -195,6 +195,24 @@ public class Choob extends PircBot
 			System.out.println(e);
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Return a regex that can (and should) be used to match lines for a
+	 * prefix indicating that the line is a command.
+	 */
+	public String getTriggerRegex()
+	{
+		return trigger + "|bot,\\s+";
+	}
+
+	/**
+	 * Return a string which can (and should) be prepended onto a line to
+	 * make it into a command.
+	 */
+	public String getTrigger()
+	{
+		return trigger;
 	}
 
 	public void onSyntheticMessage(IRCEvent mes) {

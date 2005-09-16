@@ -47,7 +47,7 @@ public class Modules
 		{
 			plugin = new PluginModule(pluginMap, dbBroker, filterList, this, irc);
 			history = new HistoryModule(dbBroker);
-			util = new UtilModule( bot );
+			util = new UtilModule(irc);
 			nick = new NickModule(dbBroker);
 			interval = new IntervalModule( intervalList );
 			synthetic = new SyntheticModule( bot );
