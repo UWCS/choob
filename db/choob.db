@@ -143,12 +143,10 @@ CREATE TABLE `LoadedPlugins` (
 
 CREATE TABLE `ObjectStore` (
   `ObjectID` int(11) NOT NULL auto_increment,
-  `UserID` int(11) UNSIGNED NOT NULL default '0',
   `ClassName` varchar(128) NOT NULL default '',
   `ClassID` int(11) NOT NULL default '0',
   PRIMARY KEY  (`ObjectID`),
-  UNIQUE KEY `Composite` (`UserID`,`ClassName`,`ClassID`),
-  FOREIGN KEY (`UserID`) REFERENCES `UserNodes` (`NodeID`)
+  UNIQUE KEY `Composite` (`ClassName`,`ClassID`)
 ) Type=InnoDB;
 
 --

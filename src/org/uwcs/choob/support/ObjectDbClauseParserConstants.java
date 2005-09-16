@@ -22,35 +22,39 @@ public interface ObjectDbClauseParserConstants {
   int ASC = 19;
   int DESC = 20;
   int INTEGER = 21;
-  int SORT_NAME = 22;
-  int LIMIT_OPENBRACKET = 23;
-  int LIMIT_NUMVALUE = 24;
-  int LIMIT_COMMA = 25;
-  int LIMIT_CLOSEBRACKET = 26;
-  int WITH_NAME = 27;
-  int _NUMVALUE = 28;
-  int NUM_FIELDNAME = 29;
-  int _GENVALUE = 30;
-  int GEN_FIELDNAME = 31;
-  int _TEXTVALUE = 32;
-  int TEXT_FIELDNAME = 33;
-  int NUMOP = 34;
-  int GENOP = 35;
-  int RLIKE = 36;
-  int LIKE = 37;
+  int RANDOM = 22;
+  int SORT_NAME = 23;
+  int LIMIT_OPENBRACKET = 24;
+  int LIMIT_NUMVALUE = 25;
+  int LIMIT_COMMA = 26;
+  int LIMIT_CLOSEBRACKET = 27;
+  int WITH_AS = 28;
+  int WITH_NAME = 29;
+  int WITH_ALIAS = 30;
+  int _NUMVALUE = 31;
+  int NUM_FIELDNAME = 32;
+  int _GENVALUE = 33;
+  int GEN_FIELDNAME = 34;
+  int _TEXTVALUE = 35;
+  int TEXT_FIELDNAME = 36;
+  int NUMOP = 37;
+  int GENOP = 38;
+  int RLIKE = 39;
+  int LIKE = 40;
 
   int S_OP = 0;
   int S_TEXTVALUE = 1;
   int S_GENVALUE = 2;
   int S_NUMVALUE = 3;
-  int S_WITH = 4;
-  int S_LIMIT3 = 5;
-  int S_LIMIT2 = 6;
-  int S_LIMIT = 7;
-  int S_SORT = 8;
-  int S_NEXT = 9;
-  int S_WHERE = 10;
-  int DEFAULT = 11;
+  int S_WITH2 = 4;
+  int S_WITH = 5;
+  int S_LIMIT3 = 6;
+  int S_LIMIT2 = 7;
+  int S_LIMIT = 8;
+  int S_SORT = 9;
+  int S_NEXT = 10;
+  int S_WHERE = 11;
+  int DEFAULT = 12;
 
   String[] tokenImage = {
     "<EOF>",
@@ -75,12 +79,15 @@ public interface ObjectDbClauseParserConstants {
     "\"ASC\"",
     "\"DESC\"",
     "\"INTEGER\"",
+    "\"RANDOM\"",
     "<SORT_NAME>",
     "\"(\"",
     "<LIMIT_NUMVALUE>",
     "\",\"",
     "\")\"",
+    "\"AS\"",
     "<WITH_NAME>",
+    "<WITH_ALIAS>",
     "<_NUMVALUE>",
     "<NUM_FIELDNAME>",
     "<_GENVALUE>",

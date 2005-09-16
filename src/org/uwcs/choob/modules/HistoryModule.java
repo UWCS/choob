@@ -11,6 +11,8 @@ import java.sql.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 import java.security.*;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Logs lines from IRC to the database.
@@ -67,22 +69,86 @@ public class HistoryModule
 		}
 	}
 
-	public Message getLastMessage( String channel )
+	/**
+	 * Get as the most recent Message from the history of the channel in which cause occurred.
+	 * @param cause The "cause" - only messages that occurred before this are processed
+	 * @return A list of message objects, the first being the most recent.
+	 */
+	public Message getLastMessage( Message cause ) throws ChoobException
+	{
+		if (cause instanceof ChannelEvent)
+			return getLastMessage(((ChannelEvent)cause).getChannel(), cause);
+		throw new IllegalArgumentException("Message passed to getLastMessage was not a ChannelEvent.");
+	}
+
+	/**
+	 * Get as the most recent Message from the history of channel.
+	 * @param channel The channel to read
+	 * @return A list of message objects, the first being the most recent.
+	 */
+	public Message getLastMessage( String channel ) throws ChoobException
 	{
 		return getLastMessage(channel, null);
 	}
 
-	public Message getLastMessage( final String channel, Message skip )
+	/**
+	 * Get as the most recent Message from the history of channel.
+	 * @param channel The channel to read
+	 * @param cause The "cause" - only messages that occurred before this are processed
+	 * @return A list of message objects, the first being the most recent.
+	 */
+	public Message getLastMessage( String channel, Message cause ) throws ChoobException
+	{
+		List<Message> ret = getLastMessages(channel, cause, 1);
+		if (ret.size() == 1)
+			return ret.get(0);
+		else
+			return null;
+	}
+
+	/**
+	 * Get as many as possible up to count Messages from the history of the channel in which cause occurred.
+	 * @param channel The channel to read
+	 * @param count The maximal number of messages to return.
+	 * @return A list of message objects, the first being the most recent.
+	 */
+	public List<Message> getLastMessages( String channel, int count ) throws ChoobException
+	{
+		return getLastMessages(channel, null, count);
+	}
+
+	/**
+	 * Get as many as possible up to count Messages from the history of the channel in which cause occurred.
+	 * @param cause The "cause" - only messages that occurred before this are processed
+	 * @param count The maximal number of messages to return.
+	 * @return A list of message objects, the first being the most recent.
+	 */
+	public List<Message> getLastMessages( Message cause, int count ) throws ChoobException
+	{
+		if (cause instanceof ChannelEvent)
+			return getLastMessages(((ChannelEvent)cause).getChannel(), cause, count);
+		throw new IllegalArgumentException("Message passed to getLastMessages was not a ChannelEvent.");
+	}
+
+	/**
+	 * Get as many as possible up to count Messages from the history of channel.
+	 * @param channel The channel to read
+	 * @param cause The "cause" - only messages that occurred before this are processed
+	 * @param count The maximal number of messages to return.
+	 * @return A list of message objects, the first being the most recent.
+	 */
+	public List<Message> getLastMessages( final String channel, Message cause, int count ) throws ChoobException
 	{
 		Connection dbCon = dbBroker.getConnection();
 		try {
-			// XXX Race condition: We should probably check for only messages
-			// BEFORE skip. Otherwise all hell might break loose under heavy
-			// load.
-			PreparedStatement stat = dbCon.prepareStatement("SELECT * FROM History WHERE Channel = ? ORDER BY Time DESC LIMIT 2");
+			PreparedStatement stat = dbCon.prepareStatement("SELECT * FROM History WHERE Channel = ? AND Time < ? ORDER BY Time DESC LIMIT ?");
 			stat.setString(1, channel);
+			stat.setLong(2, cause == null ? System.currentTimeMillis() : cause.getMillis() );
+			stat.setInt(3, count);
 
 			final ResultSet result = stat.executeQuery();
+
+			List<Message> results = new ArrayList<Message>(count);
 
 			if ( result.first() )
 			{
@@ -96,6 +162,7 @@ public class HistoryModule
 					Message mes;
 					try
 					{
+						// Need privs to create events...
 						mes = (Message)AccessController.doPrivileged( new PrivilegedExceptionAction() {
 							public Object run() throws SQLException {
 								if (type.equals(ChannelAction.class.getName()))
@@ -117,19 +184,24 @@ public class HistoryModule
 						System.err.println("Invalid event type: " + type);
 						continue;
 					}
-					if (!mes.equals(skip))
-						return mes;
-					System.out.println("Skipping event...");
+
+					/* Sanity check; since we use <, this shouldn't happen...
+					if (mes.equals(cause))
+					{
+						System.out.println("Skipping event...");
+						continue;
+					}//*/
+
+					results.add(mes);
 				}
 				while( result.next() );
 			}
-			return null;
+			return results;
 		}
 		catch( SQLException e )
 		{
 			System.err.println("Could not read history line from database: " + e);
-			return null; // I guess we can ignore this...
-			//throw new ChoobException("SQL Exception while fetching line from the database...");
+			throw new ChoobException("SQL Error reading from database.");
 		}
 		finally
 		{

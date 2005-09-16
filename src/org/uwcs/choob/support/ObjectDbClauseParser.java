@@ -47,13 +47,14 @@
                         for (int i=0; i<parser.classList.size(); i++)
                         {
                                 String classN = (String)parser.classList.get(i);
-                                joinText.append("ObjectStore s"+i+" INNER JOIN ");
+                                joinText.append("ObjectStore s"+i);
                                 whereClause.append(" && s"+i+".ClassName = \"" + classN + "\"");
+                                if (i < parser.classList.size() - 1)
+                                        joinText.append(" INNER JOIN ");
                         }
                         for(int i=0; i<parser.joinList.size(); i++)
                         {
-                                if (i != 0)
-                                        joinText.append(" INNER JOIN ");
+                                joinText.append(" INNER JOIN ");
                                 String fullName = (String)parser.joinList.get(i);
                                 int pos = fullName.lastIndexOf('.');
                                 String fieldName = fullName.substring(pos + 1);
@@ -100,6 +101,7 @@
   final public String SQL() throws ParseException {
                 String s;
                 StringBuffer b = new StringBuffer();
+                boolean clause = false;
     label_1:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -132,7 +134,8 @@
       case WHERE:
         jj_consume_token(WHERE);
         s = ClauseList();
-                          b.append(s);
+                                clause = true;
+                                b.append(s);
         break;
       default:
         jj_la1[1] = jj_gen;
@@ -140,7 +143,7 @@
         throw new ParseException();
       }
     }
-                  {if (true) return b.toString();}
+                  {if (true) return clause ? b.toString() : "1";}
     throw new Error("Missing return statement in function");
   }
 
@@ -313,36 +316,51 @@
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case ASC:
     case DESC:
+    case INTEGER:
+    case SORT_NAME:
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case ASC:
-        jj_consume_token(ASC);
-
-        break;
       case DESC:
-        jj_consume_token(DESC);
-                                 order = "DESC";
+        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+        case ASC:
+          jj_consume_token(ASC);
+
+          break;
+        case DESC:
+          jj_consume_token(DESC);
+                                         order = "DESC";
+          break;
+        default:
+          jj_la1[10] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+        }
         break;
       default:
-        jj_la1[10] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
+        jj_la1[11] = jj_gen;
+        ;
       }
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case INTEGER:
+        jj_consume_token(INTEGER);
+                                            modpre = " CAST( "; modpost = " AS SIGNED) ";
+        break;
+      default:
+        jj_la1[12] = jj_gen;
+        ;
+      }
+      t = jj_consume_token(SORT_NAME);
+                                sortOrder = " ORDER BY " + modpre + getFieldName(t.image) + modpost + " " + order;
+      break;
+    case RANDOM:
+      jj_consume_token(RANDOM);
+                                sortOrder = " ORDER BY RAND()";
       break;
     default:
-      jj_la1[11] = jj_gen;
-      ;
+      jj_la1[13] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
     }
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case INTEGER:
-      jj_consume_token(INTEGER);
-                                    modpre = " CAST( "; modpost = " AS SIGNED) ";
-      break;
-    default:
-      jj_la1[12] = jj_gen;
-      ;
-    }
-    t = jj_consume_token(SORT_NAME);
-                        sortOrder = " ORDER BY " + modpre + getFieldName(t.image) + modpost + " " + order;
   }
 
   final public void ParseLimit() throws ParseException {
@@ -361,20 +379,38 @@
                                 limitTo = " LIMIT " + t1.image;
       break;
     default:
-      jj_la1[13] = jj_gen;
+      jj_la1[14] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
   }
 
   final public void ParseWith() throws ParseException {
-                Token t;
-    t = jj_consume_token(WITH_NAME);
-                        if (classMap.get(t.image) == null)
-                        {
-                                classMap.put(t.image, classList.size());
-                                classList.add(t.image);
-                        }
+                Token t1, t2;
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case WITH_AS:
+      jj_consume_token(WITH_AS);
+      t1 = jj_consume_token(WITH_ALIAS);
+      t2 = jj_consume_token(WITH_NAME);
+                                if (classMap.get(t1.image) == null)
+                                {
+                                        classMap.put(t1.image, classList.size());
+                                        classList.add(t2.image);
+                                }
+      break;
+    case WITH_NAME:
+      t1 = jj_consume_token(WITH_NAME);
+                                if (classMap.get(t1.image) == null)
+                                {
+                                        classMap.put(t1.image, classList.size());
+                                        classList.add(t1.image);
+                                }
+      break;
+    default:
+      jj_la1[15] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
+    }
   }
 
   public ObjectDbClauseParserTokenManager token_source;
@@ -382,7 +418,7 @@
   public Token token, jj_nt;
   private int jj_ntk;
   private int jj_gen;
-  final private int[] jj_la1 = new int[14];
+  final private int[] jj_la1 = new int[16];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static {
@@ -390,10 +426,10 @@
       jj_la1_1();
    }
    private static void jj_la1_0() {
-      jj_la1_0 = new int[] {0x1e00,0x1e00,0x60000,0x60000,0xe000,0x30000000,0xc0000000,0x0,0x0,0x0,0x180000,0x180000,0x200000,0x6000000,};
+      jj_la1_0 = new int[] {0x1e00,0x1e00,0x60000,0x60000,0xe000,0x80000000,0x0,0x0,0x0,0x0,0x180000,0x180000,0x200000,0xf80000,0xc000000,0x30000000,};
    }
    private static void jj_la1_1() {
-      jj_la1_1 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3,0x3,0x3c,0x0,0x0,0x0,0x0,};
+      jj_la1_1 = new int[] {0x0,0x0,0x0,0x0,0x0,0x1,0x6,0x18,0x18,0x1e0,0x0,0x0,0x0,0x0,0x0,0x0,};
    }
 
   public ObjectDbClauseParser(java.io.InputStream stream) {
@@ -402,7 +438,7 @@
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 14; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 16; i++) jj_la1[i] = -1;
   }
 
   public void ReInit(java.io.InputStream stream) {
@@ -411,7 +447,7 @@
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 14; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 16; i++) jj_la1[i] = -1;
   }
 
   public ObjectDbClauseParser(java.io.Reader stream) {
@@ -420,7 +456,7 @@
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 14; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 16; i++) jj_la1[i] = -1;
   }
 
   public void ReInit(java.io.Reader stream) {
@@ -429,7 +465,7 @@
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 14; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 16; i++) jj_la1[i] = -1;
   }
 
   public ObjectDbClauseParser(ObjectDbClauseParserTokenManager tm) {
@@ -437,7 +473,7 @@
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 14; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 16; i++) jj_la1[i] = -1;
   }
 
   public void ReInit(ObjectDbClauseParserTokenManager tm) {
@@ -445,7 +481,7 @@
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 14; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 16; i++) jj_la1[i] = -1;
   }
 
   final private Token jj_consume_token(int kind) throws ParseException {
@@ -492,15 +528,15 @@
 
   public ParseException generateParseException() {
     jj_expentries.removeAllElements();
-    boolean[] la1tokens = new boolean[38];
-    for (int i = 0; i < 38; i++) {
+    boolean[] la1tokens = new boolean[41];
+    for (int i = 0; i < 41; i++) {
       la1tokens[i] = false;
     }
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 14; i++) {
+    for (int i = 0; i < 16; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -512,7 +548,7 @@
         }
       }
     }
-    for (int i = 0; i < 38; i++) {
+    for (int i = 0; i < 41; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;

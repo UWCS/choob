@@ -23,7 +23,7 @@ import java.util.*;
  * @author	bucko
  */
 public class SecurityModule
-//	extends SecurityManager
+	extends SecurityManager // For getClassContext(). Heh.
 {
 	DbConnectionBroker dbBroker;
 	Map nodeMap;

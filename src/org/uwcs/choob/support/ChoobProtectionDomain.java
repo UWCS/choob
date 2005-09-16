@@ -24,6 +24,13 @@ public class ChoobProtectionDomain extends ProtectionDomain
 
 	public boolean implies( Permission perm )
 	{
+		// XXX HAX ATTACK XXX
+		if ( perm instanceof ChoobSpecialStackPermission )
+		{
+			List toStack = ((ChoobSpecialStackPermission)perm).getHaxList();
+			toStack.add(pluginName);
+			return true;
+		}
 		return mod.hasPluginPerm( perm, pluginName );
 	}
 }
