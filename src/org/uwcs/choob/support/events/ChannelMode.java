@@ -27,9 +27,9 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 	/**
 	 * Construct a new ChannelMode
 	 */
-	public ChannelMode(String methodName, String channel, String mode, boolean set)
+	public ChannelMode(String methodName, long millis, int random, String channel, String mode, boolean set)
 	{
-		super(methodName);
+		super(methodName, millis, random);
 		this.channel = channel;
 		this.mode = mode;
 		this.set = set;
@@ -80,6 +80,29 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 		return set;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof ChannelMode))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		ChannelMode thing = (ChannelMode)obj;
+		if ( true
+ && channel.equals(thing.channel) && mode.equals(thing.mode) && (set == thing.set))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("ChannelMode(");
+		out.append(super.toString());
+		out.append(", channel = " + channel);
+		out.append(", mode = " + mode);
+		out.append(", set = " + set);
+		return out.toString();
+	}
 
 
 }

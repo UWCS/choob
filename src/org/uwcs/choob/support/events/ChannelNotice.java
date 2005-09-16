@@ -17,9 +17,9 @@ public class ChannelNotice extends Message implements ChannelEvent
 	/**
 	 * Construct a new ChannelNotice
 	 */
-	public ChannelNotice(String methodName, String message, String nick, String login, String hostname, String target, String channel)
+	public ChannelNotice(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target, String channel)
 	{
-		super(methodName, message, nick, login, hostname, target);
+		super(methodName, millis, random, message, nick, login, hostname, target);
 		this.channel = channel;
 
 	}
@@ -50,6 +50,27 @@ public class ChannelNotice extends Message implements ChannelEvent
 		return channel;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof ChannelNotice))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		ChannelNotice thing = (ChannelNotice)obj;
+		if ( true
+ && channel.equals(thing.channel))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("ChannelNotice(");
+		out.append(super.toString());
+		out.append(", channel = " + channel);
+		return out.toString();
+	}
 
 	/**
 	 * Get the reply context in which this event resides

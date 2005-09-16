@@ -12,9 +12,9 @@ public class PrivateMessage extends Message implements PrivateEvent, CommandEven
 	/**
 	 * Construct a new PrivateMessage
 	 */
-	public PrivateMessage(String methodName, String message, String nick, String login, String hostname, String target)
+	public PrivateMessage(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
 	{
-		super(methodName, message, nick, login, hostname, target);
+		super(methodName, millis, random, message, nick, login, hostname, target);
 
 	}
 
@@ -35,6 +35,26 @@ public class PrivateMessage extends Message implements PrivateEvent, CommandEven
 		return new PrivateMessage(this, message);
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof PrivateMessage))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		PrivateMessage thing = (PrivateMessage)obj;
+		if ( true
+)
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("PrivateMessage(");
+		out.append(super.toString());
+		return out.toString();
+	}
 
 
 }

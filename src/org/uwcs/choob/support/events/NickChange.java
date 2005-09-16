@@ -32,9 +32,9 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	/**
 	 * Construct a new NickChange
 	 */
-	public NickChange(String methodName, String nick, String login, String hostname, String newNick)
+	public NickChange(String methodName, long millis, int random, String nick, String login, String hostname, String newNick)
 	{
-		super(methodName);
+		super(methodName, millis, random);
 		this.nick = nick;
 		this.login = login;
 		this.hostname = hostname;
@@ -95,6 +95,30 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 		return newNick;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof NickChange))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		NickChange thing = (NickChange)obj;
+		if ( true
+ && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && newNick.equals(thing.newNick))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("NickChange(");
+		out.append(super.toString());
+		out.append(", nick = " + nick);
+		out.append(", login = " + login);
+		out.append(", hostname = " + hostname);
+		out.append(", newNick = " + newNick);
+		return out.toString();
+	}
 
 
 }

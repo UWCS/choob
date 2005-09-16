@@ -37,9 +37,9 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	/**
 	 * Construct a new ChannelInvite
 	 */
-	public ChannelInvite(String methodName, String channel, String nick, String login, String hostname, String target)
+	public ChannelInvite(String methodName, long millis, int random, String channel, String nick, String login, String hostname, String target)
 	{
-		super(methodName);
+		super(methodName, millis, random);
 		this.channel = channel;
 		this.nick = nick;
 		this.login = login;
@@ -110,6 +110,31 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 		return target;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof ChannelInvite))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		ChannelInvite thing = (ChannelInvite)obj;
+		if ( true
+ && channel.equals(thing.channel) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && target.equals(thing.target))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("ChannelInvite(");
+		out.append(super.toString());
+		out.append(", channel = " + channel);
+		out.append(", nick = " + nick);
+		out.append(", login = " + login);
+		out.append(", hostname = " + hostname);
+		out.append(", target = " + target);
+		return out.toString();
+	}
 
 
 }

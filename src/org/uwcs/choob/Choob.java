@@ -212,152 +212,152 @@ public class Choob extends PircBot
 
 	protected void onNotice(String nick, String login, String hostname, String target, String message) {
 		if (target.indexOf('#') == 0)
-			spinThread(new ChannelNotice("onNotice", message, nick, login, hostname, target, target));
+			spinThread(new ChannelNotice("onNotice", System.currentTimeMillis(), ((int)(Math.random()*127)), message, nick, login, hostname, target, target));
 		else
-			spinThread(new PrivateNotice("onNotice", message, nick, login, hostname, target));
+			spinThread(new PrivateNotice("onPrivateNotice", System.currentTimeMillis(), ((int)(Math.random()*127)), message, nick, login, hostname, target));
 	}
 
 	protected void onMessage(String target, String nick, String login, String hostname, String message) {
-		spinThread(new ChannelMessage("onMessage", message, nick, login, hostname, target, target));
+		spinThread(new ChannelMessage("onMessage", System.currentTimeMillis(), ((int)(Math.random()*127)), message, nick, login, hostname, target, target));
 	}
 
 	protected void onPrivateMessage(String nick, String login, String hostname, String message) {
-		spinThread(new PrivateMessage("onPrivateMessage", message, nick, login, hostname, null));
+		spinThread(new PrivateMessage("onPrivateMessage", System.currentTimeMillis(), ((int)(Math.random()*127)), message, nick, login, hostname, null));
 	}
 
 	protected void onAction(String nick, String login, String hostname, String target, String message) {
 		if (target.indexOf('#') == 0)
-			spinThread(new ChannelAction("onAction", message, nick, login, hostname, target, target));
+			spinThread(new ChannelAction("onAction", System.currentTimeMillis(), ((int)(Math.random()*127)), message, nick, login, hostname, target, target));
 		else
-			spinThread(new PrivateAction("onAction", message, nick, login, hostname, target));
+			spinThread(new PrivateAction("onPrivateAction", System.currentTimeMillis(), ((int)(Math.random()*127)), message, nick, login, hostname, target));
 	}
 
 	protected void onChannelInfo(String channel, int userCount, String topic) {
-		spinThread(new ChannelInfo("onChannelInfo", channel));
+		spinThread(new ChannelInfo("onChannelInfo", System.currentTimeMillis(), ((int)(Math.random()*127)), channel));
 	}
 
 	protected void onDeVoice(String channel, String nick, String login, String hostname, String target) {
-		spinThread(new ChannelUserMode("onDeVoice", channel, "v", true, target));
+		spinThread(new ChannelUserMode("onDeVoice", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "v", true, target));
 	}
 
 	protected void onDeop(String channel, String nick, String login, String hostname, String target) {
-		spinThread(new ChannelUserMode("onDeop", channel, "o", true, target));
+		spinThread(new ChannelUserMode("onDeop", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "o", true, target));
 	}
 
 	protected void onInvite(String target, String nick, String login, String hostname, String channel) {
-		spinThread(new ChannelInvite("onInvite", channel, nick, login, hostname, target));
+		spinThread(new ChannelInvite("onInvite", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, nick, login, hostname, target));
 	}
 
 	protected void onJoin(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelJoin("onJoin", channel, nick, login, hostname));
+		spinThread(new ChannelJoin("onJoin", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, nick, login, hostname));
 	}
 
 	protected void onKick(String channel, String nick, String login, String hostname, String target, String reason) {
-		spinThread(new ChannelKick("onKick", channel, nick, login, hostname, target));
+		spinThread(new ChannelKick("onKick", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, nick, login, hostname, target));
 	}
 
 	protected void onMode(String channel, String nick, String login, String hostname, String modes) {
-		spinThread(new ChannelModes("onMode", channel, modes));
+		spinThread(new ChannelModes("onMode", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, modes));
 	}
 
 	protected void onNickChange(String nick, String login, String hostname, String newNick) {
-		spinThread(new NickChange("onNickChange", nick, login, hostname, newNick));
+		spinThread(new NickChange("onNickChange", System.currentTimeMillis(), ((int)(Math.random()*127)), nick, login, hostname, newNick));
 	}
 
 	protected void onOp(String channel, String nick, String login, String hostname, String target) {
-		spinThread(new ChannelUserMode("onOp", channel, "o", true, target));
+		spinThread(new ChannelUserMode("onOp", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "o", true, target));
 	}
 
 	protected void onPart(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelPart("onPart", channel, nick, login, hostname));
+		spinThread(new ChannelPart("onPart", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, nick, login, hostname));
 	}
 
 	protected void onQuit(String nick, String login, String hostname, String message) {
-		spinThread(new QuitEvent("onQuit", message, nick, login, hostname));
+		spinThread(new QuitEvent("onQuit", System.currentTimeMillis(), ((int)(Math.random()*127)), message, nick, login, hostname));
 	}
 
 	protected void onRemoveChannelBan(String channel, String nick, String login, String hostname, String param) {
-		spinThread(new ChannelParamMode("onRemoveChannelBan", channel, "b", false, param));
+		spinThread(new ChannelParamMode("onRemoveChannelBan", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "b", false, param));
 	}
 
 	protected void onRemoveChannelKey(String channel, String nick, String login, String hostname, String param) {
-		spinThread(new ChannelParamMode("onRemoveChannelKey", channel, "k", false, param));
+		spinThread(new ChannelParamMode("onRemoveChannelKey", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "k", false, param));
 	}
 
 	protected void onRemoveChannelLimit(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onRemoveChannelLimit", channel, "l", false));
+		spinThread(new ChannelMode("onRemoveChannelLimit", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "l", false));
 	}
 
 	protected void onRemoveInviteOnly(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onRemoveInviteOnly", channel, "i", false));
+		spinThread(new ChannelMode("onRemoveInviteOnly", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "i", false));
 	}
 
 	protected void onRemoveModerated(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onRemoveModerated", channel, "m", false));
+		spinThread(new ChannelMode("onRemoveModerated", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "m", false));
 	}
 
 	protected void onRemoveNoExternalMessages(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onRemoveNoExternalMessages", channel, "n", false));
+		spinThread(new ChannelMode("onRemoveNoExternalMessages", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "n", false));
 	}
 
 	protected void onRemovePrivate(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onRemovePrivate", channel, "p", false));
+		spinThread(new ChannelMode("onRemovePrivate", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "p", false));
 	}
 
 	protected void onRemoveSecret(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onRemoveSecret", channel, "s", false));
+		spinThread(new ChannelMode("onRemoveSecret", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "s", false));
 	}
 
 	protected void onRemoveTopicProtection(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onRemoveTopicProtection", channel, "t", false));
+		spinThread(new ChannelMode("onRemoveTopicProtection", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "t", false));
 	}
 
 	protected void onSetChannelBan(String channel, String nick, String login, String hostname, String param) {
-		spinThread(new ChannelParamMode("onSetChannelBan", channel, "b", true, param));
+		spinThread(new ChannelParamMode("onSetChannelBan", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "b", true, param));
 	}
 
 	protected void onSetChannelKey(String channel, String nick, String login, String hostname, String param) {
-		spinThread(new ChannelParamMode("onSetChannelKey", channel, "k", true, param));
+		spinThread(new ChannelParamMode("onSetChannelKey", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "k", true, param));
 	}
 
 	protected void onSetInviteOnly(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onSetInviteOnly", channel, "i", true));
+		spinThread(new ChannelMode("onSetInviteOnly", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "i", true));
 	}
 
 	protected void onSetModerated(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onSetModerated", channel, "m", true));
+		spinThread(new ChannelMode("onSetModerated", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "m", true));
 	}
 
 	protected void onSetNoExternalMessages(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onSetNoExternalMessages", channel, "n", true));
+		spinThread(new ChannelMode("onSetNoExternalMessages", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "n", true));
 	}
 
 	protected void onSetPrivate(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onSetPrivate", channel, "p", true));
+		spinThread(new ChannelMode("onSetPrivate", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "p", true));
 	}
 
 	protected void onSetSecret(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onSetSecret", channel, "s", true));
+		spinThread(new ChannelMode("onSetSecret", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "s", true));
 	}
 
 	protected void onSetTopicProtection(String channel, String nick, String login, String hostname) {
-		spinThread(new ChannelMode("onSetTopicProtection", channel, "t", true));
+		spinThread(new ChannelMode("onSetTopicProtection", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "t", true));
 	}
 
 	protected void onTopic(String channel, String message, String nick, long date, boolean changed) {
-		spinThread(new ChannelTopic("onTopic", channel, message));
+		spinThread(new ChannelTopic("onTopic", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, message));
 	}
 
 	protected void onUnknown(String line) {
-		spinThread(new UnknownEvent("onUnknown"));
+		spinThread(new UnknownEvent("onUnknown", System.currentTimeMillis(), ((int)(Math.random()*127))));
 	}
 
 	protected void onUserMode(String targetNick, String nick, String login, String hostname, String modes) {
-		spinThread(new UserModes("onUserMode", modes));
+		spinThread(new UserModes("onUserMode", System.currentTimeMillis(), ((int)(Math.random()*127)), modes));
 	}
 
 	protected void onVoice(String channel, String nick, String login, String hostname, String target) {
-		spinThread(new ChannelUserMode("onVoice", channel, "v", true, target));
+		spinThread(new ChannelUserMode("onVoice", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "v", true, target));
 	}
 
 	// END PASTE!

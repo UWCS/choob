@@ -119,7 +119,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			throw new ChoobException("Compile failed: " + baos.toString());
 	}
 
-	private String[] makeJavaFiles(String outDir, InputStream in) throws IOException
+	private String[] makeJavaFiles(String pluginName, String outDir, InputStream in) throws IOException
 	{
 		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 		String line;
@@ -133,6 +133,10 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			{
 				System.out.println("Is import.");
 				imps.append(line + "\n");
+			}
+			else if (line.startsWith("package "))
+			{
+				// Squelch
 			}
 			else if (line.startsWith("public class "))
 			{
@@ -148,6 +152,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 					classOut.close();
 				}
 				classOut = new PrintStream(new FileOutputStream(javaFile));
+				classOut.print("package plugins." + pluginName + ";");
 				classOut.print(imps);
 			}
 			if (classOut != null)
@@ -190,7 +195,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				{
 					javaDir.mkdirs();
 					in = sourceConn.getInputStream();
-					String[] names = makeJavaFiles(classPath, in);
+					String[] names = makeJavaFiles(pluginName, classPath, in);
 					compile(names, classPath);
 					// This should help to aleviate timezone differences.
 					javaFile.setLastModified( sourceConn.getLastModified() );
@@ -210,10 +215,10 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				}
 			}
 		}
-		ClassLoader loader = new ChoobPluginClassLoader(pluginName, classPath, getProtectionDomain(pluginName));
+		ClassLoader loader = new HaxSunPluginClassLoader(pluginName, classPath, getProtectionDomain(pluginName));
 		try
 		{
-			return instantiatePlugin(loader.loadClass(pluginName), pluginName);
+			return instantiatePlugin(loader.loadClass("plugins." + pluginName + "." + pluginName), pluginName);
 		}
 		catch (ClassNotFoundException e)
 		{
@@ -244,18 +249,19 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 						else
 							throw new ChoobException("Unknown parameter in constructor.");
 				pluginObj = c[i].newInstance((Object [])arg);
+				break;
 			}
 			catch (IllegalAccessException e)
 			{
-				throw new ChoobException("Plugin " + newClass.getName() + " had no constructor (this error shouldn't occour, something serious is wrong): " + e);
+				throw new ChoobException("Plugin " + pluginName + " had no constructor (this error shouldn't occour, something serious is wrong): " + e);
 			}
 			catch (InvocationTargetException e)
 			{
-				throw new ChoobException("Plugin " + newClass.getName() + "'s constructor threw an exception: " + e.getCause(), e.getCause());
+				throw new ChoobException("Plugin " + pluginName + "'s constructor threw an exception: " + e.getCause(), e.getCause());
 			}
 			catch (InstantiationException e)
 			{
-				throw new ChoobException("Plugin " + newClass.getName() + "'s constructor threw an exception: " + e.getCause(), e.getCause());
+				throw new ChoobException("Plugin " + pluginName + "'s constructor threw an exception: " + e.getCause(), e.getCause());
 			}
 
 		try
@@ -277,7 +283,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		catch (InvocationTargetException e)
 		{
 			// This isn't.
-			throw new ChoobException("Plugin " + newClass.getName() + "'s create() threw an exception: " + e.getCause(), e.getCause());
+			throw new ChoobException("Plugin " + pluginName + "'s create() threw an exception: " + e.getCause(), e.getCause());
 		}
 
 		String[] newCommands = new String[0];
@@ -355,7 +361,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 	private ChoobTask callCommand(final Method meth, Object param)
 	{
-		String pluginName = meth.getDeclaringClass().getName();
+		String pluginName = meth.getDeclaringClass().getSimpleName();
 		final Object plugin = allPlugins.getPluginObj(pluginName);
 		Object[] params;
 		if (meth.getParameterTypes().length == 1)
@@ -368,6 +374,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			public void run() {
 				try
 				{
+					System.out.println("About to invoke method " + meth + " on plugin " + plugin + " with params " + params2);
 					meth.invoke(plugin, params2);
 				}
 				catch (InvocationTargetException e)
@@ -530,7 +537,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		StringBuffer buf = new StringBuffer(APIName + "(");
 		for(int i=0; i<args.length; i++)
 		{
-			buf.append(args[i].getClass().getName());
+			buf.append(args[i].getClass().getSimpleName());
 			if (i < args.length - 1)
 				buf.append(",");
 		}
@@ -595,7 +602,7 @@ final class ChoobPluginMap
 				Iterator<Method> it2 = filters.get(it3.next()).iterator();
 				while(it2.hasNext())
 				{
-					if (it2.next().getDeclaringClass().getName().compareToIgnoreCase(pluginName) == 0)
+					if (it2.next().getDeclaringClass().getSimpleName().compareToIgnoreCase(pluginName) == 0)
 						it2.remove();
 				}
 			}
@@ -750,7 +757,7 @@ final class ChoobPluginMap
 
 	synchronized Object getPluginObj(Method meth)
 	{
-		return getPluginObj(meth.getDeclaringClass().getName().toLowerCase());
+		return getPluginObj(meth.getDeclaringClass().getSimpleName().toLowerCase());
 	}
 
 	synchronized Method getCommand(String commandName)
@@ -770,7 +777,7 @@ final class ChoobPluginMap
 
 	synchronized void setAPI(String apiName, Method meth)
 	{
-		pluginApiCallSigs.get(meth.getDeclaringClass().getName().toLowerCase()).add(apiName.toLowerCase());
+		pluginApiCallSigs.get(meth.getDeclaringClass().getSimpleName().toLowerCase()).add(apiName.toLowerCase());
 		apiCallSigs.put(apiName.toLowerCase(), meth);
 	}
 

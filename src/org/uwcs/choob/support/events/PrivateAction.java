@@ -12,9 +12,9 @@ public class PrivateAction extends Message implements PrivateEvent, FilterEvent
 	/**
 	 * Construct a new PrivateAction
 	 */
-	public PrivateAction(String methodName, String message, String nick, String login, String hostname, String target)
+	public PrivateAction(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
 	{
-		super(methodName, message, nick, login, hostname, target);
+		super(methodName, millis, random, message, nick, login, hostname, target);
 
 	}
 
@@ -35,6 +35,26 @@ public class PrivateAction extends Message implements PrivateEvent, FilterEvent
 		return new PrivateAction(this, message);
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof PrivateAction))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		PrivateAction thing = (PrivateAction)obj;
+		if ( true
+)
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("PrivateAction(");
+		out.append(super.toString());
+		return out.toString();
+	}
 
 
 }

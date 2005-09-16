@@ -9,11 +9,6 @@ import org.uwcs.choob.support.events.*;
 public class ChannelParamMode extends ChannelMode implements ParamEvent
 {
 	/**
-	 * set
-	 */
-	private final boolean set;
-
-	/**
 	 * param
 	 */
 	private final String param;
@@ -22,10 +17,9 @@ public class ChannelParamMode extends ChannelMode implements ParamEvent
 	/**
 	 * Construct a new ChannelParamMode
 	 */
-	public ChannelParamMode(String methodName, String channel, String mode, boolean set, String param)
+	public ChannelParamMode(String methodName, long millis, int random, String channel, String mode, boolean set, String param)
 	{
-		super(methodName, channel, mode, (boolean)set);
-		this.set = set;
+		super(methodName, millis, random, channel, mode, set);
 		this.param = param;
 
 	}
@@ -36,7 +30,6 @@ public class ChannelParamMode extends ChannelMode implements ParamEvent
 	public ChannelParamMode(ChannelParamMode old)
 	{
 		super(old);
-		this.set = old.set;
 		this.param = old.param;
 
 	}
@@ -50,14 +43,6 @@ public class ChannelParamMode extends ChannelMode implements ParamEvent
 	}
 
 	/**
-	 * Get the value of set
-	 * @return The value of set
-	 */
-	public boolean isSet() {
-		return set;
-	}
-
-	/**
 	 * Get the value of param
 	 * @return The value of param
 	 */
@@ -65,6 +50,27 @@ public class ChannelParamMode extends ChannelMode implements ParamEvent
 		return param;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof ChannelParamMode))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		ChannelParamMode thing = (ChannelParamMode)obj;
+		if ( true
+ && param.equals(thing.param))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("ChannelParamMode(");
+		out.append(super.toString());
+		out.append(", param = " + param);
+		return out.toString();
+	}
 
 
 }

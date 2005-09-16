@@ -1,20 +1,41 @@
-package org.uwcs.choob.support;
+package org.uwcs.choob.plugins;
 
 import java.io.*;
 import java.net.*;
 import java.security.*;
 
-public class ChoobPluginClassLoader extends ClassLoader
+public class HaxSunPluginClassLoader extends ClassLoader
 {
 	private String pluginName;
 	private String path;
 	private ProtectionDomain domain;
-	public ChoobPluginClassLoader( String pluginName, String path, ProtectionDomain domain )
+	private Package pack;
+
+	public HaxSunPluginClassLoader( String pluginName, String path, ProtectionDomain domain )
 	{
 		super();
 		this.pluginName = pluginName;
 		this.path = path;
 		this.domain = domain;
+//		super.definePackage("plugins", "", "", "", "", "", "", null);
+		pack = definePackage("plugins." + pluginName, "", "", "", "", "", "", null);
+		System.out.println("Constructed");
+	}
+
+	protected Package getPackage(String name)
+	{
+		System.out.println("Asked for package: " + name);
+		System.out.println("super gives: " + super.getPackage(name));
+		if (name.equals("plugins." + pluginName))
+			return pack;
+		System.out.println("Delegating to super.");
+		return super.getPackage(name);
+	}
+
+	protected Package definePackage(String name, String specTitle, String specVersion, String specVendor, String implTitle, String implVersion, String implVendor, URL sealBase)
+	{
+		System.out.println("definePackage(" +name+", "+specTitle+", "+specVersion+", "+specVendor+", "+implTitle+", "+implVersion+", "+implVendor+", "+sealBase);
+		return super.definePackage(name, specTitle, specVersion, specVendor, implTitle, implVersion, implVendor, sealBase);
 	}
 
 	public Class findClass(final String name) throws ClassNotFoundException
@@ -27,7 +48,8 @@ public class ChoobPluginClassLoader extends ClassLoader
 						{
 							try
 							{
-								String fileName = path + File.separatorChar + name.replace('.', File.separatorChar) + ".class";
+								String fileName = path + name.replace('.', File.separatorChar) + ".class";
+								System.out.println("Attempting to load class from file " + fileName);
 								File classFile = new File(fileName);
 								if (!classFile.isFile())
 								{
@@ -55,7 +77,10 @@ public class ChoobPluginClassLoader extends ClassLoader
 								if (read != size)
 									throw new ClassNotFoundException("Class " + name + " has was not fully read; not loaded.");
 
-								return defineClass(name, classData, 0, classData.length, domain);
+								System.out.println("Defining class now...");
+								Class theClass = defineClass(name, classData, 0, classData.length, domain);
+								System.out.println("Defined. Package is: " + theClass.getPackage());
+								return theClass;
 							}
 							catch (IOException e)
 							{

@@ -93,7 +93,7 @@ class NickServ
 		return result;
 	}
 
-	public void onNotice( Message mes, Modules modules, IRCInterface irc )
+	public void onPrivateNotice( Message mes, Modules modules, IRCInterface irc )
 	{
 		if ( ! (mes instanceof PrivateNotice) )
 			return; // Only interested in private notices

@@ -32,9 +32,9 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 	/**
 	 * Construct a new QuitEvent
 	 */
-	public QuitEvent(String methodName, String message, String nick, String login, String hostname)
+	public QuitEvent(String methodName, long millis, int random, String message, String nick, String login, String hostname)
 	{
-		super(methodName);
+		super(methodName, millis, random);
 		this.message = message;
 		this.nick = nick;
 		this.login = login;
@@ -95,6 +95,30 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 		return hostname;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof QuitEvent))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		QuitEvent thing = (QuitEvent)obj;
+		if ( true
+ && message.equals(thing.message) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("QuitEvent(");
+		out.append(super.toString());
+		out.append(", message = " + message);
+		out.append(", nick = " + nick);
+		out.append(", login = " + login);
+		out.append(", hostname = " + hostname);
+		return out.toString();
+	}
 
 
 }

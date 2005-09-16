@@ -61,6 +61,9 @@ final class ChoobDecoderTask extends ChoobTask
 			// FilterEvents are messages
 			Message mes = (Message) event;
 			tasks.addAll(modules.plugin.getPlugMan().filterTasks(mes));
+
+			// For now, only FilterEvents will be logged...
+			modules.history.addLog( (Message) event );
 		}
 
 		// Now if it's a message, deal with that too

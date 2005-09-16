@@ -54,7 +54,7 @@ our %inheritance = (
 
 # Parameters for stuff
 our %params = (
-	IRCEvent => [qw/methodName/],
+	IRCEvent => [qw/methodName (long)millis (int)random/],
 	ChannelEvent => [qw/channel/],
 	PrivateEvent => [qw//],
 	CommandEvent => [qw//],
@@ -95,10 +95,14 @@ while ($_ = <DATA>) {
 					push @paramProtos, "$type $name";
 					$paramConst{$name} = $name;
 				} else {
-					$paramConst{$name} = "$def";
+					$paramConst{$name} = $def;
 				}
 			}
 		}
+		$paramType{millis} = 'long';
+		$paramConst{millis} = 'System.currentTimeMillis()';
+		$paramType{random} = 'int';
+		$paramConst{random} = '((int)(Math.random()*127))';
 		my $paramProtos = join ', ', @paramProtos;
 
 		my $eventHandler = qq|\tprotected void $evtName($paramProtos) {\n|;
@@ -106,8 +110,16 @@ while ($_ = <DATA>) {
 			# Need to horrormunge!
 			my %handlers;
 			$paramConst{channel} = "target";
+			my $meth = $paramConst{methodName};
+			$meth =~ s/^"on(.*)"/$1/;
 			foreach ('Private', 'Channel') {
 				my @inherit = &getInherit($_.$class);
+
+				if ($_ eq 'Private') {
+					$paramConst{methodName} = "\"on$_$meth\"";
+				} else {
+					$paramConst{methodName} = "\"on$meth\"";
+				}
 
 				my @constOrder = map { my @a=(); if ($params{$_}) { @a = @{$params{$_}} } (@a) } @inherit;
 				map { s/\(\w+\)// } @constOrder;
@@ -116,6 +128,7 @@ while ($_ = <DATA>) {
 
 				$handlers{$_} = qq|spinThread(new $_$class($constParams))|;
 			}
+			$paramConst{methodName} = "\"on$meth\"";
 			$eventHandler .= <<END;
 		if (target.indexOf('#') == 0)
 			$handlers{Channel};
@@ -174,7 +187,7 @@ foreach my $class (keys %inheritance) {
 		my @i = @{$inheritance{$class}};
 		$extends = "extends $i[0]";
 		my @sInherit = &getInherit($i[0]);
-		@superOrder = map { my @a=(); if ($params{$_}) { @a = @{$params{$_}} } (@a) } @sInherit;
+		@superOrder = grep { s/\((\w+)\)// || 1 } map { my @a=(); if ($params{$_}) { @a = @{$params{$_}} } (@a) } @sInherit;
 		my $superParams = join ', ', @superOrder;
 		$super1 = "\t\tsuper($superParams);";
 		$implements = "implements ".join(", ",@i[1..$#i]) if @i > 1;
@@ -221,13 +234,36 @@ END
 		# Speshul things needed!
 		push @constOrder, "synthLevel";
 		$paramType{synthLevel} = "int";
-		push @constOrder, "millis";
-		$paramType{millis} = "long";
-		push @constOrder, "random";
-		$paramType{random} = "int";
 		$super1 = "";
 		$super2 = "";
 	}
+
+	my $equals = <<END;
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof $class))
+			return false;
+END
+	my $toString = <<END;
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("$class(");
+END
+
+	if ($class ne 'IRCEvent') { # Don't want to ask Object...
+		$equals .= <<END;
+		if (!super.equals(obj))
+			return false;
+END
+		$toString .= <<END;
+		out.append(super.toString());
+END
+	}
+	$equals .= <<END;
+		$class thing = ($class)obj;
+		if ( true
+END
+
 
 	my $members = "";
 	my $memberInit1 = "";
@@ -261,20 +297,41 @@ END
 	}
 
 END
+		if ($paramType{$field} eq 'String') {
+			$equals .= " && $field.equals(thing.$field)";
+		} else {
+			$equals .= " && ($field == thing.$field)";
+		}
+		$toString .= <<END;
+		out.append(", $field = " + $field);
+END
 	}
+
+	$equals .= <<END;
+)
+			return true;
+		return false;
+	}
+END
+	$toString .= <<END;
+		return out.toString();
+	}
+END
 
 	if ($class eq "IRCEvent") {
 		$memberInit1 = <<END;
+		java.security.AccessController.checkPermission(new org.uwcs.choob.support.ChoobPermission("event.create"));
 		this.methodName = methodName;
+		this.millis = millis;
+		this.random = random;
 		this.synthLevel = 0;
-		this.millis = System.currentTimeMillis();
-		this.random = ((int)(Math.random()*127));
 END
 		$memberInit2 = <<END;
+		java.security.AccessController.checkPermission(new org.uwcs.choob.support.ChoobPermission("event.create"));
 		this.methodName = old.methodName;
+		this.millis = old.millis;
+		this.random = old.random;
 		this.synthLevel = old.synthLevel + 1;
-		this.millis = System.currentTimeMillis();
-		this.random = ((int)(Math.random()*127));
 END
 	}
 
@@ -317,6 +374,8 @@ $memberInit2
 	}
 
 $getters
+$equals
+$toString
 $extra
 }
 END

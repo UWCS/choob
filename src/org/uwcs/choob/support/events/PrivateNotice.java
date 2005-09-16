@@ -12,9 +12,9 @@ public class PrivateNotice extends Message implements PrivateEvent
 	/**
 	 * Construct a new PrivateNotice
 	 */
-	public PrivateNotice(String methodName, String message, String nick, String login, String hostname, String target)
+	public PrivateNotice(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
 	{
-		super(methodName, message, nick, login, hostname, target);
+		super(methodName, millis, random, message, nick, login, hostname, target);
 
 	}
 
@@ -35,6 +35,26 @@ public class PrivateNotice extends Message implements PrivateEvent
 		return new PrivateNotice(this, message);
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof PrivateNotice))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		PrivateNotice thing = (PrivateNotice)obj;
+		if ( true
+)
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("PrivateNotice(");
+		out.append(super.toString());
+		return out.toString();
+	}
 
 
 }

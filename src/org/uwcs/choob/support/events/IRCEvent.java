@@ -14,11 +14,6 @@ public class IRCEvent
 	private final String methodName;
 
 	/**
-	 * synthLevel
-	 */
-	private final int synthLevel;
-
-	/**
 	 * millis
 	 */
 	private final long millis;
@@ -28,17 +23,23 @@ public class IRCEvent
 	 */
 	private final int random;
 
+	/**
+	 * synthLevel
+	 */
+	private final int synthLevel;
+
 
 	/**
 	 * Construct a new IRCEvent
 	 */
-	public IRCEvent(String methodName)
+	public IRCEvent(String methodName, long millis, int random)
 	{
 
+		java.security.AccessController.checkPermission(new org.uwcs.choob.support.ChoobPermission("event.create"));
 		this.methodName = methodName;
+		this.millis = millis;
+		this.random = random;
 		this.synthLevel = 0;
-		this.millis = System.currentTimeMillis();
-		this.random = ((int)(Math.random()*127));
 
 	}
 
@@ -48,10 +49,11 @@ public class IRCEvent
 	public IRCEvent(IRCEvent old)
 	{
 
+		java.security.AccessController.checkPermission(new org.uwcs.choob.support.ChoobPermission("event.create"));
 		this.methodName = old.methodName;
+		this.millis = old.millis;
+		this.random = old.random;
 		this.synthLevel = old.synthLevel + 1;
-		this.millis = System.currentTimeMillis();
-		this.random = ((int)(Math.random()*127));
 
 	}
 
@@ -72,14 +74,6 @@ public class IRCEvent
 	}
 
 	/**
-	 * Get the value of synthLevel
-	 * @return The value of synthLevel
-	 */
-	public int getSynthLevel() {
-		return synthLevel;
-	}
-
-	/**
 	 * Get the value of millis
 	 * @return The value of millis
 	 */
@@ -95,6 +89,35 @@ public class IRCEvent
 		return random;
 	}
 
+	/**
+	 * Get the value of synthLevel
+	 * @return The value of synthLevel
+	 */
+	public int getSynthLevel() {
+		return synthLevel;
+	}
+
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof IRCEvent))
+			return false;
+		IRCEvent thing = (IRCEvent)obj;
+		if ( true
+ && methodName.equals(thing.methodName) && (millis == thing.millis) && (random == thing.random) && (synthLevel == thing.synthLevel))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("IRCEvent(");
+		out.append(", methodName = " + methodName);
+		out.append(", millis = " + millis);
+		out.append(", random = " + random);
+		out.append(", synthLevel = " + synthLevel);
+		return out.toString();
+	}
 
 
 }

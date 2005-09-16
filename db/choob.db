@@ -114,16 +114,18 @@ INSERT INTO `GroupMembers` VALUES (3,2);
 
 CREATE TABLE `History` (
   `LineID` int(11) unsigned NOT NULL auto_increment,
-  `Nick` VARCHAR(32) NOT NULL,
-  `Channel` VARCHAR(32) NOT NULL,
+  `Type` varchar(50) NOT NULL default '',
+  `Nick` varchar(32) NOT NULL default '',
+  `Hostmask` varchar(64) NOT NULL default '',
+  `Channel` varchar(32) default NULL,
   `Text` text NOT NULL,
-  `Time` timestamp(14) NOT NULL,
+  `Time` bigint(20) NOT NULL default '0',
   `Random` tinyint(4) NOT NULL default '0',
   PRIMARY KEY  (`LineID`),
-  KEY (`Nick`),
-  KEY (`Channel`),
-  KEY (`Time`)
-) Type=InnoDB;
+  KEY `Nick` (`Nick`),
+  KEY `Channel` (`Channel`),
+  KEY `Time` (`Time`)
+) TYPE=InnoDB;
 
 --
 -- Table structure for table `LoadedPlugins`

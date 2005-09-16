@@ -12,9 +12,9 @@ public class UnknownEvent extends IRCEvent
 	/**
 	 * Construct a new UnknownEvent
 	 */
-	public UnknownEvent(String methodName)
+	public UnknownEvent(String methodName, long millis, int random)
 	{
-		super(methodName);
+		super(methodName, millis, random);
 
 	}
 
@@ -35,6 +35,26 @@ public class UnknownEvent extends IRCEvent
 		return new UnknownEvent(this);
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof UnknownEvent))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		UnknownEvent thing = (UnknownEvent)obj;
+		if ( true
+)
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("UnknownEvent(");
+		out.append(super.toString());
+		return out.toString();
+	}
 
 
 }

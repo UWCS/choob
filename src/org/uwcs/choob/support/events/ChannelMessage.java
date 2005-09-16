@@ -17,9 +17,9 @@ public class ChannelMessage extends Message implements ChannelEvent, CommandEven
 	/**
 	 * Construct a new ChannelMessage
 	 */
-	public ChannelMessage(String methodName, String message, String nick, String login, String hostname, String target, String channel)
+	public ChannelMessage(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target, String channel)
 	{
-		super(methodName, message, nick, login, hostname, target);
+		super(methodName, millis, random, message, nick, login, hostname, target);
 		this.channel = channel;
 
 	}
@@ -50,6 +50,27 @@ public class ChannelMessage extends Message implements ChannelEvent, CommandEven
 		return channel;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof ChannelMessage))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		ChannelMessage thing = (ChannelMessage)obj;
+		if ( true
+ && channel.equals(thing.channel))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("ChannelMessage(");
+		out.append(super.toString());
+		out.append(", channel = " + channel);
+		return out.toString();
+	}
 
 	/**
 	 * Get the reply context in which this event resides

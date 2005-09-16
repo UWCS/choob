@@ -17,9 +17,9 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 	/**
 	 * Construct a new UserModes
 	 */
-	public UserModes(String methodName, String modes)
+	public UserModes(String methodName, long millis, int random, String modes)
 	{
-		super(methodName);
+		super(methodName, millis, random);
 		this.modes = modes;
 
 	}
@@ -50,6 +50,27 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 		return modes;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof UserModes))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		UserModes thing = (UserModes)obj;
+		if ( true
+ && modes.equals(thing.modes))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("UserModes(");
+		out.append(super.toString());
+		out.append(", modes = " + modes);
+		return out.toString();
+	}
 
 
 }

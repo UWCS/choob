@@ -9,11 +9,6 @@ import org.uwcs.choob.support.events.*;
 public class ChannelUserMode extends ChannelMode implements AimedEvent
 {
 	/**
-	 * set
-	 */
-	private final boolean set;
-
-	/**
 	 * target
 	 */
 	private final String target;
@@ -22,10 +17,9 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 	/**
 	 * Construct a new ChannelUserMode
 	 */
-	public ChannelUserMode(String methodName, String channel, String mode, boolean set, String target)
+	public ChannelUserMode(String methodName, long millis, int random, String channel, String mode, boolean set, String target)
 	{
-		super(methodName, channel, mode, (boolean)set);
-		this.set = set;
+		super(methodName, millis, random, channel, mode, set);
 		this.target = target;
 
 	}
@@ -36,7 +30,6 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 	public ChannelUserMode(ChannelUserMode old)
 	{
 		super(old);
-		this.set = old.set;
 		this.target = old.target;
 
 	}
@@ -50,14 +43,6 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 	}
 
 	/**
-	 * Get the value of set
-	 * @return The value of set
-	 */
-	public boolean isSet() {
-		return set;
-	}
-
-	/**
 	 * Get the value of target
 	 * @return The value of target
 	 */
@@ -65,6 +50,27 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 		return target;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof ChannelUserMode))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		ChannelUserMode thing = (ChannelUserMode)obj;
+		if ( true
+ && target.equals(thing.target))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("ChannelUserMode(");
+		out.append(super.toString());
+		out.append(", target = " + target);
+		return out.toString();
+	}
 
 
 }

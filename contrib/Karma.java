@@ -41,7 +41,7 @@ public class Karma
 			List<KarmaReasonObject> results;
 			try
 			{
-				results=mods.odb.retrieve(KarmaReasonObject.class, "string = '" + ma.group(1) + "' AND direction = '" + (ma.group(2).equals("suck") ? -1 : 1) + "'");
+				results=mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = '" + ma.group(1) + "' AND direction = '" + (ma.group(2).equals("suck") ? -1 : 1) + "'");
 			}
 			catch (ChoobException e) { return; }
 			if (results.size()==0)
@@ -92,7 +92,7 @@ public class Karma
 
 			boolean dup=ma.group(2).equals("++");
 
-			List<KarmaObject> results = retrieveKarmaObjects("string = '" + st + "'", mods);
+			List<KarmaObject> results = retrieveKarmaObjects("WHERE string = '" + st + "'", mods);
 			if (results.size()==0)
 			{
 				ko=new KarmaObject();
@@ -169,7 +169,7 @@ public class Karma
 
 	private void commandScores(Message con, Modules mods, IRCInterface irc, boolean asc)
 	{
-		List<KarmaObject> kos=retrieveKarmaObjects("SORT " + (asc ? "ASC" : "DESC") + " INTEGER value AND LIMIT (5)", mods);
+		List<KarmaObject> kos=retrieveKarmaObjects("SORT " + (asc ? "ASC" : "DESC") + " INTEGER value LIMIT (5)", mods);
 
 		String t="High Scores: ";
 
@@ -232,7 +232,7 @@ public class Karma
 			for (int i=1; i<params.size(); i++)
 			{
 				String st=(String)params.get(i);
-				List<KarmaObject> results=retrieveKarmaObjects("string = '" + st + "'", mods);
+				List<KarmaObject> results=retrieveKarmaObjects("WHERE string = '" + st + "'", mods);
 				if (results.size()!=0)
 					kos.add((KarmaObject)results.get(0));
 				else
@@ -288,7 +288,7 @@ public class Karma
 			String st=items[0].trim();
 			int val=Integer.parseInt((String)items[1]);
 
-			List<KarmaObject> results = retrieveKarmaObjects("string = '" + st + "'", mods);
+			List<KarmaObject> results = retrieveKarmaObjects("WHERE string = '" + st + "'", mods);
 			if (results.size()==0)
 			{
 				ko=new KarmaObject();

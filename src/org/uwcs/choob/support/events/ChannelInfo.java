@@ -17,9 +17,9 @@ public class ChannelInfo extends IRCEvent implements ChannelEvent
 	/**
 	 * Construct a new ChannelInfo
 	 */
-	public ChannelInfo(String methodName, String channel)
+	public ChannelInfo(String methodName, long millis, int random, String channel)
 	{
-		super(methodName);
+		super(methodName, millis, random);
 		this.channel = channel;
 
 	}
@@ -50,6 +50,27 @@ public class ChannelInfo extends IRCEvent implements ChannelEvent
 		return channel;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof ChannelInfo))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		ChannelInfo thing = (ChannelInfo)obj;
+		if ( true
+ && channel.equals(thing.channel))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("ChannelInfo(");
+		out.append(super.toString());
+		out.append(", channel = " + channel);
+		return out.toString();
+	}
 
 
 }

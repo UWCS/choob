@@ -80,7 +80,7 @@ public class ObjectDbModule
 		{
 			try
 			{
-				sqlQuery = ObjectDbClauseParser.getSQL(clause, storedClass.toString());
+				sqlQuery = ObjectDbClauseParser.getSQL(clause, storedClass.getName());
 			}
 			catch (ParseException e)
 			{
@@ -92,7 +92,7 @@ public class ObjectDbModule
 		}
 		else
 		{
-			sqlQuery = "SELECT ObjectStore.ClassID FROM ObjectStore WHERE ClassName = '" + storedClass.toString() + "';";
+			sqlQuery = "SELECT ObjectStore.ClassID FROM ObjectStore WHERE ClassName = '" + storedClass.getName() + "';";
 		}
 
 		Connection dbConnection = broker.getConnection();
@@ -147,7 +147,7 @@ public class ObjectDbModule
 	{
 		PreparedStatement retriveObject = dbConnection.prepareStatement("SELECT * FROM ObjectStore LEFT JOIN ObjectStoreData ON ObjectStore.ObjectID = ObjectStoreData.ObjectID WHERE ClassName = ? AND ClassID = ?;");
 
-		retriveObject.setString(1, storedClass.toString() );
+		retriveObject.setString(1, storedClass.getName() );
 		retriveObject.setInt(2, id);
 
 		final ResultSet objSet = retriveObject.executeQuery();
@@ -202,13 +202,19 @@ public class ObjectDbModule
 					{
 						tempField.set( tempObject, result.getString("FieldValue") );
 					}
-
-					if( result.getString("FieldType").equals("int") )
+					else if( result.getString("FieldType").equals("int") )
 					{
 						tempField.setInt( tempObject, Integer.parseInt( result.getString("FieldValue")) );
 					}
-
-					if( result.getString("FieldType").equals("float") )
+					else if( result.getString("FieldType").equals("long") )
+					{
+						tempField.setLong( tempObject, Long.parseLong( result.getString("FieldValue")) );
+					}
+					else if( result.getString("FieldType").equals("boolean") )
+					{
+						tempField.setBoolean( tempObject, result.getString("FieldValue").equals("1") );
+					}
+					else if( result.getString("FieldType").equals("float") )
 					{
 						tempField.setFloat( tempObject, Float.parseFloat( result.getString("FieldValue")) );
 					}
@@ -299,7 +305,7 @@ public class ObjectDbModule
 
 		PreparedStatement retrieveID = dbCon.prepareStatement("SELECT ObjectID FROM ObjectStore WHERE ClassName = ? AND ClassID = ?;");
 
-		retrieveID.setString(1, strObj.getClass().toString() );
+		retrieveID.setString(1, strObj.getClass().getName() );
 		retrieveID.setInt(2, id);
 
 		ResultSet resultID = retrieveID.executeQuery();
@@ -381,7 +387,7 @@ public class ObjectDbModule
 		{
 			PreparedStatement highestID = dbCon.prepareStatement("SELECT MAX(ClassID) FROM ObjectStore WHERE ClassName = ?;");
 
-			highestID.setString(1, strObj.getClass().toString());
+			highestID.setString(1, strObj.getClass().getName());
 
 			ResultSet ids = highestID.executeQuery();
 
@@ -396,7 +402,7 @@ public class ObjectDbModule
 		PreparedStatement insertObject = dbCon.prepareStatement("INSERT INTO ObjectStore VALUES(NULL,?,?,?);");
 
 		insertObject.setInt(1, 1); // CHANGE THIS
-		insertObject.setString(2, strObj.getClass().toString());
+		insertObject.setString(2, strObj.getClass().getName());
 		insertObject.setInt(3, id);
 
 		insertObject.execute();
@@ -429,8 +435,20 @@ public class ObjectDbModule
 						insertField.setString(2, tempField.getName());
 						insertField.setString(3, "int");
 						insertField.setString(4, Integer.toString(tempField.getInt(strObj)));
-
-						//System.out.println("Found integer field: " + tempField);
+					}
+					else if( tempField.getType() == java.lang.Long.TYPE )
+					{
+						foundType = true;
+						insertField.setString(2, tempField.getName());
+						insertField.setString(3, "long");
+						insertField.setString(4, Long.toString(tempField.getLong(strObj)));
+					}
+					else if( tempField.getType() == java.lang.Boolean.TYPE )
+					{
+						foundType = true;
+						insertField.setString(2, tempField.getName());
+						insertField.setString(3, "boolean");
+						insertField.setString(4, tempField.getBoolean(strObj) ? "1" : "0");
 					}
 					else if( tempField.getType() == java.lang.Float.TYPE )
 					{
@@ -438,8 +456,6 @@ public class ObjectDbModule
 						insertField.setString(2, tempField.getName());
 						insertField.setString(3, "float");
 						insertField.setString(4, Float.toString(tempField.getFloat(strObj)));
-
-						//System.out.println("Found float field: " + tempField);
 					}
 					else if( tempField.getType() == String.class )
 					{

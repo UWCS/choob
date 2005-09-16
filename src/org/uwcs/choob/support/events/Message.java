@@ -37,9 +37,9 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 	/**
 	 * Construct a new Message
 	 */
-	public Message(String methodName, String message, String nick, String login, String hostname, String target)
+	public Message(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
 	{
-		super(methodName);
+		super(methodName, millis, random);
 		this.message = message;
 		this.nick = nick;
 		this.login = login;
@@ -110,6 +110,31 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 		return target;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof Message))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		Message thing = (Message)obj;
+		if ( true
+ && message.equals(thing.message) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && target.equals(thing.target))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("Message(");
+		out.append(super.toString());
+		out.append(", message = " + message);
+		out.append(", nick = " + nick);
+		out.append(", login = " + login);
+		out.append(", hostname = " + hostname);
+		out.append(", target = " + target);
+		return out.toString();
+	}
 
 	/**
 	 * Get the reply context in which this event resides

@@ -17,9 +17,9 @@ public class ChannelAction extends Message implements ChannelEvent, FilterEvent
 	/**
 	 * Construct a new ChannelAction
 	 */
-	public ChannelAction(String methodName, String message, String nick, String login, String hostname, String target, String channel)
+	public ChannelAction(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target, String channel)
 	{
-		super(methodName, message, nick, login, hostname, target);
+		super(methodName, millis, random, message, nick, login, hostname, target);
 		this.channel = channel;
 
 	}
@@ -50,6 +50,27 @@ public class ChannelAction extends Message implements ChannelEvent, FilterEvent
 		return channel;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof ChannelAction))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		ChannelAction thing = (ChannelAction)obj;
+		if ( true
+ && channel.equals(thing.channel))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("ChannelAction(");
+		out.append(super.toString());
+		out.append(", channel = " + channel);
+		return out.toString();
+	}
 
 	/**
 	 * Get the reply context in which this event resides

@@ -37,9 +37,9 @@ public class ChannelKick extends IRCEvent implements ChannelEvent, ContextEvent,
 	/**
 	 * Construct a new ChannelKick
 	 */
-	public ChannelKick(String methodName, String channel, String nick, String login, String hostname, String target)
+	public ChannelKick(String methodName, long millis, int random, String channel, String nick, String login, String hostname, String target)
 	{
-		super(methodName);
+		super(methodName, millis, random);
 		this.channel = channel;
 		this.nick = nick;
 		this.login = login;
@@ -110,6 +110,31 @@ public class ChannelKick extends IRCEvent implements ChannelEvent, ContextEvent,
 		return target;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof ChannelKick))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		ChannelKick thing = (ChannelKick)obj;
+		if ( true
+ && channel.equals(thing.channel) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && target.equals(thing.target))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("ChannelKick(");
+		out.append(super.toString());
+		out.append(", channel = " + channel);
+		out.append(", nick = " + nick);
+		out.append(", login = " + login);
+		out.append(", hostname = " + hostname);
+		out.append(", target = " + target);
+		return out.toString();
+	}
 
 	/**
 	 * Get the reply context in which this event resides

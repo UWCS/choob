@@ -32,9 +32,9 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 	/**
 	 * Construct a new ChannelJoin
 	 */
-	public ChannelJoin(String methodName, String channel, String nick, String login, String hostname)
+	public ChannelJoin(String methodName, long millis, int random, String channel, String nick, String login, String hostname)
 	{
-		super(methodName);
+		super(methodName, millis, random);
 		this.channel = channel;
 		this.nick = nick;
 		this.login = login;
@@ -95,6 +95,30 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 		return hostname;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof ChannelJoin))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		ChannelJoin thing = (ChannelJoin)obj;
+		if ( true
+ && channel.equals(thing.channel) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("ChannelJoin(");
+		out.append(super.toString());
+		out.append(", channel = " + channel);
+		out.append(", nick = " + nick);
+		out.append(", login = " + login);
+		out.append(", hostname = " + hostname);
+		return out.toString();
+	}
 
 	/**
 	 * Get the reply context in which this event resides

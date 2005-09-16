@@ -23,7 +23,7 @@ public class Modules
 	 */
 	public DbConnectionBroker dbBroker;
 	public PluginModule plugin;
-	public LoggerModule logger;
+	public HistoryModule history;
 	public UtilModule util;
 	public NickModule nick;
 	public IntervalModule interval;
@@ -46,7 +46,7 @@ public class Modules
 		try
 		{
 			plugin = new PluginModule(pluginMap, dbBroker, filterList, this, irc);
-			logger = new LoggerModule(dbBroker);
+			history = new HistoryModule(dbBroker);
 			util = new UtilModule( bot );
 			nick = new NickModule(dbBroker);
 			interval = new IntervalModule( intervalList );

@@ -22,9 +22,9 @@ public class ChannelTopic extends IRCEvent implements ChannelEvent, ContextEvent
 	/**
 	 * Construct a new ChannelTopic
 	 */
-	public ChannelTopic(String methodName, String channel, String message)
+	public ChannelTopic(String methodName, long millis, int random, String channel, String message)
 	{
-		super(methodName);
+		super(methodName, millis, random);
 		this.channel = channel;
 		this.message = message;
 
@@ -65,6 +65,28 @@ public class ChannelTopic extends IRCEvent implements ChannelEvent, ContextEvent
 		return message;
 	}
 
+
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof ChannelTopic))
+			return false;
+		if (!super.equals(obj))
+			return false;
+		ChannelTopic thing = (ChannelTopic)obj;
+		if ( true
+ && channel.equals(thing.channel) && message.equals(thing.message))
+			return true;
+		return false;
+	}
+
+	public String toString()
+	{
+		StringBuffer out = new StringBuffer("ChannelTopic(");
+		out.append(super.toString());
+		out.append(", channel = " + channel);
+		out.append(", message = " + message);
+		return out.toString();
+	}
 
 	/**
 	 * Get the reply context in which this event resides
