@@ -80,7 +80,7 @@ final class ChoobDecoderTask extends ChoobTask
 			{
 				// OK, it's a command!
 				int commandStart = ma.end();
-				int commandEnd = matchAgainst.indexOf(' ');
+				int commandEnd = matchAgainst.indexOf(' ', commandStart);
 				if (commandEnd != -1)
 					matchAgainst = matchAgainst.substring(commandStart, commandEnd);
 				else
