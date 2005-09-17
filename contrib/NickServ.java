@@ -3,6 +3,7 @@ import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 import bsh.*;
+import java.util.*;
 
 /**
  * Choob nickserv checker
@@ -13,31 +14,34 @@ import bsh.*;
  * :)
  */
 
-class NickServ
+public class NickServ
 {
-	private Map nickChecks;
+	private Map<String,ResultObj> nickChecks;
 
-	public void create(Modules modules)
+	public NickServ(Modules modules)
 	{
-		nickChecks = new HashMap();
+		nickChecks = new HashMap<String,ResultObj>();
 	}
 
 	public void destroy(Modules modules)
 	{
-		Iterator nicks = nickChecks.keySet().iterator();
-		while(nicks.hasNext()) {
-			ResultObj result = splatNickCheck(nick);
-			synchronized(result)
-			{
-				result.notifyAll();
+		synchronized(nickChecks)
+		{
+			Iterator<String> nicks = nickChecks.keySet().iterator();
+			while(nicks.hasNext()) {
+				ResultObj result = splatNickCheck(nicks.next());
+				synchronized(result)
+				{
+					result.notifyAll();
+				}
 			}
 		}
 	}
 
-	public void commandNickServ( Message con, Modules modules, IRCInterface irc )
+	public void commandNickServ( Message con, Modules modules, IRCInterface irc ) throws ChoobException
 	{
 		String nick = modules.util.getParamString( con );
-		int check1 = (int)modules.plugin.callAPI("NickServ.NickServCheck", new Object[] { irc, nick });
+		int check1 = (Integer)modules.plugin.callAPI("NickServ", "NickServCheck",irc, nick);
 		if ( check1 > 0 )
 		{
 			irc.sendContextReply(con, nick + " is authed (" + check1 + ")!");
@@ -54,7 +58,15 @@ class NickServ
 
 		synchronized(result)
 		{
-			result.wait(30000);
+			try
+			{
+				result.wait(30000); // Make sure if NickServ breaks we're not screwed
+			}
+			catch (InterruptedException e)
+			{
+				// Ooops, timeout
+				return -1;
+			}
 		}
 		int status = result.getResult();
 		return status;

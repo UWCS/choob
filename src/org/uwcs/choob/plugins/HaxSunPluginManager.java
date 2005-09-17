@@ -378,10 +378,10 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 					if (param instanceof Message)
 					{
 						irc.sendContextReply((Message)param,
-								"An exception occurred while running this command: " + e);
+								"An exception occurred while running this command: " + e.getCause());
 					}
 					System.err.println("Exception invoking method " + meth);
-					e.printStackTrace();
+					e.getCause().printStackTrace();
 				}
 				catch (IllegalAccessException e)
 				{
@@ -439,7 +439,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		if (meth == null)
 		{
 			// OK, not cached. But maybe it's still there...
-			List<Method> meths = allPlugins.getAllAPI(APIName);
+			List<Method> meths = allPlugins.getAllAPI(pluginName + "." + APIName);
 			meth = javaHorrorMethodResolve(meths, params);
 			if (meth != null)
 				allPlugins.setAPI(sig, meth);
