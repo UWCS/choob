@@ -8,7 +8,7 @@ import java.util.*;
 
 public class SVN
 {
-	public void create( Modules mods )
+	public SVN( Modules mods )
 	{
 		mods.interval.callBack( this, null, new Date( (new Date().getTime())+1000 ) );
 	}
