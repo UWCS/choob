@@ -4,21 +4,39 @@ import org.uwcs.choob.support.events.*;
 import org.uwcs.choob.modules.*;
 import java.net.*;
 import java.io.*;
+import java.util.*;
 
-class SVN
+public class SVN
 {
 	public void create( Modules mods )
 	{
 		mods.interval.callBack( this, null, new Date( (new Date().getTime())+1000 ) );
 	}
 
-	public void interval( Object parameter, Modules mods, IRCInterface irc )
+	public void interval( Object parameter, Modules mods, IRCInterface irc ) throws ChoobException
 	{
-		URL svnURL = new URL("http://svn.uwcs.co.uk/repos/choob/");
+		URL svnURL;
+		try
+		{
+			svnURL = new URL("http://svn.uwcs.co.uk/repos/choob/");
+		}
+		catch (MalformedURLException e)
+		{
+			throw new ChoobException("Constant URL in SVN plugin broken...");
+		} // squelch
 
-		BufferedReader svnPage = new BufferedReader( new InputStreamReader( svnURL.openStream() ) );
+		String revString;
 
-		String revString = svnPage.readLine();
+		try
+		{
+			BufferedReader svnPage = new BufferedReader( new InputStreamReader( svnURL.openStream() ) );
+
+			revString = svnPage.readLine();
+		}
+		catch (IOException e)
+		{
+			throw new ChoobException("IO Exception reading version number.", e);
+		}
 
 		String newRev = revString.substring( revString.indexOf("tle>")+4, revString.indexOf(":") );
 
