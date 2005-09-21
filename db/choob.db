@@ -156,11 +156,14 @@ CREATE TABLE `ObjectStore` (
 CREATE TABLE `ObjectStoreData` (
   `ObjectID` int(11) NOT NULL default '0',
   `FieldName` varchar(128) NOT NULL default '',
-  `FieldType` varchar(32) NOT NULL default '',
-  `FieldValue` text NOT NULL,
+  `FieldBigInt` BIGINT NOT NULL,
+  `FieldDouble` DOUBLE NOT NULL,
+  `FieldString` text NOT NULL,
   UNIQUE KEY (`ObjectID`, `FieldName`),
   KEY (`FieldName`),
-  KEY (`FieldType`),
+  INDEX (`FieldBigInt`),
+  INDEX (`FieldDouble`),
+  INDEX (`FieldString` (32)),
   FOREIGN KEY (`ObjectID`) REFERENCES `ObjectStore` (`ObjectID`)
 ) Type=InnoDB;
 

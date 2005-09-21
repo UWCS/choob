@@ -34,6 +34,9 @@ public class Quote
 	private static int MINWORDS = 2; // Minimum words in a line to be quotable using simple syntax.
 	private static int HISTORY = 30; // Lines of history to search.
 	private static int EXCERPT = 40; // Maximum length of excerpt text in replies to create.
+	private static int MAXLINES = 10; // Maximum allowed lines in a quote.
+	private static int MAXCLAUSES = 20; // Maximum allowed lines in a quote.
+	private static int MAXJOINS = 6; // Maximum allowed lines in a quote.
 	private static String IGNORE = "quote|quoten|quote.create"; // Ignore these when searching for regex quotes.
 
 	private Modules mods;
@@ -232,6 +235,13 @@ public class Quote
 
 		// Have some lines.
 
+		// Is it a sensible size?
+		if (lines.size() > MAXLINES)
+		{
+			irc.sendContextReply(mes, "Sorry, this quote is longer than the maximum size of " + MAXLINES + " lines.");
+			return;
+		}
+
 		// Check for people suspiciously quoting themselves.
 		// For now, that's just if they are the final line in the quote.
 		Message last = lines.get(lines.size() - 1);
@@ -331,7 +341,7 @@ public class Quote
 	public void commandGet( Message mes ) throws ChoobException
 	{
 		String whereClause = getClause( mods.util.getParamString( mes ) );
-		List quotes = mods.odb.retrieve( QuoteObject.class, whereClause );
+		List quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause );
 
 		if (quotes.size() == 0)
 		{
@@ -355,6 +365,21 @@ public class Quote
 			else
 				irc.sendContextMessage( mes, "<" + line.nick + "> " + line.message );
 		}
+	}
+
+	public void commandCount( Message mes ) throws ChoobException
+	{
+		String whereClause = getClause( mods.util.getParamString( mes ) );
+		List<Integer> quoteCounts = mods.odb.retrieveInt( QuoteObject.class, whereClause );
+
+		int count = quoteCounts.size();
+
+		if (count == 0)
+			irc.sendContextReply( mes, "Sorry, no quotes match!" );
+		else if (count == 1)
+			irc.sendContextReply( mes, "There's just the one quote..." );
+		else
+			irc.sendContextReply( mes, "There's " + count + " quotes!" );
 	}
 
 	/**
@@ -465,6 +490,7 @@ public class Quote
 					clauses.add("join"+joins+".nick = \"" + user.replaceAll("(\\W)", "$1") + "\"");
 				clauses.add("join"+joins+".quoteID = id");
 				joins++;
+
 				pos = end-1; // In case there's a space, this is the /
 			}
 			else if (param.charAt(0) >= '0' && param.charAt(0) <= '9')
@@ -490,14 +516,18 @@ public class Quote
 			pos = text.indexOf(' ', pos + 1);
 		}
 
+		// All those joins hate MySQL.
+		if (joins > MAXJOINS)
+			throw new ChoobException("Sorry, due to MySQL being whorish, only " + MAXJOINS + " nickname or line clause(s) allowed for now.");
+		else if (clauses.size() > MAXCLAUSES)
+			throw new ChoobException("Sorry, due to MySQL being whorish, only " + MAXCLAUSES + " clause(s) allowed for now.");
+
 		if (!score)
 			clauses.add("score > -3");
 
 		StringBuffer search = new StringBuffer();
 		for(int i=0; i<joins; i++)
 			search.append("WITH AS join" + i + " " + QuoteLine.class.getName() + " ");
-		search.append("SORT BY RANDOM ");
-		search.append("LIMIT (1) ");
 		if (clauses.size() > 0)
 		{
 			search.append("WHERE ");

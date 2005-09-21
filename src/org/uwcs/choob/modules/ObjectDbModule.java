@@ -54,6 +54,21 @@ public class ObjectDbModule
 		}
 	}
 
+	public List<Integer> retrieveInt(Class storedClass, String clause) throws ChoobException
+	{
+		Connection dbConn = broker.getConnection();
+		ObjectDBTransaction trans = new ObjectDBTransaction();
+		trans.setConn(dbConn);
+		try
+		{
+			return trans.retrieveInt(storedClass, clause);
+		}
+		finally
+		{
+			broker.freeConnection( dbConn );
+		}
+	}
+
 	public void delete( Object strObject ) throws ChoobException
 	{
 		Connection dbConn = broker.getConnection();

@@ -154,6 +154,57 @@ public class ObjectDBTransaction
 		}
 	}
 
+	public final List<Integer> retrieveInt(Class storedClass, String clause) throws ChoobException
+	{
+		AccessController.checkPermission(new ChoobPermission("objectdb."+storedClass.getName().toLowerCase()));
+		String sqlQuery;
+
+		if ( clause != null )
+		{
+			try
+			{
+				sqlQuery = ObjectDbClauseParser.getSQL(clause, storedClass.getName());
+			}
+			catch (ParseException e)
+			{
+				// TODO there's some public properties we can use to make a better error message.
+				System.err.println("Parse error in string: " + clause);
+				System.err.println("Error was: " + e);
+				throw new ChoobException("Parse error in clause string.");
+			}
+		}
+		else
+		{
+			sqlQuery = "SELECT ObjectStore.ClassID FROM ObjectStore WHERE ClassName = '" + storedClass.getName() + "';";
+		}
+
+		System.out.println("Query: " + sqlQuery);
+
+		try
+		{
+			ArrayList<Integer> objects = new ArrayList<Integer>();
+
+			Statement objStat = dbConn.createStatement();
+
+			ResultSet results = objStat.executeQuery( sqlQuery );
+
+			if( results.first() )
+			{
+				do
+				{
+					objects.add( results.getInt(1) );
+				}
+				while(results.next());
+			}
+
+			return objects;
+		}
+		catch (SQLException e)
+		{
+			throw sqlErr(e);
+		}
+	}
+
 	private final Object retrieveById(Class storedClass, int id) throws ChoobException
 	{
 		try
@@ -217,25 +268,31 @@ public class ObjectDBTransaction
 				{
 					Field tempField = tempObject.getClass().getField( result.getString("FieldName") );
 
-					if( result.getString("FieldType").equals("String") )
+					Type theType = tempField.getType();
+
+					if( theType == String.class )
 					{
-						tempField.set( tempObject, result.getString("FieldValue") );
+						tempField.set( tempObject, result.getString("FieldString") );
 					}
-					else if( result.getString("FieldType").equals("int") )
+					else if( theType == Integer.TYPE )
 					{
-						tempField.setInt( tempObject, Integer.parseInt( result.getString("FieldValue")) );
+						tempField.setInt( tempObject, (int)result.getLong("FieldBigInt") );
 					}
-					else if( result.getString("FieldType").equals("long") )
+					else if( theType == Long.TYPE )
 					{
-						tempField.setLong( tempObject, Long.parseLong( result.getString("FieldValue")) );
+						tempField.setLong( tempObject, result.getLong("FieldBigInt") );
 					}
-					else if( result.getString("FieldType").equals("boolean") )
+					else if( theType == Boolean.TYPE )
 					{
-						tempField.setBoolean( tempObject, result.getString("FieldValue").equals("1") );
+						tempField.setBoolean( tempObject, result.getLong("FieldBigInt") == 1 );
 					}
-					else if( result.getString("FieldType").equals("float") )
+					else if( theType == Float.TYPE )
 					{
-						tempField.setFloat( tempObject, Float.parseFloat( result.getString("FieldValue")) );
+						tempField.setFloat( tempObject, (float)result.getDouble("FieldDouble") );
+					}
+					else if( theType == Double.TYPE )
+					{
+						tempField.setDouble( tempObject, result.getDouble("FieldDouble") );
 					}
 				}
 				catch( NoSuchFieldException e )
@@ -386,7 +443,7 @@ public class ObjectDBTransaction
 
 			int generatedID = generatedKeys.getInt(1);
 
-			PreparedStatement insertField = dbConn.prepareStatement("INSERT INTO ObjectStoreData VALUES(?,?,?,?);");
+			PreparedStatement insertField = dbConn.prepareStatement("INSERT INTO ObjectStoreData VALUES(?,?,?,?,?);");
 
 			Field[] fields = strObj.getClass().getFields();
 
@@ -396,47 +453,63 @@ public class ObjectDBTransaction
 
 				if( !tempField.getName().equals("id") )
 				{
-					boolean foundType = false;
+					boolean foundType = true;
 
 					insertField.setInt(1, generatedID);
 
+					Type theType = tempField.getType();
+
 					try
 					{
-						if( tempField.getType() == java.lang.Integer.TYPE )
+						if( theType == java.lang.Integer.TYPE )
 						{
-							foundType = true;
+							int theVal = tempField.getInt(strObj);
 							insertField.setString(2, tempField.getName());
-							insertField.setString(3, "int");
-							insertField.setString(4, Integer.toString(tempField.getInt(strObj)));
+							insertField.setLong(3, theVal);
+							insertField.setDouble(4, theVal);
+							insertField.setString(5, Integer.toString(theVal));
 						}
-						else if( tempField.getType() == java.lang.Long.TYPE )
+						else if( theType == java.lang.Long.TYPE )
 						{
-							foundType = true;
+							long theVal = tempField.getLong(strObj);
 							insertField.setString(2, tempField.getName());
-							insertField.setString(3, "long");
-							insertField.setString(4, Long.toString(tempField.getLong(strObj)));
+							insertField.setLong(3, theVal);
+							insertField.setDouble(4, theVal);
+							insertField.setString(5, Long.toString(theVal));
 						}
-						else if( tempField.getType() == java.lang.Boolean.TYPE )
+						else if( theType == java.lang.Boolean.TYPE )
 						{
-							foundType = true;
+							boolean theVal = tempField.getBoolean(strObj);
 							insertField.setString(2, tempField.getName());
-							insertField.setString(3, "boolean");
-							insertField.setString(4, tempField.getBoolean(strObj) ? "1" : "0");
+							insertField.setLong(3, theVal ? 1 : 0);
+							insertField.setDouble(4, theVal ? 1 : 0);
+							insertField.setString(5, theVal ? "1" : "0");
 						}
-						else if( tempField.getType() == java.lang.Float.TYPE )
+						else if( theType == java.lang.Float.TYPE )
 						{
-							foundType = true;
+							float theVal = tempField.getFloat(strObj);
 							insertField.setString(2, tempField.getName());
-							insertField.setString(3, "float");
-							insertField.setString(4, Float.toString(tempField.getFloat(strObj)));
+							insertField.setLong(3, (long)theVal);
+							insertField.setDouble(4, theVal);
+							insertField.setString(5, Float.toString(theVal));
 						}
-						else if( tempField.getType() == String.class )
+						else if( theType == java.lang.Double.TYPE )
 						{
-							foundType = true;
+							double theVal = tempField.getDouble(strObj);
 							insertField.setString(2, tempField.getName());
-							insertField.setString(3, "String");
-							insertField.setString(4, (String)tempField.get(strObj));
+							insertField.setLong(3, (long)theVal);
+							insertField.setDouble(4, theVal);
+							insertField.setString(5, Double.toString(theVal));
 						}
+						else if( theType == String.class )
+						{
+							insertField.setString(2, tempField.getName());
+							insertField.setLong(3, 0); // XXX - parse these or not parse these?
+							insertField.setDouble(4, 0);
+							insertField.setString(5, (String)tempField.get(strObj));
+						}
+						else
+							foundType = false;
 
 						if( foundType )
 						{
