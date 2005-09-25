@@ -76,7 +76,7 @@ final class ChoobDecoderTask extends ChoobTask
 			// First, is does it have a trigger?
 			String matchAgainst = mes.getMessage();
 			ma = triggerPattern.matcher(matchAgainst);
-			if (ma.find())
+			if ( ma.find() )
 			{
 				// OK, it's a command!
 				int commandStart = ma.end();

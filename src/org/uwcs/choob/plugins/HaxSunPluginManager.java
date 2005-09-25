@@ -1,4 +1,4 @@
-/**
+/*
  * Haxy plugin loader that compiles with the Sun javac API and stuff.
  * @author bucko
  */
@@ -343,7 +343,8 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 					break;
 				}
 			}
-			filtered.add(method);
+			if (okness)
+				filtered.add(method);
 		}
 
 		// Right, have a bunch of applicable methods.
@@ -788,7 +789,7 @@ final class ChoobPluginMap
 		while(pats.hasNext())
 		{
 			Pattern pat = pats.next();
-			if (pat.matcher(text).matches())
+			if (pat.matcher(text).find())
 				ret.addAll(filters.get(pat));
 		}
 		return ret;
