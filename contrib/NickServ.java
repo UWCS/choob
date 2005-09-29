@@ -14,13 +14,29 @@ import java.util.*;
  * :)
  */
 
+// Holds the NickServ result
+public class ResultObj
+{
+	int result;
+	long time;
+}
+
 public class NickServ
 {
-	private Map<String,ResultObj> nickChecks;
+	private static int TIMEOUT = 10000; // Timeout on nick checks.
+//	private static int CACHE_TIMEOUT = 3600000; // Timeout on nick check cache (1 hour).
+	// ^^ Can only be used once we can verify a user is in a channel and thus trust their online-ness.
+	private static int CACHE_TIMEOUT = 300000; // Timeout on nick check cache (5 mins).
 
-	public NickServ(Modules modules)
+	private Map<String,ResultObj> nickChecks;
+	Modules modules;
+	IRCInterface irc;
+
+	public NickServ(Modules modules, IRCInterface irc)
 	{
 		nickChecks = new HashMap<String,ResultObj>();
+		this.irc = irc;
+		this.modules = modules;
 	}
 
 	public void destroy(Modules modules)
@@ -29,7 +45,7 @@ public class NickServ
 		{
 			Iterator<String> nicks = nickChecks.keySet().iterator();
 			while(nicks.hasNext()) {
-				ResultObj result = splatNickCheck(nicks.next());
+				ResultObj result = getNickCheck(nicks.next());
 				synchronized(result)
 				{
 					result.notifyAll();
@@ -38,23 +54,29 @@ public class NickServ
 		}
 	}
 
-	public void commandNickServ( Message con, Modules modules, IRCInterface irc ) throws ChoobException
+	public void commandNickServ( Message con ) throws ChoobException
 	{
 		String nick = modules.util.getParamString( con );
-		int check1 = (Integer)modules.plugin.callAPI("NickServ", "NickServCheck",irc, nick);
-		if ( check1 > 0 )
+		int check1 = (Integer)modules.plugin.callAPI("NickServ", "NickServStatus", nick);
+		if ( check1 > 1 )
 		{
 			irc.sendContextReply(con, nick + " is authed (" + check1 + ")!");
 		}
 		else
 		{
-			irc.sendContextReply(con, nick + " is not authed!");
+			irc.sendContextReply(con, nick + " is not authed (" + check1 + ")!");
 		}
 	}
 
-	public int apiNickServCheck( IRCInterface irc, String nick )
+	public int apiNickServStatus( String nick )
 	{
-		ResultObj result = getNewNickCheck(irc, nick);
+		ResultObj result = getCachedNickCheck( nick.toLowerCase() );
+		if (result != null)
+		{
+			return result.result;
+		}
+
+		result = getNewNickCheck( nick.toLowerCase() );
 
 		synchronized(result)
 		{
@@ -68,12 +90,18 @@ public class NickServ
 				return -1;
 			}
 		}
-		int status = result.getResult();
+		int status = result.result;
 		return status;
 	}
 
-	private ResultObj getNewNickCheck( IRCInterface irc, String nick )
+	public boolean apiNickServCheck( String nick )
 	{
+		return apiNickServStatus( nick ) >= 3; // Ie, authed by password
+	}
+
+	private ResultObj getNewNickCheck( String nick )
+	{
+		System.out.println("Asked for new nick check for " + nick);
 		ResultObj result;
 		synchronized(nickChecks)
 		{
@@ -82,72 +110,115 @@ public class NickServ
 			{
 				// Not already waiting on this one
 				result = new ResultObj();
+				result.result = -1;
 				irc.sendMessage("NickServ", "STATUS " + nick);
 				nickChecks.put( nick, result );
-			} 
+			}
 		}
 		return result;
 	}
 
-	private ResultObj splatNickCheck( String nick )
+	private ResultObj getNickCheck( String nick )
+	{
+		synchronized(nickChecks)
+		{
+			return (ResultObj)nickChecks.get( nick );
+		}
+	}
+
+	private ResultObj getCachedNickCheck( String nick )
 	{
 		ResultObj result;
 		synchronized(nickChecks)
 		{
 			result = (ResultObj)nickChecks.get( nick );
+			System.out.println("Cached value for " + nick + " is: " + result);
 			if ( result == null )
 				// !!! This should never really happen
 				return null;
 
-			// Clear status so next time we ask NickServ again
-			nickChecks.remove( nick );
+			if (result.result == -1)
+				return null;
+
+			if ( result.time + TIMEOUT < System.currentTimeMillis() )
+			{
+				// expired!
+				// TODO - do this in an interval...
+				nickChecks.remove( nick );
+				System.out.println("Ooops, it expired! It has " + result.time + " vs our " + System.currentTimeMillis() + ".");
+				return null;
+			}
 		}
 		return result;
 	}
 
-	public void onPrivateNotice( Message mes, Modules modules, IRCInterface irc )
+	public void onPrivateNotice( Message mes )
 	{
 		if ( ! (mes instanceof PrivateNotice) )
 			return; // Only interested in private notices
 
-		if ( ! mes.getNick().equals( "NickServ" ) )
+		if ( ! mes.getNick().toLowerCase().equals( "nickserv" ) )
 			return; // Not from NickServ --> also don't care
 
 		List params = modules.util.getParams( mes );
 
-		if ( ! ((String)params.get(0)).equals("STATUS") )
+		if ( ! ((String)params.get(0)).toLowerCase().equals("status") )
 			return; // Wrong type of message!
 
 		String nick = (String)params.get(1);
 		int status = Integer.valueOf((String)params.get(2));
 
-		ResultObj result = splatNickCheck( nick );
+		ResultObj result = getNickCheck( nick.toLowerCase() );
 		if ( result == null )
 			return; // XXX
 
 		synchronized(result)
 		{
-			result.setResult( status );
+			result.result = status;
+			result.time = System.currentTimeMillis();
 
 			result.notifyAll();
 		}
 	}
 
-	// Holds the NickServ result
-	private class ResultObj
+	// Expire old checks when appropriate...
+
+	public void onNickChange( NickChange nc )
 	{
-		int result;
-		public ResultObj()
+		synchronized(nickChecks)
 		{
-			result = -1;
+			nickChecks.remove(nc.getNick());
+			nickChecks.remove(nc.getNewNick());
 		}
-		public void setResult( int result )
+	}
+
+	public void onJoin( ChannelJoin cj )
+	{
+		synchronized(nickChecks)
 		{
-			this.result = result;
+			nickChecks.remove(cj.getNick());
 		}
-		public int getResult()
+	}
+
+	public void onKick( ChannelKick ck )
+	{
+		synchronized(nickChecks)
 		{
-			return result;
+			nickChecks.remove(ck.getTarget());
+		}
+	}
+	public void onJoin( ChannelPart cp )
+	{
+		synchronized(nickChecks)
+		{
+			nickChecks.remove(cp.getNick());
+		}
+	}
+	public void onQuit( QuitEvent qe )
+	{
+		synchronized(nickChecks)
+		{
+			nickChecks.remove(qe.getNick());
 		}
 	}
 }
