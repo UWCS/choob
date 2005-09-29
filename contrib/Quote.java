@@ -709,7 +709,7 @@ public class Quote
 				}
 				quote.score++;
 				quote.up++;
-				irc.sendContextReply( mes, "OK, quote " + quoteID + " is now too leet enough to be seen! Current karma is " + quote.score + "." );
+				irc.sendContextReply( mes, "OK, quote " + quoteID + " is now leet enough to be seen! Current karma is " + quote.score + "." );
 			}
 			else
 			{
