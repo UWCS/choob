@@ -5,6 +5,7 @@ import org.uwcs.choob.support.events.*;
 import java.sql.*;
 import java.util.*;
 import java.util.regex.*;
+import java.text.*;
 
 public class QuoteObject
 {
@@ -28,6 +29,18 @@ public class QuoteLine
 	public boolean isAction;
 }
 
+public class RecentQuote
+{
+	public QuoteObject quote;
+	// No sense in caching the lines here.
+	public long time;
+	/*
+	 * 0 = displayed
+	 * 1 = quoted
+	 */
+	public int type;
+}
+
 public class Quote
 {
 	private static int MINLENGTH = 10; // Minimum length of a line to be quotable using simple syntax.
@@ -37,11 +50,16 @@ public class Quote
 	private static int MAXLINES = 10; // Maximum allowed lines in a quote.
 	private static int MAXCLAUSES = 20; // Maximum allowed lines in a quote.
 	private static int MAXJOINS = 6; // Maximum allowed lines in a quote.
-	private static String IGNORE = "quote|quoten|quote.create"; // Ignore these when searching for regex quotes.
+	private static int RECENTLENGTH = 20; // Maximum length of "recent quotes" list for a context.
+	private static String IGNORE = "quoteme|quote|quoten|quote.create"; // Ignore these when searching for regex quotes.
+	private static int THRESHOLD = -3; // Lowest karma of displayed quote.
+
+	private HashMap<String,List<RecentQuote>> recentQuotes;
 
 	private Modules mods;
 	private IRCInterface irc;
 	private Pattern ignorePattern;
+
 	public Quote( Modules mods, IRCInterface irc )
 	{
 		this.mods = mods;
@@ -49,6 +67,7 @@ public class Quote
 		this.ignorePattern = Pattern.compile(
 				"^(?:" + irc.getTriggerRegex() + ")" +
 				"(?:" + IGNORE + ")", Pattern.CASE_INSENSITIVE);
+		recentQuotes = new HashMap<String,List<RecentQuote>>();
 	}
 
 	public void commandCreate( Message mes ) throws ChoobException
@@ -139,6 +158,37 @@ public class Quote
 				Message line = history.get(i);
 				String text = line.getMessage();
 				if (text.length() < MINLENGTH || text.split(" +").length < MINWORDS)
+					continue;
+				String guessNick = mods.nick.getBestPrimaryNick( line.getNick() );
+				if ( guessNick.toLowerCase().equals(findNick) )
+				{
+					lines.add(line);
+					break;
+				}
+			}
+			if (lines.size() == 0)
+			{
+				irc.sendContextReply(mes, "No quote found for nickname " + findNick + ".");
+				return;
+			}
+		}
+		else if (param.toLowerCase().startsWith("action:"))
+		{
+			// XXX untested
+			// It's an action from a nickname
+			String bits[] = param.split(" +");
+			if (bits.length > 2)
+			{
+				irc.sendContextReply(mes, "When quoting by nickname, you must supply only 1 parameter.");
+				return;
+			}
+			bits = bits[0].split(":");
+			String findNick = mods.nick.getBestPrimaryNick( bits[1] ).toLowerCase();
+			for(int i=0; i<history.size(); i++)
+			{
+				Message line = history.get(i);
+				String text = line.getMessage();
+				if (!(line instanceof ChannelAction) || text.length() < MINLENGTH || text.split(" +").length < MINWORDS)
 					continue;
 				String guessNick = mods.nick.getBestPrimaryNick( line.getNick() );
 				if ( guessNick.toLowerCase().equals(findNick) )
@@ -257,8 +307,8 @@ public class Quote
 		// OK, build a QuoteObject...
 		final QuoteObject q = new QuoteObject();
 		q.id = 0;
-		q.quoter = mes.getNick();
-		q.hostmask = mes.getLogin() + "@" + mes.getHostname();
+		q.quoter = mods.nick.getBestPrimaryNick(mes.getNick());
+		q.hostmask = (mes.getLogin() + "@" + mes.getHostname()).toLowerCase();
 		q.lines = lines.size();
 		q.score = 0;
 		q.up = 0;
@@ -266,6 +316,8 @@ public class Quote
 		q.time = System.currentTimeMillis();
 
 		// QuoteLine object; quoteID will be filled in later.
+
+		final List quoteLines = new ArrayList(lines.size());
 
 		try
 		{
@@ -275,16 +327,17 @@ public class Quote
 				save(q);
 
 				// Now have a quote ID!
-				QuoteLine ql = new QuoteLine();
-				ql.quoteID = q.id;
 				for(int i=0; i<lines.size(); i++)
 				{
+					QuoteLine ql = new QuoteLine();
+					ql.quoteID = q.id;
 					ql.id = 0;
 					ql.lineNumber = i;
 					ql.nick = lines.get(i).getNick();
 					ql.message = lines.get(i).getMessage();
 					ql.isAction = (lines.get(i) instanceof ChannelAction);
 					save(ql);
+					quoteLines.add(ql);
 				}
 			}});
 		}
@@ -294,47 +347,75 @@ public class Quote
 			return;
 		}
 
+		// Remember this quote for later...
+		synchronized(recentQuotes)
+		{
+			String context = mes.getContext();
+			List<RecentQuote> recent = recentQuotes.get(context);
+			if (recent == null)
+			{
+				recent = new LinkedList<RecentQuote>();
+				recentQuotes.put( context, recent );
+			}
+
+			RecentQuote info = new RecentQuote();
+			info.quote = q;
+			info.time = System.currentTimeMillis();
+			info.type = 1;
+
+			recent.add(0, info);
+
+			while (recent.size() > RECENTLENGTH)
+				recent.remove( RECENTLENGTH );
+		}
+
+		irc.sendContextReply( mes, "OK, added quote " + q.id + ": " + formatPreview(quoteLines) );
+	}
+
+	private String formatPreview(List lines)
+	{
 		if (lines.size() == 1)
 		{
-			Message line = lines.get(0);
+			QuoteLine line = (QuoteLine)lines.get(0);
 			String text;
-			if (line.getMessage().length() > EXCERPT)
-				text = line.getMessage().substring(0, 27) + "...";
+			if (line.message.length() > EXCERPT)
+				text = line.message.substring(0, 27) + "...";
 			else
-				text = line.getMessage();
+				text = line.message;
 			String prefix;
-			if (line instanceof ChannelAction)
-				prefix = "* " + line.getNick();
+			if (line.isAction)
+				prefix = "* " + line.nick;
 			else
-				prefix = "<" + line.getNick() + ">";
-			irc.sendContextReply( mes, "Quoted this: " + prefix + " " + text );
+				prefix = "<" + line.nick + ">";
+			return prefix + " " + text;
 		}
 		else
 		{
 			// last is initalised above
-			Message first = lines.get(0);
+			QuoteLine first = (QuoteLine)lines.get(0);
 
 			String firstText;
-			if (first instanceof ChannelAction)
-				firstText = "* " + first.getNick();
+			if (first.isAction)
+				firstText = "* " + first.nick;
 			else
-				firstText = "<" + first.getNick() + ">";
-			if (first.getMessage().length() > EXCERPT)
-				firstText += " " + first.getMessage().substring(0, 27) + "...";
+				firstText = "<" + first.nick + ">";
+			if (first.message.length() > EXCERPT)
+				firstText += " " + first.message.substring(0, 27) + "...";
 			else
-				firstText += " " + first.getMessage();
+				firstText += " " + first.message;
 
+			QuoteLine last = (QuoteLine)lines.get(lines.size() - 1);
 			String lastText;
-			if (last instanceof ChannelAction)
-				lastText = "* " + last.getNick();
+			if (last.isAction)
+				lastText = "* " + last.nick;
 			else
-				lastText = "<" + last.getNick() + ">";
-			if (last.getMessage().length() > EXCERPT)
-				lastText += " " + last.getMessage().substring(0, 27) + "...";
+				lastText = "<" + last.nick + ">";
+			if (last.message.length() > EXCERPT)
+				lastText += " " + last.message.substring(0, 27) + "...";
 			else
-				lastText += " " + last.getMessage();
+				lastText += " " + last.message;
 
-			irc.sendContextReply( mes, "Quoted this: " + firstText + " -> " + lastText );
+			return firstText + " -> " + lastText;
 		}
 	}
 
@@ -365,6 +446,28 @@ public class Quote
 			else
 				irc.sendContextMessage( mes, "<" + line.nick + "> " + line.message );
 		}
+
+		// Remember this quote for later...
+		synchronized(recentQuotes)
+		{
+			String context = mes.getContext();
+			List<RecentQuote> recent = recentQuotes.get(context);
+			if (recent == null)
+			{
+				recent = new LinkedList<RecentQuote>();
+				recentQuotes.put( context, recent );
+			}
+
+			RecentQuote info = new RecentQuote();
+			info.quote = quote;
+			info.time = System.currentTimeMillis();
+			info.type = 0;
+
+			recent.add(0, info);
+
+			while (recent.size() > RECENTLENGTH)
+				recent.remove( RECENTLENGTH );
+		}
 	}
 
 	public void commandCount( Message mes ) throws ChoobException
@@ -382,6 +485,264 @@ public class Quote
 			irc.sendContextReply( mes, "There's " + count + " quotes!" );
 	}
 
+	// quotekarma, quoteinfo
+	public void commandInfo( Message mes ) throws ChoobException
+	{
+		String whereClause = getClause( mods.util.getParamString(mes) );
+		List<Integer> quoteKarmas = mods.odb.retrieveInt( QuoteObject.class, "SELECT score " + whereClause );
+
+		int count = quoteKarmas.size();
+		int nonZeroCount = 0;
+		int total = 0;
+		int max = 0, min = 0;
+		for(Integer i: quoteKarmas)
+		{
+			total += i;
+			if (i != 0)
+			{
+				nonZeroCount++;
+				if (i < min)
+					min = i;
+				else if (i > max)
+					max = i;
+			}
+		}
+
+		DecimalFormat format = new DecimalFormat("##0.00");
+
+		String avKarma = format.format((double) total / (double) count);
+		String avNonZeroKarma = format.format((double) total / (double) nonZeroCount);
+
+		if (count == 0)
+			irc.sendContextReply( mes, "Sorry, no quotes found!" );
+		else if (count == 1)
+			irc.sendContextReply( mes, "I only found one quote; karma is " + total + "." );
+		else
+			irc.sendContextReply( mes, "Found " + count + " quotes. The total karma is " + total + ", average " + avKarma + ". " + nonZeroCount + " quotes had a karma; average for these is " + avNonZeroKarma + ". Min karma is " + min + " and max is " + max + "." );
+	}
+
+	public void commandRemove( Message mes ) throws ChoobException
+	{
+		// Quotes are stored by context...
+		synchronized(recentQuotes)
+		{
+			String context = mes.getContext();
+			List<RecentQuote> recent = recentQuotes.get(context);
+			if (recent == null || recent.size() == 0)
+			{
+				irc.sendContextReply( mes, "Sorry, no quotes seen from here!" );
+				return;
+			}
+
+			String nick = mods.nick.getBestPrimaryNick(mes.getNick()).toLowerCase();
+			String hostmask = (mes.getLogin() + "@" + mes.getHostname()).toLowerCase();
+
+			Iterator<RecentQuote> iter = recent.iterator();
+			QuoteObject quote = null;
+			RecentQuote info = null;
+			while(iter.hasNext())
+			{
+				info = iter.next();
+				if (info.type == 1 && info.quote.quoter.toLowerCase().equals(nick)
+						&& info.quote.hostmask.equals(hostmask))
+				{
+					quote = info.quote;
+					break;
+				}
+			}
+
+			if (quote == null)
+			{
+				irc.sendContextReply( mes, "Sorry, you haven't quoted anything recently here!" );
+				return;
+			}
+
+			final QuoteObject theQuote = quote;
+			final List quoteLines = mods.odb.retrieveInt( QuoteLine.class, "WHERE quoteID = " + quote.id );
+			try
+			{
+				mods.odb.runTransaction( new ObjectDBTransaction() {
+					public void run() throws ChoobException
+				{
+					delete(theQuote);
+
+					// Now have a quote ID!
+					for(Object line: quoteLines)
+					{
+						delete((QuoteLine)line);
+					}
+				}});
+			}
+			catch (ChoobException e)
+			{
+				irc.sendContextReply( mes, "Could not unquote: " + e );
+				return;
+			}
+
+			recent.remove(info); // So the next unquote doesn't hit it
+
+			irc.sendContextReply( mes, "OK, unquoted quote " + quote.id + " (" + formatPreview(quoteLines) + ")." );
+		}
+	}
+
+	public void commandLast( Message mes ) throws ChoobException
+	{
+		// Get a count...
+		int count = 1;
+		String param =  mods.util.getParamString(mes);
+		try
+		{
+			if ( param.length() > 0 )
+				count = Integer.parseInt( param );
+		}
+		catch ( NumberFormatException e )
+		{
+			irc.sendContextReply( mes, "The text " + param + " is not a valid number!" );
+			return;
+		}
+		synchronized(recentQuotes)
+		{
+			String context = mes.getContext();
+			List<RecentQuote> recent = recentQuotes.get(context);
+			if (recent == null || recent.size() == 0)
+			{
+				irc.sendContextReply( mes, "Sorry, no quotes seen from here!" );
+				return;
+			}
+
+			// Ugly hack to avoid lack of last()...
+			ListIterator<RecentQuote> iter = recent.listIterator();
+
+			RecentQuote info = null;
+			QuoteObject quote = null;
+			boolean first = true;
+			String output = null;
+			int remain = count;
+			while(iter.hasNext() && remain-- > 0)
+			{
+				info = iter.next();
+				if (!first)
+					output = output + ", " + info.quote.id;
+				else
+					output = "" + info.quote.id;
+				first = false;
+			}
+
+			if (count == 1)
+				irc.sendContextReply( mes, "Most recent quote ID: " + output + "." );
+			else
+				irc.sendContextReply( mes, "Most recent quote IDs: " + output + "." );
+		}
+	}
+
+	public void commandKarmaMod( Message mes ) throws ChoobException
+	{
+		int quoteID = -1;
+		boolean up = true;
+		List<String> params =  mods.util.getParams(mes);
+		if (params.size() == 1 || params.size() > 3)
+		{
+			irc.sendContextReply( mes, "Syntax: quote.KarmaMod {up|down} [number]" );
+			return;
+		}
+
+		// Check input
+		try
+		{
+			if ( params.size() == 3 )
+				quoteID = Integer.parseInt( params.get(2) );
+		}
+		catch ( NumberFormatException e )
+		{
+			irc.sendContextReply( mes, "The text " + params.get(2) + " is not a valid number!" );
+			return;
+		}
+
+		if ( params.get(1).toLowerCase().equals("down") )
+			up = false;
+		else if ( params.get(1).toLowerCase().equals("up") )
+			up = true;
+		else
+		{
+			irc.sendContextReply( mes, "Syntax: quote.KarmaMod {up|down} [number]" );
+			return;
+		}
+
+		String leet;
+		if (up)
+			leet = "l33t";
+		else
+			leet = "lame";
+
+		if (quoteID == -1)
+		{
+			synchronized(recentQuotes)
+			{
+				String context = mes.getContext();
+				List<RecentQuote> recent = recentQuotes.get(context);
+				if (recent == null || recent.size() == 0)
+				{
+					irc.sendContextReply( mes, "Sorry, no quotes seen from here!" );
+					return;
+				}
+
+				quoteID = recent.get(0).quote.id;
+			}
+		}
+
+		List quotes = mods.odb.retrieve( QuoteObject.class, "WHERE id = " + quoteID );
+		if (quotes.size() == 0)
+		{
+			irc.sendContextReply( mes, "No such quote to " + leet + "!" );
+			return;
+		}
+
+		QuoteObject quote = (QuoteObject)quotes.get(0);
+		if (up)
+		{
+			if (quote.score == THRESHOLD - 1)
+			{
+				if (!mods.security.hasPerm( new ChoobPermission( "quote.delete" ), mes.getNick() ))
+				{
+					irc.sendContextReply( mes, "Sorry, that quote is on the karma threshold. Only an admin can make it more leet!" );
+					return;
+				}
+				quote.score++;
+				quote.up++;
+				irc.sendContextReply( mes, "OK, quote " + quoteID + " is now too leet enough to be seen! Current karma is " + quote.score + "." );
+			}
+			else
+			{
+				quote.score++;
+				quote.up++;
+				irc.sendContextReply( mes, "OK, quote " + quoteID + " is now more leet! Current karma is " + quote.score + "." );
+			}
+		}
+		else if (quote.score == THRESHOLD)
+		{
+			if (mods.security.hasPerm( new ChoobPermission( "quote.delete" ), mes.getNick() ))
+			{
+				quote.score--;
+				quote.down++;
+				irc.sendContextReply( mes, "OK, quote " + quoteID + " is now too lame to be seen! Current karma is " + quote.score + "." );
+			}
+			else
+			{
+				irc.sendContextReply( mes, "Sorry, that quote is on the karma threshold. Only an admin can make it more lame!" );
+				return;
+			}
+		}
+		else
+		{
+			quote.score--;
+			quote.down++;
+
+			irc.sendContextReply( mes, "OK, quote " + quoteID + " is now more lame! Current karma is " + quote.score + "." );
+		}
+		mods.odb.update(quote);
+	}
+
+	/**
 	/**
 	 * Simple parser for quote searches...
 	 */
@@ -414,7 +775,7 @@ public class Quote
 				if (param.charAt(0) == '/')
 				{
 					// This must be a regex with a user parameter. Save for later.
-					user = first;
+					user = mods.nick.getBestPrimaryNick( first );
 					pos = pos + colon + 1;
 				}
 				// OK, not a regex. What else might it be?
@@ -495,6 +856,7 @@ public class Quote
 			}
 			else if (param.charAt(0) >= '0' && param.charAt(0) <= '9')
 			{
+				// Number -> Quote-by-ID
 				int value;
 				try
 				{
@@ -502,18 +864,29 @@ public class Quote
 				}
 				catch (NumberFormatException e)
 				{
-					throw new ChoobException("Invalid score selector: " + param);
+					throw new ChoobException("Invalid quote number: " + param);
 				}
 				clauses.add("id = " + value);
 			}
 			else
 			{
 				// This is a name
-				clauses.add("join"+joins+".nick = \"" + param.replaceAll("(\\W)", "\\\\1") + "\"");
+				user = mods.nick.getBestPrimaryNick( param );
+				clauses.add("join"+joins+".nick = \"" + user.replaceAll("(\\W)", "\\\\1") + "\"");
 				clauses.add("join"+joins+".quoteID = id");
 				joins++;
 			}
+
+			// Make sure we skip any double spaces...
 			pos = text.indexOf(' ', pos + 1);
+			while( pos < text.length() - 1 && text.charAt(pos + 1) == ' ')
+			{
+				pos++;
+			}
+
+			// And that we haven't hopped off the end...
+			if (pos == text.length() - 1)
+				pos = -1;
 		}
 
 		// All those joins hate MySQL.
@@ -523,7 +896,7 @@ public class Quote
 			throw new ChoobException("Sorry, due to MySQL being whorish, only " + MAXCLAUSES + " clause(s) allowed for now.");
 
 		if (!score)
-			clauses.add("score > -3");
+			clauses.add("score > " + THRESHOLD);
 
 		StringBuffer search = new StringBuffer();
 		for(int i=0; i<joins; i++)
