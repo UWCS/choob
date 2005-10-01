@@ -49,7 +49,9 @@ public class Test
 
 	public void onJoin( ChannelJoin ev, Modules mod, IRCInterface irc )
 	{
-		irc.sendMessage(ev.getChannel(), "Hello, " + ev.getNick() + "!");
+		System.out.println(ev.getLogin());
+		if (!ev.getLogin().equals("Choob"))
+			irc.sendMessage(ev.getChannel(), "Hello, " + ev.getNick() + "!");
 	}
 
 	public void onPart( ChannelPart ev, Modules mod, IRCInterface irc )
