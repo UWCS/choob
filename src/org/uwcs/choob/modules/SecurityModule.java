@@ -926,6 +926,7 @@ public class SecurityModule
 				stat.setInt(2, group.getType());
 				if (stat.executeUpdate() == 0)
 					System.err.println("Ack! No rows updated in group " + groupName + " insert!");
+				dbConn.commit();
 			}
 			catch (SQLException e)
 			{
