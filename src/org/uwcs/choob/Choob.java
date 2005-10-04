@@ -192,13 +192,14 @@ public class Choob extends PircBot
 				}
 				while ( coreplugResults.next() );
 
+			coreplugSmt.close();
+
 			broker.freeConnection(dbConnection);
 		}
 		catch( Exception e )
 		{
 			// If we failed to load the core plugins, we've got issues.
-			System.out.println(e);
-			e.printStackTrace();
+			throw new RuntimeException("Failed to load core plugin list!", e);
 		}
 	}
 

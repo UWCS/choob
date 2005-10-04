@@ -363,15 +363,17 @@ public class DbConnectionBroker implements Runnable {
 
 	public boolean isValidated( Connection tempCon )
 	{
+		Statement validStat;
 		try
 		{
-			Statement validStat = tempCon.createStatement();
+			validStat = tempCon.createStatement();
 
 			ResultSet tempResult = validStat.executeQuery("SELECT NOW();");
 
 			if( tempResult.first() )
 			{
 				log.println("Success: Connection passed validation.");
+				validStat.close();
 				return true;
 			}
 			else

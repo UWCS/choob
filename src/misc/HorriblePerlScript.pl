@@ -65,7 +65,7 @@ our %params = (
 	AimedEvent => [qw/target/],
 	MultiModeEvent => [qw/modes/],
 	NickChangeEvent => [qw/newNick/],
-	ContextEvent => [qw//],
+	ContextEvent => [qw/(!String)context/],
 	ParamEvent => [qw/param/],
 );
 
@@ -122,6 +122,7 @@ while ($_ = <DATA>) {
 				}
 
 				my @constOrder = map { my @a=(); if ($params{$_}) { @a = @{$params{$_}} } (@a) } @inherit;
+				@constOrder = grep { !/\(\!/ } @constOrder;
 				map { s/\(\w+\)// } @constOrder;
 
 				my $constParams = join ', ', map { $paramConst{$_} } @constOrder;
@@ -141,6 +142,7 @@ END
 			my @inherit = &getInherit($class);
 
 			my @constOrder = map { my @a=(); if ($params{$_}) { @a = @{$params{$_}} } (@a) } @inherit;
+			@constOrder = grep { !/\(\!/ } @constOrder;
 			map { s/\(\w+\)// } @constOrder;
 
 			my $constParams = join ', ', map { $paramConst{$_} } @constOrder;
@@ -164,14 +166,17 @@ foreach my $class (keys %inheritance) {
 	my @inherit = &getInherit($class);
 	my @constOrder = map { my @a=(); if ($params{$_}) { @a = @{$params{$_}} } (@a) } @inherit;
 	my %paramType;
+	my %paramVirtual;
 	foreach(@constOrder) {
-		if (s/\((\w+)\)//) {
-			$paramType{$_} = $1;
+		if (s/\((!)?(\w+)\)//) {
+			$paramVirtual{$_} = (defined $1 && $1 eq '!') ? 1 : 0;
+			$paramType{$_} = $2;
 		} else {
+			$paramVirtual{$_} = 0;
 			$paramType{$_} = "String";
 		}
 	}
-	my $constProto = join ', ', map { "$paramType{$_} $_" } @constOrder;
+	my $constProto = join ', ', map { $paramVirtual{$_} ? () : ("$paramType{$_} $_") } @constOrder;
 
 	my $extends = "";
 	my $implements = "";
@@ -187,7 +192,7 @@ foreach my $class (keys %inheritance) {
 		my @i = @{$inheritance{$class}};
 		$extends = "extends $i[0]";
 		my @sInherit = &getInherit($i[0]);
-		@superOrder = grep { s/\((\w+)\)// || 1 } map { my @a=(); if ($params{$_}) { @a = @{$params{$_}} } (@a) } @sInherit;
+		@superOrder = grep { s/\((\w+)\)// || 1 } grep { !/\(!/ } map { my @a=(); if ($params{$_}) { @a = @{$params{$_}} } (@a) } @sInherit;
 		my $superParams = join ', ', @superOrder;
 		$super1 = "\t\tsuper($superParams);";
 		$implements = "implements ".join(", ",@i[1..$#i]) if @i > 1;
@@ -270,6 +275,21 @@ END
 	my $memberInit2 = "";
 	my $getters = "";
 	foreach my $field (grep { my$a=$_;!scalar(grep {$a eq $_} @superOrder) } @constOrder) {
+		# Some params (for example context) don't do anything except in the interface.
+		next if $paramVirtual{$field};
+
+		my $get = ($paramType{$field} eq 'boolean') ? 'is' : 'get';
+		$getters .= <<END;
+	/**
+	 * Get the value of $field
+	 * \@return The value of $field
+	 */
+	public $paramType{$field} $get\u$field() {
+		return $field;
+	}
+
+END
+
 		$members .= <<END;
 	/**
 	 * $field
@@ -286,17 +306,6 @@ END
 			$memberInit2 .= "\t\tthis.$field = old.$field;\n";
 		}
 
-		my $get = ($paramType{$field} eq 'boolean') ? 'is' : 'get';
-		$getters .= <<END;
-	/**
-	 * Get the value of $field
-	 * \@return The value of $field
-	 */
-	public $paramType{$field} $get\u$field() {
-		return $field;
-	}
-
-END
 		if ($paramType{$field} eq 'String') {
 			$equals .= " && $field.equals(thing.$field)";
 		} else {
@@ -390,8 +399,8 @@ foreach my $interface (keys %params) {
 	foreach (@{$params{$interface}}) {
 		my $paramType;
 
-		if (s/\((\w+)\)//) {
-			$paramType = $1;
+		if (s/\((!)?(\w+)\)//) {
+			$paramType = $2;
 		} else {
 			$paramType = "String";
 		}

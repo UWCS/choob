@@ -10,7 +10,7 @@ public class SVN
 {
 	public SVN( Modules mods )
 	{
-		mods.interval.callBack( this, null, new Date( (new Date().getTime())+1000 ) );
+		mods.interval.callBack( this, null, new Date( (new Date().getTime())+100 ) );
 	}
 
 	public void interval( Object parameter, Modules mods, IRCInterface irc ) throws ChoobException
@@ -18,7 +18,8 @@ public class SVN
 		URL svnURL;
 		try
 		{
-			svnURL = new URL("http://svn.uwcs.co.uk/repos/choob/");
+			//svnURL = new URL("http://svn.uwcs.co.uk/repos/choob/");
+			svnURL = new URL("http://localhost/~bucko/choobrepos.html");
 		}
 		catch (MalformedURLException e)
 		{
@@ -48,6 +49,6 @@ public class SVN
 			}
 		}
 
-		mods.interval.callBack( this, newRev, new Date( (new Date().getTime())+10000 ) );		
+		mods.interval.callBack( this, newRev, new Date( (new Date().getTime())+1000 ) );		
 	}
 }

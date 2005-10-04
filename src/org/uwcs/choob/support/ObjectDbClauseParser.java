@@ -790,19 +790,9 @@
   }
 
   final public void ParseSelect() throws ParseException {
-                Token t;
-    //			<K_COUNT>
-    //			{
-    //				selClause = "COUNT(s0.ClassID)";
-    //			}
-    //		|
-    //			<K_SUM> t = <FIELDNAME>
-    //			{
-    //				selClause = "SUM("+getFieldName(t.image)+")";
-    //			}
-    //		|
-                            t = jj_consume_token(FIELDNAME);
-                                selClause = getFieldName(t.image);
+                SimpleNode expr;
+    expr = ExpressionRoot();
+                                selClause = parseExpression(expr, HINT_INTEGER);
   }
 
   public ObjectDbClauseParserTokenManager token_source;

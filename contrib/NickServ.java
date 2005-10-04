@@ -2,8 +2,8 @@ import org.uwcs.choob.*;
 import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
-import bsh.*;
 import java.util.*;
+import java.security.*;
 
 /**
  * Choob nickserv checker
@@ -29,17 +29,17 @@ public class NickServ
 	private static int CACHE_TIMEOUT = 300000; // Timeout on nick check cache (5 mins).
 
 	private Map<String,ResultObj> nickChecks;
-	Modules modules;
+	Modules mods;
 	IRCInterface irc;
 
-	public NickServ(Modules modules, IRCInterface irc)
+	public NickServ(Modules mods, IRCInterface irc)
 	{
 		nickChecks = new HashMap<String,ResultObj>();
 		this.irc = irc;
-		this.modules = modules;
+		this.mods = mods;
 	}
 
-	public void destroy(Modules modules)
+	public void destroy(Modules mods)
 	{
 		synchronized(nickChecks)
 		{
@@ -54,22 +54,28 @@ public class NickServ
 		}
 	}
 
-	public void commandNickServ( Message con ) throws ChoobException
+	public void commandCheck( Message mes ) throws ChoobException
 	{
-		String nick = modules.util.getParamString( con );
-		int check1 = (Integer)modules.plugin.callAPI("NickServ", "NickServStatus", nick);
+		String nick = mods.util.getParamString( mes );
+		int check1 = (Integer)mods.plugin.callAPI("NickServ", "Status", nick);
 		if ( check1 > 1 )
 		{
-			irc.sendContextReply(con, nick + " is authed (" + check1 + ")!");
+			irc.sendContextReply(mes, nick + " is authed (" + check1 + ")!");
 		}
 		else
 		{
-			irc.sendContextReply(con, nick + " is not authed (" + check1 + ")!");
+			irc.sendContextReply(mes, nick + " is not authed (" + check1 + ")!");
 		}
 	}
 
-	public int apiNickServStatus( String nick )
+	public int apiStatus( String nick )
 	{
+		System.out.println("Called by: " + mods.security.getCallerPluginName());
+		List<String> names = mods.security.getPluginNames();
+		System.out.println("Stack:");
+		for(String name: names)
+			System.out.println("\t" + name);
+		System.out.println("End of stack.");
 		ResultObj result = getCachedNickCheck( nick.toLowerCase() );
 		if (result != null)
 		{
@@ -94,12 +100,12 @@ public class NickServ
 		return status;
 	}
 
-	public boolean apiNickServCheck( String nick )
+	public boolean apiCheck( String nick )
 	{
-		return apiNickServStatus( nick ) >= 3; // Ie, authed by password
+		return apiStatus( nick ) >= 3; // Ie, authed by password
 	}
 
-	private ResultObj getNewNickCheck( String nick )
+	private ResultObj getNewNickCheck( final String nick )
 	{
 		System.out.println("Asked for new nick check for " + nick);
 		ResultObj result;
@@ -111,7 +117,13 @@ public class NickServ
 				// Not already waiting on this one
 				result = new ResultObj();
 				result.result = -1;
-				irc.sendMessage("NickServ", "STATUS " + nick);
+				AccessController.doPrivileged( new PrivilegedAction() {
+					public Object run()
+					{
+						irc.sendMessage("NickServ", "STATUS " + nick);
+						return null;
+					}
+				});
 				nickChecks.put( nick, result );
 			}
 		}
@@ -160,7 +172,7 @@ public class NickServ
 		if ( ! mes.getNick().toLowerCase().equals( "nickserv" ) )
 			return; // Not from NickServ --> also don't care
 
-		List params = modules.util.getParams( mes );
+		List params = mods.util.getParams( mes );
 
 		if ( ! ((String)params.get(0)).toLowerCase().equals("status") )
 			return; // Wrong type of message!
@@ -207,13 +219,15 @@ public class NickServ
 			nickChecks.remove(ck.getTarget());
 		}
 	}
-	public void onJoin( ChannelPart cp )
+
+	public void onPart( ChannelPart cp )
 	{
 		synchronized(nickChecks)
 		{
 			nickChecks.remove(cp.getNick());
 		}
 	}
+
 	public void onQuit( QuitEvent qe )
 	{
 		synchronized(nickChecks)

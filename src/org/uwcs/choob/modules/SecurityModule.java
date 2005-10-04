@@ -26,7 +26,8 @@ public class SecurityModule
 	extends SecurityManager // For getClassContext(). Heh.
 {
 	DbConnectionBroker dbBroker;
-	Map <Integer, Permissions>nodeMap;
+	Map<Integer,PermissionCollection> nodeMap;
+	Map<Integer,List<Integer>> nodeTree;
 
 	/**
 	 * Creates a new instance of SecurityModule
@@ -40,7 +41,8 @@ public class SecurityModule
 		//throwAway = DiscreteFilesClassLoader.class;
 
 		this.dbBroker = dbBroker;
-		this.nodeMap = new HashMap<Integer, Permissions>();
+		this.nodeMap = new HashMap<Integer,PermissionCollection>();
+		this.nodeTree = new HashMap<Integer,List<Integer>>();
 		this.nodeDbLock = new Object();
 	}
 
@@ -50,14 +52,12 @@ public class SecurityModule
 	 */
 
 	/**
-	 * Get an attempted hax at the protection domain context...
+	 * Returns an AccessControlContext which implies all permissions, but
+	 * retains the plugin stack so that getPluginNames() will work.
 	 */
-	public AccessControlContext getContext( String pluginName )
+	public AccessControlContext getPluginContext( )
 	{
-		LinkedList <String> pluginStack = getPluginNames();
-		if ( pluginName != null )
-			pluginStack.add( pluginName );
-		ProtectionDomain domain = new ChoobProtectionDomain(this, pluginName);
+		ProtectionDomain domain = new ChoobFakeProtectionDomain( getPluginNames() );
 		return new AccessControlContext(new ProtectionDomain[] { domain });
 	}
 
@@ -66,12 +66,14 @@ public class SecurityModule
 		return new ChoobProtectionDomain(this, pluginName);
 	}
 
-	private LinkedList <String>getPluginNames()
+	public List<String> getPluginNames()
 	{
-		LinkedList<String> pluginStack = new LinkedList<String>();
+		List<String> pluginStack = new ArrayList<String>();
 		// XXX HAX XXX HAX XXX HAX XXX HAX XXX
 		// ^^ If this doesn't persuade you that this is a hack, nothing will...
-		AccessController.checkPermission(new ChoobSpecialStackPermission(pluginStack));
+		ChoobSpecialStackPermission perm = new ChoobSpecialStackPermission(pluginStack);
+		AccessController.checkPermission(perm);
+		perm.patch();
 		return pluginStack;
 	}
 
@@ -90,34 +92,6 @@ public class SecurityModule
 	}
 
 	/**
-	 * Get the node ID that owns a named plugin
-	 */
-	private int getNodeIDFromPluginName(String pluginName)
-	{
-		Connection dbConn = dbBroker.getConnection();
-		try
-		{
-			PreparedStatement stat = dbConn.prepareStatement("SELECT UserID FROM UserPlugins WHERE PluginName = ?");
-			stat.setString(1, pluginName);
-			ResultSet results = stat.executeQuery();
-			if ( results.first() )
-			{
-				return results.getInt(1);
-			}
-			System.err.println("Ack! Plugin name " + pluginName + " not found!");
-		}
-		catch (SQLException e)
-		{
-			System.err.println("Ack! SQL exception when getting node from plugin name " + pluginName + ": " + e);
-		}
-		finally
-		{
-			dbBroker.freeConnection(dbConn);
-		}
-		return -1;
-	}
-
-	/**
 	 * Force plugin permissions to be reloaded at some later point.
 	 */
 	public void invalidateNodePermissions(int nodeID)
@@ -127,18 +101,27 @@ public class SecurityModule
 		}
 	}
 
+	/**
+	 * Force plugin tree to be reloaded at some later point.
+	 */
+	public void invalidateNodeTree(int nodeID)
+	{
+		synchronized(nodeMap) {
+			nodeTree.remove(nodeID);
+		}
+	}
+
 	private PermissionCollection getNodePermissions(int nodeID)
 	{
 		PermissionCollection perms;
 		synchronized(nodeMap)
 		{
 			perms = (PermissionCollection)nodeMap.get(nodeID);
-		}
-		if (perms == null)
-			updateNodePermissions(nodeID);
-		synchronized(nodeMap)
-		{
-			perms = (PermissionCollection)nodeMap.get(nodeID);
+			if (perms == null)
+			{
+				updateNodePermissions(nodeID);
+				perms = (PermissionCollection)nodeMap.get(nodeID);
+			}
 		}
 		return perms;
 	}
@@ -153,8 +136,9 @@ public class SecurityModule
 
 		Permissions permissions = new Permissions();
 
+		PreparedStatement permissionsSmt = null;
 		try {
-			PreparedStatement permissionsSmt = dbConnection.prepareStatement("SELECT Type, Permission, Action FROM UserNodePermissions WHERE UserNodePermissions.NodeID = ?");
+			permissionsSmt = dbConnection.prepareStatement("SELECT Type, Permission, Action FROM UserNodePermissions WHERE UserNodePermissions.NodeID = ?");
 
 			permissionsSmt.setInt(1, nodeID);
 
@@ -239,7 +223,11 @@ public class SecurityModule
 		}
 		finally
 		{
-			dbBroker.freeConnection(dbConnection);
+			try
+			{
+				dbCleanupSel(permissionsSmt, dbConnection);
+			}
+			catch (ChoobException e) {}
 		}
 
 		System.out.println("All permissions for " + nodeID + " done.");
@@ -294,51 +282,82 @@ public class SecurityModule
 	 */
 	private Iterator<Integer> getAllNodes(int nodeID, boolean addThis)
 	{
-		Connection dbConn = dbBroker.getConnection();
-		List <Integer> list = new LinkedList<Integer>();
-		if (addThis)
-			list.add(nodeID);
-		try
+		synchronized(nodeTree)
 		{
-			getAllNodesRecursive(dbConn, list, nodeID, 0);
+			Connection dbConn = dbBroker.getConnection();
+			List list = new ArrayList<Integer>();
+			if (addThis)
+				list.add(nodeID);
+			try
+			{
+				getAllNodesRecursive(dbConn, list, nodeID, 0);
+			}
+			finally
+			{
+				dbBroker.freeConnection(dbConn);
+			}
+			return list.listIterator();
 		}
-		finally
-		{
-			dbBroker.freeConnection(dbConn);
-		}
-		return list.listIterator();
 	}
 
 	private void getAllNodesRecursive(Connection dbConn, List<Integer> list, int nodeID, int recurseDepth)
 	{
 		if (recurseDepth >= 5)
 		{
-			System.err.println("Ack! Recursion depth succeeded when trying to process user node " + nodeID);
+			System.err.println("Ack! Recursion depth exceeded when trying to process user node " + nodeID);
 			return;
 		}
-		try
+
+		List<Integer> things = nodeTree.get(nodeID);
+		if (things == null)
 		{
-			PreparedStatement stat = dbConn.prepareStatement("SELECT GroupID FROM GroupMembers WHERE MemberID = ?");
-			stat.setInt(1, nodeID);
-
-			ResultSet results = stat.executeQuery();
-
-			if ( results.first() )
+			things = new ArrayList<Integer>();
+			nodeTree.put(nodeID, things);
+			PreparedStatement stat = null;
+			try
 			{
-				do
+				stat = dbConn.prepareStatement("SELECT GroupID FROM GroupMembers WHERE MemberID = ?");
+				stat.setInt(1, nodeID);
+
+				ResultSet results = stat.executeQuery();
+
+				if ( results.first() )
 				{
-					int newNode = results.getInt(1);
-					if ( !list.contains( newNode ) )
+					do
 					{
-						list.add( newNode );
-					}
-					getAllNodesRecursive(dbConn, list, newNode, recurseDepth + 1);
-				} while ( results.next() );
+						int newNode = results.getInt(1);
+						if ( !list.contains( newNode ) )
+						{
+							list.add( newNode );
+						}
+						things.add( newNode );
+					} while ( results.next() );
+				}
+			}
+			catch (SQLException e)
+			{
+				System.err.println("Ack! SQL exception when fetching groups for node " + nodeID + ": " + e);
+			}
+			finally
+			{
+				try
+				{
+					if (stat != null)
+						stat.close();
+				}
+				catch (SQLException e)
+				{
+					System.err.println("Ack! SQL exception when closing statement: " + e);
+					e.printStackTrace();
+				}
 			}
 		}
-		catch (SQLException e)
+
+		for(int newNode: things)
 		{
-			System.err.println("Ack! SQL exception when fetching groups for node " + nodeID + ": " + e);
+			if (!list.contains(newNode))
+				list.add(newNode);
+			getAllNodesRecursive(dbConn, list, newNode, recurseDepth + 1);
 		}
 	}
 
@@ -359,14 +378,23 @@ public class SecurityModule
 	}
 
 	/**
+	 * Get the node ID that corresponds to a plugin
+	 */
+	private int getNodeIDFromPluginName(String pluginName)
+	{
+		return getNodeIDFromNodeName(pluginName, 2);
+	}
+
+	/**
 	 * Get the node ID that corresponds to a node name
 	 */
 	private int getNodeIDFromNodeName(String nodeName, int nodeType)
 	{
 		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
 		try
 		{
-			PreparedStatement stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? && NodeClass = ?");
+			stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? && NodeClass = ?");
 			stat.setString(1, nodeName);
 			stat.setInt(2, nodeType);
 			ResultSet results = stat.executeQuery();
@@ -382,7 +410,11 @@ public class SecurityModule
 		}
 		finally
 		{
-			dbBroker.freeConnection(dbConn);
+			try
+			{
+				dbCleanupSel(stat, dbConn);
+			}
+			catch (ChoobException e) {}
 		}
 		return -1;
 	}
@@ -393,9 +425,10 @@ public class SecurityModule
 	private UserNode getNodeFromNodeID(int nodeID)
 	{
 		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
 		try
 		{
-			PreparedStatement stat = dbConn.prepareStatement("SELECT NodeName, NodeClass FROM UserNodes WHERE NodeID = ?");
+			stat = dbConn.prepareStatement("SELECT NodeName, NodeClass FROM UserNodes WHERE NodeID = ?");
 			stat.setInt(1, nodeID);
 			ResultSet results = stat.executeQuery();
 			if ( results.first() )
@@ -411,7 +444,11 @@ public class SecurityModule
 		}
 		finally
 		{
-			dbBroker.freeConnection(dbConn);
+			try
+			{
+				dbCleanupSel(stat, dbConn);
+			}
+			catch (ChoobException e) {}
 		}
 		return null;
 	}
@@ -421,40 +458,21 @@ public class SecurityModule
 	 */
 	private int getLastInsertID(Connection dbConn) throws SQLException
 	{
-		PreparedStatement stat = dbConn.prepareStatement("SELECT LAST_INSERT_ID()");
-		ResultSet results = stat.executeQuery();
-		if ( results.first() )
-			return results.getInt(1);
-		throw new SQLException("Ack! LAST_INSERT_ID() returned no results!");
-	}
-
-	/**
-	 * Get the node ID that corresponds to a plugin
-	 */
-	private int getNodeFromPluginName(String pluginName)
-	{
-		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
 		try
 		{
-			PreparedStatement stat = dbConn.prepareStatement("SELECT UserID FROM UserPlugins WHERE PluginName = ?");
-			stat.setString(1, pluginName);
+			stat = dbConn.prepareStatement("SELECT LAST_INSERT_ID()");
 			ResultSet results = stat.executeQuery();
 			if ( results.first() )
-			{
 				return results.getInt(1);
-			}
-			System.err.println("Ack! Plugin name " + pluginName + " not found!");
-		}
-		catch (SQLException e)
-		{
-			System.err.println("Ack! SQL exception when getting node from plugin name " + pluginName + ": " + e);
+			throw new SQLException("Ack! LAST_INSERT_ID() returned no results!");
 		}
 		finally
 		{
-			dbBroker.freeConnection(dbConn);
+			stat.close();
 		}
-		return -1;
 	}
+
 
 	/* ================================
 	 * PLUGIN PERMISSION CHECK ROUTINES
@@ -487,6 +505,11 @@ public class SecurityModule
 		return hasPluginPerm(permission, getPluginName(1));
 	}
 
+	public String getCallerPluginName()
+	{
+		return getPluginName(1);
+	}
+
 	/**
 	 * Check if the previous plugin on the call stack has a permission
 	 * @param permission
@@ -501,7 +524,7 @@ public class SecurityModule
 		// Should prevent circular checks...
 		return ((Boolean)AccessController.doPrivileged(new PrivilegedAction() {
 			public Object run() {
-				int nodeID = getNodeFromPluginName( pluginName );
+				int nodeID = getNodeIDFromPluginName( pluginName );
 
 				// No such user!
 				if (nodeID == -1)
@@ -523,18 +546,47 @@ public class SecurityModule
 	/**
 	 * Convenience method
 	 */
-	private void dbCleanup(Connection dbConn) throws ChoobException
+	private void dbCleanupSel(Statement stat, Connection dbConn) throws ChoobException
 	{
 		try
 		{
-			dbConn.rollback(); // If success, this does nothing
-			dbConn.setAutoCommit(true);
-			dbBroker.freeConnection(dbConn);
+			if (stat != null)
+				stat.close();
 		}
 		catch (SQLException e)
 		{
-			// XXX WTF to do here?
-			sqlErr("dealing with dealing with SQL error", e);
+			sqlErr("closing SQL statement", e);
+		}
+		finally
+		{
+			dbBroker.freeConnection(dbConn);
+		}
+	}
+
+	private void dbCleanup(Statement stat, Connection dbConn) throws ChoobException
+	{
+		try
+		{
+			if (stat != null)
+				stat.close();
+		}
+		catch (SQLException e)
+		{
+			sqlErr("closing SQL statement", e);
+		}
+		finally
+		{
+			try
+			{
+				dbConn.rollback(); // If success, this does nothing
+				dbConn.setAutoCommit(true);
+				dbBroker.freeConnection(dbConn);
+			}
+			catch (SQLException e)
+			{
+				// XXX WTF to do here?
+				sqlErr("cleaning up SQL connection", e);
+			}
 		}
 	}
 
@@ -562,12 +614,13 @@ public class SecurityModule
 		}
 
 		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
 				// Bind plugin
-				PreparedStatement stat = dbConn.prepareStatement("REPLACE INTO UserPlugins (UserID, PluginName) VALUES (?, ?)");
+				stat = dbConn.prepareStatement("REPLACE INTO UserPlugins (UserID, PluginName) VALUES (?, ?)");
 				stat.setInt(1, userID);
 				stat.setString(2, pluginName);
 				if (stat.executeUpdate() == 0)
@@ -582,7 +635,7 @@ public class SecurityModule
 			}
 			finally
 			{
-				dbCleanup(dbConn);
+				dbCleanupSel(stat, dbConn);
 			}
 		}
 	}
@@ -596,19 +649,21 @@ public class SecurityModule
 		AccessController.checkPermission(new ChoobPermission("user.add"));
 
 		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
 				dbConn.setAutoCommit(false);
 				// First, make sure no user exists...
-				PreparedStatement stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND (NodeClass = 0 OR NodeClass = 1)");
+				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND (NodeClass = 0 OR NodeClass = 1)");
 				stat.setString(1, userName);
 				ResultSet results = stat.executeQuery();
 				if ( results.first() )
 				{
 					throw new ChoobException ("User " + userName + " already exists!");
 				}
+				stat.close();
 
 				// Add user and group
 				stat = dbConn.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
@@ -617,12 +672,15 @@ public class SecurityModule
 				if (stat.executeUpdate() == 0)
 					System.err.println("Ack! No rows updated in user insert!");
 				int userID = getLastInsertID(dbConn);
+				stat.close();
+
 				stat = dbConn.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
 				stat.setString(1, userName);
 				stat.setInt(2, 1);
 				if (stat.executeUpdate() == 0)
 					System.err.println("Ack! No rows updated in user group insert!");
 				int groupID = getLastInsertID(dbConn);
+				stat.close();
 
 				// Now bind them.
 				stat = dbConn.prepareStatement("INSERT INTO GroupMembers (GroupID, MemberID) VALUES (?, ?)");
@@ -640,11 +698,192 @@ public class SecurityModule
 			}
 			finally
 			{
-				dbCleanup(dbConn); // If success, this does nothing
+				dbCleanup(stat, dbConn); // If success, this does nothing
 			}
 		}
 	}
-	// Must check (system) user.add
+
+	/**
+	 * Links a user name to a root user name.
+	 */
+	public void linkUser(String root, String leaf) throws ChoobException
+	{
+		AccessController.checkPermission(new ChoobPermission("user.link"));
+
+		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
+		synchronized(nodeDbLock)
+		{
+			try
+			{
+				dbConn.setAutoCommit(false);
+				// First, make sure no user exists...
+				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
+				stat.setString(1, leaf);
+				ResultSet results = stat.executeQuery();
+				if ( results.first() )
+					throw new ChoobException ("User " + leaf + " already exists!");
+				stat.close();
+
+				// Now make sure the root does exist...
+				// As user
+				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
+				stat.setString(1, root);
+				results = stat.executeQuery();
+				if ( !results.first() )
+					throw new ChoobException ("User " + root + " does not exist!");
+				int rootUserID = results.getInt(1);
+				stat.close();
+
+				// As group
+				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 1");
+				stat.setString(1, root);
+				results = stat.executeQuery();
+				if ( !results.first() )
+					throw new ChoobException ("User " + root + " is a leaf user. You can't link to it!");
+				int rootID = results.getInt(1);
+				stat.close();
+
+				// And that they're linked.
+				stat = dbConn.prepareStatement("SELECT GroupID FROM GroupMembers WHERE GroupID = ? AND MemberID = ?");
+				stat.setInt(1, rootID);
+				stat.setInt(2, rootUserID);
+				results = stat.executeQuery();
+				if ( !results.first() )
+					throw new ChoobException ("User " + root + " is a leaf user. You can't link to it!");
+				stat.close();
+
+				// Add user.
+				stat = dbConn.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
+				stat.setString(1, leaf);
+				stat.setInt(2, 0);
+				if (stat.executeUpdate() == 0)
+					System.err.println("Ack! No rows updated in user insert!");
+				int userID = getLastInsertID(dbConn);
+				stat.close();
+
+				// Now bind it.
+				stat = dbConn.prepareStatement("INSERT INTO GroupMembers (GroupID, MemberID) VALUES (?, ?)");
+				stat.setInt(1, rootID);
+				stat.setInt(2, userID);
+				if (stat.executeUpdate() == 0)
+					System.err.println("Ack! No rows updated in user group member insert!");
+
+				// Done!
+				dbConn.commit();
+			}
+			catch (SQLException e)
+			{
+				sqlErr("linking user " + leaf + " to root " + root, e);
+			}
+			finally
+			{
+				dbCleanup(stat, dbConn); // If success, this does nothing
+			}
+		}
+	}
+
+	/**
+	 * Get the "root" username for a given user.
+	 * @throws ChoobException if the user did not exist.
+	 * @return the root username.
+	 */
+	public String getRootUser(String userName) throws ChoobException
+	{
+		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
+		try
+		{
+			// First, make sure no user exists...
+			stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
+			stat.setString(1, userName);
+			ResultSet results = stat.executeQuery();
+			if ( !results.first() )
+				throw new ChoobException ("User " + userName + " does not exist!");
+			int userID = results.getInt(1);
+			stat.close();
+
+			stat = dbConn.prepareStatement("SELECT GroupID FROM GroupMembers WHERE MemberID = ?");
+			stat.setInt(1, userID);
+			results = stat.executeQuery();
+			if ( !results.first() )
+				throw new ChoobException ("Consistency error: User " + userName + " is in no group!");
+			int groupID = results.getInt(1);
+			if ( results.next() )
+				throw new ChoobException ("Consistency error: User " + userName + " is in more than one group!");
+			stat.close();
+
+			// Now make sure the root does exist...
+			stat = dbConn.prepareStatement("SELECT NodeName FROM UserNodes WHERE NodeID = ?");
+			stat.setInt(1, groupID);
+			results = stat.executeQuery();
+			if ( !results.first() )
+				throw new ChoobException ("Consistency error: Group " + groupID + " does not exist!");
+			String groupName = results.getString(1);
+			stat.close();
+
+			return groupName;
+		}
+		catch (SQLException e)
+		{
+			sqlErr("fetching root user name for " + userName, e);
+		}
+		finally
+		{
+			dbCleanupSel(stat, dbConn); // If success, this does nothing
+		}
+		return null; // Impossible to get here anyway...
+	}
+
+	/**
+	 * Removes a user name (but not its groups).
+	 */
+	public void delUser(String userName) throws ChoobException
+	{
+		AccessController.checkPermission(new ChoobPermission("user.del"));
+
+		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
+		synchronized(nodeDbLock)
+		{
+			try
+			{
+				dbConn.setAutoCommit(false);
+				// Make sure the user exists...
+				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
+				stat.setString(1, userName);
+				ResultSet results = stat.executeQuery();
+				if ( !results.first() )
+					throw new ChoobException ("User " + userName + " does not exist!");
+				int userID = results.getInt(1);
+				stat.close();
+
+				// Add user.
+				stat = dbConn.prepareStatement("DELETE FROM UserNodes WHERE NodeID = ?");
+				stat.setInt(1, userID);
+				if (stat.executeUpdate() == 0)
+					System.err.println("Ack! No rows updated in user delete!");
+				stat.close();
+
+				// Now bind it.
+				stat = dbConn.prepareStatement("DELETE FROM GroupMembers WHERE MemberID = ?");
+				stat.setInt(1, userID);
+				if (stat.executeUpdate() == 0)
+					System.err.println("Ack! No rows updated in user member delete!");
+
+				// Done!
+				dbConn.commit();
+			}
+			catch (SQLException e)
+			{
+				sqlErr("deleting user " + userName, e);
+			}
+			finally
+			{
+				dbCleanup(stat, dbConn); // If success, this does nothing
+			}
+		}
+	}
 
 	/**
 	 * Add a user to the database
@@ -666,12 +905,13 @@ public class SecurityModule
 
 		// OK, we're allowed to add.
 		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
 				dbConn.setAutoCommit(false);
-				PreparedStatement stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = ?");
+				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = ?");
 				stat.setString(1, group.getName());
 				stat.setInt(2, group.getType());
 				ResultSet results = stat.executeQuery();
@@ -679,21 +919,20 @@ public class SecurityModule
 				{
 					throw new ChoobException("Group " + groupName + " already exists!");
 				}
+				stat.close();
 
 				stat = dbConn.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
 				stat.setString(1, group.getName());
 				stat.setInt(2, group.getType());
 				if (stat.executeUpdate() == 0)
 					System.err.println("Ack! No rows updated in group " + groupName + " insert!");
-
-				dbConn.commit();
 			}
 			catch (SQLException e)
 			{
 				sqlErr("adding group " + groupName, e);
 			}
 			finally {
-				dbCleanup(dbConn); // If success, this does nothing
+				dbCleanup(stat, dbConn); // If success, this does nothing
 			}
 		}
 	}
@@ -734,12 +973,13 @@ public class SecurityModule
 			throw new ChoobException("Group " + child + " does not exist!");
 
 		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
 				dbConn.setAutoCommit(false);
-				PreparedStatement stat = dbConn.prepareStatement("SELECT MemberID FROM GroupMembers WHERE GroupID = ? AND MemberID = ?");
+				stat = dbConn.prepareStatement("SELECT MemberID FROM GroupMembers WHERE GroupID = ? AND MemberID = ?");
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
 				ResultSet results = stat.executeQuery();
@@ -747,6 +987,7 @@ public class SecurityModule
 				{
 					throw new ChoobException("Group " + parent + " already had member " + child);
 				}
+				stat.close();
 
 				stat = dbConn.prepareStatement("INSERT INTO GroupMembers (GroupID, MemberID) VALUES (?, ?)");
 				stat.setInt(1, parentID);
@@ -762,9 +1003,10 @@ public class SecurityModule
 			}
 			finally
 			{
-				dbCleanup(dbConn); // If success, this does nothing
+				dbCleanup(stat, dbConn); // If success, this does nothing
 			}
 		}
+		invalidateNodeTree(parentID);
 	}
 
 	public void removeUserFromGroup(String parentName, String childName) throws ChoobException
@@ -803,11 +1045,12 @@ public class SecurityModule
 			throw new ChoobException("Group " + child + " does not exist!");
 
 		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
-				PreparedStatement stat = dbConn.prepareStatement("SELECT MemberID FROM GroupMembers WHERE GroupID = ? AND MemberID = ?");
+				stat = dbConn.prepareStatement("SELECT MemberID FROM GroupMembers WHERE GroupID = ? AND MemberID = ?");
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
 				ResultSet results = stat.executeQuery();
@@ -815,14 +1058,13 @@ public class SecurityModule
 				{
 					throw new ChoobException("Group " + parent + " did not have member " + child);
 				}
+				stat.close();
 
 				stat = dbConn.prepareStatement("DELETE FROM GroupMembers WHERE GroupID = ? AND  MemberID = ?");
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
 				if ( stat.executeUpdate() == 0 )
 					System.err.println("Ack! Group member remove did nothing: " + parent + ", member " + child);
-
-				dbConn.commit();
 			}
 			catch (SQLException e)
 			{
@@ -830,9 +1072,10 @@ public class SecurityModule
 			}
 			finally
 			{
-				dbCleanup(dbConn); // If success, this does nothing
+				dbCleanupSel(stat, dbConn); // If success, this does nothing
 			}
 		}
+		invalidateNodeTree(parentID);
 	}
 
 	public void grantPermission(String groupName, Permission permission) throws ChoobException
@@ -865,11 +1108,12 @@ public class SecurityModule
 			throw new ChoobException("Group " + group + " already has permission " + permission + "!");
 
 		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
-				PreparedStatement stat = dbConn.prepareStatement("INSERT INTO UserNodePermissions (NodeID, Type, Permission, Action) VALUES (?, ?, ?, ?)");
+				stat = dbConn.prepareStatement("INSERT INTO UserNodePermissions (NodeID, Type, Permission, Action) VALUES (?, ?, ?, ?)");
 				stat.setInt(1, groupID);
 				stat.setString(2, permission.getClass().getName());
 				if (permission instanceof AllPermission)
@@ -885,8 +1129,6 @@ public class SecurityModule
 				if ( stat.executeUpdate() == 0 )
 					System.err.println("Ack! Permission add did nothing: " + group + " " + permission);
 
-				dbConn.commit();
-
 				invalidateNodePermissions(groupID);
 			}
 			catch (SQLException e)
@@ -895,7 +1137,7 @@ public class SecurityModule
 			}
 			finally
 			{
-				dbCleanup(dbConn); // If success, this does nothing
+				dbCleanupSel(stat, dbConn); // If success, this does nothing
 			}
 		}
 	}
@@ -944,7 +1186,7 @@ public class SecurityModule
 	}
 
 	/**
-	 * Attempt to work out from whence a group's permissions come.
+	 * Get a list of permissions for a given group.
 	 */
 	public String[] getPermissions(String groupName) throws ChoobException
 	{
@@ -995,11 +1237,11 @@ public class SecurityModule
 			throw new ChoobException("Group " + group + " does not have permission " + permission + "!");
 
 		Connection dbConn = dbBroker.getConnection();
+		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
-				PreparedStatement stat;
 				if (permission instanceof AllPermission)
 				{
 					stat = dbConn.prepareStatement("DELETE FROM UserNodePermissions WHERE NodeID = ? AND Type = ?");
@@ -1020,8 +1262,6 @@ public class SecurityModule
 					throw new ChoobException("The given permission wasn't explicily assigned in the form you attempted to revoke. Try using the find permission command to locate it.");
 				}
 
-				dbConn.commit();
-
 				invalidateNodePermissions(groupID);
 			}
 			catch (SQLException e)
@@ -1030,7 +1270,7 @@ public class SecurityModule
 			}
 			finally
 			{
-				dbCleanup(dbConn); // If success, this does nothing
+				dbCleanupSel(stat, dbConn); // If success, this does nothing
 			}
 		}
 	}

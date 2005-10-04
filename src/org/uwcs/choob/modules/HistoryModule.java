@@ -39,9 +39,10 @@ public class HistoryModule
 
 		Connection dbConnection = dbBroker.getConnection();
 
+		PreparedStatement insertLine = null;
 		try
 		{
-			PreparedStatement insertLine = dbConnection.prepareStatement("INSERT INTO History VALUES(NULL,?,?,?,?,?,?,?)");
+			insertLine = dbConnection.prepareStatement("INSERT INTO History VALUES(NULL,?,?,?,?,?,?,?)");
 
 			insertLine.setString(1, mes.getClass().getName());
 			insertLine.setString(2, mes.getNick());
@@ -65,7 +66,19 @@ public class HistoryModule
 		}
 		finally
 		{
-			dbBroker.freeConnection( dbConnection );
+			try
+			{
+				if (insertLine != null)
+					insertLine.close();
+			}
+			catch (SQLException e)
+			{
+				System.err.println("Could not close SQL connection: " + e);
+			}
+			finally
+			{
+				dbBroker.freeConnection( dbConnection );
+			}
 		}
 	}
 
@@ -140,8 +153,9 @@ public class HistoryModule
 	public List<Message> getLastMessages( final String channel, Message cause, int count ) throws ChoobException
 	{
 		Connection dbCon = dbBroker.getConnection();
+		PreparedStatement stat = null;
 		try {
-			PreparedStatement stat = dbCon.prepareStatement("SELECT * FROM History WHERE Channel = ? AND Time < ? ORDER BY Time DESC LIMIT ?");
+			stat = dbCon.prepareStatement("SELECT * FROM History WHERE Channel = ? AND Time < ? ORDER BY Time DESC LIMIT ?");
 			stat.setString(1, channel);
 			stat.setLong(2, cause == null ? System.currentTimeMillis() : cause.getMillis() );
 			stat.setInt(3, count);
@@ -205,7 +219,20 @@ public class HistoryModule
 		}
 		finally
 		{
-			dbBroker.freeConnection( dbCon );
+			try
+			{
+				if (stat != null)
+					stat.close();
+			}
+			catch (SQLException e)
+			{
+				System.err.println("Could not read history line from database: " + e);
+				throw new ChoobException("SQL Error reading from database.");
+			}
+			finally
+			{
+				dbBroker.freeConnection( dbCon );
+			}
 		}
 	}
 }

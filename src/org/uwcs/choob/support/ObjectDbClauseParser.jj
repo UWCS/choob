@@ -714,23 +714,13 @@ void ParseWith() :
 
 void ParseSelect() :
 	{
-		Token t;
+		SimpleNode expr;
 	}
 	{
 		(
-//			<K_COUNT>
-//			{
-//				selClause = "COUNT(s0.ClassID)";
-//			}
-//		|
-//			<K_SUM> t = <FIELDNAME>
-//			{
-//				selClause = "SUM("+getFieldName(t.image)+")";
-//			}
-//		|
-			t = <FIELDNAME>
+			expr = ExpressionRoot()
 			{
-				selClause = getFieldName(t.image);
+				selClause = parseExpression(expr, HINT_INTEGER);
 			}
 		)
 	}

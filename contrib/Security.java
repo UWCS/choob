@@ -11,8 +11,14 @@ import java.util.*;
  */
 public class Security
 {
-	//public ChoobHelp help;
-	public void create() {
+	private static int TIMEOUT = 300;
+	private Map<String,List<String>> linkMap;
+	private Modules mods;
+	private IRCInterface irc;
+	public Security (Modules mods, IRCInterface irc) {
+		linkMap = new HashMap<String,List<String>>();
+		this.mods = mods;
+		this.irc = irc;
 		/* Possible help interface
 		helpAddUser = new ChoobHelp(
 				"[<username>]",
@@ -32,8 +38,26 @@ public class Security
 				"You need a ChoobPermission of group.members.<groupname> to remove from <groupname>, unless the group is named user.<nickname>.<name> where <nickname> is your nickname."); */
 	}
 
-	public void commandAddUser( Message mes, Modules mods, IRCInterface irc )
+	private boolean nsCheck( String nick ) {
+		try
+		{
+			return (Boolean)mods.plugin.callAPI("NickServ", "Check", nick);
+		}
+		catch (ChoobException e)
+		{
+			System.err.println("NickServ Check failed: Assuming invalid");
+			return false;
+		}
+	}
+
+	public void commandAddUser( Message mes )
 	{
+		if (!nsCheck(mes.getNick()))
+		{
+			irc.sendContextReply(mes, "Sorry, you must be identified with NickServ to add users.");
+			return;
+		}
+
 		List params = mods.util.getParams( mes );
 
 		String userName;
@@ -42,7 +66,7 @@ public class Security
 		else if (params.size() == 3)
 		{
 			// Hacky alias
-			commandAddToGroup( mes, mods, irc );
+			commandAddToGroup( mes );
 			return;
 		}
 		else if (params.size() > 2)
@@ -55,7 +79,7 @@ public class Security
 			// Must check permission!
 			userName = (String)params.get(1);
 			// Sure, this will be checked for us. But what about the user who called us?
-			if (! mods.security.hasPerm( new ChoobPermission("user.add." + userName) , mes.getNick() ) )
+			if (! mods.security.hasPerm( new ChoobPermission("user.add") , mes.getNick() ) )
 			{
 				irc.sendContextReply( mes, "You don't have permission to add arbitrary users!" );
 				return;
@@ -79,8 +103,200 @@ public class Security
 		irc.sendContextReply( mes, "OK, user added!" );
 	}
 
-	public void commandAddGroup( Message mes, Modules mods, IRCInterface irc )
+	public void commandDelUser( Message mes )
 	{
+		if (!nsCheck(mes.getNick()))
+		{
+			irc.sendContextReply(mes, "Sorry, you must be identified with NickServ to delete users.");
+			return;
+		}
+
+		List params = mods.util.getParams( mes );
+
+		String userName;
+		if (params.size() == 1)
+			userName = mes.getNick();
+		else if (params.size() > 2)
+		{
+			irc.sendContextReply( mes, "You may only specify one user!" );
+			return;
+		}
+		else
+		{
+			// Must check permission!
+			userName = (String)params.get(1);
+			// Sure, this will be checked for us. But what about the user who called us?
+			if (! mods.security.hasPerm( new ChoobPermission("user.del") , mes.getNick() ) )
+			{
+				irc.sendContextReply( mes, "You don't have permission to add arbitrary users!" );
+				return;
+			}
+		}
+		// Can add the user...
+		try
+		{
+			mods.security.delUser( userName );
+		}
+		catch ( ChoobException e )
+		{
+			irc.sendContextReply( mes, "The user could not be deleted: " + e );
+			return;
+		}
+		catch ( SecurityException e )
+		{
+			irc.sendContextReply( mes, "Urgh. We got a security exception." );
+			return;
+		}
+		irc.sendContextReply( mes, "OK, user added!" );
+	}
+
+	/**
+	 * Mark the user's nickname as pokable.
+	 */
+	public void commandBeginLink( Message mes )
+	{
+		String userName = mes.getNick();
+
+		if (!nsCheck(userName))
+		{
+			irc.sendContextReply(mes, "Sorry, you must be identified with NickServ to begin nick linking.");
+			return;
+		}
+
+		List params = mods.util.getParams( mes );
+		if (params.size() == 1)
+		{
+			irc.sendContextReply(mes, "Syntax: Security.BeginLink <NICKNAME> [<NICKNAME> ...]");
+			return;
+		}
+
+		String rootName;
+		try
+		{
+			rootName = mods.security.getRootUser( userName );
+		}
+		catch (ChoobException e)
+		{
+			System.out.println(e.getMessage());
+			irc.sendContextReply(mes, "Your username has not been added to the bot. Try Security.AddUser first!");
+			return;
+		}
+
+		List<String> nicks;
+		synchronized(linkMap)
+		{
+			nicks = linkMap.get(rootName.toLowerCase());
+			if (nicks == null)
+			{
+				nicks = new ArrayList<String>();
+				linkMap.put(rootName.toLowerCase(), nicks);
+			}
+		}
+
+		for(int i=1; i<params.size(); i++)
+		{
+			nicks.add(((String)params.get(i)).toLowerCase());
+		}
+
+		irc.sendContextReply(mes, "OK, ready to link to " + rootName + ". Change nickname, identify, then use \"Security.Link " + rootName + "\".");
+	}
+
+	public void commandLink( Message mes )
+	{
+		List params = mods.util.getParams( mes );
+
+		if (!nsCheck(mes.getNick()))
+		{
+			irc.sendContextReply(mes, "Sorry, you must be identified with NickServ to link nicks.");
+			return;
+		}
+
+		String rootName;
+		String leafName;
+		if (params.size() == 2)
+		{
+			leafName = mes.getNick();
+			rootName = (String)params.get(1);
+			List<String> nicks = null;
+			synchronized(linkMap)
+			{
+				nicks = linkMap.get(rootName.toLowerCase());
+			}
+			if (nicks == null || !nicks.contains( leafName.toLowerCase() )) {
+				irc.sendContextReply( mes, "You haven't called \"Security.BeginLink " + leafName + "\" as " + rootName + "! Please change to " + rootName + " and do this.");
+				return;
+			}
+		}
+		else if (params.size() > 3)
+		{
+			irc.sendContextReply( mes, "Syntax: Security.Link <ROOT> [<LEAF>] - to link <LEAF> (or your current nick) to <ROOT>." );
+			return;
+		}
+		else
+		{
+			// Must check permission!
+			rootName = (String)params.get(1);
+			leafName = (String)params.get(2);
+			// Sure, this will be checked for us. But what about the user who called us?
+			if (! mods.security.hasPerm( new ChoobPermission("user.link") , mes.getNick() ) )
+			{
+				irc.sendContextReply( mes, "You don't have permission to link arbitrary users!" );
+				return;
+			}
+		}
+
+		// Can add the user...
+		try
+		{
+			mods.security.linkUser( rootName, leafName );
+		}
+		catch ( ChoobException e )
+		{
+			irc.sendContextReply( mes, "The user could not be deleted: " + e );
+			return;
+		}
+		catch ( SecurityException e )
+		{
+			irc.sendContextReply( mes, "Urgh. We got a security exception." );
+			return;
+		}
+		irc.sendContextReply( mes, "OK, user " + leafName + " linked to root " + rootName + "!");
+	}
+
+	public boolean groupCheck(String groupName, String userName)
+	{
+		if (groupName.toLowerCase().startsWith("user."))
+		{
+			String chunk = groupName.toLowerCase().substring(5);
+			if (chunk.startsWith(userName.toLowerCase() + "."))
+				return true;
+			else
+			{
+				// Check root, too...
+				String rootName;
+				try
+				{
+					rootName = mods.security.getRootUser( userName );
+					if (chunk.startsWith(rootName.toLowerCase() + "."))
+						return true;
+				}
+				catch (ChoobException e)
+				{
+					// Squelch
+				}
+			}
+		}
+		return false;
+	}
+
+	public void commandAddGroup( Message mes )
+	{
+		if (!nsCheck(mes.getNick()))
+		{
+			irc.sendContextReply(mes, "Sorry, you must be identified with NickServ to link nicks.");
+			return;
+		}
+
 		List params = mods.util.getParams( mes );
 
 		String groupName;
@@ -94,13 +310,11 @@ public class Security
 			// Must check permission!
 			groupName = (String)params.get(1);
 
+			boolean check = true;
 			// Sure, this will be checked for us. But what about the user who called us?
-			int len = mes.getNick().length() + 6;
-			if (groupName.length() > len && groupName.regionMatches(true, 0, "user." + mes.getNick() + ".", 0, len))
-			{
-				// OK to add
-			}
-			else if (! mods.security.hasPerm( new ChoobPermission("group.add." + groupName) , mes.getNick() ) )
+			if (groupCheck(groupName, mes.getNick()))
+				check = false;
+			if (!check && !mods.security.hasPerm( new ChoobPermission("group.add." + groupName) , mes.getNick() ) )
 			{
 				irc.sendContextReply( mes, "You don't have permission to add arbitrary groups!" );
 				return;
@@ -125,18 +339,24 @@ public class Security
 	}
 
 	//public ChoobHelp helpAddToGroup;
-	public void commandAddToGroup( Message mes, Modules mods, IRCInterface irc )
+	public void commandAddToGroup( Message mes )
 	{
-		this.doGroupMemberChange(mes, mods, irc, true);
+		this.doGroupMemberChange(mes, true);
 	}
 
-	public void commandRemoveFromGroup( Message mes, Modules mods, IRCInterface irc )
+	public void commandRemoveFromGroup( Message mes )
 	{
-		this.doGroupMemberChange(mes, mods, irc, false);
+		this.doGroupMemberChange(mes, false);
 	}
 
-	public void doGroupMemberChange( Message mes, Modules mods, IRCInterface irc, boolean isAdding )
+	public void doGroupMemberChange( Message mes, boolean isAdding )
 	{
+		if (!nsCheck(mes.getNick()))
+		{
+			irc.sendContextReply(mes, "Sorry, you must be identified with NickServ to change group members.");
+			return;
+		}
+
 		List params = mods.util.getParams( mes );
 
 		String childName;
@@ -153,14 +373,12 @@ public class Security
 			childName = (String)params.get(1);
 			if (childName.indexOf('.') != -1)
 				isGroup = true;
-			parentName = (String)params.get(2);
+			parentName = ((String)params.get(2));
+			boolean check = true;
 			// Sure, this will be checked for us. But what about the user who called us?
-			int len = mes.getNick().length() + 6;
-			if (parentName.length() > len && parentName.regionMatches(true, 0, "user." + mes.getNick() + ".", 0, len))
-			{
-				// OK to add
-			}
-			else if (! mods.security.hasPerm( new ChoobPermission("group.members." + parentName) , mes.getNick() ) )
+			if (groupCheck(parentName, mes.getNick()))
+				check = false;
+			if (!check && ! mods.security.hasPerm( new ChoobPermission("group.members." + parentName) , mes.getNick() ) )
 			{
 				irc.sendContextReply( mes, "You don't have permission to alter members of arbitrary groups!" );
 				return;
@@ -194,7 +412,7 @@ public class Security
 			irc.sendContextReply( mes, "Urgh. We got a security exception." );
 			return;
 		}
-		irc.sendContextReply( mes, "OK, membership altered!" );
+		irc.sendContextReply( mes, "OK, membership of " + childName + " in " + parentName + " altered!" );
 	}
 
 	private Permission makePermission(String permType, String permName, String permActions)
@@ -214,41 +432,50 @@ public class Security
 		return null;
 	}
 
-	public void commandGrant( Message mes, Modules mods, IRCInterface irc )
+	public void commandGrant( Message mes )
 	{
-		this.doPermChange( mes, mods, irc, true );
+		this.doPermChange( mes, true );
 	}
 
-	public void commandRevoke( Message mes, Modules mods, IRCInterface irc )
+	public void commandRevoke( Message mes )
 	{
-		this.doPermChange( mes, mods, irc, false );
+		this.doPermChange( mes, false );
 	}
 
-	public void doPermChange( Message mes, Modules mods, IRCInterface irc, boolean isGranting )
+	public void doPermChange( Message mes, boolean isGranting )
 	{
-		List params = mods.util.getParams( mes );
-
-		String actions = null;
-		if (params.size() < 4 || params.size() > 5)
+		if (!nsCheck(mes.getNick()))
 		{
-			irc.sendContextReply( mes, "You must specify a child user/group and a parent group!" );
+			irc.sendContextReply(mes, "Sorry, you must be identified with NickServ to link nicks.");
 			return;
 		}
-		else if (params.size() == 5)
+
+		List params = mods.util.getParams( mes );
+
+		if (params.size() < 3 || params.size() > 5)
 		{
-			actions = (String)params.get(4);
+			irc.sendContextReply( mes, "You must specify a group and a permission!" );
+			return;
 		}
-		String groupName = (String)params.get(1);
+
+		String actions = null;
+		if (params.size() == 5)
+			actions = (String)params.get(4);
+
+		String permName = null;
+		if (params.size() >= 4)
+			permName = (String)params.get(3);
+
 		String permType = (String)params.get(2);
-		String permName = (String)params.get(3);
+		String groupName = (String)params.get(1);
 
 		int len = mes.getNick().length() + 6;
 		String permString = isGranting ? "grant." : "revoke.";
-		if (groupName.length() > len && groupName.regionMatches(true, 0, "user." + mes.getNick() + ".", 0, len))
-		{
-			// OK to add
-		}
-		else if (! mods.security.hasPerm( new ChoobPermission("group." + permString + groupName) , mes.getNick() ) )
+		boolean check = true;
+		// Sure, this will be checked for us. But what about the user who called us?
+		if (groupCheck(groupName, mes.getNick()))
+			check = false;
+		if (!check && !mods.security.hasPerm( new ChoobPermission("group." + permString + groupName) , mes.getNick() ) )
 		{
 			irc.sendContextReply( mes, "You don't have permission to do that!" );
 			return;
@@ -288,23 +515,26 @@ public class Security
 		irc.sendContextReply( mes, "OK, permission changed!" );
 	}
 
-	public void commandFindPermission( Message mes, Modules mods, IRCInterface irc )
+	public void commandFindPermission( Message mes )
 	{
 		List params = mods.util.getParams( mes );
 
-		String actions = null;
-		if (params.size() < 4 || params.size() > 5)
+		if (params.size() < 3 || params.size() > 5)
 		{
-			irc.sendContextReply( mes, "You must specify a child user/group and a parent group!" );
+			irc.sendContextReply( mes, "You must specify a group and a permission!" );
 			return;
 		}
-		else if (params.size() == 5)
-		{
+
+		String actions = null;
+		if (params.size() == 5)
 			actions = (String)params.get(4);
-		}
-		String groupName = (String)params.get(1);
+
+		String permName = null;
+		if (params.size() >= 4)
+			permName = (String)params.get(3);
+
 		String permType = (String)params.get(2);
-		String permName = (String)params.get(3);
+		String groupName = (String)params.get(1);
 
 		Permission permission = makePermission(permType, permName, actions);
 		if (permission == null)

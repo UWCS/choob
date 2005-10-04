@@ -99,9 +99,23 @@ public class ObjectDBTransaction
 		}
 	}
 
+	public final void cleanUp(Statement stat) throws ChoobException
+	{
+		try
+		{
+			if (stat != null)
+				stat.close();
+		}
+		catch (SQLException e)
+		{
+			throw sqlErr(e);
+		}
+	}
+
 	private final ChoobException sqlErr(SQLException e)
 	{
 		System.err.println("Ack! SQL Exception: " + e);
+		e.printStackTrace();
 		return new ChoobException("An SQL exception occurred while processing this operation.");
 	}
 
@@ -129,11 +143,12 @@ public class ObjectDBTransaction
 			sqlQuery = "SELECT ObjectStore.ClassID FROM ObjectStore WHERE ClassName = '" + storedClass.getName() + "';";
 		}
 
+		Statement objStat = null;
 		try
 		{
 			ArrayList <Object>objects = new ArrayList<Object>();
 
-			Statement objStat = dbConn.createStatement();
+			objStat = dbConn.createStatement();
 
 			ResultSet results = objStat.executeQuery( sqlQuery );
 
@@ -151,6 +166,10 @@ public class ObjectDBTransaction
 		catch (SQLException e)
 		{
 			throw sqlErr(e);
+		}
+		finally
+		{
+			cleanUp(objStat);
 		}
 	}
 
@@ -180,11 +199,12 @@ public class ObjectDBTransaction
 
 		System.out.println("Query: " + sqlQuery);
 
+		Statement objStat = null;
 		try
 		{
 			ArrayList<Integer> objects = new ArrayList<Integer>();
 
-			Statement objStat = dbConn.createStatement();
+			objStat = dbConn.createStatement();
 
 			ResultSet results = objStat.executeQuery( sqlQuery );
 
@@ -203,13 +223,18 @@ public class ObjectDBTransaction
 		{
 			throw sqlErr(e);
 		}
+		finally
+		{
+			cleanUp(objStat);
+		}
 	}
 
 	private final Object retrieveById(Class storedClass, int id) throws ChoobException
 	{
+		PreparedStatement retrieveObject = null;
 		try
 		{
-			PreparedStatement retrieveObject = dbConn.prepareStatement("SELECT * FROM ObjectStore LEFT JOIN ObjectStoreData ON ObjectStore.ObjectID = ObjectStoreData.ObjectID WHERE ClassName = ? AND ClassID = ?;");
+			retrieveObject = dbConn.prepareStatement("SELECT * FROM ObjectStore LEFT JOIN ObjectStoreData ON ObjectStore.ObjectID = ObjectStoreData.ObjectID WHERE ClassName = ? AND ClassID = ?;");
 
 			retrieveObject.setString(1, storedClass.getName() );
 			retrieveObject.setInt(2, id);
@@ -253,6 +278,10 @@ public class ObjectDBTransaction
 		catch (SQLException e)
 		{
 			throw sqlErr(e);
+		}
+		finally
+		{
+			cleanUp(retrieveObject);
 		}
 	}
 
@@ -356,6 +385,7 @@ public class ObjectDBTransaction
 	public final void delete( Object strObj ) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("objectdb."+strObj.getClass().getName().toLowerCase()));
+		PreparedStatement delete = null, deleteData = null;
 		try
 		{
 			int id = getId( strObj );
@@ -378,11 +408,11 @@ public class ObjectDBTransaction
 				throw new ChoobException("Object for deletion does not exist.");
 			}
 
-			PreparedStatement delete = dbConn.prepareStatement("DELETE FROM ObjectStore WHERE ObjectID = ?");
+			delete = dbConn.prepareStatement("DELETE FROM ObjectStore WHERE ObjectID = ?");
 
 			delete.setInt(1, objectID);
 
-			PreparedStatement deleteData = dbConn.prepareStatement("DELETE FROM ObjectStoreData WHERE ObjectID = ?");
+			deleteData = dbConn.prepareStatement("DELETE FROM ObjectStoreData WHERE ObjectID = ?");
 
 			deleteData.setInt(1, objectID);
 
@@ -393,6 +423,11 @@ public class ObjectDBTransaction
 		catch (SQLException e)
 		{
 			throw sqlErr(e);
+		}
+		finally
+		{
+			cleanUp(delete);
+			cleanUp(deleteData);
 		}
 	}
 
@@ -410,40 +445,45 @@ public class ObjectDBTransaction
 	public final void save( Object strObj ) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("objectdb."+strObj.getClass().getName().toLowerCase()));
+		PreparedStatement stat = null, field;
 		try
 		{
 			int id = getId( strObj );
 
 			if( id == 0 )
 			{
-				PreparedStatement highestID = dbConn.prepareStatement("SELECT MAX(ClassID) FROM ObjectStore WHERE ClassName = ?;");
+				stat = dbConn.prepareStatement("SELECT MAX(ClassID) FROM ObjectStore WHERE ClassName = ?;");
 
-				highestID.setString(1, strObj.getClass().getName());
+				stat.setString(1, strObj.getClass().getName());
 
-				ResultSet ids = highestID.executeQuery();
+				ResultSet ids = stat.executeQuery();
 
 				if( ids.first() )
 					id = ids.getInt(1)+1;
 				else
 					id = 1;
 
+				stat.close();
+
 				setId( strObj, id );
 			}
 
-			PreparedStatement insertObject = dbConn.prepareStatement("INSERT INTO ObjectStore VALUES(NULL,?,?);");
+			stat = dbConn.prepareStatement("INSERT INTO ObjectStore VALUES(NULL,?,?);");
 
-			insertObject.setString(1, strObj.getClass().getName());
-			insertObject.setInt(2, id);
+			stat.setString(1, strObj.getClass().getName());
+			stat.setInt(2, id);
 
-			insertObject.execute();
+			stat.execute();
 
-			ResultSet generatedKeys = insertObject.getGeneratedKeys();
+			ResultSet generatedKeys = stat.getGeneratedKeys();
 
 			generatedKeys.first();
 
 			int generatedID = generatedKeys.getInt(1);
 
-			PreparedStatement insertField = dbConn.prepareStatement("INSERT INTO ObjectStoreData VALUES(?,?,?,?,?);");
+			stat.close();
+
+			stat = dbConn.prepareStatement("INSERT INTO ObjectStoreData VALUES(?,?,?,?,?);");
 
 			Field[] fields = strObj.getClass().getFields();
 
@@ -455,7 +495,7 @@ public class ObjectDBTransaction
 				{
 					boolean foundType = true;
 
-					insertField.setInt(1, generatedID);
+					stat.setInt(1, generatedID);
 
 					Type theType = tempField.getType();
 
@@ -464,56 +504,56 @@ public class ObjectDBTransaction
 						if( theType == java.lang.Integer.TYPE )
 						{
 							int theVal = tempField.getInt(strObj);
-							insertField.setString(2, tempField.getName());
-							insertField.setLong(3, theVal);
-							insertField.setDouble(4, theVal);
-							insertField.setString(5, Integer.toString(theVal));
+							stat.setString(2, tempField.getName());
+							stat.setLong(3, theVal);
+							stat.setDouble(4, theVal);
+							stat.setString(5, Integer.toString(theVal));
 						}
 						else if( theType == java.lang.Long.TYPE )
 						{
 							long theVal = tempField.getLong(strObj);
-							insertField.setString(2, tempField.getName());
-							insertField.setLong(3, theVal);
-							insertField.setDouble(4, theVal);
-							insertField.setString(5, Long.toString(theVal));
+							stat.setString(2, tempField.getName());
+							stat.setLong(3, theVal);
+							stat.setDouble(4, theVal);
+							stat.setString(5, Long.toString(theVal));
 						}
 						else if( theType == java.lang.Boolean.TYPE )
 						{
 							boolean theVal = tempField.getBoolean(strObj);
-							insertField.setString(2, tempField.getName());
-							insertField.setLong(3, theVal ? 1 : 0);
-							insertField.setDouble(4, theVal ? 1 : 0);
-							insertField.setString(5, theVal ? "1" : "0");
+							stat.setString(2, tempField.getName());
+							stat.setLong(3, theVal ? 1 : 0);
+							stat.setDouble(4, theVal ? 1 : 0);
+							stat.setString(5, theVal ? "1" : "0");
 						}
 						else if( theType == java.lang.Float.TYPE )
 						{
 							float theVal = tempField.getFloat(strObj);
-							insertField.setString(2, tempField.getName());
-							insertField.setLong(3, (long)theVal);
-							insertField.setDouble(4, theVal);
-							insertField.setString(5, Float.toString(theVal));
+							stat.setString(2, tempField.getName());
+							stat.setLong(3, (long)theVal);
+							stat.setDouble(4, theVal);
+							stat.setString(5, Float.toString(theVal));
 						}
 						else if( theType == java.lang.Double.TYPE )
 						{
 							double theVal = tempField.getDouble(strObj);
-							insertField.setString(2, tempField.getName());
-							insertField.setLong(3, (long)theVal);
-							insertField.setDouble(4, theVal);
-							insertField.setString(5, Double.toString(theVal));
+							stat.setString(2, tempField.getName());
+							stat.setLong(3, (long)theVal);
+							stat.setDouble(4, theVal);
+							stat.setString(5, Double.toString(theVal));
 						}
 						else if( theType == String.class )
 						{
-							insertField.setString(2, tempField.getName());
-							insertField.setLong(3, 0); // XXX - parse these or not parse these?
-							insertField.setDouble(4, 0);
-							insertField.setString(5, (String)tempField.get(strObj));
+							stat.setString(2, tempField.getName());
+							stat.setLong(3, 0); // XXX - parse these or not parse these?
+							stat.setDouble(4, 0);
+							stat.setString(5, (String)tempField.get(strObj));
 						}
 						else
 							foundType = false;
 
 						if( foundType )
 						{
-							insertField.executeUpdate();
+							stat.executeUpdate();
 						}
 					}
 					catch ( IllegalAccessException e )
@@ -526,6 +566,10 @@ public class ObjectDBTransaction
 		catch (SQLException e)
 		{
 			throw sqlErr(e);
+		}
+		finally
+		{
+			cleanUp(stat);
 		}
 	}
 }

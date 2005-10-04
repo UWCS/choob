@@ -125,10 +125,12 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		StringBuffer imps = new StringBuffer();
 		PrintStream classOut = null;
 		List<String> fileNames = new ArrayList<String>();
+		int skipLines = 0;
 		while((line = reader.readLine()) != null)
 		{
 			if (line.startsWith("import "))
 			{
+				skipLines--; // imports get added anyway...
 				imps.append(line + "\n");
 			}
 			else if (line.startsWith("package "))
@@ -150,7 +152,10 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				classOut = new PrintStream(new FileOutputStream(javaFile));
 				classOut.print("package plugins." + pluginName + ";");
 				classOut.print(imps);
+				for(int i=0; i<skipLines; i++)
+					classOut.print("\n");
 			}
+			skipLines++;
 			if (classOut != null)
 				classOut.println(line);
 		}
@@ -433,7 +438,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return null;
 	}
 
-	public Object doAPI(String pluginName, String APIName, Object... params) throws ChoobException
+	public Object doAPI(String pluginName, String APIName, final Object... params) throws ChoobException
 	{
 		String sig = getAPISignature(pluginName + "." + APIName, params);
 		Method meth = allPlugins.getAPI(sig);
@@ -445,20 +450,33 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			if (meth != null)
 				allPlugins.setAPI(sig, meth);
 			else
-				throw new ChoobException("Couldn't find a method matching " + sig);
+				throw new NoSuchPluginException("Couldn't find a method matching " + sig);
 		}
-		Object plugin = allPlugins.getPluginObj(meth);
+		final Object plugin = allPlugins.getPluginObj(meth);
+		final Method meth2 = meth;
 		try
 		{
-			return meth.invoke(plugin, params);
+			return AccessController.doPrivileged(new PrivilegedExceptionAction() {
+				public Object run() throws InvocationTargetException, IllegalAccessException {
+					return meth2.invoke(plugin, params);
+				}
+			}, mods.security.getPluginContext() );
 		}
-		catch (InvocationTargetException e)
+		catch (PrivilegedActionException pe)
 		{
-			throw new ChoobException("Exception invoking method " + meth + ": " + e.getCause(), e.getCause());
-		}
-		catch (IllegalAccessException e)
-		{
-			throw new ChoobException("Could not access method " + meth + ": " + e);
+			Throwable e = pe.getCause();
+			if (e instanceof InvocationTargetException)
+			{
+				if (e.getCause() instanceof ChoobException)
+					// Doesn't need wrapping...
+					throw (ChoobException)e.getCause();
+				else
+					throw new ChoobException("Exception invoking method " + meth + ": " + e.getCause(), e.getCause());
+			}
+			else if (e instanceof IllegalAccessException)
+				throw new ChoobException("Could not access method " + meth + ": " + e);
+			else
+				throw new ChoobException("Unknown error accessing method " + meth + ": " + e);
 		}
 	}
 

@@ -896,7 +896,7 @@ public class Quote
 			throw new ChoobException("Sorry, due to MySQL being whorish, only " + MAXCLAUSES + " clause(s) allowed for now.");
 
 		if (!score)
-			clauses.add("score > " + THRESHOLD);
+			clauses.add("score > " + (THRESHOLD - 1));
 
 		StringBuffer search = new StringBuffer();
 		for(int i=0; i<joins; i++)

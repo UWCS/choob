@@ -7,9 +7,27 @@ import java.util.*;
 
 public class Plugin
 {
-	public void commandLoadPlugin( Message con, Modules modules, IRCInterface irc )
+	public void commandLoadPlugin( Message mes, Modules mods, IRCInterface irc )
 	{
-		List<String> params = modules.util.getParams( con );
+		// First, do auth!
+		boolean valid;
+		try
+		{
+			valid = (Boolean)mods.plugin.callAPI( "NickServ", "Check", mes.getNick() );
+		}
+		catch (ChoobException e)
+		{
+			System.err.println("NickServ check failed; assuming valid: " + e);
+			valid = true;
+		}
+
+		if ( !valid )
+		{
+			irc.sendContextReply( mes, "Sorry, but you can only use this command when identified with NickServ" );
+			return;
+		}
+
+		List<String> params = mods.util.getParams( mes );
 
 		String url="";
 		String classname="";
@@ -25,7 +43,7 @@ public class Plugin
 				classname=ma.group(1);
 			else
 			{
-				irc.sendContextReply(con, "Unable to parse url (" + url + ") -> classname, please specify.");
+				irc.sendContextReply(mes, "Unable to parse url (" + url + ") -> classname, please specify.");
 				return;
 			}
 		}
@@ -33,7 +51,7 @@ public class Plugin
 		{
 			if( params.size() != 3 )
 			{
-				irc.sendContextReply(con, "Syntax: [classname] url");
+				irc.sendContextReply(mes, "Syntax: [classname] url");
 				return;
 			}
 			else
@@ -42,23 +60,37 @@ public class Plugin
 				classname=params.get(1);
 				if ( classname.indexOf("/") != -1 )
 				{
-					irc.sendContextReply(con, "Arguments the other way around, you spoon.");
+					irc.sendContextReply(mes, "Arguments the other way around, you spoon.");
 					return;
 				}
 			}
 		}
 
-
-		irc.sendContextReply(con, "Loading plugin.. " + classname);
+		if ( !mods.security.hasPerm( new ChoobPermission( "plugin.load." + classname.toLowerCase() ), mes.getNick() ) )
+		{
+			irc.sendContextReply( mes, "Bobdamn it! You're not authed to do that!" );
+			return;
+		}
 
 		try
 		{
-			modules.plugin.addPlugin(classname, url);
-			irc.sendContextReply(con, "Plugin parsed, compiled and loaded!");
+			mods.security.addGroup("plugin." + classname.toLowerCase());
+		}
+		catch (ChoobException e)
+		{
+			// TODO: Make a groupExists() or something so we don't need to squelch this
+		}
+
+		irc.sendContextReply(mes, "Loading plugin.. " + classname);
+
+		try
+		{
+			mods.plugin.addPlugin(classname, url);
+			irc.sendContextReply(mes, "Plugin parsed, compiled and loaded!");
 		}
 		catch (Exception e)
 		{
-			irc.sendContextReply(con, "Error parsing plugin, see log for details.");
+			irc.sendContextReply(mes, "Error parsing plugin, see log for details.");
 			e.printStackTrace();
 		}
 	}

@@ -6,20 +6,20 @@ import org.uwcs.choob.modules.SecurityModule;
 import java.util.List;
 
 /**
- * Choob protection domain implementation.
+ * Fake protection domain. Implies every permission, but does the
+ * ChoobSpecialStackPermission hack. This is used in doAPI calls.
  * Just shells out to modules.SecurityModule really.
  * @author bucko
  */
-public class ChoobProtectionDomain extends ProtectionDomain
+public class ChoobFakeProtectionDomain extends ProtectionDomain
 {
 	private SecurityModule mod;
-	private String pluginName;
+	private List<String> pluginNames;
 
-	public ChoobProtectionDomain( SecurityModule mod, String pluginName )
+	public ChoobFakeProtectionDomain( List<String> pluginNames )
 	{
 		super( null, null );
-		this.mod = mod;
-		this.pluginName = pluginName;
+		this.pluginNames = pluginNames;
 	}
 
 	public boolean implies( Permission perm )
@@ -27,9 +27,8 @@ public class ChoobProtectionDomain extends ProtectionDomain
 		// XXX HAX ATTACK XXX
 		if ( perm instanceof ChoobSpecialStackPermission )
 		{
-			((ChoobSpecialStackPermission)perm).add(pluginName);
-			return true;
+			((ChoobSpecialStackPermission)perm).root(pluginNames);
 		}
-		return mod.hasPluginPerm( perm, pluginName );
+		return true;
 	}
 }

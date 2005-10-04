@@ -48,7 +48,7 @@ public class ChoobWatcherThread extends Thread
 				{
 					Interval tempInterval = (Interval)tempIt.next();
 
-					if( Math.abs( tempInterval.getTrigger().getTime() / 1000 ) == Math.abs( timeNow.getTime() / 1000 ) )
+					if( tempInterval.getTrigger().getTime() <= timeNow.getTime() )
 					{
 						toRun.add( tempInterval );
 						tempIt.remove();

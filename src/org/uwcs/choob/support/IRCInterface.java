@@ -48,16 +48,19 @@ public class IRCInterface {
 	 * @param message A String of the message you want to send.
 	 * @param prefix If in a channel, should the reply be prefixed with "{Nick}: "?
 	 */
-	public void sendContextReply(Message ev, String message, boolean prefix)
+	public void sendContextReply(ContextEvent ev, String message, boolean prefix)
 	{
-		if( ev instanceof PrivateEvent || mods.pc.isProtected(ev.getContext()) )
-		{
-			bot.sendMessage(ev.getNick(), message);
-		}
+		if ( !(ev instanceof UserEvent) )
+			return; // XXX!?!
+
+		if( ev instanceof PrivateEvent)
+			bot.sendMessage(((UserEvent)ev).getNick(), message);
+		else if ( mods.pc.isProtected(ev.getContext()) ) // It's a channel
+			bot.sendMessage(((UserEvent)ev).getNick(), message);
 		else
 		{
 			if (prefix)
-				bot.sendMessage(ev.getContext(), ev.getNick() + ": " + message);
+				bot.sendMessage(ev.getContext(), ((UserEvent)ev).getNick() + ": " + message);
 			else
 				bot.sendMessage(ev.getContext(), message);
 		}
@@ -83,7 +86,7 @@ public class IRCInterface {
 	/**
 	 * Facilitate the optional third parameter to sendContextReply.
 	 */
-	public void sendContextReply(Message ev, String message)
+	public void sendContextReply(ContextEvent ev, String message)
 	{
 		sendContextReply(ev, message, true);
 	}
@@ -91,7 +94,7 @@ public class IRCInterface {
 	/**
 	 * Alias of sendContextReply that doesn't prefix the message with "{Nick}: "
 	 */
-	public void sendContextMessage(Message ev, String message)
+	public void sendContextMessage(ContextEvent ev, String message)
 	{
 		sendContextReply(ev, message, false);
 	}

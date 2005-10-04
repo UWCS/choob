@@ -30,41 +30,6 @@ public class NickModule
 	}
 
 	/**
-	 * Gets the User's ID number from a (possibly linked) nick.
-	 * @param nick String representing the Nick.
-	 * @return User's ID, or 0 if not found.
-	 */
-
-	public int getUserID(String nick) throws Exception
-	{
-		try
-		{
-			Connection dbConnection = dbBroker.getConnection();
-
-			PreparedStatement insertLine = dbConnection.prepareStatement("SELECT `UserID` FROM `AddNicks` WHERE ? LIKE `Nick` LIMIT 1;");
-
-			insertLine.setString(1, nick);
-
-			ResultSet nickSet = insertLine.executeQuery();
-
-			if ( nickSet.first() )
-			{
-				dbBroker.freeConnection( dbConnection );
-				return nickSet.getInt("UserID");
-			}
-
-			dbBroker.freeConnection( dbConnection );
-
-			return 0; // Better way to handle this?
-		}
-		catch( Exception e )
-		{
-			throw new Exception("Could not read nick information from database.", e);
-		}
-
-	}
-
-	/**
 	 * Gets the User's primary nick from a (possibly linked) nick.
 	 * @param nick String representing the Nick.
 	 * @return User's primary nick, or "" if not found.
@@ -73,9 +38,11 @@ public class NickModule
 	{
 		Connection dbConnection = dbBroker.getConnection();
 
+		PreparedStatement insertLine = null;
+
 		try
 		{
-			PreparedStatement insertLine = dbConnection.prepareStatement("SELECT `User`.`UserNick` FROM `AddNicks`,`User` WHERE ? LIKE `Nick` AND `User`.`UserID`=`AddNicks`.`UserId` LIMIT 1;");
+			insertLine = dbConnection.prepareStatement("SELECT `User`.`UserNick` FROM `AddNicks`,`User` WHERE ? LIKE `Nick` AND `User`.`UserID`=`AddNicks`.`UserId` LIMIT 1;");
 
 			insertLine.setString(1, nick);
 
@@ -88,13 +55,26 @@ public class NickModule
 
 			return "";
 		}
-		catch( Exception e )
+		catch( SQLException e )
 		{
-			throw new ChoobException("Could not read nick information from database.", e);
+			System.err.println("SQL exception while reading nick information: " + e);
+			throw new ChoobException("Could not read nick information from database.");
 		}
 		finally
 		{
-			dbBroker.freeConnection( dbConnection );
+			try {
+				if (insertLine != null)
+					insertLine.close();
+			}
+			catch (SQLException e)
+			{
+				System.err.println("SQL exception while closing connection: " + e);
+				throw new ChoobException("Could not read nick information from database.");
+			}
+			finally
+			{
+				dbBroker.freeConnection( dbConnection );
+			}
 		}
 	}
 

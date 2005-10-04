@@ -11,14 +11,27 @@ import java.util.List;
 public class ChoobSpecialStackPermission extends BasicPermission
 {
 	private List<String> haxList;
+	private List<String> startList;
 	public ChoobSpecialStackPermission(List<String> haxList)
 	{
 		super("HAX");
 		this.haxList = haxList;
+		this.startList = null;
 	}
 
-	public List<String> getHaxList()
+	public void add(String pluginName)
 	{
-		return haxList;
+		haxList.add(pluginName);
+	}
+
+	public void root(List list)
+	{
+		startList = list;
+	}
+
+	public void patch()
+	{
+		if (startList != null)
+			haxList.addAll(startList);
 	}
 }

@@ -64,13 +64,12 @@ public class Test
 
 	public void onJoin( ChannelJoin ev, Modules mod, IRCInterface irc )
 	{
-		System.out.println(ev.getLogin());
 		if (!ev.getLogin().equals("Choob"))
-			irc.sendMessage(ev.getChannel(), "Hello, " + ev.getNick() + "!");
+			irc.sendContextMessage( ev, "Hello, " + ev.getNick() + "!");
 	}
 
 	public void onPart( ChannelPart ev, Modules mod, IRCInterface irc )
 	{
-		irc.sendMessage(ev.getChannel(), "Bye, " + ev.getNick() + "!");
+		irc.sendContextMessage( ev, "Bye, " + ev.getNick() + "!");
 	}
 }

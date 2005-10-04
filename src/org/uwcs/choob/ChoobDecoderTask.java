@@ -95,9 +95,10 @@ final class ChoobDecoderTask extends ChoobTask
 				{
 					// TODO This should really use a module called AliasModule or something.
 					Connection dbConnection = dbBroker.getConnection();
+					PreparedStatement aliasesSmt = null;
 					try
 					{
-						PreparedStatement aliasesSmt = dbConnection.prepareStatement("SELECT `Converted` FROM `Aliases` WHERE `Name` = ?;");
+						aliasesSmt = dbConnection.prepareStatement("SELECT `Converted` FROM `Aliases` WHERE `Name` = ?;");
 						aliasesSmt.setString(1, ma.group(1).toLowerCase());
 
 						ResultSet aliasesResults = aliasesSmt.executeQuery();
@@ -110,7 +111,19 @@ final class ChoobDecoderTask extends ChoobTask
 					}
 					finally
 					{
-						dbBroker.freeConnection( dbConnection );
+						try {
+							if (aliasesSmt != null)
+								aliasesSmt.close();
+						}
+						catch (SQLException e)
+						{
+							// Cry
+							System.err.println("SQL Exception when closing statement: " + e);
+						}
+						finally
+						{
+							dbBroker.freeConnection( dbConnection );
+						}
 					}
 				}
 
