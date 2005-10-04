@@ -32,6 +32,7 @@ INSERT INTO `UserNodes` VALUES (3,'bucko',1);
 INSERT INTO `UserNodes` VALUES (4,'Plugin',2);
 INSERT INTO `UserNodes` VALUES (5,'Test',2);
 INSERT INTO `UserNodes` VALUES (6,'Security',2);
+INSERT INTO `UserNodes` VALUES (7,'NickServ',2);
 
 --
 -- Table structure for table `AddNicks`
@@ -90,6 +91,7 @@ CREATE TABLE `CorePlugins` (
 INSERT INTO `CorePlugins` VALUES ('Test','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Test.java');
 INSERT INTO `CorePlugins` VALUES ('Plugin','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Plugin.java');
 INSERT INTO `CorePlugins` VALUES ('Security','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Security.java');
+INSERT INTO `CorePlugins` VALUES ('NickServ','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java');
 
 --
 -- Table structure for table `GroupMembers`
@@ -114,6 +116,7 @@ INSERT INTO `GroupMembers` VALUES (3,2);
 INSERT INTO `GroupMembers` VALUES (1,4);
 INSERT INTO `GroupMembers` VALUES (1,5);
 INSERT INTO `GroupMembers` VALUES (1,6);
+INSERT INTO `GroupMembers` VALUES (1,7);
 
 --
 -- Table structure for table `History`
