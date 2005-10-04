@@ -33,14 +33,15 @@ public class ChoobMain
 			bot.setVerbose(true);
 
 			// Connect to the IRC server.
-			bot.connect("irc.uwcs.co.uk");
-//			bot.connect("localhost");
+			bot.connect(bot.server);
 
 			// Set mode +B (is a bot)
 			bot.sendRawLineViaQueue("MODE " + bot.getName() + " +B");
 
-			// Join the #pircbot channel.
-			bot.joinChannel("#bots");
+			// Join the channels.
+			for (int i=0; i<bot.channels.length; i++)
+				bot.joinChannel(bot.channels[i]);
+
 		}
 		catch( Exception e )
 		{
