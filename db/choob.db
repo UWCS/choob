@@ -1,4 +1,4 @@
-drop database choob;
+drop database if exists choob;
 create database choob;
 
 use choob;

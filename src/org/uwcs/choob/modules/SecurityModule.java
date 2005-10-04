@@ -26,7 +26,7 @@ public class SecurityModule
 	extends SecurityManager // For getClassContext(). Heh.
 {
 	DbConnectionBroker dbBroker;
-	Map nodeMap;
+	Map <Integer, Permissions>nodeMap;
 
 	/**
 	 * Creates a new instance of SecurityModule
@@ -40,7 +40,7 @@ public class SecurityModule
 		//throwAway = DiscreteFilesClassLoader.class;
 
 		this.dbBroker = dbBroker;
-		this.nodeMap = new HashMap();
+		this.nodeMap = new HashMap<Integer, Permissions>();
 		this.nodeDbLock = new Object();
 	}
 
@@ -54,7 +54,7 @@ public class SecurityModule
 	 */
 	public AccessControlContext getContext( String pluginName )
 	{
-		LinkedList pluginStack = getPluginNames();
+		LinkedList <String> pluginStack = getPluginNames();
 		if ( pluginName != null )
 			pluginStack.add( pluginName );
 		ProtectionDomain domain = new ChoobProtectionDomain(this, pluginName);
@@ -66,9 +66,9 @@ public class SecurityModule
 		return new ChoobProtectionDomain(this, pluginName);
 	}
 
-	private LinkedList getPluginNames()
+	private LinkedList <String>getPluginNames()
 	{
-		LinkedList pluginStack = new LinkedList();
+		LinkedList<String> pluginStack = new LinkedList<String>();
 		// XXX HAX XXX HAX XXX HAX XXX HAX XXX
 		// ^^ If this doesn't persuade you that this is a hack, nothing will...
 		AccessController.checkPermission(new ChoobSpecialStackPermission(pluginStack));
@@ -295,7 +295,7 @@ public class SecurityModule
 	private Iterator<Integer> getAllNodes(int nodeID, boolean addThis)
 	{
 		Connection dbConn = dbBroker.getConnection();
-		List list = new LinkedList<Integer>();
+		List <Integer> list = new LinkedList<Integer>();
 		if (addThis)
 			list.add(nodeID);
 		try
@@ -309,7 +309,7 @@ public class SecurityModule
 		return list.listIterator();
 	}
 
-	private void getAllNodesRecursive(Connection dbConn, List list, int nodeID, int recurseDepth)
+	private void getAllNodesRecursive(Connection dbConn, List<Integer> list, int nodeID, int recurseDepth)
 	{
 		if (recurseDepth >= 5)
 		{
@@ -910,7 +910,7 @@ public class SecurityModule
 		if (groupID == -1)
 			throw new ChoobException("Group " + group + " does not exist!");
 
-		List<String> foundPerms = new LinkedList();
+		List<String> foundPerms = new LinkedList<String>();
 
 		Iterator<Integer> allNodes = getAllNodes(groupID, true);
 
@@ -953,7 +953,7 @@ public class SecurityModule
 		if (groupID == -1)
 			throw new ChoobException("Group " + group + " does not exist!");
 
-		List<String> foundPerms = new LinkedList();
+		List<String> foundPerms = new LinkedList<String>();
 
 		PermissionCollection perms = getNodePermissions( groupID );
 		// Be careful to avoid invalid groups and stuff.

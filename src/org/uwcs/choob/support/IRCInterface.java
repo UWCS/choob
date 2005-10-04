@@ -17,8 +17,8 @@ import java.security.AccessController;
  * @author	sadiq
  */
 public class IRCInterface {
-	private Choob bot;
-	private Modules mods;
+	protected Choob bot;
+	protected Modules mods;
 
 	/** Creates a new instance of IRCInterface */
 	public IRCInterface(Choob bot) {

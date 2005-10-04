@@ -33,12 +33,15 @@ public class Choob extends PircBot
 	Modules modules;
 	IRCInterface irc;
 	String trigger;
-	List filterList;
-	List intervalList;
+	List <Filter> filterList;
+	List <Interval> intervalList;
 	ChoobWatcherThread watcher;
 
 	private static final int INITTHREADS = 5;
 	private static final int MAXTHREADS = 20;
+
+	public String server;
+	public String[] channels;
 
 	/**
 	 * Constructor for Choob, initialises vital variables.
@@ -64,6 +67,8 @@ public class Choob extends PircBot
 			dbPass = botProps.getProperty("dbPass");
 			trigger = botProps.getProperty("botTrigger");
 			dbServer = botProps.getProperty("dbServer");
+			server = botProps.getProperty("server");
+			channels = botProps.getProperty("channels").split("[ ,]");
 		}
 		catch (Exception e)
 		{

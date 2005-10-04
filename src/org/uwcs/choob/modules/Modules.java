@@ -41,7 +41,7 @@ public class Modules
 	 * @param dbBroker
 	 * @param pluginMap
 	 */
-	public Modules( DbConnectionBroker dbBroker, Map pluginMap, List filterList, List intervalList, Choob bot, IRCInterface irc )
+	public Modules( DbConnectionBroker dbBroker, Map pluginMap, List <Filter>filterList, List<Interval> intervalList, Choob bot, IRCInterface irc )
 	{
 		try
 		{
@@ -59,7 +59,7 @@ public class Modules
 		{
 			throw new RuntimeException("Could not instantiate modules: " + e);
 		}
-		
+
 		this.dbBroker = dbBroker;
 		this.pluginMap = pluginMap;
 		this.intervalList = intervalList;

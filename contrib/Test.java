@@ -3,6 +3,7 @@ import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 import java.util.*;
+import java.util.regex.*;
 
 public class Test
 {
@@ -22,6 +23,12 @@ public class Test
 		irc.sendContextReply(con, "Yarr!");
 	}
 
+	public void commandPiratey( Message con, Modules mods, IRCInterface irc )
+	{
+		//irc.sendContextAction(con, "reaches into her pants, and grabs a Yarr.");
+		irc.sendContextReply(con, "(:;test.piratey:)");
+	}
+
 	public void commandInMy( Message con, Modules mods, IRCInterface irc )
 	{
 		irc.sendContextMessage(con, "..Pants!");
@@ -33,11 +40,19 @@ public class Test
 	}
 
 	// Define the regex for the KarmaPlus filter.
-	public String filterFauxRegex = "^Faux sucks";
+	public String filterFauxRegex = ".*?([a-zA-Z0-9]{2,}) sucks.*";
 
 	public void filterFaux( Message con, Modules modules, IRCInterface irc )
 	{
-		irc.sendContextReply( con, "I would almost certainly concur.");
+		Pattern pa;
+		Matcher ma;
+		pa=Pattern.compile(filterFauxRegex);
+		ma=pa.matcher(con.getMessage());
+		ma.find();
+		if (ma.group(1).equals(con.getNick()))
+			irc.sendContextReply( con, "You sure do!");
+		else
+			irc.sendContextMessage( con, "No, I disagree, " + con.getNick() + " sucks.");
 	}
 
 	public String filterBouncyRegex = "^bouncy bouncy";

@@ -12,11 +12,11 @@ import org.uwcs.choob.*;
  */
 public class ProtectedChannels
 {
-	Vector channels;
+	ArrayList <String>channels;
 
 	public ProtectedChannels()
 	{
-		channels=new Vector();
+		channels=new ArrayList<String>();
 	}
 
 	public Boolean isProtected (String channel)

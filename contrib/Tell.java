@@ -65,7 +65,7 @@ public class Tell
 	{
 		try
 		{
-			List results = mods.odb.retrieve (TellObject.class, "target = '" + mods.nick.getBestPrimaryNick(nick) + "'");
+			List results = mods.odb.retrieve (TellObject.class, "where target = '" + mods.nick.getBestPrimaryNick(nick) + "'");
 
 			if (results.size()!=0)
 				for (int i=0; i < results.size(); i++ )

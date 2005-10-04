@@ -37,7 +37,7 @@ public class ChoobWatcherThread extends Thread
 
 		do
 		{
-			List<Interval> toRun = new ArrayList();
+			List<Interval> toRun = new ArrayList<Interval>();
 
 			synchronized( intervalList )
 			{

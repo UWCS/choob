@@ -15,10 +15,10 @@ import org.uwcs.choob.support.*;
  */
 public class IntervalModule
 {
-	List intervalList;
+	List <Interval> intervalList;
 
 	/** Creates a new instance of IntervalModule */
-	public IntervalModule( List intervalList )
+	public IntervalModule( List <Interval> intervalList )
 	{
 		this.intervalList = intervalList;
 	}

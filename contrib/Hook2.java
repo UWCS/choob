@@ -3,7 +3,7 @@ import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 
-class Hook2
+public class Hook2
 {
 	public void commandHook( Message con, Modules modules, IRCInterface irc )
 	{

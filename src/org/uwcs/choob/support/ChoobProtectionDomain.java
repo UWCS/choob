@@ -27,7 +27,7 @@ public class ChoobProtectionDomain extends ProtectionDomain
 		// XXX HAX ATTACK XXX
 		if ( perm instanceof ChoobSpecialStackPermission )
 		{
-			List toStack = ((ChoobSpecialStackPermission)perm).getHaxList();
+			List <String>toStack = ((ChoobSpecialStackPermission)perm).getHaxList();
 			toStack.add(pluginName);
 			return true;
 		}

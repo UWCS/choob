@@ -131,7 +131,7 @@ public class ObjectDBTransaction
 
 		try
 		{
-			ArrayList objects = new ArrayList();
+			ArrayList <Object>objects = new ArrayList<Object>();
 
 			Statement objStat = dbConn.createStatement();
 

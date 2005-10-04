@@ -92,7 +92,7 @@ public class BeanshellPluginUtils
 		throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
 	{
 		Method[] methods = plugin.getClass().getDeclaredMethods();
-		ArrayList filtered = new ArrayList();
+		ArrayList <Method>filtered = new ArrayList<Method>();
 		for(int i=0; i<methods.length; i++)
 		{
 			if (methods[i].getName().equals(methodName))
@@ -103,7 +103,7 @@ public class BeanshellPluginUtils
 			throw new NoSuchMethodException("No method named " + methodName + " in plugin " + plugin.getClass().getName());
 
 		// Do any of them have the right signature?
-		ArrayList secondPass = new ArrayList();
+		ArrayList <Method>secondPass = new ArrayList<Method>();
 		for(int i=0; i<filtered.size(); i++)
 		{
 			Method method = (Method)filtered.get(i);
@@ -377,7 +377,7 @@ public class BeanshellPluginUtils
 	/**
 	 *
 	 */
-	static public List getExportedMethods(Object plugin, String prefix)
+	static public List<String> getExportedMethods(Object plugin, String prefix)
 	{
 		Class coreClass = plugin.getClass();
 
@@ -385,7 +385,7 @@ public class BeanshellPluginUtils
 
 		Pattern methodPattern = Pattern.compile("^" + prefix + "([A-Z][a-zA-Z]*)");
 
-		ArrayList methods = new ArrayList();
+		ArrayList<String> methods = new ArrayList<String>();
 
 		for( int c = 0; c < methodList.length ; c++ )
 		{
@@ -410,7 +410,7 @@ public class BeanshellPluginUtils
 
 		List filterNames = getExportedMethods(plugin, "filter");
 
-		List filters = new ArrayList();
+		List <Filter>filters = new ArrayList<Filter>();
 
 		for( int c = 0; c < filterNames.size() ; c++ )
 		{
