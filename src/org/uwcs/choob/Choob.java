@@ -82,6 +82,8 @@ public class Choob extends PircBot
 		// Set the bot's hostname.
 		this.setLogin("Choob");
 
+		this.setMessageDelay(0); // Disable PircBot's flood protection, reducing percieved lag.
+
 		this.setVersion("Choob SVN - http://svn.uwcs.co.uk/repos/choob/");
 
 		// Create a new database connection broker using the MySQL drivers
