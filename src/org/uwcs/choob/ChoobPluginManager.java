@@ -65,8 +65,8 @@ public abstract class ChoobPluginManager
 	 * (Re)loads a plugin from an URL and a plugin name. Note that in the case
 	 * of reloading, the old plugin will be disposed of AFTER the new one is
 	 * loaded.
-	 * @param srcContent String comprising of the plugin's source.
 	 * @param pluginName Class name of plugin.
+	 * @param fromLocation URL from which to get the plugin's contents.
 	 * @throws Exception Thrown if there's a syntactical error in the plugin's source.
 	 */
 	public final void loadPlugin(String pluginName, URL fromLocation) throws ChoobException

@@ -322,9 +322,8 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	/**
 	 * Go through the horror of method resolution.
 	 *
-	 * @param plugin The plugin to use.
-	 * @param methodName The name of the method to resolve.
-	 * @param args The arguments to resolve the method onto.
+	 * @param methods The list of methods to search.
+	 * @param args The arguments of the method we hope to resolve.
 	 */
 	private Method javaHorrorMethodResolve(List<Method> methods, Object[] args)
 	{
