@@ -370,10 +370,10 @@ public class Security
 		else
 		{
 			// Must check permission!
-			childName = (String)params.get(1);
+			parentName = (String)params.get(1);
+			childName = ((String)params.get(2));
 			if (childName.indexOf('.') != -1)
 				isGroup = true;
-			parentName = ((String)params.get(2));
 			boolean check = true;
 			// Sure, this will be checked for us. But what about the user who called us?
 			if (groupCheck(parentName, mes.getNick()))

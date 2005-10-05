@@ -1007,7 +1007,7 @@ public class SecurityModule
 				dbCleanup(stat, dbConn); // If success, this does nothing
 			}
 		}
-		invalidateNodeTree(parentID);
+		invalidateNodeTree(childID);
 	}
 
 	public void removeUserFromGroup(String parentName, String childName) throws ChoobException
@@ -1076,7 +1076,7 @@ public class SecurityModule
 				dbCleanupSel(stat, dbConn); // If success, this does nothing
 			}
 		}
-		invalidateNodeTree(parentID);
+		invalidateNodeTree(childID);
 	}
 
 	public void grantPermission(String groupName, Permission permission) throws ChoobException
