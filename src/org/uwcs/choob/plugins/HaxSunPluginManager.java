@@ -437,17 +437,21 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return null;
 	}
 
-	public Object doAPI(String pluginName, String APIName, final Object... params) throws ChoobException
+	public Object doGeneric(String pluginName, String prefix, String genName, final Object... params) throws ChoobException
 	{
-		String sig = getAPISignature(pluginName + "." + APIName, params);
-		Method meth = allPlugins.getAPI(sig);
+		String fullName = pluginName + "." + prefix + ":" + genName;
+		String sig = getAPISignature(fullName, params);
+		Method meth = allPlugins.getGeneric(sig);
 		if (meth == null)
 		{
 			// OK, not cached. But maybe it's still there...
-			List<Method> meths = allPlugins.getAllAPI(pluginName + "." + APIName);
-			meth = javaHorrorMethodResolve(meths, params);
+			List<Method> meths = allPlugins.getAllGeneric(fullName);
+
+			if (meths != null)
+				meth = javaHorrorMethodResolve(meths, params);
+
 			if (meth != null)
-				allPlugins.setAPI(sig, meth);
+				allPlugins.setGeneric(sig, meth);
 			else
 				throw new NoSuchPluginException("Couldn't find a method matching " + sig);
 		}
@@ -457,6 +461,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		{
 			return AccessController.doPrivileged(new PrivilegedExceptionAction() {
 				public Object run() throws InvocationTargetException, IllegalAccessException {
+					System.out.println("Meth is: " + meth2 + "(" + meth2.getDeclaringClass() + "), plugin is: " + plugin + ".");
 					return meth2.invoke(plugin, params);
 				}
 			}, mods.security.getPluginContext() );
@@ -470,15 +475,21 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 					// Doesn't need wrapping...
 					throw (ChoobException)e.getCause();
 				else
-					throw new ChoobException("Exception invoking method " + meth + ": " + e.getCause(), e.getCause());
+					throw new ChoobException("Exception invoking method " + fullName + ": " + e.getCause(), e.getCause());
 			}
 			else if (e instanceof IllegalAccessException)
-				throw new ChoobException("Could not access method " + meth + ": " + e);
+				throw new ChoobException("Could not access method " + fullName + ": " + e);
 			else
-				throw new ChoobException("Unknown error accessing method " + meth + ": " + e);
+				throw new ChoobException("Unknown error accessing method " + fullName + ": " + e);
 		}
 	}
 
+	public Object doAPI(String pluginName, String APIName, final Object... params) throws ChoobException
+	{
+		return doGeneric(pluginName, "api", APIName, params);
+	}
+
+	// Helper methods for the class below.
 	static boolean checkCommandSignature(Method meth)
 	{
 		Class[] params = meth.getParameterTypes();
@@ -571,34 +582,53 @@ public final class HaxSunPluginManager extends ChoobPluginManager
  */
 final class ChoobPluginMap
 {
+	// Name -> Plugin object
 	private final Map<String,Object> plugins;
+
+	// These map a plugin name to the list of things in the later lists.
 	private final Map<String,List<String>> pluginCommands;
-	private final Map<String,List<String>> pluginApiCallSigs;
-	private final Map<String,List<String>> pluginApiCalls;
+//	private final Map<String,List<String>> pluginApiCallSigs;
+//	private final Map<String,List<String>> pluginApiCalls;
+	private final Map<String,List<String>> pluginGenCallSigs;
+	private final Map<String,List<String>> pluginGenCalls;
 	private final Map<String,List<Pattern>> pluginFilters;
+
+	// This gives a method to search for inside the events list.
 	private final Map<String,List<Method>> pluginEvents;
+
+	// Only one interval per plugin.
 	private final Map<String,Method> pluginInterval;
-	private final Map<String,Method> commands;
-	private final Map<String,Method> apiCallSigs;
-	private final Map<String,List<Method>> apiCalls;
-	private final Map<Pattern,List<Method>> filters;
-	private final Map<String,List<Method>> events;
+
+	private final Map<String,Method> commands; // plugin.commandname -> method
+//	private final Map<String,Method> apiCallSigs;
+//	private final Map<String,List<Method>> apiCalls;
+	private final Map<String,Method> genCallSigs; // plugin.prefix:genericname(params) -> method
+	private final Map<String,List<Method>> genCalls; // plugin.prefix:genericname -> list of possible methods
+	private final Map<Pattern,List<Method>> filters; // pattern object -> method to call on match
+	private final Map<String,List<Method>> events; // event name -> method list
+
+	// Create an empty plugin map.
 	ChoobPluginMap()
 	{
 		plugins = new HashMap<String,Object>();
 		pluginCommands = new HashMap<String,List<String>>();
-		pluginApiCalls = new HashMap<String,List<String>>();
-		pluginApiCallSigs = new HashMap<String,List<String>>();
+		//pluginApiCalls = new HashMap<String,List<String>>();
+		//pluginApiCallSigs = new HashMap<String,List<String>>();
+		pluginGenCalls = new HashMap<String,List<String>>();
+		pluginGenCallSigs = new HashMap<String,List<String>>();
 		pluginFilters = new HashMap<String,List<Pattern>>();
 		pluginEvents = new HashMap<String,List<Method>>();
 		pluginInterval = new HashMap<String,Method>();
 		commands = new HashMap<String,Method>();
-		apiCallSigs = new HashMap<String,Method>();
-		apiCalls = new HashMap<String,List<Method>>();
+		//apiCallSigs = new HashMap<String,Method>();
+		//apiCalls = new HashMap<String,List<Method>>();
+		genCallSigs = new HashMap<String,Method>();
+		genCalls = new HashMap<String,List<Method>>();
 		filters = new HashMap<Pattern,List<Method>>();
 		events = new HashMap<String,List<Method>>();
 	}
 
+	// Wipe out details for plugin <name>, and if pluginObj is not null, add new ones.
 	synchronized void resetPlugin(String pluginName, Object pluginObj)
 	{
 		String lname = pluginName.toLowerCase();
@@ -609,12 +639,18 @@ final class ChoobPluginMap
 			it = pluginCommands.get(lname).iterator();
 			while (it.hasNext())
 				commands.remove(it.next());
-			it = pluginApiCalls.get(lname).iterator();
+			/*it = pluginApiCalls.get(lname).iterator();
 			while (it.hasNext())
 				apiCalls.remove(it.next());
 			it = pluginApiCallSigs.get(lname).iterator();
 			while (it.hasNext())
-				apiCallSigs.remove(it.next());
+				apiCallSigs.remove(it.next());*/
+			it = pluginGenCalls.get(lname).iterator();
+			while (it.hasNext())
+				genCalls.remove(it.next());
+			it = pluginGenCallSigs.get(lname).iterator();
+			while (it.hasNext())
+				genCallSigs.remove(it.next());
 			Iterator<Pattern> it3 = pluginFilters.get(lname).iterator();
 			while (it3.hasNext())
 			{
@@ -637,8 +673,10 @@ final class ChoobPluginMap
 		{
 			plugins.remove(lname);
 			pluginCommands.remove(lname);
-			pluginApiCalls.remove(lname);
-			pluginApiCallSigs.remove(lname);
+			//pluginApiCalls.remove(lname);
+			//pluginApiCallSigs.remove(lname);
+			pluginGenCalls.remove(lname);
+			pluginGenCallSigs.remove(lname);
 			pluginEvents.remove(lname);
 			pluginInterval.remove(lname);
 			return;
@@ -648,10 +686,14 @@ final class ChoobPluginMap
 		// OK, now load in new values...
 		List<String> coms = new LinkedList<String>();
 		pluginCommands.put(lname, coms);
-		List<String> apis = new LinkedList<String>();
-		pluginApiCalls.put(lname, apis);
-		List<String> apiss = new LinkedList<String>();
-		pluginApiCallSigs.put(lname, apiss);
+		//List<String> apis = new LinkedList<String>();
+		//pluginApiCalls.put(lname, apis);
+		//List<String> apiss = new LinkedList<String>();
+		//pluginApiCallSigs.put(lname, apiss);
+		List<String> gens = new LinkedList<String>();
+		pluginGenCalls.put(lname, gens);
+		List<String> genss = new LinkedList<String>();
+		pluginGenCallSigs.put(lname, genss);
 		List<Pattern> fils = new LinkedList<Pattern>();
 		pluginFilters.put(lname, fils);
 		List<Method> evs = new LinkedList<Method>();
@@ -662,7 +704,7 @@ final class ChoobPluginMap
 		for(Method meth: meths)
 		{
 			String name = meth.getName();
-			if (name.length() > 7 && name.substring(0, 7).equals("command"))
+			if (name.startsWith("command"))
 			{
 				String commandName = lname + "." + name.substring(7).toLowerCase();
 				// Command
@@ -676,7 +718,7 @@ final class ChoobPluginMap
 					System.err.println("Command " + commandName + " had invalid signature.");
 				}
 			}
-			else if (name.length() > 3 && name.substring(0, 3).equals("api"))
+/*			else if (name.startsWith("api"))
 			{
 				String apiName = lname + "." + name.substring(3).toLowerCase();
 				if (HaxSunPluginManager.checkAPISignature(meth))
@@ -690,8 +732,8 @@ final class ChoobPluginMap
 				{
 					System.err.println("API call " + apiName + " had invalid signature.");
 				}
-			}
-			else if (name.length() > 6 && name.substring(0, 6).equals("filter"))
+			} API == generic */
+			else if (name.startsWith("filter"))
 			{
 				String filter;
 				try
@@ -735,7 +777,7 @@ final class ChoobPluginMap
 					System.err.println("Filter " + lname + "." + name + " had invalid signature.");
 				}
 			}
-			else if (name.length() > 2 && name.substring(0, 2).equals("on"))
+			else if (name.startsWith("on"))
 			{
 				if (HaxSunPluginManager.checkEventSignature(meth))
 				{
@@ -749,7 +791,7 @@ final class ChoobPluginMap
 					System.err.println("Event " + lname + "." + name + " had invalid signature.");
 				}
 			}
-			else if (name.equals("interval"))
+			else if (name.startsWith("interval"))
 			{
 				if (HaxSunPluginManager.checkIntervalSignature(meth))
 				{
@@ -759,7 +801,33 @@ final class ChoobPluginMap
 				{
 					System.err.println("Interval " + lname + "." + name + " had invalid signature.");
 				}
-			} // Ignore anything else
+			}
+			else
+			{
+				// File it as a generic.
+				Matcher matcher = Pattern.compile("([a-z]+).+").matcher(name);
+				if (matcher.matches())
+				{
+					// Is a real generic.
+					String prefix = matcher.group(1);
+					String gName = name.substring(prefix.length()).toLowerCase();
+					String fullName = lname + "." + prefix + ":" + gName;
+					if (HaxSunPluginManager.checkAPISignature(meth))
+					{
+						if (genCalls.get(fullName) == null)
+							genCalls.put(fullName, new LinkedList<Method>());
+						genCalls.get(fullName).add(meth);
+					}
+					else
+					{
+						System.err.println("Generic call " + fullName + " had invalid signature.");
+					}
+				}
+				else
+				{
+					System.err.println("Ignoring method " + name + ".");
+				}
+			}
 		}
 	}
 
@@ -783,7 +851,7 @@ final class ChoobPluginMap
 		return pluginCommands.get(pluginName.toLowerCase());
 	}
 
-	synchronized Method getAPI(String apiName)
+	/*synchronized Method getAPI(String apiName)
 	{
 		return apiCallSigs.get(apiName.toLowerCase());
 	}
@@ -797,6 +865,22 @@ final class ChoobPluginMap
 	synchronized List<Method> getAllAPI(String apiName)
 	{
 		return apiCalls.get(apiName.toLowerCase());
+	}*/
+
+	synchronized Method getGeneric(String genName)
+	{
+		return genCallSigs.get(genName.toLowerCase());
+	}
+
+	synchronized void setGeneric(String genName, Method meth)
+	{
+		pluginGenCallSigs.get(meth.getDeclaringClass().getSimpleName().toLowerCase()).add(genName.toLowerCase());
+		genCallSigs.put(genName.toLowerCase(), meth);
+	}
+
+	synchronized List<Method> getAllGeneric(String genName)
+	{
+		return genCalls.get(genName.toLowerCase());
 	}
 
 	synchronized List<Method> getFilter(String text)

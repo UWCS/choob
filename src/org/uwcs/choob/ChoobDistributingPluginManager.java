@@ -128,7 +128,7 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 
 	/**
 	 * Run any filters on the given Message.
-	 * @param ev
+	 * @param ev IRCEvent to pass along
 	 */
 	public List<ChoobTask> filterTasks(Message ev)
 	{
@@ -146,8 +146,8 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 
 	/**
 	 * Attempt to perform an API call on a contained plugin.
-	 * @param APIName
-	 * @param params
+	 * @param APIName The name of the API call.
+	 * @param params The parameters to pass.
 	 */
 	public Object doAPI(String pluginName, String APIName, Object... params) throws ChoobException
 	{
@@ -158,6 +158,24 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 		}
 		if (man != null)
 			return man.doAPI(pluginName, APIName, params);
+		return null;
+	}
+
+	/**
+	 * Attempt to perform an generic call on a contained plugin.
+	 * @param prefix The prefix (ie call type) of the call.
+	 * @param genericName The name of the call.
+	 * @param params Params to pass.
+	 */
+	public Object doGeneric(String pluginName, String prefix, String genericName, Object... params) throws ChoobException
+	{
+		ChoobPluginManager man;
+		synchronized(pluginMap)
+		{
+			man = pluginMap.get(pluginName.toLowerCase());
+		}
+		if (man != null)
+			return man.doGeneric(pluginName, prefix, genericName, params);
 		return null;
 	}
 }

@@ -162,15 +162,23 @@ public abstract class ChoobPluginManager
 
 	/**
 	 * Run any filters on the given Message.
-	 * @param ev
+	 * @param ev IRCEvent to pass along.
 	 */
 	abstract public List<ChoobTask> filterTasks(Message ev);
 
 	/**
 	 * Attempt to perform an API call on a contained plugin.
-	 * @param APIName
-	 * @param params
+	 * @param APIName The name of the API call.
+	 * @param params Params to pass through.
 	 */
 	abstract public Object doAPI(String pluginName, String APIName, Object... params) throws ChoobException;
+
+	/**
+	 * Attempt to perform an API call on a contained plugin.
+	 * @param prefix The prefix (ie. type) of call.
+	 * @param genericName The name of the call.
+	 * @param params Params to pass through.
+	 */
+	abstract public Object doGeneric(String pluginName, String prefix, String genericName, Object... params) throws ChoobException;
 }
 
