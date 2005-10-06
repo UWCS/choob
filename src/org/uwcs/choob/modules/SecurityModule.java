@@ -86,7 +86,7 @@ public class SecurityModule
 	public String getPluginName(int skip)
 	{
 		List names = getPluginNames();
-		if (skip > names.size())
+		if (skip >= names.size())
 			return null;
 		return (String)names.get(skip);
 	}
@@ -498,11 +498,21 @@ public class SecurityModule
 
 	/**
 	 * Check if the previous plugin on the call stack has a permission
-	 * @param permission
+	 * @param permission Permission to query
 	 */
 	public boolean hasPluginPerm(Permission permission)
 	{
-		return hasPluginPerm(permission, getPluginName(1));
+		return hasPluginPerm(permission, getPluginName(0));
+	}
+
+	/**
+	 * Check if the skip'th plugin on the call stack has a permission
+	 * @param permission Permission to query
+	 * @param skip Number of plugins to skip
+	 */
+	public boolean hasPluginPerm(Permission permission, int skip)
+	{
+		return hasPluginPerm(permission, getPluginName(skip));
 	}
 
 	public String getCallerPluginName()
@@ -511,9 +521,9 @@ public class SecurityModule
 	}
 
 	/**
-	 * Check if the previous plugin on the call stack has a permission
-	 * @param permission
-	 * @param pluginName
+	 * Check if the passed plugin has a permission
+	 * @param permission Permission to query
+	 * @param pluginName Plugin to query
 	 */
 	public boolean hasPluginPerm(final Permission permission, final String pluginName)
 	{
