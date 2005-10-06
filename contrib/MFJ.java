@@ -86,7 +86,7 @@ public class MFJ
 			default: colour = "Black"; 			break;
 		}
 		
-		irc.sendContextAction( con, "Today's colour is " + colour + ".");
+		irc.sendContextMessage( con, "Today's colour is " + colour + ".");
 	}
 	
 	/**
