@@ -118,6 +118,6 @@ public class MFJ
 		
 		String[] months = dfc.getMonths();
 				
-		irc.sendContextMessage( con, "It is " + months[cal.get(cal.MONTH) - 1] + ".");
+		irc.sendContextMessage( con, "It is " + months[cal.get(cal.MONTH)] + ".");
 	}
 }
