@@ -5,6 +5,7 @@ import org.uwcs.choob.support.events.*;
 
 //Calendar support
 import java.util.GregorianCalendar;
+import java.text.DateFormatSymbols;
 
 /**
  * Random command implementations from myself. Enjoy.
@@ -95,5 +96,28 @@ public class MFJ
 	public void commandColor(Message con, Modules mods, IRCInterface irc)
 	{
 		commandColour(con, mods, irc);
+	}
+	
+	/**
+	 * Implement JB's !year command
+	 */
+	public void commandYear(Message con, Modules mods, IRCInterface irc)
+	{
+		GregorianCalendar cal = new GregorianCalendar();
+		
+		irc.sendContextMessage( con, "It is the year " + cal.get(cal.YEAR) + ".");
+	}
+	
+	/**
+	 * Implement JB's !month command
+	 */
+	public void commandMonth(Message con, Modules mods, IRCInterface irc)
+	{
+		GregorianCalendar cal = new GregorianCalendar();
+		DateFormatSymbols dfc = new DateFormatSymbols();
+		
+		String[] months = dfc.getMonths();
+				
+		irc.sendContextMessage( con, "It is " + months[cal.get(cal.MONTH) - 1] + ".");
 	}
 }
