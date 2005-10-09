@@ -27,6 +27,7 @@ public abstract class ChoobPluginManager
 	static Modules mods;
 	static IRCInterface irc;
 	static Map<String,ChoobPluginManager> pluginMap;
+	static Map<String,List<String>> commands;
 	static List<ChoobPluginManager> pluginManagers;
 	static SpellDictionaryChoob phoneticCommands;
 
@@ -46,6 +47,7 @@ public abstract class ChoobPluginManager
 		ChoobPluginManager.irc = irc;
 		pluginManagers = new LinkedList<ChoobPluginManager>();
 		pluginMap = new HashMap<String,ChoobPluginManager>();
+		commands = new HashMap<String,List<String>>();
 		File transFile = new File("lib/en_phonet.dat");
 		try
 		{
@@ -74,6 +76,10 @@ public abstract class ChoobPluginManager
 		SecurityManager sm = System.getSecurityManager();
 		if (sm != null)
 			sm.checkPermission(new ChoobPermission("plugin.load."+pluginName));
+
+		// Make sure we're ready to add commands.
+		if (commands.get(pluginName.toLowerCase()) == null)
+			commands.put(pluginName.toLowerCase(), new ArrayList<String>());
 
 		Object pluginObj = createPlugin(pluginName, fromLocation);
 
@@ -113,25 +119,99 @@ public abstract class ChoobPluginManager
 	}
 
 	/**
+	 * Get a list of plugins.
+	 */
+	public final String[] plugins()
+	{
+		synchronized(pluginMap)
+		{
+			Set<String> keys = pluginMap.keySet();
+			String[] ret = new String[keys.size()];
+			return (String[])keys.toArray(ret);
+		}
+	}
+
+	/**
+	 * Get a list of commands in a plugin.
+	 */
+	public final String[] commands(String pluginName)
+	{
+		synchronized(commands)
+		{
+			List<String> coms = commands.get(pluginName.toLowerCase());
+			if (coms == null)
+				return null;
+			String[] ret = new String[coms.size()];
+			return (String[])coms.toArray(ret);
+		}
+	}
+
+	/**
 	 * Adds a command to the internal database.
 	 */
-	public final void addCommand(String commandName)
+	public final void addCommand(String pluginName, String commandName)
 	{
 		synchronized(phoneticCommands)
 		{
-			phoneticCommands.addWord(commandName.toLowerCase());
+			if (pluginName != null)
+				phoneticCommands.addWord((pluginName + "." + commandName).toLowerCase());
+			else
+				phoneticCommands.removeWord(commandName.toLowerCase());
+		}
+		synchronized(commands)
+		{
+			if (pluginName != null)
+				commands.get(pluginName.toLowerCase()).add(commandName);
+			else
+				commands.get("").add(commandName);
 		}
 	}
 
 	/**
 	 * Removes a command from the internal database.
 	 */
-	public final void removeCommand(String commandName)
+	public final void removeCommand(String pluginName, String commandName)
 	{
 		synchronized(phoneticCommands)
 		{
-			phoneticCommands.removeWord(commandName.toLowerCase());
+			if (pluginName != null)
+				phoneticCommands.removeWord((pluginName + "." + commandName).toLowerCase());
+			else
+				phoneticCommands.removeWord(commandName.toLowerCase());
 		}
+		synchronized(commands)
+		{
+			if (pluginName != null)
+				commands.get(pluginName.toLowerCase()).remove(commandName);
+			else
+				commands.get("").remove(commandName);
+		}
+	}
+
+	/**
+	 * Remove a command from the internal database. Use the two parameter
+	 * version in preference to this!
+	 */
+	public final void removeCommand(String commandName)
+	{
+		Matcher ma = Pattern.compile("(\\w+)\\.(\\w+)").matcher(commandName);
+		if (ma.matches())
+			removeCommand(ma.group(1), ma.group(2));
+		else
+			removeCommand(null, commandName);
+	}
+
+	/**
+	 * Add a command to the internal database. Use the two parameter
+	 * version in preference to this!
+	 */
+	public final void addCommand(String commandName)
+	{
+		Matcher ma = Pattern.compile("(\\w+)\\.(\\w+)").matcher(commandName);
+		if (ma.matches())
+			addCommand(ma.group(1), ma.group(2));
+		else
+			addCommand(null, commandName);
 	}
 
 	public final static ProtectionDomain getProtectionDomain( String pluginName )

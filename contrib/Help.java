@@ -32,9 +32,17 @@ public class Help
 		this.mods = mods;
 	}
 
+	public String[] helpTopics = { "Help", "Plugins" };
+
 	/**
 	 * Get help!
 	 */
+	public String[] helpHelp = {
+		"Get help on a topic.",
+		"Help.Help <topic> <params>",
+		"<topic> is either a plugin name or of the form <plugin>.<name>",
+		"<params> is a parameter to pass to the help."
+	};
 	public void commandHelp( Message mes ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams( mes, 2 );
@@ -137,6 +145,74 @@ public class Help
 		irc.sendContextReply( mes, help );
 	}
 
+	public String[] helpPlugins = {
+		"Get a list of loaded plugins.",
+		"Help.Plugins"
+	};
+	public void commandPlugins( Message mes )
+	{
+		String[] plugins = mods.plugin.plugins();
+
+		StringBuffer buf = new StringBuffer("Plugins: ");
+		for(int i=0; i<plugins.length; i++)
+		{
+			if (i != 0)
+				buf.append(", ");
+			if (i == plugins.length - 1)
+				buf.append("and ");
+			buf.append(plugins[i]);
+		}
+		buf.append(".");
+
+		irc.sendContextReply(mes, buf.toString());
+	}
+
+	public String[] helpCommands = {
+		"Get a list of commands in a plugin.",
+		"Help.Commands <plugin>",
+		"<plugin> is the name of a loaded plugin."
+	};
+	public void commandCommands( Message mes )
+	{
+		String plugin = mods.util.getParamString(mes);
+		String[] commands = mods.plugin.commands(plugin);
+
+		if (commands == null)
+		{
+			irc.sendContextReply(mes, "That plugin doesn't exist!");
+		}
+		else if (commands.length == 0)
+		{
+			irc.sendContextReply(mes, "No commands in plugin " + plugin + ".");
+		}
+		else if (commands.length == 1)
+		{
+			irc.sendContextReply(mes, "1 command in plugin " + plugin + ": " + commands[0] + ".");
+		}
+		else if (commands.length == 2)
+		{
+			irc.sendContextReply(mes, "2 commands in plugin " + plugin + ": " + commands[0] + " and " + commands[1] + ".");
+		}
+		else
+		{
+			StringBuffer buf = new StringBuffer("" + commands.length);
+			buf.append(" commands in plugin ");
+			buf.append(plugin);
+			buf.append(": ");
+			for(int i=0; i<commands.length; i++)
+			{
+				if (i != 0)
+					buf.append(", ");
+				if (i == commands.length - 1)
+					buf.append("and ");
+				buf.append(commands[i]);
+			}
+			buf.append(".");
+
+			irc.sendContextReply(mes, buf.toString());
+		}
+	}
+
 	private Object callMethod(String plugin, String topic, String param) throws ChoobException
 	{
 		try
@@ -149,9 +225,5 @@ public class Help
 		}
 	}
 
-	public String[] helpTopics = { "Help", "Plugins" };
 
-	public String[] helpHelp = { "Get help on a topic.", "Help.Help <topic> <params>", "<topic> is either a plugin name or of the form <plugin>.<name>", "<params> is a parameter to pass to the help." };
-
-	public String[] helpPlugins = { "Get a list of loaded plugins.", "Help.Plugins" };
 }

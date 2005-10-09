@@ -107,7 +107,18 @@ public class PluginModule {
 
 	public ChoobTask doInterval(String plugin, Object param)
 	{
+		// XXX Security hole!?!?!
 		return plugMan.intervalTask(plugin, param);
+	}
+
+	public String[] plugins()
+	{
+		return plugMan.plugins();
+	}
+
+	public String[] commands(String pluginName)
+	{
+		return plugMan.commands(pluginName);
 	}
 
 	public void loadDbPlugins( Modules modules ) throws Exception

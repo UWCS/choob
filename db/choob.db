@@ -33,6 +33,7 @@ INSERT INTO `UserNodes` VALUES (4,'Plugin',2);
 INSERT INTO `UserNodes` VALUES (5,'Test',2);
 INSERT INTO `UserNodes` VALUES (6,'Security',2);
 INSERT INTO `UserNodes` VALUES (7,'NickServ',2);
+INSERT INTO `UserNodes` VALUES (8,'Help',2);
 
 --
 -- Table structure for table `AddNicks`
@@ -117,6 +118,7 @@ INSERT INTO `GroupMembers` VALUES (1,4);
 INSERT INTO `GroupMembers` VALUES (1,5);
 INSERT INTO `GroupMembers` VALUES (1,6);
 INSERT INTO `GroupMembers` VALUES (1,7);
+INSERT INTO `GroupMembers` VALUES (1,8);
 
 --
 -- Table structure for table `History`
