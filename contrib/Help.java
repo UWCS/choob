@@ -12,7 +12,13 @@ import java.util.regex.*;
  *
  * This module works by calling the generic function of type "help", name
  * (the command to be queried) and string parameter of anything after the
- * command name. The call is expected to return a String.
+ * command name. The call is expected to return a non-null object. If the
+ * return value is a string array, elements should be in the order: Brief
+ * description, Syntax, Parameter explanation 1, Parameter explanation 2.
+ * Anything other than a String array just has toString() called upon it.
+ *
+ * In the special case of the topics help, the array should simply be an
+ * array of valid topics.
  */
 
 public class Help
@@ -62,19 +68,47 @@ public class Help
 		String help;
 		try
 		{
-			if (topic != null)
+			if (topic != null && !topic.toLowerCase().equals("topics"))
 			{
-				Object ret = mods.plugin.callGeneric(plugin, "help", topic, topicParams);
+				Object ret = callMethod(plugin, topic, topicParams);
 				if (ret == null)
 				{
 					irc.sendContextReply( mes, "Gah! That topic had help, but the help seems to be broken." );
 					return;
 				}
-				help = ret.toString();
+				else if (ret instanceof String[])
+				{
+					String[] helpArr = (String[])ret;
+					if (helpArr.length < 2)
+					{
+						irc.sendContextReply( mes, "Gah! That topic had help, but the help seems to be broken (it returned an array of 1 string)." );
+						return;
+					}
+					StringBuffer buf = new StringBuffer();
+					buf.append( helpArr[0] );
+					buf.append( " Syntax: " );
+					buf.append( helpArr[1] );
+					if (helpArr.length > 2)
+					{
+						buf.append(" where");
+						for(int i=2; i<helpArr.length; i++)
+						{
+							buf.append(" ");
+							if (i != 2)
+								buf.append("and ");
+							buf.append(helpArr[i]);
+						}
+					}
+					help = buf.toString();
+				}
+				else
+				{
+					help = ret.toString();
+				}
 			}
 			else
 			{
-				Object ret = mods.plugin.callGeneric(plugin, "help", "Topics");
+				Object ret = callMethod(plugin, "Topics", topicParams);
 				if (ret == null)
 				{
 					irc.sendContextReply( mes, "Gah! That plugin had help, but the help seems to be broken." );
@@ -103,13 +137,21 @@ public class Help
 		irc.sendContextReply( mes, help );
 	}
 
-	public String[] helpTopics( )
+	private Object callMethod(String plugin, String topic, String param) throws ChoobException
 	{
-		return new String[] { "Help", "Plugins" };
+		try
+		{
+			return mods.plugin.callGeneric(plugin, "help", topic, param);
+		}
+		catch (NoSuchPluginException e)
+		{
+			return mods.plugin.callGeneric(plugin, "help", topic);
+		}
 	}
 
-	public String helpHelp( String params )
-	{
-		return "Syntax: \"Help.Help <topic> <params>\" where <topic> is either a plugin name or of the form <plugin>.<name>, and <params> is a parameter to pass to the help.";
-	}
+	public String[] helpTopics = { "Help", "Plugins" };
+
+	public String[] helpHelp = { "Get help on a topic.", "Help.Help <topic> <params>", "<topic> is either a plugin name or of the form <plugin>.<name>", "<params> is a parameter to pass to the help." };
+
+	public String[] helpPlugins = { "Get a list of loaded plugins.", "Help.Plugins" };
 }

@@ -320,35 +320,46 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	}
 
 	/**
-	 * Go through the horror of method resolution.
+	 * Go through the horror of method resolution. Fields are regarded as a
+	 * method that takes no parameters.
 	 *
-	 * @param methods The list of methods to search.
+	 * @param methods The list of things to search.
 	 * @param args The arguments of the method we hope to resolve.
 	 */
-	private Method javaHorrorMethodResolve(List<Method> methods, Object[] args)
+	private Member javaHorrorMethodResolve(List<Member> methods, Object[] args)
 	{
 		// Do any of them have the right signature?
-		List<Method> filtered = new LinkedList<Method>();
-		Iterator<Method> it = methods.iterator();
+		List<Member> filtered = new LinkedList<Member>();
+		Iterator<Member> it = methods.iterator();
 		while(it.hasNext())
 		{
-			Method method = it.next();
-			Class[] types = method.getParameterTypes();
-			int paramlength = types.length;
-			if (paramlength != args.length)
-				continue;
-
-			boolean okness = true;
-			for(int j=0; j<paramlength; j++)
+			Member thing = it.next();
+			if (thing instanceof Field)
 			{
-				if (!types[j].isInstance(args[j]))
-				{
-					okness = false;
-					break;
-				}
+				if (args.length == 0)
+					filtered.add(thing);
 			}
-			if (okness)
-				filtered.add(method);
+			else
+			{
+				// Is a method
+				Method method = (Method)thing;
+				Class[] types = method.getParameterTypes();
+				int paramlength = types.length;
+				if (paramlength != args.length)
+					continue;
+
+				boolean okness = true;
+				for(int j=0; j<paramlength; j++)
+				{
+					if (!types[j].isInstance(args[j]))
+					{
+						okness = false;
+						break;
+					}
+				}
+				if (okness)
+					filtered.add(method);
+			}
 		}
 
 		// Right, have a bunch of applicable methods.
@@ -441,11 +452,11 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	{
 		String fullName = pluginName + "." + prefix + ":" + genName;
 		String sig = getAPISignature(fullName, params);
-		Method meth = allPlugins.getGeneric(sig);
+		Member meth = allPlugins.getGeneric(sig);
 		if (meth == null)
 		{
 			// OK, not cached. But maybe it's still there...
-			List<Method> meths = allPlugins.getAllGeneric(fullName);
+			List<Member> meths = allPlugins.getAllGeneric(fullName);
 
 			if (meths != null)
 				meth = javaHorrorMethodResolve(meths, params);
@@ -456,13 +467,16 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				throw new NoSuchPluginException("Couldn't find a method matching " + sig);
 		}
 		final Object plugin = allPlugins.getPluginObj(meth);
-		final Method meth2 = meth;
+		final Member meth2 = meth;
 		try
 		{
 			return AccessController.doPrivileged(new PrivilegedExceptionAction() {
 				public Object run() throws InvocationTargetException, IllegalAccessException {
 					System.out.println("Meth is: " + meth2 + "(" + meth2.getDeclaringClass() + "), plugin is: " + plugin + ".");
-					return meth2.invoke(plugin, params);
+					if (meth2 instanceof Method)
+						return ((Method)meth2).invoke(plugin, params);
+					else
+						return ((Field)meth2).get(plugin);
 				}
 			}, mods.security.getPluginContext() );
 		}
@@ -602,8 +616,8 @@ final class ChoobPluginMap
 	private final Map<String,Method> commands; // plugin.commandname -> method
 //	private final Map<String,Method> apiCallSigs;
 //	private final Map<String,List<Method>> apiCalls;
-	private final Map<String,Method> genCallSigs; // plugin.prefix:genericname(params) -> method
-	private final Map<String,List<Method>> genCalls; // plugin.prefix:genericname -> list of possible methods
+	private final Map<String,Member> genCallSigs; // plugin.prefix:genericname(params) -> method
+	private final Map<String,List<Member>> genCalls; // plugin.prefix:genericname -> list of possible methods
 	private final Map<Pattern,List<Method>> filters; // pattern object -> method to call on match
 	private final Map<String,List<Method>> events; // event name -> method list
 
@@ -622,8 +636,8 @@ final class ChoobPluginMap
 		commands = new HashMap<String,Method>();
 		//apiCallSigs = new HashMap<String,Method>();
 		//apiCalls = new HashMap<String,List<Method>>();
-		genCallSigs = new HashMap<String,Method>();
-		genCalls = new HashMap<String,List<Method>>();
+		genCallSigs = new HashMap<String,Member>();
+		genCalls = new HashMap<String,List<Member>>();
 		filters = new HashMap<Pattern,List<Method>>();
 		events = new HashMap<String,List<Method>>();
 	}
@@ -818,8 +832,9 @@ final class ChoobPluginMap
 					String fullName = lname + "." + prefix + ":" + gName;
 					if (HaxSunPluginManager.checkAPISignature(meth))
 					{
+						gens.add(fullName);
 						if (genCalls.get(fullName) == null)
-							genCalls.put(fullName, new LinkedList<Method>());
+							genCalls.put(fullName, new LinkedList<Member>());
 						genCalls.get(fullName).add(meth);
 					}
 					else
@@ -833,6 +848,51 @@ final class ChoobPluginMap
 				}
 			}
 		}
+		Field[] fields = pluginClass.getFields();
+		for(Field field: fields)
+		{
+			// We don't want these. :)
+			if (field.getDeclaringClass() != pluginClass)
+				continue;
+
+			String name = field.getName();
+			if (name.startsWith("command"))
+			{
+			}
+/*			else if (name.startsWith("api"))
+			{
+			} API == generic */
+			else if (name.startsWith("filter"))
+			{
+			}
+			else if (name.startsWith("on"))
+			{
+			}
+			else if (name.startsWith("interval"))
+			{
+			}
+			else
+			{
+				// File it as a generic.
+				Matcher matcher = Pattern.compile("([a-z]+)([A-Z].+)?").matcher(name);
+				if (matcher.matches())
+				{
+					// Is a real generic.
+					String prefix = matcher.group(1);
+					String gName = name.substring(prefix.length()).toLowerCase();
+					String fullName = lname + "." + prefix + ":" + gName;
+
+					gens.add(fullName);
+					if (genCalls.get(fullName) == null)
+						genCalls.put(fullName, new LinkedList<Member>());
+					genCalls.get(fullName).add(field);
+				}
+				else
+				{
+					System.err.println("Ignoring field " + name + ".");
+				}
+			}
+		}
 	}
 
 	synchronized Object getPluginObj(String pluginName)
@@ -840,7 +900,7 @@ final class ChoobPluginMap
 		return plugins.get(pluginName.toLowerCase());
 	}
 
-	synchronized Object getPluginObj(Method meth)
+	synchronized Object getPluginObj(Member meth)
 	{
 		return getPluginObj(meth.getDeclaringClass().getSimpleName().toLowerCase());
 	}
@@ -871,18 +931,18 @@ final class ChoobPluginMap
 		return apiCalls.get(apiName.toLowerCase());
 	}*/
 
-	synchronized Method getGeneric(String genName)
+	synchronized Member getGeneric(String genName)
 	{
 		return genCallSigs.get(genName.toLowerCase());
 	}
 
-	synchronized void setGeneric(String genName, Method meth)
+	synchronized void setGeneric(String genName, Member obj)
 	{
-		pluginGenCallSigs.get(meth.getDeclaringClass().getSimpleName().toLowerCase()).add(genName.toLowerCase());
-		genCallSigs.put(genName.toLowerCase(), meth);
+		pluginGenCallSigs.get(obj.getDeclaringClass().getSimpleName().toLowerCase()).add(genName.toLowerCase());
+		genCallSigs.put(genName.toLowerCase(), obj);
 	}
 
-	synchronized List<Method> getAllGeneric(String genName)
+	synchronized List<Member> getAllGeneric(String genName)
 	{
 		return genCalls.get(genName.toLowerCase());
 	}
