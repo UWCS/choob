@@ -541,7 +541,8 @@ public class SecurityModule
 					return false;
 
 				// Now just check on this node!
-				return hasPerm( permission, nodeID );
+				// Include the plugin.
+				return hasPerm( permission, nodeID, true );
 			}
 		})).booleanValue();
 	}
