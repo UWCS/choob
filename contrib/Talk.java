@@ -3,6 +3,8 @@ import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 
+import org.jibble.pircbot.Colors;
+
 /**
  * Choob talky talky plugin
  *
@@ -14,6 +16,11 @@ import org.uwcs.choob.support.events.*;
 
 public class Talk
 {
+	public void commandShout( Message mes, Modules mods, IRCInterface irc )
+	{
+		irc.sendContextReply(mes, Colors.BOLD + "Bold yellow on magenta.");
+	}
+
 	public void commandSay( Message con, Modules modules, IRCInterface irc )
 	{
 		irc.sendContextReply(con, modules.util.getParamString(con));
