@@ -577,9 +577,14 @@ public class ObjectDBTransaction
 	private final void checkPermission(Class objClass)
 	{
 		String plugin = mods.security.getPluginName(0);
-		String plugName = "plugins." + plugin.toLowerCase() + ".";
-		String objName = objClass.getName().toLowerCase();
-		if ( !objName.startsWith(plugName) )
+		if (plugin != null)
+		{
+			String plugName = "plugins." + plugin.toLowerCase() + ".";
+			String objName = objClass.getName().toLowerCase();
+			if ( !objName.startsWith(plugName) )
+				AccessController.checkPermission(new ChoobPermission("objectdb."+objClass.getName().toLowerCase()));
+		}
+		else
 			AccessController.checkPermission(new ChoobPermission("objectdb."+objClass.getName().toLowerCase()));
 	}
 }
