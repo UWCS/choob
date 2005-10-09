@@ -348,7 +348,7 @@ public class Security
 		this.doGroupMemberChange(mes, false);
 	}
 
-	public void doGroupMemberChange( Message mes, boolean isAdding )
+	private void doGroupMemberChange( Message mes, boolean isAdding )
 	{
 		if (!nsCheck(mes.getNick()))
 		{
@@ -462,7 +462,7 @@ public class Security
 		this.doPermChange( mes, false );
 	}
 
-	public void doPermChange( Message mes, boolean isGranting )
+	private void doPermChange( Message mes, boolean isGranting )
 	{
 		if (!nsCheck(mes.getNick()))
 		{

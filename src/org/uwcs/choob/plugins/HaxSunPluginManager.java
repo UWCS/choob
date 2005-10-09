@@ -703,6 +703,10 @@ final class ChoobPluginMap
 		Method[] meths = pluginClass.getMethods();
 		for(Method meth: meths)
 		{
+			// We don't want these. :)
+			if (meth.getDeclaringClass() != pluginClass)
+				continue;
+
 			String name = meth.getName();
 			if (name.startsWith("command"))
 			{
@@ -805,7 +809,7 @@ final class ChoobPluginMap
 			else
 			{
 				// File it as a generic.
-				Matcher matcher = Pattern.compile("([a-z]+).+").matcher(name);
+				Matcher matcher = Pattern.compile("([a-z]+)([A-Z].+)?").matcher(name);
 				if (matcher.matches())
 				{
 					// Is a real generic.
