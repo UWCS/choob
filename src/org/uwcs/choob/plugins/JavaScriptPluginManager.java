@@ -6,11 +6,13 @@ package org.uwcs.choob.plugins;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.regex.*;
 import org.uwcs.choob.*;
 import org.uwcs.choob.support.events.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.modules.*;
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.regexp.*;
 
 /*
  * Deals with all the magic for JavaScript plugins. Woo.
@@ -111,6 +113,7 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 				newCommands = (String[])commands.toArray(newCommands);
 		}
 		
+		// Update bot's command list now.
 		for (int i = 0; i < oldCommands.length; i++)
 			removeCommand(oldCommands[i]);
 		for (int i = 0; i < newCommands.length; i++)
@@ -124,7 +127,7 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	}
 	
 	public ChoobTask commandTask(String pluginName, String command, Message ev) {
-		System.out.println("JavaScriptPluginManager.commandTask(" + pluginName + ", " + command + ")");
+		// Call a command! Look it up, and then call if something was found.
 		JavaScriptPluginMethod method = pluginMap.getCommand(pluginName + "." + command);
 		if (method != null) {
 			return callCommand(method, ev);
@@ -146,6 +149,12 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	public List<ChoobTask> filterTasks(Message ev) {
 		System.out.println("JavaScriptPluginManager.filterTasks");
 		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
+		List<JavaScriptPluginMethod> methods = pluginMap.getFilter(ev.getMessage());
+		if (methods != null) {
+			for (JavaScriptPluginMethod method: methods) {
+				tasks.add(callCommand(method, ev));
+			}
+		}
 		return tasks;
 	}
 	
@@ -191,14 +200,20 @@ final class JavaScriptPluginMap {
 	
 	// List of commands for each plugin.
 	private final Map<String,List<String>> pluginCommands;
+	// List of filters for each plugin.
+	private final Map<String,List<NativeRegExp>> pluginFilters;
 	
 	// List of function for each command.
 	private final Map<String,JavaScriptPluginMethod> commands;
+	// List of function for each filter.
+	private final Map<NativeRegExp,JavaScriptPluginMethod> filters;
 	
 	public JavaScriptPluginMap() {
 		plugins = new HashMap<String,Object>();
 		pluginCommands = new HashMap<String,List<String>>();
+		pluginFilters  = new HashMap<String,List<NativeRegExp>>();
 		commands = new HashMap<String,JavaScriptPluginMethod>();
+		filters  = new HashMap<NativeRegExp,JavaScriptPluginMethod>();
 	}
 	
 	synchronized void loadPluginMap(String pluginName, JavaScriptPlugin pluginObj) {
@@ -209,6 +224,8 @@ final class JavaScriptPluginMap {
 		plugins.put(lname, pluginObj);
 		List<String> commandNames = new LinkedList<String>();
 		pluginCommands.put(lname, commandNames);
+		List<NativeRegExp> filterNames = new LinkedList<NativeRegExp>();
+		pluginFilters.put(lname, filterNames);
 		
 		Scriptable inst = pluginObj.getInstance();
 		while (inst != null) {
@@ -218,15 +235,55 @@ final class JavaScriptPluginMap {
 				if (prop instanceof String) {
 					propString = (String)prop;
 					if (propString.startsWith("command")) {
+						// Looks like a command definition.
 						Object propVal = inst.get(propString, inst);
-						if (propVal instanceof Function) {
-							JavaScriptPluginMethod method = new JavaScriptPluginMethod(pluginObj, propString, (Function)propVal);
-							
-							String commandName = lname + "." + propString.substring(7).toLowerCase();
-							commandNames.add(commandName);
-							commands.put(commandName, method);
-							System.out.println("  Added command: " + commandName);
+						if (!(propVal instanceof Function)) {
+							System.err.println("  Command-like property that is not a function: " + propString);
+							continue;
 						}
+						// It's a function, yay!
+						Function func = (Function)propVal;
+						JavaScriptPluginMethod method = new JavaScriptPluginMethod(pluginObj, propString, func);
+						
+						String commandName = lname + "." + propString.substring(7).toLowerCase();
+						
+						commandNames.add(commandName);
+						commands.put(commandName, method);
+						
+						System.out.println("  Added command: " + commandName);
+						
+					} else if (propString.startsWith("filter")) {
+						// Looks like a filter definition.
+						Object propVal = inst.get(propString, inst);
+						if (!(propVal instanceof Function)) {
+							System.err.println("  Filter-like property that is not a function: " + propString);
+							continue;
+						}
+						// It's a function, yay!
+						Function func = (Function)propVal;
+						
+						Object regexpVal = func.get("regexp", func);
+						if (regexpVal == Scriptable.NOT_FOUND) {
+							System.err.println("  Filter function (" + propString + ") missing 'regexp' property.");
+							continue;
+						}
+						if (!(regexpVal instanceof NativeRegExp)) {
+							System.err.println("  Filter function (" + propString + ") property 'regexp' is not a Regular Expression: " + regexpVal.getClass().getName());
+							continue;
+						}
+						
+						JavaScriptPluginMethod method = new JavaScriptPluginMethod(pluginObj, propString, func);
+						
+						String filterName = lname + "." + propString.substring(6).toLowerCase();
+						NativeRegExp filterPattern = (NativeRegExp)regexpVal;
+						
+						filterNames.add(filterPattern);
+						filters.put(filterPattern, method);
+						
+						System.out.println("  Added filter: " + filterName);
+						
+					} else {
+						System.err.println("  Unknown property: " + propString);
 					}
 				} else {
 					System.out.println("  Found property of type: " + prop.getClass().getName());
@@ -258,6 +315,29 @@ final class JavaScriptPluginMap {
 	
 	synchronized List<String> getCommands(String pluginName) {
 		return pluginCommands.get(pluginName.toLowerCase());
+	}
+	
+	synchronized List<JavaScriptPluginMethod> getFilter(String message) {
+		List<JavaScriptPluginMethod> rv = new LinkedList<JavaScriptPluginMethod>();
+		Iterator<NativeRegExp> regexps = filters.keySet().iterator();
+		while (regexps.hasNext()) {
+			NativeRegExp regexp = regexps.next();
+			JavaScriptPluginMethod method = filters.get(regexp);
+			JavaScriptPlugin plugin = method.getPlugin();
+			Scriptable scope = plugin.getScope();
+			Object[] args = { message };
+			
+			Context cx = Context.enter();
+			try {
+				Object ret = regexp.call(cx, scope, null, args);
+				if (ret != null) {
+					rv.add(method);
+				}
+			} finally {
+				cx.exit();
+			}
+		}
+		return rv;
 	}
 }
 
