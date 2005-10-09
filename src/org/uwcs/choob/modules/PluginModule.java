@@ -28,6 +28,7 @@ public class PluginModule {
 	Modules mods;
 	ChoobPluginManager plugMan;
 	ChoobPluginManager dPlugMan;
+	ChoobPluginManager jsPlugMan;
 	Choob bot;
 
 	/**
@@ -41,6 +42,7 @@ public class PluginModule {
 		this.mods = mods;
 		this.plugMan = new HaxSunPluginManager(mods, irc);
 		this.dPlugMan = new ChoobDistributingPluginManager();
+		this.jsPlugMan = new JavaScriptPluginManager(mods, irc);
 	}
 
 	public ChoobPluginManager getPlugMan()
@@ -71,7 +73,10 @@ public class PluginModule {
 			throw new ChoobException("URL " + URL + " is malformed: " + e);
 		}
 
-		plugMan.loadPlugin(pluginName, srcURL);
+		if (srcURL.getFile().endsWith(".js"))
+			jsPlugMan.loadPlugin(pluginName, srcURL);
+		else
+			plugMan.loadPlugin(pluginName, srcURL);
 
 		addPluginToDb(pluginName);
 	}

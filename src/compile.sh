@@ -8,4 +8,4 @@ if [ misc/HorriblePerlScript.pl -nt org/uwcs/choob/Choob.java ]; then
 	perl misc/HorriblePerlScript.pl
 fi
 
-javac -classpath lib/jazzy-core.jar:lib/bsh-2.0b4.jar:lib/mysql-connector-java-3.1.10-bin.jar:lib/pircbot.jar org/uwcs/choob/support/events/*.java org/uwcs/choob/*.java org/uwcs/choob/support/*.java org/uwcs/choob/modules/*.java org/uwcs/choob/plugins/*.java
+javac -classpath lib/jazzy-core.jar:lib/bsh-2.0b4.jar:lib/mysql-connector-java-3.1.10-bin.jar:lib/pircbot.jar:lib/js-rhino-1.6r2.jar org/uwcs/choob/support/events/*.java org/uwcs/choob/*.java org/uwcs/choob/support/*.java org/uwcs/choob/modules/*.java org/uwcs/choob/plugins/*.java
