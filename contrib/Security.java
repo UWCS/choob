@@ -4,6 +4,7 @@ import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 import java.security.*;
 import java.util.*;
+import java.util.regex.*;
 
 /**
  * Choob plugin for fiddling with security privs
@@ -310,10 +311,8 @@ public class Security
 			// Must check permission!
 			groupName = (String)params.get(1);
 
-			boolean check = true;
+			boolean check = groupCheck(groupName, mes.getNick());
 			// Sure, this will be checked for us. But what about the user who called us?
-			if (groupCheck(groupName, mes.getNick()))
-				check = false;
 			if (!check && !mods.security.hasPerm( new ChoobPermission("group.add." + groupName) , mes.getNick() ) )
 			{
 				irc.sendContextReply( mes, "You don't have permission to add arbitrary groups!" );
@@ -374,10 +373,8 @@ public class Security
 			childName = ((String)params.get(2));
 			if (childName.indexOf('.') != -1)
 				isGroup = true;
-			boolean check = true;
+			boolean check = groupCheck(parentName, mes.getNick());
 			// Sure, this will be checked for us. But what about the user who called us?
-			if (groupCheck(parentName, mes.getNick()))
-				check = false;
 			if (!check && ! mods.security.hasPerm( new ChoobPermission("group.members." + parentName) , mes.getNick() ) )
 			{
 				irc.sendContextReply( mes, "You don't have permission to alter members of arbitrary groups!" );
@@ -417,19 +414,42 @@ public class Security
 
 	private Permission makePermission(String permType, String permName, String permActions)
 	{
-		if (permType.toLowerCase().equals("choob")
-				|| permType.toLowerCase().equals("choobpermission")
-				|| permType.toLowerCase().equals("org.uwcs.choob.support.choobpermission"))
-		{
+		String lType = permType.toLowerCase();
+		Matcher ma = Pattern.compile("(?:.*\\.)?(\\w+)(?:permission)?").matcher(lType);
+		if (ma.matches())
+			lType = ma.group(1);
+		System.out.println("Permission type: " + lType);
+
+		// Choob permission (primary)
+		if ( lType.equals("choob") )
 			return new ChoobPermission(permName);
-		}
-		else if (permType.toLowerCase().equals("all")
-				|| permType.toLowerCase().equals("allpermission")
-				|| permType.toLowerCase().equals("java.security.allpermission"))
-		{
+
+		// All permission
+		else if ( lType.equals("all") )
 			return new java.security.AllPermission();
-		}
-		return null;
+
+		// These permissions use the action parameter
+		else if ( lType.equals("file") )
+			return new java.io.FilePermission(permName, permActions);
+
+		else if ( lType.equals("socket") )
+			return new java.net.SocketPermission(permName, permActions);
+
+		// The remainder are all BasicPermission-derived
+		else if ( lType.equals("runtime") )
+			return new java.lang.RuntimePermission(permName);
+
+		else if ( lType.equals("security") )
+			return new java.security.SecurityPermission(permName);
+
+		else if ( lType.equals("property") )
+			return new java.util.PropertyPermission(permName, permActions);
+
+		else if ( lType.equals("reflect") )
+			return new java.lang.reflect.ReflectPermission(permName);
+
+		else
+			return null;
 	}
 
 	public void commandGrant( Message mes )
@@ -471,11 +491,9 @@ public class Security
 
 		int len = mes.getNick().length() + 6;
 		String permString = isGranting ? "grant." : "revoke.";
-		boolean check = true;
+		boolean check = groupCheck(groupName, mes.getNick());
 		// Sure, this will be checked for us. But what about the user who called us?
-		if (groupCheck(groupName, mes.getNick()))
-			check = false;
-		if (!check && !mods.security.hasPerm( new ChoobPermission("group." + permString + groupName) , mes.getNick() ) )
+		if (!(check || mods.security.hasPerm( new ChoobPermission("group." + permString + groupName) , mes.getNick() )) )
 		{
 			irc.sendContextReply( mes, "You don't have permission to do that!" );
 			return;

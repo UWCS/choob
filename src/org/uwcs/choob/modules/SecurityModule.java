@@ -436,7 +436,7 @@ public class SecurityModule
 				dbBroker.freeConnection(dbConn);
 				return new UserNode(results.getString(1), results.getInt(2));
 			}
-			System.err.println("Ack! Node " + nodeID + ") not found!");
+			System.err.println("Ack! Node " + nodeID + " not found!");
 		}
 		catch (SQLException e)
 		{

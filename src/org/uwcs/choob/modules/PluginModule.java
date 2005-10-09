@@ -76,9 +76,28 @@ public class PluginModule {
 		addPluginToDb(pluginName);
 	}
 
+	/**
+	 * Call the API subroutine of name name on plugin pluginName and return the result.
+	 * @param pluginName The name of the plugin to call.
+	 * @param name The name of the routine to call.
+	 * @param params Parameters to pass to the routine.
+	 */
 	public Object callAPI(String pluginName, String APIString, Object... params) throws ChoobException
 	{
 		return plugMan.doAPI(pluginName, APIString, params);
+	}
+
+	/**
+	 * Call the generic subroutine of type type and name name on plugin pluginName and return the result.
+	 * @param pluginName The name of the plugin to call.
+	 * @param type The type of the routine to call.
+	 * @param name The name of the routine to call.
+	 * @param params Parameters to pass to the routine.
+	 */
+	public Object callGeneric(String pluginName, String type, String name, Object... params) throws ChoobException
+	{
+		AccessController.checkPermission(new ChoobPermission("generic." + type));
+		return plugMan.doGeneric(pluginName, type, name, params);
 	}
 
 	public ChoobTask doInterval(String plugin, Object param)
