@@ -17,7 +17,12 @@ import org.mozilla.javascript.*;
  * @author silver
  */
 public class JavaScriptPluginManager extends ChoobPluginManager {
+	/*
+	 * The plugin map tracks which plugin instances have which commands, and
+	 * keeps a command name --> function map in particular.
+	 */
 	private JavaScriptPluginMap pluginMap;
+	// The size of the reading buffer when loading JS files.
 	private static final int READER_CHUNK = 1024;
 	// For passing to plugin constructors.
 	private final Modules mods;
@@ -30,10 +35,18 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 		this.pluginMap = new JavaScriptPluginMap();
 	}
 	
+	/*
+	 * Utility method for JS scripts, so they can print debug information out
+	 * easily. Signature stolen from Mozilla/Firefox.
+	 */
 	public static void dump(String text) {
 		System.out.print("JS dump: " + text);
 	}
 	
+	/*
+	 * Utility method for JS scripts, so they can print debug information out
+	 * easily.
+	 */
 	public static void dumpln(String text) {
 		System.out.println("JS dump: " + text);
 	}
@@ -44,11 +57,17 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 		String code = "";
 		URLConnection con;
 		try {
+			// First thing's first; we must connect to the identified resource.
 			con = fromLocation.openConnection();
 		} catch(IOException e) {
 			throw new ChoobException("Unable to open a connection to the source for " + pluginName);
 		}
 		try {
+			/*
+			 * This lot reads the resource in in chunks, using a buffer, and
+			 * simply keeps the code in a local variable (once it has be
+			 * evaluated in a plugin instances, it is no longer needed).
+			 */
 			con.connect();
 			InputStream stream = con.getInputStream();
 			InputStreamReader streamReader = new InputStreamReader(stream);
@@ -67,8 +86,36 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 			throw new ChoobException("Unable to fetch the source for " + pluginName);
 		}
 		
+		// Create the new plugin instance.
 		JavaScriptPlugin plug = new JavaScriptPlugin(this, pluginName, code, mods, irc);
-		pluginMap.loadPluginMap(pluginName, plug);
+		
+		// Update bot's overall command list, for spell-check-based suggestions.
+		String[] newCommands = new String[0];
+		String[] oldCommands = new String[0];
+		synchronized(pluginMap)
+		{
+			List<String> commands;
+			
+			// Get list of commands for plugin before setting up new one.
+			commands = pluginMap.getCommands(pluginName);
+			if (commands != null)
+				oldCommands = (String[])commands.toArray(oldCommands);
+			
+			// Clear the old instance's map data and load the new plugin map.
+			pluginMap.unloadPluginMap(pluginName);
+			pluginMap.loadPluginMap(pluginName, plug);
+			
+			// Get list of commands for newly loaded plugin.
+			commands = pluginMap.getCommands(pluginName);
+			if (commands != null)
+				newCommands = (String[])commands.toArray(newCommands);
+		}
+		
+		for (int i = 0; i < oldCommands.length; i++)
+			removeCommand(oldCommands[i]);
+		for (int i = 0; i < newCommands.length; i++)
+			addCommand(newCommands[i]);
+		
 		return plug;
 	}
 	
@@ -178,7 +225,7 @@ final class JavaScriptPluginMap {
 							String commandName = lname + "." + propString.substring(7).toLowerCase();
 							commandNames.add(commandName);
 							commands.put(commandName, method);
-							System.out.println("  Command: " + commandName);
+							System.out.println("  Added command: " + commandName);
 						}
 					}
 				} else {
@@ -189,13 +236,18 @@ final class JavaScriptPluginMap {
 		}
 	}
 	
-	synchronized void unloadPluginMap(String pluginName, JavaScriptPlugin pluginObj) {
+	synchronized void unloadPluginMap(String pluginName) {
 		System.out.println("JavaScriptPluginMap.unloadPluginMap(" + pluginName + ")");
 		String lname = pluginName.toLowerCase();
 		
+		if (plugins.get(lname) == null) {
+			return;
+		}
+		
 		plugins.remove(lname);
 		for (String command: getCommands(pluginName)) {
-			commands.remove(command.getName());
+			commands.remove(command);
+			System.out.println("  Removed command: " + command);
 		}
 		pluginCommands.remove(lname);
 	}
@@ -209,6 +261,13 @@ final class JavaScriptPluginMap {
 	}
 }
 
+/*
+ * This class represents a single function in a plugin that can be called from
+ * the outside. It keeps track of the plugin instance, the function name, and
+ * the actual function so it can be identified and called with the right
+ * scope (in JS, the call scope must be preserved, and this is handled by the
+ * plugin object here).
+ */
 final class JavaScriptPluginMethod {
 	private JavaScriptPlugin plugin;
 	private String name;
