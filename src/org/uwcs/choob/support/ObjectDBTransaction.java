@@ -32,11 +32,12 @@ import java.security.PrivilegedExceptionAction;
 public class ObjectDBTransaction
 {
 	private Connection dbConn;
+	private Modules mods;
 
-	/** Creates a new instance of ObjectDbTest */
-	/*public ObjectDBTransaction()
+	public final void setMods(Modules mods)
 	{
-	}*/
+		this.mods = mods;
+	}
 
 	public final void setConn(Connection dbConn)
 	{
@@ -121,7 +122,7 @@ public class ObjectDBTransaction
 
 	public final List<?> retrieve(Class storedClass, String clause) throws ChoobException
 	{
-		AccessController.checkPermission(new ChoobPermission("objectdb."+storedClass.getName().toLowerCase()));
+		checkPermission(storedClass);
 		String sqlQuery;
 
 		if ( clause != null )
@@ -175,7 +176,7 @@ public class ObjectDBTransaction
 
 	public final List<Integer> retrieveInt(Class storedClass, String clause) throws ChoobException
 	{
-		AccessController.checkPermission(new ChoobPermission("objectdb."+storedClass.getName().toLowerCase()));
+		checkPermission(storedClass);
 		String sqlQuery;
 
 		if ( clause != null )
@@ -384,7 +385,7 @@ public class ObjectDBTransaction
 
 	public final void delete( Object strObj ) throws ChoobException
 	{
-		AccessController.checkPermission(new ChoobPermission("objectdb."+strObj.getClass().getName().toLowerCase()));
+		checkPermission(strObj.getClass());
 		PreparedStatement delete = null, deleteData = null;
 		try
 		{
@@ -444,7 +445,7 @@ public class ObjectDBTransaction
 
 	public final void save( Object strObj ) throws ChoobException
 	{
-		AccessController.checkPermission(new ChoobPermission("objectdb."+strObj.getClass().getName().toLowerCase()));
+		checkPermission(strObj.getClass());
 		PreparedStatement stat = null, field;
 		try
 		{
@@ -571,5 +572,14 @@ public class ObjectDBTransaction
 		{
 			cleanUp(stat);
 		}
+	}
+
+	private final void checkPermission(Class objClass)
+	{
+		String plugin = mods.security.getPluginName(0);
+		String plugName = "plugins." + plugin.toLowerCase() + ".";
+		String objName = objClass.getName().toLowerCase();
+		if ( !objName.startsWith(plugName) )
+			AccessController.checkPermission(new ChoobPermission("objectdb."+objClass.getName().toLowerCase()));
 	}
 }

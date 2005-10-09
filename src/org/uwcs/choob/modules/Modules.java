@@ -86,7 +86,7 @@ public class Modules
 			synthetic = new SyntheticModule( bot );
 			security = new SecurityModule( dbBroker );
 			pc = new ProtectedChannels();
-			odb = new ObjectDbModule( dbBroker );
+			odb = new ObjectDbModule( dbBroker, this );
 		}
 		catch (ChoobException e)
 		{

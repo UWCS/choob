@@ -31,11 +31,13 @@ import java.security.PrivilegedExceptionAction;
 public class ObjectDbModule
 {
 	DbConnectionBroker broker;
+	Modules mods;
 
 	/** Creates a new instance of ObjectDbModule */
-	public ObjectDbModule(DbConnectionBroker broker)
+	public ObjectDbModule(DbConnectionBroker broker, Modules mods)
 	{
 		this.broker = broker;
+		this.mods = mods;
 	}
 
 	/**
@@ -48,6 +50,7 @@ public class ObjectDbModule
 		Connection dbConn = broker.getConnection();
 		ObjectDBTransaction trans = new ObjectDBTransaction();
 		trans.setConn(dbConn);
+		trans.setMods(mods);
 		try
 		{
 			return trans.retrieve(storedClass, clause);
@@ -63,6 +66,7 @@ public class ObjectDbModule
 		Connection dbConn = broker.getConnection();
 		ObjectDBTransaction trans = new ObjectDBTransaction();
 		trans.setConn(dbConn);
+		trans.setMods(mods);
 		try
 		{
 			return trans.retrieveInt(storedClass, clause);
@@ -82,6 +86,7 @@ public class ObjectDbModule
 		Connection dbConn = broker.getConnection();
 		ObjectDBTransaction trans = new ObjectDBTransaction();
 		trans.setConn(dbConn);
+		trans.setMods(mods);
 		try
 		{
 			trans.delete( strObject );
@@ -101,6 +106,7 @@ public class ObjectDbModule
 		Connection dbConn = broker.getConnection();
 		ObjectDBTransaction trans = new ObjectDBTransaction();
 		trans.setConn(dbConn);
+		trans.setMods(mods);
 		try
 		{
 			trans.begin();
@@ -124,6 +130,7 @@ public class ObjectDbModule
 		Connection dbConn = broker.getConnection();
 		ObjectDBTransaction trans = new ObjectDBTransaction();
 		trans.setConn(dbConn);
+		trans.setMods(mods);
 		try
 		{
 			trans.begin();
@@ -141,6 +148,7 @@ public class ObjectDbModule
 	{
 		Connection dbConn = broker.getConnection();
 		trans.setConn(dbConn);
+		trans.setMods(mods);
 		try
 		{
 			trans.begin();

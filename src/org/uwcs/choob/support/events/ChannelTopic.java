@@ -6,27 +6,27 @@
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
  
-public class ChannelTopic extends IRCEvent implements ChannelEvent, ContextEvent, MessageEvent
+public class ChannelTopic extends IRCEvent implements MessageEvent, ChannelEvent, ContextEvent
 {
-	/**
-	 * channel
-	 */
-	private final String channel;
-
 	/**
 	 * message
 	 */
 	private final String message;
 
+	/**
+	 * channel
+	 */
+	private final String channel;
+
 
 	/**
 	 * Construct a new ChannelTopic
 	 */
-	public ChannelTopic(String methodName, long millis, int random, String channel, String message)
+	public ChannelTopic(String methodName, long millis, int random, String message, String channel)
 	{
 		super(methodName, millis, random);
-		this.channel = channel;
 		this.message = message;
+		this.channel = channel;
 
 	}
 
@@ -36,8 +36,8 @@ public class ChannelTopic extends IRCEvent implements ChannelEvent, ContextEvent
 	public ChannelTopic(ChannelTopic old, String message)
 	{
 		super(old);
-		this.channel = old.channel;
 		this.message = message;
+		this.channel = old.channel;
 
 	}
 
@@ -50,19 +50,19 @@ public class ChannelTopic extends IRCEvent implements ChannelEvent, ContextEvent
 	}
 
 	/**
-	 * Get the value of channel
-	 * @return The value of channel
-	 */
-	public String getChannel() {
-		return channel;
-	}
-
-	/**
 	 * Get the value of message
 	 * @return The value of message
 	 */
 	public String getMessage() {
 		return message;
+	}
+
+	/**
+	 * Get the value of channel
+	 * @return The value of channel
+	 */
+	public String getChannel() {
+		return channel;
 	}
 
 
@@ -74,7 +74,7 @@ public class ChannelTopic extends IRCEvent implements ChannelEvent, ContextEvent
 			return false;
 		ChannelTopic thing = (ChannelTopic)obj;
 		if ( true
- && channel.equals(thing.channel) && message.equals(thing.message))
+ && message.equals(thing.message) && channel.equals(thing.channel))
 			return true;
 		return false;
 	}
@@ -83,8 +83,8 @@ public class ChannelTopic extends IRCEvent implements ChannelEvent, ContextEvent
 	{
 		StringBuffer out = new StringBuffer("ChannelTopic(");
 		out.append(super.toString());
-		out.append(", channel = " + channel);
 		out.append(", message = " + message);
+		out.append(", channel = " + channel);
 		return out.toString();
 	}
 

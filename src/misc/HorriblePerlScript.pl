@@ -39,8 +39,8 @@ our %inheritance = (
 	ChannelInvite => [qw/IRCEvent ChannelEvent UserEvent AimedEvent/],
 	ChannelJoin => [qw/IRCEvent ChannelEvent ContextEvent UserEvent/],
 	ChannelPart => [qw/IRCEvent ChannelEvent ContextEvent UserEvent/],
-	ChannelKick => [qw/IRCEvent ChannelEvent ContextEvent UserEvent AimedEvent/],
-	ChannelTopic => [qw/IRCEvent ChannelEvent ContextEvent MessageEvent/], # !!! (extras)
+	ChannelKick => [qw/IRCEvent MessageEvent ChannelEvent ContextEvent UserEvent AimedEvent/],
+	ChannelTopic => [qw/IRCEvent MessageEvent ChannelEvent ContextEvent/], # !!! (extras)
 
 	QuitEvent => [qw/IRCEvent MessageEvent UserEvent/],
 
@@ -475,7 +475,7 @@ DeVoice(channel, nick, login, hostname, target)[mode = "v", bool set = true] Cha
 Deop(channel, nick, login, hostname, target)[mode = "o", bool set = true] ChannelUserMode, Channel de-op
 Invite(target, nick, login, hostname, channel) ChannelInvite, Channel invite
 Join(channel, nick, login, hostname) ChannelJoin, Channel join
-Kick(channel, nick, login, hostname, target, reason) ChannelKick, Channel kick
+Kick(channel, nick, login, hostname, target, message) ChannelKick, Channel kick
 Mode(channel, nick, login, hostname, modes) ChannelModes, Channel mode (generic) !!!
 NickChange(nick, login, hostname, newNick) NickChange, Server nickname change
 Op(channel, nick, login, hostname, target)[mode = "o", bool set = true] ChannelUserMode, Channel op

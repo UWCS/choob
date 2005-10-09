@@ -307,8 +307,8 @@ public class Choob extends PircBot
 		spinThread(new ChannelJoin("onJoin", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, nick, login, hostname));
 	}
 
-	protected void onKick(String channel, String nick, String login, String hostname, String target, String reason) {
-		spinThread(new ChannelKick("onKick", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, nick, login, hostname, target));
+	protected void onKick(String channel, String nick, String login, String hostname, String target, String message) {
+		spinThread(new ChannelKick("onKick", System.currentTimeMillis(), ((int)(Math.random()*127)), message, channel, nick, login, hostname, target));
 	}
 
 	protected void onMode(String channel, String nick, String login, String hostname, String modes) {
@@ -400,7 +400,7 @@ public class Choob extends PircBot
 	}
 
 	protected void onTopic(String channel, String message, String nick, long date, boolean changed) {
-		spinThread(new ChannelTopic("onTopic", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, message));
+		spinThread(new ChannelTopic("onTopic", System.currentTimeMillis(), ((int)(Math.random()*127)), message, channel));
 	}
 
 	protected void onUnknown(String line) {
