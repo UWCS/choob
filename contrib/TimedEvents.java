@@ -6,6 +6,7 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
+import java.text.SimpleDateFormat;
 
 /**
  * Timed events plugin for Choob
@@ -55,6 +56,68 @@ public class TimedEvents
 		irc.sendContextReply(mes, "OK, will do in " + period + "secs.");
 	}
 
+	public void commandAt( Message mes, Modules mods, IRCInterface irc )
+	{
+		// XXX /Lots/ of duplicated code from in.
+
+		List<String> params = mods.util.getParams( mes, 2 );
+
+		if (params.size() <= 2) {
+			irc.sendContextReply(mes, "Syntax is: at <time> <command>");
+			return;
+		}
+
+		String time = params.get(1);
+		String command = params.get(2);
+
+		// Does the command have a trigger?
+		if (!Pattern.compile(irc.getTriggerRegex()).matcher(command).find())
+			// No.
+			command = irc.getTrigger() + command;
+
+		IRCEvent newMes = mes.cloneEvent( command );
+
+		// Java--
+
+		Date callbackTime;
+		GregorianCalendar g=new GregorianCalendar();
+		Matcher ma=Pattern.compile("([0-9]|(?:1[0-9])|(?:2[0-3])):([0-5][0-9])((?::[0-5][0-9])?) ?((?:(?:am)|(?:pm))?)").matcher(time);
+		if (!ma.matches())
+		{
+			irc.sendContextReply(mes, "Bad date format: " + time + ".");
+			return;
+		}
+		int h=Integer.parseInt(ma.group(1));
+		int m=Integer.parseInt(ma.group(2));
+		int s=0;
+
+		if (ma.group(3).length()!=0)
+		try
+		{
+			s=Integer.parseInt(ma.group(3).substring(1)); // Lose the :.
+		}
+		catch (NumberFormatException e) { }
+
+		System.out.println(ma.group(4) + h);
+		if (ma.group(4).equalsIgnoreCase("pm"))
+		{
+			if (h<=12)
+				h+=12;
+		}
+		System.out.println(ma.group(4) + h);
+
+		g.set(Calendar.HOUR_OF_DAY, h);
+		g.set(Calendar.MINUTE, m);
+		g.set(Calendar.SECOND, s);
+
+		if (g.before(new GregorianCalendar()))
+			g.add(Calendar.DAY_OF_MONTH, 1);
+
+		callbackTime=g.getTime();
+
+		mods.interval.callBack( this, newMes, callbackTime );
+		irc.sendContextReply(mes, "OK, will do at " + callbackTime.toString() + ".");
+	}
 	public int apiDecodePeriod(String time) throws NumberFormatException {
 		int period = 0;
 

@@ -66,7 +66,7 @@ public class Choob extends PircBot
 		// Create a new database connection broker using the MySQL drivers
 		try
 		{
-			broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://" + conf.getSettingFallback("dbServer","") + "/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", conf.getSettingFallback("dbUser",""), conf.getSettingFallback("dbPass",""), 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
+			broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://" + conf.getSettingFallback("dbServer","localhost") + "/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", conf.getSettingFallback("dbUser","choob"), conf.getSettingFallback("dbPass",""), 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
 		}
 		catch (IOException e)
 		{
