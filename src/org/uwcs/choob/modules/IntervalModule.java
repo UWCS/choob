@@ -10,8 +10,7 @@ import java.util.*;
 import org.uwcs.choob.support.*;
 
 /**
- *
- * @author	sadiq
+ * Generates a call-back to a plugin at a specified point in time.
  */
 public class IntervalModule
 {
@@ -23,6 +22,12 @@ public class IntervalModule
 		this.intervalList = intervalList;
 	}
 
+	/**
+	 * Calls the 'interval' function in the specified plugin, with the specified parameter and after the specified interval.
+	 * @param plugin The plugin in which to call the function.
+	 * @param parameter The paramater that you want passed along to the interval function.
+	 * @param interval The Date at which you want the event to occour.
+	 */
 	public void callBack( Object plugin, Object parameter, Date interval )
 	{
 		Interval newInt = new Interval();

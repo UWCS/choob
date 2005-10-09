@@ -40,54 +40,41 @@ public class Choob extends PircBot
 	private static final int INITTHREADS = 5;
 	private static final int MAXTHREADS = 20;
 
-	public String server;
-	public String[] channels;
-
 	/**
 	 * Constructor for Choob, initialises vital variables.
-	 * @throws IOException Possibly arises from the database connection pool creation.
 	 */
-	public Choob() throws IOException
+	public Choob()
 	{
+		ConfigReader conf;
+		try
+		{
+			conf=new ConfigReader("bot.conf");
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+			System.out.println("\n\nError reading config file, exiting.");
+			System.exit(2);
+			return;
+		}
+
+		trigger = conf.getSettingFallback("botTrigger","~");
+
 		// Create a shiny synchronised (americans--) list
 		intervalList = Collections.synchronizedList(new ArrayList());
 
-		// Set the bot's nickname.
-		String botName="Choob";
-		String dbUser="";
-		String dbPass="";
-		String dbServer="localhost";
-
+		// Create a new database connection broker using the MySQL drivers
 		try
 		{
-			Properties botProps = new Properties();
-			botProps.load(this.getClass().getClassLoader().getResourceAsStream ("bot.conf"));
-			botName = botProps.getProperty("botName");
-			dbUser = botProps.getProperty("dbUser");
-			dbPass = botProps.getProperty("dbPass");
-			trigger = botProps.getProperty("botTrigger");
-			dbServer = botProps.getProperty("dbServer");
-			server = botProps.getProperty("server");
-			channels = botProps.getProperty("channels").split("[ ,]");
+			broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://" + conf.getSettingFallback("dbServer","") + "/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", conf.getSettingFallback("dbUser",""), conf.getSettingFallback("dbPass",""), 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
 		}
-		catch (Exception e)
+		catch (IOException e)
 		{
-			System.out.println(e);
-			System.out.println("\n\nFatal error reading bot.conf, check the readme file. Exiting.");
-			System.exit(2);
+			e.printStackTrace();
+			System.out.println("Unexpected error in DbConnectionBroker setup, exiting.");
+			System.exit(5);
+			return;
 		}
-
-		this.setName(botName);
-
-		// Set the bot's hostname.
-		this.setLogin("Choob");
-
-		this.setMessageDelay(0); // Disable PircBot's flood protection, reducing percieved lag.
-
-		this.setVersion("Choob SVN - http://svn.uwcs.co.uk/repos/choob/");
-
-		// Create a new database connection broker using the MySQL drivers
-		broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://" + dbServer + "/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", dbUser, dbPass, 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
 
 		// Create a new IRC interface
 		irc = new IRCInterface( this );
@@ -96,6 +83,48 @@ public class Choob extends PircBot
 		modules = new Modules(broker, pluginMap, filterList, intervalList, this, irc );
 
 		irc.setMods(modules);
+
+		// ---
+
+		// Set the name from the config file.
+		this.setName(conf.getSettingFallback("botName", "Choob"));
+
+		// Set the bot's hostname.
+		this.setLogin("Choob");
+
+		// Disable PircBot's flood protection, reducing percieved lag.
+		this.setMessageDelay(0);
+
+		// Set Version (the comment).
+		this.setVersion("Choob SVN - http://svn.uwcs.co.uk/repos/choob/");
+
+
+		// Set up the threading stuff.
+		init();
+
+		// Enable debugging output.
+		setVerbose(true);
+
+		// Connect to the IRC server.
+		try
+		{
+			connect(conf.getSettingFallback("server","irc.uwcs.co.uk"));
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			System.out.println("Unexpected error during connection, exiting.");
+			System.exit(3);
+			return;
+		}
+
+		// Set mode +B (is a bot)
+		sendRawLineViaQueue("MODE " + getName() + " +B");
+
+		// Join the channels.
+		String[] channels = conf.getSettingFallback("channels","").split("[ ,]");
+		for (int i=0; i<channels.length; i++)
+			joinChannel(channels[i]);
 	}
 
 	public IRCInterface getIRC()
@@ -394,19 +423,4 @@ public class Choob extends PircBot
 
 		ChoobThreadManager.queueTask(task);
 	}
-
-	/**
-	 * Starts off a waiting worker thread to work on an incoming line from IRC.
-	 * @param channel
-	 * @param sender
-	 * @param login
-	 * @param hostname
-	 * @param message
-	 * @param privMessage
-	 */
-	/*
-	private synchronized void spinThread(String channel, String sender, String login, String hostname, String message, boolean privMessage)
-	{
-		spinThread(new Message(sender,channel,message,privMessage));
-	}*/
 }

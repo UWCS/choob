@@ -16,10 +16,10 @@ import java.util.*;
 import java.util.regex.*;
 
 /**
- *
- * @author	sadiq
+ * Set of general functions that tend to be frequently used in plugins.
  */
-public class UtilModule {
+public class UtilModule
+{
 	private IRCInterface irc;
 	private Pattern triggerPattern;
 
@@ -29,6 +29,7 @@ public class UtilModule {
 		this.triggerPattern = Pattern.compile(irc.getTriggerRegex());
 	}
 
+	/** Get the offset of the trigger in the list of arguments */
 	private int getTriggerOffset( String text )
 	{
 		Matcher ma = triggerPattern.matcher(text);
@@ -38,6 +39,7 @@ public class UtilModule {
 		return 0;
 	}
 
+	/** Get the parameter string (ie. message without the command) from a Message object */
 	public String getParamString( Message mes )
 	{
 		String text = mes.getMessage();
@@ -49,6 +51,7 @@ public class UtilModule {
 		return "";
 	}
 
+	/** Split the parameters of a Message event into a List of Strings */
 	public List<String> getParams( Message mes )
 	{
 		String text = mes.getMessage();

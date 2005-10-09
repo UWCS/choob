@@ -19,4 +19,4 @@ botTrigger=~
 server=irc.uwcs.co.uk
 
 # Space or comma seperated list of #channels to join on connecting.
-channels=#bots
+channels=#bots #choob

@@ -13,12 +13,11 @@ import org.uwcs.choob.support.events.*;
 import java.security.AccessController;
 
 /**
- *
- * @author	sadiq
+ * The primary way for plugins to pass feedback to IRC.
  */
 public class IRCInterface {
-	protected Choob bot;
-	protected Modules mods;
+	Choob bot;
+	Modules mods;
 
 	/** Creates a new instance of IRCInterface */
 	public IRCInterface(Choob bot) {

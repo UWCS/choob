@@ -24,7 +24,7 @@ public class ChoobSpecialStackPermission extends BasicPermission
 		haxList.add(pluginName);
 	}
 
-	public void root(List list)
+	public void root(List<String> list)
 	{
 		startList = list;
 	}

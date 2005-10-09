@@ -15,8 +15,8 @@ import java.util.*;
 import java.util.regex.*;
 
 /**
- *
- * @author	Faux
+ * Helper functions for dealing with users' nicks.
+ * @deprecated
  */
 
 public class NickModule

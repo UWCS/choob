@@ -12,7 +12,7 @@ import org.uwcs.choob.support.events.*;
 import org.uwcs.choob.*;
 
 /**
- *
+ * Facilitates the synthesis of artificial message events.
  * @author	sadiq
  */
 public class SyntheticModule
@@ -25,6 +25,7 @@ public class SyntheticModule
 		this.bot = bot;
 	}
 
+	/** Queues the message with the bot, as if it had come from IRC. */
 	public void doSyntheticMessage( Message mes )
 	{
 		if( System.getSecurityManager() != null )

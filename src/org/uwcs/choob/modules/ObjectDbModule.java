@@ -26,8 +26,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
 /**
- *
- * @author	sadiq
+ * An interface with the ObjectDB.
  */
 public class ObjectDbModule
 {
@@ -39,6 +38,11 @@ public class ObjectDbModule
 		this.broker = broker;
 	}
 
+	/**
+	 * Retrieve a list of classes matching the specified classtype and clause.
+	 * @param storedClass The .class of the object you want to retrieve.
+	 * @param clause The clause specifying which objects you want to select.
+	 */
 	public List retrieve(Class storedClass, String clause) throws ChoobException
 	{
 		Connection dbConn = broker.getConnection();
@@ -69,6 +73,10 @@ public class ObjectDbModule
 		}
 	}
 
+	/**
+	 * Delete a specific object from the database.
+	 * @param strObject The object to delete.
+	 */
 	public void delete( Object strObject ) throws ChoobException
 	{
 		Connection dbConn = broker.getConnection();
@@ -84,6 +92,10 @@ public class ObjectDbModule
 		}
 	}
 
+	/**
+	 * Update a changed object back to the database.
+	 * @param strObject The object to update.
+	 */
 	public void update( Object strObject ) throws ChoobException
 	{
 		Connection dbConn = broker.getConnection();
@@ -103,6 +115,10 @@ public class ObjectDbModule
 		}
 	}
 
+	/**
+	 * Save a new object to the database.
+	 * @param strObject The object to save.
+	 */
 	public void save( Object strObject ) throws ChoobException
 	{
 		Connection dbConn = broker.getConnection();

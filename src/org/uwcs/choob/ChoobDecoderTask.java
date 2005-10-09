@@ -93,13 +93,46 @@ final class ChoobDecoderTask extends ChoobTask
 				ma = aliasPattern.matcher(matchAgainst);
 				if ( ma.find() )
 				{
+					String alias=ma.group(1).toLowerCase();
+
+					try
+					{
+						System.out.println("Selecting where '" + alias + "'");
+						List<AliasObject> aOs = modules.odb.retrieve(AliasObject.class, "WHERE name='" + alias + "'");
+						if (aOs.size()!=0)
+						{
+							String conv=aOs.get(0).converted;
+							int io=conv.indexOf(' ');
+
+							if (io >= 0)
+								conv = conv.substring(0, io);
+
+							String message = aOs.get(0).converted + mes.getMessage().substring(matchAgainst.length()+1);
+
+							matchAgainst=conv;
+
+							System.out.println("After: " + message);
+
+							if (mes instanceof ChannelMessage)
+								mes = new ChannelMessage("onMessage", mes.getMillis(), mes.getRandom(), message, mes.getNick(), mes.getLogin(), mes.getHostname(), mes.getTarget(), mes.getTarget());
+							else
+								if (mes instanceof PrivateMessage)
+									mes = new PrivateMessage("onPrivateMessage", mes.getMillis(), mes.getRandom(), message, mes.getNick(), mes.getLogin(), mes.getHostname(), null);
+						}
+					}
+					catch (ChoobException e)
+					{
+						System.out.println("While doing obdb aliases:");
+						e.printStackTrace();
+					}
+
 					// TODO This should really use a module called AliasModule or something.
 					Connection dbConnection = dbBroker.getConnection();
 					PreparedStatement aliasesSmt = null;
 					try
 					{
 						aliasesSmt = dbConnection.prepareStatement("SELECT `Converted` FROM `Aliases` WHERE `Name` = ?;");
-						aliasesSmt.setString(1, ma.group(1).toLowerCase());
+						aliasesSmt.setString(1, alias);
 
 						ResultSet aliasesResults = aliasesSmt.executeQuery();
 						if ( aliasesResults.first() )

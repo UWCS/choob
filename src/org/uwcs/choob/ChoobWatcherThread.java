@@ -11,8 +11,7 @@ import java.util.*;
 import org.uwcs.choob.modules.*;
 
 /**
- *
- * @author	sadiq
+ * Continually monitors the list of active callbacks, executing them as required.
  */
 public class ChoobWatcherThread extends Thread
 {

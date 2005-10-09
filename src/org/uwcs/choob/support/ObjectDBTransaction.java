@@ -119,7 +119,7 @@ public class ObjectDBTransaction
 		return new ChoobException("An SQL exception occurred while processing this operation.");
 	}
 
-	public final List retrieve(Class storedClass, String clause) throws ChoobException
+	public final List<?> retrieve(Class storedClass, String clause) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("objectdb."+storedClass.getName().toLowerCase()));
 		String sqlQuery;

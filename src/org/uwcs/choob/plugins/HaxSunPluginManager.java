@@ -492,7 +492,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	// Helper methods for the class below.
 	static boolean checkCommandSignature(Method meth)
 	{
-		Class[] params = meth.getParameterTypes();
+		Class<?>[] params = meth.getParameterTypes();
 		if (params.length == 1)
 		{
 			if (!Message.class.isAssignableFrom(params[0]))
@@ -515,7 +515,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 	static boolean checkEventSignature(Method meth)
 	{
-		Class[] params = meth.getParameterTypes();
+		Class<?>[] params = meth.getParameterTypes();
 		if (params.length == 1)
 		{
 			// XXX could be better
@@ -539,7 +539,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 	static boolean checkIntervalSignature(Method meth)
 	{
-		Class[] params = meth.getParameterTypes();
+		Class<?>[] params = meth.getParameterTypes();
 		if (params.length == 1)
 		{
 			// OK
