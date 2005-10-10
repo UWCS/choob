@@ -8,13 +8,20 @@ import java.util.GregorianCalendar;
 import java.text.DateFormatSymbols;
 
 /**
- * Random command implementations from myself. Enjoy.
+ * Random command implementations from myself. Quality not certain. Use at own risk.
  * 
  * @author MFJ
  */
 
 public class MFJ
 {
+	public String filterBeardRegex = ".*beard.*";
+
+	public void filterBeard( Message con, Modules modules, IRCInterface irc )
+	{
+		irc.sendContextAction( con, "points at " + con.getNick() + "'s beard.");
+	}
+	
 	/**
 	 * Implements JB's !dance command, with different outputs
 	 */
