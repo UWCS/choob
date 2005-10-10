@@ -102,7 +102,7 @@ INSERT INTO `CorePlugins` VALUES ('Test','http://svn.uwcs.co.uk/repos/choob/trun
 INSERT INTO `CorePlugins` VALUES ('Security','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Security.java');
 INSERT INTO `CorePlugins` VALUES ('NickServ','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java');
 INSERT INTO `CorePlugins` VALUES ('Help','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Help.java');
-INSERT INTO `CorePlugins` VALUES ('Seen','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java');
+INSERT INTO `CorePlugins` VALUES ('Seen','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Seen.java');
 INSERT INTO `CorePlugins` VALUES ('Talk','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Talk.java');
 INSERT INTO `CorePlugins` VALUES ('TimedEvents','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/TimedEvents.java');
 INSERT INTO `CorePlugins` VALUES ('MiscMsg','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MiscMsg.java');
