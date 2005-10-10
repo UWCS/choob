@@ -89,7 +89,7 @@ public class PluginModule {
 	 */
 	public Object callAPI(String pluginName, String APIString, Object... params) throws ChoobException
 	{
-		return plugMan.doAPI(pluginName, APIString, params);
+		return dPlugMan.doAPI(pluginName, APIString, params);
 	}
 
 	/**
@@ -102,7 +102,7 @@ public class PluginModule {
 	public Object callGeneric(String pluginName, String type, String name, Object... params) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("generic." + type));
-		return plugMan.doGeneric(pluginName, type, name, params);
+		return dPlugMan.doGeneric(pluginName, type, name, params);
 	}
 
 	public ChoobTask doInterval(String plugin, Object param)
