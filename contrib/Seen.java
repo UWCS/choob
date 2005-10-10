@@ -58,9 +58,9 @@ public class Seen
 
 		if (seen.primaryTime > 0)
 		{
+			// Have spoken
 			String primaryTime = DateFormat.getInstance().format(new Date(seen.primaryTime));
 			String secondaryTime = DateFormat.getInstance().format(new Date(seen.secondaryTime));
-			// Have spoken
 			switch(seen.secondaryType)
 			{
 				case 0:
@@ -88,6 +88,30 @@ public class Seen
 		else
 		{
 			// Haven't spoken
+			String secondaryTime = DateFormat.getInstance().format(new Date(seen.secondaryTime));
+			switch(seen.secondaryType)
+			{
+				case 0:
+					// Nothing
+					irc.sendContextReply( mes, "Sorry, no such luck! I've not seen " + nick + "!" );
+					break;
+				case 1:
+					// Nick Change
+					irc.sendContextReply( mes, nick + " changed nickname to " + seen.secondaryData + " at " + secondaryTime + ".");
+					break;
+				case 2:
+					// Kick
+					irc.sendContextReply( mes, nick + " was kicked from " + seen.secondaryData + " at " + secondaryTime + ".");
+					break;
+				case 3:
+					// Part
+					irc.sendContextReply( mes, nick + " left " + seen.secondaryData + " at " + secondaryTime + ".");
+					break;
+				case 4:
+					// Quit
+					irc.sendContextReply( mes, nick + " before quit with message \"" + seen.secondaryData + "\" at " + secondaryTime + ".");
+					break;
+			}
 		}
 	}
 
