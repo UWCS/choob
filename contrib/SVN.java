@@ -18,8 +18,7 @@ public class SVN
 		URL svnURL;
 		try
 		{
-			//svnURL = new URL("http://svn.uwcs.co.uk/repos/choob/");
-			svnURL = new URL("http://localhost/~bucko/choobrepos.html");
+			svnURL = new URL("http://svn.uwcs.co.uk/repos/choob/");
 		}
 		catch (MalformedURLException e)
 		{
