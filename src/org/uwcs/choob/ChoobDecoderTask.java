@@ -37,7 +37,6 @@ final class ChoobDecoderTask extends ChoobTask
 		ChoobDecoderTask.modules = modules;
 		ChoobDecoderTask.irc = irc;
 		triggerPattern = Pattern.compile("^(?:" + irc.getTriggerRegex() + ")", Pattern.CASE_INSENSITIVE);
-		aliasPattern = Pattern.compile("^([a-zA-Z0-9_]+)$");
 		commandPattern = Pattern.compile("^([a-zA-Z0-9_]+)\\.([a-zA-Z0-9_]+)$");
 	}
 
@@ -79,6 +78,8 @@ final class ChoobDecoderTask extends ChoobTask
 			if ( ma.find() )
 			{
 				// OK, it's a command!
+
+				// Decode into a string we can match as a command.
 				int commandStart = ma.end();
 				int commandEnd = matchAgainst.indexOf(' ', commandStart);
 				if (commandEnd != -1)
@@ -86,77 +87,8 @@ final class ChoobDecoderTask extends ChoobTask
 				else
 					matchAgainst = matchAgainst.substring(commandStart);
 
-				// Try and pick up aliased commands.
 				if (matchAgainst.indexOf(' ') >= 0)
 					matchAgainst = matchAgainst.substring(0, matchAgainst.indexOf(' '));
-
-				ma = aliasPattern.matcher(matchAgainst);
-				if ( ma.find() )
-				{
-					String alias=ma.group(1).toLowerCase();
-
-					try
-					{
-						System.out.println("Selecting where '" + alias + "'");
-						List<AliasObject> aOs = modules.odb.retrieve(AliasObject.class, "WHERE name='" + alias + "'");
-						if (aOs.size()!=0)
-						{
-							String conv=aOs.get(0).converted;
-							int io=conv.indexOf(' ');
-
-							if (io >= 0)
-								conv = conv.substring(0, io);
-
-							String message = aOs.get(0).converted + mes.getMessage().substring(matchAgainst.length()+1);
-
-							matchAgainst=conv;
-
-							System.out.println("After: " + message);
-
-							mes = (Message)mes.cloneEvent(message);
-						}
-					}
-					catch (ChoobException e)
-					{
-						System.out.println("While doing obdb aliases:");
-						e.printStackTrace();
-					}
-
-					// TODO This should really use a module called AliasModule or something.
-					Connection dbConnection = dbBroker.getConnection();
-					PreparedStatement aliasesSmt = null;
-					try
-					{
-						aliasesSmt = dbConnection.prepareStatement("SELECT `Converted` FROM `Aliases` WHERE `Name` = ?;");
-						aliasesSmt.setString(1, alias);
-
-						ResultSet aliasesResults = aliasesSmt.executeQuery();
-						if ( aliasesResults.first() )
-							matchAgainst = aliasesResults.getString("Converted");
-					}
-					catch (SQLException e)
-					{
-						System.err.println("SQL exception looking up an alias: " + e);
-					}
-					finally
-					{
-						try {
-							if (aliasesSmt != null)
-								aliasesSmt.close();
-						}
-						catch (SQLException e)
-						{
-							// Cry
-							System.err.println("SQL Exception when closing statement: " + e);
-						}
-						finally
-						{
-							dbBroker.freeConnection( dbConnection );
-						}
-					}
-				}
-
-				// Now, continue as if nothing has happened..
 
 				ma = commandPattern.matcher(matchAgainst);
 				if( ma.matches() )

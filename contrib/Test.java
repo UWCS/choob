@@ -72,4 +72,19 @@ public class Test
 	{
 		irc.sendContextMessage( ev, "Bye, " + ev.getNick() + "!");
 	}
+
+	public void commandAPI ( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	{
+		List<String> params = mods.util.getParams( mes );
+		irc.sendContextReply(mes, mods.plugin.callAPI( params.get(1), params.get(2), params.get(3) ).toString());
+	}
+
+	public void commandGeneric ( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	{
+		List<String> params = mods.util.getParams( mes );
+		if (params.size() == 5)
+			irc.sendContextReply(mes, mods.plugin.callGeneric( params.get(1), params.get(2), params.get(3), params.get(4) ).toString());
+		else
+			irc.sendContextReply(mes, mods.plugin.callGeneric( params.get(1), params.get(2), params.get(3) ).toString());
+	}
 }

@@ -161,6 +161,17 @@ public class Seen
 		saveSeen (seen);
 	}
 
+	public void onAction( ChannelAction mes ) throws ChoobException
+	{
+		SeenObj seen = getSeen( mes.getNick(), true );
+		seen.primaryTime = System.currentTimeMillis();
+		seen.primaryMessage = "/me " + mes.getMessage();
+		seen.primaryChannel = mes.getChannel();
+		seen.secondaryType = 0;
+		seen.secondaryData = "";
+		saveSeen (seen);
+	}
+
 	public void onNickChange( NickChange nc ) throws ChoobException
 	{
 		SeenObj seen = getSeen( nc.getNick(), true );
