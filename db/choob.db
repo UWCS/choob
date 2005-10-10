@@ -35,6 +35,10 @@ INSERT INTO `UserNodes` VALUES (6,'Security',2);
 INSERT INTO `UserNodes` VALUES (7,'NickServ',2);
 INSERT INTO `UserNodes` VALUES (8,'Help',2);
 INSERT INTO `UserNodes` VALUES (9,'Seen',2);
+INSERT INTO `UserNodes` VALUES (10,'Talk',2);
+INSERT INTO `UserNodes` VALUES (11,'TimedEvents',2);
+INSERT INTO `UserNodes` VALUES (12,'MiscMsg',2);
+INSERT INTO `UserNodes` VALUES (13,'Tell',2);
 
 --
 -- Table structure for table `AddNicks`
@@ -95,6 +99,11 @@ INSERT INTO `CorePlugins` VALUES ('Plugin','http://svn.uwcs.co.uk/repos/choob/tr
 INSERT INTO `CorePlugins` VALUES ('Security','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Security.java');
 INSERT INTO `CorePlugins` VALUES ('NickServ','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java');
 INSERT INTO `CorePlugins` VALUES ('Seen','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java');
+INSERT INTO `CorePlugins` VALUES ('Talk','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Talk.java');
+INSERT INTO `CorePlugins` VALUES ('TimedEvents','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/TimedEvents.java');
+INSERT INTO `CorePlugins` VALUES ('MiscMsg','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MiscMsg.java');
+INSERT INTO `CorePlugins` VALUES ('Tell','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Tell.java');
+INSERT INTO `CorePlugins` VALUES ('Alias','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Alias.java');
 
 --
 -- Table structure for table `GroupMembers`
