@@ -39,6 +39,9 @@ INSERT INTO `UserNodes` VALUES (10,'Talk',2);
 INSERT INTO `UserNodes` VALUES (11,'TimedEvents',2);
 INSERT INTO `UserNodes` VALUES (12,'MiscMsg',2);
 INSERT INTO `UserNodes` VALUES (13,'Tell',2);
+INSERT INTO `UserNodes` VALUES (14,'Alias',2);
+INSERT INTO `UserNodes` VALUES (15,'Karma',2);
+INSERT INTO `UserNodes` VALUES (16,'Quote',2);
 
 --
 -- Table structure for table `AddNicks`
@@ -94,16 +97,19 @@ CREATE TABLE `CorePlugins` (
 -- Dumping data for table `CorePlugins`
 --
 
-INSERT INTO `CorePlugins` VALUES ('Test','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Test.java');
 INSERT INTO `CorePlugins` VALUES ('Plugin','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Plugin.java');
+INSERT INTO `CorePlugins` VALUES ('Test','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Test.java');
 INSERT INTO `CorePlugins` VALUES ('Security','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Security.java');
 INSERT INTO `CorePlugins` VALUES ('NickServ','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java');
+INSERT INTO `CorePlugins` VALUES ('Help','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Help.java');
 INSERT INTO `CorePlugins` VALUES ('Seen','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java');
 INSERT INTO `CorePlugins` VALUES ('Talk','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Talk.java');
 INSERT INTO `CorePlugins` VALUES ('TimedEvents','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/TimedEvents.java');
 INSERT INTO `CorePlugins` VALUES ('MiscMsg','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MiscMsg.java');
 INSERT INTO `CorePlugins` VALUES ('Tell','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Tell.java');
 INSERT INTO `CorePlugins` VALUES ('Alias','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Alias.java');
+INSERT INTO `CorePlugins` VALUES ('Karma','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Karma.java');
+INSERT INTO `CorePlugins` VALUES ('Quote','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Quote.java');
 
 --
 -- Table structure for table `GroupMembers`
@@ -130,6 +136,14 @@ INSERT INTO `GroupMembers` VALUES (1,5);
 INSERT INTO `GroupMembers` VALUES (1,6);
 INSERT INTO `GroupMembers` VALUES (1,7);
 INSERT INTO `GroupMembers` VALUES (1,8);
+INSERT INTO `GroupMembers` VALUES (1,9);
+INSERT INTO `GroupMembers` VALUES (1,10);
+INSERT INTO `GroupMembers` VALUES (1,11);
+INSERT INTO `GroupMembers` VALUES (1,12);
+INSERT INTO `GroupMembers` VALUES (1,13);
+INSERT INTO `GroupMembers` VALUES (1,14);
+INSERT INTO `GroupMembers` VALUES (1,15);
+INSERT INTO `GroupMembers` VALUES (1,16);
 
 --
 -- Table structure for table `History`
