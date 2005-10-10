@@ -28,7 +28,7 @@ public class Alias
 
 	public void commandAdd( Message mes ) throws ChoobException
 	{
-		String propend="";
+		String propend=".";
 		List<String>s=mods.util.getParams(mes, 2);
 
 		if (s.size() <= 2)
