@@ -31,6 +31,12 @@ public class Alias
 		String propend="";
 		List<String>s=mods.util.getParams(mes, 2);
 
+		if (s.size() <= 2)
+		{
+			irc.sendContextReply(mes, "Syntax: add <aliasname> <string>.");
+			return;
+		}
+
 		String alias=s.get(1).replaceAll(validator,"").toLowerCase();
 		String conv=s.get(2);
 
