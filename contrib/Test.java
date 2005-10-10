@@ -52,7 +52,7 @@ public class Test
 		if (ma.group(1).equals(con.getNick()))
 			irc.sendContextReply( con, "You sure do!");
 		else
-			irc.sendContextMessage( con, "No, I disagree, " + con.getNick() + " sucks.");
+			irc.sendContextMessage( con, "No, I disagree, " + con.getNick() + " suX.");
 	}
 
 	public String filterBouncyRegex = "^bouncy bouncy";
