@@ -86,9 +86,9 @@ public class Karma
 		{
 			KarmaObject ko;
 			String st=ma.group(1);
-			if (used.contains(st))
+			if (used.contains(st.toLowerCase()))
 				continue;
-			used.add(st);
+			used.add(st.toLowerCase());
 
 			boolean dup=ma.group(2).equals("++");
 
