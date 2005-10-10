@@ -115,7 +115,8 @@ public class Seen
 			return (SeenObj)objs.get(0);
 	}
 
-	private void saveSeen(SeenObj seen) throws ChoobException
+	// Synchronized, since update appears to be non thread safe...
+	private synchronized void saveSeen(SeenObj seen) throws ChoobException
 	{
 		if (seen.id == 0)
 			mods.odb.save(seen);
