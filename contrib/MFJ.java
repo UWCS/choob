@@ -120,4 +120,17 @@ public class MFJ
 				
 		irc.sendContextMessage( con, "It is " + months[cal.get(cal.MONTH)] + ".");
 	}
+	
+	/**
+	 * Implement JB's !day command
+	 */
+	public void commandDay(Message con, Modules mods, IRCInterface irc)
+	{
+		GregorianCalendar cal = new GregorianCalendar();
+		DateFormatSymbols dfc = new DateFormatSymbols();
+		
+		String[] days = dfc.getWeekdays();
+				
+		irc.sendContextMessage( con, "It is " + days[cal.get(cal.DAY_OF_WEEK)] + ".");
+	}
 }
