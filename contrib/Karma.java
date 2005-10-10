@@ -13,7 +13,7 @@ public class KarmaObject
 	public int up;
 	public int down;
 	public int value;
-	public boolean dup;
+	boolean dup;
 }
 
 public class KarmaReasonObject
