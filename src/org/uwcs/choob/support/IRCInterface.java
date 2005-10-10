@@ -19,6 +19,9 @@ public class IRCInterface {
 	Choob bot;
 	Modules mods;
 
+	final int maxmsglength=400; // Arbiatary hax!
+	final int maxmsgtruncation=30; // Arbiatary hax!
+
 	/** Creates a new instance of IRCInterface */
 	public IRCInterface(Choob bot) {
 		this.bot = bot;
@@ -52,16 +55,48 @@ public class IRCInterface {
 		if ( !(ev instanceof UserEvent) )
 			return; // XXX!?!
 
+		String sprefix="";
+		String target=null;
 		if( ev instanceof PrivateEvent)
-			bot.sendMessage(((UserEvent)ev).getNick(), message);
+			target=((UserEvent)ev).getNick();
 		else if ( mods.pc.isProtected(ev.getContext()) ) // It's a channel
-			bot.sendMessage(((UserEvent)ev).getNick(), message);
+			target=((UserEvent)ev).getNick();
 		else
 		{
 			if (prefix)
-				bot.sendMessage(ev.getContext(), ((UserEvent)ev).getNick() + ": " + message);
-			else
-				bot.sendMessage(ev.getContext(), message);
+				sprefix = ((UserEvent)ev).getNick() + ": ";
+
+			target=ev.getContext();
+			message=sprefix+message;
+		}
+
+		if (target==null)
+			return;
+
+		if (message.length() > maxmsglength)
+		{
+			// XXX HAX XXX HAX XXX HAX I'm so drunk.
+			do
+			{
+				int lio=message.substring(0, Math.min(maxmsglength, message.length())).lastIndexOf(' ');
+				if (lio==-1 || maxmsglength-lio > maxmsgtruncation)
+				{
+					System.out.println(maxmsglength-lio);
+					if (message.trim().length()>0)
+						bot.sendMessage(target, message.substring(0, Math.min(maxmsglength, message.length())) + (message.length() > maxmsglength ? "..." : ""));
+					message=sprefix + message.substring(Math.min(maxmsglength, message.length()));
+				}
+				else
+				{
+					bot.sendMessage(target, message.substring(0, lio));
+					message=sprefix + message.substring(Math.min(lio, message.length()));
+				}
+			}
+			while (message.length() > sprefix.length() );
+		}
+		else
+		{
+			bot.sendMessage(target, message);
 		}
 	}
 

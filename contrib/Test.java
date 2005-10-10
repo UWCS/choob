@@ -39,20 +39,13 @@ public class Test
 		System.exit(1);
 	}
 
+
 	// Define the regex for the KarmaPlus filter.
-	public String filterFauxRegex = ".*?([a-zA-Z0-9]{2,}) sucks.*";
+	public String filterFauxRegex = "Faux sucks";
 
 	public void filterFaux( Message con, Modules modules, IRCInterface irc )
 	{
-		Pattern pa;
-		Matcher ma;
-		pa=Pattern.compile(filterFauxRegex);
-		ma=pa.matcher(con.getMessage());
-		ma.find();
-		if (ma.group(1).equals(con.getNick()))
-			irc.sendContextReply( con, "You sure do!");
-		else
-			irc.sendContextMessage( con, "No, I disagree, " + con.getNick() + " suX.");
+		irc.sendContextMessage( con, "No, I disagree, " + con.getNick() + " is the one that is the suck.");
 	}
 
 	public String filterBouncyRegex = "^bouncy bouncy";

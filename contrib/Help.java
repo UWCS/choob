@@ -4,6 +4,8 @@ import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 import java.util.*;
 import java.util.regex.*;
+import org.jibble.pircbot.Colors;
+
 
 /**
  * Choob help plugin
@@ -172,31 +174,37 @@ public class Help
 		"Help.Commands <plugin>",
 		"<plugin> is the name of a loaded plugin."
 	};
-	public void commandCommands( Message mes )
-	{
-		String plugin = mods.util.getParamString(mes);
-		String[] commands = mods.plugin.commands(plugin);
 
+	private String titleCase(String s)
+	{
+		StringBuffer sb = new StringBuffer(s.toLowerCase());
+		sb.setCharAt(0,s.substring(0,1).toUpperCase().charAt(0));
+		return sb.toString();
+	}
+
+	private String commandString(String[] commands, String plugin, boolean brief)
+	{
 		if (commands == null)
 		{
-			irc.sendContextReply(mes, "That plugin doesn't exist!");
+			return "That plugin doesn't exist!";
 		}
 		else if (commands.length == 0)
 		{
-			irc.sendContextReply(mes, "No commands in plugin " + plugin + ".");
+			return "No commands in plugin " + plugin + ".";
 		}
 		else if (commands.length == 1)
 		{
-			irc.sendContextReply(mes, "1 command in plugin " + plugin + ": " + commands[0] + ".");
+			return (brief ? "" : "1 command in plugin ") + plugin + ": " + commands[0] + ".";
 		}
 		else if (commands.length == 2)
 		{
-			irc.sendContextReply(mes, "2 commands in plugin " + plugin + ": " + commands[0] + " and " + commands[1] + ".");
+			return (brief ? "" : "2 commands in plugin " ) + plugin + ": " + commands[0] + " and " + commands[1] + ".";
 		}
 		else
 		{
-			StringBuffer buf = new StringBuffer("" + commands.length);
-			buf.append(" commands in plugin ");
+			StringBuffer buf = new StringBuffer("");
+			if (!brief)
+				buf.append(commands.length + " commands in plugin ");
 			buf.append(plugin);
 			buf.append(": ");
 			for(int i=0; i<commands.length; i++)
@@ -209,7 +217,27 @@ public class Help
 			}
 			buf.append(".");
 
-			irc.sendContextReply(mes, buf.toString());
+			return buf.toString();
+		}
+	}
+
+	public void commandCommands( Message mes )
+	{
+		String plugin = mods.util.getParamString(mes);
+
+		if (plugin.trim().equals(""))
+		{
+			String rep="";
+
+			String[] plugins = mods.plugin.plugins();
+			for (int j=0; j<plugins.length; j++)
+				rep+=commandString(mods.plugin.commands(plugins[j]), Colors.BOLD + titleCase(plugins[j]) + Colors.NORMAL, true) + " ";
+			irc.sendContextReply(mes, rep);
+		}
+		else
+		{
+			String[] commands = mods.plugin.commands(plugin);
+			irc.sendContextReply(mes, commandString(commands, plugin, false));
 		}
 	}
 
