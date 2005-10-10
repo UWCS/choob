@@ -36,40 +36,34 @@ public class ChoobWatcherThread extends Thread
 
 		do
 		{
-			List<Interval> toRun = new ArrayList<Interval>();
-
+			long timeNow = (new Date()).getTime();
+			long next = timeNow + 1000;
 			synchronized( intervalList )
 			{
-				Date timeNow = new Date();
 				Iterator tempIt = intervalList.iterator();
 
 				while( tempIt.hasNext() )
 				{
 					Interval tempInterval = (Interval)tempIt.next();
 
-					if( tempInterval.getTrigger().getTime() <= timeNow.getTime() )
+					if( tempInterval.getTrigger() <= timeNow )
 					{
-						toRun.add( tempInterval );
 						tempIt.remove();
+						ChoobTask t = mods.plugin.doInterval(tempInterval.getPlugin(), tempInterval.getParameter());
+						ChoobThreadManager.queueTask(t);
 					}
+					else if (next > tempInterval.getTrigger())
+						next = tempInterval.getTrigger();
 				}
 			}
 
-			Iterator<Interval> runIt = toRun.iterator();
-
-			while( runIt.hasNext() )
-			{
-				Interval runningInterval = runIt.next();
-
-				ChoobTask t = mods.plugin.doInterval(runningInterval.getPlugin(), runningInterval.getParameter());
-				ChoobThreadManager.queueTask(t);
-			}
+			long delay = next - timeNow;
 
 			synchronized( this )
 			{
 				try
 				{
-					wait(500);
+					wait(delay);
 				}
 				catch( InterruptedException e )
 				{

@@ -10,7 +10,7 @@ public class SVN
 {
 	public SVN( Modules mods )
 	{
-		mods.interval.callBack( this, null, new Date( (new Date().getTime())+100 ) );
+		mods.interval.callBack( null, 100 );
 	}
 
 	public void interval( Object parameter, Modules mods, IRCInterface irc ) throws ChoobException
@@ -49,6 +49,6 @@ public class SVN
 			}
 		}
 
-		mods.interval.callBack( this, newRev, new Date( (new Date().getTime())+1000 ) );		
+		mods.interval.callBack( newRev, 1000 );
 	}
 }

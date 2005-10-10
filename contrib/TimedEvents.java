@@ -50,10 +50,11 @@ public class TimedEvents
 
 		IRCEvent newMes = mes.cloneEvent( command );
 
-		Date callbackTime = new Date( (new Date().getTime()) + period * 1000);
+		long callbackTime = period * 1000;
 
-		mods.interval.callBack( this, newMes, callbackTime );
-		irc.sendContextReply(mes, "OK, will do in " + period + "secs.");
+		mods.interval.callBack( newMes, callbackTime );
+		System.out.println(System.currentTimeMillis() + callbackTime);
+		irc.sendContextReply(mes, "OK, will do at " + new Date(System.currentTimeMillis() + callbackTime) + ".");
 	}
 
 	public void commandAt( Message mes, Modules mods, IRCInterface irc )
@@ -79,45 +80,53 @@ public class TimedEvents
 
 		// Java--
 
-		Date callbackTime;
-		GregorianCalendar g=new GregorianCalendar();
-		Matcher ma=Pattern.compile("([0-9]|(?:1[0-9])|(?:2[0-3])):([0-5][0-9])((?::[0-5][0-9])?) ?((?:(?:am)|(?:pm))?)").matcher(time);
+		GregorianCalendar g = new GregorianCalendar();
+		Matcher ma = Pattern.compile("([0-9]|1[0-9]|2[0-3]):([0-5][0-9])(?::([0-5][0-9]))? ?(am|pm)?").matcher(time);
 		if (!ma.matches())
 		{
 			irc.sendContextReply(mes, "Bad date format: " + time + ".");
 			return;
 		}
-		int h=Integer.parseInt(ma.group(1));
-		int m=Integer.parseInt(ma.group(2));
-		int s=0;
 
-		if (ma.group(3).length()!=0)
+		int h,m,s;
 		try
 		{
-			s=Integer.parseInt(ma.group(3).substring(1)); // Lose the :.
-		}
-		catch (NumberFormatException e) { }
+			h = Integer.parseInt(ma.group(1));
+			m = Integer.parseInt(ma.group(2));
+			s = 0;
 
-		System.out.println(ma.group(4) + h);
-		if (ma.group(4).equalsIgnoreCase("pm"))
-		{
-			if (h<=12)
-				h+=12;
+			if (ma.group(3) != null)
+				s = Integer.parseInt(ma.group(3));
 		}
-		System.out.println(ma.group(4) + h);
+		catch (NumberFormatException e)
+		{
+			irc.sendContextReply( mes, "Bad date format: " + time + ".");
+			return;
+		}
+
+		if (ma.group(4) != null)
+		{
+			if (ma.group(4).equalsIgnoreCase("pm"))
+			{
+				if (h<=12)
+					h+=12;
+			}
+		}
 
 		g.set(Calendar.HOUR_OF_DAY, h);
 		g.set(Calendar.MINUTE, m);
 		g.set(Calendar.SECOND, s);
 
-		if (g.before(new GregorianCalendar()))
+		if (g.getTimeInMillis() < System.currentTimeMillis())
 			g.add(Calendar.DAY_OF_MONTH, 1);
 
-		callbackTime=g.getTime();
+		long callbackTime = g.getTimeInMillis() - System.currentTimeMillis();
 
-		mods.interval.callBack( this, newMes, callbackTime );
-		irc.sendContextReply(mes, "OK, will do at " + callbackTime.toString() + ".");
+		mods.interval.callBack( newMes, callbackTime );
+
+		irc.sendContextReply(mes, "OK, will do at " + g.getTime().toString() + ".");
 	}
+
 	public int apiDecodePeriod(String time) throws NumberFormatException {
 		int period = 0;
 

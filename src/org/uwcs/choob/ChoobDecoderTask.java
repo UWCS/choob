@@ -113,11 +113,7 @@ final class ChoobDecoderTask extends ChoobTask
 
 							System.out.println("After: " + message);
 
-							if (mes instanceof ChannelMessage)
-								mes = new ChannelMessage("onMessage", mes.getMillis(), mes.getRandom(), message, mes.getNick(), mes.getLogin(), mes.getHostname(), mes.getTarget(), mes.getTarget());
-							else
-								if (mes instanceof PrivateMessage)
-									mes = new PrivateMessage("onPrivateMessage", mes.getMillis(), mes.getRandom(), message, mes.getNick(), mes.getLogin(), mes.getHostname(), null);
+							mes = (Message)mes.cloneEvent(message);
 						}
 					}
 					catch (ChoobException e)

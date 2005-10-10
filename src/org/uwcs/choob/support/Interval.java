@@ -16,7 +16,7 @@ public class Interval
 {
 	private String plugin;
 
-	private Date trigger;
+	private long trigger;
 
 	private Object parameter;
 
@@ -25,11 +25,18 @@ public class Interval
 	{
 	}
 
+	public Interval(String plugin, Object parameter, long trigger)
+	{
+		this.plugin = plugin;
+		this.parameter = parameter;
+		this.trigger = trigger;
+	}
+
 	/**
 	 * Getter for property trigger.
 	 * @return Value of property trigger.
 	 */
-	public java.util.Date getTrigger()
+	public long getTrigger()
 	{
 		return trigger;
 	}
@@ -38,7 +45,7 @@ public class Interval
 	 * Setter for property trigger.
 	 * @param trigger New value of property trigger.
 	 */
-	public void setTrigger(java.util.Date trigger)
+	public void setTrigger(long trigger)
 	{
 		this.trigger = trigger;
 	}

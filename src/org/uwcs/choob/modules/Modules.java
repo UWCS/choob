@@ -82,7 +82,7 @@ public class Modules
 			history = new HistoryModule(dbBroker);
 			util = new UtilModule(irc);
 			nick = new NickModule(dbBroker);
-			interval = new IntervalModule( intervalList );
+			interval = new IntervalModule( intervalList, this );
 			synthetic = new SyntheticModule( bot );
 			security = new SecurityModule( dbBroker );
 			pc = new ProtectedChannels();

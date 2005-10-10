@@ -107,8 +107,8 @@ public class PluginModule {
 
 	public ChoobTask doInterval(String plugin, Object param)
 	{
-		// XXX Security hole!?!?!
-		return plugMan.intervalTask(plugin, param);
+		// XXX Security hole!?!?! (This method is PUBLIC)
+		return dPlugMan.intervalTask(plugin, param);
 	}
 
 	public String[] plugins()
