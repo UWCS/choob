@@ -3,6 +3,7 @@ import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 import java.util.*;
+import java.text.*;
 
 public class MiscMsg
 {
@@ -10,6 +11,27 @@ public class MiscMsg
 	public void commandCT( Message con, Modules mods, IRCInterface irc )
 	{
 		randomReply(con, irc, new String[] { "Yes, your connection is working fine.", "No, your connection seems really broken." });
+	}
+
+	public void commandTime( Message con, Modules mods, IRCInterface irc )
+	{
+		irc.sendContextReply(con, new SimpleDateFormat("'The time is 'hh:mm:ss'.'").format(new Date()));
+	}
+
+	public void commandDate( Message con, Modules mods, IRCInterface irc )
+	{
+		irc.sendContextReply(con, new SimpleDateFormat("'The date is 'd MMM yyyy'.'").format(new Date()));
+	}
+
+	public void commandRandom( Message con, Modules mods, IRCInterface irc )
+	{
+		double max=1;
+		try
+		{
+			max=Double.parseDouble(mods.util.getParamString(con));
+		}
+		catch (NumberFormatException e) { }
+		irc.sendContextReply(con, "Random number between 0 and " + max + " is " + new Random().nextDouble()*max + ".");
 	}
 
 	private void randomReply( Message con, IRCInterface irc, final String[] s)

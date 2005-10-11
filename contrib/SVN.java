@@ -48,6 +48,6 @@ public class SVN
 			}
 		}
 
-		mods.interval.callBack( newRev, 1000 );
+		mods.interval.callBack( newRev, 30000 );
 	}
 }

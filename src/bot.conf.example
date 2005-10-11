@@ -1,7 +1,7 @@
 # This is an example bot.conf file. You _must_ have one for your Choob instance or it won't run.
 
 # Name of your bot
-botName=SomeName
+botName=SomeChoob
 
 # Username for the MySQL database running on localhost named Choob
 dbUser=choob
@@ -13,10 +13,13 @@ dbPass=choob
 dbServer=localhost
 
 # Trigger that commands should be prefixed with.
-botTrigger=~
+botTrigger=:
 
 # IRC Server to connect to. Even if you aren't planning on using Choob on irc.uwcs.co.uk, we'd love it if you'd come say hello anyway.
 server=irc.uwcs.co.uk
 
 # Space or comma seperated list of #channels to join on connecting.
 channels=#bots #choob
+
+# List of ||| seperated raw-commands to send on connection.
+connectstring=PRIVMSG NickServ :identify password

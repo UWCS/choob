@@ -121,6 +121,10 @@ public class Choob extends PircBot
 		// Set mode +B (is a bot)
 		sendRawLineViaQueue("MODE " + getName() + " +B");
 
+		String[] commands = conf.getSettingFallback("connectstring","").split("\\|\\|\\|");
+		for (int i=0; i<commands.length; i++)
+			sendRawLineViaQueue(commands[i]);
+
 		// Join the channels.
 		String[] channels = conf.getSettingFallback("channels","").split("[ ,]");
 		for (int i=0; i<channels.length; i++)
