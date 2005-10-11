@@ -13,7 +13,7 @@ public class SVN
 		mods.interval.callBack( null, 100 );
 	}
 
-	public void interval( Object parameter, Modules mods, IRCInterface irc ) throws ChoobException
+	public synchronized void interval( Object parameter, Modules mods, IRCInterface irc ) throws ChoobException
 	{
 		URL svnURL;
 		try
