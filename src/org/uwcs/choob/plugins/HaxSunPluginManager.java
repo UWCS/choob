@@ -116,6 +116,8 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			return baos.toString(); // success
 		else
 		{
+			System.out.println(baos.toString());
+
 			HashedStringObject hso=new HashedStringObject();
 			hso.string=baos.toString();
 			hso.hash=((Integer)((hso.string.hashCode()%128)+256)).toString();

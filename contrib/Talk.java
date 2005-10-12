@@ -18,10 +18,15 @@ public class Talk
 {
 	public void commandShout( Message mes, Modules mods, IRCInterface irc )
 	{
-		irc.sendContextReply(mes, Colors.BOLD + "Bold yellow on magenta.");
+		irc.sendContextReply(mes, Colors.BOLD + "BOOM! Headshot!");
 	}
 
 	public void commandSay( Message con, Modules modules, IRCInterface irc )
+	{
+		irc.sendContextMessage(con, modules.util.getParamString(con));
+	}
+
+	public void commandReply( Message con, Modules modules, IRCInterface irc )
 	{
 		irc.sendContextReply(con, modules.util.getParamString(con));
 	}

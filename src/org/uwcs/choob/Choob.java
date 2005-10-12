@@ -248,6 +248,7 @@ public class Choob extends PircBot
 		}
 		catch( Exception e )
 		{
+			e.printStackTrace();
 			// If we failed to load the core plugins, we've got issues.
 			throw new RuntimeException("Failed to load core plugin list!", e);
 		}
