@@ -4,12 +4,14 @@ import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 import java.util.*;
 import java.security.*;
+import org.jibble.pircbot.Colors;
+import java.util.regex.*;
 
 /**
  * Choob nickserv checker
- * 
+ *
  * @author bucko
- * 
+ *
  * Anyone who needs further docs for this module has some serious Java issues.
  * :)
  */
@@ -32,11 +34,24 @@ public class NickServ
 	Modules mods;
 	IRCInterface irc;
 
+	/** Enable horrible hacks. If you know which network you're going to be using the bot on, finalize this, and all of the other code will get removed by the compiler. */
+	boolean infooverride=false;
+
+	final Pattern ValidInfoReply=Pattern.compile("^(?:\\s*Nickname: ([^\\s]+) ?(<< ONLINE >>)?)|(?:The nickname \\[([^\\s]+)\\] is not registered)$");
+
 	public NickServ(Modules mods, IRCInterface irc)
 	{
 		nickChecks = new HashMap<String,ResultObj>();
 		this.irc = irc;
 		this.mods = mods;
+		if (infooverride==false)
+			// Check ensure that our NickServ is sane, and, if not, enable workarounds.
+			mods.interval.callBack(null, 1);
+	}
+
+	public synchronized void interval( Object parameter, Modules mods, IRCInterface irc ) throws ChoobException
+	{
+		apiCheck("____" + ((new Random()).nextInt() & 1024));
 	}
 
 	public void destroy(Modules mods)
@@ -120,7 +135,7 @@ public class NickServ
 				AccessController.doPrivileged( new PrivilegedAction() {
 					public Object run()
 					{
-						irc.sendMessage("NickServ", "STATUS " + nick);
+						irc.sendMessage("NickServ", (infooverride ? "INFO " : "STATUS ") + nick);
 						return null;
 					}
 				});
@@ -172,13 +187,59 @@ public class NickServ
 		if ( ! mes.getNick().toLowerCase().equals( "nickserv" ) )
 			return; // Not from NickServ --> also don't care
 
+		System.out.println(mes.getMessage());
+		if (infooverride == false && mes.getMessage().trim().toLowerCase().equals("unknown command [status]"))
+		{
+			// Ohes nose, horribly broken network! Let's pretend that it didn't just slap us in the face with a glove.
+			System.out.println("Reverting to badly broken NickServ handling.");
+
+			infooverride=true;
+
+			synchronized (nickChecks)
+			{
+				nickChecks.clear(); // <-- Ooh, lets break things.
+			}
+
+			// Any pending nick checks will fail, but.. well, bah.
+			return;
+		}
+
 		List params = mods.util.getParams( mes );
 
-		if ( ! ((String)params.get(0)).toLowerCase().equals("status") )
-			return; // Wrong type of message!
+		if (infooverride)
+		{
+			if (mes.getMessage().indexOf("Nickname: ") ==-1 && mes.getMessage().indexOf("The nickname [") ==-1)
+				return; // Wrong type of message!
+		}
+		else
+		{
+			if ( ! ((String)params.get(0)).toLowerCase().equals("status") )
+				return; // Wrong type of message!
+		}
 
-		String nick = (String)params.get(1);
-		int status = Integer.valueOf((String)params.get(2));
+		String nick;
+		int status;
+
+
+		if (!infooverride /* && statuscommand*/)
+		{
+			nick = (String)params.get(1);
+			status = Integer.valueOf((String)params.get(2));
+		}
+		else
+		{
+			Matcher ma=ValidInfoReply.matcher(Colors.removeFormattingAndColors(mes.getMessage()));
+
+			if (!ma.matches())
+				return;
+
+			nick = ma.group(1);
+
+			if (nick==null)
+				nick=ma.group(3);
+
+			status = (ma.group(2)!=null && !ma.group(2).equals("") ? 3 : 0);
+		}
 
 		ResultObj result = getNickCheck( nick.toLowerCase() );
 		if ( result == null )
