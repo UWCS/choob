@@ -115,7 +115,22 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		if (ret == 0)
 			return baos.toString(); // success
 		else
-			throw new ChoobException("Compile failed: " + baos.toString());
+		{
+			HashedStringObject hso=new HashedStringObject();
+			hso.string=baos.toString();
+			hso.hash=((Integer)((hso.string.hashCode()%128)+256)).toString();
+
+			mods.odb.save(hso);
+
+			try
+			{
+				throw new ChoobException("Compile failed, see: http://" + InetAddress.getLocalHost().getHostAddress() + ":12345/store/" + hso.hash + " for details.");
+			}
+			catch (UnknownHostException e)
+			{
+				throw new ChoobException("Your network appears to be really, really broken.");
+			}
+		}
 	}
 
 	private String[] makeJavaFiles(String pluginName, String outDir, InputStream in) throws IOException

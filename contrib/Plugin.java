@@ -90,7 +90,7 @@ public class Plugin
 		}
 		catch (Exception e)
 		{
-			irc.sendContextReply(mes, "Error parsing plugin, see log for details.");
+			irc.sendContextReply(mes, "Error parsing plugin, see log for details. " + e);
 			e.printStackTrace();
 		}
 	}
