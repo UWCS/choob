@@ -15,12 +15,12 @@ import java.text.DateFormatSymbols;
 
 public class MFJ
 {
-	public String filterBeardRegex = ".*beard.*";
+	//public String filterBeardRegex = ".*beard.*";
 
-	public void filterBeard( Message con, Modules modules, IRCInterface irc )
-	{
-		irc.sendContextAction( con, "points at " + con.getNick() + "'s beard.");
-	}
+	//public void filterBeard( Message con, Modules modules, IRCInterface irc )
+	//{
+	//	irc.sendContextAction( con, "points at " + con.getNick() + "'s beard.");
+	//}
 	
 	/**
 	 * Implements JB's !dance command, with different outputs
