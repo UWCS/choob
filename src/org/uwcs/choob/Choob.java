@@ -40,12 +40,14 @@ public class Choob extends PircBot
 	private static final int INITTHREADS = 5;
 	private static final int MAXTHREADS = 20;
 
+	private ConfigReader conf;
+
 	/**
 	 * Constructor for Choob, initialises vital variables.
 	 */
 	public Choob()
 	{
-		ConfigReader conf;
+
 		try
 		{
 			conf=new ConfigReader("bot.conf");
@@ -105,12 +107,25 @@ public class Choob extends PircBot
 		// Enable debugging output.
 		setVerbose(true);
 
+		try
+		{
+			doConnect();
+		}
+		catch (IOException e)
+		{}
+		catch (IrcException e)
+		{}
+	}
+
+	//* Connect the initialised bot to IRC, and do hard-coded post-connection stuff. */
+	void doConnect() throws IOException, IrcException
+	{
 		// Connect to the IRC server.
 		try
 		{
 			connect(conf.getSettingFallback("server","irc.uwcs.co.uk"));
 		}
-		catch (Exception e)
+		catch (IOException e)
 		{
 			e.printStackTrace();
 			System.out.println("Unexpected error during connection, exiting.");
@@ -258,6 +273,28 @@ public class Choob extends PircBot
 
 	public void onSyntheticMessage(IRCEvent mes) {
 		spinThread( mes );
+	}
+
+	protected void onDisconnect()
+	{
+		System.out.println ("Connection lost!");
+		for (;;)
+		{
+			System.out.println ("Waiting...");
+			try
+			{
+				Thread.sleep(30000);
+			} catch (InterruptedException e) { }
+
+			System.out.println ("Reconnecting...");
+
+			try
+			{
+				doConnect();
+			}
+			catch (IOException e) {}
+			catch (IrcException e) {}
+		}
 	}
 
 	/*

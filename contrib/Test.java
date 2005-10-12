@@ -18,6 +18,19 @@ public class Test
 			irc.sendContextReply(con, "You don't have " + priv + "!" );
 	}
 
+	public void commandJoin( Message con, Modules mods, IRCInterface irc ) throws ChoobException
+	{
+		irc.join(mods.util.getParamString(con));
+		irc.sendContextReply(con, "Okay!");
+	}
+
+	public void commandPart( Message con, Modules mods, IRCInterface irc ) throws ChoobException
+	{
+		irc.part(mods.util.getParamString(con));
+		irc.sendContextReply(con, "Okay!");
+	}
+
+
 	public void commandPirate( Message con, Modules mods, IRCInterface irc )
 	{
 		irc.sendContextReply(con, "Yarr!");

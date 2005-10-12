@@ -188,4 +188,18 @@ public class IRCInterface {
 
 		bot.sendAction(target, message);
 	}
+
+	public void join(String channel) throws ChoobException
+	{
+		AccessController.checkPermission(new ChoobPermission("state.join." + channel));
+		bot.joinChannel(channel);
+	}
+
+	public void part(String channel) throws ChoobException
+	{
+		AccessController.checkPermission(new ChoobPermission("state.part." + channel));
+		bot.partChannel(channel);
+	}
+
+
 }
