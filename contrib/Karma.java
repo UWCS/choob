@@ -27,7 +27,7 @@ public class KarmaReasonObject
 public class Karma
 {
 	// Java-- A better regex would be: (")?((?(1)(?:[ \\./a-zA-Z0-9_-]{2,})|(?:[\\./a-zA-Z0-9_-]{2,})))(?(1)")((?:\\+\\+)|(?:\\-\\-))
-	public String filterKarmaRegex = ".*?(?:((?:[\\./a-zA-Z0-9_-]{3,})|(?:^[\\./a-zA-Z0-9_-]+))((?:\\+\\+)|(?:\\-\\-)))(?:(?:[^+-])|$).*?";
+	public String filterKarmaRegex = "\\b(?:((?:[\\./a-zA-Z0-9_-]{3,})|(?:^[\\./a-zA-Z0-9_-]+))((?:\\+\\+)|(?:\\-\\-)))\\B";
 
 	public void commandReason( Message con, Modules mods, IRCInterface irc )
 	{
@@ -142,7 +142,7 @@ public class Karma
 		for (int i=0; i<kos.size(); i++)
 		{
 
-			t+=kos.get(i).string + ( kos.get(i).dup ? "++" : "--") + " (now " + kos.get(i).value + ")";
+			t+=kos.get(i).string + ( kos.get(i).dup ? " up" : " down") + " (now " + kos.get(i).value + ")";
 			if (i!=kos.size()-1)
 			{
 				if (i==kos.size()-2)
