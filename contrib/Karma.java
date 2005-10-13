@@ -27,7 +27,15 @@ public class KarmaReasonObject
 public class Karma
 {
 	// Java-- A better regex would be: (")?((?(1)(?:[ \\./a-zA-Z0-9_-]{2,})|(?:[\\./a-zA-Z0-9_-]{2,})))(?(1)")((?:\\+\\+)|(?:\\-\\-))
-	public String filterKarmaRegex = "\\b(?:([\\./a-zA-Z0-9_-]{3,}|^[\\./a-zA-Z0-9_-]+)(\\+\\+|\\-\\-))\\B";
+	public String filterKarmaRegex = "(?x:\\b(?:"
+		+ "("
+			+ "[\\./a-zA-Z0-9_-]{3,}" // 3 chars anywhere
+		+ "|"
+			+ "^[\\./a-zA-Z0-9_-]+" // Or anything at the start
+		+ ")"
+
+		+ "( \\+\\+ | \\-\\- )" // The actual karma change
+		+ ")\\B)";
 
 	public void commandReason( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
 	{
@@ -61,7 +69,12 @@ public class Karma
 		ArrayList<KarmaObject> karmaObjs = new ArrayList();
 		HashSet used = new HashSet();
 
-		Matcher reasonMatch = Pattern.compile("^([\\./a-zA-Z0-9_-]+)(\\+\\+|\\-\\-)\\s+(?:because) \\(?(.+?)\\)?$")
+		Matcher reasonMatch = Pattern.compile("(?x:^"
+				+ "([\\./a-zA-Z0-9_-]+)" // The karma string.
+				+ "(\\+\\+|\\-\\-)" // Up or down.
+				+ "\\s+(?:because)?" // Optional because.
+				+ "\\(? (.+?) \\)?" // The reason, optionally in brackets.
+				+ "$)")
 			.matcher(mes.getMessage());
 
 		if (reasonMatch.matches())
