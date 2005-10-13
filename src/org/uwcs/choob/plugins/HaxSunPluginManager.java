@@ -598,7 +598,11 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		StringBuffer buf = new StringBuffer(APIName + "(");
 		for(int i=0; i<args.length; i++)
 		{
-			buf.append(args[i].getClass().getSimpleName());
+			if (args[i] != null)
+				buf.append(args[i].getClass().getSimpleName());
+			else
+				buf.append("null");
+
 			if (i < args.length - 1)
 				buf.append(",");
 		}

@@ -111,7 +111,7 @@ public class StupidServ extends Thread
 
 					try
 					{
-						mods.plugin.callGeneric(mo.group(1), "web", mo.group(2), mods, irc, out, (mo.groupCount() == 3 ? mo.group(3) : ""), new String[] { sock.getInetAddress().getHostAddress(), sock.getInetAddress().getHostName()});
+						mods.plugin.callGeneric(mo.group(1), "web", mo.group(2), mods, irc, out, (mo.group(3) != null ? mo.group(3) : ""), new String[] { sock.getInetAddress().getHostAddress(), sock.getInetAddress().getHostName()});
 					}
 					catch (Exception e)
 					{
@@ -197,9 +197,9 @@ public class Http
 		}
 	}
 
-	public void webPants(Object[] a)
+	public void webPants(Modules mods, IRCInterface IRC, PrintWriter out, String extra, String[] info)
 	{
-		((PrintWriter)a[2]).println("Badgers!");
+		out.println("Badgers!");
 	}
 
 	protected void finalize() throws Throwable
