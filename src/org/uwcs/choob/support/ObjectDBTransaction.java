@@ -31,6 +31,8 @@ import java.security.PrivilegedExceptionAction;
  */
 public class ObjectDBTransaction
 {
+	private static final int MAXOR = 50; // Max OR statements in a lumped together objectDB query.
+
 	private Connection dbConn;
 	private Modules mods;
 
@@ -145,34 +147,135 @@ public class ObjectDBTransaction
 		}
 
 		Statement objStat = null;
-		PreparedStatement retrieveStat = null;
+		Statement retrieveStat = null;
 		try
 		{
 			final List<Object> objects = new ArrayList<Object>();
 
 			objStat = dbConn.createStatement();
+			retrieveStat = dbConn.createStatement();
 
-			ResultSet results = objStat.executeQuery( sqlQuery );
+			ResultSet allObjects = objStat.executeQuery( sqlQuery );
 
-			retrieveStat = dbConn.prepareStatement(
-					"SELECT ClassID, FieldName, FieldBigInt, FieldDouble, FieldString FROM ObjectStore LEFT JOIN ObjectStoreData ON ObjectStore.ObjectID = ObjectStoreData.ObjectID WHERE ClassName = ? AND ClassID = ?;");
-			final PreparedStatement retrieveStatement = retrieveStat;
+			String baseQuery = "SELECT ClassID, FieldName, FieldBigInt, FieldDouble, FieldString FROM ObjectStore LEFT JOIN ObjectStoreData ON ObjectStore.ObjectID = ObjectStoreData.ObjectID WHERE ClassName = '" + storedClass.getName() + "' AND (";
 
-			final Map<String,Field> fieldCache = new HashMap<String,Field>();
+			Map<String,Field> fieldCache = new HashMap<String,Field>();
 
-			if( results.first() )
+			Field idField;
+			try
 			{
-				final int id = results.getInt(1);
-				do
+				idField = storedClass.getField( "id" );
+			}
+			catch( NoSuchFieldException e )
+			{
+				throw new ChoobException("Object of type " + storedClass + " has no id field!");
+			}
+
+			if( allObjects.first() )
+			{
+				do // Loop over all objects
 				{
-					AccessController.doPrivileged( new PrivilegedExceptionAction() {
-						public Object run() throws ChoobException {
-							objects.add( retrieveById( storedClass, id, retrieveStatement, fieldCache ) );
-							return null;
+					// Eat this and maybe some more elements...
+					int[] ids = new int[MAXOR];
+					int count = 0;
+					do
+					{
+						ids[count] = allObjects.getInt(1);
+						count++;
+					} while (allObjects.next() && count < MAXOR);
+
+					// Build a query to get values for them...
+					StringBuffer query = new StringBuffer(baseQuery);
+					for(int i=0; i<count; i++)
+					{
+						query.append("ClassID = " + ids[i]);
+						if (i != count - 1)
+							query.append(" OR ");
+					}
+					query.append(");");
+
+					ResultSet result = retrieveStat.executeQuery(query.toString());
+
+					if (!result.first())
+					{
+						// Ooops. To quote Sadiq: Um, yeah...
+						throw new ChoobException ("Inconsistent database state: One or more objects of type " + storedClass.getName() + " in ObjectStore did not exist in ObjectStoreData.");
+					}
+					do // Loop over this block's results
+					{
+						try
+						{
+							Object tempObject = storedClass.newInstance();
+
+							int id = result.getInt(1);
+
+							idField.setInt( tempObject, id );
+
+							do // Loop over this object's fields
+							{
+								try
+								{
+									// Break if we're in the next object
+									if (result.getInt(1) != id)
+										break;
+
+									String name = result.getString(2);
+									Field tempField = fieldCache.get(name);
+									if (tempField == null)
+									{
+										tempField = storedClass.getField( name );
+										fieldCache.put( name, tempField );
+									}
+
+									Type theType = tempField.getType();
+
+									if( theType == String.class )
+									{
+										tempField.set( tempObject, result.getString(5) );
+									}
+									else if( theType == Integer.TYPE )
+									{
+										tempField.setInt( tempObject, (int)result.getLong(3) );
+									}
+									else if( theType == Long.TYPE )
+									{
+										tempField.setLong( tempObject, result.getLong(3) );
+									}
+									else if( theType == Boolean.TYPE )
+									{
+										tempField.setBoolean( tempObject, result.getLong(3) == 1 );
+									}
+									else if( theType == Float.TYPE )
+									{
+										tempField.setFloat( tempObject, (float)result.getDouble(4) );
+									}
+									else if( theType == Double.TYPE )
+									{
+										tempField.setDouble( tempObject, result.getDouble(4) );
+									}
+								}
+								catch( NoSuchFieldException e )
+								{
+									// Ignore this, as per spec.
+								}
+							}
+							while( result.next() ); // Looping over fields
+
+							// tempObject has been build.
+							objects.add(tempObject);
 						}
-					});
-				}
-				while(results.next());
+						catch (InstantiationException e)
+						{
+							System.err.println("Error instantiating object of type " + storedClass + ": " + e);
+							throw new ChoobException("The object could not be instantiated");
+						}
+						catch (IllegalAccessException e)
+						{
+							System.err.println("Access error instantiating object of type " + storedClass + ": " + e);
+							throw new ChoobException("The object could not be instantiated");
+						}
+					} while ( result.next() ); // Looping over objects
+				} while ( allObjects.next() ); // Looping over blocks of IDs
 			}
 
 			return objects;
@@ -180,12 +283,6 @@ public class ObjectDBTransaction
 		catch (SQLException e)
 		{
 			throw sqlErr(e);
-		}
-		catch (PrivilegedActionException e)
-		{
-			System.out.println("retrieveById() got a PrivilegedActionException. This shouldn't happen!");
-			e.printStackTrace();
-			throw (ChoobException)e.getCause();
 		}
 		finally
 		{
@@ -247,104 +344,6 @@ public class ObjectDBTransaction
 		finally
 		{
 			cleanUp(objStat);
-		}
-	}
-
-	private final Object retrieveById(Class storedClass, int id, PreparedStatement retrieveObject, Map<String,Field> fieldCache) throws ChoobException
-	{
-		try
-		{
-			Field idField = fieldCache.get( "id" );
-			if (idField == null)
-			{
-				idField = storedClass.getField( "id" );
-				fieldCache.put( "id", idField );
-			}
-
-			retrieveObject.setString(1, storedClass.getName() );
-			retrieveObject.setInt(2, id);
-
-			ResultSet result = retrieveObject.executeQuery();
-
-			if( result.first() )
-			{
-				try
-				{
-					Object tempObject = storedClass.newInstance();
-
-					idField.setInt( tempObject, result.getInt(1) );
-
-					do
-					{
-						try
-						{
-							String name = result.getString(2);
-							Field tempField = fieldCache.get(name);
-							if (tempField == null)
-							{
-								tempField = storedClass.getField( name );
-								fieldCache.put( name, tempField );
-							}
-
-							Type theType = tempField.getType();
-
-							if( theType == String.class )
-							{
-								tempField.set( tempObject, result.getString(5) );
-							}
-							else if( theType == Integer.TYPE )
-							{
-								tempField.setInt( tempObject, (int)result.getLong(3) );
-							}
-							else if( theType == Long.TYPE )
-							{
-								tempField.setLong( tempObject, result.getLong(3) );
-							}
-							else if( theType == Boolean.TYPE )
-							{
-								tempField.setBoolean( tempObject, result.getLong(3) == 1 );
-							}
-							else if( theType == Float.TYPE )
-							{
-								tempField.setFloat( tempObject, (float)result.getDouble(4) );
-							}
-							else if( theType == Double.TYPE )
-							{
-								tempField.setDouble( tempObject, result.getDouble(4) );
-							}
-						}
-						catch( NoSuchFieldException e )
-						{
-							// Ignore this, as per spec.
-						}
-					}
-					while( result.next() );
-
-					return tempObject;
-				}
-				catch (InstantiationException e)
-				{
-					System.err.println("Error instantiating object of type " + storedClass + ": " + e);
-					throw new ChoobException("The object could not be instantiated");
-				}
-				catch (IllegalAccessException e)
-				{
-					System.err.println("Access error instantiating object of type " + storedClass + ": " + e);
-					throw new ChoobException("The object could not be instantiated");
-				}
-			}
-			else
-				// This should never happen...
-				throw new ChoobException("An object found in the database could not later be retrieved");
-		}
-		catch( NoSuchFieldException e )
-		{
-			throw new ChoobException("Object of type " + storedClass + " has no id field!");
-			// Ignore this, as per spec.
-		}
-		catch (SQLException e)
-		{
-			throw sqlErr(e);
 		}
 	}
 
