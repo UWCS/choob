@@ -467,6 +467,10 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 	public Object doGeneric(String pluginName, String prefix, String genName, final Object... params) throws ChoobException
 	{
+		final Object plugin = allPlugins.getPluginObj(pluginName);
+		if (plugin == null)
+			throw new NoSuchPluginException("Couldn't find a plugin named " + pluginName);
+
 		String fullName = pluginName + "." + prefix + ":" + genName;
 		String sig = getAPISignature(fullName, params);
 		Member meth = allPlugins.getGeneric(sig);
@@ -483,7 +487,6 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			else
 				throw new NoSuchPluginException("Couldn't find a method matching " + sig);
 		}
-		final Object plugin = allPlugins.getPluginObj(meth);
 		final Member meth2 = meth;
 		try
 		{
