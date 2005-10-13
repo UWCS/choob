@@ -103,19 +103,19 @@ public class StupidServ extends Thread
 				}
 				else if (mo.matches())
 				{
+					/*
 					out.println("HTTP/1.0 200 OK");
 					out.println("Content-Type: text/plain");
 					out.println();
-
+					*/
 
 					try
 					{
-						mods.plugin.callAPI(mo.group(1), mo.group(2), new Object[] { mods, irc, out, (mo.groupCount() == 3 ? mo.group(3) : ""), new String[] { sock.getInetAddress().getHostAddress(), sock.getInetAddress().getHostName() }});
-						out.println("Okay!");
+						mods.plugin.callGeneric(mo.group(1), "web", mo.group(2), mods, irc, out, (mo.groupCount() == 3 ? mo.group(3) : ""), new String[] { sock.getInetAddress().getHostAddress(), sock.getInetAddress().getHostName()});
 					}
 					catch (Exception e)
 					{
-						out.println("No luck :(");
+						out.println("Error: " + e);
 						e.printStackTrace();
 					}
 				}
@@ -195,6 +195,11 @@ public class Http
 			out.println("ERROR!");
 			e.printStackTrace();
 		}
+	}
+
+	public void webPants(Object[] a)
+	{
+		((PrintWriter)a[2]).println("Badgers!");
 	}
 
 	protected void finalize() throws Throwable
