@@ -800,7 +800,7 @@ final class ChoobPluginMap
 				Pattern pattern;
 				try
 				{
-					pattern = Pattern.compile(filter);
+					pattern = Pattern.compile(filter, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 				}
 				catch (PatternSyntaxException e)
 				{
