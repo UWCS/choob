@@ -120,7 +120,7 @@ public class ObjectDBTransaction
 		return new ChoobException("An SQL exception occurred while processing this operation.");
 	}
 
-	public final List<?> retrieve(Class storedClass, String clause) throws ChoobException
+	public final List<?> retrieve(final Class storedClass, String clause) throws ChoobException
 	{
 		checkPermission(storedClass);
 		String sqlQuery;
@@ -145,19 +145,32 @@ public class ObjectDBTransaction
 		}
 
 		Statement objStat = null;
+		PreparedStatement retrieveStat = null;
 		try
 		{
-			ArrayList <Object>objects = new ArrayList<Object>();
+			final List<Object> objects = new ArrayList<Object>();
 
 			objStat = dbConn.createStatement();
 
 			ResultSet results = objStat.executeQuery( sqlQuery );
 
+			retrieveStat = dbConn.prepareStatement(
+					"SELECT ClassID, FieldName, FieldBigInt, FieldDouble, FieldString FROM ObjectStore LEFT JOIN ObjectStoreData ON ObjectStore.ObjectID = ObjectStoreData.ObjectID WHERE ClassName = ? AND ClassID = ?;");
+			final PreparedStatement retrieveStatement = retrieveStat;
+
+			final Map<String,Field> fieldCache = new HashMap<String,Field>();
+
 			if( results.first() )
 			{
+				final int id = results.getInt(1);
 				do
 				{
-					objects.add( retrieveById( storedClass, results.getInt("ClassID") ) );
+					AccessController.doPrivileged( new PrivilegedExceptionAction() {
+						public Object run() throws ChoobException {
+							objects.add( retrieveById( storedClass, id, retrieveStatement, fieldCache ) );
+							return null;
+						}
+					});
 				}
 				while(results.next());
 			}
@@ -168,8 +181,15 @@ public class ObjectDBTransaction
 		{
 			throw sqlErr(e);
 		}
+		catch (PrivilegedActionException e)
+		{
+			System.out.println("retrieveById() got a PrivilegedActionException. This shouldn't happen!");
+			e.printStackTrace();
+			throw (ChoobException)e.getCause();
+		}
 		finally
 		{
+			cleanUp(retrieveStat);
 			cleanUp(objStat);
 		}
 	}
@@ -230,36 +250,77 @@ public class ObjectDBTransaction
 		}
 	}
 
-	private final Object retrieveById(Class storedClass, int id) throws ChoobException
+	private final Object retrieveById(Class storedClass, int id, PreparedStatement retrieveObject, Map<String,Field> fieldCache) throws ChoobException
 	{
-		PreparedStatement retrieveObject = null;
 		try
 		{
-			retrieveObject = dbConn.prepareStatement("SELECT * FROM ObjectStore LEFT JOIN ObjectStoreData ON ObjectStore.ObjectID = ObjectStoreData.ObjectID WHERE ClassName = ? AND ClassID = ?;");
+			Field idField = fieldCache.get( "id" );
+			if (idField == null)
+			{
+				idField = storedClass.getField( "id" );
+				fieldCache.put( "id", idField );
+			}
 
 			retrieveObject.setString(1, storedClass.getName() );
 			retrieveObject.setInt(2, id);
 
-			final ResultSet objSet = retrieveObject.executeQuery();
+			ResultSet result = retrieveObject.executeQuery();
 
-			if( objSet.first() )
+			if( result.first() )
 			{
 				try
 				{
-					final Object tempObject = storedClass.newInstance();
+					Object tempObject = storedClass.newInstance();
 
-					AccessController.doPrivileged( new PrivilegedExceptionAction() {
-						public Object run() throws ChoobException {
-							populateObject( tempObject, objSet );
-							return null;
+					idField.setInt( tempObject, result.getInt(1) );
+
+					do
+					{
+						try
+						{
+							String name = result.getString(2);
+							Field tempField = fieldCache.get(name);
+							if (tempField == null)
+							{
+								tempField = storedClass.getField( name );
+								fieldCache.put( name, tempField );
+							}
+
+							Type theType = tempField.getType();
+
+							if( theType == String.class )
+							{
+								tempField.set( tempObject, result.getString(5) );
+							}
+							else if( theType == Integer.TYPE )
+							{
+								tempField.setInt( tempObject, (int)result.getLong(3) );
+							}
+							else if( theType == Long.TYPE )
+							{
+								tempField.setLong( tempObject, result.getLong(3) );
+							}
+							else if( theType == Boolean.TYPE )
+							{
+								tempField.setBoolean( tempObject, result.getLong(3) == 1 );
+							}
+							else if( theType == Float.TYPE )
+							{
+								tempField.setFloat( tempObject, (float)result.getDouble(4) );
+							}
+							else if( theType == Double.TYPE )
+							{
+								tempField.setDouble( tempObject, result.getDouble(4) );
+							}
 						}
-					});
+						catch( NoSuchFieldException e )
+						{
+							// Ignore this, as per spec.
+						}
+					}
+					while( result.next() );
 
 					return tempObject;
-				}
-				catch (PrivilegedActionException e)
-				{
-					throw (ChoobException)e.getCause();
 				}
 				catch (InstantiationException e)
 				{
@@ -276,13 +337,14 @@ public class ObjectDBTransaction
 				// This should never happen...
 				throw new ChoobException("An object found in the database could not later be retrieved");
 		}
+		catch( NoSuchFieldException e )
+		{
+			throw new ChoobException("Object of type " + storedClass + " has no id field!");
+			// Ignore this, as per spec.
+		}
 		catch (SQLException e)
 		{
 			throw sqlErr(e);
-		}
-		finally
-		{
-			cleanUp(retrieveObject);
 		}
 	}
 
@@ -290,39 +352,39 @@ public class ObjectDBTransaction
 	{
 		try
 		{
-			setId( tempObject, result.getInt("ClassID") );
+			setId( tempObject, result.getInt(1) );
 
 			do
 			{
 				try
 				{
-					Field tempField = tempObject.getClass().getField( result.getString("FieldName") );
+					Field tempField = tempObject.getClass().getField( result.getString(2) );
 
 					Type theType = tempField.getType();
 
 					if( theType == String.class )
 					{
-						tempField.set( tempObject, result.getString("FieldString") );
+						tempField.set( tempObject, result.getString(5) );
 					}
 					else if( theType == Integer.TYPE )
 					{
-						tempField.setInt( tempObject, (int)result.getLong("FieldBigInt") );
+						tempField.setInt( tempObject, (int)result.getLong(3) );
 					}
 					else if( theType == Long.TYPE )
 					{
-						tempField.setLong( tempObject, result.getLong("FieldBigInt") );
+						tempField.setLong( tempObject, result.getLong(3) );
 					}
 					else if( theType == Boolean.TYPE )
 					{
-						tempField.setBoolean( tempObject, result.getLong("FieldBigInt") == 1 );
+						tempField.setBoolean( tempObject, result.getLong(3) == 1 );
 					}
 					else if( theType == Float.TYPE )
 					{
-						tempField.setFloat( tempObject, (float)result.getDouble("FieldDouble") );
+						tempField.setFloat( tempObject, (float)result.getDouble(4) );
 					}
 					else if( theType == Double.TYPE )
 					{
-						tempField.setDouble( tempObject, result.getDouble("FieldDouble") );
+						tempField.setDouble( tempObject, result.getDouble(4) );
 					}
 				}
 				catch( NoSuchFieldException e )
