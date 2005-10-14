@@ -12,6 +12,7 @@ public class AliasObject
 	public int id;
 	public String name;
 	public String converted;
+	public int locked=0;
 }
 
 public class Alias
@@ -46,6 +47,12 @@ public class Alias
 		{
 			AliasObject aO = existing.get(0);
 
+			if (aO.locked!=0)
+			{
+				irc.sendContextReply(mes, "You cannot re-alias " + alias + ", it is locked.");
+				return;
+			}
+
 			propend=", was " + aO.converted + ".";
 
 			aO.converted=conv;
@@ -60,14 +67,21 @@ public class Alias
 
 	public void commandList( Message mes ) throws ChoobException
 	{
-		List<AliasObject> existing = mods.odb.retrieve( AliasObject.class, "WHERE 1" );
+		String clause="locked=0";
+		String parm=mods.util.getParamString(mes).toLowerCase();
+		if (parm.equals("locked"))
+			clause="locked>0";
+		else if (parm.equals("all"))
+			clause="1";
+
+		List<AliasObject> existing = mods.odb.retrieve( AliasObject.class, "WHERE " + clause );
 		String list="Alias list: ";
 		if (existing.size()==0)
 			irc.sendContextReply(mes, "No aliases.");
 		else
 		{
 			for (int i=0; i<existing.size(); i++)
-				list+=existing.get(i).name + ": " + existing.get(i).converted + ", ";
+				list+=existing.get(i).name + ", ";
 			irc.sendContextReply(mes, list.substring(0,list.length()-2) + ".");
 		}
 	}
@@ -75,6 +89,13 @@ public class Alias
 	public void commandShow( Message mes ) throws ChoobException
 	{
 		List<String>s=mods.util.getParams(mes, 2);
+
+		if (s.size()<2)
+		{
+			irc.sendContextReply(mes, "Please specify the name of the alias to show.");
+			return;
+		}
+
 		String alias = s.get(1).replaceAll(validator,"").toLowerCase();
 
 		List<AliasObject> existing = mods.odb.retrieve( AliasObject.class, "WHERE name='" + alias + "'" );
@@ -88,9 +109,67 @@ public class Alias
 		}
 	}
 
-	public void commandDelete( Message mes ) throws ChoobException
+	public void commandLock( Message mes ) throws ChoobException
+	{
+
+		if (!mods.security.hasPerm(new ChoobPermission("plugins.alias.lock.lock"), mes.getNick()))
+		{
+			irc.sendContextReply(mes, "You lack authority!");
+			return;
+		}
+
+		List<String>s=mods.util.getParams(mes, 2);
+
+		if (s.size()>1 && setLock(s.get(1), 1))
+			irc.sendContextReply(mes, "Okay!");
+		else
+			irc.sendContextReply(mes, "Please specify what you want to lock."); // <-- Not really an ideal reply.
+	}
+
+	public void commandUnLock( Message mes ) throws ChoobException
+	{
+
+		if (!mods.security.hasPerm(new ChoobPermission("plugins.alias.lock.unlock"), mes.getNick()))
+		{
+			irc.sendContextReply(mes, "You lack authority!");
+			return;
+		}
+
+		List<String>s=mods.util.getParams(mes, 2);
+
+		if (s.size()>1 && setLock(s.get(1), 0))
+			irc.sendContextReply(mes, "Okay!");
+		else
+			irc.sendContextReply(mes, "Please specify what you want to unlock.");
+	}
+
+	private boolean setLock( String name, int locked ) throws ChoobException
+	{
+		String alias = name.replaceAll(validator,"").toLowerCase();
+
+		List<AliasObject> existing = mods.odb.retrieve( AliasObject.class, "WHERE name='" + alias + "'" );
+
+		if (existing.size()==0)
+			return false;
+		else
+		{
+			AliasObject aO=existing.get(0);
+			aO.locked=locked;
+			mods.odb.update(aO);
+			return true;
+		}
+	}
+
+	public void commandRemove( Message mes ) throws ChoobException
 	{
 		List<String>s=mods.util.getParams(mes, 2);
+
+		if (s.size()<2)
+		{
+			irc.sendContextReply(mes, "Please specify the name of the alias to remove.");
+			return;
+		}
+
 		String alias = s.get(1).replaceAll(validator,"").toLowerCase();
 
 		List<AliasObject> existing = mods.odb.retrieve( AliasObject.class, "WHERE name='" + alias + "'" );
@@ -100,10 +179,17 @@ public class Alias
 		else
 		{
 			AliasObject aO=existing.get(0);
+			if (aO.locked!=0)
+			{
+				irc.sendContextReply(mes, "This alias is locked, you cannot remove it.");
+				return;
+			}
+
 			mods.odb.delete(aO);
 			irc.sendContextReply(mes, "Deleted '" + aO.name + "', was aliased to '" + aO.converted + "'.");
 		}
 	}
+
 
 	public void onPrivateMessage( Message mes ) throws ChoobException
 	{

@@ -5,6 +5,8 @@ import org.uwcs.choob.support.events.*;
 import java.sql.*;
 import java.util.*;
 import java.util.regex.*;
+import java.io.*;
+
 
 public class KarmaObject
 {
@@ -94,6 +96,12 @@ public class Karma
 		while (karmaMatch.find())
 		{
 			String name = karmaMatch.group(1);
+
+			if (name.indexOf("--")!=-1)
+			{
+				irc.sendContextReply(mes, "Tard.");
+				return;
+			}
 
 			// Have we already done this?
 			if (used.contains(name.toLowerCase()))
@@ -359,5 +367,20 @@ public class Karma
 	{
 		irc.sendContextReply(mes, "No chance, matey.");
 	}
+
+	public void webList(Modules mods, IRCInterface irc, PrintWriter out, String params, String[] user) throws ChoobException
+	{
+		out.println("HTTP/1.0 200 OK");
+		out.println("Content-Type: text/html");
+		out.println();
+
+		List<KarmaObject> res = retrieveKarmaObjects("WHERE 1 ORDER BY value", mods);
+
+
+		out.println(res.size());
+
+	}
+
+
 }
 

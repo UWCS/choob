@@ -167,6 +167,7 @@ public class Http
 					out.println("Error: " + e);
 					e.printStackTrace();
 				}
+				out.println("Badgers.");
 			}
 			else
 			{
@@ -229,6 +230,15 @@ public class Http
 
 	public void commandClose(Message mes)
 	{
+		if (!mods.security.hasPerm(new ChoobPermission("plugins.http.close"), mes.getNick()))
+		{
+			irc.sendContextReply(mes, "You lack authority!");
+			return;
+		}
+
+		if (listener==null)
+			return;
+
 		try
 		{
 			listener.close();

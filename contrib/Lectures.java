@@ -10,7 +10,6 @@ import java.text.DateFormatSymbols;
 
 // NB: This will not work unless you've done at least some of the stuff in http://faux.uwcs.co.uk/Lectures.choob.rar.
 
-
 public class Lectures
 {
 	SimpleDateFormat df=new SimpleDateFormat("h:mm a 'on' EEEE");

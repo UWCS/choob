@@ -122,6 +122,11 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			hso.string=baos.toString();
 			hso.hash=((Integer)((hso.string.hashCode()%128)+256)).toString();
 
+			List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = '" + hso.hash + "'");
+			Iterator li=res.iterator();
+			while (li.hasNext())									// Slight overkill.
+				mods.odb.delete(li.next());
+
 			mods.odb.save(hso);
 
 			try
