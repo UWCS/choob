@@ -558,7 +558,7 @@ public class Quote
 			}
 
 			final QuoteObject theQuote = quote;
-			final List quoteLines = mods.odb.retrieveInt( QuoteLine.class, "WHERE quoteID = " + quote.id );
+			final List<QuoteLine> quoteLines = mods.odb.retrieve( QuoteLine.class, "WHERE quoteID = " + quote.id );
 			try
 			{
 				mods.odb.runTransaction( new ObjectDBTransaction() {
@@ -567,9 +567,9 @@ public class Quote
 					delete(theQuote);
 
 					// Now have a quote ID!
-					for(Object line: quoteLines)
+					for(QuoteLine line: quoteLines)
 					{
-						delete((QuoteLine)line);
+						delete(line);
 					}
 				}});
 			}
