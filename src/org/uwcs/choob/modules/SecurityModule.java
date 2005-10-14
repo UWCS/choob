@@ -29,6 +29,7 @@ public class SecurityModule
 	Map<Integer,PermissionCollection> nodeMap;
 	Map<Integer,List<Integer>> nodeTree;
 	Modules mods;
+	int anonID;
 
 	/**
 	 * Creates a new instance of SecurityModule
@@ -46,6 +47,7 @@ public class SecurityModule
 		this.nodeMap = new HashMap<Integer,PermissionCollection>();
 		this.nodeTree = new HashMap<Integer,List<Integer>>();
 		this.nodeDbLock = new Object();
+		this.anonID = getNodeIDFromNodeName("anonymous", 3);
 	}
 
 	/* =====================
@@ -293,12 +295,17 @@ public class SecurityModule
 			try
 			{
 				getAllNodesRecursive(dbConn, list, nodeID, 0);
+				if (anonID != -1)
+				{
+					list.add(anonID);
+					getAllNodesRecursive(dbConn, list, anonID, 0);
+				}
 			}
 			finally
 			{
 				dbBroker.freeConnection(dbConn);
 			}
-			return list.listIterator();
+			return list.iterator();
 		}
 	}
 
