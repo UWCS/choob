@@ -138,7 +138,7 @@ public class Help
 				}
 			}
 		}
-		catch (NoSuchPluginException e)
+		catch (ChoobNoSuchCallException e)
 		{
 			System.out.println(e.toString());
 			irc.sendContextReply( mes, "Topic " + topic + " in plugin " + plugin + " didn't exist!" );
@@ -247,7 +247,7 @@ public class Help
 		{
 			return mods.plugin.callGeneric(plugin, "help", topic, param);
 		}
-		catch (NoSuchPluginException e)
+		catch (ChoobNoSuchCallException e)
 		{
 			return mods.plugin.callGeneric(plugin, "help", topic);
 		}

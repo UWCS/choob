@@ -23,7 +23,7 @@ public class Http
 		{
 			listener = (ServerSocket)mods.plugin.callAPI("Http", "GetSocket");
 		}
-		catch (NoSuchPluginException e)
+		catch (ChoobNoSuchPluginException e)
 		{
 //			System.out.println("No such plugin...");
 //			e.printStackTrace();

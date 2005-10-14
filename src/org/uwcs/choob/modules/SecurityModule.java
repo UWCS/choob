@@ -567,6 +567,8 @@ public class SecurityModule
 
 		if (!hasPerm(permission, nickName))
 			return false;
+
+		return true;
 	}
 
 	/**
