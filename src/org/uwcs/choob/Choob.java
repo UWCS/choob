@@ -112,26 +112,24 @@ public class Choob extends PircBot
 			doConnect();
 		}
 		catch (IOException e)
-		{}
+		{
+			e.printStackTrace();
+			System.out.println("Connection Error, exiting: " + e);
+			System.exit(2);
+		}
 		catch (IrcException e)
-		{}
+		{
+			e.printStackTrace();
+			System.out.println("Unhandled IRC Error on connect, exitin: ." + e);
+			System.exit(3);
+		}
 	}
 
 	//* Connect the initialised bot to IRC, and do hard-coded post-connection stuff. */
 	void doConnect() throws IOException, IrcException
 	{
 		// Connect to the IRC server.
-		try
-		{
-			connect(conf.getSettingFallback("server","irc.uwcs.co.uk"));
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-			System.out.println("Unexpected error during connection, exiting.");
-			System.exit(3);
-			return;
-		}
+		connect(conf.getSettingFallback("server","irc.uwcs.co.uk"));
 
 		// Set mode +B (is a bot)
 		sendRawLineViaQueue("MODE " + getName() + " +B");
@@ -293,8 +291,16 @@ public class Choob extends PircBot
 			{
 				doConnect();
 			}
-			catch (IOException e) {}
-			catch (IrcException e) {}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+				System.out.println("Connection Error, exiting: " + e);
+			}
+			catch (IrcException e)
+			{
+				e.printStackTrace();
+				System.out.println("Unhandled IRC Error on connect, exitin: ." + e);
+			}
 		}
 	}
 
