@@ -117,7 +117,16 @@ public class NickServ
 
 	public boolean apiCheck( String nick )
 	{
-		return apiStatus( nick ) >= 3; // Ie, authed by password
+		return apiCheck( nick, false );
+	}
+
+	public boolean apiCheck( String nick, boolean assumption )
+	{
+		int stat = apiStatus( nick );
+		if (stat == -1)
+			return assumption;
+		else
+			return stat >= 3;
 	}
 
 	private ResultObj getNewNickCheck( final String nick )

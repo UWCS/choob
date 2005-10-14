@@ -158,7 +158,7 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 		}
 		if (man != null)
 			return man.doAPI(pluginName, APIName, params);
-		return null;
+		throw new ChoobNoSuchPluginException("Plugin " + pluginName + " doesn't exist!");
 	}
 
 	/**

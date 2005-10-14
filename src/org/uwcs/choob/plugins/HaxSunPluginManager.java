@@ -415,8 +415,10 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 					// Let the user know what happened.
 					if (param instanceof Message)
 					{
+						Throwable cause = e.getCause();
+
 						irc.sendContextReply((Message)param,
-								"An exception occurred while running this command: " + e.getCause());
+							mods.plugin.exceptionReply(cause));
 					}
 					System.err.println("Exception invoking method " + meth);
 					e.getCause().printStackTrace();
@@ -474,7 +476,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	{
 		final Object plugin = allPlugins.getPluginObj(pluginName);
 		if (plugin == null)
-			throw new NoSuchPluginException("Couldn't find a plugin named " + pluginName);
+			throw new ChoobNoSuchPluginException("Couldn't find a plugin named " + pluginName);
 
 		String fullName = pluginName + "." + prefix + ":" + genName;
 		String sig = getAPISignature(fullName, params);
@@ -490,7 +492,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			if (meth != null)
 				allPlugins.setGeneric(sig, meth);
 			else
-				throw new NoSuchPluginException("Couldn't find a method matching " + sig);
+				throw new ChoobNoSuchCallException("Couldn't find a method matching " + sig);
 		}
 		final Member meth2 = meth;
 		try

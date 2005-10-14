@@ -28,12 +28,13 @@ public class SecurityModule
 	DbConnectionBroker dbBroker;
 	Map<Integer,PermissionCollection> nodeMap;
 	Map<Integer,List<Integer>> nodeTree;
+	Modules mods;
 
 	/**
 	 * Creates a new instance of SecurityModule
 	 * @param dbBroker Database connection pool/broker.
 	 */
-	public SecurityModule(DbConnectionBroker dbBroker)
+	public SecurityModule(DbConnectionBroker dbBroker, Modules mods)
 	{
 		// Make sure these classes is preloaded!
 		// This avoids circular security checks. Oh, the horror!
@@ -41,6 +42,7 @@ public class SecurityModule
 		//throwAway = DiscreteFilesClassLoader.class;
 
 		this.dbBroker = dbBroker;
+		this.mods = mods;
 		this.nodeMap = new HashMap<Integer,PermissionCollection>();
 		this.nodeTree = new HashMap<Integer,List<Integer>>();
 		this.nodeDbLock = new Object();
@@ -94,7 +96,7 @@ public class SecurityModule
 	/**
 	 * Force plugin permissions to be reloaded at some later point.
 	 */
-	public void invalidateNodePermissions(int nodeID)
+	private void invalidateNodePermissions(int nodeID)
 	{
 		synchronized(nodeMap) {
 			nodeMap.remove(nodeID);
@@ -104,7 +106,7 @@ public class SecurityModule
 	/**
 	 * Force plugin tree to be reloaded at some later point.
 	 */
-	public void invalidateNodeTree(int nodeID)
+	private void invalidateNodeTree(int nodeID)
 	{
 		synchronized(nodeMap) {
 			nodeTree.remove(nodeID);
@@ -479,8 +481,96 @@ public class SecurityModule
 	 * ================================
 	 */
 
+	public String renderPermission(Permission permission)
+	{
+		if (permission instanceof AllPermission)
+			return "ALL";
+
+		String output;
+		String className = permission.getClass().getSimpleName();
+		if (className.endsWith("Permission"))
+			output = className.substring(0, className.length() - 10);
+		else
+			output = className;
+
+		String name = permission.getName();
+		String actions = permission.getActions();
+		if (name != null)
+		{
+			output += " with name \"" + name + "\"";
+			if (actions != null)
+				output += " and actions \"" + actions + "\"";
+		}
+		else if (actions != null)
+			output += " and actions \"" + actions + "\"";
+
+		return output;
+	}
+
 	/**
-	 * Check if the given userName has permission.
+	 * Check if the given nickName has permission and is authed with NickServ (if NickServ is loaded).
+	 * @param permission The permission to check.
+	 * @param nickName The nickname to check the permission on.
+	 * @throws ChoobAuthException If the nick is not authorised.
+	 */
+	public void checkNickPerm(Permission permission, String nickName) throws ChoobAuthException
+	{
+		try
+		{
+			boolean nsCheck = (Boolean)mods.plugin.callAPI("NickServ", "Check", nickName, false);
+			if (!nsCheck)
+				throw new ChoobNSAuthException();
+		}
+		catch (ChoobNoSuchPluginException e)
+		{
+			// XXX Should this throw an exception?:
+			//if (!allowNoNS)
+			//	throw new ChoobAuthException("The NickServ plugin is not loaded! Holy mother of God save us all!");
+		}
+		catch (ChoobException e)
+		{
+			// OMFG!
+			System.err.println("Error calling NickServ check! Details:");
+			e.printStackTrace();
+		}
+
+		if (!hasPerm(permission, nickName))
+			throw new ChoobUserAuthException(permission);
+	}
+
+	/**
+	 * Check if the given nickName has permission and is authed with NickServ (if NickServ is loaded).
+	 * @param permission The permission to check.
+	 * @param nickName The nickname to check the permission on.
+	 * @throws ChoobAuthException If the nick is not authorised.
+	 */
+	public boolean hasNickPerm(Permission permission, String nickName)
+	{
+		try
+		{
+			boolean nsCheck = (Boolean)mods.plugin.callAPI("NickServ", "Check", nickName, false);
+			if (!nsCheck)
+				return false;
+		}
+		catch (ChoobNoSuchPluginException e)
+		{
+			// XXX Should this throw an exception?:
+			//if (!allowNoNS)
+			//	throw new ChoobAuthException("The NickServ plugin is not loaded! Holy mother of God save us all!");
+		}
+		catch (ChoobException e)
+		{
+			// OMFG!
+			System.err.println("Error calling NickServ check! Details:");
+			e.printStackTrace();
+		}
+
+		if (!hasPerm(permission, nickName))
+			return false;
+	}
+
+	/**
+	 * Check if the given userName has permission. Better to use checkNickPerm.
 	 * @param permission
 	 * @param userName
 	 */
@@ -497,12 +587,35 @@ public class SecurityModule
 	}
 
 	/**
+	 * Check if the previous plugin on the call stack has a permission.
+	 * @param permission Permission to query
+	 * @throws ChoobPluginAuthException if the permission has not been granted.
+	 */
+	public void checkPluginPerm(Permission permission) throws ChoobPluginAuthException
+	{
+		String plugin = getPluginName(0);
+		checkPluginPerm(permission, plugin);
+	}
+
+	/**
 	 * Check if the previous plugin on the call stack has a permission
 	 * @param permission Permission to query
 	 */
 	public boolean hasPluginPerm(Permission permission)
 	{
 		return hasPluginPerm(permission, getPluginName(0));
+	}
+
+	/**
+	 * Check if the previous plugin on the call stack has a permission.
+	 * @param permission Permission to query
+	 * @param skip Number of plugins to skip
+	 * @throws ChoobPluginAuthException if the permission has not been granted.
+	 */
+	public void checkPluginPerm(Permission permission, int skip) throws ChoobPluginAuthException
+	{
+		String plugin = getPluginName(skip);
+		checkPluginPerm(permission, plugin);
 	}
 
 	/**
@@ -521,20 +634,32 @@ public class SecurityModule
 	}
 
 	/**
+	 * Check if the previous plugin on the call stack has a permission.
+	 * @param permission Permission to query
+	 * @param plugin Plugin to query
+	 * @throws ChoobPluginAuthException if the permission has not been granted.
+	 */
+	public void checkPluginPerm(Permission permission, String plugin) throws ChoobPluginAuthException
+	{
+		if (!hasPluginPerm(permission, plugin))
+			throw new ChoobPluginAuthException(plugin, permission);
+	}
+
+	/**
 	 * Check if the passed plugin has a permission
 	 * @param permission Permission to query
-	 * @param pluginName Plugin to query
+	 * @param plugin Plugin to query
 	 */
-	public boolean hasPluginPerm(final Permission permission, final String pluginName)
+	public boolean hasPluginPerm(final Permission permission, final String plugin)
 	{
-		System.out.println("Checking permission on plugin " + pluginName + ": " + permission);
-		if (pluginName == null)
+		System.out.println("Checking permission on plugin " + plugin + ": " + permission);
+		if (plugin == null)
 			return true; // XXX should this be true?
 
 		// Should prevent circular checks...
 		return ((Boolean)AccessController.doPrivileged(new PrivilegedAction() {
 			public Object run() {
-				int nodeID = getNodeIDFromPluginName( pluginName );
+				int nodeID = getNodeIDFromPluginName( plugin );
 
 				// No such user!
 				if (nodeID == -1)

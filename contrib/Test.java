@@ -14,7 +14,7 @@ public class Test
 		List<String> params = mods.util.getParams( con );
 
 		String priv = params.get(1);
-		if ( mods.security.hasPerm( new ChoobPermission(priv), con.getNick() ) )
+		if ( mods.security.hasNickPerm( new ChoobPermission(priv), con.getNick() ) )
 			irc.sendContextReply(con, "You do indeed have " + priv + "!" );
 		else
 			irc.sendContextReply(con, "You don't have " + priv + "!" );

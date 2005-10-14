@@ -16,6 +16,7 @@ import java.net.*;
 import java.lang.reflect.*;
 import java.sql.*;
 import java.security.AccessController;
+import java.security.AccessControlException;
 
 /**
  * Module that performs functions relating to the plugin architecture of the bot.
@@ -47,9 +48,8 @@ public class PluginModule {
 
 	public ChoobPluginManager getPlugMan()
 	{
-		SecurityManager sm = System.getSecurityManager();
-		if (sm != null)
-			sm.checkPermission(new ChoobPermission("getPluginManager"));
+		// XXX Need better permission name.
+		AccessController.checkPermission(new ChoobPermission("getPluginManager"));
 
 		return dPlugMan;
 	}
@@ -105,9 +105,21 @@ public class PluginModule {
 		return dPlugMan.doGeneric(pluginName, type, name, params);
 	}
 
+	public String exceptionReply(Throwable e)
+	{
+		if (e instanceof ChoobAuthException)
+			return e.getMessage();
+		else if (e instanceof ChoobNoSuchPluginException)
+			return "You need to load the plugin " + ((ChoobNoSuchPluginException)e).getPlugin() + "!";
+		else if (e instanceof AccessControlException)
+			return "D'oh! The plugin needs permission " + ChoobAuthException.getPermissionText(((AccessControlException)e).getPermission()) + "!";
+		else
+			return "The plugin author was too lazy to trap the exception: " + e;
+	}
+
 	public ChoobTask doInterval(String plugin, Object param)
 	{
-		// XXX Security hole!?!?! (This method is PUBLIC)
+		AccessController.checkPermission(new ChoobPermission("interval"));
 		return dPlugMan.intervalTask(plugin, param);
 	}
 
@@ -123,7 +135,7 @@ public class PluginModule {
 
 	public void loadDbPlugins( Modules modules ) throws Exception
 	{
-		if( System.getSecurityManager() != null ) System.getSecurityManager().checkPermission(new ChoobPermission("canLoadSavedPlugins"));
+		AccessController.checkPermission(new ChoobPermission("canLoadSavedPlugins"));
 
 		Connection dbCon = broker.getConnection();
 

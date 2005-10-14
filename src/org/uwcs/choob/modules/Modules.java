@@ -84,7 +84,7 @@ public class Modules
 			nick = new NickModule();
 			interval = new IntervalModule( intervalList, this );
 			synthetic = new SyntheticModule( bot );
-			security = new SecurityModule( dbBroker );
+			security = new SecurityModule( dbBroker, this );
 			pc = new ProtectedChannels();
 			odb = new ObjectDbModule( dbBroker, this );
 		}

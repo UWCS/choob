@@ -702,14 +702,17 @@ public class Quote
 		{
 			if (quote.score == THRESHOLD - 1)
 			{
-				if (!mods.security.hasPerm( new ChoobPermission( "quote.delete" ), mes.getNick() ))
+				if (mods.security.hasNickPerm( new ChoobPermission( "quote.delete" ), mes.getNick() ))
+				{
+					quote.score++;
+					quote.up++;
+					irc.sendContextReply( mes, "OK, quote " + quoteID + " is now leet enough to be seen! Current karma is " + quote.score + "." );
+				}
+				else
 				{
 					irc.sendContextReply( mes, "Sorry, that quote is on the karma threshold. Only an admin can make it more leet!" );
 					return;
 				}
-				quote.score++;
-				quote.up++;
-				irc.sendContextReply( mes, "OK, quote " + quoteID + " is now leet enough to be seen! Current karma is " + quote.score + "." );
 			}
 			else
 			{
@@ -720,7 +723,7 @@ public class Quote
 		}
 		else if (quote.score == THRESHOLD)
 		{
-			if (mods.security.hasPerm( new ChoobPermission( "quote.delete" ), mes.getNick() ))
+			if (mods.security.hasNickPerm( new ChoobPermission( "quote.delete" ), mes.getNick() ))
 			{
 				quote.score--;
 				quote.down++;
