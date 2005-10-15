@@ -39,48 +39,75 @@ public class Help
 	/**
 	 * Get help!
 	 */
-	public String[] helpHelp = {
+	public String[] helpCommandHelp = {
 		"Get help on a topic.",
-		"Help.Help <topic> <params>",
-		"<topic> is either a plugin name or of the form <plugin>.<name>",
-		"<params> is a parameter to pass to the help."
+		"<topic> [<params>]",
+		"<topic>", "is either a plugin name or of the form <plugin>.<name> or <plugin>.<type>.<name>",
+		"<params>", "is an optional parameter to pass to the help"
 	};
 	public void commandHelp( Message mes ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams( mes, 2 );
-		String topic, topicParams;
+		String fullTopic, topicParams;
 		if (params.size() == 1)
 		{
-			topic = "help";
+			fullTopic = "help";
 			topicParams = "";
 		}
 		else if (params.size() == 2)
 		{
-			topic = params.get(1);
+			fullTopic = params.get(1);
 			topicParams = "";
 		}
 		else
 		{
-			topic = params.get(1);
+			fullTopic = params.get(1);
 			topicParams = params.get(2);
 		}
 
-		Matcher ma = Pattern.compile("(\\w+)(?:\\.(\\w+))?").matcher(topic);
-		if (!ma.matches())
+		Matcher topicMatcher = Pattern.compile("([^\\s.]+)(?:\\.([^\\s.]+)(?:\\.([^ .]+))?)?").matcher(fullTopic);
+		if (!topicMatcher.matches())
 		{
-			irc.sendContextReply( mes, "Help topics must be of the form <name> or <plugin>.<name>." );
+			irc.sendContextReply( mes, "Help topics must be of the form <plugin>, <plugin>.<name>, or <plugin>.<type>.<name>." );
 			return;
 		}
 
-		String plugin = ma.group(1);
-		topic = ma.group(2);
+		String plugin = topicMatcher.group(1);
+		String topic, type;
+		if (topicMatcher.group(3) == null)
+		{
+			topic = topicMatcher.group(2);
+			type = null;
+		}
+		else
+		{
+			topic = topicMatcher.group(3);
+			type = topicMatcher.group(2);
+		}
 
 		String help;
 		try
 		{
 			if (topic != null && !topic.toLowerCase().equals("topics"))
 			{
-				Object ret = callMethod(plugin, topic, topicParams);
+				// Help on some specific thingy.
+				Object ret;
+				if (type == null)
+				{
+					try
+					{
+						ret = callMethod(plugin, "command" + topic, topicParams);
+						type = "command";
+					}
+					catch (ChoobNoSuchCallException e)
+					{
+						ret = callMethod(plugin, topic, topicParams);
+						type = "";
+					}
+				}
+				else
+					ret = callMethod(plugin, type + topic, topicParams);
+
 				if (ret == null)
 				{
 					irc.sendContextReply( mes, "Gah! That topic had help, but the help seems to be broken." );
@@ -89,27 +116,43 @@ public class Help
 				else if (ret instanceof String[])
 				{
 					String[] helpArr = (String[])ret;
-					if (helpArr.length < 2)
+					if (type.toLowerCase().equals("command"))
 					{
-						irc.sendContextReply( mes, "Gah! That topic had help, but the help seems to be broken (it returned an array of 1 string)." );
-						return;
-					}
-					StringBuffer buf = new StringBuffer();
-					buf.append( helpArr[0] );
-					buf.append( " Syntax: " );
-					buf.append( helpArr[1] );
-					if (helpArr.length > 2)
-					{
-						buf.append(" where");
-						for(int i=2; i<helpArr.length; i++)
+						if (helpArr.length < 2)
 						{
-							buf.append(" ");
-							if (i != 2)
-								buf.append("and ");
-							buf.append(helpArr[i]);
+							help = helpArr[0];
+						}
+						else
+						{
+							StringBuilder buf = new StringBuilder();
+							buf.append( helpArr[0] );
+							buf.append( " Syntax: " );
+							buf.append( plugin + "." + topic );
+							buf.append( helpArr[1] );
+							if (helpArr.length > 2)
+							{
+								buf.append(" where");
+								for(int i=2; i<helpArr.length; i++)
+								{
+									buf.append(helpArr[i]);
+									if (i < helpArr.length - 1)
+										buf.append(" and ");
+								}
+							}
+							help = buf.toString();
 						}
 					}
-					help = buf.toString();
+					else // Assume of type API.
+					{
+						StringBuilder buf = new StringBuilder();
+						for(int i=0; i<helpArr.length; i++)
+						{
+							buf.append( helpArr[i] );
+							if (i < helpArr.length - 1)
+								buf.append(" ");
+						}
+						help = buf.toString();
+					}
 				}
 				else
 				{
@@ -118,7 +161,12 @@ public class Help
 			}
 			else
 			{
-				Object ret = callMethod(plugin, "Topics", topicParams);
+				Object ret;
+				if (type == null)
+					ret = callMethod(plugin, topic, topicParams);
+				else
+					ret = callMethod(plugin, type + topic, topicParams);
+
 				if (ret == null)
 				{
 					irc.sendContextReply( mes, "Gah! That plugin had help, but the help seems to be broken." );
@@ -126,7 +174,7 @@ public class Help
 				}
 				else if (ret instanceof String[])
 				{
-					StringBuffer buf = new StringBuffer("Help topics:");
+					StringBuilder buf = new StringBuilder("Help topics:");
 					String[] topics = (String[])ret;
 					for(int i=0; i<topics.length; i++)
 						buf.append(" " + topics[i]);
@@ -147,15 +195,14 @@ public class Help
 		irc.sendContextReply( mes, help );
 	}
 
-	public String[] helpPlugins = {
+	public String[] helpCommandPlugins = {
 		"Get a list of loaded plugins.",
-		"Help.Plugins"
 	};
 	public void commandPlugins( Message mes )
 	{
 		String[] plugins = mods.plugin.plugins();
 
-		StringBuffer buf = new StringBuffer("Plugins: ");
+		StringBuilder buf = new StringBuilder("Plugins: ");
 		for(int i=0; i<plugins.length; i++)
 		{
 			if (i != 0)
@@ -169,28 +216,30 @@ public class Help
 		irc.sendContextReply(mes, buf.toString());
 	}
 
-	public String[] helpCommands = {
-		"Get a list of commands in a plugin.",
-		"Help.Commands <plugin>",
-		"<plugin> is the name of a loaded plugin."
-	};
-
 	private String titleCase(String s)
 	{
-		StringBuffer sb = new StringBuffer(s.toLowerCase());
+		StringBuilder sb = new StringBuilder(s.toLowerCase());
 		sb.setCharAt(0,s.substring(0,1).toUpperCase().charAt(0));
 		return sb.toString();
 	}
 
-	private String commandString(String[] commands, String plugin, boolean brief)
+	private String commandString(String pluginOrig, boolean brief)
 	{
+		String[] commands = mods.plugin.commands(pluginOrig);
+
+		String plugin;
+		if (brief)
+			plugin = Colors.BOLD + titleCase(pluginOrig) + Colors.NORMAL;
+		else
+			plugin = titleCase(pluginOrig);
+
 		if (commands == null)
 		{
 			return "That plugin doesn't exist!";
 		}
 		else if (commands.length == 0)
 		{
-			return "No commands in plugin " + plugin + ".";
+			return (brief ? plugin + ": No commands." : "No commands in plugin " + plugin + ".");
 		}
 		else if (commands.length == 1)
 		{
@@ -202,18 +251,18 @@ public class Help
 		}
 		else
 		{
-			StringBuffer buf = new StringBuffer("");
+			StringBuilder buf = new StringBuilder("");
 			if (!brief)
 				buf.append(commands.length + " commands in plugin ");
 			buf.append(plugin);
 			buf.append(": ");
 			for(int i=0; i<commands.length; i++)
 			{
-				if (i != 0)
-					buf.append(", ");
-				if (i == commands.length - 1)
-					buf.append("and ");
 				buf.append(commands[i]);
+				if (i < commands.length - 2)
+					buf.append(", ");
+				else if (i == commands.length - 2)
+					buf.append(" and ");
 			}
 			buf.append(".");
 
@@ -221,6 +270,11 @@ public class Help
 		}
 	}
 
+	public String[] helpCommandCommands = {
+		"Get a list of commands in a plugin.",
+		"<plugin>",
+		"<plugin> is the name of a loaded plugin."
+	};
 	public void commandCommands( Message mes )
 	{
 		String plugin = mods.util.getParamString(mes);
@@ -231,13 +285,12 @@ public class Help
 
 			String[] plugins = mods.plugin.plugins();
 			for (int j=0; j<plugins.length; j++)
-				rep+=commandString(mods.plugin.commands(plugins[j]), Colors.BOLD + titleCase(plugins[j]) + Colors.NORMAL, true) + " ";
+				rep += commandString(plugins[j], true) + " ";
 			irc.sendContextReply(mes, rep);
 		}
 		else
 		{
-			String[] commands = mods.plugin.commands(plugin);
-			irc.sendContextReply(mes, commandString(commands, plugin, false));
+			irc.sendContextReply(mes, commandString(plugin, false));
 		}
 	}
 
@@ -252,6 +305,4 @@ public class Help
 			return mods.plugin.callGeneric(plugin, "help", topic);
 		}
 	}
-
-
 }

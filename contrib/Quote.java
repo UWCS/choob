@@ -43,7 +43,7 @@ public class RecentQuote
 
 public class Quote
 {
-	private static int MINLENGTH = 10; // Minimum length of a line to be quotable using simple syntax.
+	private static int MINLENGTH = 7; // Minimum length of a line to be quotable using simple syntax.
 	private static int MINWORDS = 2; // Minimum words in a line to be quotable using simple syntax.
 	private static int HISTORY = 30; // Lines of history to search.
 	private static int EXCERPT = 40; // Maximum length of excerpt text in replies to create.
@@ -146,7 +146,7 @@ public class Quote
 		else if (param.charAt(0) != '/' && param.indexOf(':') == -1)
 		{
 			// It's a nickname.
-			String bits[] = param.split(" +");
+			String bits[] = param.split("\\s+");
 			if (bits.length > 2)
 			{
 				irc.sendContextReply(mes, "When quoting by nickname, you must supply only 1 parameter.");
@@ -174,24 +174,35 @@ public class Quote
 		}
 		else if (param.toLowerCase().startsWith("action:"))
 		{
-			// XXX untested
 			// It's an action from a nickname
-			String bits[] = param.split(" +");
+			String bits[] = param.split("\\s+");
 			if (bits.length > 2)
 			{
 				irc.sendContextReply(mes, "When quoting by nickname, you must supply only 1 parameter.");
 				return;
 			}
 			bits = bits[0].split(":");
-			String findNick = mods.nick.getBestPrimaryNick( bits[1] ).toLowerCase();
+			String findNick;
+			if (bits.length == 2)
+				findNick = mods.nick.getBestPrimaryNick( bits[1] ).toLowerCase();
+			else
+				findNick = null;
 			for(int i=0; i<history.size(); i++)
 			{
 				Message line = history.get(i);
 				String text = line.getMessage();
 				if (!(line instanceof ChannelAction) || text.length() < MINLENGTH || text.split(" +").length < MINWORDS)
 					continue;
-				String guessNick = mods.nick.getBestPrimaryNick( line.getNick() );
-				if ( guessNick.toLowerCase().equals(findNick) )
+				if (findNick != null)
+				{
+					String guessNick = mods.nick.getBestPrimaryNick( line.getNick() );
+					if ( guessNick.toLowerCase().equals(findNick) )
+					{
+						lines.add(line);
+						break;
+					}
+				}
+				else
 				{
 					lines.add(line);
 					break;
@@ -295,12 +306,14 @@ public class Quote
 		// Check for people suspiciously quoting themselves.
 		// For now, that's just if they are the final line in the quote.
 		Message last = lines.get(lines.size() - 1);
-		/*/ Remove the first slash to comment me out.
+		//*/ Remove the first slash to comment me out.
 		if (last.getLogin().compareToIgnoreCase(mes.getLogin()) == 0
 				&& last.getHostname().compareToIgnoreCase(mes.getHostname()) == 0)
 		{
 			// Suspicious!
-			irc.sendContextReply(mes, "Sorry, no quoting yorself!");
+			System.out.println("Last line from: " + last.getNick() + "!" + last.getLogin() + "@" + last.getHostname());
+			System.out.println("This line from: " + mes.getNick() + "!" + mes.getLogin() + "@" + mes.getHostname());
+			irc.sendContextReply(mes, "Sorry, no quoting yourself!");
 			return;
 		} //*/
 
