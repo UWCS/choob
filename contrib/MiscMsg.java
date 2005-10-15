@@ -7,7 +7,7 @@ import java.text.*;
 
 public class MiscMsg
 {
-	private IRCInterfaces irc;
+	private IRCInterface irc;
 	private Modules mods;
 	public MiscMsg(Modules mods, IRCInterface irc)
 	{
@@ -111,16 +111,16 @@ public class MiscMsg
 		// Did someone say.. horribly broken parser?
 
 		ArrayList<String> replies = new ArrayList();
-		String []tokens = s.split("\\s+(?:or|,)\\s+");
+		String[] tokens = params.split("\\s+(?:or|,)\\s+");
 
 		for (int i=0; i<tokens.length; i++)
 		{
-			replies.add(tokens[j]);
+			replies.add(tokens[i]);
 		}
 		irc.sendContextReply(mes, "Answer to \"" + params + "\" is " + replies.get(rand.nextInt(replies.size())) + ".");
 	}
 
-	public String[] helpCommandFlipACoin = {
+	public String[] helpCommand8Ball = {
 		"Ask the magical 8 ball to sort out your life.",
 		"<Question>",
 		"<Question> is some a question for the 8 ball the think over."
