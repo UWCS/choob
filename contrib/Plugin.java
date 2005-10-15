@@ -65,11 +65,11 @@ public class Plugin
 		try
 		{
 			mods.plugin.addPlugin(classname, url);
-			irc.sendContextReply(mes, "Plugin parsed, compiled and loaded!");
+			irc.sendContextReply(mes, "Plugin loaded OK!");
 		}
 		catch (Exception e)
 		{
-			irc.sendContextReply(mes, "Error parsing plugin, see log for details. " + e);
+			irc.sendContextReply(mes, "Error loading plugin, see log for more details. " + e);
 			e.printStackTrace();
 		}
 	}
