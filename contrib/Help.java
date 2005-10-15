@@ -34,7 +34,18 @@ public class Help
 		this.mods = mods;
 	}
 
-	public String[] helpTopics = { "Help", "Plugins" };
+	public String[] helpApi = {
+		  "Help is a plugin that lets you add help to other plugins. To do so,"
+		+ " you simply need to provide generic calls of type 'help' for each"
+		+ " of your commands, API procedures etc. For the command 'Foo', for"
+		+ " example, the generic call should be named 'commandFoo'.",
+		  "The return value of any of these can be either a String, which will"
+		+ " simply be rendered verbatim, or a String array whose contents"
+		+ " depend upon the help type: For the special name 'Topics', it's just"
+		+ " a list of topics; for a command, the first element should be a"
+		+ " brief description, the second the syntax, and all subsequent are"
+		+ " parameter descriptions."
+	};
 
 	/**
 	 * Get help!
@@ -84,11 +95,13 @@ public class Help
 			topic = topicMatcher.group(3);
 			type = topicMatcher.group(2);
 		}
+		if (topic == null)
+			topic = "topics";
 
 		String help;
 		try
 		{
-			if (topic != null && !topic.toLowerCase().equals("topics"))
+			if (!topic.toLowerCase().equals("topics"))
 			{
 				// Help on some specific thingy.
 				Object ret;
@@ -126,12 +139,14 @@ public class Help
 						{
 							StringBuilder buf = new StringBuilder();
 							buf.append( helpArr[0] );
-							buf.append( " Syntax: " );
+							buf.append( " Syntax: '" );
 							buf.append( plugin + "." + topic );
+							buf.append( " " );
 							buf.append( helpArr[1] );
+							buf.append( "'" );
 							if (helpArr.length > 2)
 							{
-								buf.append(" where");
+								buf.append(" where ");
 								for(int i=2; i<helpArr.length; i++)
 								{
 									buf.append(helpArr[i]);
@@ -139,6 +154,7 @@ public class Help
 										buf.append(" and ");
 								}
 							}
+							buf.append(".");
 							help = buf.toString();
 						}
 					}
@@ -148,8 +164,10 @@ public class Help
 						for(int i=0; i<helpArr.length; i++)
 						{
 							buf.append( helpArr[i] );
-							if (i < helpArr.length - 1)
-								buf.append(" ");
+							if (i < helpArr.length - 2)
+								buf.append(", ");
+							else if (i == helpArr.length - 2)
+								buf.append(" and ");
 						}
 						help = buf.toString();
 					}
@@ -162,29 +180,58 @@ public class Help
 			else
 			{
 				Object ret;
-				if (type == null)
-					ret = callMethod(plugin, topic, topicParams);
-				else
-					ret = callMethod(plugin, type + topic, topicParams);
+				try
+				{
+					if (type == null)
+						ret = callMethod(plugin, "topics", topicParams);
+					else
+						ret = callMethod(plugin, type + "topics", topicParams);
+				}
+				catch (ChoobNoSuchCallException e)
+				{
+					ret = null;
+				}
 
+				StringBuilder buf = new StringBuilder("Commands: ");
+				buf.append(commandString(plugin, true, false));
 				if (ret == null)
 				{
-					irc.sendContextReply( mes, "Gah! That plugin had help, but the help seems to be broken." );
-					return;
+					buf.append(" No extra topics.");
 				}
 				else if (ret instanceof String[])
 				{
-					StringBuilder buf = new StringBuilder("Help topics:");
 					String[] topics = (String[])ret;
-					for(int i=0; i<topics.length; i++)
-						buf.append(" " + topics[i]);
-					help = buf.toString();
+					if (topics.length == 1)
+					{
+						buf.append(" Extra help topic: ");
+						buf.append(topics[0]);
+					}
+					else if (topics.length > 1)
+					{
+						buf.append(" Extra help topics: ");
+						for(int i=0; i<topics.length; i++)
+						{
+							buf.append(topics[i]);
+							if (i < topics.length - 2)
+								buf.append(", ");
+							else if (i == topics.length - 2)
+								buf.append(" and ");
+						}
+					}
+					buf.append(".");
 				}
 				else
 				{
-					help = ret.toString();
+					buf.append(ret.toString());
 				}
+				help = buf.toString();
 			}
+		}
+		catch (ChoobNoSuchPluginException e)
+		{
+			System.out.println(e.toString());
+			irc.sendContextReply( mes, "Plugin " + plugin + " didn't exist!" );
+			return;
 		}
 		catch (ChoobNoSuchCallException e)
 		{
@@ -223,7 +270,7 @@ public class Help
 		return sb.toString();
 	}
 
-	private String commandString(String pluginOrig, boolean brief)
+	private String commandString(String pluginOrig, boolean brief, boolean name)
 	{
 		String[] commands = mods.plugin.commands(pluginOrig);
 
@@ -239,23 +286,26 @@ public class Help
 		}
 		else if (commands.length == 0)
 		{
-			return (brief ? plugin + ": No commands." : "No commands in plugin " + plugin + ".");
+			return name ? (brief ? plugin + ": No commands." : "No commands in plugin " + plugin + ".") : "None";
 		}
 		else if (commands.length == 1)
 		{
-			return (brief ? "" : "1 command in plugin ") + plugin + ": " + commands[0] + ".";
+			return (name ? (brief ? "" : "1 command in plugin ") + plugin + ": " : "" ) + commands[0] + ".";
 		}
 		else if (commands.length == 2)
 		{
-			return (brief ? "" : "2 commands in plugin " ) + plugin + ": " + commands[0] + " and " + commands[1] + ".";
+			return (name ? (brief ? "" : "2 commands in plugin " ) + plugin + ": " : "" ) + commands[0] + " and " + commands[1] + ".";
 		}
 		else
 		{
 			StringBuilder buf = new StringBuilder("");
-			if (!brief)
-				buf.append(commands.length + " commands in plugin ");
-			buf.append(plugin);
-			buf.append(": ");
+			if (name)
+			{
+				if (!brief)
+					buf.append(commands.length + " commands in plugin ");
+				buf.append(plugin);
+				buf.append(": ");
+			}
 			for(int i=0; i<commands.length; i++)
 			{
 				buf.append(commands[i]);
@@ -279,18 +329,18 @@ public class Help
 	{
 		String plugin = mods.util.getParamString(mes);
 
-		if (plugin.trim().equals(""))
+		if (plugin.equals(""))
 		{
 			String rep="";
 
 			String[] plugins = mods.plugin.plugins();
 			for (int j=0; j<plugins.length; j++)
-				rep += commandString(plugins[j], true) + " ";
+				rep += commandString(plugins[j], true, true) + " ";
 			irc.sendContextReply(mes, rep);
 		}
 		else
 		{
-			irc.sendContextReply(mes, commandString(plugin, false));
+			irc.sendContextReply(mes, commandString(plugin, false, true));
 		}
 	}
 

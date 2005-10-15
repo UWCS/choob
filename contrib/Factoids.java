@@ -37,7 +37,18 @@ public class Factoids
 		mods.odb.save( fact );
 	}
 
-	
+	public String[] helpTopics = { "Remember" };
+
+	public String[] helpRemember = {
+		  "The bot will automagically remember things which are said in the"
+		+ " channels of the form '<a> is <b>' or '<a> was <b>'."
+	};
+
+	public String[] helpCommandWhatIs = {
+		"Ask the bot what it thinks something is.",
+		"<Name>",
+		"<Name> is the name of the object to enquire about"
+	};
 	public void commandWhatIs( Message msg, Modules mods, IRCInterface irc ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams( msg, 2 );

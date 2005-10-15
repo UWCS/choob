@@ -29,6 +29,7 @@ public class Lookup
 			return what + " [reverse lookup] --> " + reverseLookup(what) + ".";
 
 		// Stolen hax!
+		// XXX clean this up.
 		try
 		{
 			Hashtable env = new Hashtable();
@@ -54,17 +55,33 @@ public class Lookup
 		}
 	}
 
+	public String[] helpCommandLookupIn = {
+		"Look up a DNS record in a domain.",
+		"<Domain> [<Record>]",
+		"<Domain> is the domain name",
+		"<Record> is the optional record type"
+	};
 	public void commandLookupIn( Message mes, Modules mods, IRCInterface irc )
 	{
 
-		List<String> p=mods.util.getParams(mes, 2);
-		if (p.get(2).trim().length()==0)
+		List<String> params = mods.util.getParams(mes, 3);
+		String domain, record;
+		if (params.size() < 2 || params.size() > 3)
 		{
-			irc.sendContextReply(mes, "Usage: <record> <domain>.");
+			irc.sendContextReply(mes, "Usage: <domain> [<record>].");
 			return;
 		}
+		else if (params.size() == 2)
+		{
+			domain = params.get(1);
+			record = "A";
+		}
+		else
+		{
+			domain = params.get(1);
+			record = params.get(2);
+		}
 
-
-		irc.sendContextReply(mes, genericLookup(p.get(2), p.get(1)));
+		irc.sendContextReply(mes, genericLookup(domain, record));
 	}
 }

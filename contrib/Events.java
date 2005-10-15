@@ -13,16 +13,24 @@ import java.text.*;
 public class Events
 {
 	private GetContentsCached eventsdata;
-	
-	public Events()
+	private Modules mods;
+	private IRCInterface irc;
+
+	public Events(Modules mods, IRCInterface irc)
 	{
-		try { eventsdata=new GetContentsCached(new URL("http://faux.uwcs.co.uk/events.data")); /* <-- default timeout is okay. */ } catch (Exception e) {} // Never going to be thrown.
+		this.mods = mods;
+		this.irc = irc;
+		try {
+			eventsdata = new GetContentsCached(new URL("http://faux.uwcs.co.uk/events.data")); /* <-- default timeout is okay. */
+		}
+		// XXX
+		catch (Exception e) {} // Never going to be thrown.
 	}
-		
-	public String stupidStamp(long i)
+
+	private String stupidStamp(long i)
 	{
 		System.out.println(i);
-		
+
 		long w= (i / (7*24*60*60*1000)); i -= w*(7*24*60*60*1000);
 		long d= (i / (24*60*60*1000)); i -= d*(24*60*60*1000);
 		long h= (i / (60*60*1000)); i -= h*(60*60*1000);
@@ -37,23 +45,23 @@ public class Events
 			for (int j=0; j<st.length; j++)
 				if (st[j]!=0)
 				{
-					t+=st[j] + pr[j]; 
+					t+=st[j] + pr[j];
 					st[j]=0;
 					break;
 				}
-		
+
 		return t;
 	}
-	
-	public ArrayList<String[]> readEventsData()
+
+	private ArrayList<String[]> readEventsData()
 	{
 		ArrayList<String[]> events=new ArrayList();
 		String s=null;
 		try { s=eventsdata.getContents(); } catch (IOException e) 
-		{ 
+		{
 			return null; // H4X!
 		}
-		
+
 		//System.out.println("BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADGERS" + s);
 		//int c=ids.replaceAll("[^ ]*","").length()+1;
 		//int d=0;
@@ -69,8 +77,13 @@ public class Events
 		}
 		return events;
 	}
-	
-	public void commandInfo(Message mes, Modules mods, IRCInterface irc)
+
+	public String[] helpCommandInfo = {
+		"Get info about a given event",
+		"<Key>",
+		"<Key> is a key to use for event searching"
+	};
+	public void commandInfo(Message mes)
 	{
 		String comp=mods.util.getParamString(mes).toLowerCase();
 		if (comp.equals(""))
@@ -78,7 +91,7 @@ public class Events
 			irc.sendContextReply(mes, "Please name the event you want info on.");
 			return;
 		}
-		
+
 		ArrayList<String[]> events=readEventsData();
 		int c=events.size();
 		String rep="";
@@ -99,7 +112,12 @@ public class Events
 		irc.sendContextReply(mes, "Event not found.");
 	}
 
-	public void commandSignup(Message mes, Modules mods, IRCInterface irc)
+	public String[] helpCommandSignup = {
+		"Get a signup link for a given event.",
+		"<Key>",
+		"<Key> is a key to use for event searching"
+	};
+	public void commandSignup(Message mes)
 	{
 		String comp=mods.util.getParamString(mes).toLowerCase();
 		if (comp.equals(""))
@@ -107,7 +125,7 @@ public class Events
 			irc.sendContextReply(mes, "Please name the event you want info on.");
 			return;
 		}
-		
+
 		ArrayList<String[]> events=readEventsData();
 		int c=events.size();
 		String rep="";
@@ -139,7 +157,12 @@ public class Events
 		irc.sendContextReply(mes, rep + "Event not found.");
 	}
 
-	public void commandLink(Message mes, Modules mods, IRCInterface irc)
+	public String[] helpCommandLink = {
+		"Get an information link for a given event.",
+		"<Key>",
+		"<Key> is a key to use for event searching"
+	};
+	public void commandLink(Message mes)
 	{
 		String comp=mods.util.getParamString(mes).toLowerCase();
 		if (comp.equals(""))
@@ -147,7 +170,7 @@ public class Events
 			irc.sendContextReply(mes, "Please name the event you want info on.");
 			return;
 		}
-		
+
 		ArrayList<String[]> events=readEventsData();
 		int c=events.size();
 		String rep="";
@@ -173,8 +196,13 @@ public class Events
 		}
 		irc.sendContextReply(mes, rep + "Event not found.");
 	}
-	
-	public void commandSignups(Message mes, Modules mods, IRCInterface irc)
+
+	public String[] helpCommandSignups = {
+		"Get the signups list for a given event.",
+		"<Key>",
+		"<Key> is a key to use for event searching"
+	};
+	public void commandSignups(Message mes)
 	{
 		String comp=mods.util.getParamString(mes).toLowerCase();
 		if (comp.equals(""))
@@ -182,7 +210,7 @@ public class Events
 			irc.sendContextReply(mes, "Please name the event you want info on.");
 			return;
 		}
-		
+
 		ArrayList<String[]> events=readEventsData();
 		int c=events.size();
 		String rep="";
@@ -207,8 +235,11 @@ public class Events
 		}
 		irc.sendContextReply(mes, rep + "Event not found.");
 	}
-		
-	public void commandList(Message mes, Modules mods, IRCInterface irc)
+
+	public String[] helpCommandList = {
+		"Get a list of events.",
+	};
+	public void commandList(Message mes)
 	{
 		ArrayList<String[]> events=readEventsData();
 		int c=events.size();

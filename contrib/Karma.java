@@ -39,6 +39,10 @@ public class Karma
 		+ "( \\+\\+ | \\-\\- )" // The actual karma change
 		+ ")\\B)";
 
+	public String[] helpCommandReason = {
+		"Find out why something sucks or rocks."
+		// XXX Add syntax here.
+	};
 	public void commandReason( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
 	{
 		Matcher whyMatch = Pattern.compile(".*(do|does)? ([\\./a-zA-Z0-9_-]+) (suck|rulz0r)\\?$")
@@ -63,6 +67,14 @@ public class Karma
 			return;
 		}
 	}
+
+	public String[] helpTopics = { "Using" };
+	public String[] helpUsing = {
+		  "To change the karma of something, simply send the message"
+		+ " 'something--' or 'something++'. You can also specify a reason, by"
+		+ " sending a line starting with a karma change then giving a reason,"
+		+ " like: 'ntl-- they suck'."
+	};
 
 	public void filterKarma( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
 	{
@@ -189,7 +201,6 @@ public class Karma
 		return "th";
 	}
 
-
 	private void commandScores(Message mes, Modules mods, IRCInterface irc, boolean asc) throws ChoobException
 	{
 		List<KarmaObject> karmaObjs = retrieveKarmaObjects("SORT " + (asc ? "ASC" : "DESC") + " INTEGER value LIMIT (5)", mods);
@@ -214,11 +225,17 @@ public class Karma
 		irc.sendContextReply( mes, output.toString());
 	}
 
+	public String[] helpCommandHighScores = {
+		"Find out what has the highest karma"
+	};
 	public void commandHighScores(Message mes, Modules mods, IRCInterface irc) throws ChoobException
 	{
 		commandScores(mes, mods, irc, false);
 	}
 
+	public String[] helpCommandLowScores = {
+		"Find out what has the lowest karma"
+	};
 	public void commandLowScores(Message mes, Modules mods, IRCInterface irc) throws ChoobException
 	{
 		commandScores(mes, mods, irc, true);
@@ -238,6 +255,11 @@ public class Karma
 		return mods.odb.retrieve(KarmaObject.class, clause);
 	}
 
+	public String[] helpCommandGet = {
+		"Find out the karma of some object or other.",
+		"<Object> [<Object> ...]",
+		"<Object> is the name of something to get the karma of"
+	};
 	public void commandGet (Message mes, Modules mods, IRCInterface irc) throws ChoobException
 	{
 		List<String> params = mods.util.getParams( mes );
@@ -284,6 +306,12 @@ public class Karma
 		irc.sendContextReply( mes, output.toString());
 	}
 
+	public String[] helpCommandSet = {
+		"Set out the karma of some object or other.",
+		"<Object>=<Value> [<Object>=<Value> ...]",
+		"<Object> is the name of something to set the karma of",
+		"<Value> is the value to set the karma to"
+	};
 	public void commandSet( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
 	{
 		if (!mods.security.hasNickPerm(new ChoobPermission("plugins.karma.set"), mes.getNick()))
@@ -363,6 +391,9 @@ public class Karma
 
 	}
 
+	public String[] helpCommandList = {
+		"Get a list of all karma objects.",
+	};
 	public void commandList (Message mes, Modules mods, IRCInterface irc)
 	{
 		irc.sendContextReply(mes, "No chance, matey.");

@@ -96,6 +96,11 @@ public class Alias
 		irc.sendContextReply(mes, "Aliased '" + name + "' to '" + conv + "'" + oldAlias + ".");
 	}
 
+	public String[] helpCommandRemove = {
+		"Remove an alias to the bot.",
+		"<Name>",
+		"<Name> is the name of the alias to add",
+	};
 	public void commandRemove( Message mes ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams(mes, 2);
@@ -134,6 +139,9 @@ public class Alias
 			irc.sendContextReply(mes, "Alias not found.");
 	}
 
+	public String[] helpCommandList = {
+		"List all aliases.",
+	};
 	public void commandList( Message mes ) throws ChoobException
 	{
 		String clause = "locked = 0";
@@ -169,6 +177,11 @@ public class Alias
 		}
 	}
 
+	public String[] helpCommandShow = {
+		"Give information about an alias.",
+		"<Alias>",
+		"<Alias> is the name of the alias to show"
+	};
 	public void commandShow( Message mes ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams(mes, 2);
@@ -189,6 +202,11 @@ public class Alias
 			irc.sendContextReply(mes, "'" + alias.name + "'" + (alias.locked ? "[LOCKED]" : "") + " was aliased to '" + alias.converted + "' by '" + alias.owner + "'.");
 	}
 
+	public String[] helpCommandLock = {
+		"Lock an alias so that no-one but its owner can change it.",
+		"<Alias>",
+		"<Alias> is the name of the alias to lock"
+	};
 	public void commandLock( Message mes ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams(mes, 2);
@@ -216,7 +234,12 @@ public class Alias
 		}
 	}
 
-	public void commandUnLock( Message mes ) throws ChoobException
+	public String[] helpCommandUnlock = {
+		"Unlock an alias so that anyone can change it.",
+		"<Alias>",
+		"<Alias> is the name of the alias to unlock"
+	};
+	public void commandUnlock( Message mes ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams(mes, 2);
 

@@ -16,6 +16,17 @@ public class Http
 
 	private static Pattern rpcurl = Pattern.compile("rpc/([a-zA-Z0-9_-]+?)\\.([a-zA-Z0-9_-]+?)(?:\\?(.*))?");
 
+	public String[] helpApi = {
+		  "Http is a neat plugin to allow your plugins to expose content onto a"
+		+ " web page. All you need to do is supply generic calls of type 'web',"
+		+ " and Http will call them when it's asked to by its web server.",
+		  "Your 'web' generic calls should be able to accept as arguments a"
+		+ " PrintWriter, a String and a String[]. The first should be used for"
+		+ " output (including headers), the second is the parameter string"
+		+ " passed after the ? (if any), and the third is a two element array"
+		+ " containing the address and hostname of the caller."
+	};
+
 	public Http (Modules mods, IRCInterface irc) throws ChoobException
 	{
 		// First, try to get the socket from the old server
@@ -159,7 +170,7 @@ public class Http
 				try
 				{
 					mods.plugin.callGeneric(mo.group(1), "web", mo.group(2) != null ? mo.group(2) : "",
-							mods, irc, out, (mo.group(3) != null ? mo.group(3) : ""),
+							out, (mo.group(3) != null ? mo.group(3) : ""),
 							new String[] { sock.getInetAddress().getHostAddress(), sock.getInetAddress().getHostName()});
 				}
 				catch (Exception e)
@@ -210,7 +221,7 @@ public class Http
 		}
 	}
 
-	public void webNickServ(Modules mods, IRCInterface irc, PrintWriter out, String args, String[] from)
+	public void webNickServ(PrintWriter out, String args, String[] from)
 	{
 		try
 		{
@@ -223,11 +234,14 @@ public class Http
 		}
 	}
 
-	public void webPants(Modules mods, IRCInterface IRC, PrintWriter out, String extra, String[] info)
+	public void webPants(PrintWriter out, String extra, String[] info)
 	{
 		out.println("Badgers!");
 	}
 
+	public String[] helpCommandClose = {
+		"Close the server socket in case of trouble."
+	};
 	public void commandClose(Message mes)
 	{
 		if (!mods.security.hasPerm(new ChoobPermission("plugins.http.close"), mes.getNick()))
