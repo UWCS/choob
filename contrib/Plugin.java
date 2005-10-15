@@ -7,7 +7,13 @@ import java.util.*;
 
 public class Plugin
 {
-	public void commandLoadPlugin( Message mes, Modules mods, IRCInterface irc ) throws ChoobAuthException
+	public String[] helpLoad = {
+		"Load a plugin.",
+		"[<Name>] <URL>",
+		"<Name> is an optional name for the plugin (if you don't give one, it'll be guessed from the URL)",
+		"<URL> is the URL from which to load the plugin"
+	};
+	public void commandLoad( Message mes, Modules mods, IRCInterface irc ) throws ChoobAuthException
 	{
 		// First, do auth!
 		List<String> params = mods.util.getParams( mes );
@@ -72,5 +78,13 @@ public class Plugin
 			irc.sendContextReply(mes, "Error loading plugin, see log for more details. " + e);
 			e.printStackTrace();
 		}
+	}
+
+	public String[] helpLoadPlugin = {
+		"See Load.",
+	};
+	public void commandLoadPlugin( Message mes, Modules mods, IRCInterface irc ) throws ChoobAuthException
+	{
+		commandLoad(mes, mods, irc);
 	}
 }

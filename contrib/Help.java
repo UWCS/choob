@@ -164,10 +164,8 @@ public class Help
 						for(int i=0; i<helpArr.length; i++)
 						{
 							buf.append( helpArr[i] );
-							if (i < helpArr.length - 2)
-								buf.append(", ");
-							else if (i == helpArr.length - 2)
-								buf.append(" and ");
+							if (i < helpArr.length - 1)
+								buf.append(" ");
 						}
 						help = buf.toString();
 					}

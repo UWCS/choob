@@ -69,11 +69,27 @@ public class NickServ
 		}
 	}
 
+	public String[] helpApi = {
+		  "NickServ allows your plugin to poke NickServ and get auth status on"
+		+ " nicknames. It gives you two API methods: Check and Status. Both"
+		+ " take a single String parameter and Check returns a Boolean, Status"
+		+ " an Integer. If the status is 3, the nick is considered authed,"
+		+ " anything lower is not."
+	};
+
+	public String[] helpCommandCheck = {
+		"Check if someone's authed with NickServ.",
+		"[<NickName>]",
+		"<NickName> is an optional nick to check"
+	};
 	public void commandCheck( Message mes ) throws ChoobException
 	{
 		String nick = mods.util.getParamString( mes );
+		if (nick.length() == 0)
+			nick = mes.getNick();
+
 		int check1 = (Integer)mods.plugin.callAPI("NickServ", "Status", nick);
-		if ( check1 > 1 )
+		if ( check1 == 3 )
 		{
 			irc.sendContextReply(mes, nick + " is authed (" + check1 + ")!");
 		}

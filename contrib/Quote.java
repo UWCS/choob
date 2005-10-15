@@ -70,6 +70,36 @@ public class Quote
 		recentQuotes = new HashMap<String,List<RecentQuote>>();
 	}
 
+	public String[] helpTopics = { "UsingCreate", "UsingGet" };
+
+	public String[] helpUsingCreate = {
+		  "There's 4 ways of calling Quote.Create.",
+		  "If you pass no parameters, the most recent line that's long enough will be quoted.",
+		  "With just a nickname, the most recent line from that nick that's long enough will be quoted.",
+		  "With action:<Nick>, the most recent long enough action will be quoted.",
+		  "Finally, you can specify one or 2 regeular expression searches. If"
+		+ " you specify just one, the most recent matching line will be quoted."
+		+ " With 2, the first one matches the start of the quote, and the"
+		+ " second matches the end. Previous quote commands are skipped when"
+		+ " any regex matching.",
+		  "'Long enough' in this context means at least " + MINLENGTH
+		+ " characters, and at least " + MINWORDS + " words."
+	};
+
+	public String[] helpUsingGet = {
+		"There are several clauses you can use to select quotes.",
+		"You can specify a number, which will be used as a quote ID.",
+		"A clause '<Selector>:<Relation><Number>', where <Selector> is one of 'score' or 'length', <Relation> is '>', '<' or '=' and <Number> is some number.",
+		"You can use 'quoter:<Nick>' to get quotes made by <Nick>.",
+		"Finally, you can use '<Nick>', '/<Regex>/' or '<Nick>:/<Regex>/' to match only quotes from <Nick>, quotes matching <Regex> or quotes where <Nick> said something matching <Regex>."
+	};
+
+	public String[] helpCommandCreate = {
+		"Create a new quote. See Quote.UsingCreate for more info.",
+		"[ <Nick> | action:<Nick> | [<Nick>:]/<Regex>/ [[<Nick>:]/<Regex>] ]",
+		"<Nick> is a nickname to quote",
+		"<Regex> is a regular expression to use to match lines"
+	};
 	public void commandCreate( Message mes ) throws ChoobException
 	{
 		if (!(mes instanceof ChannelEvent))
@@ -432,6 +462,11 @@ public class Quote
 		}
 	}
 
+	public String[] helpCommandGet = {
+		"Get a random quote from the database.",
+		"[ <Clause> [ <Clause> ... ]]",
+		"<Clause> is a clause to select quotes with (see Quote.UsingGet)"
+	};
 	public void commandGet( Message mes ) throws ChoobException
 	{
 		String whereClause = getClause( mods.util.getParamString( mes ) );
@@ -483,6 +518,11 @@ public class Quote
 		}
 	}
 
+	public String[] helpCommandCount = {
+		"Get the number of matching quotes.",
+		"[ <Clause> [ <Clause> ... ]]",
+		"<Clause> is a clause to select quotes with (see Quote.UsingGet)"
+	};
 	public void commandCount( Message mes ) throws ChoobException
 	{
 		String whereClause = getClause( mods.util.getParamString( mes ) );
@@ -499,6 +539,11 @@ public class Quote
 	}
 
 	// quotekarma, quoteinfo
+	public String[] helpCommandInfo = {
+		"Get a summary of matching quotes.",
+		"[ <Clause> [ <Clause> ... ]]",
+		"<Clause> is a clause to select quotes with (see Quote.UsingGet)"
+	};
 	public void commandInfo( Message mes ) throws ChoobException
 	{
 		String whereClause = getClause( mods.util.getParamString(mes) );
@@ -534,6 +579,9 @@ public class Quote
 			irc.sendContextReply( mes, "Found " + count + " quotes. The total karma is " + total + ", average " + avKarma + ". " + nonZeroCount + " quotes had a karma; average for these is " + avNonZeroKarma + ". Min karma is " + min + " and max is " + max + "." );
 	}
 
+	public String[] helpCommandRemove = {
+		"Remove your most recently added quote.",
+	};
 	public void commandRemove( Message mes ) throws ChoobException
 	{
 		// Quotes are stored by context...
@@ -598,6 +646,11 @@ public class Quote
 		}
 	}
 
+	public String[] helpCommandLast = {
+		"Get a list of recent quote IDs.",
+		"[<Count>]",
+		"<Count> is the maximum number to return (default is 1)"
+	};
 	public void commandLast( Message mes ) throws ChoobException
 	{
 		// Get a count...
@@ -648,6 +701,12 @@ public class Quote
 		}
 	}
 
+	public String[] helpCommandKarmaMod = {
+		"Increase or decrease the karma of a quote.",
+		"<Direction> [<ID>]",
+		"<Direction> is 'up' or 'down'",
+		"<ID> is an optional quote ID (default is to use the most recent)"
+	};
 	public void commandKarmaMod( Message mes ) throws ChoobException
 	{
 		int quoteID = -1;
