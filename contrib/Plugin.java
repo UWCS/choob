@@ -60,7 +60,7 @@ public class Plugin
 			// TODO: Make a groupExists() or something so we don't need to squelch this
 		}
 
-		irc.sendContextReply(mes, "Loading plugin.. " + classname);
+		irc.sendContextReply(mes, "Loading plugin '" + classname + "'...");
 
 		try
 		{
