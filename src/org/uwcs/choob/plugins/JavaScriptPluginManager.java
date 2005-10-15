@@ -5,6 +5,7 @@ package org.uwcs.choob.plugins;
 
 import java.io.*;
 import java.net.*;
+import java.security.*;
 import java.util.*;
 import java.util.regex.*;
 import org.uwcs.choob.*;
@@ -95,6 +96,26 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 		// Create the new plugin instance.
 		JavaScriptPlugin plug = new JavaScriptPlugin(this, pluginName, code, mods, irc);
 		
+		/*final JavaScriptPluginManager plugManF = this;
+		final String pluginNameF = pluginName;
+		final String codeF = code;
+		
+		ProtectionDomain accessDomain = mods.security.getProtectionDomain(pluginName);
+		AccessControlContext accessContext = new AccessControlContext(new ProtectionDomain[] { accessDomain });
+		try {
+			plug = (JavaScriptPlugin)AccessController.doPrivileged(new PrivilegedExceptionAction() {
+					public Object run() throws PrivilegedActionException {
+						return AccessController.doPrivileged(new PrivilegedExceptionAction() {
+								public Object run() throws ChoobException {
+									return new JavaScriptPlugin(plugManF, pluginNameF, codeF, mods, irc);
+								}
+							});
+					}
+				}, accessContext);
+		} catch (PrivilegedActionException e) {
+			throw (ChoobException)(e.getCause());
+		}*/
+		
 		// Update bot's overall command list, for spell-check-based suggestions.
 		String[] newCommands = new String[0];
 		String[] oldCommands = new String[0];
@@ -141,8 +162,12 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	}
 	
 	public ChoobTask intervalTask(String pluginName, Object param) {
-		System.out.println("JavaScriptPluginManager.intervalTask");
-		// FIXME: Implement this! //
+		System.out.println("JavaScriptPluginManager.intervalTask(" + pluginName + ")");
+		// Call the interval callback function.
+		JavaScriptPluginMethod method = pluginMap.getInterval(pluginName);
+		if (method != null) {
+			return callCommand(method, param);
+		}
 		return null;
 	}
 	
@@ -187,38 +212,45 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 		return (ChoobTask)callMethod(method, params, CALL_WANT_TASK);
 	}
 	
-	private Object callMethod(final JavaScriptPluginMethod method, final Object[] params, int result)
+	private Object callMethod(final JavaScriptPluginMethod method, final Object[] params, final int result)
 	{
 		final JavaScriptPlugin plugin = method.getPlugin();
+		final String pluginName = plugin.getName();
+		
+		ProtectionDomain accessDomain = mods.security.getProtectionDomain(pluginName);
+		final AccessControlContext accessContext = new AccessControlContext(new ProtectionDomain[] { accessDomain });
+		final PrivilegedExceptionAction action = new PrivilegedExceptionAction() {
+			public Object run() throws ChoobException {
+				Context cx = Context.enter();
+				try {
+					Scriptable scope = plugin.getScope();
+					Scriptable inst = plugin.getInstance();
+					Function function = method.getFunction();
+					
+					return function.call(cx, scope, inst, params);
+				} finally {
+					cx.exit();
+				}
+			}
+		};
 		
 		if (result == CALL_WANT_TASK) {
-			String pluginName = plugin.getName();
 			final Object[] params2 = params;
 			return new ChoobTask(pluginName) {
 				public void run() {
-					Context cx = Context.enter();
 					try {
-						Scriptable scope = plugin.getScope();
-						Scriptable inst = plugin.getInstance();
-						Function function = method.getFunction();
-						
-						function.call(cx, scope, inst, params2);
-					} finally {
-						cx.exit();
+						AccessController.doPrivileged(action, accessContext);
+					} catch (PrivilegedActionException e) {
+						//throw (ChoobException)(e.getCause());
 					}
 				}
 			};
 		}
 		if (result == CALL_WANT_RESULT) {
-			Context cx = Context.enter();
 			try {
-				Scriptable scope = plugin.getScope();
-				Scriptable inst = plugin.getInstance();
-				Function function = method.getFunction();
-				
-				return function.call(cx, scope, inst, params);
-			} finally {
-				cx.exit();
+				return AccessController.doPrivileged(action, accessContext);
+			} catch (PrivilegedActionException e) {
+				//throw (ChoobException)(e.getCause());
 			}
 		}
 		return null;
@@ -242,15 +274,18 @@ final class JavaScriptPluginMap {
 	private final Map<NativeRegExp,JavaScriptPluginMethod> filters;
 	// List of function for each generic.
 	private final Map<String,JavaScriptPluginMethod> generics;
+	// List of function for each interval callback.
+	private final Map<String,JavaScriptPluginMethod> intervals;
 	
 	public JavaScriptPluginMap() {
 		plugins = new HashMap<String,Object>();
 		pluginCommands = new HashMap<String,List<String>>();
 		pluginFilters  = new HashMap<String,List<NativeRegExp>>();
 		pluginGenerics = new HashMap<String,List<String>>();
-		commands = new HashMap<String,JavaScriptPluginMethod>();
-		filters  = new HashMap<NativeRegExp,JavaScriptPluginMethod>();
-		generics = new HashMap<String,JavaScriptPluginMethod>();
+		commands  = new HashMap<String,JavaScriptPluginMethod>();
+		filters   = new HashMap<NativeRegExp,JavaScriptPluginMethod>();
+		generics  = new HashMap<String,JavaScriptPluginMethod>();
+		intervals = new HashMap<String,JavaScriptPluginMethod>();
 	}
 	
 	synchronized void loadPluginMap(String pluginName, JavaScriptPlugin pluginObj) {
@@ -258,12 +293,13 @@ final class JavaScriptPluginMap {
 		String lname = pluginName.toLowerCase();
 		
 		// Set up maps...
-		plugins.put(lname, pluginObj);
 		List<String> commandNames = new LinkedList<String>();
-		pluginCommands.put(lname, commandNames);
 		List<NativeRegExp> filterNames = new LinkedList<NativeRegExp>();
-		pluginFilters.put(lname, filterNames);
 		List<String> genericNames = new LinkedList<String>();
+		
+		plugins.put(lname, pluginObj);
+		pluginCommands.put(lname, commandNames);
+		pluginFilters.put(lname, filterNames);
 		pluginGenerics.put(lname, genericNames);
 		
 		Scriptable inst = pluginObj.getInstance();
@@ -289,7 +325,7 @@ final class JavaScriptPluginMap {
 						commandNames.add(commandName);
 						commands.put(commandName, method);
 						
-						System.out.println("  Added command: " + commandName);
+						System.out.println("  Added command : " + commandName);
 						
 					} else if (propString.startsWith("filter")) {
 						// Looks like a filter definition.
@@ -319,7 +355,23 @@ final class JavaScriptPluginMap {
 						filterNames.add(filterPattern);
 						filters.put(filterPattern, method);
 						
-						System.out.println("  Added filter: " + filterName);
+						System.out.println("  Added filter  : " + filterPattern);
+						
+					} else if (propString.equals("interval")) {
+						// Looks like an interval callback.
+						Object propVal = inst.get(propString, inst);
+						if (!(propVal instanceof Function)) {
+							System.err.println("  Interval-like property that is not a function: " + propString);
+							continue;
+						}
+						// It's a function, yay!
+						Function func = (Function)propVal;
+						
+						JavaScriptPluginMethod method = new JavaScriptPluginMethod(pluginObj, propString, func);
+						
+						intervals.put(lname, method);
+						
+						System.out.println("  Added interval: " + lname);
 						
 					} else {
 						Matcher matcher = Pattern.compile("([a-z]+)([A-Z].+)?").matcher(propString);
@@ -341,7 +393,7 @@ final class JavaScriptPluginMap {
 							genericNames.add(fullName);
 							generics.put(fullName, method);
 							
-							System.out.println("  Added generic: " + fullName);
+							System.out.println("  Added generic : " + fullName);
 							
 						} else {
 							System.err.println("  Unknown property: " + propString);
@@ -364,11 +416,25 @@ final class JavaScriptPluginMap {
 		}
 		
 		plugins.remove(lname);
-		for (String command: getCommands(pluginName)) {
+		for (String command: pluginCommands.get(lname)) {
 			commands.remove(command);
-			System.out.println("  Removed command: " + command);
+			System.out.println("  Removed command : " + command);
+		}
+		for (NativeRegExp filter: pluginFilters.get(lname)) {
+			filters.remove(filter);
+			System.out.println("  Removed filter  : " + filter);
+		}
+		for (String generic: pluginGenerics.get(lname)) {
+			generics.remove(generic);
+			System.out.println("  Removed generic : " + generic);
+		}
+		if (intervals.get(lname) != null) {
+			intervals.remove(lname);
+			System.out.println("  Removed interval: " + lname);
 		}
 		pluginCommands.remove(lname);
+		pluginFilters.remove(lname);
+		pluginGenerics.remove(lname);
 	}
 	
 	synchronized JavaScriptPluginMethod getCommand(String commandName) {
@@ -404,6 +470,10 @@ final class JavaScriptPluginMap {
 	
 	synchronized JavaScriptPluginMethod getGeneric(String genericName) {
 		return generics.get(genericName.toLowerCase());
+	}
+	
+	synchronized JavaScriptPluginMethod getInterval(String pluginName) {
+		return intervals.get(pluginName.toLowerCase());
 	}
 }
 
@@ -467,9 +537,25 @@ final class JavaScriptPlugin {
 			if (!(ctor instanceof Function)) {
 				throw new ChoobException("Constructor property '" + pluginName + "' for JavaScript plugin is not a function.");
 			}
+			
 			// Construct instance.
-			Object args[] = { mods, irc };
-			inst = cx.newObject(scope, pluginName, args);
+			final Object args[] = { mods, irc };
+			final Scriptable scopeF = scope;
+			final String pluginNameF = pluginName;
+			final Context cxF = cx;
+			
+			ProtectionDomain accessDomain = mods.security.getProtectionDomain(pluginName);
+			AccessControlContext accessContext = new AccessControlContext(new ProtectionDomain[] { accessDomain });
+			try {
+				inst = (Scriptable)AccessController.doPrivileged(new PrivilegedExceptionAction() {
+						public Object run() throws ChoobException {
+							return cxF.newObject(scopeF, pluginNameF, args);
+						}
+					}, accessContext);
+			} catch (PrivilegedActionException e) {
+				throw (ChoobException)(e.getCause());
+			}
+			
 			System.out.println("JavaScriptPlugin ctor result: " + cx.toString(inst));
 		} finally {
 			cx.exit();
