@@ -66,7 +66,7 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 			// First thing's first; we must connect to the identified resource.
 			con = fromLocation.openConnection();
 		} catch(IOException e) {
-			throw new ChoobException("Unable to open a connection to the source for " + pluginName);
+			throw new ChoobException("Unable to open a connection to the source location <" + fromLocation + ">.");
 		}
 		try {
 			/*
@@ -89,7 +89,7 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 			}
 			System.out.println("JavaScriptPluginManager.createPlugin: loaded " + read + " characters.");
 		} catch(IOException e) {
-			throw new ChoobException("Unable to fetch the source for " + pluginName);
+			throw new ChoobException("Unable to fetch the source from <" + fromLocation + ">.");
 		}
 		
 		// Create the new plugin instance.
@@ -462,7 +462,10 @@ final class JavaScriptPlugin {
 			Object result = cx.evaluateString(scope, code, pluginName, 1, null);
 			Object ctor = scope.get(pluginName, scope);
 			if (ctor == Scriptable.NOT_FOUND) {
-				throw new ChoobException("Constructor for JavaScript plugin " + pluginName + " not found.");
+				throw new ChoobException("Constructor property '" + pluginName + "' for JavaScript plugin not found.");
+			}
+			if (!(ctor instanceof Function)) {
+				throw new ChoobException("Constructor property '" + pluginName + "' for JavaScript plugin is not a function.");
 			}
 			// Construct instance.
 			Object args[] = { mods, irc };
