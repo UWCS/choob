@@ -46,7 +46,7 @@ public class UtilModule
 		int offset = getTriggerOffset(text);
 		int spacePos = text.indexOf(' ', offset);
 		if (spacePos != -1)
-			return text.substring(spacePos + 1);
+			return text.substring(spacePos + 1).trim();
 
 		return "";
 	}
@@ -59,7 +59,7 @@ public class UtilModule
 
 		List<String> tempList = new LinkedList<String>();
 
-		StringTokenizer tokens = new StringTokenizer(text.substring(offset)," ");
+		StringTokenizer tokens = new StringTokenizer(text.substring(offset), " ");
 
 		while( tokens.hasMoreTokens() )
 		{
@@ -99,7 +99,7 @@ public class UtilModule
 				}
 				if (currentPos == -1) {
 					// Last parameter!
-					tempList.add( text.substring( lastPos ) );
+					tempList.add( text.substring( lastPos ).trim() );
 					break;
 				}
 			}
@@ -109,7 +109,7 @@ public class UtilModule
 		if (currentPos != -1) {
 			// Above loop finished without already slurping the final
 			// parameter.
-			tempList.add( text.substring( lastPos ) );
+			tempList.add( text.substring( lastPos ).trim() );
 		}
 
 		System.out.println("Done.");

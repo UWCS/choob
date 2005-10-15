@@ -515,6 +515,45 @@ public class SecurityModule
 	}
 
 	/**
+	 * Check if the given nickName is authed with NickServ (if NickServ is loaded).
+	 * @param nickName The nickname to check the permission on.
+	 * @throws ChoobNSAuthException If the nick is not authorised.
+	 */
+	public void checkNS(String nickName) throws ChoobNSAuthException
+	{
+		if (!hasNS(nickName))
+			throw new ChoobNSAuthException();
+	}
+
+	/**
+	 * Check if the given nickName is authed with NickServ (if NickServ is loaded).
+	 * @param nickName The nickname to check the permission on.
+	 * @return Whether the nick is authorised.
+	 */
+	public boolean hasNS(String nickName)
+	{
+		try
+		{
+			//return (Boolean)mods.plugin.callAPI("NickServ", "Check", nickName, false);
+			return (Boolean)mods.plugin.callAPI("NickServ", "Check", nickName);
+		}
+		catch (ChoobNoSuchPluginException e)
+		{
+			// XXX Should this throw an exception?:
+			//if (!allowNoNS)
+			//	throw new ChoobAuthException("The NickServ plugin is not loaded! Holy mother of God save us all!");
+			return true;
+		}
+		catch (ChoobException e)
+		{
+			// OMFG!
+			System.err.println("Error calling NickServ check! Details:");
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	/**
 	 * Check if the given nickName has permission and is authed with NickServ (if NickServ is loaded).
 	 * @param permission The permission to check.
 	 * @param nickName The nickname to check the permission on.
@@ -522,24 +561,7 @@ public class SecurityModule
 	 */
 	public void checkNickPerm(Permission permission, String nickName) throws ChoobAuthException
 	{
-		try
-		{
-			boolean nsCheck = (Boolean)mods.plugin.callAPI("NickServ", "Check", nickName, false);
-			if (!nsCheck)
-				throw new ChoobNSAuthException();
-		}
-		catch (ChoobNoSuchPluginException e)
-		{
-			// XXX Should this throw an exception?:
-			//if (!allowNoNS)
-			//	throw new ChoobAuthException("The NickServ plugin is not loaded! Holy mother of God save us all!");
-		}
-		catch (ChoobException e)
-		{
-			// OMFG!
-			System.err.println("Error calling NickServ check! Details:");
-			e.printStackTrace();
-		}
+		checkNS(nickName);
 
 		if (!hasPerm(permission, nickName))
 			throw new ChoobUserAuthException(permission);
@@ -549,28 +571,12 @@ public class SecurityModule
 	 * Check if the given nickName has permission and is authed with NickServ (if NickServ is loaded).
 	 * @param permission The permission to check.
 	 * @param nickName The nickname to check the permission on.
-	 * @throws ChoobAuthException If the nick is not authorised.
+	 * @return Whether the nick is authorised.
 	 */
 	public boolean hasNickPerm(Permission permission, String nickName)
 	{
-		try
-		{
-			boolean nsCheck = (Boolean)mods.plugin.callAPI("NickServ", "Check", nickName, false);
-			if (!nsCheck)
-				return false;
-		}
-		catch (ChoobNoSuchPluginException e)
-		{
-			// XXX Should this throw an exception?:
-			//if (!allowNoNS)
-			//	throw new ChoobAuthException("The NickServ plugin is not loaded! Holy mother of God save us all!");
-		}
-		catch (ChoobException e)
-		{
-			// OMFG!
-			System.err.println("Error calling NickServ check! Details:");
-			e.printStackTrace();
-		}
+		if (!hasNS(nickName))
+			return false;
 
 		if (!hasPerm(permission, nickName))
 			return false;
@@ -944,7 +950,8 @@ public class SecurityModule
 			stat.setString(1, userName);
 			ResultSet results = stat.executeQuery();
 			if ( !results.first() )
-				throw new ChoobException ("User " + userName + " does not exist!");
+				//throw new ChoobException ("User " + userName + " does not exist!");
+				return userName;
 			int userID = results.getInt(1);
 			stat.close();
 
