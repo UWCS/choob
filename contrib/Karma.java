@@ -314,11 +314,7 @@ public class Karma
 	};
 	public void commandSet( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
 	{
-		if (!mods.security.hasNickPerm(new ChoobPermission("plugins.karma.set"), mes.getNick()))
-		{
-			irc.sendContextReply(mes, "You lack authority!");
-			return;
-		}
+		mods.security.checkNickPerm(new ChoobPermission("plugins.karma.set"), mes.getNick());
 
 		List<String> params = mods.util.getParams( mes );
 		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
