@@ -33,7 +33,6 @@ public class Choob extends PircBot
 	Modules modules;
 	IRCInterface irc;
 	String trigger;
-	List <Filter> filterList;
 	List <Interval> intervalList;
 	ChoobWatcherThread watcher;
 
@@ -63,7 +62,7 @@ public class Choob extends PircBot
 		trigger = conf.getSettingFallback("botTrigger","~");
 
 		// Create a shiny synchronised (americans--) list
-		intervalList = Collections.synchronizedList(new ArrayList());
+		intervalList = new ArrayList();
 
 		// Create a new database connection broker using the MySQL drivers
 		try
@@ -82,7 +81,7 @@ public class Choob extends PircBot
 		irc = new IRCInterface( this );
 
 		// Initialise our modules.
-		modules = new Modules(broker, pluginMap, filterList, intervalList, this, irc );
+		modules = new Modules(broker, pluginMap, intervalList, this, irc );
 
 		irc.setMods(modules);
 

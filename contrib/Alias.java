@@ -80,7 +80,7 @@ public class Alias
 				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
 					mods.security.checkNS(mes.getNick());
 				else
-					mods.security.checkNickPerm(new ChoobPermission("plugins.alias.unlock"), mes.getNick());
+					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
 			}
 
 			oldAlias = " (was " + alias.converted + ")";
@@ -126,7 +126,7 @@ public class Alias
 				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
 					mods.security.checkNS(mes.getNick());
 				else
-					mods.security.checkNickPerm(new ChoobPermission("plugins.alias.unlock"), mes.getNick());
+					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
 			}
 
 			oldAlias = " (was " + alias.converted + ")";
@@ -141,6 +141,8 @@ public class Alias
 
 	public String[] helpCommandList = {
 		"List all aliases.",
+		"[<Which>]",
+		"<Which> is either not present for all unlocked, 'locked' or 'all'"
 	};
 	public void commandList( Message mes ) throws ChoobException
 	{
@@ -162,6 +164,8 @@ public class Alias
 			for (int i=0; i < results.size(); i++)
 			{
 				list += results.get(i).name;
+				if (results.get(i).locked)
+					list += "*";
 				if (i < results.size() - 2)
 					list += ", ";
 				else if (i == results.size() - 2)
@@ -260,7 +264,7 @@ public class Alias
 			if (nick.toLowerCase().equals(alias.owner.toLowerCase()))
 				mods.security.checkNS(mes.getNick());
 			else
-				mods.security.checkNickPerm(new ChoobPermission("plugins.alias.unlock"), mes.getNick());
+				mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
 
 			alias.locked = false;
 			mods.odb.update(alias);

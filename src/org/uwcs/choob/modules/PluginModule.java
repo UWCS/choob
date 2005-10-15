@@ -24,7 +24,6 @@ import java.security.AccessControlException;
  */
 public class PluginModule {
 	Map pluginMap;
-	List filterList;
 	DbConnectionBroker broker;
 	Modules mods;
 	ChoobPluginManager plugMan;
@@ -36,10 +35,9 @@ public class PluginModule {
 	 * Creates a new instance of the PluginModule.
 	 * @param pluginMap Map containing currently loaded plugins.
 	 */
-	public PluginModule(Map pluginMap, DbConnectionBroker broker, List filterList, Modules mods, IRCInterface irc) throws ChoobException {
+	public PluginModule(Map pluginMap, DbConnectionBroker broker, Modules mods, IRCInterface irc) throws ChoobException {
 		this.pluginMap = pluginMap;
 		this.broker = broker;
-		this.filterList = filterList;
 		this.mods = mods;
 		this.plugMan = new HaxSunPluginManager(mods, irc);
 		this.dPlugMan = new ChoobDistributingPluginManager();

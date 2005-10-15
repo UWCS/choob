@@ -15,14 +15,14 @@ import org.uwcs.choob.modules.*;
  */
 public class ChoobWatcherThread extends Thread
 {
-	List intervalList;
+	List<Interval> intervalList;
 	IRCInterface irc;
 	boolean running;
 	Map pluginMap;
 	Modules mods;
 
 	/** Creates a new instance of ChoobWatcherThread */
-	public ChoobWatcherThread( List intervalList, IRCInterface irc, Map pluginMap, Modules mods )
+	public ChoobWatcherThread( List<Interval> intervalList, IRCInterface irc, Map pluginMap, Modules mods )
 	{
 		this.intervalList = intervalList;
 		this.irc = irc;
@@ -40,11 +40,11 @@ public class ChoobWatcherThread extends Thread
 			long next = timeNow + 1000;
 			synchronized( intervalList )
 			{
-				Iterator tempIt = intervalList.iterator();
+				Iterator<Interval> tempIt = intervalList.iterator();
 
 				while( tempIt.hasNext() )
 				{
-					Interval tempInterval = (Interval)tempIt.next();
+					Interval tempInterval = tempIt.next();
 
 					if( tempInterval.getTrigger() <= timeNow )
 					{

@@ -20,16 +20,19 @@ public class Interval
 
 	private Object parameter;
 
+	private int id;
+
 	/** Creates a new instance of Interval */
 	public Interval()
 	{
 	}
 
-	public Interval(String plugin, Object parameter, long trigger)
+	public Interval(String plugin, Object parameter, long trigger, int id)
 	{
 		this.plugin = plugin;
 		this.parameter = parameter;
 		this.trigger = trigger;
+		this.id = id;
 	}
 
 	/**
@@ -48,6 +51,24 @@ public class Interval
 	public void setTrigger(long trigger)
 	{
 		this.trigger = trigger;
+	}
+
+	/**
+	 * Getter for property id.
+	 * @return Value of property id.
+	 */
+	public int getId()
+	{
+		return id;
+	}
+
+	/**
+	 * Setter for property id.
+	 * @param trigger New value of property id.
+	 */
+	public void setId(int id)
+	{
+		this.id = id;
 	}
 
 	/**

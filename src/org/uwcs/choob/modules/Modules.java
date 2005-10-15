@@ -74,11 +74,11 @@ public class Modules
 	/**
 	 * Creates a new instance of the Modules.
 	 */
-	public Modules( DbConnectionBroker dbBroker, Map pluginMap, List <Filter>filterList, List<Interval> intervalList, Choob bot, IRCInterface irc )
+	public Modules( DbConnectionBroker dbBroker, Map pluginMap, List<Interval> intervalList, Choob bot, IRCInterface irc )
 	{
 		try
 		{
-			plugin = new PluginModule(pluginMap, dbBroker, filterList, this, irc);
+			plugin = new PluginModule(pluginMap, dbBroker, this, irc);
 			history = new HistoryModule(dbBroker);
 			util = new UtilModule(irc);
 			nick = new NickModule();

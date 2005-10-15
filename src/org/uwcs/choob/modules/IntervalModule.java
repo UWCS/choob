@@ -31,9 +31,18 @@ public class IntervalModule
 	 */
 	public void callBack( Object parameter, Date interval )
 	{
-		String plugin = mods.security.getPluginName(0);
-		Interval newInt = new Interval( plugin, parameter, interval.getTime() );
-		intervalList.add( newInt );
+		callBackReal( parameter, interval.getTime(), 0 );
+	}
+
+	/**
+	 * Calls the 'interval' function in the calling plugin, with the specified parameter and after the specified interval.
+	 * @param parameter The paramater that you want passed along to the interval function.
+	 * @param interval The Date at which you want the event to occour.
+	 * @param id The unique id of this interval (-1 for no ID).
+	 */
+	public void callBack( Object parameter, Date interval, int id )
+	{
+		callBackReal( parameter, interval.getTime(), id );
 	}
 
 	/**
@@ -43,8 +52,43 @@ public class IntervalModule
 	 */
 	public void callBack( Object parameter, long delay )
 	{
+		callBackReal( parameter, System.currentTimeMillis() + delay, 0 );
+	}
+
+	/**
+	 * Calls the 'interval' function in the calling plugin, with the specified parameter and after the specified interval.
+	 * @param parameter The paramater that you want passed along to the interval function.
+	 * @param delay The delay after which you want the event to occour.
+	 * @param id The unique id of this interval (-1 for no ID).
+	 */
+	public void callBack( Object parameter, long delay, int id )
+	{
+		callBackReal( parameter, System.currentTimeMillis() + delay, id );
+	}
+
+	private void callBackReal (Object parameter, long when, int id)
+	{
 		String plugin = mods.security.getPluginName(0);
-		Interval newInt = new Interval( plugin, parameter, System.currentTimeMillis() + delay );
-		intervalList.add( newInt );
+		if (plugin == null)
+		{
+			System.err.println("A plugin tried to call callBack, but wasn't on the stack...");
+			return;
+		}
+		Interval newInt = new Interval( plugin, parameter, when, id );
+		synchronized(intervalList)
+		{
+			if ( id != -1 )
+			{
+				// XXX this is damn inefficient...
+				Iterator<Interval> iterator = intervalList.iterator();
+				while(iterator.hasNext())
+				{
+					Interval thisInt = iterator.next();
+					if ( id == thisInt.getId() && plugin.equals(thisInt.getPlugin()) )
+						iterator.remove();
+				}
+			}
+			intervalList.add( newInt );
+		}
 	}
 }

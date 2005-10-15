@@ -52,7 +52,7 @@ public class TimedEvents
 
 		long callbackTime = period * 1000;
 
-		mods.interval.callBack( newMes, callbackTime );
+		mods.interval.callBack( newMes, callbackTime, -1 );
 		System.out.println(System.currentTimeMillis() + callbackTime);
 		irc.sendContextReply(mes, "OK, will do at " + new Date(System.currentTimeMillis() + callbackTime) + ".");
 	}
@@ -122,7 +122,7 @@ public class TimedEvents
 
 		long callbackTime = g.getTimeInMillis() - System.currentTimeMillis();
 
-		mods.interval.callBack( newMes, callbackTime );
+		mods.interval.callBack( newMes, callbackTime, -1 );
 
 		irc.sendContextReply(mes, "OK, will do at " + g.getTime().toString() + ".");
 	}
