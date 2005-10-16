@@ -25,6 +25,7 @@ public class MFJ
 	/**
 	 * Implements JB's !dance command, with different outputs
 	 */
+	public String[] helpCommandDance = { "Makes the bot dance with you. If you don't want the bot to dance with you, don't use it." };
 	public void commandDance(Message con, Modules mods, IRCInterface irc)
 	{
 		int type = (int) (10 * Math.random());		
@@ -48,9 +49,12 @@ public class MFJ
 		irc.sendContextAction( con, "grabs " + con.getNick() + " and" + dance );
 	}
 	
+	
+	
 	/**
 	 * Implements JB's !colour command
 	 */
+	public String[] helpCommandColour = { "Lets you know what today's colour is." };
 	public void commandColour(Message con, Modules mods, IRCInterface irc)
 	{
 		GregorianCalendar cal = new GregorianCalendar();
@@ -100,6 +104,7 @@ public class MFJ
 	/**
 	 * Americans--
 	 */
+	public String[] helpCommandColour = { "Lets you know what today's colour is, if you're American and can't spell." };
 	public void commandColor(Message con, Modules mods, IRCInterface irc)
 	{
 		commandColour(con, mods, irc);
@@ -108,6 +113,7 @@ public class MFJ
 	/**
 	 * Implement JB's !year command
 	 */
+	public String[] helpCommandColour = { "Outputs the current year." };
 	public void commandYear(Message con, Modules mods, IRCInterface irc)
 	{
 		GregorianCalendar cal = new GregorianCalendar();
@@ -118,6 +124,7 @@ public class MFJ
 	/**
 	 * Implement JB's !month command
 	 */
+	public String[] helpCommandColour = { "Outputs the current month." };
 	public void commandMonth(Message con, Modules mods, IRCInterface irc)
 	{
 		GregorianCalendar cal = new GregorianCalendar();
@@ -131,6 +138,7 @@ public class MFJ
 	/**
 	 * Implement JB's !day command
 	 */
+	public String[] helpCommandColour = { "Outputs the current day." };
 	public void commandDay(Message con, Modules mods, IRCInterface irc)
 	{
 		GregorianCalendar cal = new GregorianCalendar();
