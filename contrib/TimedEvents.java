@@ -35,7 +35,7 @@ public class TimedEvents
 
 		// Reload all old queued objects...
 		long time = System.currentTimeMillis();
-		List<TimedEvent> events = mods.odb.retrieve(TimedEvent.class, null);
+		List<TimedEvent> events = mods.odb.retrieve(TimedEvent.class, "WHERE 1");
 		for(TimedEvent event: events)
 		{
 			mods.interval.callBack( event, event.executeAt - time, -1 );

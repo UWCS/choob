@@ -97,9 +97,9 @@ public class Alias
 	}
 
 	public String[] helpCommandRemove = {
-		"Remove an alias to the bot.",
+		"Remove an alias from the bot.",
 		"<Name>",
-		"<Name> is the name of the alias to add",
+		"<Name> is the name of the alias to remove",
 	};
 	public void commandRemove( Message mes ) throws ChoobException
 	{

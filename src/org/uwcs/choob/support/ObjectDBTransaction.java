@@ -217,7 +217,12 @@ public class ObjectDBTransaction
 								{
 									// Break if we're in the next object
 									if (result.getInt(1) != id)
-										break;
+									{
+										objects.add(tempObject);
+										tempObject = storedClass.newInstance();
+										id = result.getInt(1);
+										idField.setInt( tempObject, id );
+									}
 
 									String name = result.getString(2);
 									Field tempField = fieldCache.get(name);
@@ -256,12 +261,13 @@ public class ObjectDBTransaction
 								}
 								catch( NoSuchFieldException e )
 								{
+									e.printStackTrace();
 									// Ignore this, as per spec.
 								}
 							}
 							while( result.next() ); // Looping over fields
 
-							// tempObject has been build.
+							// tempObject has been built.
 							objects.add(tempObject);
 						}
 						catch (InstantiationException e)
@@ -314,8 +320,6 @@ public class ObjectDBTransaction
 		{
 			sqlQuery = "SELECT ObjectStore.ClassID FROM ObjectStore WHERE ClassName = '" + storedClass.getName() + "';";
 		}
-
-		System.out.println("Query: " + sqlQuery);
 
 		Statement objStat = null;
 		try

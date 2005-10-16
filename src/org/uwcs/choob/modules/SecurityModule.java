@@ -607,7 +607,8 @@ public class SecurityModule
 		System.out.println(userName + " " + userNode + ": " + permission);
 
 		if (userNode == -1)
-			return false;
+			if (anonID != -1)
+				return hasPerm(permission, anonID, true);
 
 		return hasPerm(permission, userNode);
 	}
