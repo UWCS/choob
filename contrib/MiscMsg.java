@@ -30,7 +30,7 @@ public class MiscMsg
 	};
 	public void commandTime( Message mes )
 	{
-		irc.sendContextReply(mes, new SimpleDateFormat("'The time is 'hh:mm:ss'.'").format(new Date()));
+		irc.sendContextReply(mes, new SimpleDateFormat("'The time is 'HH:mm:ss'.'").format(new Date()));
 	}
 
 	public String[] helpCommandDate = {
