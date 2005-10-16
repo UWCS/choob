@@ -589,6 +589,17 @@ public class SecurityModule
 	 * @param permission
 	 * @param userName
 	 */
+	public void checkPerm(Permission permission, String userName) throws ChoobUserAuthException
+	{
+		if (!hasPerm(permission, userName))
+			throw new ChoobUserAuthException(permission);
+	}
+
+	/**
+	 * Check if the given userName has permission. Better to use checkNickPerm.
+	 * @param permission
+	 * @param userName
+	 */
 	public boolean hasPerm(Permission permission, String userName)
 	{
 		int userNode = getNodeIDFromUserName(userName);

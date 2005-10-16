@@ -3,32 +3,35 @@ import org.uwcs.choob.modules.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 
-class Shutup
+public class Shutup
 {
-	public void commandPirate( Message con, Modules mods, IRCInterface irc )
+	// XXX Make this lot nicer!
+	public String[] helpCommandAdd = {
+		"Make the bot shut up in the current channel.",
+	};
+	public void commandAdd( Message mes, Modules mods, IRCInterface irc )
 	{
-		irc.sendContextReply(con, "Yarr!");
+		irc.sendContextReply(mes, "Okay, shutting up in " + mes.getContext() + ".");
+		mods.pc.addProtected(mes.getContext());
 	}
 
-	public void commandAdd( Message con, Modules mods, IRCInterface irc )
+	public String[] helpCommandRemove = {
+		"Make the bot wake up in the current channel.",
+	};
+	public void commandRemove( Message mes, Modules mods, IRCInterface irc )
 	{
-		irc.sendContextReply(con, "Okay, now silent in " + con.getChannel() + ".");
-		mods.pc.addProtected(con.getChannel());
+		mods.pc.removeProtected(mes.getContext());
+		irc.sendContextReply(mes, "Yay, I'm free to speak in " + mes.getContext() + " again!");
 	}
 
-	public void commandRemove( Message con, Modules mods, IRCInterface irc )
+	public String[] helpCommandCheck = {
+		"Check if the bot is shut up in the current channel.",
+	};
+	public void commandCheck( Message mes, Modules mods, IRCInterface irc )
 	{
-		mods.pc.removeProtected(con.getChannel());
-		irc.sendContextReply(con, "Yay, I'm free to speak in " + con.getChannel() + " again!");
-	}
-
-
-	public Boolean commandCheck( Message con, Modules mods, IRCInterface irc )
-	{
-		if (mods.pc.isProtected(con.getChannel()))
-			irc.sendContextReply(con, "Yes, shut-up.");
+		if (mods.pc.isProtected(mes.getContext()))
+			irc.sendContextReply(mes, "Yes, shut-up.");
 		else
-			irc.sendContextReply(con, "Nope, not shut-up.");
+			irc.sendContextReply(mes, "Nope, not shut-up.");
 	}
-
 }

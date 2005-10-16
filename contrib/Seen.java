@@ -18,6 +18,7 @@ import java.text.*;
 public class SeenObj
 {
 	public int id;
+	public String name;
 	public String nick;
 	public String primaryMessage;
 	public String primaryChannel;
@@ -38,11 +39,23 @@ public class Seen
 		this.mods = mods;
 	}
 
+	public String[] helpTopics = { "Using" };
+	public String[] helpUsing = {
+		  "Seen is a plugin that watches all channels and observes when it last"
+		+ " saw people speak. It monitors messages, nick changes, quits,"
+		+ " parts and kicks."
+	};
+
+	public String[] helpCommandSeen = {
+		"Discover when the bot last saw a user.",
+		"<Name>",
+		"<Name> is the user to look for."
+	};
 	public void commandSeen( Message mes ) throws ChoobException
 	{
 		String nick = mods.nick.getBestPrimaryNick(mods.util.getParamString( mes ));
 
-		if (nick.toLowerCase().equals(mes.getNick().toLowerCase()))
+		if (nick.toLowerCase().equals(mods.nick.getBestPrimaryNick(mes.getNick()).toLowerCase()))
 		{
 			// Seen on themselves.
 			irc.sendContextReply( mes, "Ever looked in a mirror?" );
@@ -65,23 +78,23 @@ public class Seen
 			{
 				case 0:
 					// Nothing
-					irc.sendContextReply( mes, nick + " said \"" + seen.primaryMessage + "\" in " + seen.primaryChannel + " at " + primaryTime + ".");
+					irc.sendContextReply( mes, seen.nick + " said \"" + seen.primaryMessage + "\" in " + seen.primaryChannel + " at " + primaryTime + ".");
 					break;
 				case 1:
 					// Nick Change
-					irc.sendContextReply( mes, nick + " said \"" + seen.primaryMessage + "\" in " + seen.primaryChannel + " at " + primaryTime + " before changing nickname to " + seen.secondaryData + " at " + secondaryTime + ".");
+					irc.sendContextReply( mes, seen.nick + " said \"" + seen.primaryMessage + "\" in " + seen.primaryChannel + " at " + primaryTime + " before changing nickname to " + seen.secondaryData + " at " + secondaryTime + ".");
 					break;
 				case 2:
 					// Kick
-					irc.sendContextReply( mes, nick + " said \"" + seen.primaryMessage + "\" in " + seen.primaryChannel + " at " + primaryTime + " before being kicked from " + seen.secondaryData + " at " + secondaryTime + ".");
+					irc.sendContextReply( mes, seen.nick + " said \"" + seen.primaryMessage + "\" in " + seen.primaryChannel + " at " + primaryTime + " before being kicked from " + seen.secondaryData + " at " + secondaryTime + ".");
 					break;
 				case 3:
 					// Part
-					irc.sendContextReply( mes, nick + " said \"" + seen.primaryMessage + "\" in " + seen.primaryChannel + " at " + primaryTime + " before leaving " + seen.secondaryData + " at " + secondaryTime + ".");
+					irc.sendContextReply( mes, seen.nick + " said \"" + seen.primaryMessage + "\" in " + seen.primaryChannel + " at " + primaryTime + " before leaving " + seen.secondaryData + " at " + secondaryTime + ".");
 					break;
 				case 4:
 					// Quit
-					irc.sendContextReply( mes, nick + " said \"" + seen.primaryMessage + "\" in " + seen.primaryChannel + " at " + primaryTime + " before quitting with message \"" + seen.secondaryData + "\" at " + secondaryTime + ".");
+					irc.sendContextReply( mes, seen.nick + " said \"" + seen.primaryMessage + "\" in " + seen.primaryChannel + " at " + primaryTime + " before quitting with message \"" + seen.secondaryData + "\" at " + secondaryTime + ".");
 					break;
 			}
 		}
@@ -93,23 +106,24 @@ public class Seen
 			{
 				case 0:
 					// Nothing
-					irc.sendContextReply( mes, "Sorry, no such luck! I've not seen " + nick + "!" );
+					// Can this even happen?
+					irc.sendContextReply( mes, "Sorry, no such luck! I've not seen " + seen.nick + "!" );
 					break;
 				case 1:
 					// Nick Change
-					irc.sendContextReply( mes, nick + " changed nickname to " + seen.secondaryData + " at " + secondaryTime + ".");
+					irc.sendContextReply( mes, seen.nick + " changed nickname to " + seen.secondaryData + " at " + secondaryTime + ".");
 					break;
 				case 2:
 					// Kick
-					irc.sendContextReply( mes, nick + " was kicked from " + seen.secondaryData + " at " + secondaryTime + ".");
+					irc.sendContextReply( mes, seen.nick + " was kicked from " + seen.secondaryData + " at " + secondaryTime + ".");
 					break;
 				case 3:
 					// Part
-					irc.sendContextReply( mes, nick + " left " + seen.secondaryData + " at " + secondaryTime + ".");
+					irc.sendContextReply( mes, seen.nick + " left " + seen.secondaryData + " at " + secondaryTime + ".");
 					break;
 				case 4:
 					// Quit
-					irc.sendContextReply( mes, nick + " before quit with message \"" + seen.secondaryData + "\" at " + secondaryTime + ".");
+					irc.sendContextReply( mes, seen.nick + " before quit with message \"" + seen.secondaryData + "\" at " + secondaryTime + ".");
 					break;
 			}
 		}
@@ -117,16 +131,16 @@ public class Seen
 
 	private SeenObj getSeen(String nick, boolean create) throws ChoobException
 	{
-		nick = mods.nick.getBestPrimaryNick(nick).replaceAll("(\\W)", "\\\\$1");
+		String sortNick = mods.nick.getBestPrimaryNick(nick).replaceAll("(\\W)", "\\\\$1");
 
-		List objs = mods.odb.retrieve( SeenObj.class, "WHERE nick = \"" + nick + "\"" );
+		List<SeenObj> objs = mods.odb.retrieve( SeenObj.class, "WHERE nick = \"" + nick + "\"" );
 
 		if ( objs.size() == 0 )
 		{
 			if ( create )
 			{
 				SeenObj seen = new SeenObj();
-				seen.nick = nick;
+				seen.name = sortNick;
 				seen.primaryMessage = "";
 				seen.primaryChannel = "";
 				seen.secondaryData = "";
@@ -136,7 +150,11 @@ public class Seen
 				return null;
 		}
 		else
-			return (SeenObj)objs.get(0);
+		{
+			SeenObj seen = objs.get(0);
+			seen.name = sortNick; // To stop nasty errors...
+			return seen;
+		}
 	}
 
 	// Synchronized, since update appears to be non thread safe...
@@ -153,6 +171,7 @@ public class Seen
 	public void onMessage( ChannelMessage mes ) throws ChoobException
 	{
 		SeenObj seen = getSeen( mes.getNick(), true );
+		seen.nick = mes.getNick();
 		seen.primaryTime = System.currentTimeMillis();
 		seen.primaryMessage = mes.getMessage();
 		seen.primaryChannel = mes.getChannel();
@@ -164,6 +183,7 @@ public class Seen
 	public void onAction( ChannelAction mes ) throws ChoobException
 	{
 		SeenObj seen = getSeen( mes.getNick(), true );
+		seen.nick = mes.getNick();
 		seen.primaryTime = System.currentTimeMillis();
 		seen.primaryMessage = "/me " + mes.getMessage();
 		seen.primaryChannel = mes.getChannel();
@@ -175,6 +195,7 @@ public class Seen
 	public void onNickChange( NickChange nc ) throws ChoobException
 	{
 		SeenObj seen = getSeen( nc.getNick(), true );
+		seen.nick = nc.getNick();
 		seen.secondaryTime = System.currentTimeMillis();
 		seen.secondaryData = nc.getNewNick();
 		seen.secondaryType = 1;
@@ -184,6 +205,7 @@ public class Seen
 	public void onKick( ChannelKick ck ) throws ChoobException
 	{
 		SeenObj seen = getSeen( ck.getTarget(), true );
+		seen.nick = ck.getTarget();
 		seen.secondaryTime = System.currentTimeMillis();
 		seen.secondaryData = ck.getChannel() + " with message \"" + ck.getMessage() + "\"";
 		seen.secondaryType = 2;
@@ -193,6 +215,7 @@ public class Seen
 	public void onPart( ChannelPart cp ) throws ChoobException
 	{
 		SeenObj seen = getSeen( cp.getNick(), true );
+		seen.nick = cp.getNick();
 		seen.secondaryTime = System.currentTimeMillis();
 		seen.secondaryData = cp.getChannel();
 		seen.secondaryType = 3;
@@ -202,6 +225,7 @@ public class Seen
 	public void onQuit( QuitEvent qe ) throws ChoobException
 	{
 		SeenObj seen = getSeen( qe.getNick(), true );
+		seen.nick = qe.getNick();
 		seen.secondaryTime = System.currentTimeMillis();
 		seen.secondaryData = qe.getMessage();
 		seen.secondaryType = 4;

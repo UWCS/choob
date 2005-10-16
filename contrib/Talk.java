@@ -16,21 +16,40 @@ import org.jibble.pircbot.Colors;
 
 public class Talk
 {
+	public String[] helpCommandShout = {
+		"Give a yell to deafen countries."
+	};
 	public void commandShout( Message mes, Modules mods, IRCInterface irc )
 	{
 		irc.sendContextReply(mes, Colors.BOLD + "BOOM! Headshot!");
 	}
 
+	public String[] helpCommandSay = {
+		"Get the bot to say something.",
+		"<Text>",
+		"<Text> is the text to say"
+	};
 	public void commandSay( Message con, Modules modules, IRCInterface irc )
 	{
 		irc.sendContextMessage(con, modules.util.getParamString(con));
 	}
 
+	public String[] helpCommandReply = {
+		"Get the bot to reply to you.",
+		"<Text>",
+		"<Text> is the text with which to reply"
+	};
 	public void commandReply( Message con, Modules modules, IRCInterface irc )
 	{
 		irc.sendContextReply(con, modules.util.getParamString(con));
 	}
 
+	public String[] helpCommandMsg = {
+		"Get the bot to speak to people.",
+		"<Target> <Text>",
+		"<Target> is the destination",
+		"<Text> is the message to send"
+	};
 	public void commandMsg( Message con, Modules modules, IRCInterface irc )
 	{
 		String params = modules.util.getParamString(con);
@@ -44,11 +63,22 @@ public class Talk
 		}
 	}
 
+	public String[] helpCommandMe = {
+		"Get the bot to do things.",
+		"<Text>",
+		"<Text> is the text that describes what to do"
+	};
 	public void commandMe( Message con, Modules modules, IRCInterface irc )
 	{
 		irc.sendContextAction(con, modules.util.getParamString(con));
 	}
 
+	public String[] helpCommandDescribe = {
+		"Get the bot to do things to people.",
+		"<Target> <Text>",
+		"<Target> is the destination",
+		"<Text> is the thing to do"
+	};
 	public void commandDescribe( Message con, Modules modules, IRCInterface irc )
 	{
 		String params = modules.util.getParamString(con);

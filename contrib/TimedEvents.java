@@ -16,6 +16,13 @@ import java.text.SimpleDateFormat;
 public class TimedEvents
 {
 	private static String lastDelivery=null;
+
+	public String[] helpCommandIn = {
+		"Make a command execute in the future.",
+		"<When> <Command>",
+		"<When> is a non-empty time of the form [<Days>d][<Hours>h][<Minutes>m][<Seconds>s]",
+		"<Command> is the command to execute"
+	};
 	public void commandIn( Message mes, Modules mods, IRCInterface irc )
 	{
 		// Stop recursion
@@ -57,6 +64,12 @@ public class TimedEvents
 		irc.sendContextReply(mes, "OK, will do at " + new Date(System.currentTimeMillis() + callbackTime) + ".");
 	}
 
+	public String[] helpCommandAt = {
+		"Make a command execute in the future.",
+		"<When> <Command>",
+		"<When> is a time of the form HH:MM[:SS]",
+		"<Command> is the command to execute"
+	};
 	public void commandAt( Message mes, Modules mods, IRCInterface irc )
 	{
 		// XXX /Lots/ of duplicated code from in.

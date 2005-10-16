@@ -20,19 +20,37 @@ public class TellObject
 
 public class Tell
 {
-	public void commandSend( Message con, Modules mods, IRCInterface irc )
+	public String[] helpTopics = { "Using", "Security" };
+
+	public String[] helpUsing = {
+		  "Tell is a plugin that allows you to send messages to people who"
+		+ " aren't around at the moment. When they next speak, the bot will"
+		+ " let them know."
+	};
+
+	public String[] helpSecurity = {
+		  "Tells currently ignore NickServ completely, which makes them pretty insecure."
+	};
+
+	public String[] helpCommandSend = {
+		"Send a tell to the given nickname.",
+		"<Nick>[,<Nick>...] <Message>",
+		"<Nick> is the target of the tell",
+		"<Message> is the content"
+	};
+	public void commandSend( Message mes, Modules mods, IRCInterface irc )
 	{
 		int targets = 0;
 		TellObject tO = new TellObject();
 		// Note: This is intentionally not translated to a primary nick.
-		tO.from=con.getNick();
+		tO.from=mes.getNick();
 
 		Pattern pa = Pattern.compile("^[^ ]+? ([a-zA-Z0-9_,|-]+) (.*)$");
-		Matcher ma = pa.matcher(con.getMessage());
+		Matcher ma = pa.matcher(mes.getMessage());
 
 		if (!ma.matches())
 		{
-			irc.sendContextMessage(con, "Syntax error.");
+			irc.sendContextMessage(mes, "Syntax error.");
 			return;
 		}
 
@@ -40,7 +58,7 @@ public class Tell
 
 		StringTokenizer tokens = new StringTokenizer(ma.group(1), ",");
 
-		tO.date=(new Date(con.getMillis())).toString();
+		tO.date=(new Date(mes.getMillis())).toString();
 
 		while( tokens.hasMoreTokens() )
 		{
@@ -54,11 +72,11 @@ public class Tell
 			}
 			catch (ChoobException e)
 			{
-				irc.sendContextReply(con, "Ack, could not send to " + tO.target + ": " + e);
+				irc.sendContextReply(mes, "Ack, could not send to " + tO.target + ": " + e);
 			}
 		}
 
-		irc.sendContextMessage(con, "Okay, will tell upon next speaking. (Sent to " + targets + " " + (targets == 1 ? "person" : "people") + ").");
+		irc.sendContextMessage(mes, "Okay, will tell upon next speaking. (Sent to " + targets + " " + (targets == 1 ? "person" : "people") + ").");
 	}
 
 	private void spew(String nick, Modules mods, IRCInterface irc)
@@ -85,6 +103,5 @@ public class Tell
 	public void onMessage( ChannelMessage ev, Modules mod, IRCInterface irc ) { spew(ev.getNick(), mod, irc); }
 	public void onPrivateMessage( PrivateMessage ev, Modules mod, IRCInterface irc ) { spew(ev.getNick(), mod, irc); }
 	public void onJoin( ChannelJoin ev, Modules mod, IRCInterface irc ) { spew(ev.getNick(), mod, irc); }
-
 }
 
