@@ -11,19 +11,23 @@ import org.jibble.pircbot.Colors;
 
 public class Events
 {
-	private GetContentsCached eventsdata;
 	private Modules mods;
 	private IRCInterface irc;
 
-	public Events(Modules mods, IRCInterface irc)
+	private final URL eventsurl;
+
+	public Events(Modules mods, IRCInterface irc) throws ChoobException
 	{
 		this.mods = mods;
 		this.irc = irc;
-		try {
-			eventsdata = new GetContentsCached(new URL("http://faux.uwcs.co.uk/events.data")); /* <-- default timeout is okay. */
-	}
-		// XXX
-		catch (Exception e) {} // Never going to be thrown.
+		try
+		{
+			eventsurl = new URL("http://faux.uwcs.co.uk/events.data");
+		}
+		catch (MalformedURLException e)
+		{
+			throw new ChoobException("Error in constant data.");
+		}
 	}
 
 	private String stupidStamp(long i)
@@ -58,17 +62,20 @@ public class Events
 	//  Id:                                         1        2          3       4       5       6       7         8                     9                                 10
 	//  Name:                                       id       name     start   end <signup>code max   current    names</signup>        desc.                             location
 
-	private ArrayList<String[]> readEventsData()
+	private ArrayList<String[]> readEventsData() throws ChoobException
 	{
 		ArrayList<String[]> events=new ArrayList();
-		String s=null;
-		try { s=eventsdata.getContents(); } catch (IOException e)
+		Matcher ma;
+
+		try
 		{
-			return null; // H4X!
+			ma=mods.scrape.getMatcher(eventsurl, 10000, events_pattern);
+		}
+		catch (IOException e)
+		{
+			throw new ChoobException("Error reading events data file.");
 		}
 
-		String rep="";
-		Matcher ma=events_pattern.matcher(s);
 		while (ma.find())
 		{
 			String [] nine=ma.group(9).split("\\|");
@@ -82,7 +89,7 @@ public class Events
 		"<Key>",
 		"<Key> is a key to use for event searching"
 	};
-	public void commandInfo(Message mes)
+	public void commandInfo(Message mes) throws ChoobException
 	{
 		String comp=mods.util.getParamString(mes).toLowerCase();
 		if (comp.equals(""))
@@ -122,7 +129,7 @@ public class Events
 		"<Key>",
 		"<Key> is a key to use for event searching"
 	};
-	public void commandSignup(Message mes)
+	public void commandSignup(Message mes) throws ChoobException
 	{
 		String comp=mods.util.getParamString(mes).toLowerCase();
 		if (comp.equals(""))
@@ -167,7 +174,7 @@ public class Events
 		"<Key>",
 		"<Key> is a key to use for event searching"
 	};
-	public void commandLink(Message mes)
+	public void commandLink(Message mes) throws ChoobException
 	{
 		String comp=mods.util.getParamString(mes).toLowerCase();
 		if (comp.equals(""))
@@ -207,7 +214,7 @@ public class Events
 		"<Key>",
 		"<Key> is a key to use for event searching"
 	};
-	public void commandSignups(Message mes)
+	public void commandSignups(Message mes) throws ChoobException
 	{
 		String comp=mods.util.getParamString(mes).toLowerCase();
 		if (comp.equals(""))
@@ -244,7 +251,7 @@ public class Events
 	public String[] helpCommandList = {
 		"Get a list of events.",
 	};
-	public void commandList(Message mes)
+	public void commandList(Message mes) throws ChoobException
 	{
 		ArrayList<String[]> events=readEventsData();
 		int c=events.size();

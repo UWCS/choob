@@ -64,6 +64,11 @@ public class Modules
 	 */
 	public ObjectDbModule odb;
 
+	/**
+	 * An instance of the ScraperModule, a set of tools to simplify screen-scraping.
+	 */
+	public ScraperModule scrape;
+
 	private DbConnectionBroker dbBroker;
 	Map pluginMap;
 	List intervalList;
@@ -87,6 +92,7 @@ public class Modules
 			security = new SecurityModule( dbBroker, this );
 			pc = new ProtectedChannels();
 			odb = new ObjectDbModule( dbBroker, this );
+			scrape = new ScraperModule();
 		}
 		catch (ChoobException e)
 		{

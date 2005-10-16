@@ -11,18 +11,27 @@ import java.util.regex.*;
 
 public class GetContentsCached
 {
-	//String variants require exceptions, throwing is irritating and catching makes no sense.
-	
-	//public GetContentsCached(String url) { this.url=new URL(url); } 
-	//public GetContentsCached(String url, int mintime) { this.url=new URL(url); this.mintime=mintime*1000; }
-	public GetContentsCached(URL url) { this.url=url; } 
-	public GetContentsCached(URL url, int mintime) { this.url=url; this.mintime=mintime*1000; }
-	
+	public static int DEFAULT_TIMEOUT=5*60*1000;  // <-- 5 mins in ms.
+
+	public GetContentsCached(URL url) { this.url=url; }
+	public GetContentsCached(URL url, long mintime) { this.url=url; setTimeout(mintime); }
+
 	URL url;
 	long lastaccess;
-	long mintime=5*60*1000; // <-- 5 mins in ms.
+	long mintime=DEFAULT_TIMEOUT;
 	protected String contents=null;
-	
+
+	public long getTimeout()
+	{
+		return mintime;
+	}
+
+	public void setTimeout(long timeout)
+	{
+		mintime=timeout;
+		updateNextCheck();
+	}
+
 	public void updateIfNeeded() throws IOException
 	{
 		long now=(new Date()).getTime();
@@ -34,20 +43,25 @@ public class GetContentsCached
 		InputStreamReader isr	= new InputStreamReader(is);
 		BufferedReader br		= new BufferedReader(isr);
 		String l, ls="";
-		
+
 		while ((l=br.readLine())!=null)
 			ls+=l+"\n";
 		contents=ls;
-		lastaccess=now;	
+		lastaccess=now;
 	}
-	
+
+	public void updateNextCheck()
+	{
+		lastaccess=(new Date()).getTime()-mintime;
+	}
+
 	public String getContents() throws IOException
 	{
 		updateIfNeeded();
 		System.out.println(contents);
 		return contents;
 	}
-	
+
 	public String getContentsNull()
 	{
 		try

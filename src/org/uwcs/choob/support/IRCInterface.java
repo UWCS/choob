@@ -19,8 +19,8 @@ public class IRCInterface {
 	Choob bot;
 	Modules mods;
 
-	final int maxmsglength=400; // Arbiatary hax!
-	final int maxmsgtruncation=30; // Arbiatary hax!
+	public final static int MAX_MESSAGE_LENGTH=400; // Arbiatary hax!
+	final int maxmsgtruncation=100; // Arbiatary hax!
 
 	/** Creates a new instance of IRCInterface */
 	public IRCInterface(Choob bot) {
@@ -73,18 +73,18 @@ public class IRCInterface {
 		if (target==null)
 			return;
 
-		if (message.length() > maxmsglength)
+		if (message.length() > MAX_MESSAGE_LENGTH)
 		{
 			// XXX HAX XXX HAX XXX HAX I'm so drunk.
 			do
 			{
-				int lio=message.substring(0, Math.min(maxmsglength, message.length())).lastIndexOf(' ');
-				if (lio==-1 || maxmsglength-lio > maxmsgtruncation)
+				int lio=message.substring(0, Math.min(MAX_MESSAGE_LENGTH, message.length())).lastIndexOf(' ');
+				if (lio==-1 || MAX_MESSAGE_LENGTH-lio > maxmsgtruncation)
 				{
-					System.out.println(maxmsglength-lio);
+					System.out.println(MAX_MESSAGE_LENGTH-lio);
 					if (message.trim().length()>0)
-						bot.sendMessage(target, message.substring(0, Math.min(maxmsglength, message.length())) + (message.length() > maxmsglength ? "..." : ""));
-					message=sprefix + message.substring(Math.min(maxmsglength, message.length()));
+						bot.sendMessage(target, message.substring(0, Math.min(MAX_MESSAGE_LENGTH, message.length())) + (message.length() > MAX_MESSAGE_LENGTH ? "..." : ""));
+					message=sprefix + message.substring(Math.min(MAX_MESSAGE_LENGTH, message.length()));
 				}
 				else
 				{

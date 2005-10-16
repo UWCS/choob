@@ -82,7 +82,7 @@ public class PluginModule {
 	/**
 	 * Call the API subroutine of name name on plugin pluginName and return the result.
 	 * @param pluginName The name of the plugin to call.
-	 * @param name The name of the routine to call.
+	 * @param APIString The name of the routine to call.
 	 * @param params Parameters to pass to the routine.
 	 */
 	public Object callAPI(String pluginName, String APIString, Object... params) throws ChoobException
