@@ -196,7 +196,7 @@ CREATE TABLE `ObjectStoreData` (
   `FieldName` varchar(128) NOT NULL default '',
   `FieldBigInt` BIGINT NOT NULL,
   `FieldDouble` DOUBLE NOT NULL,
-  `FieldString` text NOT NULL,
+  `FieldString` TEXT,
   UNIQUE KEY (`ObjectID`, `FieldName`),
   KEY (`FieldName`),
   INDEX (`FieldBigInt`),

@@ -8,6 +8,14 @@ import java.util.*;
 import java.util.regex.*;
 import java.text.SimpleDateFormat;
 
+public class TimedEvent
+{
+	public int id;
+	public int mesID; // For duplication
+	public String command;
+	public long executeAt;
+}
+
 /**
  * Timed events plugin for Choob
  *
@@ -15,7 +23,23 @@ import java.text.SimpleDateFormat;
  */
 public class TimedEvents
 {
-	private static String lastDelivery=null;
+	private TimedEvent lastDelivery = null;
+	private Modules mods;
+	private IRCInterface irc;
+
+	public TimedEvents(Modules mods, IRCInterface irc) throws ChoobException
+	{
+		this.mods = mods;
+		this.irc = irc;
+
+		// Reload all old queued objects...
+		long time = System.currentTimeMillis();
+		List<TimedEvent> events = mods.odb.retrieve(TimedEvent.class, null);
+		for(TimedEvent event: events)
+		{
+			mods.interval.callBack( event, event.executeAt - time, -1 );
+		}
+	}
 
 	public String[] helpCommandIn = {
 		"Make a command execute in the future.",
@@ -23,7 +47,7 @@ public class TimedEvents
 		"<When> is a non-empty time of the form [<Days>d][<Hours>h][<Minutes>m][<Seconds>s]",
 		"<Command> is the command to execute"
 	};
-	public void commandIn( Message mes, Modules mods, IRCInterface irc )
+	public void commandIn( Message mes ) throws ChoobException
 	{
 		// Stop recursion
 		if (mes.getSynthLevel() > 1) {
@@ -34,7 +58,7 @@ public class TimedEvents
 		List<String> params = mods.util.getParams( mes, 2 );
 
 		if (params.size() <= 2) {
-			irc.sendContextReply(mes, "Syntax is: in <time> <command>");
+			irc.sendContextReply(mes, "Syntax is: TimedEvents.In <When> <Command>");
 			return;
 		}
 
@@ -55,13 +79,21 @@ public class TimedEvents
 			// No.
 			command = irc.getTrigger() + command;
 
-		IRCEvent newMes = mes.cloneEvent( command );
+		TimedEvent timedEvent = new TimedEvent();
+		timedEvent.mesID = mods.history.getMessageID(mes);
+		timedEvent.command = command;
+		timedEvent.executeAt = System.currentTimeMillis() + period * 1000;
 
-		long callbackTime = period * 1000;
+		if (timedEvent.mesID == -1)
+		{
+			irc.sendContextReply(mes, "Internal error: The message you sent apparently did not exist!");
+			return;
+		}
 
-		mods.interval.callBack( newMes, callbackTime, -1 );
-		System.out.println(System.currentTimeMillis() + callbackTime);
-		irc.sendContextReply(mes, "OK, will do at " + new Date(System.currentTimeMillis() + callbackTime) + ".");
+		mods.odb.save(timedEvent);
+		mods.interval.callBack( timedEvent, period * 1000, -1 );
+
+		irc.sendContextReply(mes, "OK, will do at " + new Date(timedEvent.executeAt) + ".");
 	}
 
 	public String[] helpCommandAt = {
@@ -70,14 +102,14 @@ public class TimedEvents
 		"<When> is a time of the form HH:MM[:SS]",
 		"<Command> is the command to execute"
 	};
-	public void commandAt( Message mes, Modules mods, IRCInterface irc )
+	public void commandAt( Message mes ) throws ChoobException
 	{
 		// XXX /Lots/ of duplicated code from in.
 
 		List<String> params = mods.util.getParams( mes, 2 );
 
 		if (params.size() <= 2) {
-			irc.sendContextReply(mes, "Syntax is: at <time> <command>");
+			irc.sendContextReply(mes, "Syntax is: TimedEvents.At <When> <Command>");
 			return;
 		}
 
@@ -89,11 +121,8 @@ public class TimedEvents
 			// No.
 			command = irc.getTrigger() + command;
 
-		IRCEvent newMes = mes.cloneEvent( command );
-
 		// Java--
-
-		GregorianCalendar g = new GregorianCalendar();
+		GregorianCalendar cal = new GregorianCalendar();
 		Matcher ma = Pattern.compile("([0-9]|1[0-9]|2[0-3]):([0-5][0-9])(?::([0-5][0-9]))? ?(am|pm)?").matcher(time);
 		if (!ma.matches())
 		{
@@ -126,18 +155,30 @@ public class TimedEvents
 			}
 		}
 
-		g.set(Calendar.HOUR_OF_DAY, h);
-		g.set(Calendar.MINUTE, m);
-		g.set(Calendar.SECOND, s);
+		cal.set(Calendar.HOUR_OF_DAY, h);
+		cal.set(Calendar.MINUTE, m);
+		cal.set(Calendar.SECOND, s);
 
-		if (g.getTimeInMillis() < System.currentTimeMillis())
-			g.add(Calendar.DAY_OF_MONTH, 1);
+		if (cal.getTimeInMillis() < System.currentTimeMillis())
+			cal.add(Calendar.DAY_OF_MONTH, 1);
 
-		long callbackTime = g.getTimeInMillis() - System.currentTimeMillis();
+		TimedEvent timedEvent = new TimedEvent();
+		timedEvent.mesID = mods.history.getMessageID(mes);
+		timedEvent.command = command;
+		timedEvent.executeAt = cal.getTimeInMillis();
 
-		mods.interval.callBack( newMes, callbackTime, -1 );
+		if (timedEvent.mesID == -1)
+		{
+			irc.sendContextReply(mes, "Internal error: The message you sent apparently did not exist!");
+			return;
+		}
 
-		irc.sendContextReply(mes, "OK, will do at " + g.getTime().toString() + ".");
+		long callbackTime = cal.getTimeInMillis() - System.currentTimeMillis();
+
+		mods.odb.save(timedEvent);
+		mods.interval.callBack( timedEvent, callbackTime, -1 );
+
+		irc.sendContextReply(mes, "OK, will do at " + cal.getTime() + ".");
 	}
 
 	public int apiDecodePeriod(String time) throws NumberFormatException {
@@ -172,20 +213,44 @@ public class TimedEvents
 		return period;
 	}
 
-	public void interval( Object parameter, Modules mods, IRCInterface irc )
+	public void interval( Object parameter ) throws ChoobException
 	{
-		if (parameter != null && parameter instanceof Message) {
+		if (parameter != null && parameter instanceof TimedEvent) {
 			// It's a message to be redelivered
 
-			lastDelivery=((Message)parameter).getNick() + " queued the following command on " + new Date(((Message)parameter).getMillis()).toString() + ": " + ((Message)parameter).getMessage();
+			TimedEvent timedEvent = (TimedEvent) parameter;
 
-			mods.synthetic.doSyntheticMessage( (Message)parameter);
+			Message mes = mods.history.getMessage(timedEvent.mesID);
+			if (mes == null)
+			{
+				System.err.println("Event number " + timedEvent.mesID + " appears to have gone!");
+				return;
+			}
+			Message newMes = (Message)mes.cloneEvent(timedEvent.command);
+
+			lastDelivery = timedEvent;
+
+			mods.synthetic.doSyntheticMessage( newMes );
+
+			mods.odb.delete(timedEvent);
 		}
 	}
 
-	public void commandWQT( Message mes, Modules mods, IRCInterface irc )
+	public String[] helpCommandLast = {
+		"Find out what the last queued event to be executed was."
+	};
+	public void commandLast( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
 	{
-		irc.sendContextReply(mes, (lastDelivery != null ? lastDelivery : "Nobody queued nuffin', gov'ner."));
+		if (lastDelivery != null)
+		{
+			Message lMes = mods.history.getMessage(lastDelivery.mesID);
+			if (lMes != null)
+				irc.sendContextReply(mes, lMes.getNick() + " queued the following command on " + new Date(lMes.getMillis()).toString() + ": " + lastDelivery.command);
+			else
+				irc.sendContextReply(mes, "The following command was queued: " + lastDelivery.command);
+		}
+		else
+			irc.sendContextReply(mes, "Nobody queued nuffin', gov'ner.");
 	}
 
 }

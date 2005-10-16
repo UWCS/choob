@@ -55,7 +55,7 @@ public class HistoryModule
 			insertLine.setString(4, chan);
 			insertLine.setString(5, mes.getMessage());
 			insertLine.setLong(6, mes.getMillis());
-			insertLine.setInt(7, mes.getRandom()); // XXX Why?
+			insertLine.setInt(7, mes.getRandom());
 
 			insertLine.executeUpdate();
 		}
@@ -78,6 +78,136 @@ public class HistoryModule
 			finally
 			{
 				dbBroker.freeConnection( dbConnection );
+			}
+		}
+	}
+
+	/**
+	 * Get the ID of a message object.
+	 * @param mes The message object to find.
+	 * @return Either a message ID, or -1 if the message didn't exist.
+	 */
+	public int getMessageID( Message mes ) throws ChoobException
+	{
+		Connection dbCon = dbBroker.getConnection();
+		PreparedStatement stat = null;
+		try {
+			stat = dbCon.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Channel = ? AND Text = ? AND Time = ? AND Random = ?");
+			stat.setString(1, mes.getClass().getName());
+			stat.setString(2, mes.getNick());
+			stat.setString(3, mes.getNick()+"@"+mes.getHostname());
+			String chan = null;
+			if (mes instanceof ChannelEvent)
+			{
+				chan = ((ChannelEvent)mes).getChannel();
+			}
+			stat.setString(4, chan);
+			stat.setString(5, mes.getMessage());
+			stat.setLong(6, mes.getMillis());
+			stat.setInt(7, mes.getRandom());
+
+			ResultSet result = stat.executeQuery();
+
+			if ( result.first() )
+				return result.getInt(1);
+			else
+				return -1;
+		}
+		catch( SQLException e )
+		{
+			System.err.println("Could not read history line from database: " + e);
+			throw new ChoobException("SQL Error reading from database.");
+		}
+		finally
+		{
+			try
+			{
+				if (stat != null)
+					stat.close();
+			}
+			catch (SQLException e)
+			{
+				System.err.println("Could not read history line from database: " + e);
+				throw new ChoobException("SQL Error reading from database.");
+			}
+			finally
+			{
+				dbBroker.freeConnection( dbCon );
+			}
+		}
+	}
+
+	/**
+	 * Get a historic message object.
+	 * @param messageID The message ID, as returned from getMessageID.
+	 * @return The message object or null if it didn't exist.
+	 */
+	public Message getMessage( int messageID ) throws ChoobException
+	{
+		Connection dbCon = dbBroker.getConnection();
+		PreparedStatement stat = null;
+		try {
+			stat = dbCon.prepareStatement("SELECT * FROM History WHERE LineID = ?");
+			stat.setInt(1, messageID);
+
+			final ResultSet result = stat.executeQuery();
+
+			if ( result.first() )
+			{
+				final String type = result.getString(2);
+				int pos = result.getString(4).indexOf('@');
+				final String login = result.getString(4).substring(0,pos);
+				final String host = result.getString(4).substring(pos+1);
+				final String channel = result.getString(5);
+
+				Message mes;
+				try
+				{
+					// Need privs to create events...
+					mes = (Message)AccessController.doPrivileged( new PrivilegedExceptionAction() {
+						public Object run() throws SQLException {
+							if (type.equals(ChannelAction.class.getName()))
+								return new ChannelAction("onAction", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel, channel);
+							else if (type.equals(ChannelMessage.class.getName()))
+								return new ChannelMessage("onMessage", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel, channel);
+							return null;
+						}
+					});
+				}
+				catch (PrivilegedActionException e)
+				{
+					throw (SQLException)e.getCause();
+					// Is an SQL exception...
+				}
+
+				if (mes == null)
+					System.err.println("Invalid event type: " + type);
+
+				return mes;
+			}
+			else
+				return null;
+		}
+		catch( SQLException e )
+		{
+			System.err.println("Could not read history line from database: " + e);
+			throw new ChoobException("SQL Error reading from database.");
+		}
+		finally
+		{
+			try
+			{
+				if (stat != null)
+					stat.close();
+			}
+			catch (SQLException e)
+			{
+				System.err.println("Could not read history line from database: " + e);
+				throw new ChoobException("SQL Error reading from database.");
+			}
+			finally
+			{
+				dbBroker.freeConnection( dbCon );
 			}
 		}
 	}
