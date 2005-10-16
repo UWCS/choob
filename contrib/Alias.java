@@ -311,12 +311,6 @@ public class Alias
 			return;
 		}
 
-		// Stop recursion
-		if (mes.getSynthLevel() > 1) {
-			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
-			return;
-		}
-
 		// Text is everything up to the next space...
 		int cmdEnd = text.indexOf(' ', offset);
 		String cmdParams;
@@ -341,6 +335,12 @@ public class Alias
 		if (alias == null)
 		{
 			// Consider an error here...
+			return;
+		}
+
+		// Stop recursion
+		if (mes.getSynthLevel() > 1) {
+			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
 			return;
 		}
 

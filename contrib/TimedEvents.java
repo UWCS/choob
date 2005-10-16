@@ -12,6 +12,7 @@ public class TimedEvent
 {
 	public int id;
 	public int mesID; // For duplication
+	public int synthLevel; // Remember this.
 	public String command;
 	public long executeAt;
 }
@@ -81,6 +82,7 @@ public class TimedEvents
 
 		TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
+		timedEvent.synthLevel = mes.getSynthLevel();
 		timedEvent.command = command;
 		timedEvent.executeAt = System.currentTimeMillis() + period * 1000;
 
@@ -104,8 +106,13 @@ public class TimedEvents
 	};
 	public void commandAt( Message mes ) throws ChoobException
 	{
-		// XXX /Lots/ of duplicated code from in.
+		// Stop recursion
+		if (mes.getSynthLevel() > 1) {
+			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
+			return;
+		}
 
+		// XXX /Lots/ of duplicated code from in.
 		List<String> params = mods.util.getParams( mes, 2 );
 
 		if (params.size() <= 2) {
@@ -164,6 +171,7 @@ public class TimedEvents
 
 		TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
+		timedEvent.synthLevel = mes.getSynthLevel();
 		timedEvent.command = command;
 		timedEvent.executeAt = cal.getTimeInMillis();
 
@@ -227,6 +235,9 @@ public class TimedEvents
 				return;
 			}
 			Message newMes = (Message)mes.cloneEvent(timedEvent.command);
+			// Resynth...
+			for(int i=0; i<timedEvent.synthLevel; i++)
+				newMes = (Message)newMes.cloneEvent(timedEvent.command);
 
 			lastDelivery = timedEvent;
 
