@@ -33,6 +33,9 @@ public class TimedEvents
 		this.mods = mods;
 		this.irc = irc;
 
+		// If we were reloaded, don't want old intervals hanging around.
+		mods.interval.reset();
+
 		// Reload all old queued objects...
 		long time = System.currentTimeMillis();
 		List<TimedEvent> events = mods.odb.retrieve(TimedEvent.class, "WHERE 1");

@@ -91,4 +91,28 @@ public class IntervalModule
 			intervalList.add( newInt );
 		}
 	}
+
+	/**
+	 * Clear all intervals from the calling plugin.
+	 */
+	public void reset ()
+	{
+		String plugin = mods.security.getPluginName(0);
+		if (plugin == null)
+		{
+			System.err.println("A plugin tried to call reset, but wasn't on the stack...");
+			return;
+		}
+		synchronized(intervalList)
+		{
+			// XXX this is damn inefficient...
+			Iterator<Interval> iterator = intervalList.iterator();
+			while(iterator.hasNext())
+			{
+				Interval thisInt = iterator.next();
+				if ( plugin.equals(thisInt.getPlugin()) )
+					iterator.remove();
+			}
+		}
+	}
 }
