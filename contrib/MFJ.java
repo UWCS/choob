@@ -104,7 +104,7 @@ public class MFJ
 	/**
 	 * Americans--
 	 */
-	public String[] helpCommandColour = { "Lets you know what today's colour is, if you're American and can't spell." };
+	public String[] helpCommandColor = { "Lets you know what today's colour is, if you're American and can't spell." };
 	public void commandColor(Message con, Modules mods, IRCInterface irc)
 	{
 		commandColour(con, mods, irc);
@@ -113,7 +113,7 @@ public class MFJ
 	/**
 	 * Implement JB's !year command
 	 */
-	public String[] helpCommandColour = { "Outputs the current year." };
+	public String[] helpCommandYear = { "Outputs the current year." };
 	public void commandYear(Message con, Modules mods, IRCInterface irc)
 	{
 		GregorianCalendar cal = new GregorianCalendar();
@@ -124,7 +124,7 @@ public class MFJ
 	/**
 	 * Implement JB's !month command
 	 */
-	public String[] helpCommandColour = { "Outputs the current month." };
+	public String[] helpCommandMonth = { "Outputs the current month." };
 	public void commandMonth(Message con, Modules mods, IRCInterface irc)
 	{
 		GregorianCalendar cal = new GregorianCalendar();
@@ -138,7 +138,7 @@ public class MFJ
 	/**
 	 * Implement JB's !day command
 	 */
-	public String[] helpCommandColour = { "Outputs the current day." };
+	public String[] helpCommandDay = { "Outputs the current day." };
 	public void commandDay(Message con, Modules mods, IRCInterface irc)
 	{
 		GregorianCalendar cal = new GregorianCalendar();
