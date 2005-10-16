@@ -341,8 +341,6 @@ public class Quote
 				&& last.getHostname().compareToIgnoreCase(mes.getHostname()) == 0)
 		{
 			// Suspicious!
-			System.out.println("Last line from: " + last.getNick() + "!" + last.getLogin() + "@" + last.getHostname());
-			System.out.println("This line from: " + mes.getNick() + "!" + mes.getLogin() + "@" + mes.getHostname());
 			irc.sendContextReply(mes, "Sorry, no quoting yourself!");
 			return;
 		} //*/

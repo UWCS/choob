@@ -12,14 +12,31 @@ import java.util.regex.*;
 public class TellObject
 {
 	public int id;
-	public String date;
+	public String type;
+	public long date;
 	public String from;
 	public String message;
 	public String target;
+	public boolean nickServ;
 }
 
 public class Tell
 {
+	private static int MAXTARGETS = 7;
+	private static long CACHEEXPIRE = 5 * 60 * 1000; // 5 mins
+
+	private Modules mods;
+	private IRCInterface irc;
+
+	private HashMap<String,Long> tellCache;
+
+	public Tell (Modules mods, IRCInterface irc)
+	{
+		this.mods = mods;
+		this.irc = irc;
+		this.tellCache = new HashMap<String,Long>();
+	}
+
 	public String[] helpTopics = { "Using", "Security" };
 
 	public String[] helpUsing = {
@@ -29,7 +46,17 @@ public class Tell
 	};
 
 	public String[] helpSecurity = {
-		  "Tells currently ignore NickServ completely, which makes them pretty insecure."
+		  "Tells currently use NickServ in the following way:",
+		  "If the nick you send to's base nickname exists in NickServ (eg."
+		+ " you said to 'bob|sleep' and 'bob' is registered), the tell is"
+		+ " marked secure. This means that bob can only pick up the message if"
+		+ " he is identified with NickServ, on a name that the bot both"
+		+ " considers equivalent normally to 'bob' (like, say, 'bob|awake')"
+		+ " AND considers securely equivalent, too (ie. is linked to bob).",
+		  "You should note that this means, in particular, that people who's"
+		+ " root username is not equal to their base nickname can't receive"
+		+ " tells at all! That is, if 'bob|bot' is bob's root username, he"
+		+ " will never receive tells."
 	};
 
 	public String[] helpCommandSend = {
@@ -38,70 +65,145 @@ public class Tell
 		"<Nick> is the target of the tell",
 		"<Message> is the content"
 	};
-	public void commandSend( Message mes, Modules mods, IRCInterface irc )
+	public void commandSend( Message mes ) throws ChoobException
 	{
-		int targets = 0;
-		TellObject tO = new TellObject();
-		// Note: This is intentionally not translated to a primary nick.
-		tO.from=mes.getNick();
-
-		Pattern pa = Pattern.compile("^[^ ]+? ([a-zA-Z0-9_,|-]+) (.*)$");
-		Matcher ma = pa.matcher(mes.getMessage());
-
-		if (!ma.matches())
+		List<String> params = mods.util.getParams( mes, 3 );
+		if (params.size() != 3)
 		{
-			irc.sendContextMessage(mes, "Syntax error.");
+			irc.sendContextReply(mes, "Syntax: Tell.Send <Nick>[,<Nick>...] <Message>");
 			return;
 		}
 
-		tO.message=ma.group(2); // 'Message'.
+		final TellObject tellObj = new TellObject();
 
-		StringTokenizer tokens = new StringTokenizer(ma.group(1), ",");
+		// Note: This is intentionally not translated to a primary nick.
+		tellObj.from = mes.getNick();
 
-		tO.date=(new Date(mes.getMillis())).toString();
+		tellObj.message = params.get(2); // 'Message'.
 
-		while( tokens.hasMoreTokens() )
+		tellObj.date = mes.getMillis();
+
+		if (params.get(0).toLowerCase().equals("ask"))
+			tellObj.type = "ask";
+		else
+			tellObj.type = "tell";
+
+		final String[] targets = params.get(1).split(",");
+
+		if (targets.length > MAXTARGETS)
 		{
-			// Note: This call to getBestPrimaryNick is not optimal, discussed above.
-			tO.id=0;
-			tO.target=mods.nick.getBestPrimaryNick(tokens.nextToken());
-			System.out.println("Going to save!");
-			try {
-				mods.odb.save(tO);
-				targets++;
-			}
-			catch (ChoobException e)
-			{
-				irc.sendContextReply(mes, "Ack, could not send to " + tO.target + ": " + e);
-			}
+			irc.sendContextReply(mes, "Sorry, you're only allowed " + MAXTARGETS + " targets for a given tell");
+			return;
 		}
 
-		irc.sendContextMessage(mes, "Okay, will tell upon next speaking. (Sent to " + targets + " " + (targets == 1 ? "person" : "people") + ").");
+		// Yeah, I don't really understand vim's indenting here either.
+		mods.odb.runTransaction(
+				new ObjectDBTransaction()
+				{
+					public void run() throws ChoobException
+		{
+
+			for(int i=0; i<targets.length; i++)
+		{
+			tellObj.id = 0;
+			tellObj.target = mods.nick.getBestPrimaryNick(targets[i]);
+			tellObj.nickServ = nsStatus(tellObj.target) > 0;
+			System.out.println("NickServ needed on " + tellObj.target + ": " + tellObj.nickServ);
+			clearCache(tellObj.target);
+			save(tellObj);
+		}
+		}
+		});
+
+		irc.sendContextMessage(mes, "Okay, will tell upon next speaking. (Sent to " + targets.length + " " + (targets.length == 1 ? "person" : "people") + ").");
 	}
 
-	private void spew(String nick, Modules mods, IRCInterface irc)
+	private void clearCache( String nick )
+	{
+		synchronized(tellCache)
+		{
+			Iterator<String> iter = tellCache.keySet().iterator();
+			while(iter.hasNext())
+			{
+				if (mods.nick.getBestPrimaryNick(iter.next()).equalsIgnoreCase(nick))
+					iter.remove();
+			}
+		}
+	}
+
+	private void spew(String nick, Modules mods, IRCInterface irc) throws ChoobException
+	{
+		// Use the cache
+		boolean willSkip = false;
+		synchronized(tellCache)
+		{
+			Long cache = tellCache.get(nick);
+			System.out.println("Cache: " + cache + " and now: " + System.currentTimeMillis());
+			if (cache != null && cache > System.currentTimeMillis())
+				willSkip = true;
+			tellCache.put(nick, System.currentTimeMillis() + CACHEEXPIRE);
+		}
+		if (willSkip)
+			return;
+
+		// getBestPrimaryNick should be safe from injection
+		String testNick = mods.nick.getBestPrimaryNick(nick);
+		List<TellObject> results = mods.odb.retrieve (TellObject.class, "WHERE target = '" + testNick + "'");
+
+		if (results.size() != 0)
+		{
+			int nsStatus = -2;
+			String rootNick = null;
+			for (int i=0; i < results.size(); i++ )
+			{
+				TellObject tellObj = (TellObject)results.get(i);
+				if (tellObj.nickServ)
+				{
+					if (nsStatus == -2)
+					{
+						System.out.println("NickServ needed on " + tellObj.target);
+						rootNick = mods.security.getRootUser( nick );
+						if (!rootNick.equalsIgnoreCase(testNick))
+							nsStatus = -1;
+						else
+							nsStatus = nsStatus( testNick );
+					}
+					if (nsStatus != 3)
+						continue;
+				}
+				irc.sendMessage(nick, "At " + new Date(tellObj.date) + ", " + tellObj.from + " told me to " + tellObj.type + " you: " + tellObj.message);
+				mods.odb.delete(results.get(i));
+			}
+			if (nsStatus == -1)
+				irc.sendMessage(nick, "Hi! I think you have tells, but your nickname isn't linked to " + testNick + ". Use Security.Link to do this.");
+			else if (nsStatus > 0 && nsStatus < 3)
+				irc.sendMessage(nick, "Hi! You have tells, but you're not identified with NickServ!");
+		}
+	}
+
+	public void onMessage( ChannelMessage ev, Modules mod, IRCInterface irc ) throws ChoobException
+	{
+		spew(ev.getNick(), mod, irc);
+	}
+	public void onPrivateMessage( PrivateMessage ev, Modules mod, IRCInterface irc ) throws ChoobException
+	{
+		spew(ev.getNick(), mod, irc);
+	}
+	public void onJoin( ChannelJoin ev, Modules mod, IRCInterface irc ) throws ChoobException
+	{
+		spew(ev.getNick(), mod, irc);
+	}
+
+	private int nsStatus( String nick ) throws ChoobException
 	{
 		try
 		{
-			List results = mods.odb.retrieve (TellObject.class, "where target = '" + mods.nick.getBestPrimaryNick(nick) + "'");
-
-			if (results.size()!=0)
-				for (int i=0; i < results.size(); i++ )
-				{
-					TellObject r = (TellObject)results.get(i);
-					irc.sendMessage(nick, "At " + r.date + ", " + r.from + " told me to tell you: " + r.message);
-					mods.odb.delete(results.get(i));
-				}
+			return (Integer)mods.plugin.callAPI("NickServ", "Status", nick);
 		}
-		catch (ChoobException e)
+		catch (ChoobNoSuchPluginException e)
 		{
-			System.out.println("ChoobException in spew() in Tell: " + e);
-			e.printStackTrace();
+			return 0;
 		}
 	}
-
-	public void onMessage( ChannelMessage ev, Modules mod, IRCInterface irc ) { spew(ev.getNick(), mod, irc); }
-	public void onPrivateMessage( PrivateMessage ev, Modules mod, IRCInterface irc ) { spew(ev.getNick(), mod, irc); }
-	public void onJoin( ChannelJoin ev, Modules mod, IRCInterface irc ) { spew(ev.getNick(), mod, irc); }
 }
 

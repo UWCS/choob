@@ -101,12 +101,6 @@ public class NickServ
 
 	public int apiStatus( String nick )
 	{
-		System.out.println("Called by: " + mods.security.getCallerPluginName());
-		List<String> names = mods.security.getPluginNames();
-		System.out.println("Stack:");
-		for(String name: names)
-			System.out.println("\t" + name);
-		System.out.println("End of stack.");
 		ResultObj result = getCachedNickCheck( nick.toLowerCase() );
 		if (result != null)
 		{
@@ -147,7 +141,6 @@ public class NickServ
 
 	private ResultObj getNewNickCheck( final String nick )
 	{
-		System.out.println("Asked for new nick check for " + nick);
 		ResultObj result;
 		synchronized(nickChecks)
 		{
@@ -184,7 +177,6 @@ public class NickServ
 		synchronized(nickChecks)
 		{
 			result = (ResultObj)nickChecks.get( nick );
-			System.out.println("Cached value for " + nick + " is: " + result);
 			if ( result == null )
 				// !!! This should never really happen
 				return null;
@@ -197,7 +189,6 @@ public class NickServ
 				// expired!
 				// TODO - do this in an interval...
 				nickChecks.remove( nick );
-				System.out.println("Ooops, it expired! It has " + result.time + " vs our " + System.currentTimeMillis() + ".");
 				return null;
 			}
 		}
@@ -212,11 +203,10 @@ public class NickServ
 		if ( ! mes.getNick().toLowerCase().equals( "nickserv" ) )
 			return; // Not from NickServ --> also don't care
 
-		System.out.println(mes.getMessage());
 		if (infooverride == false && mes.getMessage().trim().toLowerCase().equals("unknown command [status]"))
 		{
 			// Ohes nose, horribly broken network! Let's pretend that it didn't just slap us in the face with a glove.
-			System.out.println("Reverting to badly broken NickServ handling.");
+			System.err.println("Reverting to badly broken NickServ handling.");
 
 			infooverride=true;
 
