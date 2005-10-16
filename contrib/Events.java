@@ -7,8 +7,7 @@ import java.net.*;
 import java.util.*;
 import java.util.regex.*;
 import java.text.*;
-
-//irc.sendContextReply(mes, "On " + new SimpleDateFormat("EEEE d MMM H:mma").format(new Date(Long.parseLong(ma.group(3))*(long)1000)));
+import org.jibble.pircbot.Colors;
 
 public class Events
 {
@@ -22,7 +21,7 @@ public class Events
 		this.irc = irc;
 		try {
 			eventsdata = new GetContentsCached(new URL("http://faux.uwcs.co.uk/events.data")); /* <-- default timeout is okay. */
-		}
+	}
 		// XXX
 		catch (Exception e) {} // Never going to be thrown.
 	}
@@ -53,23 +52,23 @@ public class Events
 		return t;
 	}
 
+	// As per: http://bermuda.warwickcompsoc.co.uk/UWCSWebsite/Members/silver/document.2005-10-15.5186402265/. Don't fear the slashes, they're cuddly.
+
+	final Pattern events_pattern=Pattern.compile("(\\d+) \"([^\"]*)\" ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) \"([^\"]*)\" \"((?:\\\\\"|\\\\\\\\|[^\"])*)\" \"((?:\\\\\"|\\\\\\\\|[^\"])*)\"");
+	//  Id:                                         1        2          3       4       5       6       7         8                     9                                 10
+	//  Name:                                       id       name     start   end <signup>code max   current    names</signup>        desc.                             location
+
 	private ArrayList<String[]> readEventsData()
 	{
 		ArrayList<String[]> events=new ArrayList();
 		String s=null;
-		try { s=eventsdata.getContents(); } catch (IOException e) 
+		try { s=eventsdata.getContents(); } catch (IOException e)
 		{
 			return null; // H4X!
 		}
 
-		//System.out.println("BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADGERS" + s);
-		//int c=ids.replaceAll("[^ ]*","").length()+1;
-		//int d=0;
-		Pattern pa=Pattern.compile("([0-9]+) \\\"([a-zA-Z0-9 _-]+)\\\" ([0-9]+) ([0-9]+) ([A-Za-z0-9-]+) ([0-9]+) ([0-9]+) \\\"(.*?)\\\" \\\"(.+?)\\\" \\\"(.*?)\\\"");
-		//                             1                 2                  3       4            5           6         7           8             9             10
-		//                             id               name               date     date   <signup> code      max      cur    names</signup>   desc.       location
 		String rep="";
-		Matcher ma=pa.matcher(s);
+		Matcher ma=events_pattern.matcher(s);
 		while (ma.find())
 		{
 			String [] nine=ma.group(9).split("\\|");
@@ -102,10 +101,16 @@ public class Events
 			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
 			Date dat=new Date(Long.parseLong(ev[4])*(long)1000);
 			boolean finished=(new Date()).compareTo(da)>0;
+			int eid=0;
+			try
+			{
+				eid=Integer.parseInt(ev[1]);
+			}
+			catch (NumberFormatException e) {}
 			if (!finished)
-				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==Integer.parseInt(comp))
+				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
-					irc.sendContextReply(mes, ev[2] + " at " + ev[10] + " (" + ev[9] + ") (" + ev[1] + ") from " + (new SimpleDateFormat("EEEE d MMM H:mma").format(da)) + " to " + (new SimpleDateFormat("EEEE d MMM H:mma").format(dat)) + "." );
+					irc.sendContextReply(mes, Colors.BOLD + ev[2] + Colors.NORMAL + " at " + ev[10] + " (" + ev[9] + ") (" + ev[1] + ") from " + (new SimpleDateFormat("EEEE d MMM H:mma").format(da)) + " to " + (new SimpleDateFormat("EEEE d MMM H:mma").format(dat)) + "." );
 					return;
 				}
 		}
@@ -135,17 +140,17 @@ public class Events
 			String[] ev= events.get(c);
 			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
 			boolean finished=(new Date()).compareTo(da)>0;
-			int javaislamebecauseitmakesmewritelinesofunnecessarycode=0;
+			int eid=0;
 			try
 			{
-				javaislamebecauseitmakesmewritelinesofunnecessarycode=Integer.parseInt(comp);
+				eid=Integer.parseInt(comp);
 			}
-			catch (Exception e) { }
+			catch (NumberFormatException e) { }
 			if (!finished)
-				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==javaislamebecauseitmakesmewritelinesofunnecessarycode)
+				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
 					if (!ev[5].equals("X") && !ev[5].equals("-"))
-						irc.sendContextReply(mes, "Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev[1] + "&action=signup to sign-up for " + ev[2] + (!finished ? " [" + stupidStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + ".");
+						irc.sendContextReply(mes, "Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev[1] + "&action=signup to sign-up for " + Colors.BOLD + ev[2] + Colors.NORMAL + (!finished ? " [" + stupidStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + ".");
 					else
 					{
 						rep+="Event " + ev[1] + " matched, but does not accept sign-ups... ";
@@ -175,12 +180,12 @@ public class Events
 		int c=events.size();
 		String rep="";
 		System.out.println(comp);
-		int javaislamebecauseitmakesmewritelinesofunnecessarycode=0;
+		int eid=0;
 		try
 		{
-			javaislamebecauseitmakesmewritelinesofunnecessarycode=Integer.parseInt(comp);
+			eid=Integer.parseInt(comp);
 		}
-		catch (Exception e) { }
+		catch (NumberFormatException e) { }
 
 		while (c--!=0)
 		{
@@ -188,7 +193,7 @@ public class Events
 			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
 			boolean finished=(new Date()).compareTo(da)>0;
 			if (!finished)
-				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==javaislamebecauseitmakesmewritelinesofunnecessarycode)
+				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
 					irc.sendContextReply(mes, "http://www.warwickcompsoc.co.uk/events/details/?id=" + ev[1] + ".");
 					return;
@@ -215,21 +220,21 @@ public class Events
 		int c=events.size();
 		String rep="";
 		System.out.println(comp);
-		int javaislamebecauseitmakesmewritelinesofunnecessarycode=0;
+		int eid=0;
 		try
 		{
-			javaislamebecauseitmakesmewritelinesofunnecessarycode=Integer.parseInt(comp);
+			eid=Integer.parseInt(comp);
 		}
-		catch (Exception e) { }
+		catch (NumberFormatException e) { }
 		while (c--!=0)
 		{
 			String[] ev= events.get(c);
 			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
 			boolean finished=(new Date()).compareTo(da)>0;
 			if (!finished)
-				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==javaislamebecauseitmakesmewritelinesofunnecessarycode)
+				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
-					irc.sendContextReply(mes, "Signups for " + ev[2] + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + stupidStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + ": " + ev[8].replaceAll("([a-zA-Z])([^, ]+)","$1'$2") + ".");
+					irc.sendContextReply(mes, "Signups for " + Colors.BOLD + ev[2] + Colors.NORMAL  + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + stupidStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + ": " + ev[8].replaceAll("([a-zA-Z])([^, ]+)","$1'$2") + ".");
 					return;
 				}
 		}
@@ -249,8 +254,8 @@ public class Events
 			String[] ev= events.get(c);
 			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
 			boolean finished=(new Date()).compareTo(da)>0;
-			rep+=ev[2] + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + stupidStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + (c!=0 ? ", " : ".");
+			rep+=Colors.BOLD + ev[2] + Colors.NORMAL + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + stupidStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + (c!=0 ? ", " : ".");
 		}
-		irc.sendContextReply(mes, "Events: " + rep);	
+		irc.sendContextReply(mes, "Events: " + rep);
 	}
 }
