@@ -214,9 +214,21 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 					Function function = method.getFunction();
 					
 					return function.call(cx, scope, inst, params);
+				} catch (Exception e) {
+					if (params[0] instanceof Message) {
+						if (e instanceof EcmaError) {
+							irc.sendContextReply((Message)params[0], e.toString());
+						} else {
+							irc.sendContextReply((Message)params[0], mods.plugin.exceptionReply(e));
+						}
+					} else {
+						System.err.println("Exception invoking method " + method.getName() + ":");
+						e.printStackTrace();
+					}
 				} finally {
 					cx.exit();
 				}
+				return null;
 			}
 		};
 		
@@ -477,30 +489,6 @@ final class JavaScriptPluginMap {
 		plugins.remove(lname);
 		
 		System.out.println("Done (" + count + " items removed).");
-		
-		/*for (String command: pluginCommands.get(lname)) {
-			commands.remove(command);
-			System.out.println("  Command   " + command);
-		}
-		for (String event: pluginEvents.get(lname)) {
-			events.remove(event);
-			System.out.println("  Event     " + event);
-		}
-		for (NativeRegExp filter: pluginFilters.get(lname)) {
-			filters.remove(filter);
-			System.out.println("  Filter    " + filter);
-		}
-		for (String generic: pluginGenerics.get(lname)) {
-			generics.remove(generic);
-			System.out.println("  Generic   " + generic);
-		}
-		if (intervals.get(lname) != null) {
-			intervals.remove(lname);
-			System.out.println("  Interval  " + lname);
-		}
-		pluginCommands.remove(lname);
-		pluginFilters.remove(lname);
-		pluginGenerics.remove(lname);*/
 	}
 	
 	synchronized List<String> getCommands(String pluginName) {
