@@ -36,7 +36,6 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	private final int CALL_WANT_RESULT = 2;
 	
 	public JavaScriptPluginManager(Modules mods, IRCInterface irc) {
-		System.out.println("JavaScriptPluginManager.<ctor>");
 		this.mods = mods;
 		this.irc = irc;
 		this.pluginMap = new JavaScriptPluginMap();
@@ -142,7 +141,6 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	}
 	
 	public ChoobTask intervalTask(String pluginName, Object param) {
-		System.out.println("JavaScriptPluginManager.intervalTask(" + pluginName + ")");
 		// Call the interval callback function.
 		JavaScriptPluginMethod method = pluginMap.getInterval(pluginName);
 		if (method != null) {
@@ -152,7 +150,7 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	}
 	
 	public List<ChoobTask> eventTasks(IRCEvent ev) {
-		System.out.println("JavaScriptPluginManager.eventTasks(" + ev.getMethodName() + ")");
+		// Call the event hook functions.
 		List<ChoobTask> events = new LinkedList<ChoobTask>();
 		List<JavaScriptPluginMethod> methods = pluginMap.getEvent(ev.getMethodName());
 		if (methods != null) {
@@ -164,7 +162,7 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	}
 	
 	public List<ChoobTask> filterTasks(Message ev) {
-		System.out.println("JavaScriptPluginManager.filterTasks");
+		// Call the filter hook functions.
 		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
 		List<JavaScriptPluginMethod> methods = pluginMap.getFilter(ev.getMessage());
 		if (methods != null) {
@@ -177,7 +175,6 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	
 	public Object doGeneric(String pluginName, String prefix, String genericName, Object... params) throws ChoobException {
 		String fullName = pluginName + "." + prefix + ":" + genericName;
-		System.out.println("JavaScriptPluginManager.doGeneric(" + fullName + ")");
 		
 		JavaScriptPluginMethod method = pluginMap.getGeneric(fullName);
 		if (method != null) {
@@ -187,7 +184,6 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	}
 	
 	public Object doAPI(String pluginName, String APIName, final Object... params) throws ChoobException {
-		System.out.println("JavaScriptPluginManager.doAPI");
 		return doGeneric(pluginName, "api", APIName, params);
 	}
 	
