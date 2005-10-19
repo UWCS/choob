@@ -363,6 +363,8 @@ public class DbConnectionBroker implements Runnable {
 
 	public boolean isValidated( Connection tempCon )
 	{
+	    if( tempCon != null )
+	    {
 		Statement validStat;
 		try
 		{
@@ -393,6 +395,11 @@ public class DbConnectionBroker implements Runnable {
 			log.println("Error: Connection failed validation: " + e);
 			return false;
 		}
+	    }
+	    else
+	    {
+		return false;
+	    }
 	}
 
 	/**
@@ -425,7 +432,7 @@ public class DbConnectionBroker implements Runnable {
 
 					do {
 						 synchronized(connStatus) {
-							if((connStatus[roundRobin] < 1) && (! connPool[roundRobin].isClosed()) && isValidated( connPool[roundRobin] ))
+							if((connStatus[roundRobin] < 1) && (isValidated( connPool[roundRobin] )) )
 							{
 								conn = connPool[roundRobin];
 								connStatus[roundRobin]=1;
