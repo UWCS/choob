@@ -112,7 +112,6 @@ public class Alias
 		}
 
 		String name = params.get(1).replaceAll(validator, "").toLowerCase();
-		String conv = params.get(2);
 
 		AliasObject alias = getAlias(name);
 
