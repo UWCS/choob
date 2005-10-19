@@ -10,6 +10,12 @@ import javax.naming.directory.*;
 
 public class Lookup
 {
+	private static final Hashtable env = new Hashtable();
+	static
+	{
+		env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
+	}
+
 	private String reverseLookup(String s)
 	{
 		try
@@ -23,30 +29,31 @@ public class Lookup
 		}
 	}
 
-	private String genericLookup(String what, String where)
+	private String apiLookup(String what, String where)
 	{
 		if (where.equals("REV"))
 			return what + " [reverse lookup] --> " + reverseLookup(what) + ".";
 
-		// Stolen hax!
-		// XXX clean this up.
+		Attribute attr;
+
 		try
 		{
-			Hashtable env = new Hashtable();
-			env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
-			DirContext ictx = new InitialDirContext( env );
-			Attributes attrs = ictx.getAttributes( what, new String[] { where });
-			Attribute attr = attrs.get( where );
+			attr = (new InitialDirContext( env )).getAttributes( what, new String[] { where }).get( where );
+
+
 			if( attr == null )
 				return "None found...";
 			else
 			{
-				String rep="";
+				StringBuilder rep=new StringBuilder();
 				for (int i=0; i<attr.size(); i++)
-					rep+=(String)attr.get(i) + ", ";
-				rep=rep.substring(0, rep.length()-2);
+				{
+					rep.append(attr.get(i));
+					if (i!=attr.size()-1)
+						rep.append(", ");
+				}
 
-				return what + " ["  +where + "] --> " + rep + ".";
+				return what + " ["  +where + "] --> " + rep.toString() + ".";
 			}
 		}
 		catch ( NamingException e )
@@ -82,6 +89,6 @@ public class Lookup
 			record = params.get(2);
 		}
 
-		irc.sendContextReply(mes, genericLookup(domain, record));
+		irc.sendContextReply(mes, apiLookup(domain, record));
 	}
 }

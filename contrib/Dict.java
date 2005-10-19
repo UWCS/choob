@@ -37,6 +37,13 @@ public class Dict
 		this.irc=irc;
 	}
 
+	public String[] helpCommandDict = {
+		"Look up a word.",
+		"[<dictionary>] <word>",
+		"<dictionary> is the dictionary to use, valid dictioanries include 'wikipedia', 'urbandict' and 'dict'(.org)",
+		"<word> is the word to look up"
+	};
+
 	public void commandDict(Message mes)
 	{
 		List<String> parm=mods.util.getParams(mes, 2);

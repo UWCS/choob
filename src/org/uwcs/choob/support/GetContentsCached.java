@@ -39,14 +39,18 @@ public class GetContentsCached
 			return;
 
 		URLConnection site		= url.openConnection();
+		site.setRequestProperty("User-agent", "Choob!");
 		InputStream is			= site.getInputStream();
 		InputStreamReader isr	= new InputStreamReader(is);
 		BufferedReader br		= new BufferedReader(isr);
-		String l, ls="";
+		String l;
+		StringBuilder ls=new StringBuilder();
 
 		while ((l=br.readLine())!=null)
-			ls+=l+"\n";
-		contents=ls;
+			ls.append(l).append("\n");
+
+		contents=ls.toString();
+
 		lastaccess=now;
 	}
 
@@ -58,7 +62,6 @@ public class GetContentsCached
 	public String getContents() throws IOException
 	{
 		updateIfNeeded();
-		System.out.println(contents);
 		return contents;
 	}
 

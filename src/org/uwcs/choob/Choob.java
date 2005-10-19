@@ -119,7 +119,7 @@ public class Choob extends PircBot
 		catch (IrcException e)
 		{
 			e.printStackTrace();
-			System.out.println("Unhandled IRC Error on connect, exitin: ." + e);
+			System.out.println("Unhandled IRC Error on connect, exiting: ." + e);
 			System.exit(3);
 		}
 	}
@@ -289,6 +289,7 @@ public class Choob extends PircBot
 			try
 			{
 				doConnect();
+				return;
 			}
 			catch (IOException e)
 			{
@@ -466,6 +467,9 @@ public class Choob extends PircBot
 
 	private synchronized void spinThread(IRCEvent ev)
 	{
+		if (ev instanceof UserEvent && ((UserEvent)ev).getNick().toLowerCase().indexOf("bot")!=-1)
+			return;
+
 		ChoobTask task = new ChoobDecoderTask(ev);
 
 		ChoobThreadManager.queueTask(task);

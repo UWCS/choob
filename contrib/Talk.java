@@ -21,7 +21,7 @@ public class Talk
 	};
 	public void commandShout( Message mes, Modules mods, IRCInterface irc )
 	{
-		irc.sendContextReply(mes, Colors.BOLD + "BOOM! Headshot!");
+		irc.sendContextReply(mes, Colors.BOLD + mods.util.getParamString(mes));
 	}
 
 	public String[] helpCommandSay = {

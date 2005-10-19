@@ -4,6 +4,7 @@ import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 import java.util.*;
 import java.text.*;
+import java.io.*;
 
 public class MiscMsg
 {
@@ -131,4 +132,38 @@ public class MiscMsg
 		randomReply(mes, new String[] {"Signs point to yes.", "Yes.", "Reply hazy, try again.", "Without a doubt.", "My sources say no.", "As I see it, yes.", "You may rely on it.", "Concentrate and ask again.", "Outlook not so good.", "It is decidedly so.", "Better not tell you now.", "Very doubtful.", "Yes - definitely.", "It is certain.", "Cannot predict now.", "Most likely.", "Ask again later.", "My reply is no.", "Outlook good.", "Don't count on it." });
 	}
 
+	public void commandServerUptime(Message mes)
+	{
+		StringBuilder rep=new StringBuilder();
+
+		try
+		{
+			String str;
+
+			Process proc = Runtime.getRuntime().exec("uptime");
+
+			// get its output (your input) stream
+
+			DataInputStream in = new DataInputStream( proc.getInputStream());
+
+			try
+			{
+				while ((str = in.readLine()) != null)
+				{
+					rep.append(str);
+				}
+			}
+			catch (IOException e)
+			{
+				rep.append("IOException. ").append(e);
+			}
+
+		}
+		catch (IOException e)
+		{
+			rep.append("IOException (2). ").append(e);
+		}
+
+		irc.sendContextReply(mes, rep.toString());
+	}
 }
