@@ -30,8 +30,8 @@ INSERT INTO `UserNodes` VALUES (1,'root',3);
 INSERT INTO `UserNodes` VALUES (2,'anonymous',3);
 INSERT INTO `UserNodes` VALUES (3,'bucko',0);
 INSERT INTO `UserNodes` VALUES (4,'bucko',1);
-INSERT INTO `UserNodes` VALUES (5,'Plugin',2);
-INSERT INTO `UserNodes` VALUES (6,'Test',2);
+INSERT INTO `UserNodes` VALUES (5,'plugindevs',3);
+INSERT INTO `UserNodes` VALUES (6,'Plugin',2);
 INSERT INTO `UserNodes` VALUES (7,'Security',2);
 INSERT INTO `UserNodes` VALUES (8,'NickServ',2);
 INSERT INTO `UserNodes` VALUES (9,'Help',2);
@@ -43,6 +43,15 @@ INSERT INTO `UserNodes` VALUES (14,'Tell',2);
 INSERT INTO `UserNodes` VALUES (15,'Alias',2);
 INSERT INTO `UserNodes` VALUES (16,'Karma',2);
 INSERT INTO `UserNodes` VALUES (17,'Quote',2);
+INSERT INTO `UserNodes` VALUES (18,'Test',2);
+INSERT INTO `UserNodes` VALUES (19,'Events',2);
+INSERT INTO `UserNodes` VALUES (20,'Factoids',2);
+INSERT INTO `UserNodes` VALUES (21,'Lectures',2);
+INSERT INTO `UserNodes` VALUES (22,'Lookup',2);
+INSERT INTO `UserNodes` VALUES (23,'MFJ',2);
+INSERT INTO `UserNodes` VALUES (24,'Shutup',2);
+INSERT INTO `UserNodes` VALUES (25,'sadiq',0);
+INSERT INTO `UserNodes` VALUES (26,'sadiq',1);
 
 --
 -- Table structure for table `AddNicks`
@@ -111,6 +120,13 @@ INSERT INTO `CorePlugins` VALUES ('Tell','http://svn.uwcs.co.uk/repos/choob/trun
 INSERT INTO `CorePlugins` VALUES ('Alias','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Alias.java');
 INSERT INTO `CorePlugins` VALUES ('Karma','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Karma.java');
 INSERT INTO `CorePlugins` VALUES ('Quote','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Quote.java');
+INSERT INTO `CorePlugins` VALUES ('Factoids','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Factoids.java');
+INSERT INTO `CorePlugins` VALUES ('Events','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Events.java');
+INSERT INTO `CorePlugins` VALUES ('Lectures','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Lectures.java');
+INSERT INTO `CorePlugins` VALUES ('Lookup','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Lookup.java');
+INSERT INTO `CorePlugins` VALUES ('MFJ','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MFJ.java');
+INSERT INTO `CorePlugins` VALUES ('Shutup','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Shutup.java');
+
 
 --
 -- Table structure for table `GroupMembers`
@@ -145,6 +161,7 @@ INSERT INTO `GroupMembers` VALUES (1,14);
 INSERT INTO `GroupMembers` VALUES (1,15);
 INSERT INTO `GroupMembers` VALUES (1,16);
 INSERT INTO `GroupMembers` VALUES (1,17);
+INSERT INTO `GroupMembers` VALUES (1,26);
 
 --
 -- Table structure for table `History`
@@ -224,3 +241,4 @@ CREATE TABLE `UserNodePermissions` (
 --
 
 INSERT INTO `UserNodePermissions` VALUES (1,'java.security.AllPermission','','');
+INSERT INTO `UserNodePermissions` VALUES (5,'choob','plugin.load.*','');
