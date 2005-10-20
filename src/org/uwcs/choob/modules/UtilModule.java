@@ -85,7 +85,7 @@ public class UtilModule
 		int currentPos = text.indexOf(' ', offset);
 		int lastPos = offset;
 		if (currentPos != -1)
-			for(int i=0; i<count; i++)
+			for(int i=1; i<count; i++)
 			{
 				tempList.add( text.substring( lastPos, currentPos ) );
 				do
