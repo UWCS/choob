@@ -106,11 +106,11 @@ public class Tell
 		{
 			for(int i=0; i<targets.length; i++)
 		{
-			if (done.contains(tellObj.target))
-				continue;
 			tellObj.id = 0;
 			tellObj.target = mods.nick.getBestPrimaryNick(targets[i]);
 			tellObj.nickServ = nsStatus(tellObj.target) > 0;
+			if (done.contains(tellObj.target))
+				continue;
 			System.out.println("NickServ needed on " + tellObj.target + ": " + tellObj.nickServ);
 			clearCache(tellObj.target);
 			save(tellObj);
@@ -119,7 +119,7 @@ public class Tell
 		}
 		});
 
-		irc.sendContextMessage(mes, "Okay, will tell upon next speaking. (Sent to " + done.size() + " " + (done.size() == 1 ? "person" : "people") + ").");
+		irc.sendContextReply(mes, "Okay, will tell upon next speaking. (Sent to " + done.size() + " " + (done.size() == 1 ? "person" : "people") + ").");
 	}
 
 	private void clearCache( String nick )
