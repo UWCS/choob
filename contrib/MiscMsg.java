@@ -66,11 +66,35 @@ public class MiscMsg
 		irc.sendContextReply(mes, replies[(new Random()).nextInt(replies.length)]);
 	}
 
+	public String[] helpCommandFeatureRequest = {
+		"Provides the URL from where feature requests can be made.",
+		"",
+		""
+	};
+
+	public void commandFeatureRequest( Message mes )
+	{
+		irc.sendContextReply(mes, "Feature requests can be made from: http://trac.uwcs.co.uk/choob/cgi-bin/trac.cgi/newticket");
+	}
+
+	
+        public String[] helpCommandBugReport = {
+                "Provides the URL from where bug reports can be made.",
+                "",
+                ""
+        };
+
+        public void commandBugReport( Message mes )
+        {
+                irc.sendContextReply(mes, "Bug reports can be made from: http://trac.uwcs.co.uk/choob/cgi-bin/trac.cgi/newticket");
+        }
+
 	public String[] helpCommandFlipACoin = {
 		"Flip a coin and find the result.",
 		"[<Reply> or <Reply> [ or <Reply> ... ]]",
 		"<Reply> is some reply to write on one of the sides of the coin (coins can have more than 2 sides!)"
 	};
+
 	public void commandFlipACoin( Message mes )
 	{
 		if (!hascoin)
