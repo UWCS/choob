@@ -51,7 +51,12 @@ public class Test
 
 	public void commandExit( Message con, Modules mods, IRCInterface irc )
 	{
-		System.exit(1);
+		List<String> params = mods.util.getParams( con );
+		if (params.size() > 0) {
+			System.exit(params.get(1));
+		} else {
+			System.exit(1);
+		}
 	}
 
 
