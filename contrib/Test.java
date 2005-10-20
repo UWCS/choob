@@ -59,6 +59,10 @@ public class Test
 		}
 	}
 
+	public void commandRestart( Message con, Modules mods, IRCInterface irc )
+	{
+		System.exit(2);
+	}
 
 	// Define the regex for the KarmaPlus filter.
 	public String filterFauxRegex = "Faux sucks";
