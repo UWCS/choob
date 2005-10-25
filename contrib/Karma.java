@@ -205,7 +205,7 @@ public class Karma
 	{
 		List<KarmaObject> karmaObjs = retrieveKarmaObjects("SORT " + (asc ? "ASC" : "DESC") + " INTEGER value LIMIT (5)", mods);
 
-		StringBuffer output = new StringBuffer("High Scores: ");
+		StringBuffer output = new StringBuffer((asc ? "Low" : "High" ) + " Scores: ");
 
 		for (int i=0; i<karmaObjs.size(); i++)
 		{

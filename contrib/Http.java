@@ -7,6 +7,13 @@ import java.net.*;
 import java.io.*;
 import java.util.regex.*;
 
+public class HashedStringObject
+{
+	public int id;
+	public String hash;
+	public String string;
+}
+
 public class Http
 {
 	private Modules mods;
@@ -161,30 +168,23 @@ public class Http
 			}
 			else if (mo.matches())
 			{
-				/*
-				   out.println("HTTP/1.0 200 OK");
-				   out.println("Content-Type: text/plain");
-				   out.println();
-				 */
-
 				try
 				{
-					mods.plugin.callGeneric(mo.group(1), "web", mo.group(2) != null ? mo.group(2) : "",
-							out, (mo.group(3) != null ? mo.group(3) : ""),
-							new String[] { sock.getInetAddress().getHostAddress(), sock.getInetAddress().getHostName()});
+					mods.plugin.callGeneric(mo.group(1), "web", mo.group(2) != null ? mo.group(2) : "", out, (mo.group(3) != null ? mo.group(3) : ""), new String[] { sock.getInetAddress().getHostAddress(), sock.getInetAddress().getHostName()});
 				}
 				catch (Exception e)
 				{
 					out.println("Error: " + e);
 					e.printStackTrace();
 				}
-				out.println("Badgers.");
 			}
 			else
 			{
 				out.println("HTTP/1.0 404 Not Found");
 				out.println("Content-Type: text/plain");
 				out.println();
+
+				// Note that this reply is intentionally really short to trigger prettifying in certain browsers.
 				out.println("Oop, no pages here.");
 			}
 
@@ -275,5 +275,29 @@ public class Http
 			return listener;
 		}
 		return null;
+	}
+
+	public String apiStoreString(String s) throws ChoobException
+	{
+		HashedStringObject hso=new HashedStringObject();
+		hso.string=s;
+		hso.hash=((Integer)((hso.string.hashCode()%128)+256)).toString();
+
+		List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = '" + hso.hash + "'");
+		Iterator li=res.iterator();
+		while (li.hasNext())									// Slight overkill.
+			mods.odb.delete(li.next());
+
+		mods.odb.save(hso);
+
+		try
+		{
+			return "http://" + InetAddress.getLocalHost().getHostAddress() + ":12345/store/" + hso.hash;
+		}
+		catch (UnknownHostException e)
+		{
+			throw new ChoobException("Your network appears to be really, really broken.");
+		}
+
 	}
 }

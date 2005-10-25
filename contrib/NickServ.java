@@ -49,9 +49,10 @@ public class NickServ
 			mods.interval.callBack(null, 1);
 	}
 
+	// This is triggered by the constructor.
 	public synchronized void interval( Object parameter, Modules mods, IRCInterface irc ) throws ChoobException
 	{
-		apiCheck("____" + ((new Random()).nextInt() & 1024));
+		apiCheck("ignore-me"); // It's completely irrelevant what this nick is.
 	}
 
 	public void destroy(Modules mods)

@@ -112,31 +112,17 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 		// If you're getting crack-headed errors, and have no idea why, it's because you forgot to have a "public class".
 
+
+		String baosts=baos.toString();
+
 		if (ret == 0)
-			return baos.toString(); // success
+			return baosts; // success
 		else
 		{
-			System.out.println(baos.toString());
+			System.out.println(baosts);
 
-			HashedStringObject hso=new HashedStringObject();
-			hso.string=baos.toString();
-			hso.hash=((Integer)((hso.string.hashCode()%128)+256)).toString();
-
-			List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = '" + hso.hash + "'");
-			Iterator li=res.iterator();
-			while (li.hasNext())									// Slight overkill.
-				mods.odb.delete(li.next());
-
-			mods.odb.save(hso);
-
-			try
-			{
-				throw new ChoobException("Compile failed, see: http://" + InetAddress.getLocalHost().getHostAddress() + ":12345/store/" + hso.hash + " for details.");
-			}
-			catch (UnknownHostException e)
-			{
-				throw new ChoobException("Your network appears to be really, really broken.");
-			}
+			String url=(String)mods.plugin.callAPI("Http", "StoreString", baosts);
+			throw new ChoobException("Compile failed, see: " + url + " for details.");
 		}
 	}
 

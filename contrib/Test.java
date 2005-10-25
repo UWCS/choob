@@ -104,11 +104,4 @@ public class Test
 		else
 			irc.sendContextReply(mes, mods.plugin.callGeneric( params.get(1), params.get(2), params.get(3) ).toString());
 	}
-
-	public void webBigBang(Modules mods, IRCInterface irc, PrintWriter out, String params, String[] user)
-	{
-		irc.sendMessage("#bots", "Web request!");
-		out.println("Badgers!");
-	}
-
 }
