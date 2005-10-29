@@ -83,17 +83,20 @@ public class ObjectDbModule
 	 */
 	public void delete( Object strObject ) throws ChoobException
 	{
-		Connection dbConn = broker.getConnection();
-		ObjectDBTransaction trans = new ObjectDBTransaction();
-		trans.setConn(dbConn);
-		trans.setMods(mods);
-		try
+		synchronized( strObject.getClass() )
 		{
-			trans.delete( strObject );
-		}
-		finally
-		{
-			broker.freeConnection( dbConn );
+			Connection dbConn = broker.getConnection();
+			ObjectDBTransaction trans = new ObjectDBTransaction();
+			trans.setConn(dbConn);
+			trans.setMods(mods);
+			try
+			{
+				trans.delete( strObject );
+			}
+			finally
+			{
+				broker.freeConnection( dbConn );
+			}
 		}
 	}
 
@@ -103,21 +106,24 @@ public class ObjectDbModule
 	 */
 	public void update( Object strObject ) throws ChoobException
 	{
-		Connection dbConn = broker.getConnection();
-		ObjectDBTransaction trans = new ObjectDBTransaction();
-		trans.setConn(dbConn);
-		trans.setMods(mods);
-		try
+		synchronized( strObject.getClass() )
 		{
-			trans.begin();
-			trans.delete( strObject );
-			trans.save( strObject );
-			trans.commit();
-		}
-		finally
-		{
-			trans.finish();
-			broker.freeConnection( dbConn );
+			Connection dbConn = broker.getConnection();
+			ObjectDBTransaction trans = new ObjectDBTransaction();
+			trans.setConn(dbConn);
+			trans.setMods(mods);
+			try
+			{
+				trans.begin();
+				trans.delete( strObject );
+				trans.save( strObject );
+				trans.commit();
+			}
+			finally
+			{
+				trans.finish();
+				broker.freeConnection( dbConn );
+			}
 		}
 	}
 
@@ -127,20 +133,23 @@ public class ObjectDbModule
 	 */
 	public void save( Object strObject ) throws ChoobException
 	{
-		Connection dbConn = broker.getConnection();
-		ObjectDBTransaction trans = new ObjectDBTransaction();
-		trans.setConn(dbConn);
-		trans.setMods(mods);
-		try
+		synchronized( strObject.getClass() )
 		{
-			trans.begin();
-			trans.save( strObject );
-			trans.commit();
-		}
-		finally
-		{
-			trans.finish();
-			broker.freeConnection( dbConn );
+			Connection dbConn = broker.getConnection();
+			ObjectDBTransaction trans = new ObjectDBTransaction();
+			trans.setConn(dbConn);
+			trans.setMods(mods);
+			try
+			{
+				trans.begin();
+				trans.save( strObject );
+				trans.commit();
+			}
+			finally
+			{
+				trans.finish();
+				broker.freeConnection( dbConn );
+			}
 		}
 	}
 

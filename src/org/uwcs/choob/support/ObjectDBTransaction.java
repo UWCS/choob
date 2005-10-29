@@ -414,11 +414,11 @@ public class ObjectDBTransaction
 		{
 			final Object obj2 = obj;
 			return (Integer)AccessController.doPrivileged(new PrivilegedExceptionAction() {
-				public Object run() throws NoSuchFieldException, IllegalAccessException {
+					public Object run() throws NoSuchFieldException, IllegalAccessException {
 					Field f = obj2.getClass().getField("id");
 					return f.getInt( obj2 );
-				}
-			});
+					}
+					});
 		}
 		catch( PrivilegedActionException e )
 		{
@@ -434,12 +434,12 @@ public class ObjectDBTransaction
 			final Object obj2 = obj;
 			final int val2 = value;
 			AccessController.doPrivileged(new PrivilegedExceptionAction() {
-				public Object run() throws NoSuchFieldException, IllegalAccessException {
+					public Object run() throws NoSuchFieldException, IllegalAccessException {
 					Field f = obj2.getClass().getField("id");
 					f.setInt( obj2, val2 );
 					return null;
-				}
-			});
+					}
+					});
 		}
 		catch( PrivilegedActionException e )
 		{
@@ -636,7 +636,7 @@ public class ObjectDBTransaction
 		finally
 		{
 			cleanUp(stat);
-		}
+		}	
 	}
 
 	private final void checkPermission(Class objClass)

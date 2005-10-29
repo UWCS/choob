@@ -556,13 +556,6 @@ public class DbConnectionBroker implements Runnable
 	    }
 	} // End if(available)
 	
-	if(debugLevel > 2)
-	{
-	    log.println("Handing out connection " +
-	    idOfConnection(conn) + " --> " +
-	    (new SimpleDateFormat("MM/dd/yyyy  hh:mm:ss a")).format(new java.util.Date()));
-	}
-	
 	return conn;
     }
     

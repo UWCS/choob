@@ -15,7 +15,7 @@ class ChoobThreadManager {
 		if ( exe == null )
 		{
 			// TODO make a neater work queue that limits threads per plugin etc.
-			exe = new ThreadPoolExecutor(5, 20, (long)60, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(10, true));
+			exe = new ThreadPoolExecutor(5, 20, (long)60, TimeUnit.SECONDS, new LinkedBlockingQueue());
 		}
 	}
 
