@@ -26,7 +26,7 @@ public class Plugin
 			Pattern pa;
 			Matcher ma;
 			url=params.get(1);
-			pa = Pattern.compile("^.*\\/([^\\/]+)\\.java$");
+			pa = Pattern.compile("^.*\\/([^\\/]+)\\.(java|js)$");
 			ma = pa.matcher(url);
 			if (ma.matches())
 				classname=ma.group(1);
