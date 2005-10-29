@@ -65,7 +65,8 @@ public class Tell
 		"<Nick> is the target of the tell",
 		"<Message> is the content"
 	};
-	public void synchronized commandSend( Message mes ) throws ChoobException
+
+	public synchronized void commandSend( Message mes ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams( mes, 3 );
 		if (params.size() != 3)
