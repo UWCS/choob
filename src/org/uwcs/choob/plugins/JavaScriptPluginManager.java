@@ -127,8 +127,10 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	}
 	
 	protected void destroyPlugin(String pluginName) throws ChoobException {
-		System.out.println("JavaScriptPluginManager.destroyPlugin");
-		// FIXME: Implement this! //
+		synchronized(pluginMap)
+		{
+			pluginMap.unloadPluginMap(pluginName);
+		}
 	}
 	
 	public ChoobTask commandTask(String pluginName, String command, Message ev) {
@@ -177,25 +179,23 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 		String fullName = pluginName + "." + prefix + ":" + genericName;
 		
 		JavaScriptPluginMethod method = pluginMap.getGeneric(fullName);
-		if (method != null) {
-			return callMethod(method, params, CALL_WANT_RESULT);
+		if (method == null) {
+			throw new ChoobNoSuchCallException("No call found for " + fullName);
 		}
-		return null;
+		return callMethod(method, params, CALL_WANT_RESULT);
 	}
 	
 	public Object doAPI(String pluginName, String APIName, final Object... params) throws ChoobException {
 		return doGeneric(pluginName, "api", APIName, params);
 	}
 	
-	private ChoobTask callCommand(JavaScriptPluginMethod method, Object param)
-	{
+	private ChoobTask callCommand(JavaScriptPluginMethod method, Object param) {
 		Object[] params = { param, mods, irc };
 		
 		return (ChoobTask)callMethod(method, params, CALL_WANT_TASK);
 	}
 	
-	private Object callMethod(final JavaScriptPluginMethod method, final Object[] params, final int result)
-	{
+	private Object callMethod(final JavaScriptPluginMethod method, final Object[] params, final int result) {
 		final JavaScriptPlugin plugin = method.getPlugin();
 		final String pluginName = plugin.getName();
 		
@@ -209,7 +209,7 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 					Scriptable inst = plugin.getInstance();
 					Function function = method.getFunction();
 					
-					return function.call(cx, scope, inst, params);
+					return mapJSToJava(function.call(cx, scope, inst, params));
 					
 				} catch (RhinoException e) {
 					if (params[0] instanceof Message) {
@@ -254,6 +254,65 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 			}
 		}
 		return null;
+	}
+	
+	private Object mapJSToJava(Object jsObject) {
+		// Most Native* types from Rhino are automatically converted, or
+		// something. Arrays, however, definately are not. This code will map
+		// JS arrays into Java ones. It tries to use sensible types, as well.
+		
+		if (jsObject instanceof NativeArray) {
+			NativeArray ary = (NativeArray)jsObject;
+			int aryLen = (int)ary.getLength();
+			
+			Object[]  aryO = new Object [aryLen];
+			String[]  aryS = new String [aryLen];
+			boolean[] aryB = new boolean[aryLen];
+			double[]  aryN = new double [aryLen];
+			boolean isStringArray  = true;
+			boolean isBooleanArray = true;
+			boolean isNumberArray  = true;
+			
+			for (int i = 0; i < aryLen; i++) {
+				Object item = ary.get(i, ary);
+				
+				aryO[i] = mapJSToJava(item);
+				
+				if (isStringArray) {
+					if (item instanceof String) {
+						aryS[i] = (String)item;
+					} else {
+						isStringArray = false;
+					}
+				}
+				if (isBooleanArray) {
+					if (item instanceof Boolean) {
+						aryB[i] = ((Boolean)item).booleanValue();
+					} else {
+						isBooleanArray = false;
+					}
+				}
+				if (isNumberArray) {
+					if (item instanceof Number) {
+						aryN[i] = ((Number)item).doubleValue();
+					} else {
+						isNumberArray = false;
+					}
+				}
+			}
+			
+			if (isStringArray) {
+				return aryS;
+			}
+			if (isBooleanArray) {
+				return aryB;
+			}
+			if (isNumberArray) {
+				return aryN;
+			}
+			return aryO;
+		}
+		return jsObject;
 	}
 }
 
