@@ -479,18 +479,20 @@ final class JavaScriptPluginMap {
 						if (matcher.matches()) {
 							// Looks like a generic definition.
 							Object propVal = inst.get(propString, inst);
-							if (!(propVal instanceof Function)) {
-								System.err.println("  WARNING: Generic-like property that is not a function: " + propString);
-								continue;
+							
+							JavaScriptPluginExport export;
+							if (propVal instanceof Function) {
+								// It's a function, yay!
+								Function func = (Function)propVal;
+								export = new JavaScriptPluginMethod(pluginObj, propString, func);
+							} else {
+								export = new JavaScriptPluginProperty(pluginObj, propString);
 							}
-							// It's a function, yay!
-							Function func = (Function)propVal;
-							JavaScriptPluginMethod method = new JavaScriptPluginMethod(pluginObj, propString, func);
 							
 							String prefix = matcher.group(1);
 							String gName = propString.substring(prefix.length()).toLowerCase();
 							String fullName = lname + "." + prefix + ":" + gName;
-							generics.put(fullName, method);
+							generics.put(fullName, export);
 							count++;
 							System.out.println("  Generic   " + fullName);
 							
