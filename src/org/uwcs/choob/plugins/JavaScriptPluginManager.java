@@ -210,17 +210,23 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 					Function function = method.getFunction();
 					
 					return function.call(cx, scope, inst, params);
-				} catch (Exception e) {
+					
+				} catch (RhinoException e) {
 					if (params[0] instanceof Message) {
-						if (e instanceof EcmaError) {
-							irc.sendContextReply((Message)params[0], e.toString());
-						} else {
-							irc.sendContextReply((Message)params[0], mods.plugin.exceptionReply(e));
-						}
+						irc.sendContextReply((Message)params[0], e.details() + " Line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
 					} else {
 						System.err.println("Exception invoking method " + method.getName() + ":");
 						e.printStackTrace();
 					}
+					
+				} catch (Exception e) {
+					if (params[0] instanceof Message) {
+						irc.sendContextReply((Message)params[0], mods.plugin.exceptionReply(e));
+					} else {
+						System.err.println("Exception invoking method " + method.getName() + ":");
+						e.printStackTrace();
+					}
+					
 				} finally {
 					cx.exit();
 				}
@@ -625,6 +631,13 @@ final class JavaScriptPlugin {
 			}
 			
 			System.out.println("JavaScriptPlugin ctor result: " + cx.toString(inst));
+			
+		} catch (EvaluatorException e) {
+			throw new ChoobException(e.details() + " at line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
+			
+		} catch (RhinoException e) {
+			throw new ChoobException(e.details() + " Line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
+			
 		} finally {
 			cx.exit();
 		}
