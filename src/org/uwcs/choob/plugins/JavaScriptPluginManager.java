@@ -58,8 +58,6 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	}
 	
 	protected Object createPlugin(String pluginName, URL fromLocation) throws ChoobException {
-		System.out.println("JavaScriptPluginManager.createPlugin");
-		
 		String code = "";
 		URLConnection con;
 		try {
@@ -87,7 +85,6 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 					code += chars[i];
 				read += r;
 			}
-			System.out.println("JavaScriptPluginManager.createPlugin: loaded " + read + " characters.");
 		} catch(IOException e) {
 			throw new ChoobException("Unable to fetch the source from <" + fromLocation + ">.");
 		}
@@ -224,7 +221,7 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 					if (params[0] instanceof Message) {
 						irc.sendContextReply((Message)params[0], e.details() + " Line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
 					} else {
-						System.err.println("Exception invoking method " + export.getName() + ":");
+						System.err.println("Exception calling export " + export.getName() + ":");
 						e.printStackTrace();
 					}
 					
@@ -232,7 +229,7 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 					if (params[0] instanceof Message) {
 						irc.sendContextReply((Message)params[0], mods.plugin.exceptionReply(e));
 					} else {
-						System.err.println("Exception invoking method " + export.getName() + ":");
+						System.err.println("Exception calling export " + export.getName() + ":");
 						e.printStackTrace();
 					}
 					
@@ -360,7 +357,6 @@ final class JavaScriptPluginMap {
 	}
 	
 	synchronized void loadPluginMap(String pluginName, JavaScriptPlugin pluginObj) {
-		System.out.println("JavaScriptPluginMap.loadPluginMap(" + pluginName + ")");
 		String lname = pluginName.toLowerCase();
 		
 		System.out.println("Loading " + pluginName + ":");
@@ -510,7 +506,6 @@ final class JavaScriptPluginMap {
 	}
 	
 	synchronized void unloadPluginMap(String pluginName) {
-		System.out.println("JavaScriptPluginMap.unloadPluginMap(" + pluginName + ")");
 		String lname = pluginName.toLowerCase();
 		
 		if (plugins.get(lname) == null) {
@@ -758,8 +753,6 @@ final class JavaScriptPlugin {
 			} catch (PrivilegedActionException e) {
 				throw (ChoobException)(e.getCause());
 			}
-			
-			System.out.println("JavaScriptPlugin ctor result: " + cx.toString(inst));
 			
 		} catch (EvaluatorException e) {
 			throw new ChoobException(e.details() + " at line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
