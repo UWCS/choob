@@ -258,7 +258,7 @@ public class Choob extends PircBot
 	 */
 	public String getTriggerRegex()
 	{
-		return trigger + "|" + this.getName() + ",\\s+|bot,\\s+";
+		return trigger + "|" + getName() + ",\\s+|bot,\\s+";
 	}
 
 	/**
