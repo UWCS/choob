@@ -89,6 +89,7 @@ public class Choob extends PircBot
 
 		// Set the name from the config file.
 		this.setName(conf.getSettingFallback("botName", "Choob"));
+		modules.util.updateTrigger();
 
 		// Set the bot's hostname.
 		this.setLogin("Choob");
@@ -257,7 +258,7 @@ public class Choob extends PircBot
 	 */
 	public String getTriggerRegex()
 	{
-		return trigger + "|bot,\\s+";
+		return trigger + "|" + this.getName() + ",\\s+|bot,\\s+";
 	}
 
 	/**

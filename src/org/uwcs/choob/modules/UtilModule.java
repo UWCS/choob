@@ -28,6 +28,11 @@ public class UtilModule
 		this.irc = irc;
 		this.triggerPattern = Pattern.compile(irc.getTriggerRegex());
 	}
+	
+	public void updateTrigger()
+	{
+		this.triggerPattern = Pattern.compile(this.irc.getTriggerRegex());
+	}
 
 	/** Get the offset of the trigger in the list of arguments */
 	private int getTriggerOffset( String text )
