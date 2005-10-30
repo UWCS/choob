@@ -26,7 +26,7 @@ public class UtilModule
 	/** Creates a new instance of UtilModule */
 	public UtilModule( IRCInterface irc ) {
 		this.irc = irc;
-		this.triggerPattern = Pattern.compile(irc.getTriggerRegex());
+		updateTrigger();
 	}
 	
 	public void updateTrigger()
