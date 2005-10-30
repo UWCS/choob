@@ -124,10 +124,24 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	}
 	
 	protected void destroyPlugin(String pluginName) throws ChoobException {
+		// Update bot's overall command list, for spell-check-based suggestions.
+		String[] oldCommands = new String[0];
 		synchronized(pluginMap)
 		{
+			List<String> commands;
+			
+			// Get list of commands for plugin before setting up new one.
+			commands = pluginMap.getCommands(pluginName);
+			if (commands != null)
+				oldCommands = (String[])commands.toArray(oldCommands);
+			
+			// Clear the old instance's map data and load the new plugin map.
 			pluginMap.unloadPluginMap(pluginName);
 		}
+		
+		// Update bot's command list now.
+		for (int i = 0; i < oldCommands.length; i++)
+			removeCommand(oldCommands[i]);
 	}
 	
 	public ChoobTask commandTask(String pluginName, String command, Message ev) {
