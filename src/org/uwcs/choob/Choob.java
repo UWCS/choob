@@ -365,10 +365,6 @@ public class Choob extends PircBot
 	}
 
 	protected void onNickChange(String nick, String login, String hostname, String newNick) {
-		if (nick.equals(getName())) {
-			// Make sure the trigger checking code is up-to-date with the current nickname.
-			modules.util.updateTrigger();
-		}
 		spinThread(new NickChange("onNickChange", System.currentTimeMillis(), ((int)(Math.random()*127)), nick, login, hostname, newNick));
 	}
 

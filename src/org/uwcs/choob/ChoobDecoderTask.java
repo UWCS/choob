@@ -51,6 +51,19 @@ final class ChoobDecoderTask extends ChoobTask
 	{
 		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
 
+		if (event instanceof NickChange)
+		{
+			// FIXME: There is no way I can see to make this work here.
+			// It needs to pick up when the BOT changes name, even through
+			// external forces, and poke UtilModule about it.
+			
+			//NickChange nc = (NickChange)event;
+			//if (nc.getNick().equals()) {
+			//	// Make sure the trigger checking code is up-to-date with the current nickname.
+			//	modules.util.updateTrigger();
+			//}
+		}
+
 		// Process event calls first
 		tasks.addAll(modules.plugin.getPlugMan().eventTasks(event));
 
