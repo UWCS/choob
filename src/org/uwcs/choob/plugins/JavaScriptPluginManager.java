@@ -135,7 +135,7 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 			if (commands != null)
 				oldCommands = (String[])commands.toArray(oldCommands);
 			
-			// Clear the old instance's map data and load the new plugin map.
+			// Clear the old instance's map data.
 			pluginMap.unloadPluginMap(pluginName);
 		}
 		
@@ -187,10 +187,16 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 	}
 	
 	public Object doGeneric(String pluginName, String prefix, String genericName, Object... params) throws ChoobException {
+		// Call a psecific type of generic, by constructing the right name.
 		String fullName = pluginName + "." + prefix + ":" + genericName;
 		
 		JavaScriptPluginExport method = pluginMap.getGeneric(fullName);
 		if (method == null) {
+			/* 
+			 * This is for compatibility with the Help plugin, which assumes
+			 * that doGeneric will throw this exact exception if it is not
+			 * found, contrary to all the other methods which just return null.
+			 */
 			throw new ChoobNoSuchCallException("No call found for " + fullName);
 		}
 		return callMethod(method, params, CALL_WANT_RESULT);
@@ -206,6 +212,14 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 		return (ChoobTask)callMethod(method, params, CALL_WANT_TASK);
 	}
 	
+	/*
+	 * This calls any export a plugin has, be it a method or a property, and
+	 * can return one of two things: the result, or a ChoobTask that when run
+	 * does the call and gives the result.
+	 *
+	 * It does all the work inside a protection domain, which identifies the
+	 * plugin that is being called, so that the code can correctly identify it.
+	 */
 	private Object callMethod(final JavaScriptPluginExport export, final Object[] params, final int result) {
 		final JavaScriptPlugin plugin = export.getPlugin();
 		final String pluginName = plugin.getName();
@@ -261,7 +275,6 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 					try {
 						AccessController.doPrivileged(action, accessContext);
 					} catch (PrivilegedActionException e) {
-						//throw (ChoobException)(e.getCause());
 					}
 				}
 			};
@@ -270,7 +283,6 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 			try {
 				return AccessController.doPrivileged(action, accessContext);
 			} catch (PrivilegedActionException e) {
-				//throw (ChoobException)(e.getCause());
 			}
 		}
 		return null;
