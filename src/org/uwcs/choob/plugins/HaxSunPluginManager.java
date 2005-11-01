@@ -121,8 +121,15 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		{
 			System.out.println(baosts);
 
-			String url=(String)mods.plugin.callAPI("Http", "StoreString", baosts);
-			throw new ChoobException("Compile failed, see: " + url + " for details.");
+			String excep="Compile failed.";
+
+			try
+			{
+				String url=(String)mods.plugin.callAPI("Http", "StoreString", baosts);
+				excep="Compile failed, see: " + url + " for details.";
+			}
+			catch (Exception e) {}
+			throw new ChoobException(excep);
 		}
 	}
 

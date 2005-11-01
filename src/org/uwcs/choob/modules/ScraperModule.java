@@ -113,8 +113,8 @@ public class ScraperModule
 
 	public String quoteURLs(String html)
 	{
-		return html.replaceAll("<a +?href *= *\"(.*?)\" *?>",Colors.REVERSE + "<$1> " + Colors.NORMAL).replaceAll("</a>","");
-		//return html;
+		//return html.replaceAll("<a +?href *= *\"(.*?)\" *?>","[$1] ").replaceAll("</a>","");
+		return html;
 		//This is going to require more than: return html.replaceAll("<a +?href *= *\"(.*?)\" *?>",Colors.REVERSE + "<$1> " + Colors.NORMAL).replaceAll("</a>","");
 	}
 

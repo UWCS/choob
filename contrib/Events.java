@@ -11,10 +11,26 @@ import org.jibble.pircbot.Colors;
 
 public class Events
 {
+
+	private static final String announceChannel="#bots";
+	private static final long checkInterval=60000; // The crond job is run every minute.
+
 	private Modules mods;
 	private IRCInterface irc;
 
 	private final URL eventsurl;
+
+	private ArrayList<String[]> current;
+
+	private final static int ID=1;
+	private final static int NAME=2;
+	private final static int SIGNUPNAMES=8;
+	private final static int SIGNUPCURRENT=7;
+	private final static int SIGNUPMAX=6;
+
+	//  Id:    1        2          3       4       5       6       7         8                     9                                 10
+	//  Name:  id       name     start   end <signup>code max   current    names</signup>        desc.                             location
+
 
 	public Events(Modules mods, IRCInterface irc) throws ChoobException
 	{
@@ -22,12 +38,110 @@ public class Events
 		this.irc = irc;
 		try
 		{
+			//eventsurl = new URL("http://localhost/events.data");
 			eventsurl = new URL("http://faux.uwcs.co.uk/events.data");
 		}
 		catch (MalformedURLException e)
 		{
 			throw new ChoobException("Error in constant data.");
 		}
+		mods.interval.callBack(null, checkInterval); // 5 secs.
+	}
+
+
+	public void interval(Object param) throws ChoobException
+	{
+		ArrayList<String[]> ne=readEventsData();
+		if (current==null)
+		{
+			//current=ne;
+		}
+		else if (current.equals(ne)) // Offchance?
+		{
+			//return;
+		}
+		else
+		{
+
+			ListIterator<String[]> ci=current.listIterator();
+			ListIterator<String[]> ni=ne.listIterator();
+
+			HashMap<Integer, String[]>curr=new HashMap<Integer, String[]>();
+			while (ci.hasNext())
+			{
+				String c[]=ci.next();
+				curr.put(Integer.parseInt(c[ID]), new String[] {"","",c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], c[10] }); // Strashmaps ftw.
+			}
+
+			while (ni.hasNext())
+			{
+				String[] n=ni.next();
+				String[] c=curr.get(Integer.parseInt(n[ID]));
+				if (c==null)
+					irc.sendMessage(announceChannel, "New event! " + n[NAME] + " at " + n[10] + " in " + stupidStamp((new Date(Long.parseLong(n[3])*(long)1000)).getTime() - (new Date()).getTime()) + ".");
+				else
+				{
+					if (!c[SIGNUPCURRENT].equals(n[SIGNUPCURRENT]))
+					{
+						// OH MY GOD WHATTF HAXBQ!
+
+						String[] cn=c[SIGNUPNAMES].split(",");
+						String[] nn=n[SIGNUPNAMES].split(",");
+
+						HashSet <String> q=new HashSet<String>();
+						HashSet <String> r=new HashSet<String>();
+
+						for (int i=0; i<cn.length; i++)
+							q.add(cn[i].trim());
+
+						for (int i=0; i<nn.length; i++)
+							r.add(nn[i].trim());
+
+						Iterator <String>it=q.iterator();
+
+						while (it.hasNext())
+						{
+							Object o=it.next();
+							if (r.remove(o))
+								it.remove();
+						}
+
+						it=r.iterator();
+
+						while (it.hasNext())
+						{
+							Object o=it.next();
+							if (q.remove(o))
+								it.remove();
+						}
+
+
+						StringBuilder sig=new StringBuilder();
+
+						it=q.iterator();
+						while (it.hasNext())
+						{
+							String name=it.next();
+							if (name.length()>1)
+								sig.append("-" + name + ", ");
+						}
+
+						it=r.iterator();
+						while (it.hasNext())
+						{
+							String name=it.next();
+							if (name.length()>1)
+								sig.append("+" + name + ", ");
+						}
+						String sigts=sig.toString();
+						if (sigts.length()>2) sigts=sigts.substring(0, sigts.length()-2);
+						irc.sendMessage(announceChannel, "Signups for " + Colors.BOLD + n[NAME] + Colors.NORMAL + " (" + n[ID] + ") now " + n[SIGNUPCURRENT] + "/" + n[SIGNUPMAX] + " (" + sigts + ").");
+					}
+				}
+			}
+		}
+		current=ne;
+		mods.interval.callBack(null, checkInterval);
 	}
 
 	private String stupidStamp(long i)
@@ -69,7 +183,7 @@ public class Events
 
 		try
 		{
-			ma=mods.scrape.getMatcher(eventsurl, 10000, events_pattern);
+			ma=mods.scrape.getMatcher(eventsurl, checkInterval, events_pattern);
 		}
 		catch (IOException e)
 		{
