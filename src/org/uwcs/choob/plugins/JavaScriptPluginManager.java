@@ -517,13 +517,8 @@ final class JavaScriptPluginMap {
 							generics.put(fullName, export);
 							count++;
 							System.out.println("  Generic   " + fullName);
-							
-						} else {
-							System.err.println("  WARNING: Unknown property: " + propString);
 						}
 					}
-				} else {
-					System.out.println("  Found property of type: " + prop.getClass().getName());
 				}
 			}
 			inst = inst.getPrototype();

@@ -222,7 +222,7 @@ IF "%OK%"=="0" (
 ECHO OK: Database "choob.db" imported.
 IF EXIST custom.db (
 	TYPE custom.db | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% choob || SET OK=0
-	IF "%OK%"=="0" (
+	IF "!OK!"=="0" (
 		ECHO FATAL ERROR: Unable to import "custom.db" into the mysql database.
 		ECHO              Check "bot.conf" username and password.
 		POPD
