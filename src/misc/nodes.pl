@@ -16,7 +16,7 @@ $SIG{__DIE__} = sub {
 };
 
 my ($dbhost, $dbuser, $dbpass) = ("", "", "");
-if (open(CFG, "../bot.conf")) {
+if (open(CFG, "bot.conf") || open(CFG, "../bot.conf")) {
 	my @conf = <CFG>;
 	close(CFG);
 	
@@ -31,7 +31,7 @@ if (open(CFG, "../bot.conf")) {
 	}
 } else {
 	print "$!\n";
-	die "Unable to open bot.conf file! It must be in the parent directory to this script.";
+	die "Unable to open bot.conf file! It must be in the current or parent directory to this script.";
 }
 
 use DBI;

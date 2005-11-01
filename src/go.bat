@@ -220,11 +220,36 @@ IF "%OK%"=="0" (
 	GOTO :EOF
 )
 ECHO OK: Database "choob.db" imported.
+IF EXIST custom.db (
+	TYPE custom.db | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% choob || SET OK=0
+	IF "%OK%"=="0" (
+		ECHO FATAL ERROR: Unable to import "custom.db" into the mysql database.
+		ECHO              Check "bot.conf" username and password.
+		POPD
+		GOTO :EOF
+	)
+	ECHO OK: Database "custom.db" imported.
+)
 POPD
 
 IF NOT DEFINED BotAdminUser GOTO :do-init-no-admin-set
 
-ECHO UPDATE UserNodes SET NodeName = "%BotAdminUser%" WHERE NodeName = "bucko" | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% choob || SET OK=0
+ECHO INSERT INTO UserNodes (NodeID, NodeName, NodeClass) VALUES (1001, "%BotAdminUser%", 1) | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% choob || SET OK=0
+IF "%OK%"=="0" (
+	ECHO FATAL ERROR: Failed to update admin user information in the database.
+	GOTO :EOF
+)
+ECHO INSERT INTO UserNodes (NodeID, NodeName, NodeClass) VALUES (1002, "%BotAdminUser%", 0) | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% choob || SET OK=0
+IF "%OK%"=="0" (
+	ECHO FATAL ERROR: Failed to update admin user information in the database.
+	GOTO :EOF
+)
+ECHO INSERT INTO GroupMembers (GroupID, MemberID) VALUES (1, 1001) | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% choob || SET OK=0
+IF "%OK%"=="0" (
+	ECHO FATAL ERROR: Failed to update admin user information in the database.
+	GOTO :EOF
+)
+ECHO INSERT INTO GroupMembers (GroupID, MemberID) VALUES (1001, 1002) | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% choob || SET OK=0
 IF "%OK%"=="0" (
 	ECHO FATAL ERROR: Failed to update admin user information in the database.
 	GOTO :EOF
