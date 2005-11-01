@@ -51,7 +51,7 @@ public class Factoids
 	};
 	public void commandWhatIs( Message msg, Modules mods, IRCInterface irc ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams( msg, 3 );
+		List<String> params = mods.util.getParams(msg, 1);
 
 		List facts = mods.odb.retrieve( FactoidObject.class , "SORT RANDOM LIMIT (1) WHERE subject = \"" + params.get(1).toLowerCase() + "\"");
 

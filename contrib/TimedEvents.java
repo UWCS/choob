@@ -59,7 +59,7 @@ public class TimedEvents
 			return;
 		}
 
-		List<String> params = mods.util.getParams( mes, 3 );
+		List<String> params = mods.util.getParams(mes, 2);
 
 		if (params.size() <= 2) {
 			irc.sendContextReply(mes, "Syntax is: TimedEvents.In <When> <Command>");
@@ -116,7 +116,7 @@ public class TimedEvents
 		}
 
 		// XXX /Lots/ of duplicated code from in.
-		List<String> params = mods.util.getParams( mes, 3 );
+		List<String> params = mods.util.getParams(mes, 2);
 
 		if (params.size() <= 2) {
 			irc.sendContextReply(mes, "Syntax is: TimedEvents.At <When> <Command>");

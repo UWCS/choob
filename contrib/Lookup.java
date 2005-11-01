@@ -71,9 +71,9 @@ public class Lookup
 	public void commandLookupIn( Message mes, Modules mods, IRCInterface irc )
 	{
 
-		List<String> params = mods.util.getParams(mes, 3);
+		List<String> params = mods.util.getParams(mes, 2);
 		String domain, record;
-		if (params.size() < 2 || params.size() > 3)
+		if (params.size() <= 1)
 		{
 			irc.sendContextReply(mes, "Usage: <domain> [<record>].");
 			return;

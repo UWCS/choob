@@ -78,7 +78,7 @@ public class UtilModule
 	 * Get the first count parameters, then slurp any remaining into the
 	 * count+1th.
 	 *
-	 * Note that the command token /IS/ included in the count.
+	 * Note that the command token is /NOT/ included in the count!
 	 */
 	public List<String> getParams( Message mes, int count )
 	{
@@ -90,7 +90,7 @@ public class UtilModule
 		int currentPos = text.indexOf(' ', offset);
 		int lastPos = offset;
 		if (currentPos != -1)
-			for(int i=1; i<count; i++)
+			for(int i=0; i<count; i++)
 			{
 				tempList.add( text.substring( lastPos, currentPos ) );
 				do

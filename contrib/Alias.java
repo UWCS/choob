@@ -57,7 +57,7 @@ public class Alias
 	};
 	public void commandAdd( Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams(mes, 3);
+		List<String> params = mods.util.getParams(mes, 2);
 
 		if (params.size() <= 2)
 		{
@@ -103,7 +103,7 @@ public class Alias
 	};
 	public void commandRemove( Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams(mes, 3);
+		List<String> params = mods.util.getParams(mes, 1);
 
 		if (params.size() <= 1)
 		{
@@ -187,9 +187,9 @@ public class Alias
 	};
 	public void commandShow( Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams(mes, 3);
+		List<String> params = mods.util.getParams(mes, 1);
 
-		if (params.size() < 2)
+		if (params.size() <= 1)
 		{
 			irc.sendContextReply(mes, "Please specify the name of the alias to show.");
 			return;
@@ -212,9 +212,9 @@ public class Alias
 	};
 	public void commandLock( Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams(mes, 3);
+		List<String> params = mods.util.getParams(mes, 1);
 
-		if (params.size() < 2)
+		if (params.size() <= 1)
 		{
 			irc.sendContextReply(mes, "Please specify the name of the alias to lock.");
 			return;
@@ -244,9 +244,9 @@ public class Alias
 	};
 	public void commandUnlock( Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams(mes, 3);
+		List<String> params = mods.util.getParams(mes, 1);
 
-		if (params.size() < 2)
+		if (params.size() <= 1)
 		{
 			irc.sendContextReply(mes, "Please specify the name of the alias to unlock.");
 			return;

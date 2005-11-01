@@ -46,7 +46,7 @@ public class Dict
 
 	public void commandDict(Message mes)
 	{
-		List<String> parm=mods.util.getParams(mes, 3);
+		List<String> parm=mods.util.getParams(mes, 2);
 		if (parm.size()<=1)
 		{
 			irc.sendContextReply(mes, "Please give me a word to lookup.");

@@ -68,8 +68,8 @@ public class Tell
 
 	public synchronized void commandSend( Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams( mes, 3 );
-		if (params.size() != 3)
+		List<String> params = mods.util.getParams(mes, 2);
+		if (params.size() <= 2)
 		{
 			irc.sendContextReply(mes, "Syntax: Tell.Send <Nick>[,<Nick>...] <Message>");
 			return;
