@@ -276,7 +276,7 @@ CALL compile
 IF ERRORLEVEL 1 GOTO :do-run-compile-error
 ECHO ==== Running... ====
 CALL run
-IF "%ERRORLEVEL%"=="1" GOTO :EOF
+IF "%ERRORLEVEL%"=="0" GOTO :EOF
 :do-run-compile-error
 
 ECHO ==== Sleeping... ====
