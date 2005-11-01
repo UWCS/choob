@@ -83,17 +83,21 @@ final class ChoobDecoderTask extends ChoobTask
 		{
 			// CommandEvents are messages
 			Message mes = (Message) event;
+
 			Matcher ma;
 
 			// First, is does it have a trigger?
 			String matchAgainst = mes.getMessage();
 			ma = triggerPattern.matcher(matchAgainst);
-			if ( ma.find() )
+
+			boolean mafind = ma.find();
+
+			if ( mafind || mes instanceof PrivateMessage )
 			{
 				// OK, it's a command!
 
 				// Decode into a string we can match as a command.
-				int commandStart = ma.end();
+				int commandStart = (mafind ? ma.end() : 0);
 				int commandEnd = matchAgainst.indexOf(' ', commandStart);
 				if (commandEnd != -1)
 					matchAgainst = matchAgainst.substring(commandStart, commandEnd);
