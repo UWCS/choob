@@ -28,7 +28,7 @@ public class UtilModule
 		this.irc = irc;
 		updateTrigger();
 	}
-	
+
 	public void updateTrigger()
 	{
 		this.triggerPattern = Pattern.compile(this.irc.getTriggerRegex());

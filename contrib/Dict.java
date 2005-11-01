@@ -46,7 +46,7 @@ public class Dict
 
 	public void commandDict(Message mes)
 	{
-		List<String> parm=mods.util.getParams(mes, 2);
+		List<String> parm=mods.util.getParams(mes, 3);
 		if (parm.size()<=1)
 		{
 			irc.sendContextReply(mes, "Please give me a word to lookup.");
@@ -95,7 +95,7 @@ public class Dict
 		}
 		catch (UnsupportedEncodingException e)
 		{
-			throw new DictionaryException("Exception generating url.", e);
+			throw new DictionaryException("Unexpected exception generating url.", e);
 		}
 		catch (MalformedURLException e)
 		{
@@ -111,11 +111,11 @@ public class Dict
 		}
 		catch (FileNotFoundException e)
 		{
-			throw new DictionaryException("No article found.", e);
+			throw new DictionaryException("No article found (404).", e);
 		}
 		catch (IOException e)
 		{
-			throw new DictionaryException("Error reading from site.", e);
+			throw new DictionaryException("Error reading from site. " + e, e);
 		}
 
 	}

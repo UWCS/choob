@@ -57,7 +57,7 @@ public class Alias
 	};
 	public void commandAdd( Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams(mes, 2);
+		List<String> params = mods.util.getParams(mes, 3);
 
 		if (params.size() <= 2)
 		{
@@ -103,7 +103,7 @@ public class Alias
 	};
 	public void commandRemove( Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams(mes, 2);
+		List<String> params = mods.util.getParams(mes, 3);
 
 		if (params.size() <= 1)
 		{
@@ -131,7 +131,7 @@ public class Alias
 			oldAlias = " (was " + alias.converted + ")";
 
 			mods.odb.delete(alias);
-			
+
 			irc.sendContextReply(mes, "Deleted '" + alias.name + "', was aliased to '" + alias.converted + "'.");
 		}
 		else
@@ -187,7 +187,7 @@ public class Alias
 	};
 	public void commandShow( Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams(mes, 2);
+		List<String> params = mods.util.getParams(mes, 3);
 
 		if (params.size() < 2)
 		{
@@ -212,7 +212,7 @@ public class Alias
 	};
 	public void commandLock( Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams(mes, 2);
+		List<String> params = mods.util.getParams(mes, 3);
 
 		if (params.size() < 2)
 		{
@@ -244,7 +244,7 @@ public class Alias
 	};
 	public void commandUnlock( Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams(mes, 2);
+		List<String> params = mods.util.getParams(mes, 3);
 
 		if (params.size() < 2)
 		{

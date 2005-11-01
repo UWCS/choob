@@ -58,7 +58,7 @@ public class Help
 	};
 	public void commandHelp( Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams( mes, 2 );
+		List<String> params = mods.util.getParams( mes, 3 );
 		String fullTopic, topicParams;
 		if (params.size() == 1)
 		{
