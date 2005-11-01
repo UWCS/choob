@@ -11,9 +11,14 @@ public class Test
 {
 	public void commandSecurity( Message con, Modules mods, IRCInterface irc )
 	{
-		List<String> params = mods.util.getParams( con );
+		String priv = mods.util.getParamString( con );
 
-		String priv = params.get(1);
+		if (priv.trim().equals(""))
+		{
+			irc.sendContextReply(con, "You have to specify an argument.");
+			return;
+		}
+
 		if ( mods.security.hasNickPerm( new ChoobPermission(priv), con.getNick() ) )
 			irc.sendContextReply(con, "You do indeed have " + priv + "!" );
 		else
