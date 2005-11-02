@@ -40,7 +40,7 @@ public class Dict
 	public String[] helpCommandDict = {
 		"Look up a word.",
 		"[<dictionary>] <word>",
-		"<dictionary> is the dictionary to use, valid dictioanries include 'wikipedia', 'urbandict' and 'dict'(.org)",
+		"<dictionary> is the dictionary to use, valid dictioanries include 'wikipedia', 'urbandict', 'acronym'(finder) and 'dict'(.org)",
 		"<word> is the word to look up"
 	};
 
@@ -63,6 +63,8 @@ public class Dict
 					irc.sendContextReply(mes, apiUrbanDictionary(parm.get(2)));
 				else if (tionary.equalsIgnoreCase("dict"))
 					irc.sendContextReply(mes, apiUrbanDictionary(parm.get(2)));
+				else if (tionary.equalsIgnoreCase("acronym"))
+					irc.sendContextReply(mes, apiAcronymFinder(parm.get(2)));
 				else
 					irc.sendContextReply(mes, apiDictionary(tionary + parm.get(2)));
 			}
@@ -157,6 +159,37 @@ public class Dict
 		else
 			throw new DictionaryException("Error parsing reply.");
 	}
+
+	public String apiAcronymFinder( String item ) throws DictionaryException
+	{
+		return apiAcronymFinder(item, 1);
+	}
+
+	public String apiAcronymFinder( String item, int lines ) throws DictionaryException
+	{
+		if (item.equals(""))
+			throw new DictionaryException("Lookup what?");
+
+		URL url=generateURL("http://www.acronymfinder.com/af-query.asp?String=exact&Find=Find&Acronym=", item);
+		Matcher ma=getMatcher(url, "src=\"l.gif\" title=\"direct link\" ></a>&nbsp;(.*)");
+
+		StringBuilder s=new StringBuilder();
+
+		while (ma.find() && s.length()<((irc.MAX_MESSAGE_LENGTH-77-50)*lines))
+			s.append(mods.scrape.readyForIrc(ma.group(1))).append(", ");
+
+		if (s.length()==0)
+			throw new DictionaryException("No matches identified.");
+
+		s.setLength(s.length()-2);
+		s.append(".");
+
+		if (ma.find())
+			s.append(".. See " + url.toString());
+
+		return s.toString();
+	}
+
 
 	public String apiDictionary( String item ) throws DictionaryException
 	{
