@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public interface NickChangeEvent
 {
 	/**
@@ -13,6 +13,5 @@ public interface NickChangeEvent
 	 * @return The value of newNick
 	 */
 	public String getNewNick();
-
 
 }

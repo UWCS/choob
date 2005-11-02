@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public interface UserEvent
 {
 	/**
@@ -25,6 +25,5 @@ public interface UserEvent
 	 * @return The value of hostname
 	 */
 	public String getHostname();
-
 
 }

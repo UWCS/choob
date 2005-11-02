@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 {
 	/**
@@ -14,18 +14,42 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 	private final String channel;
 
 	/**
+	 * Get the value of channel
+	 * @return The value of channel
+	 */
+	public String getChannel() {
+		 return channel;
+	}
+
+	/**
 	 * mode
 	 */
 	private final String mode;
+
+	/**
+	 * Get the value of mode
+	 * @return The value of mode
+	 */
+	public String getMode() {
+		 return mode;
+	}
 
 	/**
 	 * set
 	 */
 	private final boolean set;
 
+	/**
+	 * Get the value of set
+	 * @return The value of set
+	 */
+	public boolean isSet() {
+		 return set;
+	}
+
 
 	/**
-	 * Construct a new ChannelMode
+	 * Construct a new ChannelMode.
 	 */
 	public ChannelMode(String methodName, long millis, int random, String channel, String mode, boolean set)
 	{
@@ -33,7 +57,6 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 		this.channel = channel;
 		this.mode = mode;
 		this.set = set;
-
 	}
 
 	/**
@@ -45,51 +68,25 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 		this.channel = old.channel;
 		this.mode = old.mode;
 		this.set = old.set;
-
 	}
 
 	/**
 	 * Synthesize a new ChannelMode from this one.
 	 * @return The new ChannelMode object.
 	 */
-	public IRCEvent cloneEvent() {
+	public IRCEvent cloneEvent()
+	{
 		return new ChannelMode(this);
 	}
-
-	/**
-	 * Get the value of channel
-	 * @return The value of channel
-	 */
-	public String getChannel() {
-		return channel;
-	}
-
-	/**
-	 * Get the value of mode
-	 * @return The value of mode
-	 */
-	public String getMode() {
-		return mode;
-	}
-
-	/**
-	 * Get the value of set
-	 * @return The value of set
-	 */
-	public boolean isSet() {
-		return set;
-	}
-
 
 	public boolean equals(Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelMode))
 			return false;
-		if (!super.equals(obj))
+		if ( !super.equals(obj) )
 			return false;
 		ChannelMode thing = (ChannelMode)obj;
-		if ( true
- && channel.equals(thing.channel) && mode.equals(thing.mode) && (set == thing.set))
+		if ( true && channel.equals(thing.channel) && mode.equals(thing.mode) && (set == thing.set) )
 			return true;
 		return false;
 	}
@@ -101,8 +98,8 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 		out.append(", channel = " + channel);
 		out.append(", mode = " + mode);
 		out.append(", set = " + set);
+		out.append(")");
 		return out.toString();
 	}
-
 
 }

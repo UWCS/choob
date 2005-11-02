@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public interface ContextEvent
 {
 	/**
@@ -13,6 +13,5 @@ public interface ContextEvent
 	 * @return The value of context
 	 */
 	public String getContext();
-
 
 }

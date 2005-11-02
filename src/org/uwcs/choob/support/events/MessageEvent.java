@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public interface MessageEvent
 {
 	/**
@@ -13,6 +13,5 @@ public interface MessageEvent
 	 * @return The value of message
 	 */
 	public String getMessage();
-
 
 }

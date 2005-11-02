@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public interface ParamEvent
 {
 	/**
@@ -13,6 +13,5 @@ public interface ParamEvent
 	 * @return The value of param
 	 */
 	public String getParam();
-
 
 }

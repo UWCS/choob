@@ -5,17 +5,24 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class PrivateAction extends Message implements PrivateEvent, FilterEvent
 {
+	/**
+	 * Get the reply context in which this event resides
+	 * @return The context
+	 */
+	public String getContext() {
+		return getNick();
+	}
+
 
 	/**
-	 * Construct a new PrivateAction
+	 * Construct a new PrivateAction.
 	 */
 	public PrivateAction(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
 	{
 		super(methodName, millis, random, message, nick, login, hostname, target);
-
 	}
 
 	/**
@@ -24,27 +31,25 @@ public class PrivateAction extends Message implements PrivateEvent, FilterEvent
 	public PrivateAction(PrivateAction old, String message)
 	{
 		super(old, message);
-
 	}
 
 	/**
 	 * Synthesize a new PrivateAction from this one.
 	 * @return The new PrivateAction object.
 	 */
-	public IRCEvent cloneEvent(String message) {
+	public IRCEvent cloneEvent(String message)
+	{
 		return new PrivateAction(this, message);
 	}
-
 
 	public boolean equals(Object obj)
 	{
 		if (obj == null || !(obj instanceof PrivateAction))
 			return false;
-		if (!super.equals(obj))
+		if ( !super.equals(obj) )
 			return false;
 		PrivateAction thing = (PrivateAction)obj;
-		if ( true
-)
+		if ( true )
 			return true;
 		return false;
 	}
@@ -53,8 +58,8 @@ public class PrivateAction extends Message implements PrivateEvent, FilterEvent
 	{
 		StringBuffer out = new StringBuffer("PrivateAction(");
 		out.append(super.toString());
+		out.append(")");
 		return out.toString();
 	}
-
 
 }

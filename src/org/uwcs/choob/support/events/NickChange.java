@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 {
 	/**
@@ -14,9 +14,25 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	private final String nick;
 
 	/**
+	 * Get the value of nick
+	 * @return The value of nick
+	 */
+	public String getNick() {
+		 return nick;
+	}
+
+	/**
 	 * login
 	 */
 	private final String login;
+
+	/**
+	 * Get the value of login
+	 * @return The value of login
+	 */
+	public String getLogin() {
+		 return login;
+	}
 
 	/**
 	 * hostname
@@ -24,13 +40,29 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	private final String hostname;
 
 	/**
+	 * Get the value of hostname
+	 * @return The value of hostname
+	 */
+	public String getHostname() {
+		 return hostname;
+	}
+
+	/**
 	 * newNick
 	 */
 	private final String newNick;
 
+	/**
+	 * Get the value of newNick
+	 * @return The value of newNick
+	 */
+	public String getNewNick() {
+		 return newNick;
+	}
+
 
 	/**
-	 * Construct a new NickChange
+	 * Construct a new NickChange.
 	 */
 	public NickChange(String methodName, long millis, int random, String nick, String login, String hostname, String newNick)
 	{
@@ -39,7 +71,6 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 		this.login = login;
 		this.hostname = hostname;
 		this.newNick = newNick;
-
 	}
 
 	/**
@@ -52,59 +83,25 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 		this.login = old.login;
 		this.hostname = old.hostname;
 		this.newNick = old.newNick;
-
 	}
 
 	/**
 	 * Synthesize a new NickChange from this one.
 	 * @return The new NickChange object.
 	 */
-	public IRCEvent cloneEvent() {
+	public IRCEvent cloneEvent()
+	{
 		return new NickChange(this);
 	}
-
-	/**
-	 * Get the value of nick
-	 * @return The value of nick
-	 */
-	public String getNick() {
-		return nick;
-	}
-
-	/**
-	 * Get the value of login
-	 * @return The value of login
-	 */
-	public String getLogin() {
-		return login;
-	}
-
-	/**
-	 * Get the value of hostname
-	 * @return The value of hostname
-	 */
-	public String getHostname() {
-		return hostname;
-	}
-
-	/**
-	 * Get the value of newNick
-	 * @return The value of newNick
-	 */
-	public String getNewNick() {
-		return newNick;
-	}
-
 
 	public boolean equals(Object obj)
 	{
 		if (obj == null || !(obj instanceof NickChange))
 			return false;
-		if (!super.equals(obj))
+		if ( !super.equals(obj) )
 			return false;
 		NickChange thing = (NickChange)obj;
-		if ( true
- && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && newNick.equals(thing.newNick))
+		if ( true && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && newNick.equals(thing.newNick) )
 			return true;
 		return false;
 	}
@@ -117,8 +114,8 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 		out.append(", login = " + login);
 		out.append(", hostname = " + hostname);
 		out.append(", newNick = " + newNick);
+		out.append(")");
 		return out.toString();
 	}
-
 
 }

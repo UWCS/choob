@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public interface ModeEvent
 {
 	/**
@@ -19,6 +19,5 @@ public interface ModeEvent
 	 * @return The value of set
 	 */
 	public boolean isSet();
-
 
 }

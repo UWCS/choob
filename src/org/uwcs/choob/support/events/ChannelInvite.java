@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, AimedEvent
 {
 	/**
@@ -14,9 +14,25 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	private final String channel;
 
 	/**
+	 * Get the value of channel
+	 * @return The value of channel
+	 */
+	public String getChannel() {
+		 return channel;
+	}
+
+	/**
 	 * nick
 	 */
 	private final String nick;
+
+	/**
+	 * Get the value of nick
+	 * @return The value of nick
+	 */
+	public String getNick() {
+		 return nick;
+	}
 
 	/**
 	 * login
@@ -24,18 +40,42 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	private final String login;
 
 	/**
+	 * Get the value of login
+	 * @return The value of login
+	 */
+	public String getLogin() {
+		 return login;
+	}
+
+	/**
 	 * hostname
 	 */
 	private final String hostname;
+
+	/**
+	 * Get the value of hostname
+	 * @return The value of hostname
+	 */
+	public String getHostname() {
+		 return hostname;
+	}
 
 	/**
 	 * target
 	 */
 	private final String target;
 
+	/**
+	 * Get the value of target
+	 * @return The value of target
+	 */
+	public String getTarget() {
+		 return target;
+	}
+
 
 	/**
-	 * Construct a new ChannelInvite
+	 * Construct a new ChannelInvite.
 	 */
 	public ChannelInvite(String methodName, long millis, int random, String channel, String nick, String login, String hostname, String target)
 	{
@@ -45,7 +85,6 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 		this.login = login;
 		this.hostname = hostname;
 		this.target = target;
-
 	}
 
 	/**
@@ -59,67 +98,25 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 		this.login = old.login;
 		this.hostname = old.hostname;
 		this.target = old.target;
-
 	}
 
 	/**
 	 * Synthesize a new ChannelInvite from this one.
 	 * @return The new ChannelInvite object.
 	 */
-	public IRCEvent cloneEvent() {
+	public IRCEvent cloneEvent()
+	{
 		return new ChannelInvite(this);
 	}
-
-	/**
-	 * Get the value of channel
-	 * @return The value of channel
-	 */
-	public String getChannel() {
-		return channel;
-	}
-
-	/**
-	 * Get the value of nick
-	 * @return The value of nick
-	 */
-	public String getNick() {
-		return nick;
-	}
-
-	/**
-	 * Get the value of login
-	 * @return The value of login
-	 */
-	public String getLogin() {
-		return login;
-	}
-
-	/**
-	 * Get the value of hostname
-	 * @return The value of hostname
-	 */
-	public String getHostname() {
-		return hostname;
-	}
-
-	/**
-	 * Get the value of target
-	 * @return The value of target
-	 */
-	public String getTarget() {
-		return target;
-	}
-
 
 	public boolean equals(Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelInvite))
 			return false;
-		if (!super.equals(obj))
+		if ( !super.equals(obj) )
 			return false;
 		ChannelInvite thing = (ChannelInvite)obj;
-		if ( true
- && channel.equals(thing.channel) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && target.equals(thing.target))
+		if ( true && channel.equals(thing.channel) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && target.equals(thing.target) )
 			return true;
 		return false;
 	}
@@ -133,8 +130,8 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 		out.append(", login = " + login);
 		out.append(", hostname = " + hostname);
 		out.append(", target = " + target);
+		out.append(")");
 		return out.toString();
 	}
-
 
 }

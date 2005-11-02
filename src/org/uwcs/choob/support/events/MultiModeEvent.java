@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public interface MultiModeEvent
 {
 	/**
@@ -13,6 +13,5 @@ public interface MultiModeEvent
 	 * @return The value of modes
 	 */
 	public String getModes();
-
 
 }

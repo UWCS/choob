@@ -7,6 +7,7 @@ package org.uwcs.choob.misc;
 
 import java.util.*;
 import java.io.*;
+import java.nio.*;
 import java.util.regex.*;
 
 public class HorriblePerlScript
@@ -105,7 +106,7 @@ public class HorriblePerlScript
 		handlers.add(new String[] { "RemoveTopicProtection", "ChannelMode", "channel", null, "nick", null, "login", null, "hostname", null, "mode", "\"t\"", "(boolean)set", "false" } );
 		handlers.add(new String[] { "SetChannelBan", "ChannelParamMode", "channel", null, "nick", null, "login", null, "hostname", null, "param", null, "mode", "\"b\"", "(boolean)set", "true" } );
 		handlers.add(new String[] { "SetChannelKey", "ChannelParamMode", "channel", null, "nick", null, "login", null, "hostname", null, "param", null, "mode", "\"k\"", "(boolean)set", "true" } );
-		handlers.add(new String[] { "SetChannelLimit", "ChannelParamMode", "channel", null, "nick", null, "login", null, "hostname", null, "(int)prm", null, "param", "(String)prm", "mode", "\"l\"", "(boolean)set", "true" } );
+		handlers.add(new String[] { "SetChannelLimit", "ChannelParamMode", "channel", null, "nick", null, "login", null, "hostname", null, "(int)prm", null, "param", "String.valueOf(prm)", "mode", "\"l\"", "(boolean)set", "true" } );
 		handlers.add(new String[] { "SetInviteOnly", "ChannelMode", "channel", null, "nick", null, "login", null, "hostname", null, "mode", "\"i\"", "(boolean)set", "true" } );
 		handlers.add(new String[] { "SetModerated", "ChannelMode", "channel", null, "nick", null, "login", null, "hostname", null, "mode", "\"m\"", "(boolean)set", "true" } );
 		handlers.add(new String[] { "SetNoExternalMessages", "ChannelMode", "channel", null, "nick", null, "login", null, "hostname", null, "mode", "\"n\"", "(boolean)set", "true" } );
@@ -171,8 +172,9 @@ public class HorriblePerlScript
 		List<String> ret = new ArrayList<String>();
 		Pattern pat = Pattern.compile("\\(([^)]+)\\)(.*)");
 		String[] inherited = inheritance.get(className);
+		// IRCEvent
 		if (inherited == null)
-			return ret;
+			inherited = new String[] { null, className };
 		for(int i = 1; i<inherited.length; i++)
 		{
 			String[] paramList = interfaces.get(inherited[i]);
@@ -211,6 +213,8 @@ public class HorriblePerlScript
 					{
 						if ( match.group(1).charAt(0) != '!' )
 							ret.put(match.group(2), match.group(1));
+						else
+							ret.put(match.group(2), match.group(1).substring(1));
 					}
 					else
 						ret.put(name, "String");
@@ -254,6 +258,22 @@ public class HorriblePerlScript
 			getInheritRecursive(superClass, ret);
 	}
 
+	public void saveToFile(String className, String classContent)
+	{
+		try
+		{
+			OutputStream stream = new FileOutputStream("org/uwcs/choob/support/events/" + className + ".java");
+			PrintWriter writer = new PrintWriter(stream);
+			writer.print(classContent);
+			writer.close();
+		}
+		catch (IOException e)
+		{
+			// We don't need particularly neat errors or anything, so...
+			throw new RuntimeException(e);
+		}
+	}
+
 	public void run()
 	{
 		/**
@@ -268,8 +288,6 @@ public class HorriblePerlScript
 
 			String handler = vals[0];
 			String className = vals[1];
-
-			System.out.println("Handling: " + handler);
 
 			String evtName = "on" + handler;
 
@@ -339,19 +357,34 @@ public class HorriblePerlScript
 
 				eventHandler.append("\t\tspinThread(new " + className + "(" + constructorParams + "));\n\t}\n\n");
 			}
-			System.out.println(eventHandler.toString());
 			eventHandlers.append(eventHandler.toString());
 		}
-		System.out.println("Result:\n" + eventHandlers);
-		// TODO Write to file!
-/*
-open CHOOB, "org/uwcs/choob/Choob.java";
-my $choob = do { local $/; <CHOOB> };
-close CHOOB;
-$choob =~ s[(?<=// BEGIN PASTE!).*?(?=// END PASTE!)][\n\n$eventHandlers\t]s;
-open CHOOB, ">org/uwcs/choob/Choob.java";
-print CHOOB $choob;
-close CHOOB; */
+
+		try
+		{
+			// Sigh, Java makes this so complicated...
+			StringBuffer choob = new StringBuffer();
+			FileReader input = new FileReader("org/uwcs/choob/Choob.java");
+			// Read it all!
+			char[] buffer = new char[16384];
+			int found;
+			while((found = input.read(buffer,0,buffer.length)) > 0)
+				choob.append(buffer,0,found);
+			input.close();
+
+			String choobData = choob.toString();
+			choobData = Pattern.compile("(?<=// BEGIN PASTE!).*?(?=// END PASTE!)", Pattern.DOTALL).matcher(choobData).replaceFirst("\n\n" + eventHandlers + "\t");
+
+			// Yet I can write the file like this...
+			OutputStream stream = new FileOutputStream("org/uwcs/choob/Choob.java");
+			PrintWriter writer = new PrintWriter(stream);
+			writer.print(choobData);
+			writer.close();
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
 
 		/**
 		 * Generate event classes
@@ -403,6 +436,13 @@ close CHOOB; */
 			}
 			classContent.append("\n{\n");
 
+			// Hack to get IRCEvent property in
+			if (className.equals("IRCEvent"))
+			{
+				memberVariables.add("synthLevel");
+				paramTypes.put("synthLevel", "int");
+			}
+
 			// Member variables now.
 			for(String fieldName: memberVariables)
 			{
@@ -424,6 +464,17 @@ close CHOOB; */
 				classContent.append(";\n\t}\n\n");
 			}
 
+			// Special case: ContextEvent!
+			if (directInheritance != null && inherited.contains("ContextEvent"))
+			{
+				classContent.append("\t/**\n\t * Get the reply context in which this event resides\n\t * @return The context\n\t */\n");
+				if (inherited.contains("ChannelEvent")) {
+					classContent.append("\tpublic String getContext() {\n\t\treturn getChannel();\n\t}\n\n");
+				} else {
+					classContent.append("\tpublic String getContext() {\n\t\treturn getNick();\n\t}\n\n");
+				}
+			}
+
 			// Constructor 1
 			classContent.append("\n\t/**\n\t * Construct a new ");
 			classContent.append(className);
@@ -439,22 +490,36 @@ close CHOOB; */
 				first = false;
 				classContent.append(paramTypes.get(paramName) + " " + paramName);
 			}
-			classContent.append(")\n\t{\n\t\tsuper(");
-			// super() params.
-			first = true;
-			for(String paramName: superParams)
+			classContent.append(")\n\t{\n");
+			// Call super if we're not the root.
+			if (directInheritance != null)
 			{
-				if (!first)
-					classContent.append(", ");
-				first = false;
-				classContent.append(paramName);
+				classContent.append("\t\tsuper(");
+				// super() params.
+				first = true;
+				for(String paramName: superParams)
+				{
+					if (!first)
+						classContent.append(", ");
+					first = false;
+					classContent.append(paramName);
+				}
+				classContent.append(");\n");
 			}
-			classContent.append(");\n");
 			// Member variable init.
 			for(String fieldName: memberVariables)
 			{
+				// Hack: Skip this.
+				if (fieldName.equals("synthLevel"))
+					continue;
 				classContent.append("\t\tthis.");
 				classContent.append(fieldName + " = " + fieldName + ";\n");
+			}
+			// IRCEvent hack.
+			if (className.equals("IRCEvent"))
+			{
+				classContent.append("\t\tjava.security.AccessController.checkPermission(new org.uwcs.choob.support.ChoobPermission(\"event.create\"));\n");
+				classContent.append("\t\tthis.synthLevel = 0;\n");
 			}
 			classContent.append("\t}\n\n");
 
@@ -469,18 +534,32 @@ close CHOOB; */
 				classContent.append(", " + paramTypes.get(paramName) + " " + paramName);
 			for(String paramName: myOverrides)
 				classContent.append(", " + paramTypes.get(paramName) + " " + paramName);
-			classContent.append(")\n\t{\n\t\tsuper(old");
-			// super() params.
-			for(String paramName: superOverrides)
-				classContent.append(", " + paramName);
-			classContent.append(");\n");
+			classContent.append(")\n\t{\n");
+			// Call super if we're not the root.
+			if (directInheritance != null)
+			{
+				classContent.append("\t\tsuper(old");
+				// super() params.
+				for(String paramName: superOverrides)
+					classContent.append(", " + paramName);
+				classContent.append(");\n");
+			}
 			// Member variable init.
 			for(String fieldName: memberVariables)
 			{
+				// Hack: Skip this.
+				if (fieldName.equals("synthLevel"))
+					continue;
 				if (myOverrides.contains(fieldName))
 					classContent.append("\t\tthis." + fieldName + " = " + fieldName + ";\n");
 				else
 					classContent.append("\t\tthis." + fieldName + " = old." + fieldName + ";\n");
+			}
+			// IRCEvent hack.
+			if (className.equals("IRCEvent"))
+			{
+				classContent.append("\t\tjava.security.AccessController.checkPermission(new org.uwcs.choob.support.ChoobPermission(\"event.create\"));\n");
+				classContent.append("\t\tthis.synthLevel = old.synthLevel + 1;\n");
 			}
 			classContent.append("\t}\n\n");
 
@@ -534,141 +613,59 @@ close CHOOB; */
 			classContent.append("\tpublic String toString()\n\t{\n\t\tStringBuffer out = new StringBuffer(\"");
 			classContent.append(className + "(\");\n");
 			if (directInheritance != null)
-				classContent.append("\t\tout.append(super.toString())\n");
+				classContent.append("\t\tout.append(super.toString());\n");
 			for(String fieldName: memberVariables)
 				classContent.append("\t\tout.append(\", " + fieldName + " = \" + " + fieldName + ");\n");
-			classContent.append("\t\tout.append(\")\")\n");
+			classContent.append("\t\tout.append(\")\");\n");
 			classContent.append("\t\treturn out.toString();\n");
 			classContent.append("\t}\n\n");
 
 			classContent.append("}\n");
 
+			saveToFile(className, classContent.toString());
+		}
+
+		/**
+		 * Interfaces.
+		 */
+		for(String interfaceName: interfaces.keySet())
+		{
+			// Not an interface; this is an interfacial superclass. Or something.
+			if (interfaceName.equals("IRCEvent"))
+				continue;
+
+			List<String> inherited = getInherit(interfaceName);
+			List<String> paramNames = getParamNames(interfaceName, true);
+			Map<String,String> paramTypes = getParamTypes(interfaceName);
+
+			// Preamble
+			StringBuffer classContent = new StringBuffer("/**\n *\n * @author Horrible Perl Script. Ewwww.\n */\n\npackage org.uwcs.choob.support.events;\nimport org.uwcs.choob.support.events.*;\n\npublic interface ");
 			
-			System.out.println("Class: " + classContent);
+			// Interface name.
+			classContent.append(interfaceName);
+			classContent.append("\n{\n");
+
+			// Getters.
+			for(String fieldName: paramNames)
+			{
+				boolean useIs = paramTypes.get(fieldName).equals("boolean");
+				classContent.append("\t/**\n\t * Get the value of " + fieldName + "\n\t * @return The value of " + fieldName + "\n\t */\n");
+				classContent.append("\tpublic ");
+				classContent.append(paramTypes.get(fieldName) + " ");
+				classContent.append(useIs ? "is" : "get");
+				classContent.append("" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1));
+				classContent.append("();\n\n");
+			}
+
+			classContent.append("}");
+
+			saveToFile(interfaceName, classContent.toString());
 		}
 	}
 }
 
 
 /*
-$extra
-}
-	if ($inheritance{$class}) {
-		my @i = @{$inheritance{$class}};
-		if (grep /ContextEvent/, @inherit) {
-			if (grep /UserEvent|ChannelEvent/, @i) {
-				# Must re-implement getContext
-				$extra .= END;
-	/**
-	 * Get the reply context in which this event resides
-	 * \@return The context
-	 *
-END
-				if (grep /ChannelEvent/, @inherit) {
-					$extra .= END;
-	public String getContext() {
-		return getChannel();
-	}
-END
-				} else {
-					$extra .= END;
-	public String getContext() {
-		return getNick();
-	}
-END
-				}
-			}
-		}
-
-		# Now for synthetic overrides
-	}
-
-	if ($class eq "IRCEvent") {
-		# Speshul things needed!
-		push @constOrder, "synthLevel";
-		$paramType{synthLevel} = "int";
-	}
-
-	if ($class eq "IRCEvent") {
-		$memberInit1 = <<END;
-		java.security.AccessController.checkPermission(new org.uwcs.choob.support.ChoobPermission("event.create"));
-		this.methodName = methodName;
-		this.millis = millis;
-		this.random = random;
-		this.synthLevel = 0;
-END
-		$memberInit2 = <<END;
-		java.security.AccessController.checkPermission(new org.uwcs.choob.support.ChoobPermission("event.create"));
-		this.methodName = old.methodName;
-		this.millis = old.millis;
-		this.random = old.random;
-		this.synthLevel = old.synthLevel + 1;
-END
-	}
-
-	open CLASS, ">org/uwcs/choob/support/events/$class.java";
-	print CLASS $classdef;
-	close CLASS
-
-	}
-
-
-}
-
-foreach my $interface (keys %params) {
-	next if $interface eq 'IRCEvent';
-	my $getters = "";
-	foreach (@{$params{$interface}}) {
-		my $paramType;
-
-		if (s/\((!)?(\w+)\)//) {
-			$paramType = $2;
-		} else {
-			$paramType = "String";
-		}
-
-		my $get = ($paramType eq 'boolean') ? 'is' : 'get';
-		$getters .= <<END;
-	/**
-	 * Get the value of $_
-	 * \@return The value of $_
-	 *
-	public $paramType $get\\u$_();
-
-END
-	}
-	my $classdef = <<END;
-/**
- *
- * \@author Horrible Perl Script. Ewwww.
- *
-
-package org.uwcs.choob.support.events;
-import org.uwcs.choob.support.events.*;
- 
-public interface $interface
-{
-$getters
-}
-END
-
-	open CLASS, ">org/uwcs/choob/support/events/$interface.java";
-	print CLASS $classdef;
-	close CLASS
-}
-
-sub getInherit {
-	my $class = shift;
-	my @stuff = ($class);
-	if ($inheritance{$class}) {
-		return ((map { (&getInherit($_)) } @{$inheritance{$class}}), $class);
-	} else {
-		return ($class);
-	}
-}
-
-
-
 # IGNORE THESE EVENTS FOR NOW
 #protected void onNickChange(String oldNick, String login, String hostname, String newNick)
 # Handled internally in pircBot, overriding causes breakage, don't let it happen:
@@ -677,15 +674,4 @@ sub getInherit {
 #protected void onServerPing(String response) { spinThread(new ChannelEvent(ChannelEvent.ce_ServerPing, new String[] {response  })); }
 #protected void onServerResponse(int code, String response) { spinThread(new ChannelEvent(ChannelEvent.ce_ServerResponse, new String[] {Integer.toString(code), response  })); }
 #protected void onTime(String sourceNick, String sourceLogin, String sourceHostname, String target) { spinThread(new ChannelEvent(ChannelEvent.ce_Time, new String[] {sourceNick, sourceLogin, sourceHostname, target })); }
-#protected void onVersion(String sourceNick, String sourceLogin, String sourceHostname, String target) { spinThread(new ChannelEvent(ChannelEvent.ce_Version, new String[] {sourceNick, sourceLogin, sourceHostname, target })); }
-
-# Protect against RFC breakage.
-
-# Handled elsewhere in this file, for now:
-#protected void onMessage(String channel, String sender, String login, String hostname, String message) { spinThread(new ChannelEvent(ChannelEvent.ce_Message, new String[] {channel, sender, login, hostname, message})); }
-#protected void onPrivateMessage(String sender, String login, String hostname, String message) { spinThread(new ChannelEvent(ChannelEvent.ce_PrivateMessage, new String[] {sender, login, hostname, message })); }
-
-
-# THESE EVENTS ARE REAL
-__DATA__
-*/
+#protected void onVersion(String sourceNick, String sourceLogin, String sourceHostname, String target) { spinThread(new ChannelEvent(ChannelEvent.ce_Version, new String[] {sourceNick, sourceLogin, sourceHostname, target })); }*/

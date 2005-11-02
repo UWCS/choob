@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class ChannelMessage extends Message implements ChannelEvent, CommandEvent, FilterEvent
 {
 	/**
@@ -13,15 +13,30 @@ public class ChannelMessage extends Message implements ChannelEvent, CommandEven
 	 */
 	private final String channel;
 
+	/**
+	 * Get the value of channel
+	 * @return The value of channel
+	 */
+	public String getChannel() {
+		 return channel;
+	}
 
 	/**
-	 * Construct a new ChannelMessage
+	 * Get the reply context in which this event resides
+	 * @return The context
+	 */
+	public String getContext() {
+		return getChannel();
+	}
+
+
+	/**
+	 * Construct a new ChannelMessage.
 	 */
 	public ChannelMessage(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target, String channel)
 	{
 		super(methodName, millis, random, message, nick, login, hostname, target);
 		this.channel = channel;
-
 	}
 
 	/**
@@ -31,35 +46,25 @@ public class ChannelMessage extends Message implements ChannelEvent, CommandEven
 	{
 		super(old, message);
 		this.channel = old.channel;
-
 	}
 
 	/**
 	 * Synthesize a new ChannelMessage from this one.
 	 * @return The new ChannelMessage object.
 	 */
-	public IRCEvent cloneEvent(String message) {
+	public IRCEvent cloneEvent(String message)
+	{
 		return new ChannelMessage(this, message);
 	}
-
-	/**
-	 * Get the value of channel
-	 * @return The value of channel
-	 */
-	public String getChannel() {
-		return channel;
-	}
-
 
 	public boolean equals(Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelMessage))
 			return false;
-		if (!super.equals(obj))
+		if ( !super.equals(obj) )
 			return false;
 		ChannelMessage thing = (ChannelMessage)obj;
-		if ( true
- && channel.equals(thing.channel))
+		if ( true && channel.equals(thing.channel) )
 			return true;
 		return false;
 	}
@@ -69,15 +74,8 @@ public class ChannelMessage extends Message implements ChannelEvent, CommandEven
 		StringBuffer out = new StringBuffer("ChannelMessage(");
 		out.append(super.toString());
 		out.append(", channel = " + channel);
+		out.append(")");
 		return out.toString();
-	}
-
-	/**
-	 * Get the reply context in which this event resides
-	 * @return The context
-	 */
-	public String getContext() {
-		return getChannel();
 	}
 
 }

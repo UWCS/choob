@@ -353,11 +353,11 @@ public class Choob extends PircBot
 	}
 
 	protected void onDeVoice(String channel, String nick, String login, String hostname, String target) {
-		spinThread(new ChannelUserMode("onDeVoice", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "v", true, target));
+		spinThread(new ChannelUserMode("onDeVoice", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "v", false, target));
 	}
 
 	protected void onDeop(String channel, String nick, String login, String hostname, String target) {
-		spinThread(new ChannelUserMode("onDeop", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "o", true, target));
+		spinThread(new ChannelUserMode("onDeop", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "o", false, target));
 	}
 
 	protected void onInvite(String target, String nick, String login, String hostname, String channel) {
@@ -434,6 +434,10 @@ public class Choob extends PircBot
 
 	protected void onSetChannelKey(String channel, String nick, String login, String hostname, String param) {
 		spinThread(new ChannelParamMode("onSetChannelKey", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "k", true, param));
+	}
+
+	protected void onSetChannelLimit(String channel, String nick, String login, String hostname, int prm) {
+		spinThread(new ChannelParamMode("onSetChannelLimit", System.currentTimeMillis(), ((int)(Math.random()*127)), channel, "l", true, String.valueOf(prm)));
 	}
 
 	protected void onSetInviteOnly(String channel, String nick, String login, String hostname) {

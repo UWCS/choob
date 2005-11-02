@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEvent
 {
 	/**
@@ -14,20 +14,35 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 	private final String channel;
 
 	/**
+	 * Get the value of channel
+	 * @return The value of channel
+	 */
+	public String getChannel() {
+		 return channel;
+	}
+
+	/**
 	 * modes
 	 */
 	private final String modes;
 
+	/**
+	 * Get the value of modes
+	 * @return The value of modes
+	 */
+	public String getModes() {
+		 return modes;
+	}
+
 
 	/**
-	 * Construct a new ChannelModes
+	 * Construct a new ChannelModes.
 	 */
 	public ChannelModes(String methodName, long millis, int random, String channel, String modes)
 	{
 		super(methodName, millis, random);
 		this.channel = channel;
 		this.modes = modes;
-
 	}
 
 	/**
@@ -38,43 +53,25 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 		super(old);
 		this.channel = old.channel;
 		this.modes = old.modes;
-
 	}
 
 	/**
 	 * Synthesize a new ChannelModes from this one.
 	 * @return The new ChannelModes object.
 	 */
-	public IRCEvent cloneEvent() {
+	public IRCEvent cloneEvent()
+	{
 		return new ChannelModes(this);
 	}
-
-	/**
-	 * Get the value of channel
-	 * @return The value of channel
-	 */
-	public String getChannel() {
-		return channel;
-	}
-
-	/**
-	 * Get the value of modes
-	 * @return The value of modes
-	 */
-	public String getModes() {
-		return modes;
-	}
-
 
 	public boolean equals(Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelModes))
 			return false;
-		if (!super.equals(obj))
+		if ( !super.equals(obj) )
 			return false;
 		ChannelModes thing = (ChannelModes)obj;
-		if ( true
- && channel.equals(thing.channel) && modes.equals(thing.modes))
+		if ( true && channel.equals(thing.channel) && modes.equals(thing.modes) )
 			return true;
 		return false;
 	}
@@ -85,8 +82,8 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 		out.append(super.toString());
 		out.append(", channel = " + channel);
 		out.append(", modes = " + modes);
+		out.append(")");
 		return out.toString();
 	}
-
 
 }

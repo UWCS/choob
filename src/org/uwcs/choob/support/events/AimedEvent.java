@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public interface AimedEvent
 {
 	/**
@@ -13,6 +13,5 @@ public interface AimedEvent
 	 * @return The value of target
 	 */
 	public String getTarget();
-
 
 }

@@ -5,17 +5,16 @@
 
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
- 
+
 public class UnknownEvent extends IRCEvent 
 {
 
 	/**
-	 * Construct a new UnknownEvent
+	 * Construct a new UnknownEvent.
 	 */
 	public UnknownEvent(String methodName, long millis, int random)
 	{
 		super(methodName, millis, random);
-
 	}
 
 	/**
@@ -24,27 +23,25 @@ public class UnknownEvent extends IRCEvent
 	public UnknownEvent(UnknownEvent old)
 	{
 		super(old);
-
 	}
 
 	/**
 	 * Synthesize a new UnknownEvent from this one.
 	 * @return The new UnknownEvent object.
 	 */
-	public IRCEvent cloneEvent() {
+	public IRCEvent cloneEvent()
+	{
 		return new UnknownEvent(this);
 	}
-
 
 	public boolean equals(Object obj)
 	{
 		if (obj == null || !(obj instanceof UnknownEvent))
 			return false;
-		if (!super.equals(obj))
+		if ( !super.equals(obj) )
 			return false;
 		UnknownEvent thing = (UnknownEvent)obj;
-		if ( true
-)
+		if ( true )
 			return true;
 		return false;
 	}
@@ -53,8 +50,8 @@ public class UnknownEvent extends IRCEvent
 	{
 		StringBuffer out = new StringBuffer("UnknownEvent(");
 		out.append(super.toString());
+		out.append(")");
 		return out.toString();
 	}
-
 
 }
