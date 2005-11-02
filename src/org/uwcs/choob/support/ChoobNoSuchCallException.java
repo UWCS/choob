@@ -7,7 +7,7 @@ package org.uwcs.choob.support;
 
 public class ChoobNoSuchCallException extends ChoobException
 {
-	private String call;
+	String call;
 	public ChoobNoSuchCallException(String call)
 	{
 		super("The plugin call " + call + " did not exist!");

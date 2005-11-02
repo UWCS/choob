@@ -158,7 +158,7 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 		}
 		if (man != null)
 			return man.doAPI(pluginName, APIName, params);
-		throw new ChoobNoSuchPluginException("Plugin " + pluginName + " doesn't exist!");
+		throw new ChoobNoSuchPluginException(pluginName, "api: " + APIName);
 	}
 
 	/**
@@ -176,7 +176,7 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 		}
 		if (man != null)
 			return man.doGeneric(pluginName, prefix, genericName, params);
-		throw new ChoobNoSuchPluginException("Plugin " + pluginName + " doesn't exist!");
+		throw new ChoobNoSuchPluginException(pluginName, "generic: " + prefix + ":" + genericName);
 	}
 }
 
