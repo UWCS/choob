@@ -338,7 +338,7 @@ public class Alias
 		}
 
 		// Stop recursion
-		if (mes.getSynthLevel() > 1) {
+		if (mes.getSynthLevel() > 3) {
 			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
 			return;
 		}

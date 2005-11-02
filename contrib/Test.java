@@ -45,7 +45,6 @@ public class Test
 
 	public void commandPiratey( Message con, Modules mods, IRCInterface irc )
 	{
-		//irc.sendContextAction(con, "reaches into her pants, and grabs a Yarr.");
 		irc.sendContextReply(con, "(:;test.piratey:)");
 	}
 
