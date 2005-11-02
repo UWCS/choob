@@ -136,12 +136,13 @@ public class SecurityModule
 	 */
 	private void updateNodePermissions(int nodeID) {
 		System.out.println("Loading permissions for user node " + nodeID + ".");
-		Connection dbConnection = dbBroker.getConnection();
+		Connection dbConnection =null;
 
 		Permissions permissions = new Permissions();
 
 		PreparedStatement permissionsSmt = null;
 		try {
+			dbConnection=dbBroker.getConnection();
 			permissionsSmt = dbConnection.prepareStatement("SELECT Type, Permission, Action FROM UserNodePermissions WHERE UserNodePermissions.NodeID = ?");
 
 			permissionsSmt.setInt(1, nodeID);
@@ -288,22 +289,32 @@ public class SecurityModule
 	{
 		synchronized(nodeTree)
 		{
-			Connection dbConn = dbBroker.getConnection();
+			Connection dbCon;
+			try
+			{
+				dbCon=dbBroker.getConnection();
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+				System.err.println("Couldn't get a connection for getAllNodes()");
+				return new ArrayList<Integer>().iterator(); // XXX
+			}
 			List list = new ArrayList<Integer>();
 			if (addThis)
 				list.add(nodeID);
 			try
 			{
-				getAllNodesRecursive(dbConn, list, nodeID, 0);
+				getAllNodesRecursive(dbCon, list, nodeID, 0);
 				if (anonID != -1)
 				{
 					list.add(anonID);
-					getAllNodesRecursive(dbConn, list, anonID, 0);
+					getAllNodesRecursive(dbCon, list, anonID, 0);
 				}
 			}
 			finally
 			{
-				dbBroker.freeConnection(dbConn);
+				dbBroker.freeConnection(dbCon);
 			}
 			return list.iterator();
 		}
@@ -399,10 +410,11 @@ public class SecurityModule
 	 */
 	private int getNodeIDFromNodeName(String nodeName, int nodeType)
 	{
-		Connection dbConn = dbBroker.getConnection();
+		Connection dbConn = null;
 		PreparedStatement stat = null;
 		try
 		{
+			dbConn = dbBroker.getConnection();
 			stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? && NodeClass = ?");
 			stat.setString(1, nodeName);
 			stat.setInt(2, nodeType);
@@ -433,10 +445,11 @@ public class SecurityModule
 	 */
 	private UserNode getNodeFromNodeID(int nodeID)
 	{
-		Connection dbConn = dbBroker.getConnection();
+		Connection dbConn = null;
 		PreparedStatement stat = null;
 		try
 		{
+			dbConn = dbBroker.getConnection();
 			stat = dbConn.prepareStatement("SELECT NodeName, NodeClass FROM UserNodes WHERE NodeID = ?");
 			stat.setInt(1, nodeID);
 			ResultSet results = stat.executeQuery();
@@ -776,12 +789,13 @@ public class SecurityModule
 			throw new ChoobException("User " + userName + " does not exist!");
 		}
 
-		Connection dbConn = dbBroker.getConnection();
+		Connection dbConn = null;
 		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
+				dbConn = dbBroker.getConnection();
 				// Bind plugin
 				stat = dbConn.prepareStatement("REPLACE INTO UserPlugins (UserID, PluginName) VALUES (?, ?)");
 				stat.setInt(1, userID);
@@ -811,12 +825,13 @@ public class SecurityModule
 	{
 		AccessController.checkPermission(new ChoobPermission("user.add"));
 
-		Connection dbConn = dbBroker.getConnection();
+		Connection dbConn = null;
 		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
+				dbConn = dbBroker.getConnection();
 				dbConn.setAutoCommit(false);
 				// First, make sure no user exists...
 				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND (NodeClass = 0 OR NodeClass = 1)");
@@ -873,12 +888,13 @@ public class SecurityModule
 	{
 		AccessController.checkPermission(new ChoobPermission("user.link"));
 
-		Connection dbConn = dbBroker.getConnection();
+		Connection dbConn = null;
 		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
+				dbConn = dbBroker.getConnection();
 				dbConn.setAutoCommit(false);
 				// First, make sure no user exists...
 				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
@@ -953,10 +969,11 @@ public class SecurityModule
 	 */
 	public String getRootUser(String userName) throws ChoobException
 	{
-		Connection dbConn = dbBroker.getConnection();
+		Connection dbConn = null;
 		PreparedStatement stat = null;
 		try
 		{
+			dbConn = dbBroker.getConnection();
 			// First, make sure no user exists...
 			stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
 			stat.setString(1, userName);
@@ -1006,12 +1023,13 @@ public class SecurityModule
 	{
 		AccessController.checkPermission(new ChoobPermission("user.del"));
 
-		Connection dbConn = dbBroker.getConnection();
+		Connection dbConn = null;
 		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
+				dbConn = dbBroker.getConnection();
 				dbConn.setAutoCommit(false);
 				// Make sure the user exists...
 				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
@@ -1068,12 +1086,13 @@ public class SecurityModule
 		}
 
 		// OK, we're allowed to add.
-		Connection dbConn = dbBroker.getConnection();
+		Connection dbConn = null;
 		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
+				dbConn = dbBroker.getConnection();
 				dbConn.setAutoCommit(false);
 				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = ?");
 				stat.setString(1, group.getName());
@@ -1137,12 +1156,13 @@ public class SecurityModule
 		if (childID == -1)
 			throw new ChoobException("Group " + child + " does not exist!");
 
-		Connection dbConn = dbBroker.getConnection();
+		Connection dbConn = null;
 		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
+				dbConn = dbBroker.getConnection();
 				dbConn.setAutoCommit(false);
 				stat = dbConn.prepareStatement("SELECT MemberID FROM GroupMembers WHERE GroupID = ? AND MemberID = ?");
 				stat.setInt(1, parentID);
@@ -1209,12 +1229,13 @@ public class SecurityModule
 		if (childID == -1)
 			throw new ChoobException("Group " + child + " does not exist!");
 
-		Connection dbConn = dbBroker.getConnection();
+		Connection dbConn = null;
 		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
+				dbConn = dbBroker.getConnection();
 				stat = dbConn.prepareStatement("SELECT MemberID FROM GroupMembers WHERE GroupID = ? AND MemberID = ?");
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
@@ -1272,12 +1293,13 @@ public class SecurityModule
 		if (hasPerm(permission, groupID, true))
 			throw new ChoobException("Group " + group + " already has permission " + permission + "!");
 
-		Connection dbConn = dbBroker.getConnection();
+		Connection dbConn = null;
 		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
+				dbConn = dbBroker.getConnection();
 				stat = dbConn.prepareStatement("INSERT INTO UserNodePermissions (NodeID, Type, Permission, Action) VALUES (?, ?, ?, ?)");
 				stat.setInt(1, groupID);
 				stat.setString(2, permission.getClass().getName());
@@ -1401,12 +1423,13 @@ public class SecurityModule
 		if (!hasPerm(permission, groupID, true))
 			throw new ChoobException("Group " + group + " does not have permission " + permission + "!");
 
-		Connection dbConn = dbBroker.getConnection();
+		Connection dbConn = null;
 		PreparedStatement stat = null;
 		synchronized(nodeDbLock)
 		{
 			try
 			{
+				dbConn = dbBroker.getConnection();
 				if (permission instanceof AllPermission)
 				{
 					stat = dbConn.prepareStatement("DELETE FROM UserNodePermissions WHERE NodeID = ? AND Type = ?");

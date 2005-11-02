@@ -65,11 +65,23 @@ public class Choob extends PircBot
 		intervalList = new ArrayList();
 
 		// Create a new database connection broker using the MySQL drivers
+		PrintWriter logFile;
 		try
 		{
-			broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://" + conf.getSettingFallback("dbServer","localhost") + "/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", conf.getSettingFallback("dbUser","choob"), conf.getSettingFallback("dbPass",""), 10, 20, "/tmp/db.log", 1, true, 60, 3) ;
+			logFile=new PrintWriter(new FileOutputStream("./tmp/db.log"));
 		}
 		catch (IOException e)
+		{
+			e.printStackTrace();
+			System.out.println("Cannot create db log, exiting.");
+			System.exit(6);
+			return;
+		}
+		try
+		{
+			broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://" + conf.getSettingFallback("dbServer","localhost") + "/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", conf.getSettingFallback("dbUser","choob"), conf.getSettingFallback("dbPass",""), 10, 20, logFile, 60);
+		}
+		catch (SQLException e)
 		{
 			e.printStackTrace();
 			System.out.println("Unexpected error in DbConnectionBroker setup, exiting.");

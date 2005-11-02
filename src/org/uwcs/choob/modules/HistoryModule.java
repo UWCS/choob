@@ -37,11 +37,12 @@ public class HistoryModule
 	{
 		AccessController.checkPermission(new ChoobPermission("history.add"));
 
-		Connection dbConnection = dbBroker.getConnection();
+		Connection dbConnection = null;
 
 		PreparedStatement insertLine = null;
 		try
 		{
+			dbConnection=dbBroker.getConnection();
 			insertLine = dbConnection.prepareStatement("INSERT INTO History VALUES(NULL,?,?,?,?,?,?,?)");
 
 			insertLine.setString(1, mes.getClass().getName());
@@ -89,9 +90,11 @@ public class HistoryModule
 	 */
 	public int getMessageID( Message mes ) throws ChoobException
 	{
-		Connection dbCon = dbBroker.getConnection();
+		Connection dbCon = null;
 		PreparedStatement stat = null;
-		try {
+		try
+		{
+			dbCon=dbBroker.getConnection();
 			stat = dbCon.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Channel = ? AND Text = ? AND Time = ? AND Random = ?");
 			stat.setString(1, mes.getClass().getName());
 			stat.setString(2, mes.getNick());
@@ -144,9 +147,11 @@ public class HistoryModule
 	 */
 	public Message getMessage( int messageID ) throws ChoobException
 	{
-		Connection dbCon = dbBroker.getConnection();
+		Connection dbCon = null;
 		PreparedStatement stat = null;
-		try {
+		try
+		{
+			dbCon=dbBroker.getConnection();
 			stat = dbCon.prepareStatement("SELECT * FROM History WHERE LineID = ?");
 			stat.setInt(1, messageID);
 
@@ -282,9 +287,11 @@ public class HistoryModule
 	 */
 	public List<Message> getLastMessages( final String channel, Message cause, int count ) throws ChoobException
 	{
-		Connection dbCon = dbBroker.getConnection();
+		Connection dbCon = null;
 		PreparedStatement stat = null;
-		try {
+		try
+		{
+			dbCon=dbBroker.getConnection();
 			stat = dbCon.prepareStatement("SELECT * FROM History WHERE Channel = ? AND Time < ? ORDER BY Time DESC LIMIT ?");
 			stat.setString(1, channel);
 			stat.setLong(2, cause == null ? System.currentTimeMillis() : cause.getMillis() );

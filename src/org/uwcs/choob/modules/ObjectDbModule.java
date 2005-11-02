@@ -47,7 +47,15 @@ public class ObjectDbModule
 	 */
 	public List retrieve(Class storedClass, String clause) throws ChoobException
 	{
-		Connection dbConn = broker.getConnection();
+		Connection dbConn = null;
+		try
+		{
+			dbConn = broker.getConnection();
+		}
+		catch (SQLException e)
+		{
+			throw new ChoobException("Sql Exception", e);
+		}
 		ObjectDBTransaction trans = new ObjectDBTransaction();
 		trans.setConn(dbConn);
 		trans.setMods(mods);
@@ -63,7 +71,15 @@ public class ObjectDbModule
 
 	public List<Integer> retrieveInt(Class storedClass, String clause) throws ChoobException
 	{
-		Connection dbConn = broker.getConnection();
+		Connection dbConn = null;
+		try
+		{
+			dbConn = broker.getConnection();
+		}
+		catch (SQLException e)
+		{
+			throw new ChoobException("Sql Exception", e);
+		}
 		ObjectDBTransaction trans = new ObjectDBTransaction();
 		trans.setConn(dbConn);
 		trans.setMods(mods);
@@ -85,7 +101,16 @@ public class ObjectDbModule
 	{
 		synchronized( strObject.getClass() )
 		{
-			Connection dbConn = broker.getConnection();
+			Connection dbConn = null;
+			try
+			{
+				dbConn = broker.getConnection();
+			}
+			catch (SQLException e)
+			{
+				throw new ChoobException("Sql Exception", e);
+			}
+
 			ObjectDBTransaction trans = new ObjectDBTransaction();
 			trans.setConn(dbConn);
 			trans.setMods(mods);
@@ -108,7 +133,16 @@ public class ObjectDbModule
 	{
 		synchronized( strObject.getClass() )
 		{
-			Connection dbConn = broker.getConnection();
+			Connection dbConn = null;
+			try
+			{
+				dbConn = broker.getConnection();
+			}
+			catch (SQLException e)
+			{
+				throw new ChoobException("Sql Exception", e);
+			}
+
 			ObjectDBTransaction trans = new ObjectDBTransaction();
 			trans.setConn(dbConn);
 			trans.setMods(mods);
@@ -135,7 +169,16 @@ public class ObjectDbModule
 	{
 		synchronized( strObject.getClass() )
 		{
-			Connection dbConn = broker.getConnection();
+			Connection dbConn = null;
+			try
+			{
+				dbConn = broker.getConnection();
+			}
+			catch (SQLException e)
+			{
+				throw new ChoobException("Sql Exception", e);
+			}
+
 			ObjectDBTransaction trans = new ObjectDBTransaction();
 			trans.setConn(dbConn);
 			trans.setMods(mods);
@@ -155,7 +198,16 @@ public class ObjectDbModule
 
 	public void runTransaction( ObjectDBTransaction trans ) throws ChoobException
 	{
-		Connection dbConn = broker.getConnection();
+		Connection dbConn = null;
+		try
+		{
+			dbConn = broker.getConnection();
+		}
+		catch (SQLException e)
+		{
+			throw new ChoobException("Sql Exception", e);
+		}
+
 		trans.setConn(dbConn);
 		trans.setMods(mods);
 		try

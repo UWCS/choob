@@ -64,7 +64,7 @@ public class Interval
 
 	/**
 	 * Setter for property id.
-	 * @param trigger New value of property id.
+	 * @param id New value of property id.
 	 */
 	public void setId(int id)
 	{

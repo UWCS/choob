@@ -152,8 +152,10 @@ public class PluginModule {
 
 	private void addPluginToDb(String pluginName) throws ChoobException
 	{
-		Connection dbCon = broker.getConnection();
-		try {
+		Connection dbCon=null;
+		try
+		{
+			dbCon= broker.getConnection();
 			PreparedStatement pluginReplace = dbCon.prepareStatement("REPLACE INTO LoadedPlugins VALUES(?,?)");
 
 			pluginReplace.setString(1,pluginName);
