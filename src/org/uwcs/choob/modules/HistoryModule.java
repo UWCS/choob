@@ -95,19 +95,21 @@ public class HistoryModule
 		try
 		{
 			dbCon=dbBroker.getConnection();
-			stat = dbCon.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Channel = ? AND Text = ? AND Time = ? AND Random = ?");
+
+			if (mes instanceof ChannelEvent)
+			{
+				stat = dbCon.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Text = ? AND Time = ? AND Random = ? AND Channel = ?");
+				stat.setString(7, ((ChannelEvent)mes).getChannel());
+			}
+			else
+				stat = dbCon.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Text = ? AND Time = ? AND Random = ?"); // XXX Checking if the channel is null causes speshulness here -- Faux.
+
 			stat.setString(1, mes.getClass().getName());
 			stat.setString(2, mes.getNick());
 			stat.setString(3, mes.getNick()+"@"+mes.getHostname());
-			String chan = null;
-			if (mes instanceof ChannelEvent)
-			{
-				chan = ((ChannelEvent)mes).getChannel();
-			}
-			stat.setString(4, chan);
-			stat.setString(5, mes.getMessage());
-			stat.setLong(6, mes.getMillis());
-			stat.setInt(7, mes.getRandom());
+			stat.setString(4, mes.getMessage());
+			stat.setLong(5, mes.getMillis());
+			stat.setInt(6, mes.getRandom());
 
 			ResultSet result = stat.executeQuery();
 
@@ -147,6 +149,7 @@ public class HistoryModule
 	 */
 	public Message getMessage( int messageID ) throws ChoobException
 	{
+		System.out.println("getMessage");
 		Connection dbCon = null;
 		PreparedStatement stat = null;
 		try
@@ -159,6 +162,8 @@ public class HistoryModule
 
 			if ( result.first() )
 			{
+				System.out.println("resultfirst");
+
 				final String type = result.getString(2);
 				int pos = result.getString(4).indexOf('@');
 				final String login = result.getString(4).substring(0,pos);
@@ -171,10 +176,15 @@ public class HistoryModule
 					// Need privs to create events...
 					mes = (Message)AccessController.doPrivileged( new PrivilegedExceptionAction() {
 						public Object run() throws SQLException {
+							System.out.println("run");
 							if (type.equals(ChannelAction.class.getName()))
 								return new ChannelAction("onAction", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel, channel);
 							else if (type.equals(ChannelMessage.class.getName()))
 								return new ChannelMessage("onMessage", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel, channel);
+							else if (type.equals(PrivateMessage.class.getName()))
+								return new PrivateMessage("onPrivateMessage", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel);
+							else if (type.equals(PrivateAction.class.getName()))
+								return new PrivateAction("onPrivateAction", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel);
 							return null;
 						}
 					});
