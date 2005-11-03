@@ -37,7 +37,7 @@ public class PrivateNotice extends Message implements PrivateEvent
 	 * Synthesize a new PrivateNotice from this one.
 	 * @return The new PrivateNotice object.
 	 */
-	public IRCEvent cloneEvent(String message)
+	public Event cloneEvent(String message)
 	{
 		return new PrivateNotice(this, message);
 	}

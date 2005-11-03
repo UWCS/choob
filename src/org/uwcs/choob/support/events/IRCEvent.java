@@ -6,21 +6,8 @@
 package org.uwcs.choob.support.events;
 import org.uwcs.choob.support.events.*;
 
-public class IRCEvent 
+public class IRCEvent extends Event implements IRCRootEvent
 {
-	/**
-	 * methodName
-	 */
-	private final String methodName;
-
-	/**
-	 * Get the value of methodName
-	 * @return The value of methodName
-	 */
-	public String getMethodName() {
-		 return methodName;
-	}
-
 	/**
 	 * millis
 	 */
@@ -66,7 +53,7 @@ public class IRCEvent
 	 */
 	public IRCEvent(String methodName, long millis, int random)
 	{
-		this.methodName = methodName;
+		super(methodName);
 		this.millis = millis;
 		this.random = random;
 		java.security.AccessController.checkPermission(new org.uwcs.choob.support.ChoobPermission("event.create"));
@@ -78,7 +65,7 @@ public class IRCEvent
 	 */
 	public IRCEvent(IRCEvent old)
 	{
-		this.methodName = old.methodName;
+		super(old);
 		this.millis = old.millis;
 		this.random = old.random;
 		java.security.AccessController.checkPermission(new org.uwcs.choob.support.ChoobPermission("event.create"));
@@ -89,7 +76,7 @@ public class IRCEvent
 	 * Synthesize a new IRCEvent from this one.
 	 * @return The new IRCEvent object.
 	 */
-	public IRCEvent cloneEvent()
+	public Event cloneEvent()
 	{
 		return new IRCEvent(this);
 	}
@@ -98,8 +85,10 @@ public class IRCEvent
 	{
 		if (obj == null || !(obj instanceof IRCEvent))
 			return false;
+		if ( !super.equals(obj) )
+			return false;
 		IRCEvent thing = (IRCEvent)obj;
-		if ( true && methodName.equals(thing.methodName) && (millis == thing.millis) && (random == thing.random) && (synthLevel == thing.synthLevel) )
+		if ( true && (millis == thing.millis) && (random == thing.random) && (synthLevel == thing.synthLevel) )
 			return true;
 		return false;
 	}
@@ -107,7 +96,7 @@ public class IRCEvent
 	public String toString()
 	{
 		StringBuffer out = new StringBuffer("IRCEvent(");
-		out.append(", methodName = " + methodName);
+		out.append(super.toString());
 		out.append(", millis = " + millis);
 		out.append(", random = " + random);
 		out.append(", synthLevel = " + synthLevel);

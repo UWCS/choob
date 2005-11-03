@@ -27,7 +27,7 @@ final class ChoobDecoderTask extends ChoobTask
 	private static Pattern triggerPattern;
 	private static Pattern aliasPattern;
 	private static Pattern commandPattern;
-	private IRCEvent event;
+	private Event event;
 
 	static void initialise(DbConnectionBroker dbBroker, Modules modules, IRCInterface irc)
 	{
@@ -41,7 +41,7 @@ final class ChoobDecoderTask extends ChoobTask
 	}
 
 	/** Creates a new instance of ChoobThread */
-	ChoobDecoderTask(IRCEvent event)
+	ChoobDecoderTask(Event event)
 	{
 		super(null);
 		this.event = event;

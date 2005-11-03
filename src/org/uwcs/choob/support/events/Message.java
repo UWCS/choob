@@ -112,7 +112,7 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 	 * Synthesize a new Message from this one.
 	 * @return The new Message object.
 	 */
-	public IRCEvent cloneEvent(String message)
+	public Event cloneEvent(String message)
 	{
 		return new Message(this, message);
 	}

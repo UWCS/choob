@@ -52,7 +52,7 @@ public class ChannelAction extends Message implements ChannelEvent, FilterEvent
 	 * Synthesize a new ChannelAction from this one.
 	 * @return The new ChannelAction object.
 	 */
-	public IRCEvent cloneEvent(String message)
+	public Event cloneEvent(String message)
 	{
 		return new ChannelAction(this, message);
 	}

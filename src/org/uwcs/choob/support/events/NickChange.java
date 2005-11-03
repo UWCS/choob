@@ -89,7 +89,7 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	 * Synthesize a new NickChange from this one.
 	 * @return The new NickChange object.
 	 */
-	public IRCEvent cloneEvent()
+	public Event cloneEvent()
 	{
 		return new NickChange(this);
 	}

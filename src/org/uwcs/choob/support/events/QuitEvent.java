@@ -89,7 +89,7 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 	 * Synthesize a new QuitEvent from this one.
 	 * @return The new QuitEvent object.
 	 */
-	public IRCEvent cloneEvent(String message)
+	public Event cloneEvent(String message)
 	{
 		return new QuitEvent(this, message);
 	}

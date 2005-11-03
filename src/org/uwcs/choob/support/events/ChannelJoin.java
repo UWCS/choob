@@ -97,7 +97,7 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 	 * Synthesize a new ChannelJoin from this one.
 	 * @return The new ChannelJoin object.
 	 */
-	public IRCEvent cloneEvent()
+	public Event cloneEvent()
 	{
 		return new ChannelJoin(this);
 	}

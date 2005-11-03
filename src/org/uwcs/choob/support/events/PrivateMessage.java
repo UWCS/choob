@@ -37,7 +37,7 @@ public class PrivateMessage extends Message implements PrivateEvent, CommandEven
 	 * Synthesize a new PrivateMessage from this one.
 	 * @return The new PrivateMessage object.
 	 */
-	public IRCEvent cloneEvent(String message)
+	public Event cloneEvent(String message)
 	{
 		return new PrivateMessage(this, message);
 	}

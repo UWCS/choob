@@ -52,7 +52,7 @@ public class ChannelNotice extends Message implements ChannelEvent
 	 * Synthesize a new ChannelNotice from this one.
 	 * @return The new ChannelNotice object.
 	 */
-	public IRCEvent cloneEvent(String message)
+	public Event cloneEvent(String message)
 	{
 		return new ChannelNotice(this, message);
 	}

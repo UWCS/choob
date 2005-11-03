@@ -127,7 +127,7 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 	 * Synthesize a new ChannelKick from this one.
 	 * @return The new ChannelKick object.
 	 */
-	public IRCEvent cloneEvent(String message)
+	public Event cloneEvent(String message)
 	{
 		return new ChannelKick(this, message);
 	}

@@ -162,7 +162,7 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 		return null;
 	}
 
-	public List<ChoobTask> eventTasks(IRCEvent ev) {
+	public List<ChoobTask> eventTasks(Event ev) {
 		// Call the event hook functions.
 		List<ChoobTask> events = new LinkedList<ChoobTask>();
 		List<JavaScriptPluginMethod> methods = pluginMap.getEvent(ev.getMethodName());

@@ -70,11 +70,9 @@ public class Modules
 	public ScraperModule scrape;
 
 	private DbConnectionBroker dbBroker;
-	Map pluginMap;
+	private Map pluginMap;
 	List intervalList;
-	List filterList;
-	private Choob bot;
-
+	Choob bot;
 
 	/**
 	 * Creates a new instance of the Modules.
@@ -102,7 +100,6 @@ public class Modules
 		this.dbBroker = dbBroker;
 		this.pluginMap = pluginMap;
 		this.intervalList = intervalList;
-		this.filterList = filterList;
 		this.bot = bot;
 	}
 }

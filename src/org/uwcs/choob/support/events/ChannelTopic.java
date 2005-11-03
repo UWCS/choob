@@ -67,7 +67,7 @@ public class ChannelTopic extends IRCEvent implements MessageEvent, ChannelEvent
 	 * Synthesize a new ChannelTopic from this one.
 	 * @return The new ChannelTopic object.
 	 */
-	public IRCEvent cloneEvent(String message)
+	public Event cloneEvent(String message)
 	{
 		return new ChannelTopic(this, message);
 	}

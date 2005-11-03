@@ -284,7 +284,7 @@ public class Choob extends PircBot
 		return trigger;
 	}
 
-	public void onSyntheticMessage(IRCEvent mes) {
+	public void onSyntheticMessage(Event mes) {
 		spinThread( mes );
 	}
 
@@ -327,6 +327,18 @@ public class Choob extends PircBot
 	 */
 
 	// BEGIN PASTE!
+
+	public void onPluginLoaded(String pluginName) {
+		spinThread(new PluginLoaded("onPluginLoaded", pluginName, 1));
+	}
+
+	public void onPluginReLoaded(String pluginName) {
+		spinThread(new PluginReLoaded("onPluginReLoaded", pluginName, 0));
+	}
+
+	public void onPluginUnLoaded(String pluginName) {
+		spinThread(new PluginUnLoaded("onPluginUnLoaded", pluginName, -1));
+	}
 
 	protected void onNotice(String nick, String login, String hostname, String target, String message) {
 		if (target.indexOf('#') == 0)
@@ -484,7 +496,7 @@ public class Choob extends PircBot
 
 	// END PASTE!
 
-	private synchronized void spinThread(IRCEvent ev)
+	private synchronized void spinThread(Event ev)
 	{
 		if (ev instanceof UserEvent && ((UserEvent)ev).getNick().toLowerCase().indexOf("bot")!=-1)
 			return;

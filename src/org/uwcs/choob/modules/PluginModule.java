@@ -23,13 +23,12 @@ import java.security.AccessControlException;
  * @author sadiq
  */
 public class PluginModule {
-	Map pluginMap;
-	DbConnectionBroker broker;
-	Modules mods;
-	ChoobPluginManager plugMan;
-	ChoobPluginManager dPlugMan;
-	ChoobPluginManager jsPlugMan;
-	Choob bot;
+	private Map pluginMap;
+	private DbConnectionBroker broker;
+	private Modules mods;
+	private ChoobPluginManager plugMan;
+	private ChoobPluginManager dPlugMan;
+	private ChoobPluginManager jsPlugMan;
 
 	/**
 	 * Creates a new instance of the PluginModule.
@@ -71,10 +70,17 @@ public class PluginModule {
 			throw new ChoobException("URL " + URL + " is malformed: " + e);
 		}
 
+		boolean existed;
 		if (srcURL.getFile().endsWith(".js"))
-			jsPlugMan.loadPlugin(pluginName, srcURL);
+			existed = jsPlugMan.loadPlugin(pluginName, srcURL);
 		else
-			plugMan.loadPlugin(pluginName, srcURL);
+			existed = plugMan.loadPlugin(pluginName, srcURL);
+
+		// Inform plugins, if they want to know.
+		if (existed)
+			mods.bot.onPluginReLoaded(pluginName);
+		else
+			mods.bot.onPluginLoaded(pluginName);
 
 		addPluginToDb(pluginName);
 	}

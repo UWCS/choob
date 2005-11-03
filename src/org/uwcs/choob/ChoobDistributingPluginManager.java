@@ -109,10 +109,10 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 	}
 
 	/**
-	 * Perform any event handling on the given IRCEvent.
-	 * @param ev IRCEvent to pass along.
+	 * Perform any event handling on the given Event.
+	 * @param ev Event to pass along.
 	 */
-	public List<ChoobTask> eventTasks(IRCEvent ev)
+	public List<ChoobTask> eventTasks(Event ev)
 	{
 		ChoobPluginManager[] mans = new ChoobPluginManager[0];
 		synchronized(pluginManagers)
@@ -128,7 +128,7 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 
 	/**
 	 * Run any filters on the given Message.
-	 * @param ev IRCEvent to pass along
+	 * @param ev Message to pass along
 	 */
 	public List<ChoobTask> filterTasks(Message ev)
 	{

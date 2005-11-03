@@ -59,7 +59,7 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 	 * Synthesize a new ChannelModes from this one.
 	 * @return The new ChannelModes object.
 	 */
-	public IRCEvent cloneEvent()
+	public Event cloneEvent()
 	{
 		return new ChannelModes(this);
 	}

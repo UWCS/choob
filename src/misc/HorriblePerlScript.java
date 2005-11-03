@@ -15,13 +15,23 @@ public class HorriblePerlScript
 	// Inheritance map
 	private final Map<String,String[]> inheritance = new HashMap<String,String[]>();
 	private final Map<String,String[]> interfaces = new HashMap<String,String[]>();
+	private final List<String> notinterfaces = new ArrayList<String>();
 	private final Map<String,String[]> overrides = new HashMap<String,String[]>();
 	private final List<String[]> handlers = new ArrayList<String[]>();
+	private final List<String> notprotected = new ArrayList<String>();
 
 	public HorriblePerlScript()
 	{
 		// Classes, and which intrefaces/classes the inherit from.
-		inheritance.put("IRCEvent", null);
+		inheritance.put("Event", null);
+
+		inheritance.put("InternalEvent", new String[] { "Event", "InternalRootEvent" } );
+
+		inheritance.put("PluginLoaded", new String[] { "InternalEvent", "PluginEvent" } );
+		inheritance.put("PluginUnLoaded", new String[] { "InternalEvent", "PluginEvent" } );
+		inheritance.put("PluginReLoaded", new String[] { "InternalEvent", "PluginEvent" } );
+
+		inheritance.put("IRCEvent", new String[] { "Event", "IRCRootEvent" } );
 
 		inheritance.put("Message", new String[] { "IRCEvent", "MessageEvent", "ContextEvent", "UserEvent", "AimedEvent", });
 
@@ -57,7 +67,10 @@ public class HorriblePerlScript
 
 
 		// Interfaces, and their parameters.
-		interfaces.put("IRCEvent", new String[] { "methodName", "(long)millis", "(int)random" });
+		interfaces.put("Event", new String[] { "methodName" });
+		interfaces.put("InternalRootEvent", new String[0]);
+		interfaces.put("PluginEvent", new String[] { "pluginName", "(int)pluginStatus" });
+		interfaces.put("IRCRootEvent", new String[] { "(long)millis", "(int)random" });
 		interfaces.put("ChannelEvent", new String[] { "channel" });
 		interfaces.put("PrivateEvent", new String[0] );
 		interfaces.put("CommandEvent", new String[0] );
@@ -71,12 +84,17 @@ public class HorriblePerlScript
 		interfaces.put("ContextEvent", new String[] { "(!String)context" });
 		interfaces.put("ParamEvent", new String[] { "param" });
 
+		notinterfaces.add("Event");
 
 		// Things that go onto the cloneEvent line.
 		overrides.put("MessageEvent", new String[] { "message" });
 
 
 		// Handlers. Key = Handler name. Value is array of: Event name, then param name and param assumed value in pairs.
+		handlers.add(new String[] { "PluginLoaded", "PluginLoaded", "pluginName", null, "pluginStatus", "1" } );
+		handlers.add(new String[] { "PluginReLoaded", "PluginReLoaded", "pluginName", null, "pluginStatus", "0" } );
+		handlers.add(new String[] { "PluginUnLoaded", "PluginUnLoaded", "pluginName", null, "pluginStatus", "-1" } );
+
 		handlers.add(new String[] { "Notice", "Notice", "nick", null, "login", null, "hostname", null, "target", null, "message", null, "channel", "target" } );
 		handlers.add(new String[] { "Message", "ChannelMessage", "target", null, "nick", null, "login", null, "hostname", null, "message", null, "channel", "target" } );
 		handlers.add(new String[] { "PrivateMessage", "PrivateMessage", "nick", null, "login", null, "hostname", null, "message", null, "target", "null" } );
@@ -118,6 +136,10 @@ public class HorriblePerlScript
 		handlers.add(new String[] { "Unknown", "UnknownEvent", "line", null } );
 		handlers.add(new String[] { "UserMode", "UserModes", "targetNick", null, "nick", null, "login", null, "hostname", null, "modes", null } );
 		handlers.add(new String[] { "Voice", "ChannelUserMode", "channel", null, "nick", null, "login", null, "hostname", null, "target", null, "mode", "\"v\"", "(boolean)set", "true" } );
+
+		notprotected.add("PluginLoaded");
+		notprotected.add("PluginReLoaded");
+		notprotected.add("PluginUnLoaded");
 	}
 
 	public static void main(String[] args)
@@ -337,7 +359,12 @@ public class HorriblePerlScript
 				paramValueMap.put(paramName[i], paramValue[i]);
 			}
 
-			StringBuffer eventHandler = new StringBuffer("\tprotected void " + evtName + "(" + prototype + ") {\n");
+			StringBuffer eventHandler = new StringBuffer("\t");
+			if (!notprotected.contains(handler))
+				eventHandler.append("protected ");
+			else
+				eventHandler.append("public ");
+			eventHandler.append("void " + evtName + "(" + prototype + ") {\n");
 			if (inheritance.get(className)[0].equals("__HORRORMUNGER__")) {
 				// Need to horrormunge!
 				String constructorParamsPublic = getConstructorOrder("Channel" + className, paramValueMap);
@@ -417,7 +444,7 @@ public class HorriblePerlScript
 			classContent.append(" ");
 			if (directInheritance != null)
 			{
-				// Not a root class, ie. IRCEvent.
+				// Not a root class.
 
 				// Superclass
 				classContent.append("extends " + directInheritance[0] + " ");
@@ -565,7 +592,7 @@ public class HorriblePerlScript
 
 			// cloneEvent
 			classContent.append("\t/**\n\t * Synthesize a new " + className + " from this one.\n");
-			classContent.append("\t * @return The new " + className + " object.\n\t */\n\tpublic IRCEvent cloneEvent");
+			classContent.append("\t * @return The new " + className + " object.\n\t */\n\tpublic Event cloneEvent");
 			// Prototype.
 			classContent.append("(");
 			first = true;
@@ -631,7 +658,7 @@ public class HorriblePerlScript
 		for(String interfaceName: interfaces.keySet())
 		{
 			// Not an interface; this is an interfacial superclass. Or something.
-			if (interfaceName.equals("IRCEvent"))
+			if (notinterfaces.contains(interfaceName))
 				continue;
 
 			List<String> inherited = getInherit(interfaceName);

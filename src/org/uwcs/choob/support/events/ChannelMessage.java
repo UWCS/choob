@@ -52,7 +52,7 @@ public class ChannelMessage extends Message implements ChannelEvent, CommandEven
 	 * Synthesize a new ChannelMessage from this one.
 	 * @return The new ChannelMessage object.
 	 */
-	public IRCEvent cloneEvent(String message)
+	public Event cloneEvent(String message)
 	{
 		return new ChannelMessage(this, message);
 	}

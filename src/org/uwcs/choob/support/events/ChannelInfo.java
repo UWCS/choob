@@ -44,7 +44,7 @@ public class ChannelInfo extends IRCEvent implements ChannelEvent
 	 * Synthesize a new ChannelInfo from this one.
 	 * @return The new ChannelInfo object.
 	 */
-	public IRCEvent cloneEvent()
+	public Event cloneEvent()
 	{
 		return new ChannelInfo(this);
 	}

@@ -97,7 +97,7 @@ public class ChannelPart extends IRCEvent implements ChannelEvent, ContextEvent,
 	 * Synthesize a new ChannelPart from this one.
 	 * @return The new ChannelPart object.
 	 */
-	public IRCEvent cloneEvent()
+	public Event cloneEvent()
 	{
 		return new ChannelPart(this);
 	}

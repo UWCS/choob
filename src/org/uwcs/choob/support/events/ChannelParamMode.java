@@ -44,7 +44,7 @@ public class ChannelParamMode extends ChannelMode implements ParamEvent
 	 * Synthesize a new ChannelParamMode from this one.
 	 * @return The new ChannelParamMode object.
 	 */
-	public IRCEvent cloneEvent()
+	public Event cloneEvent()
 	{
 		return new ChannelParamMode(this);
 	}

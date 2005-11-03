@@ -69,9 +69,10 @@ public abstract class ChoobPluginManager
 	 * loaded.
 	 * @param pluginName Class name of plugin.
 	 * @param fromLocation URL from which to get the plugin's contents.
+	 * @return true if the plugin was reloaded
 	 * @throws Exception Thrown if there's a syntactical error in the plugin's source.
 	 */
-	public final void loadPlugin(String pluginName, URL fromLocation) throws ChoobException
+	public final boolean loadPlugin(String pluginName, URL fromLocation) throws ChoobException
 	{
 		SecurityManager sm = System.getSecurityManager();
 		if (sm != null)
@@ -101,6 +102,12 @@ public abstract class ChoobPluginManager
 		}
 		if (man != null && man != this)
 			man.destroyPlugin(pluginName);
+
+		// If man existed, so did the plugin.
+		if (man != null)
+			return true;
+		else
+			return false;
 	}
 
 	public final void unloadPlugin(String pluginName) throws ChoobException
@@ -116,6 +123,8 @@ public abstract class ChoobPluginManager
 		}
 		if (man != null)
 			man.destroyPlugin(pluginName);
+		else
+			throw new ChoobNoSuchPluginException(pluginName, "UNLOAD");
 	}
 
 	/**
@@ -235,14 +244,14 @@ public abstract class ChoobPluginManager
 	abstract public ChoobTask intervalTask(String pluginName, Object param);
 
 	/**
-	 * Perform any event handling on the given IRCEvent.
-	 * @param ev IRCEvent to pass along.
+	 * Perform any event handling on the given Event.
+	 * @param ev Event to pass along.
 	 */
-	abstract public List<ChoobTask> eventTasks(IRCEvent ev);
+	abstract public List<ChoobTask> eventTasks(Event ev);
 
 	/**
 	 * Run any filters on the given Message.
-	 * @param ev IRCEvent to pass along.
+	 * @param ev Message to pass along.
 	 */
 	abstract public List<ChoobTask> filterTasks(Message ev);
 

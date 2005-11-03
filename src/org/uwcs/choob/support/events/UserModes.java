@@ -44,7 +44,7 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 	 * Synthesize a new UserModes from this one.
 	 * @return The new UserModes object.
 	 */
-	public IRCEvent cloneEvent()
+	public Event cloneEvent()
 	{
 		return new UserModes(this);
 	}

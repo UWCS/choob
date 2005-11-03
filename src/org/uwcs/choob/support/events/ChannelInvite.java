@@ -104,7 +104,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	 * Synthesize a new ChannelInvite from this one.
 	 * @return The new ChannelInvite object.
 	 */
-	public IRCEvent cloneEvent()
+	public Event cloneEvent()
 	{
 		return new ChannelInvite(this);
 	}

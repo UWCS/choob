@@ -125,4 +125,19 @@ public class Test
 			irc.sendContextReply(mes, "OK, waited.");
 		}
 	}
+
+/*	public void onPluginLoaded (PluginLoaded mes, Modules mods, IRCInterface irc)
+	{
+		irc.sendMessage("#bots", "Yay! Plugin loaded! Name is: " + mes.getPluginName());
+	}
+
+	public void onPluginUnLoaded (PluginUnLoaded mes, Modules mods, IRCInterface irc)
+	{
+		irc.sendMessage("#bots", "Boo! Plugin unloaded! Name is: " + mes.getPluginName());
+	}
+
+	public void onPluginReLoaded (PluginReLoaded mes, Modules mods, IRCInterface irc)
+	{
+		irc.sendMessage("#bots", "Boo! Plugin reloaded! Name is: " + mes.getPluginName());
+	}*/
 }

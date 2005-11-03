@@ -433,7 +433,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return null;
 	}
 
-	public List<ChoobTask> eventTasks(IRCEvent ev)
+	public List<ChoobTask> eventTasks(Event ev)
 	{
 		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
 		List<Method> meths = allPlugins.getEvent(ev.getMethodName());
@@ -553,12 +553,12 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		if (params.length == 1)
 		{
 			// XXX could be better
-			if (!IRCEvent.class.isAssignableFrom(params[0]))
+			if (!Event.class.isAssignableFrom(params[0]))
 				return false;
 		}
 		else if (params.length == 3)
 		{
-			if (!IRCEvent.class.isAssignableFrom(params[0]))
+			if (!Event.class.isAssignableFrom(params[0]))
 				return false;
 			if (!params[1].isAssignableFrom(Modules.class))
 				return false;

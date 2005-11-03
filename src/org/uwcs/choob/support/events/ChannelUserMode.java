@@ -44,7 +44,7 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 	 * Synthesize a new ChannelUserMode from this one.
 	 * @return The new ChannelUserMode object.
 	 */
-	public IRCEvent cloneEvent()
+	public Event cloneEvent()
 	{
 		return new ChannelUserMode(this);
 	}

@@ -37,7 +37,7 @@ public class PrivateAction extends Message implements PrivateEvent, FilterEvent
 	 * Synthesize a new PrivateAction from this one.
 	 * @return The new PrivateAction object.
 	 */
-	public IRCEvent cloneEvent(String message)
+	public Event cloneEvent(String message)
 	{
 		return new PrivateAction(this, message);
 	}
