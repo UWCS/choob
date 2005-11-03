@@ -17,7 +17,9 @@ import org.jibble.pircbot.Colors;
 public class Talk
 {
 	public String[] helpCommandShout = {
-		"Give a yell to deafen countries."
+		"Give a yell to deafen countries.",
+		"<Text>",
+		"<Text> is the text to yell"
 	};
 	public void commandShout( Message mes, Modules mods, IRCInterface irc )
 	{

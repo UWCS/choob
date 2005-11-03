@@ -39,7 +39,7 @@ public class UtilModule
 	{
 		Matcher ma = triggerPattern.matcher(text);
 		if (ma.find())
-			return ma.end() + 1;
+			return ma.end();
 
 		return 0;
 	}

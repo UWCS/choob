@@ -197,7 +197,7 @@ public class JavaScriptPluginManager extends ChoobPluginManager {
 			 * that doGeneric will throw this exact exception if it is not
 			 * found, contrary to all the other methods which just return null.
 			 */
-			throw new ChoobNoSuchCallException(fullName);
+			throw new ChoobNoSuchCallException(pluginName, fullName);
 		}
 		return callMethod(method, params, CALL_WANT_RESULT);
 	}

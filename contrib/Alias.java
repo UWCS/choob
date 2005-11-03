@@ -328,8 +328,8 @@ public class Alias
 		if (dotIndex != -1 && dotIndex < cmdEnd)
 			return;
 
-		String command = text.substring(offset, cmdEnd);
-		AliasObject alias = getAlias( command );
+		String aliasName = text.substring(offset, cmdEnd);
+		AliasObject alias = getAlias( aliasName );
 
 		if (alias == null)
 		{
@@ -344,15 +344,40 @@ public class Alias
 		}
 
 		String converted = alias.converted;
+
+		String newText, commandName, pluginName;
 		if (converted.indexOf("$") == -1)
-			// Simple syntax
-			command = irc.getTrigger() + converted + cmdParams;
+		{
+			// Make sure command name is valid...
+			int dotPos = converted.indexOf('.');
+			if (dotPos == -1)
+			{
+				System.err.println("Invalid alias: " + aliasName + " -> " + converted);
+				return;
+			}
+
+			pluginName = converted.substring(0, dotPos);
+			commandName = converted.substring(dotPos + 1);
+			newText = irc.getTrigger() + aliasName + cmdParams;
+		}
 		else
 		{
 			// Advanced syntax
 			List<String> paramList = mods.util.getParams(mes);
 			String[] params = new String[paramList.size()];
 			params = paramList.toArray(params);
+
+			int dotPos = converted.indexOf('.');
+			int spacePos = converted.indexOf(' ');
+			if (dotPos == -1 || spacePos == -1 || dotPos >= spacePos - 1)
+			{
+				System.err.println("Invalid alias: " + aliasName + " -> " + converted);
+				return;
+			}
+
+			pluginName = converted.substring(0, dotPos);
+			commandName = converted.substring(dotPos + 1, spacePos);
+
 			StringBuilder newCom = new StringBuilder(irc.getTrigger());
 
 			int pos = converted.indexOf('$'), oldPos = 0;
@@ -527,13 +552,13 @@ public class Alias
 				pos = converted.indexOf('$', pos);
 			}
 			newCom.append(converted.substring(oldPos, convEnd + 1));
-			command = newCom.toString();
+			newText = newCom.toString();
 		}
 
-		Message newMes = (Message)mes.cloneEvent( command );
+		Message newMes = (Message)mes.cloneEvent( newText );
 
-		System.out.println("Converted " + text + " -> " + command);
+		System.out.println("Converted " + text + " -> " + newText);
 
-		mods.synthetic.doSyntheticMessage( newMes );
+		mods.plugin.queueCommand( pluginName, commandName, newMes );
 	}
 }

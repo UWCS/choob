@@ -8,6 +8,7 @@ package org.uwcs.choob.modules;
 
 import org.uwcs.choob.plugins.*;
 import org.uwcs.choob.support.*;
+import org.uwcs.choob.support.events.*;
 import org.uwcs.choob.*;
 import java.lang.*;
 import java.util.*;
@@ -109,12 +110,28 @@ public class PluginModule {
 		return dPlugMan.doGeneric(pluginName, type, name, params);
 	}
 
+	/**
+	 * Cause a command of plugin pluginName to be queued for execution.
+	 * @param pluginName The name of the plugin to call.
+	 * @param command The name of the command to call.
+	 * @param mes The message to pass to the routing
+	 */
+	public void queueCommand(String pluginName, String command, Message mes) throws ChoobException
+	{
+		AccessController.checkPermission(new ChoobPermission("generic.command"));
+		ChoobTask task = dPlugMan.commandTask(pluginName, command, mes);
+		if (task != null)
+			ChoobThreadManager.queueTask(task);
+		else
+			throw new ChoobNoSuchCallException(pluginName, "command " + command);
+	}
+
 	public String exceptionReply(Throwable e)
 	{
 		if (e instanceof ChoobAuthException)
 			return e.getMessage();
 		else if (e instanceof ChoobNoSuchPluginException)
-			return "You need to load the plugin " + ((ChoobNoSuchPluginException)e).getPlugin() + "!";
+			return "You need to load the plugin " + ((ChoobNoSuchPluginException)e).getPluginName() + "!";
 		else if (e instanceof AccessControlException)
 			return "D'oh! The plugin needs permission " + ChoobAuthException.getPermissionText(((AccessControlException)e).getPermission()) + "!";
 		else

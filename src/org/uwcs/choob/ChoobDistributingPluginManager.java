@@ -43,7 +43,7 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 	 * @param command Command to call.
 	 * @param ev Message object from IRC.
 	 */
-	public ChoobTask commandTask(String plugin, String command, Message ev)
+	public ChoobTask commandTask(final String plugin, final String command, final Message ev)
 	{
 		ChoobPluginManager man;
 		ChoobTask task = null;
@@ -58,37 +58,41 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 		{
 			// Suggest a task instead?
 
-			List suggestions;
-			synchronized(phoneticCommands)
+			task = new ChoobTask(null)
 			{
-				suggestions = phoneticCommands.getSuggestions(plugin + "." + command, 200);
-			}
-			if (suggestions != null && suggestions.size() > 0)
-			{
-				if (suggestions.size() == 1)
-					irc.sendContextReply(ev, "Command not found. Perhaps you meant " + suggestions.get(0) + "?");
-				else
+				public void run()
 				{
-					StringBuffer buf = new StringBuffer("Command not found. Perhaps you meant one of: ");
-					Iterator<String> it = suggestions.iterator();
-					buf.append((String)it.next());
-					while(it.hasNext())
+					List suggestions;
+					synchronized(phoneticCommands)
 					{
-						String sug = (String)it.next();
-						if (it.hasNext())
-							buf.append(", ");
-						else
-							buf.append(" or ");
-						buf.append(sug);
+						suggestions = phoneticCommands.getSuggestions(plugin + "." + command, 200);
 					}
-					buf.append("?");
-					irc.sendContextReply(ev, buf.toString());
+					if (suggestions != null && suggestions.size() > 0)
+					{
+						if (suggestions.size() == 1)
+							irc.sendContextReply(ev, "Command " + plugin + "." + command + " not found. Perhaps you meant " + suggestions.get(0) + "?");
+						else
+						{
+							StringBuffer buf = new StringBuffer("Command " + plugin + "." + command + " not found. Perhaps you meant one of: ");
+							Iterator<String> it = suggestions.iterator();
+							buf.append((String)it.next());
+							while(it.hasNext())
+							{
+								String sug = (String)it.next();
+								if (it.hasNext())
+									buf.append(", ");
+								else
+									buf.append(" or ");
+								buf.append(sug);
+							}
+							buf.append("?");
+							irc.sendContextReply(ev, buf.toString());
+						}
+					}
+					else
+						irc.sendContextReply(ev, "Command " + plugin + "." + command + " not found. Can't find any suggestions either.");
 				}
-			}
-			else
-			{
-				irc.sendContextReply(ev, "Command not found. Can't find any suggestions either.");
-			}
+			};
 		}
 		return task;
 	}

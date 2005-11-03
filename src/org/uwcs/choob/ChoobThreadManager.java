@@ -9,13 +9,13 @@ import java.util.*;
  * @author bucko
  */
 
-final class ChoobThreadManager extends ThreadPoolExecutor {
+public final class ChoobThreadManager extends ThreadPoolExecutor {
 	private static ChoobThreadManager exe;
 	//private Modules mods; // TODO - make use of this to get thread counts for plugins.
 	private Map<String,Semaphore> waitObjects;
 	private Map<String,BlockingQueue<ChoobTask>> queues;
 
-	ChoobThreadManager()
+	private ChoobThreadManager()
 	{
 		super(5, 20, (long)60, TimeUnit.SECONDS, new LinkedBlockingQueue());
 		this.waitObjects = new HashMap<String,Semaphore>();
@@ -76,8 +76,9 @@ final class ChoobThreadManager extends ThreadPoolExecutor {
 		return ret;
 	}
 
-	static void queueTask(ChoobTask task) throws RejectedExecutionException
+	public static void queueTask(ChoobTask task) throws RejectedExecutionException
 	{
+		java.security.AccessController.checkPermission(new ChoobPermission("task.queue"));
 		exe.queue(task);
 	}
 

@@ -113,7 +113,6 @@ public class Tell
 			tellObj.nickServ = nsStatus(tellObj.target) > 0;
 			if (done.contains(tellObj.target))
 				continue;
-			System.out.println("NickServ needed on " + tellObj.target + ": " + tellObj.nickServ);
 			clearCache(tellObj.target);
 			save(tellObj);
 			done.add(tellObj.target);
@@ -121,7 +120,7 @@ public class Tell
 		}
 		});
 
-		irc.sendContextReply(mes, "Okay, will tell upon next speaking. (Sent to " + done.size() + " " + (done.size() == 1 ? "person" : "people") + ").");
+		irc.sendContextReply(mes, "Okay, will " + tellObj.type + " upon next speaking. (Sent to " + done.size() + " " + (done.size() == 1 ? "person" : "people") + ").");
 	}
 
 	private void clearCache( String nick )
