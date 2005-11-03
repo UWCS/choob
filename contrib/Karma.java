@@ -115,11 +115,7 @@ public class Karma
 		{
 			String name = karmaMatch.group(1);
 
-			if (name.indexOf("--")!=-1)
-			{
-				irc.sendContextReply(mes, "Tard.");
-				return;
-			}
+			name=name.replaceAll("-+","-");
 
 			// Have we already done this?
 			if (used.contains(name.toLowerCase()))
