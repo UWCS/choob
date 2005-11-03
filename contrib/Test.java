@@ -108,4 +108,21 @@ public class Test
 		else
 			irc.sendContextReply(mes, mods.plugin.callGeneric( params.get(1), params.get(2), params.get(3) ).toString());
 	}
+
+	public void commandWait (Message mes, Modules mods, IRCInterface irc)
+	{
+		Object test = new Object();
+		synchronized(test)
+		{
+			try
+			{
+				test.wait(3000);
+			}
+			catch (InterruptedException e)
+			{
+				irc.sendContextReply(mes, "Interrupted!");
+			}
+			irc.sendContextReply(mes, "OK, waited.");
+		}
+	}
 }
