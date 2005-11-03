@@ -79,9 +79,10 @@ public class TimedEvents
 		}
 
 		// Does the command have a trigger?
-		if (!Pattern.compile(irc.getTriggerRegex()).matcher(command).find())
-			// No.
-			command = irc.getTrigger() + command;
+		Matcher trigMatch = Pattern.compile(irc.getTriggerRegex()).matcher(command);
+		if (trigMatch.find())
+			// Yes. Blat it. We'll add it later.
+			command = command.substring(trigMatch.end());
 
 		TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
@@ -127,9 +128,10 @@ public class TimedEvents
 		String command = params.get(2);
 
 		// Does the command have a trigger?
-		if (!Pattern.compile(irc.getTriggerRegex()).matcher(command).find())
-			// No.
-			command = irc.getTrigger() + command;
+		Matcher trigMatch = Pattern.compile(irc.getTriggerRegex()).matcher(command);
+		if (trigMatch.find())
+			// Yes. Blat it. We'll add it later.
+			command = command.substring(trigMatch.end());
 
 		// Java--
 		GregorianCalendar cal = new GregorianCalendar();
@@ -224,7 +226,7 @@ public class TimedEvents
 		return period;
 	}
 
-	public void interval( Object parameter ) throws ChoobException
+	public synchronized void interval( Object parameter ) throws ChoobException
 	{
 		if (parameter != null && parameter instanceof TimedEvent) {
 			// It's a message to be redelivered
@@ -237,12 +239,17 @@ public class TimedEvents
 				System.err.println("Event number " + timedEvent.mesID + " appears to have gone!");
 				return;
 			}
-			Message newMes = (Message)mes.cloneEvent(timedEvent.command);
+
+			String command = irc.getTrigger() + timedEvent.command;
+
+			Message newMes = (Message)mes.cloneEvent(command);
 			// Resynth...
 			for(int i=0; i<timedEvent.synthLevel; i++)
-				newMes = (Message)newMes.cloneEvent(timedEvent.command);
+				newMes = (Message)newMes.cloneEvent(command);
 
 			lastDelivery = timedEvent;
+
+			// Get the plugin/command.
 
 			mods.synthetic.doSyntheticMessage( newMes );
 
