@@ -19,8 +19,8 @@ public class IRCInterface {
 	Choob bot;
 	Modules mods;
 
-	public final static int MAX_MESSAGE_LENGTH=400; // Arbiatary hax!
-	final int maxmsgtruncation=100; // Arbiatary hax!
+	public final static int MAX_MESSAGE_LENGTH=400; 		// Arbiatary hax!
+	public final static int MAX_MESSAGE_TRUNCATION=100;
 
 	/** Creates a new instance of IRCInterface */
 	public IRCInterface(Choob bot) {
@@ -41,6 +41,45 @@ public class IRCInterface {
 	public void sendContextAction(Message ev, String message)
 	{
 		bot.sendAction(ev.getContext(), message);
+	}
+
+	// Break apart a message and send it, Target, Message, Prefix.
+	private void sendMessage(String t, String m, String p)
+	{
+		if (t==null || m==null)
+			return;
+
+		m=m.trim();
+
+		if (m.length()==0)
+			return;
+
+		if (m.length() > MAX_MESSAGE_LENGTH)
+			do
+			{
+				int maxsublen=Math.min(MAX_MESSAGE_LENGTH, m.length());
+				String submes=m.substring(0, maxsublen);
+				int lio=submes.lastIndexOf(' ');
+				int mlen=m.length();
+
+				if (lio==-1 || MAX_MESSAGE_LENGTH-lio > MAX_MESSAGE_TRUNCATION)
+				{
+					if (mlen>0)
+						bot.sendMessage(t, submes + (mlen > MAX_MESSAGE_LENGTH ? "..." : ""));
+					m=p+m.substring(maxsublen);
+				}
+				else
+				{
+					bot.sendMessage(t, m.substring(0, lio));
+					m=p+m.substring(Math.min(lio, mlen));
+				}
+			}
+			while (m.length() > p.length() );
+		else
+		{
+			bot.sendMessage(t, m);
+		}
+
 	}
 
 	/**
@@ -70,34 +109,7 @@ public class IRCInterface {
 			message=sprefix+message;
 		}
 
-		if (target==null)
-			return;
-
-		if (message.length() > MAX_MESSAGE_LENGTH)
-		{
-			// XXX HAX XXX HAX XXX HAX I'm so drunk.
-			do
-			{
-				int lio=message.substring(0, Math.min(MAX_MESSAGE_LENGTH, message.length())).lastIndexOf(' ');
-				if (lio==-1 || MAX_MESSAGE_LENGTH-lio > maxmsgtruncation)
-				{
-					System.out.println(MAX_MESSAGE_LENGTH-lio);
-					if (message.trim().length()>0)
-						bot.sendMessage(target, message.substring(0, Math.min(MAX_MESSAGE_LENGTH, message.length())) + (message.length() > MAX_MESSAGE_LENGTH ? "..." : ""));
-					message=sprefix + message.substring(Math.min(MAX_MESSAGE_LENGTH, message.length()));
-				}
-				else
-				{
-					bot.sendMessage(target, message.substring(0, lio));
-					message=sprefix + message.substring(Math.min(lio, message.length()));
-				}
-			}
-			while (message.length() > sprefix.length() );
-		}
-		else
-		{
-			bot.sendMessage(target, message);
-		}
+		sendMessage(target, message, sprefix);
 	}
 
 
@@ -143,7 +155,7 @@ public class IRCInterface {
 	{
 		AccessController.checkPermission(new ChoobPermission("message.send.privmsg"));
 
-		bot.sendMessage(target, message);
+		sendMessage(target, message, "");
 	}
 
 	/**
@@ -158,7 +170,7 @@ public class IRCInterface {
 	{
 		AccessController.checkPermission(new ChoobPermission("message.send.tagged.privmsg"));
 
-		bot.sendMessage(target, message + " (" + ev.getNick() + ")");
+		sendMessage(target, message + " (" + ev.getNick() + ")", "");
 	}
 	/**
 	 * Sends an action to the target you specify, may be a #channel, having post-fixed it with the user's nick.
