@@ -129,7 +129,7 @@ public class Karma
 		String nick=mods.nick.getBestPrimaryNick(mes.getNick());
 
 		List<String> names = new ArrayList<String>();
-		while (karmaMatch.find())
+		while (karmaMatch.find() && karmaObjs.size()<5)
 		{
 			String name = karmaMatch.group(1);
 
@@ -179,6 +179,9 @@ public class Karma
 			karmaObj.increase = increase;
 			karmaObjs.add(karmaObj);
 			names.add(name);
+
+			if (karmaMatch.start()==0) // If something is karma'd at the start of a line, don't allow anything else to be karma'd on that line.
+				break;
 		}
 
 		saveKarmaObjects(karmaObjs, mods);
