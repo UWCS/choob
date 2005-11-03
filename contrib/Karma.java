@@ -28,6 +28,12 @@ public class KarmaReasonObject
 
 public class Karma
 {
+	Modules mods;
+	public Karma (Modules mods)
+	{
+		this.mods=mods;
+	}
+
 	// Java-- A better regex would be: (")?((?(1)(?:[ \\./a-zA-Z0-9_-]{2,})|(?:[\\./a-zA-Z0-9_-]{2,})))(?(1)")((?:\\+\\+)|(?:\\-\\-))
 	public String filterKarmaRegex = "(?x:\\b(?:"
 		+ "("
@@ -39,33 +45,45 @@ public class Karma
 		+ "( \\+\\+ | \\-\\- )" // The actual karma change
 		+ ")\\B)";
 
-	public String[] helpCommandReason = {
-		"Find out why something sucks or rocks."
-		// XXX Add syntax here.
-	};
-	public void commandReason( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	public String apiReason(String wot, boolean up) throws ChoobException
 	{
-		Matcher whyMatch = Pattern.compile(".*(do|does)? ([\\./a-zA-Z0-9_-]+) (suck|rulz0r)\\?$")
-			.matcher(mes.getMessage());
-		if (whyMatch.matches())
-		{
-			List<KarmaReasonObject> results;
-			results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = '" + whyMatch.group(2) + "' AND direction = '" + (whyMatch.group(3).toLowerCase().equals("suck") ? -1 : 1) + "'");
+		List<KarmaReasonObject> results;
+		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = '" + wot + "' AND direction = '" + (up ? 1 : -1) + "'");
 
-			if (results.size() == 0)
-			{
-				irc.sendContextReply(mes, whyMatch.group(2) + " "
-					+ whyMatch.group(1) + " NOT " + whyMatch.group(3) + "!");
-			}
-			else
-			{
-				KarmaReasonObject reason = results.get((new Random()).nextInt(results.size()));
+		if (results.size() == 0)
+			return null;
+		else
+			return (results.get((new Random()).nextInt(results.size()))).reason;
+	}
 
-				irc.sendContextReply(mes, whyMatch.group(2) + " " + whyMatch.group(3)
-					+ (reason.string.endsWith("s") ? "" : "s") + ": " + reason.reason);
-			}
-			return;
-		}
+	public String[] helpCommandReasonUp = {
+		"Find out why something rocks.",
+		"<what>"
+	};
+
+	public void commandReasonUp( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	{
+		String wot=mods.util.getParamString(mes);
+		String re=apiReason(wot, true);
+		if (re!=null)
+			irc.sendContextReply(mes, wot + " has been given karma " + re);
+		else
+			irc.sendContextReply(mes, "Nobody has ever told me why " + wot + " has gained karma. :(");
+	}
+
+	public String[] helpCommandReasonDown = {
+		"Find out why something sucks.",
+		"<what>"
+	};
+
+	public void commandReasonDown( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	{
+		String wot=mods.util.getParamString(mes);
+		String re=apiReason(wot, false);
+		if (re!=null)
+			irc.sendContextReply(mes, wot + " has lost karma " + re);
+		else
+			irc.sendContextReply(mes, "Nobody has ever told me why " + wot + " has lost karma. :(");
 	}
 
 	public String[] helpTopics = { "Using" };
@@ -73,7 +91,7 @@ public class Karma
 		  "To change the karma of something, simply send the message"
 		+ " 'something--' or 'something++'. You can also specify a reason, by"
 		+ " sending a line starting with a karma change then giving a reason,"
-		+ " like: 'ntl-- they suck'."
+		+ " like: 'ntl-- because they suck' or 'ntl-- for sucking teh c0k'."
 	};
 
 	public void filterKarma( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
@@ -89,10 +107,10 @@ public class Karma
 		HashSet used = new HashSet();
 
 		Matcher reasonMatch = Pattern.compile("(?x:^"
-				+ "([\\./a-zA-Z0-9_-]+)" // The karma string.
+				+ "([\\./a-zA-Z0-9_+-]+)" // The karma string.
 				+ "(\\+\\+|\\-\\-)" // Up or down.
-				+ "\\s+(?:because)?" // Optional because.
-				+ "\\(? (.+?) \\)?" // The reason, optionally in brackets.
+				+ "\\s+((?:because)|(?:for)" // Ensure proper english.
+				+ ".+?)" // The reason.
 				+ "$)")
 			.matcher(mes.getMessage());
 
