@@ -103,7 +103,7 @@ public class Karma
 			reason.direction = (reasonMatch.group(2).equals("++") ? 1 : -1);
 			reason.reason = reasonMatch.group(3);
 			mods.odb.save(reason);
-			special="*";
+			special=" (with reason)";
 		}
 
 		Matcher karmaMatch = Pattern.compile(filterKarmaRegex).matcher(mes.getMessage());
