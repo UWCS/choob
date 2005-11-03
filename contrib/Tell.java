@@ -84,6 +84,7 @@ public class Tell
 
 		tellObj.date = mes.getMillis();
 
+		System.out.println("Command: " + params.get(0));
 		if (params.get(0).toLowerCase().equals("ask"))
 			tellObj.type = "ask";
 		else
@@ -136,14 +137,13 @@ public class Tell
 		}
 	}
 
-	private void spew(String nick, Modules mods, IRCInterface irc) throws ChoobException
+	private synchronized void spew(String nick, Modules mods, IRCInterface irc) throws ChoobException
 	{
 		// Use the cache
 		boolean willSkip = false;
 		synchronized(tellCache)
 		{
 			Long cache = tellCache.get(nick);
-			System.out.println("Cache: " + cache + " and now: " + System.currentTimeMillis());
 			if (cache != null && cache > System.currentTimeMillis())
 				willSkip = true;
 			tellCache.put(nick, System.currentTimeMillis() + CACHEEXPIRE);
@@ -166,7 +166,6 @@ public class Tell
 				{
 					if (nsStatus == -2)
 					{
-						System.out.println("NickServ needed on " + tellObj.target);
 						rootNick = mods.security.getRootUser( nick );
 						if (!rootNick.equalsIgnoreCase(testNick))
 							nsStatus = -1;
