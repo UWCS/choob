@@ -78,6 +78,11 @@ public class Karma
 
 	public void filterKarma( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
 	{
+		if (mes instanceof PrivateEvent)
+		{
+			irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
+			return;
+		}
 		String special="";
 
 		ArrayList<KarmaObject> karmaObjs = new ArrayList();
@@ -101,8 +106,9 @@ public class Karma
 			special="*";
 		}
 
-		Matcher karmaMatch = Pattern.compile(filterKarmaRegex)
-			.matcher(mes.getMessage());
+		Matcher karmaMatch = Pattern.compile(filterKarmaRegex).matcher(mes.getMessage());
+
+		String nick=mods.nick.getBestPrimaryNick(mes.getNick());
 
 		List<String> names = new ArrayList<String>();
 		while (karmaMatch.find())
@@ -121,6 +127,9 @@ public class Karma
 			used.add(name.toLowerCase());
 
 			boolean increase = karmaMatch.group(2).equals("++");
+
+			if (name.equalsIgnoreCase(nick))
+				increase=false;
 
 			List<KarmaObject> results = retrieveKarmaObjects("WHERE string = '" + name + "'", mods);
 			KarmaObject karmaObj;

@@ -12,6 +12,13 @@ import org.jibble.pircbot.Colors;
 public class Events
 {
 
+	// As per: http://bermuda.warwickcompsoc.co.uk/UWCSWebsite/Members/silver/document.2005-10-15.5186402265/. Don't fear the slashes, they're cuddly.
+
+	final Pattern events_pattern=Pattern.compile("(\\d+) \"([^\"]*)\" ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) \"([^\"]*)\" \"((?:\\\\\"|\\\\\\\\|[^\"])*)\" \"((?:\\\\\"|\\\\\\\\|[^\"])*)\"");
+	//  Id:                                         1        2          3       4       5       6       7         8                     9                                 10
+	//  Name:                                       id       name     start   end <signup>code max   current    names</signup>        desc.                             location
+
+
 	private static final String announceChannel="#bots";
 	private static final long checkInterval=60000; // The crond job is run every minute.
 
@@ -28,10 +35,6 @@ public class Events
 	private final static int SIGNUPCURRENT=7;
 	private final static int SIGNUPMAX=6;
 
-	//  Id:    1        2          3       4       5       6       7         8                     9                                 10
-	//  Name:  id       name     start   end <signup>code max   current    names</signup>        desc.                             location
-
-
 	public Events(Modules mods, IRCInterface irc) throws ChoobException
 	{
 		this.mods = mods;
@@ -45,22 +48,14 @@ public class Events
 		{
 			throw new ChoobException("Error in constant data.");
 		}
-		mods.interval.callBack(null, checkInterval); // 5 secs.
+		mods.interval.callBack(null, checkInterval);
 	}
 
 
 	public void interval(Object param) throws ChoobException
 	{
 		ArrayList<String[]> ne=readEventsData();
-		if (current==null)
-		{
-			//current=ne;
-		}
-		else if (current.equals(ne)) // Offchance?
-		{
-			//return;
-		}
-		else
+		if (current!=null && !current.equals(ne))
 		{
 
 			ListIterator<String[]> ci=current.listIterator();
@@ -169,12 +164,6 @@ public class Events
 
 		return t;
 	}
-
-	// As per: http://bermuda.warwickcompsoc.co.uk/UWCSWebsite/Members/silver/document.2005-10-15.5186402265/. Don't fear the slashes, they're cuddly.
-
-	final Pattern events_pattern=Pattern.compile("(\\d+) \"([^\"]*)\" ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) \"([^\"]*)\" \"((?:\\\\\"|\\\\\\\\|[^\"])*)\" \"((?:\\\\\"|\\\\\\\\|[^\"])*)\"");
-	//  Id:                                         1        2          3       4       5       6       7         8                     9                                 10
-	//  Name:                                       id       name     start   end <signup>code max   current    names</signup>        desc.                             location
 
 	private ArrayList<String[]> readEventsData() throws ChoobException
 	{
