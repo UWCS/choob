@@ -58,7 +58,7 @@ final class ChoobThreadManager extends ThreadPoolExecutor {
 		Semaphore ret = waitObjects.get(pluginName.toLowerCase());
 		if (ret == null)
 		{
-			ret = new Semaphore(1);
+			ret = new Semaphore(2);
 			waitObjects.put(pluginName.toLowerCase(), ret);
 		}
 		return ret;
@@ -70,7 +70,7 @@ final class ChoobThreadManager extends ThreadPoolExecutor {
 		BlockingQueue<ChoobTask> ret = queues.get(pluginName.toLowerCase());
 		if (ret == null)
 		{
-			ret = new ArrayBlockingQueue<ChoobTask>(10);
+			ret = new ArrayBlockingQueue<ChoobTask>(30);
 			queues.put(pluginName.toLowerCase(), ret);
 		}
 		return ret;
