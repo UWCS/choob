@@ -77,10 +77,10 @@ public class Quote
 		  "If you pass no parameters (or action: or privmsg:), the most recent line (or action) that's long enough will be quoted.",
 		  "With just a nickname (or privmsg:<Nick>), the most recent line from that nick will be quoted.",
 		  "With action:<Nick>, the most recent action from that nick will be quoted.",
-		  "Finally, you can specify one or 2 regeular expression searches. If"
+		  "Finally, you can specify one or 2 regular expression searches. If"
 		+ " you specify just one, the most recent matching line will be quoted."
 		+ " With 2, the first one matches the start of the quote, and the"
-		+ " second matches the end. Previous quote commands are skipped when"
+		+ " second matches the end. Previous quote commands are skipped when doing"
 		+ " any regex matching.",
 		  "'Long enough' in this context means at least " + MINLENGTH
 		+ " characters, and at least " + MINWORDS + " words.",
