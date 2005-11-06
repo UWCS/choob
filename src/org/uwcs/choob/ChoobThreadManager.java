@@ -88,13 +88,13 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		if (pluginName == null)
 		{
 			// system task!
-			exe.execute(task);
+			execute(task);
 			return;
 		}
 		Semaphore sem = getWaitObject(pluginName);
 		if (sem.tryAcquire())
 		{
-			exe.execute(task);
+			execute(task);
 		}
 		else
 		{

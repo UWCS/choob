@@ -356,9 +356,16 @@ public class Alias
 				return;
 			}
 
+			int spacePos = converted.indexOf(' ');
+			String extra = "";
+			if (spacePos == -1)
+				spacePos = converted.length();
+			else
+				extra = converted.substring(spacePos);
+
 			pluginName = converted.substring(0, dotPos);
-			commandName = converted.substring(dotPos + 1);
-			newText = irc.getTrigger() + aliasName + cmdParams;
+			commandName = converted.substring(dotPos + 1, spacePos);
+			newText = irc.getTrigger() + aliasName + extra + cmdParams;
 		}
 		else
 		{
