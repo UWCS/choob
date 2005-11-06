@@ -70,20 +70,28 @@ public class Quote
 		recentQuotes = new HashMap<String,List<RecentQuote>>();
 	}
 
-	public String[] helpTopics = { "UsingCreate", "UsingGet" };
+	public String[] helpTopics = { "UsingCreate", "CreateExamples", "UsingGet" };
 
 	public String[] helpUsingCreate = {
 		  "There's 4 ways of calling Quote.Create.",
-		  "If you pass no parameters, the most recent line that's long enough will be quoted.",
-		  "With just a nickname, the most recent line from that nick that's long enough will be quoted.",
-		  "With action:<Nick>, the most recent long enough action will be quoted.",
+		  "If you pass no parameters (or action: or privmsg:), the most recent line (or action) that's long enough will be quoted.",
+		  "With just a nickname (or privmsg:<Nick>), the most recent line from that nick will be quoted.",
+		  "With action:<Nick>, the most recent action from that nick will be quoted.",
 		  "Finally, you can specify one or 2 regeular expression searches. If"
 		+ " you specify just one, the most recent matching line will be quoted."
 		+ " With 2, the first one matches the start of the quote, and the"
 		+ " second matches the end. Previous quote commands are skipped when"
 		+ " any regex matching.",
 		  "'Long enough' in this context means at least " + MINLENGTH
-		+ " characters, and at least " + MINWORDS + " words."
+		+ " characters, and at least " + MINWORDS + " words.",
+		  "Note that nicknames are always made into their short form: 'privmsg:fred|bed' will quote people called 'fred', 'fred|busy', etc.",
+		  "See CreateExamples for some examples."
+	};
+
+	public String[] helpCreateExamples = {
+		  "'Quote.Create action:Fred' will quote the most recent action from Fred, regardless of length.",
+		  "'Quote.Create privmsg:' will quote the most recent line that's long enough.",
+		  "'Quote.Create fred:/blizzard/ /suck/' will quote the most recent possible quote starting with fred saying 'Blizzard', ending with the first line containing 'suck'."
 	};
 
 	public String[] helpUsingGet = {
@@ -96,7 +104,7 @@ public class Quote
 
 	public String[] helpCommandCreate = {
 		"Create a new quote. See Quote.UsingCreate for more info.",
-		"[ <Nick> | action:<Nick> | [<Nick>:]/<Regex>/ [[<Nick>:]/<Regex>] ]",
+		"[ [privmsg:][<Nick>] | action:[<Nick>] | [<Nick>:]/<Regex>/ [[<Nick>:]/<Regex>] ]",
 		"<Nick> is a nickname to quote",
 		"<Regex> is a regular expression to use to match lines"
 	};
@@ -112,17 +120,12 @@ public class Quote
 
 		String param = mods.util.getParamString(mes);
 
+		// Default is privmsg
+		if ( param.equals("") || ((param.charAt(0) < '0' || param.charAt(0) > '9') && param.charAt(0) != '/' && param.indexOf(':') == -1) )
+			param = "privmsg:" + param;
+
 		final List<Message> lines = new ArrayList<Message>();
-		if ( param.equals("") )
-		{
-			if (history.size() == 0)
-			{
-				irc.sendContextReply(mes, "Can't quote -- memory like a seive!");
-				return;
-			}
-			lines.add(history.get(0));
-		}
-		else if (param.charAt(0) >= '0' && param.charAt(0) <= '9')
+		if (param.charAt(0) >= '0' && param.charAt(0) <= '9')
 		{
 			// First digit is a number. That means the rest are, too! (Or at least, we assume so.)
 			String bits[] = param.split(" +");
@@ -187,8 +190,8 @@ public class Quote
 			{
 				Message line = history.get(i);
 				String text = line.getMessage();
-				if (text.length() < MINLENGTH || text.split(" +").length < MINWORDS)
-					continue;
+//				if (text.length() < MINLENGTH || text.split(" +").length < MINWORDS)
+//					continue;
 				String guessNick = mods.nick.getBestPrimaryNick( line.getNick() );
 				if ( guessNick.toLowerCase().equals(findNick) )
 				{
@@ -202,13 +205,19 @@ public class Quote
 				return;
 			}
 		}
-		else if (param.toLowerCase().startsWith("action:"))
+		else if (param.toLowerCase().startsWith("action:") || param.toLowerCase().startsWith("privmsg:"))
 		{
+			Class thing;
+			if (param.toLowerCase().startsWith("action:"))
+				thing = ChannelAction.class;
+			else
+				thing = ChannelMessage.class;
+
 			// It's an action from a nickname
 			String bits[] = param.split("\\s+");
 			if (bits.length > 2)
 			{
-				irc.sendContextReply(mes, "When quoting by nickname, you must supply only 1 parameter.");
+				irc.sendContextReply(mes, "When quoting by type, you must supply only 1 parameter.");
 				return;
 			}
 			bits = bits[0].split(":");
@@ -221,8 +230,9 @@ public class Quote
 			{
 				Message line = history.get(i);
 				String text = line.getMessage();
-				if (!(line instanceof ChannelAction) || text.length() < MINLENGTH || text.split(" +").length < MINWORDS)
+				if (!thing.isInstance(line))
 					continue;
+
 				if (findNick != null)
 				{
 					String guessNick = mods.nick.getBestPrimaryNick( line.getNick() );
@@ -234,13 +244,19 @@ public class Quote
 				}
 				else
 				{
+					// Check length etc.
+					if (text.length() < MINLENGTH || text.split(" +").length < MINWORDS)
+						continue;
 					lines.add(line);
 					break;
 				}
 			}
 			if (lines.size() == 0)
 			{
-				irc.sendContextReply(mes, "No quote found for nickname " + findNick + ".");
+				if (findNick != null)
+					irc.sendContextReply(mes, "No quotes found for nickname " + findNick + ".");
+				else
+					irc.sendContextReply(mes, "No recent quotes of that type!");
 				return;
 			}
 		}
