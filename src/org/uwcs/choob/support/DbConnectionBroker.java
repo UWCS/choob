@@ -83,6 +83,8 @@ public class DbConnectionBroker
 		cpds.setLogWriter(logFile);
 		cpds.setCheckoutTimeout(maxCheckoutSeconds*1000);
 
+		cpds.setIdleConnectionTestPeriod(300); // Execute a getTables() after idle for 5 mins.
+		cpds.setAutomaticTestTable("C3P0TestTable"); // C3P0 will create this.
 	}
 
 	public Connection getConnection() throws SQLException

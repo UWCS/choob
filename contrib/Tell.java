@@ -37,7 +37,7 @@ public class Tell
 		this.tellCache = new HashMap<String,Long>();
 	}
 
-	public String[] helpTopics = { "Using", "Security" };
+	public String[] helpTopics = { "Using", "Security", "Cache" };
 
 	public String[] helpUsing = {
 		  "Tell is a plugin that allows you to send messages to people who"
@@ -57,6 +57,14 @@ public class Tell
 		+ " root username is not equal to their base nickname can't receive"
 		+ " tells at all! That is, if 'bob|bot' is bob's root username, he"
 		+ " will never receive tells."
+	};
+
+	public String[] helpCache = {
+		  "Whether or not you have a tell is cached for " + (CACHEEXPIRE / 1000)
+		+ " seconds. This is to stop tell continually telling you you have"
+		+ " tells but aren't identified. If you DO identify with NickServ"
+		+ " therefore, you need to use the Tell.Get command to reset this and"
+		+ " try again. Note that NickServ status is also cached."
 	};
 
 	public String[] helpCommandSend = {
@@ -123,6 +131,16 @@ public class Tell
 		irc.sendContextReply(mes, "Okay, will " + tellObj.type + " upon next speaking. (Sent to " + done.size() + " " + (done.size() == 1 ? "person" : "people") + ").");
 	}
 
+	public String[] helpCommandGet = {
+		"Get any tells that have been sent to you. See Cache."
+	};
+	public void commandGet( Message mes ) throws ChoobException
+	{
+		clearCache(mes.getNick());
+		spew( mes.getNick() );
+		irc.sendContextReply(mes, "OK, if you had any tells, I just sent 'em. :)");
+	}
+
 	private void clearCache( String nick )
 	{
 		synchronized(tellCache)
@@ -136,7 +154,7 @@ public class Tell
 		}
 	}
 
-	private synchronized void spew(String nick, Modules mods, IRCInterface irc) throws ChoobException
+	private synchronized void spew( String nick ) throws ChoobException
 	{
 		// Use the cache
 		boolean willSkip = false;
@@ -178,23 +196,25 @@ public class Tell
 				mods.odb.delete(results.get(i));
 			}
 			if (nsStatus == -1)
-				irc.sendMessage(nick, "Hi! I think you have tells, but your nickname isn't linked to " + testNick + ". Use Security.Link to do this.");
+				irc.sendMessage(nick, "Hi! I think you have tells, but your nickname isn't linked to " + testNick + ". Use Security.Link to do this, then do Tell.Get.");
 			else if (nsStatus > 0 && nsStatus < 3)
-				irc.sendMessage(nick, "Hi! You have tells, but you're not identified with NickServ!");
+				irc.sendMessage(nick, "Hi! You have tells, but you're not identified with NickServ! Once you've done so, use the Tell.Get command.");
 		}
 	}
 
-	public void onMessage( ChannelMessage ev, Modules mod, IRCInterface irc ) throws ChoobException
+	public void onMessage( ChannelMessage ev ) throws ChoobException
 	{
-		spew(ev.getNick(), mod, irc);
+		spew(ev.getNick());
 	}
-	public void onPrivateMessage( PrivateMessage ev, Modules mod, IRCInterface irc ) throws ChoobException
+
+	public void onPrivateMessage( PrivateMessage ev ) throws ChoobException
 	{
-		spew(ev.getNick(), mod, irc);
+		spew(ev.getNick());
 	}
-	public void onJoin( ChannelJoin ev, Modules mod, IRCInterface irc ) throws ChoobException
+
+	public void onJoin( ChannelJoin ev ) throws ChoobException
 	{
-		spew(ev.getNick(), mod, irc);
+		spew(ev.getNick());
 	}
 
 	private int nsStatus( String nick ) throws ChoobException
