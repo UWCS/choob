@@ -77,7 +77,7 @@ public class MiscMsg
 		irc.sendContextReply(mes, "Feature requests can be made from: http://trac.uwcs.co.uk/choob/cgi-bin/trac.cgi/newticket");
 	}
 
-	
+
         public String[] helpCommandBugReport = {
                 "Provides the URL from where bug reports can be made.",
                 "",
@@ -136,12 +136,11 @@ public class MiscMsg
 		// Did someone say.. horribly broken parser?
 
 		ArrayList<String> replies = new ArrayList();
-		String[] tokens = params.split("\\s+(?:or|,)\\s+");
+		String[] tokens = params.split("(?:(?:\\sor)|,)\\s+");
 
 		for (int i=0; i<tokens.length; i++)
-		{
 			replies.add(tokens[i]);
-		}
+
 		irc.sendContextReply(mes, "Answer to \"" + params + "\" is " + replies.get(rand.nextInt(replies.size())) + ".");
 	}
 
