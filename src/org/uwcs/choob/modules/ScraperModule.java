@@ -14,126 +14,10 @@ import org.jibble.pircbot.Colors;
 
 public final class ScraperModule
 {
-	private HashMap <java.net.URL, GetContentsCached>sites; // URL -> GetContentsCached.
-	private static HashMap <String, Character>EntityMap=new HashMap<String, Character>();
+	private Map <java.net.URL, GetContentsCached>sites=Collections.synchronizedMap(new HashMap<URL, GetContentsCached>()); // URL -> GetContentsCached.
+	private final static HashMap <String, Character>EntityMap=new HashMap<String, Character>();
 
-	ScraperModule()
-	{
-		sites=new HashMap<URL, GetContentsCached>();
-		populateEntityMap();
-	}
-
-	public String getContentsCached(URL url) throws IOException
-	{
-		return getContentsCached(url, GetContentsCached.DEFAULT_TIMEOUT);
-	}
-
-	public String getContentsCached(URL url, long timeout) throws IOException
-	{
-		GetContentsCached gcc=sites.get(url);
-		if (gcc==null)
-		{
-			gcc=new GetContentsCached(url, timeout);
-			sites.put(url, gcc);
-		}
-		else
-		{
-			if (gcc.getTimeout()>timeout)
-				gcc.setTimeout(timeout);
-		}
-
-		return gcc.getContents();
-	}
-
-	public Matcher getMatcher(URL url, long timeout, String regex) throws IOException
-	{
-		return getMatcher(url, timeout, Pattern.compile(regex));
-	}
-
-	public Matcher getMatcher(URL url, String regex) throws IOException
-	{
-		return getMatcher(url, Pattern.compile(regex));
-	}
-
-	public Matcher getMatcher(URL url, Pattern regex) throws IOException
-	{
-		return regex.matcher(getContentsCached(url));
-	}
-
-	public Matcher getMatcher(URL url, long timeout, Pattern regex) throws IOException
-	{
-		return regex.matcher(getContentsCached(url, timeout));
-	}
-
-	public String convertEntities(final String html)
-	{
-		// Sorry, I just couldn't bring myself to do foreach (hashmap => key, val) html=html.replaceall(key, val);
-
-		StringBuilder buf = new StringBuilder();
-		int l=html.length();
-		int p=0;
-		int lastp=0;
-		while (p<l)
-		{
-			p=html.indexOf("&", p);
-
-			if (p==-1)
-				break;
-
-			int semi=html.indexOf(";",p);
-
-			if (semi==-1)
-				break;
-
-			Character c=EntityMap.get(html.substring(p+1,semi));
-
-			if (c==null)
-			{
-				System.out.println(html.substring(lastp, semi));
-				buf.append(html.substring(lastp, semi+1));
-			}
-			else
-			{
-				buf.append(html.substring(lastp,p));
-				buf.append(c);
-			}
-
-			p=semi+1;
-			lastp=p;
-		}
-
-		buf.append(html.substring(lastp));
-		return buf.toString();
-	}
-
-	public String boldTags(String html)
-	{
-		return html.replaceAll("(?i)<b>", Colors.BOLD).replaceAll("(?i)</b>", Colors.NORMAL);
-	}
-
-	public String quoteURLs(String html)
-	{
-		//return html.replaceAll("<a +?href *= *\"(.*?)\" *?>","[$1] ").replaceAll("</a>","");
-		return html;
-		//This is going to require more than: return html.replaceAll("<a +?href *= *\"(.*?)\" *?>",Colors.REVERSE + "<$1> " + Colors.NORMAL).replaceAll("</a>","");
-	}
-
-	public String stripTags(String html)
-	{
-		return html.replaceAll("<.*?>","");
-	}
-
-	public String cleanup(String html)
-	{
-		return convertEntities(html.trim().replaceAll("\n",""));
-	}
-
-	public String readyForIrc(String html)
-	{
-		return stripTags(quoteURLs(boldTags(cleanup(html))));
-	}
-
-	private void populateEntityMap()
+	static
 	{
 		// Paste from entitygen.sh.
 
@@ -641,7 +525,125 @@ public final class ScraperModule
 		EntityMap.put("#8250", new Character((char)8250));
 		EntityMap.put("euro", new Character((char)8364));
 		EntityMap.put("#8364", new Character((char)8364));
-
 	}
 
+	ScraperModule() {}
+
+	public String getContentsCached(URL url) throws IOException
+	{
+		return getContentsCached(url, GetContentsCached.DEFAULT_TIMEOUT);
+	}
+
+	public String getContentsCached(URL url, long timeout) throws IOException
+	{
+		GetContentsCached gcc=sites.get(url);
+		if (gcc==null)
+		{
+			gcc=new GetContentsCached(url, timeout);
+			sites.put(url, gcc);
+		}
+		else
+		{
+			if (gcc.getTimeout()>timeout)
+				gcc.setTimeout(timeout);
+		}
+
+		synchronized (sites)
+		{
+			Iterator i=(sites.entrySet()).iterator();
+			while (i.hasNext())
+				if (((GetContentsCached)((Map.Entry)i.next()).getValue()).expired())
+					i.remove();
+		}
+
+		return gcc.getContents();
+	}
+
+	public Matcher getMatcher(URL url, long timeout, String regex) throws IOException
+	{
+		return getMatcher(url, timeout, Pattern.compile(regex));
+	}
+
+	public Matcher getMatcher(URL url, String regex) throws IOException
+	{
+		return getMatcher(url, Pattern.compile(regex));
+	}
+
+	public Matcher getMatcher(URL url, Pattern regex) throws IOException
+	{
+		return regex.matcher(getContentsCached(url));
+	}
+
+	public Matcher getMatcher(URL url, long timeout, Pattern regex) throws IOException
+	{
+		return regex.matcher(getContentsCached(url, timeout));
+	}
+
+	public String convertEntities(final String html)
+	{
+		// Sorry, I just couldn't bring myself to do foreach (hashmap => key, val) html=html.replaceall(key, val);
+
+		StringBuilder buf = new StringBuilder();
+		int l=html.length();
+		int p=0;
+		int lastp=0;
+		while (p<l)
+		{
+			p=html.indexOf("&", p);
+
+			if (p==-1)
+				break;
+
+			int semi=html.indexOf(";",p);
+
+			if (semi==-1)
+				break;
+
+			Character c=EntityMap.get(html.substring(p+1,semi));
+
+			if (c==null)
+			{
+				System.out.println(html.substring(lastp, semi));
+				buf.append(html.substring(lastp, semi+1));
+			}
+			else
+			{
+				buf.append(html.substring(lastp,p));
+				buf.append(c);
+			}
+
+			p=semi+1;
+			lastp=p;
+		}
+
+		buf.append(html.substring(lastp));
+		return buf.toString();
+	}
+
+	public String boldTags(String html)
+	{
+		return html.replaceAll("(?i)<b>", Colors.BOLD).replaceAll("(?i)</b>", Colors.NORMAL);
+	}
+
+	public String quoteURLs(String html)
+	{
+		//return html.replaceAll("<a +?href *= *\"(.*?)\" *?>","[$1] ").replaceAll("</a>","");
+		return html;
+		//This is going to require more than: return html.replaceAll("<a +?href *= *\"(.*?)\" *?>",Colors.REVERSE + "<$1> " + Colors.NORMAL).replaceAll("</a>","");
+	}
+
+	public String stripTags(String html)
+	{
+		return html.replaceAll("<.*?>","");
+	}
+
+	public String cleanup(String html)
+	{
+		return convertEntities(html.trim().replaceAll("\n",""));
+	}
+
+	public String readyForIrc(String html)
+	{
+		return stripTags(quoteURLs(boldTags(cleanup(html))));
+	}
 }

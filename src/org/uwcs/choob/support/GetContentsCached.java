@@ -21,6 +21,11 @@ public final class GetContentsCached
 	long mintime=DEFAULT_TIMEOUT;
 	protected String contents=null;
 
+	public boolean expired()
+	{
+		return lastaccess+mintime<(new Date()).getTime();
+	}
+
 	public long getTimeout()
 	{
 		return mintime;
