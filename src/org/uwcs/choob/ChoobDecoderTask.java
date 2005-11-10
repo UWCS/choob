@@ -1,24 +1,34 @@
-/*
- * ChoobThread.java
- *
- * Created on June 16, 2005, 7:25 PM
- */
-
 package org.uwcs.choob;
 
 import org.uwcs.choob.plugins.*;
 import org.uwcs.choob.modules.*;
-import java.sql.*;
 import org.uwcs.choob.support.*;
 import org.uwcs.choob.support.events.*;
 import java.util.*;
 import java.util.regex.*;
 
-/**
- * Worker thread. Waits on it's waitObject and then wakes, performs the operations
- * required on the line from IRC and then goes back to sleep.
- * @author	sadiq
- */
+final class LastEvents
+{
+	long lastmes[]={0,5000,10000};
+	int stor=0;
+
+	public LastEvents()
+	{
+		save();
+	}
+
+	public long average()
+	{
+		return (lastmes[(1+stor)%3]-lastmes[(0+stor)%3]+lastmes[(2+stor)%3]-lastmes[(1+stor)%3]) / 2;
+	}
+
+	public void save()
+	{
+		stor%=3;
+		lastmes[stor++]=(new java.util.Date()).getTime();
+	}
+}
+
 final class ChoobDecoderTask extends ChoobTask
 {
 	private static DbConnectionBroker dbBroker;
@@ -28,6 +38,9 @@ final class ChoobDecoderTask extends ChoobTask
 	private static Pattern aliasPattern;
 	private static Pattern commandPattern;
 	private Event event;
+
+	static Map<String,LastEvents>lastMessage = Collections.synchronizedMap(new HashMap<String,LastEvents>()); // Nick, Timestamp.
+	static final long AVERAGE_MESSAGE_GAP=2000;
 
 	static void initialise(DbConnectionBroker dbBroker, Modules modules, IRCInterface irc)
 	{
@@ -56,7 +69,7 @@ final class ChoobDecoderTask extends ChoobTask
 			// FIXME: There is no way I can see to make this work here.
 			// It needs to pick up when the BOT changes name, even through
 			// external forces, and poke UtilModule about it.
-			
+
 			//NickChange nc = (NickChange)event;
 			//if (nc.getNick().equals()) {
 			//	// Make sure the trigger checking code is up-to-date with the current nickname.
@@ -110,7 +123,19 @@ final class ChoobDecoderTask extends ChoobTask
 				ma = commandPattern.matcher(matchAgainst);
 				if( ma.matches() )
 				{
-					// Namespace alias code would go here
+					LastEvents la=lastMessage.get(mes.getNick());
+					if (la==null)
+						lastMessage.put(mes.getNick(), new LastEvents());
+					else
+					{
+						la.save();
+						long laa=la.average();
+						if (laa<AVERAGE_MESSAGE_GAP)
+						{
+							irc.sendMessage(mes.getNick(), "You're flooding, ignored. Please wait at least " + (AVERAGE_MESSAGE_GAP-laa) + "ms before your next message.");
+							return;
+						}
+					}
 
 					String pluginName  = ma.group(1);
 					String commandName = ma.group(2);

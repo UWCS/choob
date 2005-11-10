@@ -144,17 +144,23 @@ public class Lectures
 	{
 		PreparedStatement s=getStatement("SELECT `userid` from `users` where `nick` = ? LIMIT 1");
 		s.setString(1, nick);
+
 		ResultSet rs = s.executeQuery();
 
 		if (rs.first())
 			return rs.getInt("userid");
 
-		s.close();
-		s=getStatement("INSERT INTO `users` (`nick`) VALUES ( ? )");
-		s.setString(1, nick);
+		PreparedStatement r=getStatement("INSERT INTO `users` (`nick`) VALUES ( ? )");
+		r.setString(1, nick);
+		r.executeUpdate();
+		r.close();
 
-		s.executeUpdate();
-		return getUserId(nick); // BWBAHAHAHAHAHAHAHAHAHAHAHAHHAWBEWBAHHawha XXX HAX XXX HAX BWAHHA.
+		rs = s.executeQuery();
+
+		if (rs.first())
+			return rs.getInt("userid");
+		else
+			throw new SQLException("Unexpected result from SQL...");
 	}
 
 	private synchronized int codeSuggestions (String code, IRCInterface irc, Message mes) throws SQLException
@@ -167,7 +173,7 @@ public class Lectures
 			return rs.getInt("module");
 
 		PreparedStatement t=getStatement("SELECT `code` from `modules` where `code` LIKE ? LIMIT 6;");
-		t.setString(1, "%" + code + "%"); // XXX Wtf, this really shouldn't work.. jdbc, you suck.
+		t.setString(1, "%" + code + "%"); // JDBC-- because this really shouldn't work.
 		ResultSet rt = t.executeQuery();
 
 		System.out.println(t);

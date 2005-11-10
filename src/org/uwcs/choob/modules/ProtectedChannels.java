@@ -10,26 +10,21 @@ import org.uwcs.choob.*;
  *
  * @author	Faux
  */
-public class ProtectedChannels
+public final class ProtectedChannels
 {
-	ArrayList <String>channels;
-
-	public ProtectedChannels()
-	{
-		channels=new ArrayList<String>();
-	}
+	List <String>channels=Collections.synchronizedList(new ArrayList<String>());
 
 	public Boolean isProtected (String channel)
 	{
 		return channels.contains(channel);
 	}
 
-	public synchronized void addProtected (String channel)
+	public void addProtected (String channel)
 	{
 		channels.add(channel);
 	}
 
-	public synchronized void removeProtected (String channel)
+	public void removeProtected (String channel)
 	{
 		channels.remove(channel);
 	}
