@@ -10,7 +10,7 @@ import java.util.List;
  * Just shells out to modules.SecurityModule really.
  * @author bucko
  */
-public class ChoobProtectionDomain extends ProtectionDomain
+public final class ChoobProtectionDomain extends ProtectionDomain
 {
 	private SecurityModule mod;
 	private String pluginName;

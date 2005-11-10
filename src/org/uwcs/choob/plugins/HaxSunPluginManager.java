@@ -110,9 +110,6 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			throw (ChoobException)(e.getCause());
 		}
 
-		// If you're getting crack-headed errors, and have no idea why, it's because you forgot to have a "public class".
-
-
 		String baosts=baos.toString();
 
 		if (ret == 0)

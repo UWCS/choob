@@ -6,7 +6,7 @@
 package org.uwcs.choob.support;
 import java.security.Permission;
 
-public class ChoobPluginAuthException extends ChoobAuthException
+public final class ChoobPluginAuthException extends ChoobAuthException
 {
 	private Permission permission;
 	private String plugin;

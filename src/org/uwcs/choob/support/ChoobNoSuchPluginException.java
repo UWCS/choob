@@ -5,7 +5,7 @@
 
 package org.uwcs.choob.support;
 
-public class ChoobNoSuchPluginException extends ChoobNoSuchCallException
+public final class ChoobNoSuchPluginException extends ChoobNoSuchCallException
 {
 	public ChoobNoSuchPluginException(String plugin)
 	{

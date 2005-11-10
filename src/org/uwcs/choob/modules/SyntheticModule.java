@@ -15,9 +15,9 @@ import org.uwcs.choob.*;
  * Facilitates the synthesis of artificial message events.
  * @author	sadiq
  */
-public class SyntheticModule
+public final class SyntheticModule
 {
-	Choob bot;
+	private Choob bot;
 
 	/** Creates a new instance of IntervalModule */
 	public SyntheticModule( Choob bot )

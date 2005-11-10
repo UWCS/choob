@@ -22,7 +22,7 @@ import java.security.*;
  * Root class of a plugin manager
  * @author bucko
  */
-public class ChoobDistributingPluginManager extends ChoobPluginManager
+public final class ChoobDistributingPluginManager extends ChoobPluginManager
 {
 	public ChoobDistributingPluginManager()
 	{
@@ -62,10 +62,10 @@ public class ChoobDistributingPluginManager extends ChoobPluginManager
 			{
 				public void run()
 				{
-					List suggestions;
+					List <String>suggestions;
 					synchronized(phoneticCommands)
 					{
-						suggestions = phoneticCommands.getSuggestions(plugin + "." + command, 200);
+						suggestions = (List<String>)phoneticCommands.getSuggestions(plugin + "." + command, 200);
 					}
 					if (suggestions != null && suggestions.size() > 0)
 					{

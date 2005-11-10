@@ -13,13 +13,13 @@ import org.uwcs.choob.modules.*;
 /**
  * Continually monitors the list of active callbacks, executing them as required.
  */
-public class ChoobWatcherThread extends Thread
+public final class ChoobWatcherThread extends Thread
 {
-	List<Interval> intervalList;
-	IRCInterface irc;
-	boolean running;
-	Map pluginMap;
-	Modules mods;
+	private List<Interval> intervalList;
+	private IRCInterface irc;
+	private boolean running;
+	private Map pluginMap;
+	private Modules mods;
 
 	/** Creates a new instance of ChoobWatcherThread */
 	public ChoobWatcherThread( List<Interval> intervalList, IRCInterface irc, Map pluginMap, Modules mods )

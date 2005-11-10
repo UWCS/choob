@@ -12,7 +12,7 @@ import java.util.*;
  *
  * @author	sadiq
  */
-public class Interval
+public final class Interval
 {
 	private String plugin;
 

@@ -4,7 +4,7 @@
  */
 package org.uwcs.choob.support;
 
-public class UserNode
+public final class UserNode
 {
 	private final String nodeName;
 	private final String rootName;

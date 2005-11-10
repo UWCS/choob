@@ -4,7 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.security.*;
 
-public class HaxSunPluginClassLoader extends ClassLoader
+public final class HaxSunPluginClassLoader extends ClassLoader
 {
 	private String pluginName;
 	private String path;

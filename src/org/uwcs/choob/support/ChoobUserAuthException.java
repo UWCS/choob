@@ -6,7 +6,7 @@
 package org.uwcs.choob.support;
 import java.security.Permission;
 
-public class ChoobUserAuthException extends ChoobAuthException
+public final class ChoobUserAuthException extends ChoobAuthException
 {
 	private Permission permission;
 	public ChoobUserAuthException(Permission permission)

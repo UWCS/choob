@@ -8,7 +8,7 @@ import com.mchange.v2.c3p0.*;
 import java.io.*;
 import java.sql.*;
 
-public class DbConnectionBroker
+public final class DbConnectionBroker
 {
 	ComboPooledDataSource cpds;
 
@@ -51,6 +51,17 @@ public class DbConnectionBroker
 		setupBroker(dbDriver, dbServer, dbLogin, dbPassword, minConns, maxConns, logFileString, maxConnTime, logAppend, maxCheckoutSeconds, debugLevel);
 	}
 
+	/**
+	 * Constructor that doesn't take anything c3p0 doesn't understand, all of the others are appropriately deprecated.
+	 * dbDriver:			JDBC driver. e.g. 'oracle.jdbc.driver.OracleDriver'<br />
+	 * dbServer:			JDBC connect string. e.g. 'jdbc:oracle:thin:@203.92.21.109:1526:orcl'<br />
+	 * dbLogin:				Database login name.  e.g. 'Scott'<br />
+	 * dbPassword:			Database password.	e.g. 'Tiger'<br />
+	 * minConns:			Minimum number of connections to start with.<br />
+	 * maxConns:			Maximum number of connections in dynamic pool.<br />
+	 * logFile:				PrintWriter to log to.<br />
+	 * maxCheckoutSeconds:	Max time a connection can be checked out before being recycled. Zero value turns option off, default is 60 seconds.
+	 */
 	public DbConnectionBroker(String dbDriver, String dbServer, String dbLogin, String dbPassword, int minConns, int maxConns, PrintWriter logFile, int maxCheckoutSeconds) throws SQLException
 	{
 		setupBroker(dbDriver, dbServer, dbLogin, dbPassword, minConns, maxConns, logFile, maxCheckoutSeconds);

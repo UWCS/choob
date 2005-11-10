@@ -12,10 +12,10 @@ import org.jibble.pircbot.Colors;
 
 // I'm going to assume that java caches regex stuff.
 
-public class ScraperModule
+public final class ScraperModule
 {
-	HashMap <java.net.URL, GetContentsCached>sites; // URL -> GetContentsCached.
-	private static HashMap <String, Character>EntityMap=new HashMap();
+	private HashMap <java.net.URL, GetContentsCached>sites; // URL -> GetContentsCached.
+	private static HashMap <String, Character>EntityMap=new HashMap<String, Character>();
 
 	public ScraperModule()
 	{

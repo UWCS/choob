@@ -8,7 +8,7 @@ import java.util.List;
  * @author bucko
  */
 
-public class ChoobSpecialStackPermission extends BasicPermission
+public final class ChoobSpecialStackPermission extends BasicPermission
 {
 	private List<String> haxList;
 	private List<String> startList;

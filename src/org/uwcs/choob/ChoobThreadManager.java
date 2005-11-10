@@ -17,7 +17,7 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 
 	private ChoobThreadManager()
 	{
-		super(5, 20, (long)60, TimeUnit.SECONDS, new LinkedBlockingQueue());
+		super(5, 20, (long)60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 		this.waitObjects = new HashMap<String,Semaphore>();
 		this.queues = new HashMap<String,BlockingQueue<ChoobTask>>();
 	}

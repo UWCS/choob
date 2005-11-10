@@ -1,9 +1,3 @@
-/*
- * ObjectDbTest.java
- *
- * Created on August 6, 2005, 9:10 PM
- */
-
 package org.uwcs.choob.support;
 
 import org.uwcs.choob.*;
@@ -25,11 +19,7 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
-/**
- *
- * @author	sadiq
- */
-public class ObjectDBTransaction
+public class ObjectDBTransaction // Needs to be non-final
 {
 	private static final int MAXOR = 50; // Max OR statements in a lumped together objectDB query.
 
@@ -119,7 +109,7 @@ public class ObjectDBTransaction
 	{
 		System.err.println("Ack! SQL Exception: " + e);
 		e.printStackTrace();
-		return new ChoobException("An SQL exception occurred while processing this operation.");
+		return new ChoobException("An SQL exception occurred while processing this operation.", e);
 	}
 
 	public final List<?> retrieve(final Class storedClass, String clause) throws ChoobException
@@ -636,7 +626,7 @@ public class ObjectDBTransaction
 		finally
 		{
 			cleanUp(stat);
-		}	
+		}
 	}
 
 	private final void checkPermission(Class objClass)

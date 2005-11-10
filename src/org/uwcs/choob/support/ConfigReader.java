@@ -9,7 +9,7 @@ import java.io.*;
 /**
  * Wrapper for configuration file reading.
  */
-public class ConfigReader
+public final class ConfigReader
 {
 	Properties botProps;
 

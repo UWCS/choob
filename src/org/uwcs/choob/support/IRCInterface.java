@@ -15,9 +15,10 @@ import java.security.AccessController;
 /**
  * The primary way for plugins to pass feedback to IRC.
  */
-public class IRCInterface {
-	Choob bot;
-	Modules mods;
+public final class IRCInterface
+{
+	private Choob bot;
+	private Modules mods;
 
 	public final static int MAX_MESSAGE_LENGTH=400; 		// Arbiatary hax!
 	public final static int MAX_MESSAGE_TRUNCATION=100;
@@ -28,9 +29,10 @@ public class IRCInterface {
 		this.mods = null; // Fixes dependency problem
 	}
 
-	public void setMods(Modules mods)
+	public void grabMods()
 	{
-		this.mods = mods;
+		if (this.mods==null)
+			this.mods = bot.getMods();
 	}
 
 	/**

@@ -19,7 +19,7 @@ import org.mozilla.javascript.regexp.*;
  * Deals with all the magic for JavaScript plugins. Woo.
  * @author silver
  */
-public class JavaScriptPluginManager extends ChoobPluginManager {
+public final class JavaScriptPluginManager extends ChoobPluginManager {
 	/*
 	 * The plugin map tracks which plugin instances have which commands, and
 	 * keeps a command name --> function map in particular.

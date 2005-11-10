@@ -26,15 +26,15 @@ import java.sql.*;
 /**
  * Core class of the Choob bot, main interaction with IRC.
  */
-public class Choob extends PircBot
+public final class Choob extends PircBot
 {
-	DbConnectionBroker broker;
-	Map pluginMap;
-	Modules modules;
-	IRCInterface irc;
-	String trigger;
-	List <Interval> intervalList;
-	ChoobWatcherThread watcher;
+	private DbConnectionBroker broker;
+	private Map pluginMap;
+	private Modules modules;
+	private IRCInterface irc;
+	private String trigger;
+	private List <Interval> intervalList;
+	private ChoobWatcherThread watcher;
 
 	private static final int INITTHREADS = 5;
 	private static final int MAXTHREADS = 20;
@@ -62,7 +62,7 @@ public class Choob extends PircBot
 		trigger = conf.getSettingFallback("botTrigger","~");
 
 		// Create a shiny synchronised (americans--) list
-		intervalList = new ArrayList();
+		intervalList = new ArrayList<Interval>();
 
 		// Create a new database connection broker using the MySQL drivers
 		PrintWriter logFile;
@@ -95,9 +95,8 @@ public class Choob extends PircBot
 		// Initialise our modules.
 		modules = new Modules(broker, pluginMap, intervalList, this, irc );
 
-		irc.setMods(modules);
-
-		// ---
+		// Get the modules.
+		irc.grabMods();
 
 		// Set the name from the config file.
 		this.setName(conf.getSettingFallback("botName", "Choob"));
@@ -159,6 +158,11 @@ public class Choob extends PircBot
 	public IRCInterface getIRC()
 	{
 		return irc;
+	}
+
+	public Modules getMods()
+	{
+		return modules;
 	}
 
 	/**

@@ -18,7 +18,7 @@ import java.util.regex.*;
 /**
  * Set of general functions that tend to be frequently used in plugins.
  */
-public class UtilModule
+public final class UtilModule
 {
 	private IRCInterface irc;
 	private Pattern triggerPattern;

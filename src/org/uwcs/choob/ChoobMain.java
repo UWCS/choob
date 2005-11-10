@@ -9,7 +9,7 @@ package org.uwcs.choob;
 /**
  * Main class in the Choob project, simply creates a Choob instance.
  */
-public class ChoobMain
+public final class ChoobMain
 {
 	public static void main(String[] args)
 	{

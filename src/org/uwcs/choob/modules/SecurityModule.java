@@ -22,14 +22,13 @@ import java.util.*;
  *
  * @author	bucko
  */
-public class SecurityModule
-	extends SecurityManager // For getClassContext(). Heh.
+public final class SecurityModule extends SecurityManager // For getClassContext(). Heh.
 {
-	DbConnectionBroker dbBroker;
-	Map<Integer,PermissionCollection> nodeMap;
-	Map<Integer,List<Integer>> nodeTree;
-	Modules mods;
-	int anonID;
+	private DbConnectionBroker dbBroker;
+	private Map<Integer,PermissionCollection> nodeMap;
+	private Map<Integer,List<Integer>> nodeTree;
+	private Modules mods;
+	private int anonID;
 
 	/**
 	 * Creates a new instance of SecurityModule
@@ -300,7 +299,7 @@ public class SecurityModule
 				System.err.println("Couldn't get a connection for getAllNodes()");
 				return new ArrayList<Integer>().iterator(); // XXX
 			}
-			List list = new ArrayList<Integer>();
+			List <Integer>list = new ArrayList<Integer>();
 			if (addThis)
 				list.add(nodeID);
 			try

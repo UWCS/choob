@@ -16,7 +16,7 @@ import java.util.*;
  * An instance of this class gets passed to the plugins with each call, and is avaliable at most locations in the core, the idea being to provide a consistent set of relevant library functions.
  * @author sadiq
  */
-public class Modules
+public final class Modules
 {
 
 	/**
@@ -71,8 +71,8 @@ public class Modules
 
 	private DbConnectionBroker dbBroker;
 	private Map pluginMap;
-	List intervalList;
-	Choob bot;
+	private List intervalList;
+	private Choob bot;
 
 	/**
 	 * Creates a new instance of the Modules.
@@ -81,7 +81,7 @@ public class Modules
 	{
 		try
 		{
-			plugin = new PluginModule(pluginMap, dbBroker, this, irc);
+			plugin = new PluginModule(pluginMap, dbBroker, this, irc, bot);
 			history = new HistoryModule(dbBroker);
 			util = new UtilModule(irc);
 			nick = new NickModule();

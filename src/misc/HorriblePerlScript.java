@@ -10,7 +10,7 @@ import java.io.*;
 import java.nio.*;
 import java.util.regex.*;
 
-public class HorriblePerlScript
+public final class HorriblePerlScript
 {
 	// Inheritance map
 	private final Map<String,String[]> inheritance = new HashMap<String,String[]>();
@@ -667,7 +667,7 @@ public class HorriblePerlScript
 
 			// Preamble
 			StringBuffer classContent = new StringBuffer("/**\n *\n * @author Horrible Perl Script. Ewwww.\n */\n\npackage org.uwcs.choob.support.events;\nimport org.uwcs.choob.support.events.*;\n\npublic interface ");
-			
+
 			// Interface name.
 			classContent.append(interfaceName);
 			classContent.append("\n{\n");

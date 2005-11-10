@@ -28,10 +28,10 @@ import java.security.PrivilegedExceptionAction;
 /**
  * An interface with the ObjectDB.
  */
-public class ObjectDbModule
+public final class ObjectDbModule
 {
-	DbConnectionBroker broker;
-	Modules mods;
+	private DbConnectionBroker broker;
+	private Modules mods;
 
 	/** Creates a new instance of ObjectDbModule */
 	public ObjectDbModule(DbConnectionBroker broker, Modules mods)

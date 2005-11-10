@@ -12,10 +12,10 @@ import org.uwcs.choob.support.*;
 /**
  * Generates a call-back to a plugin at a specified point in time.
  */
-public class IntervalModule
+public final class IntervalModule
 {
-	List <Interval> intervalList;
-	Modules mods;
+	private List <Interval> intervalList;
+	private Modules mods;
 
 	/** Creates a new instance of IntervalModule */
 	public IntervalModule( List <Interval> intervalList, Modules mods )

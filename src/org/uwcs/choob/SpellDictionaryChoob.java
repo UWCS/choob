@@ -36,7 +36,7 @@ import java.util.LinkedList;
  * Taken from SpellDictionaryHashTable in Jazzy. Not thread-safe.
  * http://www.sourceforge.net/projects/jazzy/
  */
-public class SpellDictionaryChoob extends SpellDictionaryASpell {
+public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	/** A field indicating the initial hash map capacity (16KB) for the main
 	 *  dictionary hash map. Interested to see what the performance of a
 	 *  smaller initial capacity is like.

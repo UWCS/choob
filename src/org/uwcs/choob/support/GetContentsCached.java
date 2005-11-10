@@ -9,7 +9,7 @@ import java.net.*;
 import java.io.*;
 import java.util.regex.*;
 
-public class GetContentsCached
+public final class GetContentsCached
 {
 	public static int DEFAULT_TIMEOUT=5*60*1000;  // <-- 5 mins in ms.
 

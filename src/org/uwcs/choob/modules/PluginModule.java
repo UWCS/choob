@@ -23,25 +23,28 @@ import java.security.AccessControlException;
  * Module that performs functions relating to the plugin architecture of the bot.
  * @author sadiq
  */
-public class PluginModule {
+public final class PluginModule
+{
 	private Map pluginMap;
 	private DbConnectionBroker broker;
 	private Modules mods;
 	private ChoobPluginManager plugMan;
 	private ChoobPluginManager dPlugMan;
 	private ChoobPluginManager jsPlugMan;
+	private Choob bot;
 
 	/**
 	 * Creates a new instance of the PluginModule.
 	 * @param pluginMap Map containing currently loaded plugins.
 	 */
-	public PluginModule(Map pluginMap, DbConnectionBroker broker, Modules mods, IRCInterface irc) throws ChoobException {
+	public PluginModule(Map pluginMap, DbConnectionBroker broker, Modules mods, IRCInterface irc, Choob bot) throws ChoobException {
 		this.pluginMap = pluginMap;
 		this.broker = broker;
 		this.mods = mods;
 		this.plugMan = new HaxSunPluginManager(mods, irc);
 		this.dPlugMan = new ChoobDistributingPluginManager();
 		this.jsPlugMan = new JavaScriptPluginManager(mods, irc);
+		this.bot=bot;
 	}
 
 	public ChoobPluginManager getPlugMan()
@@ -79,9 +82,9 @@ public class PluginModule {
 
 		// Inform plugins, if they want to know.
 		if (existed)
-			mods.bot.onPluginReLoaded(pluginName);
+			bot.onPluginReLoaded(pluginName);
 		else
-			mods.bot.onPluginLoaded(pluginName);
+			bot.onPluginLoaded(pluginName);
 
 		addPluginToDb(pluginName);
 	}

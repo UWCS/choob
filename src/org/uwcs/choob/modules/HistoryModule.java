@@ -18,9 +18,9 @@ import java.util.ArrayList;
  * Logs lines from IRC to the database.
  * @author sadiq
  */
-public class HistoryModule
+public final class HistoryModule
 {
-	DbConnectionBroker dbBroker;
+	private DbConnectionBroker dbBroker;
 
 	/** Creates a new instance of LoggerModule */
 	public HistoryModule(DbConnectionBroker dbBroker)
@@ -102,7 +102,7 @@ public class HistoryModule
 				stat.setString(7, ((ChannelEvent)mes).getChannel());
 			}
 			else
-				stat = dbCon.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Text = ? AND Time = ? AND Random = ?"); // XXX Checking if the channel is null causes speshulness here -- Faux.
+				stat = dbCon.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Text = ? AND Time = ? AND Random = ?"); // Checking if the channel is null causes speshulness here. The check is irrelevant, though, because it will be, because of the Type.
 
 			stat.setString(1, mes.getClass().getName());
 			stat.setString(2, mes.getNick());

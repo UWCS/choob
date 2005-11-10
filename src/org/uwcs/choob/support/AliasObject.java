@@ -1,6 +1,6 @@
 package org.uwcs.choob.support;
 
-public class AliasObject
+public final class AliasObject
 {
 	public AliasObject(String name, String converted) { this.name=name; this.converted=converted; this.id=0; }
 	public AliasObject() {}

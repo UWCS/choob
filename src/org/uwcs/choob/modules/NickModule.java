@@ -18,9 +18,9 @@ import java.util.regex.*;
  * Helper functions for dealing with users' nicks.
  */
 
-public class NickModule
+public final class NickModule
 {
-	DbConnectionBroker dbBroker;
+	private DbConnectionBroker dbBroker;
 
 	static final Pattern jbNickPattern = Pattern.compile("^([a-zA-Z0-9_-]+?)(?:\\||\\`).*$");
 	static final Pattern irssiNickPattern = Pattern.compile("^_*([a-zA-Z0-9_-]+?)_*$");

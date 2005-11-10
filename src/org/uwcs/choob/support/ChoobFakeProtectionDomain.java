@@ -11,7 +11,7 @@ import java.util.List;
  * Just shells out to modules.SecurityModule really.
  * @author bucko
  */
-public class ChoobFakeProtectionDomain extends ProtectionDomain
+public final class ChoobFakeProtectionDomain extends ProtectionDomain
 {
 	private SecurityModule mod;
 	private List<String> pluginNames;

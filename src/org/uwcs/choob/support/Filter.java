@@ -10,7 +10,7 @@ package org.uwcs.choob.support;
  *
  * @author	sadiq
  */
-public class Filter
+public final class Filter
 {
 
 	private String name;
