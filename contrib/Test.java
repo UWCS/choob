@@ -83,10 +83,23 @@ public class Test
 		irc.sendContextReply( con, "Ooh, yes please.");
 	}
 
-	public void onJoin( ChannelJoin ev, Modules mod, IRCInterface irc )
+	public void onJoin( ChannelJoin ev, Modules mods, IRCInterface irc )
 	{
-		if (!ev.getLogin().equals("Choob"))
+		if (ev.getLogin().equals("Choob"))
+			return;
+
+		String s=null;
+		try
+		{
+			s=(String)mods.plugin.callAPI( "quote", "singlelinequote", ev.getNick(), ev.getContext());
+		}
+		catch (ChoobException e)
+		{}
+
+		if (s==null)
 			irc.sendContextMessage( ev, "Hello, " + ev.getNick() + "!");
+		else
+			irc.sendContextMessage( ev, "Hello, " + ev.getNick() + ": \"" + s + "\"!");
 	}
 
 	public void onPart( ChannelPart ev, Modules mod, IRCInterface irc )

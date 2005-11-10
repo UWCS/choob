@@ -532,6 +532,54 @@ public class Quote
 		}
 	}
 
+	public String apiSingleLineQuote(String nick, String context) throws ChoobException
+	{
+		String whereClause = "WITH AS join0 plugins.Quote.QuoteLine WHERE join0.nick = \"" + nick + "\" AND join0.quoteID = id AND lines = 1 AND score > -4";
+		List quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause );
+		if (quotes.size() == 0)
+			return null;
+
+		QuoteObject quote = (QuoteObject)quotes.get(0);
+		List <QuoteLine>lines = mods.odb.retrieve( QuoteLine.class, "WHERE quoteID = " + quote.id );
+
+		if (lines.size()==0)
+		{
+			System.err.println("Found quote " + quote.id + " but it was empty!" );
+			return null;
+		}
+
+		QuoteLine line = lines.get(0);
+
+		String reply;
+
+		if (line.isAction)
+			reply="/me " + line.message;
+		else
+			reply=line.message;
+
+		if (context!=null)
+			synchronized(recentQuotes)
+			{
+				List<RecentQuote> recent = recentQuotes.get(context);
+				if (recent == null)
+				{
+					recent = new LinkedList<RecentQuote>();
+					recentQuotes.put( context, recent );
+				}
+
+				RecentQuote info = new RecentQuote();
+				info.quote = quote;
+				info.time = System.currentTimeMillis();
+				info.type = 0;
+
+				recent.add(0, info);
+
+				while (recent.size() > RECENTLENGTH)
+					recent.remove( RECENTLENGTH );
+			}
+		return reply;
+	}
+
 	public String[] helpCommandCount = {
 		"Get the number of matching quotes.",
 		"[ <Clause> [ <Clause> ... ]]",
