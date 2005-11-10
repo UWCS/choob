@@ -66,11 +66,7 @@ public class MiscMsg
 		irc.sendContextReply(mes, replies[(new Random()).nextInt(replies.length)]);
 	}
 
-	public String[] helpCommandFeatureRequest = {
-		"Provides the URL from where feature requests can be made.",
-		"",
-		""
-	};
+	public String[] helpCommandFeatureRequest = { "Provides the URL from where feature requests can be made." };
 
 	public void commandFeatureRequest( Message mes )
 	{
@@ -78,16 +74,12 @@ public class MiscMsg
 	}
 
 
-        public String[] helpCommandBugReport = {
-                "Provides the URL from where bug reports can be made.",
-                "",
-                ""
-        };
+	public String[] helpCommandBugReport = { "Provides the URL from where bug reports can be made." };
 
-        public void commandBugReport( Message mes )
-        {
-                irc.sendContextReply(mes, "Bug reports can be made from: http://trac.uwcs.co.uk/choob/cgi-bin/trac.cgi/newticket");
-        }
+	public void commandBugReport( Message mes )
+	{
+		irc.sendContextReply(mes, "Bug reports can be made from: http://trac.uwcs.co.uk/choob/cgi-bin/trac.cgi/newticket");
+	}
 
 	public String[] helpCommandFlipACoin = {
 		"Flip a coin and find the result.",
