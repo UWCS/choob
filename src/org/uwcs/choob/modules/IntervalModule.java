@@ -18,7 +18,7 @@ public final class IntervalModule
 	private Modules mods;
 
 	/** Creates a new instance of IntervalModule */
-	public IntervalModule( List <Interval> intervalList, Modules mods )
+	IntervalModule( List <Interval> intervalList, Modules mods )
 	{
 		this.intervalList = intervalList;
 		this.mods = mods;

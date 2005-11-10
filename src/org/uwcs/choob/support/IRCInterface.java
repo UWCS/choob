@@ -24,7 +24,8 @@ public final class IRCInterface
 	public final static int MAX_MESSAGE_TRUNCATION=100;
 
 	/** Creates a new instance of IRCInterface */
-	public IRCInterface(Choob bot) {
+	public IRCInterface(Choob bot)
+	{
 		this.bot = bot;
 		this.mods = null; // Fixes dependency problem
 	}

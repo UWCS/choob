@@ -23,7 +23,7 @@ public final class HistoryModule
 	private DbConnectionBroker dbBroker;
 
 	/** Creates a new instance of LoggerModule */
-	public HistoryModule(DbConnectionBroker dbBroker)
+	HistoryModule(DbConnectionBroker dbBroker)
 	{
 		this.dbBroker = dbBroker;
 	}

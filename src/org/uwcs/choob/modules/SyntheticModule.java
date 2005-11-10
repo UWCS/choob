@@ -20,7 +20,7 @@ public final class SyntheticModule
 	private Choob bot;
 
 	/** Creates a new instance of IntervalModule */
-	public SyntheticModule( Choob bot )
+	SyntheticModule( Choob bot )
 	{
 		this.bot = bot;
 	}

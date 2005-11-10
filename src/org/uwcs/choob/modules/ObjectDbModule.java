@@ -34,7 +34,7 @@ public final class ObjectDbModule
 	private Modules mods;
 
 	/** Creates a new instance of ObjectDbModule */
-	public ObjectDbModule(DbConnectionBroker broker, Modules mods)
+	ObjectDbModule(DbConnectionBroker broker, Modules mods)
 	{
 		this.broker = broker;
 		this.mods = mods;

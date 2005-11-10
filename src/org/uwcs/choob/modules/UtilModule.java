@@ -24,7 +24,7 @@ public final class UtilModule
 	private Pattern triggerPattern;
 
 	/** Creates a new instance of UtilModule */
-	public UtilModule( IRCInterface irc ) {
+	UtilModule( IRCInterface irc ) {
 		this.irc = irc;
 		updateTrigger();
 	}

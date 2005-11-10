@@ -17,7 +17,7 @@ public final class ScraperModule
 	private HashMap <java.net.URL, GetContentsCached>sites; // URL -> GetContentsCached.
 	private static HashMap <String, Character>EntityMap=new HashMap<String, Character>();
 
-	public ScraperModule()
+	ScraperModule()
 	{
 		sites=new HashMap<URL, GetContentsCached>();
 		populateEntityMap();

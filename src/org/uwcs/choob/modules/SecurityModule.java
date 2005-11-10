@@ -34,7 +34,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * Creates a new instance of SecurityModule
 	 * @param dbBroker Database connection pool/broker.
 	 */
-	public SecurityModule(DbConnectionBroker dbBroker, Modules mods)
+	SecurityModule(DbConnectionBroker dbBroker, Modules mods)
 	{
 		// Make sure these classes is preloaded!
 		// This avoids circular security checks. Oh, the horror!

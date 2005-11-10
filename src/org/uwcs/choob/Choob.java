@@ -44,7 +44,7 @@ public final class Choob extends PircBot
 	/**
 	 * Constructor for Choob, initialises vital variables.
 	 */
-	public Choob()
+	Choob()
 	{
 
 		try

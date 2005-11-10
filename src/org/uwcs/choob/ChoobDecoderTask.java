@@ -12,7 +12,7 @@ final class LastEvents
 	long lastmes[]={0,5000,10000};
 	int stor=0;
 
-	public LastEvents()
+	LastEvents()
 	{
 		save();
 	}
