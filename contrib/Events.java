@@ -130,7 +130,7 @@ public class Events
 						}
 						String sigts=sig.toString();
 						if (sigts.length()>2) sigts=sigts.substring(0, sigts.length()-2);
-						irc.sendMessage(announceChannel, "Signups for " + Colors.BOLD + n[NAME] + Colors.NORMAL + " (" + n[ID] + ") now " + n[SIGNUPCURRENT] + "/" + n[SIGNUPMAX] + " (" + sigts + ").");
+						irc.sendMessage(announceChannel, "Signups for " + Colors.BOLD + n[NAME] + Colors.NORMAL + " (" + n[ID] + ") [" + stupidStamp((new Date(Long.parseLong(n[3])*(long)1000)).getTime() - (new Date()).getTime()) + "] now " + n[SIGNUPCURRENT] + "/" + n[SIGNUPMAX] + " (" + sigts + ").");
 					}
 				}
 			}
@@ -204,7 +204,6 @@ public class Events
 		ArrayList<String[]> events=readEventsData();
 		int c=events.size();
 		String rep="";
-		System.out.println(comp);
 		while (c--!=0)
 		{
 			String[] ev= events.get(c);
@@ -214,7 +213,7 @@ public class Events
 			int eid=0;
 			try
 			{
-				eid=Integer.parseInt(ev[1]);
+				eid=Integer.parseInt(comp);
 			}
 			catch (NumberFormatException e) {}
 			if (!finished)
