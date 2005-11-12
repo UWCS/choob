@@ -215,6 +215,19 @@ public final class IRCInterface
 		AccessController.checkPermission(new ChoobPermission("state.part." + channel));
 		bot.partChannel(channel);
 	}
-
+	
+	public void quit(String message) throws ChoobException
+	{
+		AccessController.checkPermission(new ChoobPermission("state.quit"));
+		bot.setExitCode(0);
+		bot.quitServer(message);
+	}
+	
+	public void restart(String message) throws ChoobException
+	{
+		AccessController.checkPermission(new ChoobPermission("state.quit"));
+		bot.setExitCode(1);
+		bot.quitServer(message);
+	}
 
 }

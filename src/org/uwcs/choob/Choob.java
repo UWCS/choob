@@ -40,6 +40,7 @@ public final class Choob extends PircBot
 	private static final int MAXTHREADS = 20;
 
 	private ConfigReader conf;
+	private int exitCode;
 
 	/**
 	 * Constructor for Choob, initialises vital variables.
@@ -139,6 +140,8 @@ public final class Choob extends PircBot
 	//* Connect the initialised bot to IRC, and do hard-coded post-connection stuff. */
 	void doConnect() throws IOException, IrcException
 	{
+		exitCode = -1;
+		
 		// Connect to the IRC server.
 		connect(conf.getSettingFallback("server","irc.uwcs.co.uk"));
 
@@ -287,6 +290,10 @@ public final class Choob extends PircBot
 	{
 		return trigger;
 	}
+	
+	public void setExitCode(int newExitCode) {
+		exitCode = newExitCode;
+	}
 
 	public void onSyntheticMessage(Event mes) {
 		spinThread( mes );
@@ -294,6 +301,11 @@ public final class Choob extends PircBot
 
 	protected void onDisconnect()
 	{
+		if (exitCode >= 0) {
+			System.out.println("Disconnected as planned.");
+			System.exit(exitCode);
+		}
+		
 		System.out.println ("Connection lost!");
 		for (;;)
 		{
