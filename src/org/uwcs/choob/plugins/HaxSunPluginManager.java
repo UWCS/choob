@@ -489,7 +489,6 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		{
 			return AccessController.doPrivileged(new PrivilegedExceptionAction() {
 				public Object run() throws InvocationTargetException, IllegalAccessException {
-					System.out.println("Meth is: " + meth2 + "(" + meth2.getDeclaringClass() + "), plugin is: " + plugin + ".");
 					if (meth2 instanceof Method)
 						return ((Method)meth2).invoke(plugin, params);
 					else

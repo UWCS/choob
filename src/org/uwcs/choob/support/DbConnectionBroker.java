@@ -94,8 +94,18 @@ public final class DbConnectionBroker
 		cpds.setLogWriter(logFile);
 		cpds.setCheckoutTimeout(maxCheckoutSeconds*1000);
 
-		cpds.setIdleConnectionTestPeriod(300); // Execute a getTables() after idle for 5 mins.
+		cpds.setIdleConnectionTestPeriod(300); // Execute a a query after idle for 5 mins.
+		//cpds.setTestConnectionOnCheckout(true); // Apparently very slow!
 		cpds.setAutomaticTestTable("C3P0TestTable"); // C3P0 will create this.
+
+		/*
+			Doesn't do what we need: Connects AFTER throwing an exception.
+			java.util.Properties props = new java.util.Properties();
+			props.setProperty("autoReconnect", "true");
+			props.setProperty("user", dbLogin);
+			props.setProperty("password", dbPassword);
+			cpds.setProperties(props);
+		*/
 	}
 
 	public Connection getConnection() throws SQLException

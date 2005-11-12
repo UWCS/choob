@@ -153,4 +153,16 @@ public class Test
 	{
 		irc.sendMessage("#bots", "Boo! Plugin reloaded! Name is: " + mes.getPluginName());
 	}*/
+
+	public void commandWhoreApi ( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	{
+		for(int i=0; i < 100000; i++)
+			try { mods.plugin.callAPI("Test", "Whore", "Iteration" + i, mes); } catch ( ChoobNoSuchCallException e ) { }
+		irc.sendContextReply(mes, "OK, API whored!");
+	}
+
+	public void apiWhore(String text, Message mes)
+	{
+		//System.out.println("Whorage called by " + mes.getNick() + ": " + text);
+	}
 }

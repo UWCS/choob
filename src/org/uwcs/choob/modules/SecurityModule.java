@@ -27,6 +27,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	private DbConnectionBroker dbBroker;
 	private Map<Integer,PermissionCollection> nodeMap;
 	private Map<Integer,List<Integer>> nodeTree;
+	private Map<String,Integer>[] nodeIDCache;
 	private Modules mods;
 	private int anonID;
 
@@ -43,9 +44,16 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 		this.dbBroker = dbBroker;
 		this.mods = mods;
+
+		this.nodeDbLock = new Object();
+
 		this.nodeMap = new HashMap<Integer,PermissionCollection>();
 		this.nodeTree = new HashMap<Integer,List<Integer>>();
-		this.nodeDbLock = new Object();
+
+		this.nodeIDCache = new Map[4];
+		for(int i=0; i<4; i++)
+			nodeIDCache[i] = new HashMap<String,Integer>();
+
 		this.anonID = getNodeIDFromNodeName("anonymous", 3);
 	}
 
@@ -134,8 +142,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * Code visciously hacked out of ChoobSecurityManager.
 	 */
 	private void updateNodePermissions(int nodeID) {
-		System.out.println("Loading permissions for user node " + nodeID + ".");
-		Connection dbConnection =null;
+		Connection dbConnection = null;
 
 		Permissions permissions = new Permissions();
 
@@ -214,8 +221,6 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 						continue; // XXX
 					}
 
-					System.out.println("Adding new permission for " + nodeID + ": " + perm);
-
 					permissions.add(perm);
 				} while ( permissionsResults.next() );
 			}
@@ -234,7 +239,6 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			catch (ChoobException e) {}
 		}
 
-		System.out.println("All permissions for " + nodeID + " done.");
 		synchronized(nodeMap) {
 			nodeMap.put(nodeID, permissions);
 		}
@@ -409,6 +413,11 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	private int getNodeIDFromNodeName(String nodeName, int nodeType)
 	{
+		// Check the cache.
+		Integer id = nodeIDCache[nodeType].get(nodeName.toLowerCase());
+		if (id != null)
+			return id.intValue();
+
 		Connection dbConn = null;
 		PreparedStatement stat = null;
 		try
@@ -420,7 +429,9 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			ResultSet results = stat.executeQuery();
 			if ( results.first() )
 			{
-				return results.getInt(1);
+				int idGot = results.getInt(1);
+				nodeIDCache[nodeType].put(nodeName.toLowerCase(), idGot);
+				return idGot;
 			}
 			System.err.println("Ack! Node name " + nodeName + "(" + nodeType + ") not found!");
 		}
@@ -616,7 +627,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	{
 		int userNode = getNodeIDFromUserName(userName);
 
-		System.out.println(userName + " " + userNode + ": " + permission);
+		System.out.println("Checking permission on user " + userName + "(" + userNode + ")" + ": " + permission);
 
 		if (userNode == -1)
 			if (anonID != -1)
