@@ -53,19 +53,19 @@ public class Test
 		irc.sendContextMessage(con, "..Pants!");
 	}
 
-	public void commandExit( Message con, Modules mods, IRCInterface irc )
+	public void commandExit( Message con, Modules mods, IRCInterface irc ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams( con );
 		if (params.size() > 1) {
 			System.exit(new Integer(params.get(1)));
 		} else {
-			System.exit(0);
+			irc.quit("Bye bye!");
 		}
 	}
 
-	public void commandRestart( Message con, Modules mods, IRCInterface irc )
+	public void commandRestart( Message con, Modules mods, IRCInterface irc ) throws ChoobException
 	{
-		System.exit(1);
+		irc.restart("Restarting...");
 	}
 
 	// Define the regex for the KarmaPlus filter.
