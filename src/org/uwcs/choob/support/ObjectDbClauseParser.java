@@ -9,15 +9,16 @@
 
         public class ObjectDbClauseParser/*@bgen(jjtree)*/implements ObjectDbClauseParserTreeConstants, ObjectDbClauseParserConstants {/*@bgen(jjtree)*/
   protected JJTObjectDbClauseParserState jjtree = new JJTObjectDbClauseParserState();private int joins = 0;
-                private List joinList = new ArrayList();
-                private Map nameMap = new HashMap();
-                private List classList = new ArrayList();
-                private Map classMap = new HashMap();
-                private Map fieldClass = new HashMap();
+                private List joinList = new ArrayList();  // List of properties to join on.
+                private Map nameMap = new HashMap();      // List of indices into joinList for join names.
+                private List classList = new ArrayList(); // List of classes used.
+                private Map classMap = new HashMap();     // Map of alias name -> classList offset.
+                private Map fieldClass = new HashMap();   // Map of field name -> classList offset.
+                private List modifiedClasses = new ArrayList(); // List of classes modified.
                 private String joinWhere = null;
 
                 // Negative values indicate nonspecific types.
-                private static final int
+                public final static int
                         HINT_NUMERIC = -1,
                         HINT_UNKNOWN = 0,
                         HINT_INTEGER = 1,
@@ -25,6 +26,22 @@
                         HINT_ID = 3,
                         HINT_STRING = 4,
                         HINT_BOOLEAN = 5;
+
+                private int type = TYPE_UNKNOWN;
+
+                public final static int
+                        TYPE_UNKNOWN = 0,
+                        TYPE_SELECT = 1,
+                        TYPE_UPDATE = 2,
+                        TYPE_DELETE = 3,
+                        TYPE_INSERT = 4;
+
+                public ObjectDbClauseParser(String clause, String className)
+                {
+                        this(new StringReader(clause));
+                        classList.add(className);
+                        classMap.put(className.toLowerCase(), new Integer(0));
+                }
 
                 public static void main(String args[])
                 {
@@ -42,16 +59,38 @@
                         }
                 }
 
-                public static String getSQL(String clause, String className) throws ParseException {
+                public static String getSQL(String clause, String className) throws ParseException
+                {
                         if (className == null)
                                 throw new IllegalArgumentException("Null class name passed to getSQL...");
 
-                        ObjectDbClauseParser parser = new ObjectDbClauseParser (new StringReader(clause));
-
-                        parser.classList.add(className);
-                        parser.classMap.put(className.toLowerCase(), new Integer(0));
+                        ObjectDbClauseParser parser = new ObjectDbClauseParser (clause, className);
 
                         return parser.ODBExpr();
+                }
+
+                /**
+		 * Gets the type of this query (TYPE_SELECT, ...)
+		 */
+                public int getType()
+                {
+                        return type;
+                }
+
+                /**
+		 * For a modification statement, returns the classes which may be altered.
+		 */
+                public List getModifiedClasses()
+                {
+                        return modifiedClasses;
+                }
+
+                /**
+		 * Returns the classes which may be read from.
+		 */
+                public List getUsedClasses()
+                {
+                        return classList;
                 }
 
                 public String getTableJoin()
@@ -315,7 +354,7 @@
                                         if (classList.size() > 0)
                                                 s = (String)classList.get(0);
                                         else
-                                                {if (true) throw new ParseException("No table specified for tableless UPDATE");}
+                                                {if (true) throw new ParseException("No class specified for classless UPDATE");}
                                 }
       t = ParseUpdate(s);
                           {if (true) return t;}
@@ -334,9 +373,9 @@
   }
 
   final public String ParseSelect(SimpleNode cols) throws ParseException {
-                String table = null;
+                String cls = null;
                 if (classList.size() > 0)
-                        table = (String)classList.get(0);
+                        cls = (String)classList.get(0);
 
                 String sort = "";
                 String limit = "";
@@ -344,6 +383,7 @@
 
                 String string;
                 List stringList;
+                SimpleNode l;
     label_1:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -362,23 +402,23 @@
       case K_WITH:
         jj_consume_token(K_WITH);
         string = ClassName();
-                                if (table == null)
-                                        {if (true) throw new ParseException("WITH clause used on a query which had no FROM table.");}
+                                if (cls == null)
+                                        {if (true) throw new ParseException("WITH clause used on a query which had no FROM class.");}
                                 else
-                                        table = string;
+                                        cls = string;
         break;
       case K_FROM:
         jj_consume_token(K_FROM);
         stringList = ClassList();
-                                if (table == null)
-                                        table = (String)stringList.get(0);
+                                if (cls == null)
+                                        cls = (String)stringList.get(0);
                                 else
-                                        {if (true) throw new ParseException("FROM clause used on a query which already had a FROM table.");}
+                                        {if (true) throw new ParseException("FROM clause used on a query which already had a FROM class.");}
         break;
       case K_SORT:
         jj_consume_token(K_SORT);
         string = ParseSort();
-                                if (sort == null)
+                                if (sort.equals(""))
                                         sort = " " + string;
                                 else
                                         {if (true) throw new ParseException("Multiple SORT clauses.");}
@@ -386,7 +426,7 @@
       case K_LIMIT:
         jj_consume_token(K_LIMIT);
         string = ParseLimit();
-                                if (limit == null)
+                                if (limit.equals(""))
                                         limit = " " + string;
                                 else
                                         {if (true) throw new ParseException("Multiple LIMIT clauses.");}
@@ -405,14 +445,17 @@
         throw new ParseException();
       }
     }
-                        if (table == null)
+                        if (cls == null)
                                 {if (true) throw new ParseException("No FROM clause in SELECT statement.");}
+
+                        type = TYPE_SELECT;
+
                         String realCols = (cols == null ? "s0.ClassID" : parseExpression(cols, HINT_UNKNOWN));
                         {if (true) return "SELECT " + realCols + " FROM " + getTableJoin() + " WHERE " + where + " AND " + joinWhere + " GROUP BY s0.ClassID" + sort + limit;}
     throw new Error("Missing return statement in function");
   }
 
-  final public String ParseUpdate(String table) throws ParseException {
+  final public String ParseUpdate(String cls) throws ParseException {
                 SimpleNode cols;
                 String where = "1";
     jj_consume_token(K_SET);
@@ -426,6 +469,9 @@
       jj_la1[5] = jj_gen;
       ;
     }
+                        modifiedClasses.add(cls);
+                        type = TYPE_UPDATE;
+
                         StringBuffer update = new StringBuffer();
                         StringBuffer inserts = new StringBuffer();
                         for(int i=0; i<cols.jjtGetNumChildren(); i++)
@@ -434,7 +480,7 @@
                                 if (i != 0)
                                         update.append(", ");
                                 String name = getFieldName(col.getName());
-                                inserts.append("INSERT IGNORE INTO ObjectStoreData SELECT ObjectID, \"" + col.getName() + "\", NULL, NULL, NULL FROM ObjectStore WHERE ClassName = \"" + table + "\";\n");
+                                inserts.append("INSERT IGNORE INTO ObjectStoreData SELECT ObjectID, \"" + col.getName() + "\", NULL, NULL, NULL FROM ObjectStore WHERE ClassName = \"" + cls + "\";\n");
                                 update.append(name + ".FieldString = " + parseExpression((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN) + ", ");
                                 update.append(name + ".FieldBigInt = " + name + ".FieldString, ");
                                 update.append(name + ".FieldDouble = " + name + ".FieldString");
@@ -446,9 +492,9 @@
   }
 
   final public String ParseInsert() throws ParseException {
-                String table = null;
+                String cls = null;
                 if (classList.size() > 0)
-                        table = (String)classList.get(0);
+                        cls = (String)classList.get(0);
 
                 String fields, string;
                 SimpleNode cols;
@@ -456,10 +502,10 @@
     case K_INTO:
       jj_consume_token(K_INTO);
       string = ClassName();
-                                if (table != null)
-                                        table = string;
+                                if (cls != null)
+                                        cls = string;
                                 else
-                                        {if (true) throw new ParseException("INTO clause used on a query which already had an INTO table.");}
+                                        {if (true) throw new ParseException("INTO clause used on a query which already had an INTO class.");}
       break;
     default:
       jj_la1[6] = jj_gen;
@@ -467,10 +513,25 @@
     }
     jj_consume_token(K_SET);
     cols = FieldSetList();
-                        StringBuffer query = new StringBuffer("INSERT INTO ObjectStore VALUES(NULL, '" + table + "', id);\n"); // Must do something about id...
+                        modifiedClasses.add(cls);
+                        type = TYPE_INSERT;
+
+                        String idClause = "DEFAULT";
+                        // Find an ID clause, if any...
                         for(int i=0; i<cols.jjtGetNumChildren(); i++)
                         {
                                 SimpleNode col = (SimpleNode)cols.jjtGetChild(i);
+                                if (col.getName().equalsIgnoreCase("id"))
+                                        idClause = parseExpression((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN);
+                        }
+
+                        StringBuffer query = new StringBuffer("INSERT INTO ObjectStore VALUES(" + idClause + ", '" + cls + "', id);\n");
+                        for(int i=0; i<cols.jjtGetNumChildren(); i++)
+                        {
+                                SimpleNode col = (SimpleNode)cols.jjtGetChild(i);
+
+                                if (col.getName().equalsIgnoreCase("id"))
+                                        continue;
 
                                 String value = parseExpression((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN);
                                 query.append("INSERT INTO ObjectStoreData VALUES(LAST_INSERT_ID(), \"" + col.getName() + "\", " + value + ", " + value + ", " + value + ");\n");
@@ -480,9 +541,9 @@
   }
 
   final public String ParseDelete() throws ParseException {
-                String table = null;
+                String cls = null;
                 if (classList.size() > 0)
-                        table = (String)classList.get(0);
+                        cls = (String)classList.get(0);
 
                 String where = "1";
                 String string;
@@ -490,10 +551,10 @@
     case K_FROM:
       jj_consume_token(K_FROM);
       string = ClassName();
-                                if (table != null)
-                                        table = string;
+                                if (cls != null)
+                                        cls = string;
                                 else
-                                        {if (true) throw new ParseException("FROM clause used on a query which already had a FROM table.");}
+                                        {if (true) throw new ParseException("FROM clause used on a query which already had a FROM class.");}
       break;
     default:
       jj_la1[7] = jj_gen;
@@ -509,6 +570,12 @@
       jj_la1[8] = jj_gen;
       ;
     }
+                        if (cls == null)
+                                {if (true) throw new ParseException("No FROM clause in a DELETE.");}
+
+                        modifiedClasses.add(cls);
+                        type = TYPE_DELETE;
+
                         {if (true) return "DELETE FROM s0 USING " + getTableJoin() + " WHERE " + where + " AND " + joinWhere;}
     throw new Error("Missing return statement in function");
   }

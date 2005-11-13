@@ -376,55 +376,28 @@ public class Quote
 
 		final List quoteLines = new ArrayList(lines.size());
 
-		try
+		mods.odb.runTransaction( new ObjectDBTransaction() {
+			public void run()
 		{
-			mods.odb.runTransaction( new ObjectDBTransaction() {
-				public void run() throws ChoobException
-			{
-				save(q);
+			save(q);
 
-				// Now have a quote ID!
-				for(int i=0; i<lines.size(); i++)
-				{
-					QuoteLine ql = new QuoteLine();
-					ql.quoteID = q.id;
-					ql.id = 0;
-					ql.lineNumber = i;
-					ql.nick = lines.get(i).getNick();
-					ql.message = lines.get(i).getMessage();
-					ql.isAction = (lines.get(i) instanceof ChannelAction);
-					save(ql);
-					quoteLines.add(ql);
-				}
-			}});
-		}
-		catch (ChoobException e)
-		{
-			irc.sendContextReply(mes, "Could not add quote: " + e);
-			return;
-		}
+			// Now have a quote ID!
+			for(int i=0; i<lines.size(); i++)
+			{
+				QuoteLine ql = new QuoteLine();
+				ql.quoteID = q.id;
+				ql.id = 0;
+				ql.lineNumber = i;
+				ql.nick = lines.get(i).getNick();
+				ql.message = lines.get(i).getMessage();
+				ql.isAction = (lines.get(i) instanceof ChannelAction);
+				save(ql);
+				quoteLines.add(ql);
+			}
+		}});
 
 		// Remember this quote for later...
-		synchronized(recentQuotes)
-		{
-			String context = mes.getContext();
-			List<RecentQuote> recent = recentQuotes.get(context);
-			if (recent == null)
-			{
-				recent = new LinkedList<RecentQuote>();
-				recentQuotes.put( context, recent );
-			}
-
-			RecentQuote info = new RecentQuote();
-			info.quote = q;
-			info.time = System.currentTimeMillis();
-			info.type = 1;
-
-			recent.add(0, info);
-
-			while (recent.size() > RECENTLENGTH)
-				recent.remove( RECENTLENGTH );
-		}
+		addLastQuote(mes.getContext(), q);
 
 		irc.sendContextReply( mes, "OK, added quote " + q.id + ": " + formatPreview(quoteLines) );
 	}
@@ -510,9 +483,51 @@ public class Quote
 		}
 
 		// Remember this quote for later...
+		addLastQuote(mes.getContext(), quote);
+	}
+
+	public String[] helpApieSingleLineQuote = {
+		"Get a single line quote from the specified nickname, optionally adding it to the recent quotes list for the passed context.",
+		"Either the single line quote, or null if there was none.",
+		"<nick> [<context>]",
+		"the nickname to get a quote from",
+		"the optional context in which the quote will be displayed"
+	};
+	public String apiSingleLineQuote(String nick)
+	{
+		return apiSingleLineQuote(nick, null);
+	}
+	public String apiSingleLineQuote(String nick, String context)
+	{
+		String whereClause = getClause(nick + " length:=1");
+		List quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause );
+		if (quotes.size() == 0)
+			return null;
+
+		QuoteObject quote = (QuoteObject)quotes.get(0);
+		List <QuoteLine>lines = mods.odb.retrieve( QuoteLine.class, "WHERE quoteID = " + quote.id );
+
+		if (lines.size() == 0)
+		{
+			System.err.println("Found quote " + quote.id + " but it was empty!" );
+			return null;
+		}
+
+		if (context != null)
+			addLastQuote(context, quote);
+
+		QuoteLine line = lines.get(0);
+
+		if (line.isAction)
+			return "/me " + line.message;
+		else
+			return line.message;
+	}
+
+	private void addLastQuote(String context, QuoteObject quote)
+	{
 		synchronized(recentQuotes)
 		{
-			String context = mes.getContext();
 			List<RecentQuote> recent = recentQuotes.get(context);
 			if (recent == null)
 			{
@@ -530,54 +545,6 @@ public class Quote
 			while (recent.size() > RECENTLENGTH)
 				recent.remove( RECENTLENGTH );
 		}
-	}
-
-	public String apiSingleLineQuote(String nick, String context) throws ChoobException
-	{
-		String whereClause = "WITH AS join0 plugins.Quote.QuoteLine WHERE join0.nick = \"" + nick + "\" AND join0.quoteID = id AND lines = 1 AND score > -4";
-		List quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause );
-		if (quotes.size() == 0)
-			return null;
-
-		QuoteObject quote = (QuoteObject)quotes.get(0);
-		List <QuoteLine>lines = mods.odb.retrieve( QuoteLine.class, "WHERE quoteID = " + quote.id );
-
-		if (lines.size()==0)
-		{
-			System.err.println("Found quote " + quote.id + " but it was empty!" );
-			return null;
-		}
-
-		QuoteLine line = lines.get(0);
-
-		String reply;
-
-		if (line.isAction)
-			reply="/me " + line.message;
-		else
-			reply=line.message;
-
-		if (context!=null)
-			synchronized(recentQuotes)
-			{
-				List<RecentQuote> recent = recentQuotes.get(context);
-				if (recent == null)
-				{
-					recent = new LinkedList<RecentQuote>();
-					recentQuotes.put( context, recent );
-				}
-
-				RecentQuote info = new RecentQuote();
-				info.quote = quote;
-				info.time = System.currentTimeMillis();
-				info.type = 0;
-
-				recent.add(0, info);
-
-				while (recent.size() > RECENTLENGTH)
-					recent.remove( RECENTLENGTH );
-			}
-		return reply;
 	}
 
 	public String[] helpCommandCount = {
@@ -682,25 +649,17 @@ public class Quote
 
 			final QuoteObject theQuote = quote;
 			final List<QuoteLine> quoteLines = mods.odb.retrieve( QuoteLine.class, "WHERE quoteID = " + quote.id );
-			try
+			mods.odb.runTransaction( new ObjectDBTransaction() {
+				public void run()
 			{
-				mods.odb.runTransaction( new ObjectDBTransaction() {
-					public void run() throws ChoobException
-				{
-					delete(theQuote);
+				delete(theQuote);
 
-					// Now have a quote ID!
-					for(QuoteLine line: quoteLines)
-					{
-						delete(line);
-					}
-				}});
-			}
-			catch (ChoobException e)
-			{
-				irc.sendContextReply( mes, "Could not unquote: " + e );
-				return;
-			}
+				// Now have a quote ID!
+				for(QuoteLine line: quoteLines)
+				{
+					delete(line);
+				}
+			}});
 
 			recent.remove(info); // So the next unquote doesn't hit it
 
@@ -880,10 +839,9 @@ public class Quote
 	}
 
 	/**
-	/**
 	 * Simple parser for quote searches...
 	 */
-	private String getClause(String text) throws ChoobException
+	private String getClause(String text)
 	{
 		List<String> clauses = new ArrayList<String>();
 		boolean score = false; // True if score clause added.
@@ -920,10 +878,10 @@ public class Quote
 				{
 					// Length modifier.
 					if (param.length() <= 1)
-						throw new ChoobException("Invalid/empty length selector.");
+						throw new ChoobError("Invalid/empty length selector.");
 					char op = param.charAt(0);
 					if (op != '>' && op != '<' && op != '=')
-						throw new ChoobException("Invalid length selector: " + param);
+						throw new ChoobError("Invalid length selector: " + param);
 					int length;
 					try
 					{
@@ -931,7 +889,7 @@ public class Quote
 					}
 					catch (NumberFormatException e)
 					{
-						throw new ChoobException("Invalid length selector: " + param);
+						throw new ChoobError("Invalid length selector: " + param);
 					}
 					clauses.add("lines " + op + " " + length);
 					fiddled = true;
@@ -939,17 +897,17 @@ public class Quote
 				else if (first.equals("quoter"))
 				{
 					if (param.length() < 1)
-						throw new ChoobException("Empty quoter nickname.");
+						throw new ChoobError("Empty quoter nickname.");
 					clauses.add("quoter = \"" + param.replaceAll("(\\W)", "\\\\1") + "\"");
 					fiddled = true;
 				}
 				else if (first.equals("score"))
 				{
 					if (param.length() <= 1)
-						throw new ChoobException("Invalid/empty score selector.");
+						throw new ChoobError("Invalid/empty score selector.");
 					char op = param.charAt(0);
 					if (op != '>' && op != '<' && op != '=')
-						throw new ChoobException("Invalid score selector: " + param);
+						throw new ChoobError("Invalid score selector: " + param);
 					int value;
 					try
 					{
@@ -957,7 +915,7 @@ public class Quote
 					}
 					catch (NumberFormatException e)
 					{
-						throw new ChoobException("Invalid score selector: " + param);
+						throw new ChoobError("Invalid score selector: " + param);
 					}
 					clauses.add("score " + op + " " + value);
 					score = true;
@@ -967,7 +925,7 @@ public class Quote
 				// here, were's screwed...
 				else
 				{
-					throw new ChoobException("Unknown selector type: " + first);
+					throw new ChoobError("Unknown selector type: " + first);
 				}
 			}
 
@@ -980,7 +938,7 @@ public class Quote
 				// Get a matcher on th region from here to the end of the string...
 				Matcher ma = Pattern.compile("^(?:\\\\.|[^\\\\/])*?/").matcher(text).region(pos+1,text.length());
 				if (!ma.find())
-					throw new ChoobException("Regular expression has no end!");
+					throw new ChoobError("Regular expression has no end!");
 				int end = ma.end();
 				String regex = text.substring(pos + 1, end - 1);
 				clauses.add("join"+joins+".message RLIKE \"" + regex.replaceAll("(\\W)", "$1") + "\"");
@@ -1001,7 +959,7 @@ public class Quote
 				}
 				catch (NumberFormatException e)
 				{
-					throw new ChoobException("Invalid quote number: " + param);
+					throw new ChoobError("Invalid quote number: " + param);
 				}
 				clauses.add("id = " + value);
 			}
@@ -1028,9 +986,9 @@ public class Quote
 
 		// All those joins hate MySQL.
 		if (joins > MAXJOINS)
-			throw new ChoobException("Sorry, due to MySQL being whorish, only " + MAXJOINS + " nickname or line clause(s) allowed for now.");
+			throw new ChoobError("Sorry, due to MySQL being whorish, only " + MAXJOINS + " nickname or line clause(s) allowed for now.");
 		else if (clauses.size() > MAXCLAUSES)
-			throw new ChoobException("Sorry, due to MySQL being whorish, only " + MAXCLAUSES + " clause(s) allowed for now.");
+			throw new ChoobError("Sorry, due to MySQL being whorish, only " + MAXCLAUSES + " clause(s) allowed for now.");
 
 		if (!score)
 			clauses.add("score > " + (THRESHOLD - 1));

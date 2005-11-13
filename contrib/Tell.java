@@ -74,7 +74,7 @@ public class Tell
 		"<Message> is the content"
 	};
 
-	public synchronized void commandSend( Message mes ) throws ChoobException
+	public synchronized void commandSend( Message mes )
 	{
 		List<String> params = mods.util.getParams(mes, 2);
 		if (params.size() <= 2)
@@ -112,7 +112,7 @@ public class Tell
 		mods.odb.runTransaction(
 				new ObjectDBTransaction()
 				{
-					public void run() throws ChoobException
+					public void run()
 		{
 			for(int i=0; i<targets.length; i++)
 		{
@@ -134,7 +134,7 @@ public class Tell
 	public String[] helpCommandGet = {
 		"Get any tells that have been sent to you. See Cache."
 	};
-	public void commandGet( Message mes ) throws ChoobException
+	public void commandGet( Message mes )
 	{
 		clearCache(mes.getNick());
 		spew( mes.getNick() );
@@ -154,7 +154,7 @@ public class Tell
 		}
 	}
 
-	private synchronized void spew( String nick ) throws ChoobException
+	private synchronized void spew( String nick )
 	{
 		// Use the cache
 		boolean willSkip = false;
@@ -204,28 +204,28 @@ public class Tell
 		}
 	}
 
-	public void onMessage( ChannelMessage ev ) throws ChoobException
+	public void onMessage( ChannelMessage ev )
 	{
 		spew(ev.getNick());
 	}
 
-	public void onPrivateMessage( PrivateMessage ev ) throws ChoobException
+	public void onPrivateMessage( PrivateMessage ev )
 	{
 		spew(ev.getNick());
 	}
 
-	public void onJoin( ChannelJoin ev ) throws ChoobException
+	public void onJoin( ChannelJoin ev )
 	{
 		spew(ev.getNick());
 	}
 
-	private int nsStatus( String nick ) throws ChoobException
+	private int nsStatus( String nick )
 	{
 		try
 		{
 			return (Integer)mods.plugin.callAPI("NickServ", "Status", nick);
 		}
-		catch (ChoobNoSuchPluginException e)
+		catch (ChoobNoSuchCallException e)
 		{
 			return 0;
 		}

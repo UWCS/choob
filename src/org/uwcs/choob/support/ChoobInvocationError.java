@@ -5,11 +5,11 @@
 
 package org.uwcs.choob.support;
 
-public class ChoobInvocationException extends ChoobException
+public class ChoobInvocationError extends ChoobError
 {
 	private String call;
 	private String plugin;
-	public ChoobInvocationException(String pluginName, String call, Throwable e)
+	public ChoobInvocationError(String pluginName, String call, Throwable e)
 	{
 		super("The plugin call " + call + " in plugin " + pluginName + " threw an exception: " + e, e);
 		this.call = call;

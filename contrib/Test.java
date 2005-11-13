@@ -88,18 +88,19 @@ public class Test
 		if (ev.getLogin().equals("Choob"))
 			return;
 
-		String s=null;
+		String quote=null;
 		try
 		{
-			s=(String)mods.plugin.callAPI( "quote", "singlelinequote", ev.getNick(), ev.getContext());
+			quote=(String)mods.plugin.callAPI( "Quote", "SingleLineQuote", ev.getNick(), ev.getContext());
 		}
-		catch (ChoobException e)
-		{}
+		catch (ChoobNoSuchCallException e)
+		{
+		}
 
-		if (s==null)
+		if (quote == null)
 			irc.sendContextMessage( ev, "Hello, " + ev.getNick() + "!");
 		else
-			irc.sendContextMessage( ev, "Hello, " + ev.getNick() + ": \"" + s + "\"!");
+			irc.sendContextMessage( ev, "Hello, " + ev.getNick() + ": \"" + quote + "\"");
 	}
 
 	public void onPart( ChannelPart ev, Modules mod, IRCInterface irc )
@@ -273,7 +274,7 @@ public class Test
 	public int id;
 }
 
-public class TestObj2
+//public class TestObj2
 {
 	public int id;
 	public String var1;
@@ -288,7 +289,7 @@ public class TestObj2
 	public String var10;
 }
 
-public class TestObj3
+//public class TestObj3
 {
 	public int id;
 	public int var1;

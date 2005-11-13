@@ -153,7 +153,7 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	 * @param APIName The name of the API call.
 	 * @param params The parameters to pass.
 	 */
-	public Object doAPI(String pluginName, String APIName, Object... params) throws ChoobException
+	public Object doAPI(String pluginName, String APIName, Object... params) throws ChoobNoSuchCallException
 	{
 		ChoobPluginManager man;
 		synchronized(pluginMap)
@@ -171,7 +171,7 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	 * @param genericName The name of the call.
 	 * @param params Params to pass.
 	 */
-	public Object doGeneric(String pluginName, String prefix, String genericName, Object... params) throws ChoobException
+	public Object doGeneric(String pluginName, String prefix, String genericName, Object... params) throws ChoobNoSuchCallException
 	{
 		ChoobPluginManager man;
 		synchronized(pluginMap)

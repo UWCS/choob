@@ -186,7 +186,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 		return tasks;
 	}
 
-	public Object doGeneric(String pluginName, String prefix, String genericName, Object... params) throws ChoobException {
+	public Object doGeneric(String pluginName, String prefix, String genericName, Object... params) throws ChoobNoSuchCallException {
 		// Call a psecific type of generic, by constructing the right name.
 		String fullName = pluginName + "." + prefix + ":" + genericName;
 
@@ -202,7 +202,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 		return callMethod(method, params, CALL_WANT_RESULT);
 	}
 
-	public Object doAPI(String pluginName, String APIName, final Object... params) throws ChoobException {
+	public Object doAPI(String pluginName, String APIName, final Object... params) throws ChoobNoSuchCallException {
 		return doGeneric(pluginName, "api", APIName, params);
 	}
 
@@ -227,7 +227,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 		ProtectionDomain accessDomain = mods.security.getProtectionDomain(pluginName);
 		final AccessControlContext accessContext = new AccessControlContext(new ProtectionDomain[] { accessDomain });
 		final PrivilegedExceptionAction action = new PrivilegedExceptionAction() {
-			public Object run() throws ChoobException {
+			public Object run() {
 				Context cx = Context.enter();
 				try {
 					Scriptable scope = plugin.getScope();
@@ -243,7 +243,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 						JavaScriptPluginProperty prop = (JavaScriptPluginProperty)export;
 						return mapJSToJava(prop.getValue());
 					}
-					throw new ChoobException("Unknown export type for " + export.getName() + ".");
+					throw new ChoobError("Unknown export type for " + export.getName() + ".");
 
 				} catch (RhinoException e) {
 					if (params[0] instanceof Message) {
@@ -275,6 +275,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 					try {
 						AccessController.doPrivileged(action, accessContext);
 					} catch (PrivilegedActionException e) {
+						// XXX
 					}
 				}
 			};
@@ -283,6 +284,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 			try {
 				return AccessController.doPrivileged(action, accessContext);
 			} catch (PrivilegedActionException e) {
+				// XXX
 			}
 		}
 		return null;

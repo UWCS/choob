@@ -94,8 +94,10 @@ public final class PluginModule
 	 * @param pluginName The name of the plugin to call.
 	 * @param APIString The name of the routine to call.
 	 * @param params Parameters to pass to the routine.
+	 * @throws ChoobNoSuchCallException If the call could not be resolved.
+	 * @throws ChoobInvocationError If the call threw an exception.
 	 */
-	public Object callAPI(String pluginName, String APIString, Object... params) throws ChoobException
+	public Object callAPI(String pluginName, String APIString, Object... params) throws ChoobNoSuchCallException
 	{
 		return dPlugMan.doAPI(pluginName, APIString, params);
 	}
@@ -106,8 +108,10 @@ public final class PluginModule
 	 * @param type The type of the routine to call.
 	 * @param name The name of the routine to call.
 	 * @param params Parameters to pass to the routine.
+	 * @throws ChoobNoSuchCallException If the call could not be resolved.
+	 * @throws ChoobInvocationError If the call threw an exception.
 	 */
-	public Object callGeneric(String pluginName, String type, String name, Object... params) throws ChoobException
+	public Object callGeneric(String pluginName, String type, String name, Object... params) throws ChoobNoSuchCallException
 	{
 		AccessController.checkPermission(new ChoobPermission("generic." + type));
 		return dPlugMan.doGeneric(pluginName, type, name, params);
@@ -118,8 +122,9 @@ public final class PluginModule
 	 * @param pluginName The name of the plugin to call.
 	 * @param command The name of the command to call.
 	 * @param mes The message to pass to the routing
+	 * @throws ChoobNoSuchCallException If the call could not be resolved.
 	 */
-	public void queueCommand(String pluginName, String command, Message mes) throws ChoobException
+	public void queueCommand(String pluginName, String command, Message mes) throws ChoobNoSuchCallException
 	{
 		AccessController.checkPermission(new ChoobPermission("generic.command"));
 		ChoobTask task = dPlugMan.commandTask(pluginName, command, mes);

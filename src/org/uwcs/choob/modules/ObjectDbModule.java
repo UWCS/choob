@@ -45,7 +45,7 @@ public final class ObjectDbModule
 	 * @param storedClass The .class of the object you want to retrieve.
 	 * @param clause The clause specifying which objects you want to select.
 	 */
-	public List retrieve(Class storedClass, String clause) throws ChoobException
+	public List retrieve(Class storedClass, String clause)
 	{
 		Connection dbConn = null;
 		try
@@ -54,7 +54,7 @@ public final class ObjectDbModule
 		}
 		catch (SQLException e)
 		{
-			throw new ChoobException("Sql Exception", e);
+			throw new ChoobError("Sql Exception", e);
 		}
 		ObjectDBTransaction trans = new ObjectDBTransaction();
 		trans.setConn(dbConn);
@@ -69,7 +69,7 @@ public final class ObjectDbModule
 		}
 	}
 
-	public List<Integer> retrieveInt(Class storedClass, String clause) throws ChoobException
+	public List<Integer> retrieveInt(Class storedClass, String clause)
 	{
 		Connection dbConn = null;
 		try
@@ -78,7 +78,7 @@ public final class ObjectDbModule
 		}
 		catch (SQLException e)
 		{
-			throw new ChoobException("Sql Exception", e);
+			throw new ChoobError("Sql Exception", e);
 		}
 		ObjectDBTransaction trans = new ObjectDBTransaction();
 		trans.setConn(dbConn);
@@ -97,7 +97,7 @@ public final class ObjectDbModule
 	 * Delete a specific object from the database.
 	 * @param strObject The object to delete.
 	 */
-	public void delete( Object strObject ) throws ChoobException
+	public void delete( Object strObject )
 	{
 		synchronized( strObject.getClass() )
 		{
@@ -108,7 +108,7 @@ public final class ObjectDbModule
 			}
 			catch (SQLException e)
 			{
-				throw new ChoobException("Sql Exception", e);
+				throw new ChoobError("Sql Exception", e);
 			}
 
 			ObjectDBTransaction trans = new ObjectDBTransaction();
@@ -129,7 +129,7 @@ public final class ObjectDbModule
 	 * Update a changed object back to the database.
 	 * @param strObject The object to update.
 	 */
-	public void update( Object strObject ) throws ChoobException
+	public void update( Object strObject )
 	{
 		synchronized( strObject.getClass() )
 		{
@@ -140,7 +140,7 @@ public final class ObjectDbModule
 			}
 			catch (SQLException e)
 			{
-				throw new ChoobException("Sql Exception", e);
+				throw new ChoobError("Sql Exception", e);
 			}
 
 			ObjectDBTransaction trans = new ObjectDBTransaction();
@@ -165,7 +165,7 @@ public final class ObjectDbModule
 	 * Save a new object to the database.
 	 * @param strObject The object to save.
 	 */
-	public void save( Object strObject ) throws ChoobException
+	public void save( Object strObject )
 	{
 		synchronized( strObject.getClass() )
 		{
@@ -176,7 +176,7 @@ public final class ObjectDbModule
 			}
 			catch (SQLException e)
 			{
-				throw new ChoobException("Sql Exception", e);
+				throw new ChoobError("Sql Exception", e);
 			}
 
 			ObjectDBTransaction trans = new ObjectDBTransaction();
@@ -196,7 +196,7 @@ public final class ObjectDbModule
 		}
 	}
 
-	public void runTransaction( ObjectDBTransaction trans ) throws ChoobException
+	public void runTransaction( ObjectDBTransaction trans )
 	{
 		Connection dbConn = null;
 		try
@@ -205,7 +205,7 @@ public final class ObjectDbModule
 		}
 		catch (SQLException e)
 		{
-			throw new ChoobException("Sql Exception", e);
+			throw new ChoobError("Sql Exception", e);
 		}
 
 		trans.setConn(dbConn);

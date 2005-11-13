@@ -259,15 +259,19 @@ public abstract class ChoobPluginManager
 	 * Attempt to perform an API call on a contained plugin.
 	 * @param APIName The name of the API call.
 	 * @param params Params to pass through.
+	 * @throws ChoobNoSuchCallException when the call didn't exist.
+	 * @throws ChoobInvocationError when the call threw an exception.
 	 */
-	abstract public Object doAPI(String pluginName, String APIName, Object... params) throws ChoobException;
+	abstract public Object doAPI(String pluginName, String APIName, Object... params) throws ChoobNoSuchCallException;
 
 	/**
 	 * Attempt to perform an API call on a contained plugin.
 	 * @param prefix The prefix (ie. type) of call.
 	 * @param genericName The name of the call.
 	 * @param params Params to pass through.
+	 * @throws ChoobNoSuchCallException when the call didn't exist.
+	 * @throws ChoobInvocationError when the call threw an exception.
 	 */
-	abstract public Object doGeneric(String pluginName, String prefix, String genericName, Object... params) throws ChoobException;
+	abstract public Object doGeneric(String pluginName, String prefix, String genericName, Object... params) throws ChoobNoSuchCallException;
 }
 

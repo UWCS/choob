@@ -36,7 +36,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		this.dbConn = dbConn;
 	}
 
-	public final void begin() throws ChoobException
+	public final void begin()
 	{
 		try
 		{
@@ -48,7 +48,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	public final void commit() throws ChoobException
+	public final void commit()
 	{
 		try
 		{
@@ -60,7 +60,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	public final void rollback() throws ChoobException
+	public final void rollback()
 	{
 		try
 		{
@@ -72,7 +72,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	public final void finish() throws ChoobException
+	public final void finish()
 	{
 		try
 		{
@@ -92,7 +92,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	public final void cleanUp(Statement stat) throws ChoobException
+	public final void cleanUp(Statement stat)
 	{
 		try
 		{
@@ -105,34 +105,44 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	private final ChoobException sqlErr(SQLException e)
+	private final ChoobError sqlErr(SQLException e)
 	{
 		System.err.println("Ack! SQL Exception: " + e);
 		e.printStackTrace();
-		return new ChoobException("An SQL exception occurred while processing this operation.", e);
+		return new ChoobError("An SQL exception occurred while processing this operation.", e);
 	}
 
-	public final List<?> retrieve(final Class storedClass, String clause) throws ChoobException
+	public final List<?> retrieve(final Class storedClass, String clause)
 	{
-		checkPermission(storedClass);
 		String sqlQuery;
 
 		if ( clause != null )
 		{
+			ObjectDbClauseParser parser = new ObjectDbClauseParser(clause, storedClass.getName());
 			try
 			{
-				sqlQuery = ObjectDbClauseParser.getSQL(clause, storedClass.getName());
+				sqlQuery = parser.ParseSelect(null);
 			}
 			catch (ParseException e)
 			{
 				// TODO there's some public properties we can use to make a better error message.
 				System.err.println("Parse error in string: " + clause);
 				System.err.println("Error was: " + e);
-				throw new ChoobException("Parse error in clause string.");
+				throw new ObjectDBError("Parse error in clause string: " + clause);
 			}
+
+			// Make sure it's the right query type... (XXX Do we need to?)
+			if (parser.getType() != ObjectDbClauseParser.TYPE_SELECT)
+				throw new ObjectDBError("Clause string " + clause + " was not a SELECT clause.");
+
+			// Make sure we can read these classes...
+			List<String> classNames = parser.getUsedClasses();
+			for(String cls: classNames)
+				checkPermission(cls);
 		}
 		else
 		{
+			checkPermission(storedClass.getName());
 			sqlQuery = "SELECT ObjectStore.ClassID FROM ObjectStore WHERE ClassName = '" + storedClass.getName() + "';";
 		}
 
@@ -158,7 +168,7 @@ public class ObjectDBTransaction // Needs to be non-final
 			}
 			catch( NoSuchFieldException e )
 			{
-				throw new ChoobException("Object of type " + storedClass + " has no id field!");
+				throw new ObjectDBError("Object of type " + storedClass + " has no id field!");
 			}
 
 			if( allObjects.first() )
@@ -191,7 +201,8 @@ public class ObjectDBTransaction // Needs to be non-final
 					if (!result.first())
 					{
 						// Ooops. To quote Sadiq: Um, yeah...
-						throw new ChoobException ("Inconsistent database state: One or more objects of type " + storedClass.getName() + " in ObjectStore did not exist in ObjectStoreData.");
+						// Actually, this is rather objects not existing in ObjectStore when they, um, existed in ObjectStore.
+						throw new ObjectDBError ("Inconsistent database state: One or more objects of type " + storedClass.getName() + " in ObjectStore did not exist in ObjectStoreData.");
 					}
 					do // Loop over this block's results
 					{
@@ -271,12 +282,12 @@ public class ObjectDBTransaction // Needs to be non-final
 						catch (InstantiationException e)
 						{
 							System.err.println("Error instantiating object of type " + storedClass + ": " + e);
-							throw new ChoobException("The object could not be instantiated");
+							throw new ObjectDBError("The object could not be instantiated.");
 						}
 						catch (IllegalAccessException e)
 						{
 							System.err.println("Access error instantiating object of type " + storedClass + ": " + e);
-							throw new ChoobException("The object could not be instantiated");
+							throw new ObjectDBError("The object could not be instantiated.");
 						}
 					} while ( result.next() ); // Looping over objects
 				} while ( allObjsNext ); // Looping over blocks of IDs
@@ -295,10 +306,39 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	public final List<Integer> retrieveInt(Class storedClass, String clause) throws ChoobException
+	public final List<Integer> retrieveInt(Class storedClass, String clause)
 	{
-		checkPermission(storedClass);
 		String sqlQuery;
+
+		if ( clause != null )
+		{
+			ObjectDbClauseParser parser = new ObjectDbClauseParser(clause, storedClass.getName());
+			try
+			{
+				sqlQuery = parser.ParseSelect(null);
+			}
+			catch (ParseException e)
+			{
+				// TODO there's some public properties we can use to make a better error message.
+				System.err.println("Parse error in string: " + clause);
+				System.err.println("Error was: " + e);
+				throw new ObjectDBError("Parse error in clause string: " + clause);
+			}
+
+			// Make sure it's the right query type... (XXX Do we need to?)
+			if (parser.getType() != ObjectDbClauseParser.TYPE_SELECT)
+				throw new ObjectDBError("Clause string " + clause + " was not a SELECT clause.");
+
+			// Make sure we can read these classes...
+			List<String> classNames = parser.getUsedClasses();
+			for(String cls: classNames)
+				checkPermission(cls);
+		}
+		else
+		{
+			checkPermission(storedClass.getName());
+			sqlQuery = "SELECT ObjectStore.ClassID FROM ObjectStore WHERE ClassName = '" + storedClass.getName() + "';";
+		}
 
 		if ( clause != null )
 		{
@@ -311,7 +351,7 @@ public class ObjectDBTransaction // Needs to be non-final
 				// TODO there's some public properties we can use to make a better error message.
 				System.err.println("Parse error in string: " + clause);
 				System.err.println("Error was: " + e);
-				throw new ChoobException("Parse error in clause string.");
+				throw new ObjectDBError("Parse error in clause string.");
 			}
 		}
 		else
@@ -349,64 +389,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	private final void populateObject( Object tempObject, ResultSet result ) throws ChoobException
-	{
-		try
-		{
-			setId( tempObject, result.getInt(1) );
-
-			do
-			{
-				try
-				{
-					Field tempField = tempObject.getClass().getField( result.getString(2) );
-
-					Type theType = tempField.getType();
-
-					if( theType == String.class )
-					{
-						tempField.set( tempObject, result.getString(5) );
-					}
-					else if( theType == Integer.TYPE )
-					{
-						tempField.setInt( tempObject, (int)result.getLong(3) );
-					}
-					else if( theType == Long.TYPE )
-					{
-						tempField.setLong( tempObject, result.getLong(3) );
-					}
-					else if( theType == Boolean.TYPE )
-					{
-						tempField.setBoolean( tempObject, result.getLong(3) == 1 );
-					}
-					else if( theType == Float.TYPE )
-					{
-						tempField.setFloat( tempObject, (float)result.getDouble(4) );
-					}
-					else if( theType == Double.TYPE )
-					{
-						tempField.setDouble( tempObject, result.getDouble(4) );
-					}
-				}
-				catch( NoSuchFieldException e )
-				{
-					// Ignore this, as per spec.
-				}
-				catch( IllegalAccessException e )
-				{
-					// Should never happen, but if it does, it's because the field
-					// was declared private.
-				}
-			}
-			while( result.next() );
-		}
-		catch (SQLException e)
-		{
-			throw sqlErr(e);
-		}
-	}
-
-	private final int getId( Object obj ) throws ChoobException
+	private final int getId( Object obj )
 	{
 		try
 		{
@@ -421,11 +404,11 @@ public class ObjectDBTransaction // Needs to be non-final
 		catch( PrivilegedActionException e )
 		{
 			// Must be a NoSuchFieldException...
-			throw new ChoobException("Class " + obj.getClass() + " does not have a unique 'id' property. Please add one.");
+			throw new ObjectDBError("Class " + obj.getClass() + " does not have a unique 'id' property. Please add one.");
 		}
 	}
 
-	private final void setId( Object obj, int value ) throws ChoobException
+	private final void setId( Object obj, int value )
 	{
 		try
 		{
@@ -442,13 +425,13 @@ public class ObjectDBTransaction // Needs to be non-final
 		catch( PrivilegedActionException e )
 		{
 			// Must be a NoSuchFieldException...
-			throw new ChoobException("Class " + obj.getClass() + " does not have a unique 'id' property. Please add one.");
+			throw new ObjectDBError("Class " + obj.getClass() + " does not have a unique 'id' property. Please add one.");
 		}
 	}
 
-	public final void delete( Object strObj ) throws ChoobException
+	public final void delete( Object strObj )
 	{
-		checkPermission(strObj.getClass());
+		checkPermission(strObj.getClass().getName());
 		PreparedStatement delete = null, deleteData = null;
 		try
 		{
@@ -469,7 +452,7 @@ public class ObjectDBTransaction // Needs to be non-final
 			}
 			else
 			{
-				throw new ChoobException("Object for deletion does not exist.");
+				throw new ObjectDBError("Object for deletion does not exist.");
 			}
 
 			delete = dbConn.prepareStatement("DELETE FROM ObjectStore WHERE ObjectID = ?");
@@ -495,20 +478,20 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	public void update( Object strObject ) throws ChoobException
+	public void update( Object strObject )
 	{
 		delete( strObject );
 		save( strObject );
 	}
 
-	public void run() throws ChoobException
+	public void run()
 	{
-		throw new ChoobException("This transaction has no run() method...");
+		throw new ObjectDBError("This transaction has no run() method...");
 	}
 
-	public final void save( Object strObj ) throws ChoobException
+	public final void save( Object strObj )
 	{
-		checkPermission(strObj.getClass());
+		checkPermission(strObj.getClass().getName());
 		PreparedStatement stat = null, field;
 		try
 		{
@@ -637,17 +620,23 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	private final void checkPermission(Class objClass)
+	private Map<String,Object> permCache = new HashMap<String,Object>(); // Doesn't need sync.
+	private final void checkPermission(String objClass)
 	{
 		String plugin = mods.security.getPluginName(0);
+		String clsName = objClass.toLowerCase();
 		if (plugin != null)
 		{
 			String plugName = "plugins." + plugin.toLowerCase() + ".";
-			String objName = objClass.getName().toLowerCase();
-			if ( !objName.startsWith(plugName) )
-				AccessController.checkPermission(new ChoobPermission("objectdb."+objClass.getName().toLowerCase()));
+			if ( clsName.startsWith(plugName) )
+				return;
 		}
-		else
-			AccessController.checkPermission(new ChoobPermission("objectdb."+objClass.getName().toLowerCase()));
+		Object cache = permCache.get(clsName);
+		if (cache == null)
+		{
+			AccessController.checkPermission(new ChoobPermission("objectdb."+clsName));
+			permCache.put(clsName, new Object());
+		}
+		// Non-null cache ==> we passed this check before.
 	}
 }
