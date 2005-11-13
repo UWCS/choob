@@ -276,7 +276,7 @@ CALL compile
 IF ERRORLEVEL 1 GOTO :do-run-compile-error
 COPY ..\.svn\dir-wcprops svn.data >nul
 ECHO ==== Running... ====
-CALL run
+CALL run once
 IF "%ERRORLEVEL%"=="0" GOTO :EOF
 :do-run-compile-error
 
