@@ -385,7 +385,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 	private ChoobTask callCommand(final Method meth, final Object param)
 	{
-		String pluginName = meth.getDeclaringClass().getSimpleName();
+		final String pluginName = meth.getDeclaringClass().getSimpleName();
 		final Object plugin = allPlugins.getPluginObj(pluginName);
 		Object[] params;
 		if (meth.getParameterTypes().length == 1)
@@ -408,7 +408,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 						Throwable cause = e.getCause();
 
 						irc.sendContextReply((Message)param,
-							mods.plugin.exceptionReply(cause));
+							mods.plugin.exceptionReply(cause, pluginName));
 					}
 					System.err.println("Exception invoking method " + meth);
 					e.getCause().printStackTrace();

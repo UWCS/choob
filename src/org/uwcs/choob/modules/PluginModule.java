@@ -134,14 +134,26 @@ public final class PluginModule
 			throw new ChoobNoSuchCallException(pluginName, "command " + command);
 	}
 
-	public String exceptionReply(Throwable e)
+	public String exceptionReply(Throwable e, String pluginName)
 	{
-		if (e instanceof ChoobException || e instanceof ChoobError)
-			return e.getMessage();
-		else if (e instanceof AccessControlException)
-			return "D'oh! A plugin needs permission " + ChoobAuthError.getPermissionText(((AccessControlException)e).getPermission()) + "!";
+		if (pluginName == null)
+		{
+			if (e instanceof ChoobException || e instanceof ChoobError)
+				return "A plugin went wrong: " + e.getMessage();
+			else if (e instanceof AccessControlException)
+				return "D'oh! A plugin needs permission " + ChoobAuthError.getPermissionText(((AccessControlException)e).getPermission()) + "!";
+			else
+				return "The plugin author was too lazy to trap the exception: " + e;
+		}
 		else
-			return "The plugin author was too lazy to trap the exception: " + e;
+		{
+			if (e instanceof ChoobException || e instanceof ChoobError)
+				return "Plugin " + pluginName + " went wrong: " + e.getMessage();
+			else if (e instanceof AccessControlException)
+				return "D'oh! Plugin " + pluginName + " needs permission " + ChoobAuthError.getPermissionText(((AccessControlException)e).getPermission()) + "!";
+			else
+				return "The author of plugin " + pluginName + " was too lazy to trap the exception: " + e;
+		}
 	}
 
 	public ChoobTask doInterval(String plugin, Object param)

@@ -277,9 +277,9 @@ public final class Choob extends PircBot
 	 */
 	public String getTriggerRegex()
 	{
-		return trigger +
-				"|" + getName().replaceAll("([^a-zA-Z0-9-])", "\\\\$1") + "[,:]\\s+" +
-				"|bot[,:]\\s+";
+		return "^(?:" +trigger +
+				"|" + getName().replaceAll("([^a-zA-Z0-9-])", "\\\\$1") + "[,:]\\s*" +
+				"|bot[,:]\\s*)";
 	}
 
 	/**

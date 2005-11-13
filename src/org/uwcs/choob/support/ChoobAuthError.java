@@ -22,14 +22,14 @@ public abstract class ChoobAuthError extends ChoobError
 
 		String name = permission.getName();
 		String actions = permission.getActions();
-		if (name != null)
+		if (name != null && !name.equals(""))
 		{
 			output += " with name \"" + name + "\"";
-			if (actions != null)
+			if (actions != null && !actions.equals(""))
 				output += " and actions \"" + actions + "\"";
 		}
-		else if (actions != null)
-			output += " and actions \"" + actions + "\"";
+		else if (actions != null && !actions.equals(""))
+			output += " with actions \"" + actions + "\"";
 
 		return output;
 	}

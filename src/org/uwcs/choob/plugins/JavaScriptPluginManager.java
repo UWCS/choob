@@ -255,7 +255,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 
 				} catch (Exception e) {
 					if (params[0] instanceof Message) {
-						irc.sendContextReply((Message)params[0], mods.plugin.exceptionReply(e));
+						irc.sendContextReply((Message)params[0], mods.plugin.exceptionReply(e, pluginName));
 					} else {
 						System.err.println("Exception calling export " + export.getName() + ":");
 						e.printStackTrace();
