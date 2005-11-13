@@ -154,7 +154,7 @@ public class Test
 		irc.sendMessage("#bots", "Boo! Plugin reloaded! Name is: " + mes.getPluginName());
 	}*/
 
-	public void commandWhoreApi ( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	/*public void commandWhoreApi ( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
 	{
 		for(int i=0; i < 100000; i++)
 			try { mods.plugin.callAPI("Test", "Whore", "Iteration" + i, mes); } catch ( ChoobNoSuchCallException e ) { }
@@ -164,5 +164,141 @@ public class Test
 	public void apiWhore(String text, Message mes)
 	{
 		//System.out.println("Whorage called by " + mes.getNick() + ": " + text);
-	}
+	}*/
+
+	/*public void commandWhoreODB ( final Message mes, final Modules mods, final IRCInterface irc ) throws ChoobException
+	{
+		mods.odb.runTransaction( new ObjectDBTransaction() { public void run() {
+		int n = 1000;
+		int count;
+		irc.sendContextReply(mes, "Beginning whorage. n = " + n);
+		long time1, time2, time3;
+		List results = null;
+
+		TestObj1 t1 = new TestObj1();
+		for(int i=1; i<n+10; i++)
+		{
+			t1.id = i;
+			//try { mods.odb.delete(t1); } catch (Exception e) { }
+			try { delete(t1); } catch (Exception e) { }
+		}
+		time1 = System.currentTimeMillis();
+		for(int i=1; i<n+1; i++)
+		{
+			t1.id = i;
+			//try { mods.odb.save(t1); } catch (Exception e) { }
+			try { save(t1); } catch (Exception e) { }
+		}
+		time2 = System.currentTimeMillis();
+		//try { results = mods.odb.retrieve(TestObj1.class, null); } catch ( Exception e ) { };
+		try { results = retrieve(TestObj1.class, null); } catch ( Exception e ) { };
+		time3 = System.currentTimeMillis();
+
+		irc.sendContextReply(mes, "End of stage 1. Time differences: " + (time2 - time1) + ", " + (time3 - time2) + ", size is " + results.size() + ".");
+
+		TestObj2 t2 = new TestObj2();
+		t2.var1 = "Supacalafragalistic";
+		t2.var2 = "Supacalafragalistic";
+		t2.var3 = "Supacalafragalistic";
+		t2.var4 = "Supacalafragalistic";
+		t2.var5 = "Supacalafragalistic";
+		t2.var6 = "Supacalafragalistic";
+		t2.var7 = "Supacalafragalistic";
+		t2.var8 = "Supacalafragalistic";
+		t2.var9 = "Supacalafragalistic";
+		t2.var10 = "Supacalafragalistic";
+		for(int i=1; i<n+10; i++)
+		{
+			t2.id = i;
+			//try { mods.odb.delete(t2); } catch (Exception e) { }
+			try { delete(t2); } catch (Exception e) { }
+		}
+		time1 = System.currentTimeMillis();
+		for(int i=1; i<n+1; i++)
+		{
+			t2.id = i;
+			//try { mods.odb.save(t2); } catch (Exception e) { }
+			try { save(t2); } catch (Exception e) { }
+		}
+		time2 = System.currentTimeMillis();
+		//try { results = mods.odb.retrieve(TestObj2.class, null); } catch ( Exception e ) { };
+		try { results = retrieve(TestObj2.class, null); } catch ( Exception e ) { };
+		time3 = System.currentTimeMillis();
+
+		irc.sendContextReply(mes, "End of stage 2. Time differences: " + (time2 - time1) + ", " + (time3 - time2) + ", size is " + results.size() + ".");
+
+		TestObj3 t3 = new TestObj3();
+		t3.var1 = 9999;
+		t3.var2 = 9999;
+		t3.var3 = 9999;
+		t3.var4 = 9999;
+		t3.var5 = 9999;
+		t3.var6 = 9999;
+		t3.var7 = 9999;
+		t3.var8 = 9999;
+		t3.var9 = 9999;
+		t3.var10 = 9999;
+		for(int i=1; i<n+10; i++)
+		{
+			t3.id = i;
+			//try { mods.odb.delete(t3); } catch (Exception e) { }
+			try { delete(t3); } catch (Exception e) { }
+		}
+		time1 = System.currentTimeMillis();
+		for(int i=1; i<n+1; i++)
+		{
+			t3.id = i;
+			//try { mods.odb.save(t3); } catch (Exception e) { }
+			try { save(t3); } catch (Exception e) { }
+		}
+		time2 = System.currentTimeMillis();
+		//try { results = mods.odb.retrieve(TestObj3.class, null); } catch ( Exception e ) { };
+		count = 0;
+		for(int i=1; i<n+1; i++)
+		{
+			t3.id = i;
+			//try { mods.odb.save(t3); } catch (Exception e) { }
+			try { retrieve(TestObj3.class, "WHERE id = " + i); count++; } catch (Exception e) { }
+		}
+		//try { results = retrieve(TestObj3.class, null); } catch ( Exception e ) { };
+		time3 = System.currentTimeMillis();
+
+		irc.sendContextReply(mes, "End of stage 3. Time differences: " + (time2 - time1) + ", " + (time3 - time2) + ", size is " + count + ".");
+		} } );
+	} */
 }
+
+/*public class TestObj1
+{
+	public int id;
+}
+
+public class TestObj2
+{
+	public int id;
+	public String var1;
+	public String var2;
+	public String var3;
+	public String var4;
+	public String var5;
+	public String var6;
+	public String var7;
+	public String var8;
+	public String var9;
+	public String var10;
+}
+
+public class TestObj3
+{
+	public int id;
+	public int var1;
+	public int var2;
+	public int var3;
+	public int var4;
+	public int var5;
+	public int var6;
+	public int var7;
+	public int var8;
+	public int var9;
+	public int var10;
+}*/

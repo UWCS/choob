@@ -163,6 +163,7 @@ public class ObjectDBTransaction // Needs to be non-final
 
 			if( allObjects.first() )
 			{
+				boolean allObjsNext = false;
 				do // Loop over all objects
 				{
 					// Eat this and maybe some more elements...
@@ -172,7 +173,8 @@ public class ObjectDBTransaction // Needs to be non-final
 					{
 						ids[count] = allObjects.getInt(1);
 						count++;
-					} while (allObjects.next() && count < MAXOR);
+						allObjsNext = allObjects.next();
+					} while (allObjsNext && count < MAXOR - 1);
 
 					// Build a query to get values for them...
 					StringBuffer query = new StringBuffer(baseQuery);
@@ -215,6 +217,12 @@ public class ObjectDBTransaction // Needs to be non-final
 									}
 
 									String name = result.getString(2);
+									if (name == null)
+									{
+										// XXX This is forbidden by the schema, yet happens when the DB is broken.
+										// Ie there's a null object.
+										continue;
+									}
 									Field tempField = fieldCache.get(name);
 									if (tempField == null)
 									{
@@ -271,7 +279,7 @@ public class ObjectDBTransaction // Needs to be non-final
 							throw new ChoobException("The object could not be instantiated");
 						}
 					} while ( result.next() ); // Looping over objects
-				} while ( allObjects.next() ); // Looping over blocks of IDs
+				} while ( allObjsNext ); // Looping over blocks of IDs
 			}
 
 			return objects;
