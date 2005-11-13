@@ -45,7 +45,7 @@ public class Quote
 {
 	private static int MINLENGTH = 7; // Minimum length of a line to be quotable using simple syntax.
 	private static int MINWORDS = 2; // Minimum words in a line to be quotable using simple syntax.
-	private static int HISTORY = 30; // Lines of history to search.
+	private static int HISTORY = 100; // Lines of history to search.
 	private static int EXCERPT = 40; // Maximum length of excerpt text in replies to create.
 	private static int MAXLINES = 10; // Maximum allowed lines in a quote.
 	private static int MAXCLAUSES = 20; // Maximum allowed lines in a quote.
@@ -362,15 +362,15 @@ public class Quote
 		} //*/
 
 		// OK, build a QuoteObject...
-		final QuoteObject q = new QuoteObject();
-		q.id = 0;
-		q.quoter = mods.nick.getBestPrimaryNick(mes.getNick());
-		q.hostmask = (mes.getLogin() + "@" + mes.getHostname()).toLowerCase();
-		q.lines = lines.size();
-		q.score = 0;
-		q.up = 0;
-		q.down = 0;
-		q.time = System.currentTimeMillis();
+		final QuoteObject quote = new QuoteObject();
+		quote.id = 0;
+		quote.quoter = mods.nick.getBestPrimaryNick(mes.getNick());
+		quote.hostmask = (mes.getLogin() + "@" + mes.getHostname()).toLowerCase();
+		quote.lines = lines.size();
+		quote.score = 0;
+		quote.up = 0;
+		quote.down = 0;
+		quote.time = System.currentTimeMillis();
 
 		// QuoteLine object; quoteID will be filled in later.
 
@@ -379,34 +379,144 @@ public class Quote
 		mods.odb.runTransaction( new ObjectDBTransaction() {
 			public void run()
 		{
-			save(q);
+			save(quote);
 
 			// Now have a quote ID!
 			for(int i=0; i<lines.size(); i++)
 			{
-				QuoteLine ql = new QuoteLine();
-				ql.quoteID = q.id;
-				ql.id = 0;
-				ql.lineNumber = i;
-				ql.nick = lines.get(i).getNick();
-				ql.message = lines.get(i).getMessage();
-				ql.isAction = (lines.get(i) instanceof ChannelAction);
-				save(ql);
-				quoteLines.add(ql);
+				QuoteLine quoteLine = new QuoteLine();
+				quoteLine.quoteID = quote.id;
+				quoteLine.id = 0;
+				quoteLine.lineNumber = i;
+				quoteLine.nick = lines.get(i).getNick();
+				quoteLine.message = lines.get(i).getMessage();
+				quoteLine.isAction = (lines.get(i) instanceof ChannelAction);
+				save(quoteLine);
+				quoteLines.add(quoteLine);
 			}
 		}});
 
 		// Remember this quote for later...
-		addLastQuote(mes.getContext(), q);
+		addLastQuote(mes.getContext(), quote, 1);
 
-		irc.sendContextReply( mes, "OK, added quote " + q.id + ": " + formatPreview(quoteLines) );
+		irc.sendContextReply( mes, "OK, added quote " + quote.id + ": " + formatPreview(quoteLines) );
 	}
 
-	private String formatPreview(List lines)
+	public String[] helpCommandAdd = {
+		"Add a quote to the database.",
+		"<Nick> <Text> [ ||| <Nick> <Text> ... ]",
+		"the nickname of the person who said the text (of the form '<nick>' or '* nick' or just simply 'nick')",
+		"the text that was actually said"
+	};
+	public java.security.Permission permissionCommandAdd = new ChoobPermission("plugins.quote.add");
+	public void commandAdd(Message mes)
+	{
+		mods.security.checkNickPerm(permissionCommandAdd, mes.getNick());
+
+		String params = mods.util.getParamString( mes );
+
+		String[] lines = params.split("\\s+\\|\\|\\|\\s+");
+
+		final QuoteLine[] content = new QuoteLine[lines.length];
+
+		for(int i=0; i<lines.length; i++)
+		{
+			String line = lines[i];
+			String nick, text;
+			boolean action = false;
+			if (line.charAt(0) == '*')
+			{
+				int spacePos1 = line.indexOf(' ');
+				if (spacePos1 == -1)
+				{
+					irc.sendContextReply(mes, "Line " + i + " was invalid!");
+					return;
+				}
+				int spacePos2 = line.indexOf(' ', spacePos1 + 1);
+				if (spacePos2 == -1)
+				{
+					irc.sendContextReply(mes, "Line " + i + " was invalid!");
+					return;
+				}
+				nick = line.substring(spacePos1 + 1, spacePos2);
+				text = line.substring(spacePos2 + 1);
+				action = true;
+			}
+			else if (line.charAt(0) == '<')
+			{
+				int spacePos = line.indexOf(' ');
+				if (spacePos == -1)
+				{
+					irc.sendContextReply(mes, "Line " + i + " was invalid!");
+					return;
+				}
+				else if (line.charAt(spacePos - 1) != '>')
+				{
+					irc.sendContextReply(mes, "Line " + i + " was invalid!");
+					return;
+				}
+				nick = line.substring(1, spacePos - 1);
+				text = line.substring(spacePos + 1);
+			}
+			else
+			{
+				int spacePos = line.indexOf(' ');
+				if (spacePos == -1)
+				{
+					irc.sendContextReply(mes, "Line " + i + " was invalid!");
+					return;
+				}
+				nick = line.substring(0, spacePos);
+				text = line.substring(spacePos + 1);
+			}
+			QuoteLine quoteLine = new QuoteLine();
+			quoteLine.id = 0;
+			quoteLine.lineNumber = i;
+			quoteLine.nick = nick;
+			quoteLine.message = text;
+			quoteLine.isAction = action;
+			content[i] = quoteLine;
+		}
+
+		final QuoteObject quote = new QuoteObject();
+		quote.id = 0;
+		quote.quoter = mods.nick.getBestPrimaryNick(mes.getNick());
+		quote.hostmask = (mes.getLogin() + "@" + mes.getHostname()).toLowerCase();
+		quote.lines = lines.length;
+		quote.score = 0;
+		quote.up = 0;
+		quote.down = 0;
+		quote.time = System.currentTimeMillis();
+
+		// QuoteLine object; quoteID will be filled in later.
+
+		final List quoteLines = new ArrayList(lines.length);
+
+		mods.odb.runTransaction( new ObjectDBTransaction() {
+			public void run()
+		{
+			save(quote);
+
+			// Now have a quote ID!
+			for(int i=0; i<content.length; i++)
+			{
+				QuoteLine quoteLine = content[i];
+				quoteLine.quoteID = quote.id;
+				save(quoteLine);
+				quoteLines.add(quoteLine);
+			}
+		}});
+
+		addLastQuote(mes.getContext(), quote, 1);
+
+		irc.sendContextReply( mes, "OK, added quote " + quote.id + ": " + formatPreview(quoteLines) );
+	}
+
+	private String formatPreview(List<QuoteLine> lines)
 	{
 		if (lines.size() == 1)
 		{
-			QuoteLine line = (QuoteLine)lines.get(0);
+			QuoteLine line = lines.get(0);
 			String text;
 			if (line.message.length() > EXCERPT)
 				text = line.message.substring(0, 27) + "...";
@@ -422,7 +532,7 @@ public class Quote
 		else
 		{
 			// last is initalised above
-			QuoteLine first = (QuoteLine)lines.get(0);
+			QuoteLine first = lines.get(0);
 
 			String firstText;
 			if (first.isAction)
@@ -434,7 +544,7 @@ public class Quote
 			else
 				firstText += " " + first.message;
 
-			QuoteLine last = (QuoteLine)lines.get(lines.size() - 1);
+			QuoteLine last = lines.get(lines.size() - 1);
 			String lastText;
 			if (last.isAction)
 				lastText = "* " + last.nick;
@@ -483,10 +593,10 @@ public class Quote
 		}
 
 		// Remember this quote for later...
-		addLastQuote(mes.getContext(), quote);
+		addLastQuote(mes.getContext(), quote, 0);
 	}
 
-	public String[] helpApieSingleLineQuote = {
+	public String[] helpApiSingleLineQuote = {
 		"Get a single line quote from the specified nickname, optionally adding it to the recent quotes list for the passed context.",
 		"Either the single line quote, or null if there was none.",
 		"<nick> [<context>]",
@@ -514,7 +624,7 @@ public class Quote
 		}
 
 		if (context != null)
-			addLastQuote(context, quote);
+			addLastQuote(context, quote, 0);
 
 		QuoteLine line = lines.get(0);
 
@@ -524,7 +634,7 @@ public class Quote
 			return line.message;
 	}
 
-	private void addLastQuote(String context, QuoteObject quote)
+	private void addLastQuote(String context, QuoteObject quote, int type)
 	{
 		synchronized(recentQuotes)
 		{
@@ -538,7 +648,7 @@ public class Quote
 			RecentQuote info = new RecentQuote();
 			info.quote = quote;
 			info.time = System.currentTimeMillis();
-			info.type = 0;
+			info.type = type;
 
 			recent.add(0, info);
 
