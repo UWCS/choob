@@ -110,11 +110,6 @@ public class Security
 			irc.sendContextReply( mes, "The user could not be deleted: " + e );
 			return;
 		}
-		catch ( SecurityException e )
-		{
-			irc.sendContextReply( mes, "Urgh. We got a security exception." );
-			return;
-		}
 		irc.sendContextReply( mes, "OK, user added!" );
 	}
 
@@ -166,12 +161,19 @@ public class Security
 			}
 		}
 
+		StringBuffer output = new StringBuffer();
 		for(int i=1; i<params.size(); i++)
 		{
+			if (i == 1) {}
+			else if (i == params.size() - 1)
+				output.append(" and ");
+			else
+				output.append(", ");
+			output.append(((String)params.get(i)).toLowerCase());
 			nicks.add(((String)params.get(i)).toLowerCase());
 		}
 
-		irc.sendContextReply(mes, "OK, ready to link to " + rootName + ". Change nickname, identify, then use \"Security.Link " + rootName + "\".");
+		irc.sendContextReply(mes, "OK, ready to link " + output + " to " + rootName + ". Change nickname, identify, then use \"Security.Link " + rootName + "\".");
 	}
 
 	public String[] helpCommandLink = {
@@ -224,11 +226,6 @@ public class Security
 		catch ( ChoobException e )
 		{
 			irc.sendContextReply( mes, "The user could not be linked: " + e );
-			return;
-		}
-		catch ( SecurityException e )
-		{
-			irc.sendContextReply( mes, "Urgh. We got a security exception." );
 			return;
 		}
 		irc.sendContextReply( mes, "OK, user " + leafName + " linked to root " + rootName + "!");
@@ -310,11 +307,6 @@ public class Security
 			irc.sendContextReply( mes, "The group could not be added: " + e );
 			return;
 		}
-		catch ( SecurityException e )
-		{
-			irc.sendContextReply( mes, "Urgh. We got a security exception." );
-			return;
-		}
 		irc.sendContextReply( mes, "OK, group added!" );
 	}
 
@@ -387,11 +379,6 @@ public class Security
 		catch ( ChoobException e )
 		{
 			irc.sendContextReply( mes, "The membership could not be altered: " + e );
-			return;
-		}
-		catch ( SecurityException e )
-		{
-			irc.sendContextReply( mes, "Urgh. We got a security exception." );
 			return;
 		}
 		irc.sendContextReply( mes, "OK, membership of " + childName + " in " + parentName + " altered!" );
@@ -544,11 +531,6 @@ public class Security
 			irc.sendContextReply( mes, "The permission could not be changed: " + e );
 			return;
 		}
-		catch ( SecurityException e )
-		{
-			irc.sendContextReply( mes, "Urgh. We got a security exception." );
-			return;
-		}
 		irc.sendContextReply( mes, "OK, permission changed!" );
 	}
 
@@ -605,11 +587,6 @@ public class Security
 		catch ( ChoobException e )
 		{
 			irc.sendContextReply( mes, "The permission could not be found: " + e );
-			return;
-		}
-		catch ( SecurityException e )
-		{
-			irc.sendContextReply( mes, "Urgh. We got a security exception." );
 			return;
 		}
 	}
