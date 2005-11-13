@@ -59,13 +59,13 @@ public class Test
 		if (params.size() > 1) {
 			System.exit(new Integer(params.get(1)));
 		} else {
-			System.exit(1);
+			System.exit(0);
 		}
 	}
 
 	public void commandRestart( Message con, Modules mods, IRCInterface irc )
 	{
-		System.exit(2);
+		System.exit(1);
 	}
 
 	// Define the regex for the KarmaPlus filter.

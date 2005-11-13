@@ -1,5 +1,9 @@
 #!/bin/sh
 
+#####
+# PLEASE UPDATE compile.bat when you change this file (at least add a "REM FIXME")
+#####
+
 # Icky compile script but it'll work. For now.
 
 # Check for updates of HorriblePerlScript!

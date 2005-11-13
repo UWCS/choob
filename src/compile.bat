@@ -1,5 +1,9 @@
 @ECHO OFF
 
+REM #####
+REM # PLEASE UPDATE compile.sh when you change this file (at least add a "# FIXME")
+REM #####
+
 REM Windows version of icky compile script but it'll work. For now.
 
 REM This checks which file is newer. It's not nice, but it'll work.
@@ -10,10 +14,26 @@ IF "%CompareFileDates%"=="1" (
 	java -cp misc org.uwcs.choob.misc.HorriblePerlScript
 )
 
+CALL :compare-file-dates org\uwcs\choob\support\ObjectDbClauseParser.jjt org\uwcs\choob\support\ObjectDbClauseParser.java
+IF "%CompareFileDates%"=="1" (
+	ECHO Recompiling ObjectDB parser...
+	jjtree -OUTPUT_DIRECTORY=org/uwcs/choob/support org/uwcs/choob/support/ObjectDbClauseParser.jjt
+	IF NOT "%ERRORLEVEL%"=="0" (
+		ECHO Failed to JJT-compile the ObjectDB Clause Parser.
+		EXIT /B 1
+	)
+	javacc -OUTPUT_DIRECTORY=org/uwcs/choob/support org/uwcs/choob/support/ObjectDbClauseParser.jj
+	IF NOT "%ERRORLEVEL%"=="0" (
+		ECHO Failed to JJ-compile the ObjectDB Clause Parser.
+		EXIT /B 1
+	)
+)
+
 javac -classpath .;lib/c3p0-0.9.0.2.jar;lib/msnm.jar;lib/jcfd.jar;lib/jazzy-core.jar;lib/bsh-2.0b4.jar;lib/mysql-connector-java-3.1.10-bin.jar;lib/pircbot.jar;lib/js-rhino-1.6r2.jar org/uwcs/choob/*.java org/uwcs/choob/support/*.java org/uwcs/choob/modules/*.java org/uwcs/choob/plugins/*.java org/uwcs/choob/support/events/*.java %1 %2 %3
 GOTO :EOF
 
 
+REM ##### Utility functions:
 
 :compare-file-dates
 REM Results (in %CompareFiles%):
