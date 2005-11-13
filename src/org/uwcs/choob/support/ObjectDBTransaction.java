@@ -506,6 +506,8 @@ public class ObjectDBTransaction // Needs to be non-final
 		{
 			int id = getId( strObj );
 
+			boolean setId = false;
+
 			if( id == 0 )
 			{
 				stat = dbConn.prepareStatement("SELECT MAX(ClassID) FROM ObjectStore WHERE ClassName = ?;");
@@ -521,7 +523,7 @@ public class ObjectDBTransaction // Needs to be non-final
 
 				stat.close();
 
-				setId( strObj, id );
+				setId = true;
 			}
 
 			int objId = 0;
@@ -645,6 +647,10 @@ public class ObjectDBTransaction // Needs to be non-final
 					}
 				}
 			}
+
+			// Set the ID only AFTER we store!
+			if (setId)
+				setId( strObj, id );
 		}
 		catch (SQLException e)
 		{

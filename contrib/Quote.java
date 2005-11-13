@@ -363,7 +363,6 @@ public class Quote
 
 		// OK, build a QuoteObject...
 		final QuoteObject quote = new QuoteObject();
-		quote.id = 0;
 		quote.quoter = mods.nick.getBestPrimaryNick(mes.getNick());
 		quote.hostmask = (mes.getLogin() + "@" + mes.getHostname()).toLowerCase();
 		quote.lines = lines.size();
@@ -379,9 +378,11 @@ public class Quote
 		mods.odb.runTransaction( new ObjectDBTransaction() {
 			public void run()
 		{
+			quote.id = 0;
 			save(quote);
 
 			// Now have a quote ID!
+			quoteLines.clear();
 			for(int i=0; i<lines.size(); i++)
 			{
 				QuoteLine quoteLine = new QuoteLine();
@@ -470,7 +471,6 @@ public class Quote
 				text = line.substring(spacePos + 1);
 			}
 			QuoteLine quoteLine = new QuoteLine();
-			quoteLine.id = 0;
 			quoteLine.lineNumber = i;
 			quoteLine.nick = nick;
 			quoteLine.message = text;
@@ -479,7 +479,6 @@ public class Quote
 		}
 
 		final QuoteObject quote = new QuoteObject();
-		quote.id = 0;
 		quote.quoter = mods.nick.getBestPrimaryNick(mes.getNick());
 		quote.hostmask = (mes.getLogin() + "@" + mes.getHostname()).toLowerCase();
 		quote.lines = lines.length;
@@ -495,13 +494,17 @@ public class Quote
 		mods.odb.runTransaction( new ObjectDBTransaction() {
 			public void run()
 		{
+			// Have to set ID etc. here in case transaction blows up.
+			quote.id = 0;
 			save(quote);
 
 			// Now have a quote ID!
+			quoteLines.clear();
 			for(int i=0; i<content.length; i++)
 			{
 				QuoteLine quoteLine = content[i];
 				quoteLine.quoteID = quote.id;
+				quoteLine.id = 0;
 				save(quoteLine);
 				quoteLines.add(quoteLine);
 			}

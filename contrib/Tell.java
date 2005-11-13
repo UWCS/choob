@@ -114,6 +114,7 @@ public class Tell
 				{
 					public void run()
 		{
+			done.clear();
 			for(int i=0; i<targets.length; i++)
 		{
 			tellObj.id = 0;
