@@ -1037,7 +1037,7 @@ public class Quote
 
 		StringBuffer search = new StringBuffer();
 		for(int i=0; i<joins; i++)
-			search.append("WITH AS join" + i + " " + QuoteLine.class.getName() + " ");
+			search.append("WITH " + QuoteLine.class.getName() + " AS join" + i + " ");
 		if (clauses.size() > 0)
 		{
 			search.append("WHERE ");

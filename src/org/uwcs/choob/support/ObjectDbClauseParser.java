@@ -11,16 +11,15 @@
   protected JJTObjectDbClauseParserState jjtree = new JJTObjectDbClauseParserState();private int joins = 0;
                 private List joinList = new ArrayList();
                 private Map nameMap = new HashMap();
-                private String sortOrder = "";
-                private String limitTo = "";
-                private String selClause = "s0.ClassID";
                 private List classList = new ArrayList();
                 private Map classMap = new HashMap();
                 private Map fieldClass = new HashMap();
+                private String joinWhere = null;
 
                 // Negative values indicate nonspecific types.
                 private static final int
                         HINT_NUMERIC = -1,
+                        HINT_UNKNOWN = 0,
                         HINT_INTEGER = 1,
                         HINT_FLOAT = 2,
                         HINT_ID = 3,
@@ -52,25 +51,32 @@
                         parser.classList.add(className);
                         parser.classMap.put(className.toLowerCase(), new Integer(0));
 
-                        StringBuffer whereClause = new StringBuffer("("+parser.SQL()+")");
+                        return parser.ODBExpr();
+                }
+
+                public String getTableJoin()
+                {
                         StringBuffer joinText = new StringBuffer();
-                        for (int i=0; i<parser.classList.size(); i++)
+                        StringBuffer whereText = new StringBuffer("(1");
+                        for (int i=0; i<classList.size(); i++)
                         {
-                                String classN = (String)parser.classList.get(i);
+                                String classN = (String)classList.get(i);
                                 joinText.append("ObjectStore s"+i);
-                                whereClause.append(" && s"+i+".ClassName = \"" + classN + "\"");
-                                if (i < parser.classList.size() - 1)
+                                whereText.append(" AND s"+i+".ClassName = \"" + classN + "\"");
+                                if (i < classList.size() - 1)
                                         joinText.append(" INNER JOIN ");
                         }
-                        for(int i=0; i<parser.joinList.size(); i++)
+                        for (int i=0; i<joinList.size(); i++)
                         {
                                 joinText.append(" INNER JOIN ");
-                                String fullName = (String)parser.joinList.get(i);
+                                String fullName = (String)joinList.get(i);
                                 int pos = fullName.lastIndexOf('.');
                                 String fieldName = fullName.substring(pos + 1);
-                                joinText.append("ObjectStoreData o" + i + " ON s"+parser.fieldClass.get(fullName)+".ObjectID = o" + i + ".ObjectID AND o" + i + ".FieldName = \"" + fieldName + "\"");
+                                joinText.append("ObjectStoreData o" + i + " ON s"+fieldClass.get(fullName)+".ObjectID = o" + i + ".ObjectID AND o" + i + ".FieldName = \"" + fieldName + "\"");
                         }
-                        return "SELECT " + parser.selClause + " FROM " + joinText.toString() + " WHERE " + whereClause.toString() + " GROUP BY s0.ClassID " + parser.sortOrder + parser.limitTo;
+                        whereText.append(")");
+                        joinWhere = whereText.toString();
+                        return joinText.toString();
                 }
 
                 public String getFieldName(String name) throws ParseException
@@ -119,6 +125,29 @@
                                         throw new ParseException("Root node has a number of children other than 1. This should be impossible!");
                                 return parseExpression((SimpleNode)expr.jjtGetChild(0), hint);
                         }
+                        else if (expr instanceof ObjectDBClauseNodeExpressionList)
+                        {
+                                StringBuffer buf = new StringBuffer();
+                                for(int i=0; i<expr.jjtGetNumChildren(); i++)
+                                {
+                                        if (i != 0)
+                                                buf.append(", ");
+                                        buf.append(parseExpression((SimpleNode)expr.jjtGetChild(i), hint));
+                                }
+                                return buf.toString();
+                        }
+                        else if (expr instanceof ObjectDBClauseNodeFunction)
+                        {
+                                StringBuffer buf = new StringBuffer(expr.getName()+"(");
+                                for(int i=0; i<expr.jjtGetNumChildren(); i++)
+                                {
+                                        if (i != 0)
+                                                buf.append(", ");
+                                        buf.append(parseExpression((SimpleNode)expr.jjtGetChild(i), hint));
+                                }
+                                buf.append(")");
+                                return buf.toString();
+                        }
                         else if (expr instanceof ObjectDBClauseNodeAdd)
                         {
                                 StringBuffer buf = new StringBuffer();
@@ -149,7 +178,9 @@
                         {
                                 // The only really tricky one...
                                 int thingHint = expr.getHint() != 0 ? expr.getHint() : hint;
-                                String prefix = expr.getName();
+                                if (thingHint == 0)
+                                        thingHint = HINT_STRING;
+                                String prefix = getFieldName(expr.getName());
                                 if (thingHint == HINT_INTEGER)
                                         return prefix + ".FieldBigInt";
                                 else if (thingHint == HINT_FLOAT)
@@ -227,10 +258,92 @@
                                 return HINT_STRING;
                 }
 
-  final public String SQL() throws ParseException {
-                String s;
+                public String join(List list)
+                {
+                        if (list.size() == 0)
+                                return "";
+                        StringBuffer buf = new StringBuffer();
+                        boolean first = true;
+                        Iterator it = list.iterator();
+                        while(it.hasNext())
+                        {
+                                if (first)
+                                        first = false;
+                                else
+                                        buf.append(", ");
+                                buf.append((String)it.next());
+                        }
+                        return buf.toString();
+                }
+
+  final public String ODBExpr() throws ParseException {
+                String s = null, t;
                 StringBuffer b = new StringBuffer();
-                boolean clause = false;
+                SimpleNode l;
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case K_SELECT:
+      jj_consume_token(K_SELECT);
+      l = ExpressionList();
+      t = ParseSelect(l);
+                          {if (true) return t;}
+      break;
+    case K_INSERT:
+      jj_consume_token(K_INSERT);
+      t = ParseInsert();
+                          {if (true) return t;}
+      break;
+    case K_UPDATE:
+      jj_consume_token(K_UPDATE);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case K_TABLE:
+        jj_consume_token(K_TABLE);
+        break;
+      default:
+        jj_la1[0] = jj_gen;
+        ;
+      }
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case FIELDNAME:
+        s = ClassName();
+        break;
+      default:
+        jj_la1[1] = jj_gen;
+        ;
+      }
+                                if (s == null)
+                                {
+                                        if (classList.size() > 0)
+                                                s = (String)classList.get(0);
+                                        else
+                                                {if (true) throw new ParseException("No table specified for tableless UPDATE");}
+                                }
+      t = ParseUpdate(s);
+                          {if (true) return t;}
+      break;
+    case K_DELETE:
+      jj_consume_token(K_DELETE);
+      t = ParseDelete();
+                          {if (true) return t;}
+      break;
+    default:
+      jj_la1[2] = jj_gen;
+      t = ParseSelect(null);
+                          {if (true) return t;}
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+  final public String ParseSelect(SimpleNode cols) throws ParseException {
+                String table = null;
+                if (classList.size() > 0)
+                        table = (String)classList.get(0);
+
+                String sort = "";
+                String limit = "";
+                String where = "1";
+
+                String string;
+                List stringList;
     label_1:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -238,50 +351,171 @@
       case K_SORT:
       case K_LIMIT:
       case K_WITH:
-      case K_SELECT:
+      case K_FROM:
         ;
         break;
       default:
-        jj_la1[0] = jj_gen;
+        jj_la1[3] = jj_gen;
         break label_1;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case K_WITH:
         jj_consume_token(K_WITH);
-        ParseWith();
-
+        string = ClassName();
+                                if (table == null)
+                                        {if (true) throw new ParseException("WITH clause used on a query which had no FROM table.");}
+                                else
+                                        table = string;
+        break;
+      case K_FROM:
+        jj_consume_token(K_FROM);
+        stringList = ClassList();
+                                if (table == null)
+                                        table = (String)stringList.get(0);
+                                else
+                                        {if (true) throw new ParseException("FROM clause used on a query which already had a FROM table.");}
         break;
       case K_SORT:
         jj_consume_token(K_SORT);
-        ParseSort();
-
+        string = ParseSort();
+                                if (sort == null)
+                                        sort = " " + string;
+                                else
+                                        {if (true) throw new ParseException("Multiple SORT clauses.");}
         break;
       case K_LIMIT:
         jj_consume_token(K_LIMIT);
-        ParseLimit();
-
-        break;
-      case K_SELECT:
-        jj_consume_token(K_SELECT);
-        ParseSelect();
-
+        string = ParseLimit();
+                                if (limit == null)
+                                        limit = " " + string;
+                                else
+                                        {if (true) throw new ParseException("Multiple LIMIT clauses.");}
         break;
       case K_WHERE:
         jj_consume_token(K_WHERE);
-        s = ClauseOr();
-                                clause = true;
-                                b.append(s);
+        string = ClauseOr();
+                                if (where.equals("1"))
+                                        where = string;
+                                else
+                                        {if (true) throw new ParseException("Multiple WHERE clauses.");}
         break;
       default:
-        jj_la1[1] = jj_gen;
+        jj_la1[4] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
     }
-                  {if (true) return clause ? b.toString() : "1";}
+                        if (table == null)
+                                {if (true) throw new ParseException("No FROM clause in SELECT statement.");}
+                        String realCols = (cols == null ? "s0.ClassID" : parseExpression(cols, HINT_UNKNOWN));
+                        {if (true) return "SELECT " + realCols + " FROM " + getTableJoin() + " WHERE " + where + " AND " + joinWhere + " GROUP BY s0.ClassID" + sort + limit;}
     throw new Error("Missing return statement in function");
   }
 
+  final public String ParseUpdate(String table) throws ParseException {
+                SimpleNode cols;
+                String where = "1";
+    jj_consume_token(K_SET);
+    cols = FieldSetList();
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case K_WHERE:
+      jj_consume_token(K_WHERE);
+      where = ClauseOr();
+      break;
+    default:
+      jj_la1[5] = jj_gen;
+      ;
+    }
+                        StringBuffer update = new StringBuffer();
+                        StringBuffer inserts = new StringBuffer();
+                        for(int i=0; i<cols.jjtGetNumChildren(); i++)
+                        {
+                                SimpleNode col = (SimpleNode)cols.jjtGetChild(i);
+                                if (i != 0)
+                                        update.append(", ");
+                                String name = getFieldName(col.getName());
+                                inserts.append("INSERT IGNORE INTO ObjectStoreData SELECT ObjectID, \"" + col.getName() + "\", NULL, NULL, NULL FROM ObjectStore WHERE ClassName = \"" + table + "\";\n");
+                                update.append(name + ".FieldString = " + parseExpression((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN) + ", ");
+                                update.append(name + ".FieldBigInt = " + name + ".FieldString, ");
+                                update.append(name + ".FieldDouble = " + name + ".FieldString");
+                        }
+                        update.append(" WHERE " + where + " AND " + joinWhere);
+                        inserts.append("UPDATE " + getTableJoin() + " SET " + update.toString());
+                        {if (true) return inserts.toString();}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public String ParseInsert() throws ParseException {
+                String table = null;
+                if (classList.size() > 0)
+                        table = (String)classList.get(0);
+
+                String fields, string;
+                SimpleNode cols;
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case K_INTO:
+      jj_consume_token(K_INTO);
+      string = ClassName();
+                                if (table != null)
+                                        table = string;
+                                else
+                                        {if (true) throw new ParseException("INTO clause used on a query which already had an INTO table.");}
+      break;
+    default:
+      jj_la1[6] = jj_gen;
+      ;
+    }
+    jj_consume_token(K_SET);
+    cols = FieldSetList();
+                        StringBuffer query = new StringBuffer("INSERT INTO ObjectStore VALUES(NULL, '" + table + "', id);\n"); // Must do something about id...
+                        for(int i=0; i<cols.jjtGetNumChildren(); i++)
+                        {
+                                SimpleNode col = (SimpleNode)cols.jjtGetChild(i);
+
+                                String value = parseExpression((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN);
+                                query.append("INSERT INTO ObjectStoreData VALUES(LAST_INSERT_ID(), \"" + col.getName() + "\", " + value + ", " + value + ", " + value + ");\n");
+                        }
+                        {if (true) return query.toString();}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public String ParseDelete() throws ParseException {
+                String table = null;
+                if (classList.size() > 0)
+                        table = (String)classList.get(0);
+
+                String where = "1";
+                String string;
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case K_FROM:
+      jj_consume_token(K_FROM);
+      string = ClassName();
+                                if (table != null)
+                                        table = string;
+                                else
+                                        {if (true) throw new ParseException("FROM clause used on a query which already had a FROM table.");}
+      break;
+    default:
+      jj_la1[7] = jj_gen;
+      ;
+    }
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case K_WHERE:
+      jj_consume_token(K_WHERE);
+      string = ClauseOr();
+                                where = string;
+      break;
+    default:
+      jj_la1[8] = jj_gen;
+      ;
+    }
+                        {if (true) return "DELETE FROM s0 USING " + getTableJoin() + " WHERE " + where + " AND " + joinWhere;}
+    throw new Error("Missing return statement in function");
+  }
+
+/**
+ * WHERE parser
+ */
   final public String ClauseOr() throws ParseException {
                 StringBuffer out = new StringBuffer();
                 String clause;
@@ -298,7 +532,7 @@
         ;
         break;
       default:
-        jj_la1[2] = jj_gen;
+        jj_la1[9] = jj_gen;
         break label_2;
       }
       jj_consume_token(K_OR);
@@ -325,7 +559,7 @@
         ;
         break;
       default:
-        jj_la1[3] = jj_gen;
+        jj_la1[10] = jj_gen;
         break label_3;
       }
       jj_consume_token(K_AND);
@@ -351,6 +585,10 @@
       jj_consume_token(CLOSEBRACKET);
                         {if (true) return "(" + s + ")";}
       break;
+    case K_0FUNC:
+    case K_1FUNC:
+    case K_2FUNC:
+    case K_3FUNC:
     case K_ISINT:
     case K_ISFLOAT:
     case K_ISSTR:
@@ -364,7 +602,7 @@
                         {if (true) return s;}
       break;
     default:
-      jj_la1[4] = jj_gen;
+      jj_la1[11] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -372,7 +610,7 @@
   }
 
   final public String BoolExpression() throws ParseException {
-                SimpleNode expr1 = null, expr2 = null;
+                SimpleNode expr1, expr2 = null;
                 String op = null;
                 int hint = 0;
     // First, an expression
@@ -410,14 +648,14 @@
                                            op = "LIKE"; hint = HINT_STRING;
         break;
       default:
-        jj_la1[5] = jj_gen;
+        jj_la1[12] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
       expr2 = ExpressionRoot();
       break;
     default:
-      jj_la1[6] = jj_gen;
+      jj_la1[13] = jj_gen;
       ;
     }
                         if ( expr2 == null )
@@ -429,6 +667,13 @@
                                 hint = getHint(expr1, expr2, hint);
                                 {if (true) return parseExpression(expr1, hint) + " " + op + " " + parseExpression(expr2, hint);}
                         }
+    throw new Error("Missing return statement in function");
+  }
+
+  final public String Expression(int hint) throws ParseException {
+                SimpleNode root;
+    root = ExpressionRoot();
+                        {if (true) return parseExpression(root, hint);}
     throw new Error("Missing return statement in function");
   }
 
@@ -478,7 +723,7 @@
           ;
           break;
         default:
-          jj_la1[7] = jj_gen;
+          jj_la1[14] = jj_gen;
           break label_4;
         }
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -489,7 +734,7 @@
           jj_consume_token(K_SUBTRACT);
           break;
         default:
-          jj_la1[8] = jj_gen;
+          jj_la1[15] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -521,7 +766,7 @@
                   boolean jjtc001 = true;
                   jjtree.openNodeScope(jjtn001);
     try {
-      Expression();
+      ExpressionUnit();
       label_5:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -530,7 +775,7 @@
           ;
           break;
         default:
-          jj_la1[9] = jj_gen;
+          jj_la1[16] = jj_gen;
           break label_5;
         }
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -541,11 +786,11 @@
           jj_consume_token(K_DIVIDE);
           break;
         default:
-          jj_la1[10] = jj_gen;
+          jj_la1[17] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
-        Expression();
+        ExpressionUnit();
       }
     } catch (Throwable jjte001) {
                   if (jjtc001) {
@@ -568,7 +813,8 @@
     }
   }
 
-  final public void Expression() throws ParseException {
+  final public void ExpressionUnit() throws ParseException {
+                          Token t;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case OPENBRACKET:
       jj_consume_token(OPENBRACKET);
@@ -599,6 +845,22 @@
       Field(HINT_BOOLEAN);
       jj_consume_token(CLOSEBRACKET);
       break;
+    case K_0FUNC:
+      t = jj_consume_token(K_0FUNC);
+      Function(t.image, 0);
+      break;
+    case K_1FUNC:
+      t = jj_consume_token(K_1FUNC);
+      Function(t.image, 1);
+      break;
+    case K_2FUNC:
+      t = jj_consume_token(K_2FUNC);
+      Function(t.image, 2);
+      break;
+    case K_3FUNC:
+      t = jj_consume_token(K_3FUNC);
+      Function(t.image, 3);
+      break;
     case IDNAME:
     case FIELDNAME:
       Field(0);
@@ -609,9 +871,44 @@
       Constant();
       break;
     default:
-      jj_la1[11] = jj_gen;
+      jj_la1[18] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
+    }
+  }
+
+  final public void Function(String name, int params) throws ParseException {
+                                                    /*@bgen(jjtree) Function */
+                                                     ObjectDBClauseNodeFunction jjtn000 = new ObjectDBClauseNodeFunction(JJTFUNCTION);
+                                                     boolean jjtc000 = true;
+                                                     jjtree.openNodeScope(jjtn000);SimpleNode n;
+    try {
+      jj_consume_token(OPENBRACKET);
+      n = ExpressionList();
+      jj_consume_token(CLOSEBRACKET);
+                  jjtree.closeNodeScope(jjtn000, true);
+                  jjtc000 = false;
+                        if (n.jjtGetNumChildren() != params)
+                                {if (true) throw new ParseException("Wrong number of parameters for " + name + "!");}
+                        jjtn000.setName(name);
+    } catch (Throwable jjte000) {
+                  if (jjtc000) {
+                    jjtree.clearNodeScope(jjtn000);
+                    jjtc000 = false;
+                  } else {
+                    jjtree.popNode();
+                  }
+                  if (jjte000 instanceof RuntimeException) {
+                    {if (true) throw (RuntimeException)jjte000;}
+                  }
+                  if (jjte000 instanceof ParseException) {
+                    {if (true) throw (ParseException)jjte000;}
+                  }
+                  {if (true) throw (Error)jjte000;}
+    } finally {
+                  if (jjtc000) {
+                    jjtree.closeNodeScope(jjtn000, true);
+                  }
     }
   }
 
@@ -636,7 +933,7 @@
                                 hint = HINT_INTEGER;
         break;
       default:
-        jj_la1[12] = jj_gen;
+        jj_la1[19] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -662,18 +959,18 @@
         name = jj_consume_token(IDNAME);
                   jjtree.closeNodeScope(jjtn000, true);
                   jjtc000 = false;
-                        jjtn000.setName(getFieldName(name.image));
+                        jjtn000.setName(name.image);
                         jjtn000.setHint(HINT_ID);
         break;
       case FIELDNAME:
         name = jj_consume_token(FIELDNAME);
                   jjtree.closeNodeScope(jjtn000, true);
                   jjtc000 = false;
-                        jjtn000.setName(getFieldName(name.image));
+                        jjtn000.setName(name.image);
                         jjtn000.setHint(hint);
         break;
       default:
-        jj_la1[13] = jj_gen;
+        jj_la1[20] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -684,7 +981,187 @@
     }
   }
 
-  final public void ParseSort() throws ParseException {
+  final public String ClassName() throws ParseException {
+                Token cls, name = null;
+    cls = jj_consume_token(FIELDNAME);
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case K_AS:
+    case FIELDNAME:
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case K_AS:
+        jj_consume_token(K_AS);
+        break;
+      default:
+        jj_la1[21] = jj_gen;
+        ;
+      }
+      name = jj_consume_token(FIELDNAME);
+      break;
+    default:
+      jj_la1[22] = jj_gen;
+      ;
+    }
+                        if (name == null)
+                                name = cls;
+
+                        if (classMap.get(name.image.toLowerCase()) == null)
+                        {
+                                classMap.put(name.image.toLowerCase(), classList.size());
+                                classList.add(cls.image);
+                        }
+
+                        {if (true) return cls.image;}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public List ClassList() throws ParseException {
+                List list = new ArrayList();
+                String string;
+    string = ClassName();
+                  list.add(string);
+    label_6:
+    while (true) {
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case COMMA:
+        ;
+        break;
+      default:
+        jj_la1[23] = jj_gen;
+        break label_6;
+      }
+      jj_consume_token(COMMA);
+      string = ClassName();
+                          list.add(string);
+    }
+                  {if (true) return list;}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public SimpleNode ExpressionList() throws ParseException {
+         /*@bgen(jjtree) ExpressionList */
+  ObjectDBClauseNodeExpressionList jjtn000 = new ObjectDBClauseNodeExpressionList(JJTEXPRESSIONLIST);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
+    try {
+      ExpressionRoot();
+      label_7:
+      while (true) {
+        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+        case COMMA:
+          ;
+          break;
+        default:
+          jj_la1[24] = jj_gen;
+          break label_7;
+        }
+        jj_consume_token(COMMA);
+        ExpressionRoot();
+      }
+                  jjtree.closeNodeScope(jjtn000, true);
+                  jjtc000 = false;
+                  jjtn000.setName(""); {if (true) return jjtn000;}
+    } catch (Throwable jjte000) {
+                  if (jjtc000) {
+                    jjtree.clearNodeScope(jjtn000);
+                    jjtc000 = false;
+                  } else {
+                    jjtree.popNode();
+                  }
+                  if (jjte000 instanceof RuntimeException) {
+                    {if (true) throw (RuntimeException)jjte000;}
+                  }
+                  if (jjte000 instanceof ParseException) {
+                    {if (true) throw (ParseException)jjte000;}
+                  }
+                  {if (true) throw (Error)jjte000;}
+    } finally {
+                  if (jjtc000) {
+                    jjtree.closeNodeScope(jjtn000, true);
+                  }
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+  final public void FieldSet() throws ParseException {
+         /*@bgen(jjtree) FieldSet */
+                ObjectDBClauseNodeFieldSet jjtn000 = new ObjectDBClauseNodeFieldSet(JJTFIELDSET);
+                boolean jjtc000 = true;
+                jjtree.openNodeScope(jjtn000);List list = new ArrayList();
+                String expr;
+                Token fieldName;
+    try {
+      fieldName = jj_consume_token(FIELDNAME);
+                  jjtn000.setName(fieldName.image);
+      jj_consume_token(K_EQUAL);
+      ExpressionRoot();
+    } catch (Throwable jjte000) {
+                  if (jjtc000) {
+                    jjtree.clearNodeScope(jjtn000);
+                    jjtc000 = false;
+                  } else {
+                    jjtree.popNode();
+                  }
+                  if (jjte000 instanceof RuntimeException) {
+                    {if (true) throw (RuntimeException)jjte000;}
+                  }
+                  if (jjte000 instanceof ParseException) {
+                    {if (true) throw (ParseException)jjte000;}
+                  }
+                  {if (true) throw (Error)jjte000;}
+    } finally {
+                  if (jjtc000) {
+                    jjtree.closeNodeScope(jjtn000, true);
+                  }
+    }
+  }
+
+  final public SimpleNode FieldSetList() throws ParseException {
+         /*@bgen(jjtree) FieldSetList */
+                ObjectDBClauseNodeFieldSetList jjtn000 = new ObjectDBClauseNodeFieldSetList(JJTFIELDSETLIST);
+                boolean jjtc000 = true;
+                jjtree.openNodeScope(jjtn000);List list = new ArrayList();
+                String string;
+    try {
+      FieldSet();
+      label_8:
+      while (true) {
+        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+        case COMMA:
+          ;
+          break;
+        default:
+          jj_la1[25] = jj_gen;
+          break label_8;
+        }
+        jj_consume_token(COMMA);
+        FieldSet();
+      }
+                  jjtree.closeNodeScope(jjtn000, true);
+                  jjtc000 = false;
+                  {if (true) return jjtn000;}
+    } catch (Throwable jjte000) {
+                  if (jjtc000) {
+                    jjtree.clearNodeScope(jjtn000);
+                    jjtc000 = false;
+                  } else {
+                    jjtree.popNode();
+                  }
+                  if (jjte000 instanceof RuntimeException) {
+                    {if (true) throw (RuntimeException)jjte000;}
+                  }
+                  if (jjte000 instanceof ParseException) {
+                    {if (true) throw (ParseException)jjte000;}
+                  }
+                  {if (true) throw (Error)jjte000;}
+    } finally {
+                  if (jjtc000) {
+                    jjtree.closeNodeScope(jjtn000, true);
+                  }
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+  final public String ParseSort() throws ParseException {
                 Token t;
                 String order = "ASC";
                 boolean isInt = false;
@@ -706,13 +1183,13 @@
                                            order = "DESC";
           break;
         default:
-          jj_la1[14] = jj_gen;
+          jj_la1[26] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
         break;
       default:
-        jj_la1[15] = jj_gen;
+        jj_la1[27] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -721,25 +1198,26 @@
                                               isInt = true;
         break;
       default:
-        jj_la1[16] = jj_gen;
+        jj_la1[28] = jj_gen;
         ;
       }
       t = jj_consume_token(FIELDNAME);
                                 String suffix = isInt ? ".FieldBigInt" : ".FieldStr";
-                                sortOrder = " ORDER BY " + getFieldName(t.image) + suffix + " " + order;
+                                {if (true) return "ORDER BY " + getFieldName(t.image) + suffix + " " + order;}
       break;
     case K_RANDOM:
       jj_consume_token(K_RANDOM);
-                                sortOrder = " ORDER BY RAND()";
+                                {if (true) return "ORDER BY RAND()";}
       break;
     default:
-      jj_la1[17] = jj_gen;
+      jj_la1[29] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
+    throw new Error("Missing return statement in function");
   }
 
-  final public void ParseLimit() throws ParseException {
+  final public String ParseLimit() throws ParseException {
                 Token t1, t2;
     jj_consume_token(OPENBRACKET);
     t1 = jj_consume_token(INTVALUE);
@@ -748,51 +1226,18 @@
       jj_consume_token(COMMA);
       t2 = jj_consume_token(INTVALUE);
       jj_consume_token(CLOSEBRACKET);
-                                limitTo = " LIMIT " + t1.image + ", " + t2.image;
+                                {if (true) return "LIMIT " + t1.image + ", " + t2.image;}
       break;
     case CLOSEBRACKET:
       jj_consume_token(CLOSEBRACKET);
-                                limitTo = " LIMIT " + t1.image;
+                                {if (true) return "LIMIT " + t1.image;}
       break;
     default:
-      jj_la1[18] = jj_gen;
+      jj_la1[30] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
-  }
-
-  final public void ParseWith() throws ParseException {
-                Token t1, t2;
-    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case K_AS:
-      jj_consume_token(K_AS);
-      t1 = jj_consume_token(FIELDNAME);
-      t2 = jj_consume_token(FIELDNAME);
-                                if (classMap.get(t1.image) == null)
-                                {
-                                        classMap.put(t1.image.toLowerCase(), classList.size());
-                                        classList.add(t2.image);
-                                }
-      break;
-    case FIELDNAME:
-      t1 = jj_consume_token(FIELDNAME);
-                                if (classMap.get(t1.image) == null)
-                                {
-                                        classMap.put(t1.image.toLowerCase(), classList.size());
-                                        classList.add(t1.image);
-                                }
-      break;
-    default:
-      jj_la1[19] = jj_gen;
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
-  }
-
-  final public void ParseSelect() throws ParseException {
-                SimpleNode expr;
-    expr = ExpressionRoot();
-                                selClause = parseExpression(expr, HINT_INTEGER);
+    throw new Error("Missing return statement in function");
   }
 
   public ObjectDbClauseParserTokenManager token_source;
@@ -800,7 +1245,7 @@
   public Token token, jj_nt;
   private int jj_ntk;
   private int jj_gen;
-  final private int[] jj_la1 = new int[20];
+  final private int[] jj_la1 = new int[31];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static {
@@ -808,10 +1253,10 @@
       jj_la1_1();
    }
    private static void jj_la1_0() {
-      jj_la1_0 = new int[] {0x1f00,0x1f00,0x20000,0x10000,0xa000,0x1f800000,0x1f800000,0x60000000,0x60000000,0x80000000,0x80000000,0x2000,0x0,0x0,0xc0000,0xc0000,0x100000,0x3c0000,0x4000,0x400000,};
+      jj_la1_0 = new int[] {0x4000,0x0,0xf0000,0x1f00,0x1f00,0x100,0x8000,0x1000,0x100,0x1000000,0x800000,0xc0500000,0x0,0x0,0x0,0x0,0x0,0x0,0xc0100000,0x0,0x0,0x20000000,0x20000000,0x0,0x0,0x0,0x6000000,0x6000000,0x8000000,0x1e000000,0x200000,};
    }
    private static void jj_la1_1() {
-      jj_la1_1 = new int[] {0x0,0x0,0x0,0x0,0x7fc,0x0,0x0,0x0,0x0,0x1,0x1,0x7fc,0x700,0xc0,0x0,0x0,0x0,0x80,0x2,0x80,};
+      jj_la1_1 = new int[] {0x0,0x40000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe003,0xfc,0xfc,0x300,0x300,0xc00,0xc00,0x3fe003,0x380000,0x60000,0x0,0x40000,0x1000,0x1000,0x1000,0x0,0x0,0x0,0x40000,0x1000,};
    }
 
   public ObjectDbClauseParser(java.io.InputStream stream) {
@@ -820,7 +1265,7 @@
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 20; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 31; i++) jj_la1[i] = -1;
   }
 
   public void ReInit(java.io.InputStream stream) {
@@ -830,7 +1275,7 @@
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 20; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 31; i++) jj_la1[i] = -1;
   }
 
   public ObjectDbClauseParser(java.io.Reader stream) {
@@ -839,7 +1284,7 @@
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 20; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 31; i++) jj_la1[i] = -1;
   }
 
   public void ReInit(java.io.Reader stream) {
@@ -849,7 +1294,7 @@
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 20; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 31; i++) jj_la1[i] = -1;
   }
 
   public ObjectDbClauseParser(ObjectDbClauseParserTokenManager tm) {
@@ -857,7 +1302,7 @@
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 20; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 31; i++) jj_la1[i] = -1;
   }
 
   public void ReInit(ObjectDbClauseParserTokenManager tm) {
@@ -866,7 +1311,7 @@
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 20; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 31; i++) jj_la1[i] = -1;
   }
 
   final private Token jj_consume_token(int kind) throws ParseException {
@@ -913,15 +1358,15 @@
 
   public ParseException generateParseException() {
     jj_expentries.removeAllElements();
-    boolean[] la1tokens = new boolean[43];
-    for (int i = 0; i < 43; i++) {
+    boolean[] la1tokens = new boolean[54];
+    for (int i = 0; i < 54; i++) {
       la1tokens[i] = false;
     }
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 31; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -933,7 +1378,7 @@
         }
       }
     }
-    for (int i = 0; i < 43; i++) {
+    for (int i = 0; i < 54; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;

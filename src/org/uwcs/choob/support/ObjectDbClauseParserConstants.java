@@ -12,37 +12,48 @@ public interface ObjectDbClauseParserConstants {
   int K_SORT = 9;
   int K_LIMIT = 10;
   int K_WITH = 11;
-  int K_SELECT = 12;
-  int OPENBRACKET = 13;
-  int CLOSEBRACKET = 14;
-  int K_NOT = 15;
-  int K_AND = 16;
-  int K_OR = 17;
-  int K_ASC = 18;
-  int K_DESC = 19;
-  int K_INTEGER = 20;
-  int K_RANDOM = 21;
-  int K_AS = 22;
-  int K_LESS = 23;
-  int K_GREATER = 24;
-  int K_EQUAL = 25;
-  int K_NOTEQUAL = 26;
-  int K_RLIKE = 27;
-  int K_LIKE = 28;
-  int K_ADD = 29;
-  int K_SUBTRACT = 30;
-  int K_MULTIPLY = 31;
-  int K_DIVIDE = 32;
-  int COMMA = 33;
-  int K_ISINT = 34;
-  int K_ISFLOAT = 35;
-  int K_ISSTR = 36;
-  int K_ISBOOL = 37;
-  int IDNAME = 38;
-  int FIELDNAME = 39;
-  int TEXTVALUE = 40;
-  int FLOATVALUE = 41;
-  int INTVALUE = 42;
+  int K_FROM = 12;
+  int K_SET = 13;
+  int K_TABLE = 14;
+  int K_INTO = 15;
+  int K_SELECT = 16;
+  int K_INSERT = 17;
+  int K_DELETE = 18;
+  int K_UPDATE = 19;
+  int OPENBRACKET = 20;
+  int CLOSEBRACKET = 21;
+  int K_NOT = 22;
+  int K_AND = 23;
+  int K_OR = 24;
+  int K_ASC = 25;
+  int K_DESC = 26;
+  int K_INTEGER = 27;
+  int K_RANDOM = 28;
+  int K_AS = 29;
+  int K_0FUNC = 30;
+  int K_1FUNC = 31;
+  int K_2FUNC = 32;
+  int K_3FUNC = 33;
+  int K_LESS = 34;
+  int K_GREATER = 35;
+  int K_EQUAL = 36;
+  int K_NOTEQUAL = 37;
+  int K_RLIKE = 38;
+  int K_LIKE = 39;
+  int K_ADD = 40;
+  int K_SUBTRACT = 41;
+  int K_MULTIPLY = 42;
+  int K_DIVIDE = 43;
+  int COMMA = 44;
+  int K_ISINT = 45;
+  int K_ISFLOAT = 46;
+  int K_ISSTR = 47;
+  int K_ISBOOL = 48;
+  int IDNAME = 49;
+  int FIELDNAME = 50;
+  int TEXTVALUE = 51;
+  int FLOATVALUE = 52;
+  int INTVALUE = 53;
 
   int DEFAULT = 0;
 
@@ -59,7 +70,14 @@ public interface ObjectDbClauseParserConstants {
     "<K_SORT>",
     "\"LIMIT\"",
     "\"WITH\"",
+    "\"FROM\"",
+    "\"SET\"",
+    "\"TABLE\"",
+    "\"INTO\"",
     "\"SELECT\"",
+    "\"INSERT\"",
+    "\"DELETE\"",
+    "\"UPDATE\"",
     "\"(\"",
     "\")\"",
     "<K_NOT>",
@@ -70,6 +88,10 @@ public interface ObjectDbClauseParserConstants {
     "\"INTEGER\"",
     "<K_RANDOM>",
     "\"AS\"",
+    "\"COUNT\"",
+    "\"SUM\"",
+    "\"SPAMANDEGGS\"",
+    "\"CONCAT\"",
     "\"<\"",
     "\">\"",
     "\"=\"",
