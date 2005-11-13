@@ -268,58 +268,52 @@ public class Test
 		} } );
 	} */
 
-	private Object waitObj = new Object();
+	// These commands attempt to create a deadlock situation and ensure it's corrently dealt with.
+	// You can also get a deadlock by setting the id to 0 in all 4 locations.
+	/*private Object waitObj = new Object();
 	public void commandDeadLock1( final Message mes, final Modules mods, final IRCInterface irc ) throws ChoobNoSuchCallException
 	{
-		irc.sendContextReply(mes, "OK, setting up deadlock (1)!");
 		for(int i=1;i<3; i++)
 		{
 			TestObj3 obj = new TestObj3();
 			obj.id = i;
-			mods.odb.delete(obj);
+			try { mods.odb.delete(obj); } catch (Exception e) { }
 		}
 		mods.plugin.queueCommand( "Test", "DeadLock2", mes );
 		mods.odb.runTransaction( new ObjectDBTransaction() { public void run() {
+			irc.sendContextReply(mes, "Setting up deadlock (1)!");
 			TestObj3 obj = new TestObj3();
 			obj.var1 = 1;
 			obj.id = 1;
-			System.out.println("Saving... (1)");
 			save( obj );
-			System.out.println("Saved... (1)");
 			synchronized(waitObj)
 			{
 				try { waitObj.wait(5000); } catch ( InterruptedException e ) { }
 			}
-			System.out.println("Waited... (1)");
 			obj.id = 2;
 			save( obj );
-			System.out.println("Saved... (1)");
 			irc.sendContextReply(mes, "Returned alive (1) with ID " + obj.id + "!");
 		} } );
 	}
 
 	public void commandDeadLock2( final Message mes, final Modules mods, final IRCInterface irc )
 	{
-		irc.sendContextReply(mes, "OK, setting up deadlock (2)!");
 		mods.odb.runTransaction( new ObjectDBTransaction() { public void run() {
+			irc.sendContextReply(mes, "Setting up deadlock (2)!");
 			TestObj3 obj = new TestObj3();
 			obj.var1 = 2;
 			obj.id = 2;
-			System.out.println("Saving... (2)");
 			save( obj );
-			System.out.println("Saved... (2)");
 			synchronized(waitObj)
 			{
 				try { waitObj.wait(3000); } catch ( InterruptedException e ) { }
 				waitObj.notifyAll();
 			}
-			System.out.println("Waited... (1)");
 			obj.id = 1;
 			save( obj );
-			System.out.println("Saved... (1)");
 			irc.sendContextReply(mes, "Returned alive (2) with ID " + obj.id + "!");
 		} } );
-	}
+	}*/
 }
 
 public class TestObj1

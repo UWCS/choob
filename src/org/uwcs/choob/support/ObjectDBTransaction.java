@@ -107,9 +107,14 @@ public class ObjectDBTransaction // Needs to be non-final
 
 	private final ChoobError sqlErr(SQLException e)
 	{
+		// Deadlock hack. XXX MySQL specific code.
+		if (e.getErrorCode() == 1213)
+		{
+			throw new ObjectDBDeadlockError();
+		}
 		System.err.println("Ack! SQL Exception: " + e);
 		e.printStackTrace();
-		return new ChoobError("An SQL exception occurred while processing this operation.", e);
+		return new ObjectDBError("An SQL exception occurred while processing this operation.", e);
 	}
 
 	public final List<?> retrieve(final Class storedClass, String clause)
@@ -478,10 +483,9 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	public void update( Object strObject )
+	public final void update( Object strObj )
 	{
-		delete( strObject );
-		save( strObject );
+		_store(strObj, true);
 	}
 
 	public void run()
@@ -490,6 +494,11 @@ public class ObjectDBTransaction // Needs to be non-final
 	}
 
 	public final void save( Object strObj )
+	{
+		_store(strObj, false);
+	}
+
+	private final void _store( Object strObj, boolean replace )
 	{
 		checkPermission(strObj.getClass().getName());
 		PreparedStatement stat = null, field;
@@ -515,22 +524,49 @@ public class ObjectDBTransaction // Needs to be non-final
 				setId( strObj, id );
 			}
 
-			stat = dbConn.prepareStatement("INSERT INTO ObjectStore VALUES(NULL,?,?);");
+			int objId = 0;
 
-			stat.setString(1, strObj.getClass().getName());
-			stat.setInt(2, id);
+			// If there might be a collision, we need the old object ID.
+			if (replace)
+			{
+				stat = dbConn.prepareStatement("SELECT ObjectID FROM ObjectStore WHERE ClassName = ? AND ClassID = ?;");
 
-			stat.execute();
+				stat.setString(1, strObj.getClass().getName());
+				stat.setInt(2, id);
 
-			ResultSet generatedKeys = stat.getGeneratedKeys();
+				stat.execute();
 
-			generatedKeys.first();
+				ResultSet ids = stat.executeQuery();
 
-			int generatedID = generatedKeys.getInt(1);
+				if( ids.first() )
+					objId = ids.getInt(1);
+
+				stat.close();
+			}
+
+			// There's no collision (more specifically, if there is one, we're boned).
+			if (objId == 0)
+			{
+				stat = dbConn.prepareStatement("INSERT INTO ObjectStore VALUES(NULL,?,?);");
+
+				stat.setString(1, strObj.getClass().getName());
+				stat.setInt(2, id);
+
+				stat.execute();
+
+				ResultSet generatedKeys = stat.getGeneratedKeys();
+
+				generatedKeys.first();
+
+				objId = generatedKeys.getInt(1);
+			}
 
 			stat.close();
 
-			stat = dbConn.prepareStatement("INSERT INTO ObjectStoreData VALUES(?,?,?,?,?);");
+			if (replace)
+				stat = dbConn.prepareStatement("REPLACE INTO ObjectStoreData VALUES(?,?,?,?,?);");
+			else
+				stat = dbConn.prepareStatement("INSERT INTO ObjectStoreData VALUES(?,?,?,?,?);");
 
 			Field[] fields = strObj.getClass().getFields();
 
@@ -542,7 +578,7 @@ public class ObjectDBTransaction // Needs to be non-final
 				{
 					boolean foundType = true;
 
-					stat.setInt(1, generatedID);
+					stat.setInt(1, objId);
 
 					Type theType = tempField.getType();
 
@@ -620,7 +656,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	private Map<String,Object> permCache = new HashMap<String,Object>(); // Doesn't need sync.
+	private final Map<String,Object> permCache = new HashMap<String,Object>(); // Doesn't need sync.
 	private final void checkPermission(String objClass)
 	{
 		String plugin = mods.security.getPluginName(0);
