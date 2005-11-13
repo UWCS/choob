@@ -6,7 +6,7 @@
 package org.uwcs.choob.support;
 import java.security.Permission;
 
-public abstract class ChoobAuthException extends ChoobException
+public abstract class ChoobAuthError extends ChoobError
 {
 	public static final String getPermissionText(Permission permission)
 	{
@@ -33,7 +33,7 @@ public abstract class ChoobAuthException extends ChoobException
 
 		return output;
 	}
-	public ChoobAuthException(String text)
+	public ChoobAuthError(String text)
 	{
 		super(text);
 	}

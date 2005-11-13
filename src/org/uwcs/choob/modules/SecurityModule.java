@@ -236,7 +236,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			{
 				dbCleanupSel(permissionsSmt, dbConnection);
 			}
-			catch (ChoobException e) {}
+			catch (ChoobError e) {}
 		}
 
 		synchronized(nodeMap) {
@@ -359,7 +359,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			}
 			catch (SQLException e)
 			{
-				System.err.println("Ack! SQL exception when fetching groups for node " + nodeID + ": " + e);
+				sqlErr("getting user nodes", e);
 			}
 			finally
 			{
@@ -370,8 +370,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				}
 				catch (SQLException e)
 				{
-					System.err.println("Ack! SQL exception when closing statement: " + e);
-					e.printStackTrace();
+					sqlErr("cleaning up user node statment", e);
 				}
 			}
 		}
@@ -437,15 +436,11 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 		catch (SQLException e)
 		{
-			System.err.println("Ack! SQL exception when getting node from node name " + nodeName + "(" + nodeType + "): " + e);
+			sqlErr("getting a node ID", e);
 		}
 		finally
 		{
-			try
-			{
-				dbCleanupSel(stat, dbConn);
-			}
-			catch (ChoobException e) {}
+			dbCleanupSel(stat, dbConn);
 		}
 		return -1;
 	}
@@ -465,7 +460,6 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			ResultSet results = stat.executeQuery();
 			if ( results.first() )
 			{
-				dbBroker.freeConnection(dbConn);
 				return new UserNode(results.getString(1), results.getInt(2));
 			}
 			System.err.println("Ack! Node " + nodeID + " not found!");
@@ -476,11 +470,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 		finally
 		{
-			try
-			{
-				dbCleanupSel(stat, dbConn);
-			}
-			catch (ChoobException e) {}
+			dbCleanupSel(stat, dbConn);
 		}
 		return null;
 	}
@@ -540,12 +530,12 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Check if the given nickName is authed with NickServ (if NickServ is loaded).
 	 * @param nickName The nickname to check the permission on.
-	 * @throws ChoobNSAuthException If the nick is not authorised.
+	 * @throws ChoobNSAuthError If the nick is not authorised.
 	 */
-	public void checkNS(String nickName) throws ChoobNSAuthException
+	public void checkNS(String nickName) throws ChoobNSAuthError
 	{
 		if (!hasNS(nickName))
-			throw new ChoobNSAuthException();
+			throw new ChoobNSAuthError();
 	}
 
 	/**
@@ -564,7 +554,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		{
 			// XXX Should this throw an exception?:
 			//if (!allowNoNS)
-			//	throw new ChoobAuthException("The NickServ plugin is not loaded! Holy mother of God save us all!");
+			//	throw new ChoobAuthError("The NickServ plugin is not loaded! Holy mother of God save us all!");
 			return true;
 		}
 		catch (ChoobException e)
@@ -580,14 +570,14 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * Check if the given nickName has permission and is authed with NickServ (if NickServ is loaded).
 	 * @param permission The permission to check.
 	 * @param nickName The nickname to check the permission on.
-	 * @throws ChoobAuthException If the nick is not authorised.
+	 * @throws ChoobAuthError If the nick is not authorised.
 	 */
-	public void checkNickPerm(Permission permission, String nickName) throws ChoobAuthException
+	public void checkNickPerm(Permission permission, String nickName) throws ChoobAuthError
 	{
 		checkNS(nickName);
 
 		if (!hasPerm(permission, nickName))
-			throw new ChoobUserAuthException(permission);
+			throw new ChoobUserAuthError(permission);
 	}
 
 	/**
@@ -612,10 +602,10 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param permission
 	 * @param userName
 	 */
-	public void checkPerm(Permission permission, String userName) throws ChoobUserAuthException
+	public void checkPerm(Permission permission, String userName) throws ChoobUserAuthError
 	{
 		if (!hasPerm(permission, userName))
-			throw new ChoobUserAuthException(permission);
+			throw new ChoobUserAuthError(permission);
 	}
 
 	/**
@@ -639,9 +629,9 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Check if the previous plugin on the call stack has a permission.
 	 * @param permission Permission to query
-	 * @throws ChoobPluginAuthException if the permission has not been granted.
+	 * @throws ChoobPluginAuthError if the permission has not been granted.
 	 */
-	public void checkPluginPerm(Permission permission) throws ChoobPluginAuthException
+	public void checkPluginPerm(Permission permission) throws ChoobPluginAuthError
 	{
 		String plugin = getPluginName(0);
 		checkPluginPerm(permission, plugin);
@@ -660,9 +650,9 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * Check if the previous plugin on the call stack has a permission.
 	 * @param permission Permission to query
 	 * @param skip Number of plugins to skip
-	 * @throws ChoobPluginAuthException if the permission has not been granted.
+	 * @throws ChoobPluginAuthError if the permission has not been granted.
 	 */
-	public void checkPluginPerm(Permission permission, int skip) throws ChoobPluginAuthException
+	public void checkPluginPerm(Permission permission, int skip) throws ChoobPluginAuthError
 	{
 		String plugin = getPluginName(skip);
 		checkPluginPerm(permission, plugin);
@@ -687,12 +677,12 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * Check if the previous plugin on the call stack has a permission.
 	 * @param permission Permission to query
 	 * @param plugin Plugin to query
-	 * @throws ChoobPluginAuthException if the permission has not been granted.
+	 * @throws ChoobPluginAuthError if the permission has not been granted.
 	 */
-	public void checkPluginPerm(Permission permission, String plugin) throws ChoobPluginAuthException
+	public void checkPluginPerm(Permission permission, String plugin) throws ChoobPluginAuthError
 	{
 		if (!hasPluginPerm(permission, plugin))
-			throw new ChoobPluginAuthException(plugin, permission);
+			throw new ChoobPluginAuthError(plugin, permission);
 	}
 
 	/**
@@ -732,7 +722,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Convenience method
 	 */
-	private void dbCleanupSel(Statement stat, Connection dbConn) throws ChoobException
+	private void dbCleanupSel(Statement stat, Connection dbConn)
 	{
 		try
 		{
@@ -749,7 +739,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 	}
 
-	private void dbCleanup(Statement stat, Connection dbConn) throws ChoobException
+	private void dbCleanup(Statement stat, Connection dbConn)
 	{
 		try
 		{
@@ -779,14 +769,15 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Convenience method
 	 */
-	private void sqlErr(String task, SQLException e) throws ChoobException
+	private void sqlErr(String task, SQLException e)
 	{
 		System.err.println("ACK! SQL error when " + task + ": " + e);
-		throw new ChoobException("An SQL error occurred when " + task + ". Please ask the bot administrator to check the logs.");
+		throw new ChoobError("An SQL error occurred when " + task + ". Please ask the bot administrator to check the logs.");
 	}
 
 	/**
 	 * Add a plugin->user binding to the database
+	 * @deprecated Perhaps?
 	 */
 	// TODO: Should this simply add plugin.pluginName to user.userName?
 	public void bindPlugin(String pluginName, String userName) throws ChoobException
@@ -974,10 +965,9 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 	/**
 	 * Get the "root" username for a given user.
-	 * @throws ChoobException if the user did not exist.
-	 * @return the root username.
+	 * @return the root username, or null
 	 */
-	public String getRootUser(String userName) throws ChoobException
+	public String getRootUser(String userName)
 	{
 		Connection dbConn = null;
 		PreparedStatement stat = null;
@@ -990,7 +980,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			ResultSet results = stat.executeQuery();
 			if ( !results.first() )
 				//throw new ChoobException ("User " + userName + " does not exist!");
-				return userName;
+				return null;
+				//return userName;
 			int userID = results.getInt(1);
 			stat.close();
 
@@ -998,10 +989,10 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			stat.setInt(1, userID);
 			results = stat.executeQuery();
 			if ( !results.first() )
-				throw new ChoobException ("Consistency error: User " + userName + " is in no group!");
+				throw new ChoobError ("Consistency error: User " + userName + " is in no group!");
 			int groupID = results.getInt(1);
 			if ( results.next() )
-				throw new ChoobException ("Consistency error: User " + userName + " is in more than one group!");
+				throw new ChoobError ("Consistency error: User " + userName + " is in more than one group!");
 			stat.close();
 
 			// Now make sure the root does exist...
@@ -1009,7 +1000,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			stat.setInt(1, groupID);
 			results = stat.executeQuery();
 			if ( !results.first() )
-				throw new ChoobException ("Consistency error: Group " + groupID + " does not exist!");
+				throw new ChoobError ("Consistency error: Group " + groupID + " does not exist!");
 			String groupName = results.getString(1);
 			stat.close();
 

@@ -462,7 +462,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return null;
 	}
 
-	public Object doGeneric(String pluginName, String prefix, String genName, final Object... params) throws ChoobException
+	public Object doGeneric(String pluginName, String prefix, String genName, final Object... params) throws ChoobInvocationException, ChoobNoSuchCallException
 	{
 		final Object plugin = allPlugins.getPluginObj(pluginName);
 		String fullName = pluginName + "." + prefix + ":" + genName;
@@ -501,20 +501,20 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			Throwable e = pe.getCause();
 			if (e instanceof InvocationTargetException)
 			{
-				if (e.getCause() instanceof ChoobException)
+				if (e.getCause() instanceof ChoobError)
 					// Doesn't need wrapping...
-					throw (ChoobException)e.getCause();
+					throw (ChoobError)e.getCause();
 				else
-					throw new ChoobException("Exception invoking method " + fullName + ": " + e.getCause(), e.getCause());
+					throw new ChoobInvocationException(pluginName, fullName, e.getCause());
 			}
 			else if (e instanceof IllegalAccessException)
-				throw new ChoobException("Could not access method " + fullName + ": " + e);
+				throw new ChoobError("Could not access method " + fullName + ": " + e);
 			else
-				throw new ChoobException("Unknown error accessing method " + fullName + ": " + e);
+				throw new ChoobError("Unknown error accessing method " + fullName + ": " + e);
 		}
 	}
 
-	public Object doAPI(String pluginName, String APIName, final Object... params) throws ChoobException
+	public Object doAPI(String pluginName, String APIName, final Object... params) throws ChoobInvocationException, ChoobNoSuchCallException
 	{
 		return doGeneric(pluginName, "api", APIName, params);
 	}

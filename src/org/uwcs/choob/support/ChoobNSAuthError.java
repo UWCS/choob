@@ -4,11 +4,10 @@
  */
 
 package org.uwcs.choob.support;
-import java.security.Permission;
 
-public final class ChoobNSAuthException extends ChoobAuthException
+public final class ChoobNSAuthError extends ChoobAuthError
 {
-	public ChoobNSAuthException()
+	public ChoobNSAuthError()
 	{
 		super("I can't let you do that, Dave! You need to be identified with NickServ!");
 	}

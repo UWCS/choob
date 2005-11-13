@@ -71,6 +71,8 @@ public class Alias
 		AliasObject alias = getAlias(name);
 
 		String nick = mods.security.getRootUser(mes.getNick());
+		if (nick == null)
+			nick = mes.getNick();
 
 		String oldAlias = ""; // Set to content of old alias, if there was one.
 		if (alias != null)
@@ -116,6 +118,8 @@ public class Alias
 		AliasObject alias = getAlias(name);
 
 		String nick = mods.security.getRootUser(mes.getNick());
+		if (nick == null)
+			nick = mes.getNick();
 
 		String oldAlias = ""; // Set to content of old alias, if there was one.
 		if (alias != null)
@@ -259,6 +263,8 @@ public class Alias
 		if (alias != null)
 		{
 			String nick = mods.security.getRootUser(mes.getNick());
+			if (nick == null)
+				nick = mes.getNick();
 
 			if (nick.toLowerCase().equals(alias.owner.toLowerCase()))
 				mods.security.checkNS(mes.getNick());

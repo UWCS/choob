@@ -131,12 +131,10 @@ public final class PluginModule
 
 	public String exceptionReply(Throwable e)
 	{
-		if (e instanceof ChoobAuthException)
+		if (e instanceof ChoobException || e instanceof ChoobError)
 			return e.getMessage();
-		else if (e instanceof ChoobNoSuchPluginException)
-			return "You need to load the plugin " + ((ChoobNoSuchPluginException)e).getPluginName() + "!";
 		else if (e instanceof AccessControlException)
-			return "D'oh! The plugin needs permission " + ChoobAuthException.getPermissionText(((AccessControlException)e).getPermission()) + "!";
+			return "D'oh! A plugin needs permission " + ChoobAuthError.getPermissionText(((AccessControlException)e).getPermission()) + "!";
 		else
 			return "The plugin author was too lazy to trap the exception: " + e;
 	}

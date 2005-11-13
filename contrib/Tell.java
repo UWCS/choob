@@ -184,6 +184,8 @@ public class Tell
 					if (nsStatus == -2)
 					{
 						rootNick = mods.security.getRootUser( nick );
+						if (rootNick == null)
+							rootNick = nick;
 						if (!rootNick.equalsIgnoreCase(testNick))
 							nsStatus = -1;
 						else

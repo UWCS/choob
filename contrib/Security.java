@@ -148,13 +148,9 @@ public class Security
 		}
 
 		String rootName;
-		try
+		rootName = mods.security.getRootUser( userName );
+		if (rootName == null)
 		{
-			rootName = mods.security.getRootUser( userName );
-		}
-		catch (ChoobException e)
-		{
-			System.out.println(e.getMessage());
 			irc.sendContextReply(mes, "Your username has not been added to the bot. Try Security.AddUser first!");
 			return;
 		}
@@ -227,7 +223,7 @@ public class Security
 		}
 		catch ( ChoobException e )
 		{
-			irc.sendContextReply( mes, "The user could not be deleted: " + e );
+			irc.sendContextReply( mes, "The user could not be linked: " + e );
 			return;
 		}
 		catch ( SecurityException e )
@@ -248,17 +244,11 @@ public class Security
 			else
 			{
 				// Check root, too...
-				String rootName;
-				try
-				{
-					rootName = mods.security.getRootUser( userName );
-					if (chunk.startsWith(rootName.toLowerCase() + "."))
-						return true;
-				}
-				catch (ChoobException e)
-				{
-					// Squelch
-				}
+				String rootName = mods.security.getRootUser( userName );
+				if (rootName == null)
+					rootName = userName;
+				if (chunk.startsWith(rootName.toLowerCase() + "."))
+					return true;
 			}
 		}
 		return false;
