@@ -205,6 +205,12 @@ public class Tell
 		}
 	}
 
+	public void onAction( ChannelAction ev )
+	{
+		spew(ev.getNick());
+	}
+
+
 	public void onMessage( ChannelMessage ev )
 	{
 		spew(ev.getNick());
