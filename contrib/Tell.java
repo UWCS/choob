@@ -210,13 +210,17 @@ public class Tell
 		spew(ev.getNick());
 	}
 
-
 	public void onMessage( ChannelMessage ev )
 	{
 		spew(ev.getNick());
 	}
 
 	public void onPrivateMessage( PrivateMessage ev )
+	{
+		spew(ev.getNick());
+	}
+
+	public void onPrivateAction( PrivateAction ev )
 	{
 		spew(ev.getNick());
 	}
