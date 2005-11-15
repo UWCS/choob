@@ -32,9 +32,15 @@ public class Factoids
 
 		factoidMatcher.find();
 
-		FactoidObject fact = new FactoidObject( factoidMatcher.group(1).toLowerCase() , factoidMatcher.group(2) );
-
-		mods.odb.save( fact );
+		try
+		{
+			FactoidObject fact = new FactoidObject( factoidMatcher.group(1).toLowerCase() , factoidMatcher.group(2) );
+			mods.odb.save( fact );
+		}
+		catch( IllegalStateException e )
+		{
+			// Well shiver me timbers! What the hell causes this?
+		}
 	}
 
 	public String[] helpTopics = { "Remember" };
