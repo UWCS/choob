@@ -1,30 +1,27 @@
-#!php
 <?
 /*
-Really needs to be run from a webserver so you can use GET variables.
+Usage:
 
-Format:
+Either:
+	http://localhost/path/to/ObjectDbDump.php?object={type of object to dump}&format={format to dump}
 
-http://localhost/path/to/ObjectDbDump.php?object={type of object to dump}&format={format to dump}
+	ie.
+	http://localhost/path/to/ObjectDbDump.php?object=plugins.Alias.AliasObject&format=alias.add
+	to dump aliases in the alias.add format.
 
-ie.
-http://localhost/path/to/ObjectDbDump.php?object=plugins.Alias.AliasObject&format=alias.add
-to dump aliases in the alias.add format.
+	Supported formats listed if format ommited.
 
-Supported formats listed if format ommited.
+Or, from the command line:
 
-Can also be run from the command line.
+	php ObjectDbDump.php {format} {object}
 
-php ObjectDbDump.php {format} {object}
+	ie.
 
-ie.
-
-c:\php\php ObjectDbDump.php alias.add plugins.Alias.AliasObject
+	c:\php\php ObjectDbDump.php alias.add plugins.Alias.AliasObject
 
 Nb: Insert username and password below.
 
 */
-
 
 header ("Content-type: text/plain");
 mysql_connect("localhost", "choob","choob");
@@ -36,10 +33,15 @@ if ($_SERVER['argc']==1)
 	$getlimit=$_GET{'limit'};
 	$getformat=$_GET{"format"};
 	$getobject=$_GET{'object'};
-	echo "set";
 }
 else
 {
+	if ($_SERVER['argc'] !=3)
+	{
+		echo "head -n 24 me for manual.";
+		exit;
+	}
+
 	$getformat=$_SERVER['argv'][1];
 	$getobject=$_SERVER['argv'][2];
 }
@@ -58,7 +60,6 @@ if (!mysql_num_rows($r))
 }
 
 $t=array();
-
 $lastrow=-1;
 
 while ($row=mysql_fetch_row($r))
@@ -119,5 +120,5 @@ switch ($format)
 		break;
 	}
 	default:
-	echo "Supported formats: xml, csil, alias.add.";
+	echo "Supported formats: xml, csil and alias.add.";
 }

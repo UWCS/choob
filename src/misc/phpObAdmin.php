@@ -38,8 +38,6 @@ if ($_SERVER{'QUERY_STRING'}=="intro")															// Give the <intro /> page.
 
 if (isset($_GET['delete']))																		// We've been asked to <delete> an object.
 {
-	echo "Can't delete, demo version ;)";
-	exit;
 	$id=(int)$_GET['delete'];
 	mysql_query('delete from `objectstoredata` where `objectid`=' . $id . ';');
 	mysql_query('delete from `objectstore` where `objectid`=' . $id . ';');
@@ -67,9 +65,7 @@ if (!mysql_num_rows($r))																			// It didn't exist, show the table <l
 	echo "<ul>";
 
 	while ($row=mysql_fetch_row($r))
-	{
 		echo "<li><a href=\"?object={$row[0]}\" target=\"main\">" . substr($row[0],8) . "</a></li>";
-	}
 
 	echo "</ul>";
 
@@ -98,9 +94,8 @@ while ($row=mysql_fetch_row($r))
 }
 array_push($t, $raray);
 
-//print_r($t);
-echo "<table>";
-echo "\n<tr>";
+echo "<table>\n<tr>";
+
 foreach ($t[0] as $keyz => $nil)
 	echo "<th>$keyz</th>";
 unset($nil);
