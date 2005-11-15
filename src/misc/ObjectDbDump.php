@@ -1,3 +1,4 @@
+#!php
 <?
 /*
 Really needs to be run from a webserver so you can use GET variables.
@@ -12,20 +13,42 @@ to dump aliases in the alias.add format.
 
 Supported formats listed if format ommited.
 
+Can also be run from the command line.
+
+php ObjectDbDump.php {format} {object}
+
+ie.
+
+c:\php\php ObjectDbDump.php alias.add plugins.Alias.AliasObject
 
 Nb: Insert username and password below.
+
 */
 
 
 header ("Content-type: text/plain");
-mysql_connect("localhost", "USERNAME","PASSWORD");
+mysql_connect("localhost", "choob","choob");
 
 mysql_select_db("choob");
 
-if (isset($_GET{'limit'}))
-	$limit=$_GET{'limit'};
+if ($_SERVER['argc']==1)
+{
+	$getlimit=$_GET{'limit'};
+	$getformat=$_GET{"format"};
+	$getobject=$_GET{'object'};
+	echo "set";
+}
+else
+{
+	$getformat=$_SERVER['argv'][1];
+	$getobject=$_SERVER['argv'][2];
+}
 
-$r=mysql_query('select `objectid`,`fieldname`,`fieldstring` from `objectstoredata` where `objectid` in (select distinct `objectstoredata`.`objectid` from `objectstoredata` inner join `objectstore` on (`objectstoredata`.`objectid`=`objectstore`.`objectid`) WHERE `ClassName`="' . mysql_real_escape_string($_GET{"object"}) . '") and 1 order by `objectid`' . (isset($limit) ? "limit $limit" : ""));
+
+if (isset($getlimit))
+	$limit=$getlimit;
+
+$r=mysql_query('select `objectid`,`fieldname`,`fieldstring` from `objectstoredata` where `objectid` in (select distinct `objectstoredata`.`objectid` from `objectstoredata` inner join `objectstore` on (`objectstoredata`.`objectid`=`objectstore`.`objectid`) WHERE `ClassName`="' . mysql_real_escape_string($getobject) . '") and 1 order by `objectid`' . (isset($limit) ? "limit $limit" : ""));
 echo mysql_error();
 
 if (!mysql_num_rows($r))
@@ -52,7 +75,7 @@ while ($row=mysql_fetch_row($r))
 }
 array_push($t, $raray);
 
-$format=$_GET{"format"};
+$format=$getformat;
 
 switch ($format)
 {
@@ -60,7 +83,7 @@ switch ($format)
 	{
 		foreach ($t as $el)
 		{
-			echo "<object type=\"{$_GET['object']}\" id={$el['id']}>\n";
+			echo "<object type=\"$getobject\" id={$el['id']}>\n";
 			foreach ($el as $n => $l)
 				if ($n!='id')
 					echo "\t<item name=\"$n\">$l</item>\n";
@@ -79,7 +102,7 @@ switch ($format)
 		foreach ($t as $el)
 		{
 			$s="";
-			echo "{$_GET['object']}:{";
+			echo "$getobject:{";
 			foreach ($t[0] as $ra => $nil)
 						$s.="$ra\t";
 					$s=substr($s,0,strlen($s)-1);
