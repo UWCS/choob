@@ -215,93 +215,87 @@ public class ObjectDBTransaction // Needs to be non-final
 						// Actually, this is rather objects not existing in ObjectStore when they, um, existed in ObjectStore.
 						throw new ObjectDBError ("Inconsistent database state: One or more objects of type " + storedClass.getName() + " in ObjectStore did not exist in ObjectStoreData.");
 					}
-					do // Loop over this block's results
+
+					Object tempObject = null; // This will be set immediately, because 0 is not a valid ID.
+					int id = 0;
+
+					try
 					{
-						try
+						do // Loop over this block's results
 						{
-							Object tempObject = storedClass.newInstance();
-
-							int id = result.getInt(1);
-
-							idField.setInt( tempObject, id );
-
-							do // Loop over this object's fields
+							try
 							{
-								try
+								// Break if we're in the next object
+								int newId = result.getInt(1);
+								if (newId != id)
 								{
-									// Break if we're in the next object
-									int newId = result.getInt(1);
-									if (newId != id)
-									{
-										objects.set(idMap.get(id), tempObject);
-										tempObject = storedClass.newInstance();
-										idField.setInt( tempObject, newId );
-										id = newId;
-									}
-
-									String name = result.getString(2);
-									if (name == null)
-									{
-										// XXX This is forbidden by the schema, yet happens when the DB is broken.
-										// Ie there's a null object.
-										continue;
-									}
-									Field tempField = fieldCache.get(name);
-									if (tempField == null)
-									{
-										tempField = storedClass.getField( name );
-										fieldCache.put( name, tempField );
-									}
-
-									Type theType = tempField.getType();
-
-									if( theType == String.class )
-									{
-										tempField.set( tempObject, result.getString(5) );
-									}
-									else if( theType == Integer.TYPE )
-									{
-										tempField.setInt( tempObject, (int)result.getLong(3) );
-									}
-									else if( theType == Long.TYPE )
-									{
-										tempField.setLong( tempObject, result.getLong(3) );
-									}
-									else if( theType == Boolean.TYPE )
-									{
-										tempField.setBoolean( tempObject, result.getLong(3) == 1 );
-									}
-									else if( theType == Float.TYPE )
-									{
-										tempField.setFloat( tempObject, (float)result.getDouble(4) );
-									}
-									else if( theType == Double.TYPE )
-									{
-										tempField.setDouble( tempObject, result.getDouble(4) );
-									}
+									tempObject = storedClass.newInstance();
+									objects.set(idMap.get(newId), tempObject);
+									idField.setInt( tempObject, newId );
+									id = newId;
 								}
-								catch( NoSuchFieldException e )
+
+								String name = result.getString(2);
+								if (name == null)
 								{
-									e.printStackTrace();
-									// Ignore this, as per spec.
+									// XXX This is forbidden by the schema, yet happens when the DB is broken.
+									// Ie there's a null object.
+									// Since it already got added, we're safe, but the object will now
+									// have all fields initialised to default.
+									continue;
+								}
+								Field tempField = fieldCache.get(name);
+								if (tempField == null)
+								{
+									tempField = storedClass.getField( name );
+									fieldCache.put( name, tempField );
+								}
+
+								Type theType = tempField.getType();
+
+								if( theType == String.class )
+								{
+									tempField.set( tempObject, result.getString(5) );
+								}
+								else if( theType == Integer.TYPE )
+								{
+									tempField.setInt( tempObject, (int)result.getLong(3) );
+								}
+								else if( theType == Long.TYPE )
+								{
+									tempField.setLong( tempObject, result.getLong(3) );
+								}
+								else if( theType == Boolean.TYPE )
+								{
+									tempField.setBoolean( tempObject, result.getLong(3) == 1 );
+								}
+								else if( theType == Float.TYPE )
+								{
+									tempField.setFloat( tempObject, (float)result.getDouble(4) );
+								}
+								else if( theType == Double.TYPE )
+								{
+									tempField.setDouble( tempObject, result.getDouble(4) );
 								}
 							}
-							while( result.next() ); // Looping over fields
-
-							// tempObject has been built.
-							objects.set(idMap.get(id), tempObject);
+							catch( NoSuchFieldException e )
+							{
+								e.printStackTrace();
+								// Ignore this, as per spec.
+							}
 						}
-						catch (InstantiationException e)
-						{
-							System.err.println("Error instantiating object of type " + storedClass + ": " + e);
-							throw new ObjectDBError("The object could not be instantiated.");
-						}
-						catch (IllegalAccessException e)
-						{
-							System.err.println("Access error instantiating object of type " + storedClass + ": " + e);
-							throw new ObjectDBError("The object could not be instantiated.");
-						}
-					} while ( result.next() ); // Looping over objects
+						while( result.next() ); // Looping over fields
+					}
+					catch (InstantiationException e)
+					{
+						System.err.println("Error instantiating object of type " + storedClass + ": " + e);
+						throw new ObjectDBError("The object could not be instantiated.");
+					}
+					catch (IllegalAccessException e)
+					{
+						System.err.println("Access error instantiating object of type " + storedClass + ": " + e);
+						throw new ObjectDBError("The object could not be instantiated.");
+					}
 				} while ( allObjsNext ); // Looping over blocks of IDs
 			}
 
