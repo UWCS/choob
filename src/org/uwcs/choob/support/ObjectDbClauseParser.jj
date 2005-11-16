@@ -1175,7 +1175,7 @@ String ParseSort() :
 			)?
 			t = <FIELDNAME>
 			{
-				String suffix = isInt ? ".FieldBigInt" : ".FieldStr";
+				String suffix = isInt ? ".FieldBigInt" : ".FieldString";
 				return "ORDER BY " + getFieldName(t.image) + suffix + " " + order;
 			}
 		|

@@ -1269,7 +1269,7 @@
         ;
       }
       t = jj_consume_token(FIELDNAME);
-                                String suffix = isInt ? ".FieldBigInt" : ".FieldStr";
+                                String suffix = isInt ? ".FieldBigInt" : ".FieldString";
                                 {if (true) return "ORDER BY " + getFieldName(t.image) + suffix + " " + order;}
       break;
     case K_RANDOM:

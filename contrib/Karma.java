@@ -421,17 +421,23 @@ public class Karma
 		irc.sendContextReply(mes, "No chance, matey.");
 	}
 
-	public void webList(Modules mods, IRCInterface irc, PrintWriter out, String params, String[] user) throws ChoobException
+	public void webList(PrintWriter out, String params, String[] user) throws ChoobException
 	{
 		out.println("HTTP/1.0 200 OK");
 		out.println("Content-Type: text/html");
 		out.println();
 
-		List<KarmaObject> res = retrieveKarmaObjects("WHERE 1 ORDER BY value", mods);
+		List<KarmaObject> res = retrieveKarmaObjects("WHERE 1 SORT INTEGER value", mods);
 
 
 		out.println(res.size());
-
+		for(KarmaObject karmaObject: res)
+		{
+			if (karmaObject == null)
+				out.println("NULL.<br/>");
+			else
+				out.println("" + karmaObject.id + ": " + karmaObject.string + " => " + karmaObject.value + ".<br/>");
+		}
 	}
 
 

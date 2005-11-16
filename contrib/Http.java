@@ -159,7 +159,7 @@ public class Http
 					else
 						out.println("No such object: " + hash);
 				}
-				catch (ChoobException e)
+				catch (Throwable e)
 				{
 					System.err.println("Error retreiving object ID from database:");
 					e.printStackTrace();

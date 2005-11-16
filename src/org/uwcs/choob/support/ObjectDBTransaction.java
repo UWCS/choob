@@ -179,6 +179,8 @@ public class ObjectDBTransaction // Needs to be non-final
 			if( allObjects.first() )
 			{
 				boolean allObjsNext = false;
+				Map<Integer,Integer> idMap = new HashMap<Integer,Integer>();
+				int blockOffset = 0;
 				do // Loop over all objects
 				{
 					// Eat this and maybe some more elements...
@@ -186,10 +188,14 @@ public class ObjectDBTransaction // Needs to be non-final
 					int count = 0;
 					do
 					{
-						ids[count] = allObjects.getInt(1);
+						int thisId = allObjects.getInt(1);
+						ids[count] = thisId;
+						idMap.put(thisId, blockOffset + count);
 						count++;
 						allObjsNext = allObjects.next();
+						objects.add(null);
 					} while (allObjsNext && count < MAXOR - 1);
+					blockOffset += count;
 
 					// Build a query to get values for them...
 					StringBuffer query = new StringBuffer(baseQuery);
@@ -224,12 +230,13 @@ public class ObjectDBTransaction // Needs to be non-final
 								try
 								{
 									// Break if we're in the next object
-									if (result.getInt(1) != id)
+									int newId = result.getInt(1);
+									if (newId != id)
 									{
-										objects.add(tempObject);
+										objects.set(idMap.get(id), tempObject);
 										tempObject = storedClass.newInstance();
-										id = result.getInt(1);
-										idField.setInt( tempObject, id );
+										idField.setInt( tempObject, newId );
+										id = newId;
 									}
 
 									String name = result.getString(2);
@@ -282,7 +289,7 @@ public class ObjectDBTransaction // Needs to be non-final
 							while( result.next() ); // Looping over fields
 
 							// tempObject has been built.
-							objects.add(tempObject);
+							objects.set(idMap.get(id), tempObject);
 						}
 						catch (InstantiationException e)
 						{
