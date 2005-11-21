@@ -1,179 +1,112 @@
-drop database if exists choob;
-create database choob;
-
-use choob;
-
--- MySQL dump 9.11
+-- phpMyAdmin SQL Dump
+-- version 2.6.1
+-- http://www.phpmyadmin.net
 --
--- Host: localhost    Database: choob
--- ------------------------------------------------------
--- Server version	4.0.24_Debian-10-log
-
+-- Host: localhost
+-- Generation Time: Nov 21, 2005 at 02:30 PM
+-- Server version: 4.1.11
+-- PHP Version: 5.0.4
 --
--- Table structure for table `AddNicks`
+-- Database: `choob`
 --
 
+USE `choob`;
 
-CREATE TABLE `UserNodes` (
-  `NodeID` int(11) unsigned NOT NULL auto_increment,
-  `NodeName` varchar(32) NOT NULL default '',
-  `NodeClass` tinyint(3) unsigned NOT NULL default '0',
-  PRIMARY KEY  (`NodeID`),
-  UNIQUE KEY `NodeName` (`NodeName`,`NodeClass`)
-) Type=InnoDB;
-
---
--- Dumping data for table `UserNodes`
---
-
-INSERT INTO `UserNodes` VALUES (1,'root',3);
-INSERT INTO `UserNodes` VALUES (2,'anonymous',3);
-INSERT INTO `UserNodes` VALUES (3,'bucko',0);
-INSERT INTO `UserNodes` VALUES (4,'bucko',1);
-INSERT INTO `UserNodes` VALUES (5,'plugindevs',3);
-INSERT INTO `UserNodes` VALUES (6,'Plugin',2);
-INSERT INTO `UserNodes` VALUES (7,'Security',2);
-INSERT INTO `UserNodes` VALUES (8,'NickServ',2);
-INSERT INTO `UserNodes` VALUES (9,'Help',2);
-INSERT INTO `UserNodes` VALUES (10,'Seen',2);
-INSERT INTO `UserNodes` VALUES (11,'Talk',2);
-INSERT INTO `UserNodes` VALUES (12,'TimedEvents',2);
-INSERT INTO `UserNodes` VALUES (13,'MiscMsg',2);
-INSERT INTO `UserNodes` VALUES (14,'Tell',2);
-INSERT INTO `UserNodes` VALUES (15,'Alias',2);
-INSERT INTO `UserNodes` VALUES (16,'Karma',2);
-INSERT INTO `UserNodes` VALUES (17,'Quote',2);
-INSERT INTO `UserNodes` VALUES (18,'Test',2);
-INSERT INTO `UserNodes` VALUES (19,'Events',2);
-INSERT INTO `UserNodes` VALUES (20,'Factoids',2);
-INSERT INTO `UserNodes` VALUES (21,'Lectures',2);
-INSERT INTO `UserNodes` VALUES (22,'Lookup',2);
-INSERT INTO `UserNodes` VALUES (23,'MFJ',2);
-INSERT INTO `UserNodes` VALUES (24,'Shutup',2);
-INSERT INTO `UserNodes` VALUES (25,'sadiq',0);
-INSERT INTO `UserNodes` VALUES (26,'sadiq',1);
-
---
--- Table structure for table `AddNicks`
---
-
---
--- I believe this table should not be used. It's insecure. --bucko
---
-
--- CREATE TABLE `AddNicks` (
---   `UserID` int(11) NOT NULL default '0',
---   `Nick` varchar(64) NOT NULL default '',
---   UNIQUE KEY `Nick` (`Nick`)
--- ) Type=InnoDB;
-
---
--- Dumping data for table `AddNicks`
---
-
--- INSERT INTO `AddNicks` VALUES (3,'Faux%');
--- INSERT INTO `AddNicks` VALUES (3,'YourMum|%');
-
---
--- Table structure for table `Aliases`
---
-
-CREATE TABLE `Aliases` (
-  `Name` varchar(64) NOT NULL default '',
-  `Converted` tinytext NOT NULL,
---  What's the point of this value?
---  `UserID` int(11) NOT NULL default '0',
-  PRIMARY KEY  (`Name`)
-) Type=InnoDB;
-
---
--- Dumping data for table `Aliases`
---
-
-INSERT INTO `Aliases` VALUES ('say','Faux.Say');
-INSERT INTO `Aliases` VALUES ('reply','Faux.Reply');
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `CorePlugins`
 --
+-- Creation: Nov 04, 2005 at 12:58 PM
+--
 
-CREATE TABLE `CorePlugins` (
+DROP TABLE IF EXISTS `CorePlugins`;
+CREATE TABLE IF NOT EXISTS `CorePlugins` (
   `PluginName` varchar(64) NOT NULL default '',
   `URL` mediumtext NOT NULL,
   PRIMARY KEY  (`PluginName`)
-) Type=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `CorePlugins`
 --
 
-INSERT INTO `CorePlugins` VALUES ('Plugin','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Plugin.java');
-INSERT INTO `CorePlugins` VALUES ('Test','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Test.java');
-INSERT INTO `CorePlugins` VALUES ('Security','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Security.java');
-INSERT INTO `CorePlugins` VALUES ('NickServ','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java');
-INSERT INTO `CorePlugins` VALUES ('Help','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Help.java');
-INSERT INTO `CorePlugins` VALUES ('Seen','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Seen.java');
-INSERT INTO `CorePlugins` VALUES ('Talk','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Talk.java');
-INSERT INTO `CorePlugins` VALUES ('TimedEvents','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/TimedEvents.java');
-INSERT INTO `CorePlugins` VALUES ('MiscMsg','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MiscMsg.java');
-INSERT INTO `CorePlugins` VALUES ('Tell','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Tell.java');
-INSERT INTO `CorePlugins` VALUES ('Alias','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Alias.java');
-INSERT INTO `CorePlugins` VALUES ('Karma','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Karma.java');
-INSERT INTO `CorePlugins` VALUES ('Quote','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Quote.java');
-INSERT INTO `CorePlugins` VALUES ('Factoids','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Factoids.java');
-INSERT INTO `CorePlugins` VALUES ('Events','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Events.java');
-INSERT INTO `CorePlugins` VALUES ('Lectures','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Lectures.java');
-INSERT INTO `CorePlugins` VALUES ('Lookup','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Lookup.java');
-INSERT INTO `CorePlugins` VALUES ('MFJ','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MFJ.java');
-INSERT INTO `CorePlugins` VALUES ('Shutup','http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Shutup.java');
+INSERT INTO `CorePlugins` VALUES ('Alias', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Alias.java');
+INSERT INTO `CorePlugins` VALUES ('Dict', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Dict.java');
+INSERT INTO `CorePlugins` VALUES ('Events', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Events.java');
+INSERT INTO `CorePlugins` VALUES ('Factoids', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Factoids.java');
+INSERT INTO `CorePlugins` VALUES ('Help', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Help.java');
+INSERT INTO `CorePlugins` VALUES ('Karma', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Karma.java');
+INSERT INTO `CorePlugins` VALUES ('Lectures', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Lectures.java');
+INSERT INTO `CorePlugins` VALUES ('Lookup', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Lookup.java');
+INSERT INTO `CorePlugins` VALUES ('MFJ', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MFJ.java');
+INSERT INTO `CorePlugins` VALUES ('MiscMsg', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MiscMsg.java');
+INSERT INTO `CorePlugins` VALUES ('NickServ', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java');
+INSERT INTO `CorePlugins` VALUES ('Plugin', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Plugin.java');
+INSERT INTO `CorePlugins` VALUES ('Quote', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Quote.java');
+INSERT INTO `CorePlugins` VALUES ('Security', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Security.java');
+INSERT INTO `CorePlugins` VALUES ('Seen', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Seen.java');
+INSERT INTO `CorePlugins` VALUES ('Shutup', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Shutup.java');
+INSERT INTO `CorePlugins` VALUES ('Talk', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Talk.java');
+INSERT INTO `CorePlugins` VALUES ('Tell', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Tell.java');
+INSERT INTO `CorePlugins` VALUES ('Test', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Test.java');
+INSERT INTO `CorePlugins` VALUES ('TimedEvents', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/TimedEvents.java');
 
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `GroupMembers`
 --
+-- Creation: Nov 04, 2005 at 12:58 PM
+--
 
-CREATE TABLE `GroupMembers` (
+DROP TABLE IF EXISTS `GroupMembers`;
+CREATE TABLE IF NOT EXISTS `GroupMembers` (
   `GroupID` int(11) unsigned default NULL,
   `MemberID` int(11) unsigned default NULL,
   UNIQUE KEY `GroupID` (`GroupID`,`MemberID`),
   KEY `MemberID` (`MemberID`),
-  KEY `GroupID_2` (`GroupID`),
-  FOREIGN KEY (`GroupID`) REFERENCES UserNodes (`NodeID`),
-  FOREIGN KEY (`MemberID`) REFERENCES UserNodes (`NodeID`)
-) Type=InnoDB;
+  KEY `GroupID_2` (`GroupID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- RELATIONS FOR TABLE `GroupMembers`:
+--   `GroupID`
+--       `UserNodes` -> `NodeID`
+--   `MemberID`
+--       `UserNodes` -> `NodeID`
+--
 
 --
 -- Dumping data for table `GroupMembers`
 --
 
-INSERT INTO `GroupMembers` VALUES (1,4);
-INSERT INTO `GroupMembers` VALUES (4,3);
-INSERT INTO `GroupMembers` VALUES (1,5);
-INSERT INTO `GroupMembers` VALUES (1,6);
-INSERT INTO `GroupMembers` VALUES (1,7);
-INSERT INTO `GroupMembers` VALUES (1,8);
-INSERT INTO `GroupMembers` VALUES (1,9);
-INSERT INTO `GroupMembers` VALUES (1,10);
-INSERT INTO `GroupMembers` VALUES (1,11);
-INSERT INTO `GroupMembers` VALUES (1,12);
-INSERT INTO `GroupMembers` VALUES (1,13);
-INSERT INTO `GroupMembers` VALUES (1,14);
-INSERT INTO `GroupMembers` VALUES (1,15);
-INSERT INTO `GroupMembers` VALUES (1,16);
-INSERT INTO `GroupMembers` VALUES (1,17);
-INSERT INTO `GroupMembers` VALUES (1,18);
-INSERT INTO `GroupMembers` VALUES (1,19);
-INSERT INTO `GroupMembers` VALUES (1,20);
-INSERT INTO `GroupMembers` VALUES (1,21);
-INSERT INTO `GroupMembers` VALUES (1,22);
-INSERT INTO `GroupMembers` VALUES (1,24);
-INSERT INTO `GroupMembers` VALUES (1,26);
+INSERT INTO `GroupMembers` VALUES (1, 4);
+INSERT INTO `GroupMembers` VALUES (1, 5);
+INSERT INTO `GroupMembers` VALUES (1, 6);
+INSERT INTO `GroupMembers` VALUES (1, 7);
+INSERT INTO `GroupMembers` VALUES (1, 8);
+INSERT INTO `GroupMembers` VALUES (1, 9);
+INSERT INTO `GroupMembers` VALUES (1, 10);
+INSERT INTO `GroupMembers` VALUES (1, 11);
+INSERT INTO `GroupMembers` VALUES (1, 12);
+INSERT INTO `GroupMembers` VALUES (1, 13);
+INSERT INTO `GroupMembers` VALUES (1, 14);
+INSERT INTO `GroupMembers` VALUES (1, 15);
+INSERT INTO `GroupMembers` VALUES (1, 16);
+INSERT INTO `GroupMembers` VALUES (1, 17);
+INSERT INTO `GroupMembers` VALUES (4, 3);
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `History`
 --
+-- Creation: Nov 04, 2005 at 12:58 PM
+--
 
-CREATE TABLE `History` (
+DROP TABLE IF EXISTS `History`;
+CREATE TABLE IF NOT EXISTS `History` (
   `LineID` int(11) unsigned NOT NULL auto_increment,
   `Type` varchar(50) NOT NULL default '',
   `Nick` varchar(32) NOT NULL default '',
@@ -186,65 +119,190 @@ CREATE TABLE `History` (
   KEY `Nick` (`Nick`),
   KEY `Channel` (`Channel`),
   KEY `Time` (`Time`)
-) TYPE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `History`
+--
+
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `LoadedPlugins`
 --
+-- Creation: Nov 04, 2005 at 12:58 PM
+--
 
-CREATE TABLE `LoadedPlugins` (
+DROP TABLE IF EXISTS `LoadedPlugins`;
+CREATE TABLE IF NOT EXISTS `LoadedPlugins` (
   `Name` varchar(255) NOT NULL default '',
   `Source` longtext NOT NULL,
-  PRIMARY KEY `Name` (`Name`)
-) Type=InnoDB;
+  PRIMARY KEY  (`Name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `LoadedPlugins`
+--
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `ObjectStore`
 --
+-- Creation: Nov 04, 2005 at 12:58 PM
+--
 
-CREATE TABLE `ObjectStore` (
+DROP TABLE IF EXISTS `ObjectStore`;
+CREATE TABLE IF NOT EXISTS `ObjectStore` (
   `ObjectID` int(11) NOT NULL auto_increment,
   `ClassName` varchar(128) NOT NULL default '',
   `ClassID` int(11) NOT NULL default '0',
   PRIMARY KEY  (`ObjectID`),
   UNIQUE KEY `Composite` (`ClassName`,`ClassID`)
-) Type=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `ObjectStore`
+--
+
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `ObjectStoreData`
 --
+-- Creation: Nov 04, 2005 at 12:58 PM
+--
 
-CREATE TABLE `ObjectStoreData` (
+DROP TABLE IF EXISTS `ObjectStoreData`;
+CREATE TABLE IF NOT EXISTS `ObjectStoreData` (
   `ObjectID` int(11) NOT NULL default '0',
   `FieldName` varchar(128) NOT NULL default '',
-  `FieldBigInt` BIGINT NOT NULL,
-  `FieldDouble` DOUBLE NOT NULL,
-  `FieldString` TEXT,
-  UNIQUE KEY (`ObjectID`, `FieldName`),
-  KEY (`FieldName`),
-  INDEX (`FieldBigInt`),
-  INDEX (`FieldDouble`),
-  INDEX (`FieldString` (32)),
-  FOREIGN KEY (`ObjectID`) REFERENCES `ObjectStore` (`ObjectID`)
-) Type=InnoDB;
+  `FieldBigInt` bigint(20) NOT NULL default '0',
+  `FieldDouble` double NOT NULL default '0',
+  `FieldString` text,
+  UNIQUE KEY `ObjectID` (`ObjectID`,`FieldName`),
+  KEY `FieldName` (`FieldName`),
+  KEY `FieldBigInt` (`FieldBigInt`),
+  KEY `FieldDouble` (`FieldDouble`),
+  KEY `FieldString` (`FieldString`(32))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- RELATIONS FOR TABLE `ObjectStoreData`:
+--   `ObjectID`
+--       `ObjectStore` -> `ObjectID`
+--
+
+--
+-- Dumping data for table `ObjectStoreData`
+--
+
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `UserNodePermissions`
 --
+-- Creation: Nov 04, 2005 at 12:58 PM
+--
 
-CREATE TABLE `UserNodePermissions` (
-  `NodeID` int(11) UNSIGNED NOT NULL default '0',
-  `Type` VARCHAR(50) NOT NULL,
-  `Permission` VARCHAR(80) NOT NULL,
-  `Action` VARCHAR(30) NOT NULL,
-  KEY (`NodeID`),
-  UNIQUE KEY (`NodeID`, `Type`, `Permission`, `Action`),
-  FOREIGN KEY (`NodeID`) REFERENCES `UserNodes` (`NodeID`)
-) Type=InnoDB COMMENT='Table storing plugin permissions';
+DROP TABLE IF EXISTS `UserNodePermissions`;
+CREATE TABLE IF NOT EXISTS `UserNodePermissions` (
+  `NodeID` int(11) unsigned NOT NULL default '0',
+  `Type` varchar(50) NOT NULL default '',
+  `Permission` varchar(80) NOT NULL default '',
+  `Action` varchar(30) NOT NULL default '',
+  UNIQUE KEY `NodeID_2` (`NodeID`,`Type`,`Permission`,`Action`),
+  KEY `NodeID` (`NodeID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Table storing plugin permissions';
+
+--
+-- RELATIONS FOR TABLE `UserNodePermissions`:
+--   `NodeID`
+--       `UserNodes` -> `NodeID`
+--
 
 --
 -- Dumping data for table `UserNodePermissions`
 --
 
-INSERT INTO `UserNodePermissions` VALUES (1,'java.security.AllPermission','','');
-INSERT INTO `UserNodePermissions` VALUES (5,'choob','plugin.load.*','');
+INSERT INTO `UserNodePermissions` VALUES (1, 'java.security.AllPermission', '', '');
+INSERT INTO `UserNodePermissions` VALUES (5, 'choob', 'plugin.load.*', '');
+INSERT INTO `UserNodePermissions` VALUES (19, 'java.net.SocketPermission', 'faux.uwcs.co.uk:80', 'connect,resolve');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `UserNodes`
+--
+-- Creation: Nov 04, 2005 at 12:58 PM
+--
+
+DROP TABLE IF EXISTS `UserNodes`;
+CREATE TABLE IF NOT EXISTS `UserNodes` (
+  `NodeID` int(11) unsigned NOT NULL auto_increment,
+  `NodeName` varchar(32) NOT NULL default '',
+  `NodeClass` tinyint(3) unsigned NOT NULL default '0',
+  PRIMARY KEY  (`NodeID`),
+  UNIQUE KEY `NodeName` (`NodeName`,`NodeClass`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `UserNodes`
+--
+
+INSERT INTO `UserNodes` VALUES (15, 'Alias', 2);
+INSERT INTO `UserNodes` VALUES (2, 'anonymous', 3);
+INSERT INTO `UserNodes` VALUES (27, 'bucko', 0);
+INSERT INTO `UserNodes` VALUES (28, 'bucko', 1);
+INSERT INTO `UserNodes` VALUES (26, 'dict', 2);
+INSERT INTO `UserNodes` VALUES (19, 'Events', 2);
+INSERT INTO `UserNodes` VALUES (20, 'Factoids', 2);
+INSERT INTO `UserNodes` VALUES (3, 'Faux', 0);
+INSERT INTO `UserNodes` VALUES (4, 'Faux', 1);
+INSERT INTO `UserNodes` VALUES (9, 'Help', 2);
+INSERT INTO `UserNodes` VALUES (25, 'http', 2);
+INSERT INTO `UserNodes` VALUES (16, 'Karma', 2);
+INSERT INTO `UserNodes` VALUES (21, 'Lectures', 2);
+INSERT INTO `UserNodes` VALUES (22, 'Lookup', 2);
+INSERT INTO `UserNodes` VALUES (23, 'MFJ', 2);
+INSERT INTO `UserNodes` VALUES (13, 'MiscMsg', 2);
+INSERT INTO `UserNodes` VALUES (8, 'NickServ', 2);
+INSERT INTO `UserNodes` VALUES (6, 'Plugin', 2);
+INSERT INTO `UserNodes` VALUES (5, 'plugindevs', 3);
+INSERT INTO `UserNodes` VALUES (17, 'Quote', 2);
+INSERT INTO `UserNodes` VALUES (1, 'root', 3);
+INSERT INTO `UserNodes` VALUES (29, 'sadiq', 0);
+INSERT INTO `UserNodes` VALUES (30, 'sadiq', 1);
+INSERT INTO `UserNodes` VALUES (7, 'Security', 2);
+INSERT INTO `UserNodes` VALUES (10, 'Seen', 2);
+INSERT INTO `UserNodes` VALUES (24, 'Shutup', 2);
+INSERT INTO `UserNodes` VALUES (11, 'Talk', 2);
+INSERT INTO `UserNodes` VALUES (14, 'Tell', 2);
+INSERT INTO `UserNodes` VALUES (18, 'Test', 2);
+INSERT INTO `UserNodes` VALUES (12, 'TimedEvents', 2);
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `GroupMembers`
+--
+ALTER TABLE `GroupMembers`
+  ADD CONSTRAINT `GroupMembers_ibfk_1` FOREIGN KEY (`GroupID`) REFERENCES `UserNodes` (`NodeID`),
+  ADD CONSTRAINT `GroupMembers_ibfk_2` FOREIGN KEY (`MemberID`) REFERENCES `UserNodes` (`NodeID`);
+
+--
+-- Constraints for table `ObjectStoreData`
+--
+ALTER TABLE `ObjectStoreData`
+  ADD CONSTRAINT `ObjectStoreData_ibfk_1` FOREIGN KEY (`ObjectID`) REFERENCES `ObjectStore` (`ObjectID`);
+
+--
+-- Constraints for table `UserNodePermissions`
+--
+ALTER TABLE `UserNodePermissions`
+  ADD CONSTRAINT `UserNodePermissions_ibfk_1` FOREIGN KEY (`NodeID`) REFERENCES `UserNodes` (`NodeID`);
