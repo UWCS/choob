@@ -29,7 +29,7 @@ public class Security
 		"[<Name>]",
 		"<Name> is an optional username to add (if omitted, your nickname will be used; if specified you need the 'user.add' permission)"
 	};
-	public void commandAddUser( Message mes ) throws ChoobAuthException
+	public void commandAddUser( Message mes )
 	{
 		mods.security.checkNS(mes.getNick());
 
@@ -79,7 +79,7 @@ public class Security
 		"[<Name>]",
 		"<Name> is an optional username to remove (if omitted, your nickname will be used; if specified you need the 'user.del' permission)"
 	};
-	public void commandDelUser( Message mes ) throws ChoobAuthException
+	public void commandDelUser( Message mes )
 	{
 		mods.security.checkNS(mes.getNick());
 
@@ -129,7 +129,7 @@ public class Security
 		"<Nick> [<Nick> ...]",
 		"<Nick> is a nickname you'd like to link to your current one"
 	};
-	public void commandBeginLink( Message mes ) throws ChoobAuthException
+	public void commandBeginLink( Message mes )
 	{
 		String userName = mes.getNick();
 
@@ -182,7 +182,7 @@ public class Security
 		"<Root> is the nickname to link to",
 		"<Leaf> is an optional nickname to link from (this defaults to your current nickname; if you specify this, it overrides BeginLink and you need the 'user.link' permission)",
 	};
-	public void commandLink( Message mes ) throws ChoobAuthException
+	public void commandLink( Message mes )
 	{
 		List params = mods.util.getParams( mes );
 
@@ -275,7 +275,7 @@ public class Security
 		"<Name>",
 		"<Name> is the name of the group to add (if this isn't of the form 'user.<YourNick>.<Something>', you need the 'group.add.<Name>' permission)"
 	};
-	public void commandAddGroup( Message mes ) throws ChoobAuthException
+	public void commandAddGroup( Message mes )
 	{
 		mods.security.checkNS(mes.getNick());
 
@@ -316,7 +316,7 @@ public class Security
 		"<Parent> is the name of the group to add into",
 		"<Child> is the name of the group to add",
 	};
-	public void commandAddToGroup( Message mes ) throws ChoobAuthException
+	public void commandAddToGroup( Message mes )
 	{
 		this.doGroupMemberChange(mes, true);
 	}
@@ -327,12 +327,12 @@ public class Security
 		"<Parent> is the name of the group to remove from",
 		"<Child> is the name of the group to remove",
 	};
-	public void commandRemoveFromGroup( Message mes ) throws ChoobAuthException
+	public void commandRemoveFromGroup( Message mes )
 	{
 		this.doGroupMemberChange(mes, false);
 	}
 
-	private void doGroupMemberChange( Message mes, boolean isAdding ) throws ChoobAuthException
+	private void doGroupMemberChange( Message mes, boolean isAdding )
 	{
 		mods.security.checkNS(mes.getNick());
 
@@ -457,7 +457,7 @@ public class Security
 		"<Name> is the permission's name (optional or not depends on the particular permission)",
 		"<Actions> is the permission's actions (optional or not depends on the particular permission)",
 	};
-	public void commandGrant( Message mes ) throws ChoobAuthException
+	public void commandGrant( Message mes )
 	{
 		this.doPermChange( mes, true );
 	}
@@ -470,12 +470,12 @@ public class Security
 		"<Name> is the permission's name (optional or not depends on the particular permission)",
 		"<Actions> is the permission's actions (optional or not depends on the particular permission)",
 	};
-	public void commandRevoke( Message mes ) throws ChoobAuthException
+	public void commandRevoke( Message mes )
 	{
 		this.doPermChange( mes, false );
 	}
 
-	private void doPermChange( Message mes, boolean isGranting ) throws ChoobAuthException
+	private void doPermChange( Message mes, boolean isGranting )
 	{
 		mods.security.checkNS(mes.getNick());
 
@@ -542,7 +542,7 @@ public class Security
 		"<Name> is the permission's name (optional or not depends on the particular permission)",
 		"<Actions> is the permission's actions (optional or not depends on the particular permission)",
 	};
-	public void commandFindPermission( Message mes ) throws ChoobAuthException
+	public void commandFindPermission( Message mes )
 	{
 		List params = mods.util.getParams( mes );
 

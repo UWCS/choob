@@ -13,7 +13,7 @@ public class Plugin
 		"<Name> is an optional name for the plugin (if you don't give one, it'll be guessed from the URL)",
 		"<URL> is the URL from which to load the plugin"
 	};
-	public void commandLoad( Message mes, Modules mods, IRCInterface irc ) throws ChoobAuthException
+	public void commandLoad( Message mes, Modules mods, IRCInterface irc )
 	{
 		// First, do auth!
 		List<String> params = mods.util.getParams( mes );
@@ -83,7 +83,7 @@ public class Plugin
 	public String[] helpLoadPlugin = {
 		"See Load.",
 	};
-	public void commandLoadPlugin( Message mes, Modules mods, IRCInterface irc ) throws ChoobAuthException
+	public void commandLoadPlugin( Message mes, Modules mods, IRCInterface irc )
 	{
 		commandLoad(mes, mods, irc);
 	}
