@@ -1,7 +1,7 @@
-import org.uwcs.choob.*;
-import org.uwcs.choob.support.*;
-import org.uwcs.choob.support.events.*;
-import org.uwcs.choob.modules.*;
+import uk.co.uwcs.choob.*;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.modules.*;
 import java.util.*;
 import java.net.*;
 import java.util.Hashtable;

@@ -3,7 +3,7 @@
  * @author bucko
  */
 
-package org.uwcs.choob.misc;
+package uk.co.uwcs.choob.misc;
 
 import java.util.*;
 import java.io.*;
@@ -284,7 +284,7 @@ public final class HorriblePerlScript
 	{
 		try
 		{
-			OutputStream stream = new FileOutputStream("org/uwcs/choob/support/events/" + className + ".java");
+			OutputStream stream = new FileOutputStream("uk/co/uwcs/choob/support/events/" + className + ".java");
 			PrintWriter writer = new PrintWriter(stream);
 			writer.print(classContent);
 			writer.close();
@@ -391,7 +391,7 @@ public final class HorriblePerlScript
 		{
 			// Sigh, Java makes this so complicated...
 			StringBuffer choob = new StringBuffer();
-			FileReader input = new FileReader("org/uwcs/choob/Choob.java");
+			FileReader input = new FileReader("uk/co/uwcs/choob/Choob.java");
 			// Read it all!
 			char[] buffer = new char[16384];
 			int found;
@@ -403,7 +403,7 @@ public final class HorriblePerlScript
 			choobData = Pattern.compile("(?<=// BEGIN PASTE!).*?(?=// END PASTE!)", Pattern.DOTALL).matcher(choobData).replaceFirst("\n\n" + eventHandlers + "\t");
 
 			// Yet I can write the file like this...
-			OutputStream stream = new FileOutputStream("org/uwcs/choob/Choob.java");
+			OutputStream stream = new FileOutputStream("uk/co/uwcs/choob/Choob.java");
 			PrintWriter writer = new PrintWriter(stream);
 			writer.print(choobData);
 			writer.close();
@@ -436,7 +436,7 @@ public final class HorriblePerlScript
 			boolean first; // Used for commas in loops.
 
 			// Preamble.
-			StringBuffer classContent = new StringBuffer("/**\n *\n * @author Horrible Perl Script. Ewwww.\n */\n\npackage org.uwcs.choob.support.events;\nimport org.uwcs.choob.support.events.*;\n\n");
+			StringBuffer classContent = new StringBuffer("/**\n *\n * @author Horrible Perl Script. Ewwww.\n */\n\npackage uk.co.uwcs.choob.support.events;\nimport uk.co.uwcs.choob.support.events.*;\n\n");
 
 			// Class description.
 			classContent.append("public class ");
@@ -545,7 +545,7 @@ public final class HorriblePerlScript
 			// IRCEvent hack.
 			if (className.equals("IRCEvent"))
 			{
-				classContent.append("\t\tjava.security.AccessController.checkPermission(new org.uwcs.choob.support.ChoobPermission(\"event.create\"));\n");
+				classContent.append("\t\tjava.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission(\"event.create\"));\n");
 				classContent.append("\t\tthis.synthLevel = 0;\n");
 			}
 			classContent.append("\t}\n\n");
@@ -585,7 +585,7 @@ public final class HorriblePerlScript
 			// IRCEvent hack.
 			if (className.equals("IRCEvent"))
 			{
-				classContent.append("\t\tjava.security.AccessController.checkPermission(new org.uwcs.choob.support.ChoobPermission(\"event.create\"));\n");
+				classContent.append("\t\tjava.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission(\"event.create\"));\n");
 				classContent.append("\t\tthis.synthLevel = old.synthLevel + 1;\n");
 			}
 			classContent.append("\t}\n\n");
@@ -666,7 +666,7 @@ public final class HorriblePerlScript
 			Map<String,String> paramTypes = getParamTypes(interfaceName);
 
 			// Preamble
-			StringBuffer classContent = new StringBuffer("/**\n *\n * @author Horrible Perl Script. Ewwww.\n */\n\npackage org.uwcs.choob.support.events;\nimport org.uwcs.choob.support.events.*;\n\npublic interface ");
+			StringBuffer classContent = new StringBuffer("/**\n *\n * @author Horrible Perl Script. Ewwww.\n */\n\npackage uk.co.uwcs.choob.support.events;\nimport uk.co.uwcs.choob.support.events.*;\n\npublic interface ");
 
 			// Interface name.
 			classContent.append(interfaceName);
