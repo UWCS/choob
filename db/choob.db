@@ -10,6 +10,13 @@
 -- Database: `choob`
 --
 
+---
+-- This is needed to make sure the constraints from the existing db are
+-- cleared, otherwise we get constraint errors when importing.
+---
+DROP DATABASE IF EXISTS choob;
+CREATE DATABASE choob;
+
 USE `choob`;
 
 -- --------------------------------------------------------
