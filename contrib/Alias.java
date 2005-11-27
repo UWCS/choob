@@ -303,7 +303,7 @@ public class Alias
 	{
 		String text = mes.getMessage();
 
-		Matcher matcher = Pattern.compile(irc.getTriggerRegex()).matcher(text);
+		Matcher matcher = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE).matcher(text);
 		int offset = 0;
 
 		// Make sure this is actually a command...
