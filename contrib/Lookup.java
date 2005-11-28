@@ -56,6 +56,10 @@ public class Lookup
 				return what + " ["  +where + "] --> " + rep.toString() + ".";
 			}
 		}
+		catch ( NameNotFoundException e )
+		{
+			return "Not found: " + what;
+		}
 		catch ( NamingException e )
 		{
 			return "Unexpected error: " + e;

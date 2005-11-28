@@ -16,6 +16,7 @@ public class KarmaObject
 	public int down;
 	public int value;
 	boolean increase;
+	String instName;
 }
 
 public class KarmaReasonObject
@@ -28,62 +29,156 @@ public class KarmaReasonObject
 
 public class Karma
 {
-	Modules mods;
-	public Karma (Modules mods)
+	// Non-null == ignore.
+	private static Set exceptions = new HashSet();
+	static
 	{
-		this.mods=mods;
+		exceptions.add("c");
+		exceptions.add("dc");
+		exceptions.add("visualj");
 	}
 
-	// Java-- A better regex would be: (")?((?(1)(?:[ \\./a-zA-Z0-9_-]{2,})|(?:[\\./a-zA-Z0-9_-]{2,})))(?(1)")((?:\\+\\+)|(?:\\-\\-))
-	public String filterKarmaRegex = "(?x:\\b(?:"
-		+ "("
-			+ "[\\./a-zA-Z0-9_-]{3,}" // 3 chars anywhere
-		+ "|"
-			+ "^[\\./a-zA-Z0-9_-]+" // Or anything at the start
-		+ ")"
+	private Modules mods;
+	private IRCInterface irc;
+	public Karma (Modules mods, IRCInterface irc)
+	{
+		this.mods = mods;
+		this.irc = irc;
+	}
 
-		+ "( \\+\\+ | \\-\\- )" // The actual karma change
-		+ ")\\B)";
-
-	public String apiReason(String wot, boolean up) throws ChoobException
+	public String[] apiReason()
 	{
 		List<KarmaReasonObject> results;
-		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = '" + wot + "' AND direction = '" + (up ? 1 : -1) + "'");
+		results = mods.odb.retrieve(KarmaReasonObject.class, "ORDER BY RAND() LIMIT 1");
 
 		if (results.size() == 0)
 			return null;
 		else
-			return (results.get((new Random()).nextInt(results.size()))).reason;
+			return new String[] {
+				results.get(0).string,
+				results.get(0).reason,
+				results.get(0).direction == 1 ? "gained" : "lost"
+			};
+	}
+
+	public String[] apiReason(boolean up)
+	{
+		List<KarmaReasonObject> results;
+		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE direction = '" + (up ? 1 : -1) + "' ORDER BY RAND() LIMIT 1");
+
+		if (results.size() == 0)
+			return null;
+		else
+			return new String[] {
+				results.get(0).string,
+				results.get(0).reason,
+				up ? "gained" : "lost"
+			};
+	}
+
+	public String[] apiReason(String name)
+	{
+		List<KarmaReasonObject> results;
+		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = '" + name.replaceAll("\"", "\\\\\"") + "' ORDER BY RAND() LIMIT 1");
+
+		if (results.size() == 0)
+			return null;
+		else
+			return new String[] {
+				name,
+				results.get(0).reason,
+				results.get(0).direction == 1 ? "gained" : "lost"
+			};
+	}
+
+	public String[] apiReason(String name, boolean up)
+	{
+		List<KarmaReasonObject> results;
+		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = '" + name.replaceAll("\"", "\\\\\"") + "' AND direction = '" + (up ? 1 : -1) + "' ORDER BY RAND() LIMIT 1");
+
+		if (results.size() == 0)
+			return null;
+		else
+			return new String[] {
+				name,
+				results.get(0).reason,
+				up ? "gained" : "lost"
+			};
+	}
+
+	public String[] helpCommandReason = {
+		"Find out why something rocks or sucks.",
+		"[<Object>]",
+		"<Object> is the optional thing to ask about."
+	};
+	public void commandReason( Message mes )
+	{
+		String name = mods.util.getParamString(mes);
+
+		String[] reason;
+		if (name.equals(""))
+		{
+			reason = apiReason(true);
+			if (reason != null)
+				name = reason[0];
+		}
+		else
+			reason = apiReason(name);
+
+		if (reason != null)
+			irc.sendContextReply(mes, name + " has " + reason[2] + " karma " + reason[1]);
+		else
+			irc.sendContextReply(mes, "Nobody has ever told me why " + name + " has changed karma. :(");
 	}
 
 	public String[] helpCommandReasonUp = {
 		"Find out why something rocks.",
-		"<what>"
+		"[<Object>]",
+		"<Object> is the optional thing to ask about."
 	};
-
-	public void commandReasonUp( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	public void commandReasonUp( Message mes )
 	{
-		String wot=mods.util.getParamString(mes);
-		String re=apiReason(wot, true);
-		if (re!=null)
-			irc.sendContextReply(mes, wot + " has been given karma " + re);
+		String name = mods.util.getParamString(mes);
+
+		String[] reason;
+		if (name.equals(""))
+		{
+			reason = apiReason(true);
+			if (reason != null)
+				name = reason[0];
+		}
 		else
-			irc.sendContextReply(mes, "Nobody has ever told me why " + wot + " has gained karma. :(");
+			reason = apiReason(name, true);
+
+		if (reason != null)
+			irc.sendContextReply(mes, name + " has gained karma " + reason[1]);
+		else
+			irc.sendContextReply(mes, "Nobody has ever told me why " + name + " has gained karma. :(");
 	}
 
 	public String[] helpCommandReasonDown = {
 		"Find out why something sucks.",
-		"<what>"
+		"[<Object>]",
+		"<Object> is the optional thing to ask about."
 	};
-
-	public void commandReasonDown( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	public void commandReasonDown( Message mes )
 	{
-		String wot=mods.util.getParamString(mes);
-		String re=apiReason(wot, false);
-		if (re!=null)
-			irc.sendContextReply(mes, wot + " has lost karma " + re);
+		String name = mods.util.getParamString(mes);
+
+		String[] reason;
+		if (name.equals(""))
+		{
+			reason = apiReason(true);
+			if (reason != null)
+				name = reason[0];
+		}
 		else
-			irc.sendContextReply(mes, "Nobody has ever told me why " + wot + " has lost karma. :(");
+			reason = apiReason(name, true);
+
+		if (reason != null)
+			irc.sendContextReply(mes, name + " has lost karma " + reason[1]);
+		else
+			irc.sendContextReply(mes, "Nobody has ever told me why " + name + " has lost karma. :(");
 	}
 
 	public String[] helpTopics = { "Using" };
@@ -91,108 +186,187 @@ public class Karma
 		  "To change the karma of something, simply send the message"
 		+ " 'something--' or 'something++'. You can also specify a reason, by"
 		+ " sending a line starting with a karma change then giving a reason,"
-		+ " like: 'ntl-- because they suck' or 'ntl-- for sucking teh c0k'."
+		+ " like: 'ntl-- because they suck' or 'ntl-- for sucking teh c0k'.",
+		  "For strings shorter than 3 chars, or spaced strings or whatever,"
+		+ " you can use quotes, like this: '\"a\"--' or '\"big bananas\"++'."
+		+ " You can't yet Set these types of string."
 	};
 
-	public void filterKarma( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	// Let's just do a simple filter to pick up karma. This is lightweight and
+	// picks up anything that /could/ be karma (though not necessarily only
+	// karma)
+	public String filterKarmaRegex = "(?:\\+\\+|\\-\\-)\\B";
+
+	// If you change this, change reasonPattern too.
+	private static Pattern karmaPattern = Pattern.compile(
+		  "(?x:"
+		+ "(?:"
+			// Quoted string
+			+ "\""
+			+ "("
+				+ "(?:\\\\.|[^\"\\\\]+)*" // C-style quoting
+			+ ")"
+			+ "\""
+		+ "|"
+			// Plain string
+			+ "\\b"
+			+ "("
+				+ "(?:[\\./a-zA-Z0-9_]|-(?=[\\./a-zA-Z0-9_])[^-]){3,}" // 3 chars anywhere
+			+ ")"
+		+ ")"
+		+ "( \\+\\+ | \\-\\- )" // The actual karma change
+		+ "(?: \\W | $ )" // Need either non-alphanum or end-of-string now.
+		+ ")"
+	);
+
+	// If you change the first part of this, change karmaPattern too.
+	private static Pattern reasonPattern = Pattern.compile(
+		  "(?x:"
+		+ "^" // Anchor at start of string...
+
+		+ "(?:"
+			// Quoted string
+			+ "\""
+			+ "("
+				+ "(?:\\\\.|[^\"\\\\]+)*" // C-style quoting
+			+ ")"
+			+ "\""
+		+ "|"
+			// Plain string
+			+ "\\b"
+			+ "("
+				+ "(?:[\\./a-zA-Z0-9_]|-(?=[\\./a-zA-Z0-9_])[^-]){3,}" // Limited selection, and >3 chars.
+			+ ")"
+		+ ")"
+		+ "( \\+\\+ | \\-\\- )" // The actual karma change
+
+		+ "\\s+"
+		+ "("
+			// A "natural English" reason
+			+ "(?i: because | for)\\s" // Must start sensibly
+			+ ".+?"                   // Rest of reason
+		+ "|"
+			// A bracketted reason
+			+ "\\("
+			+ ".+?" // Contains any text.
+			+ "\\)"
+		+ ")"
+		+ "\\s*$" // Chew up all trailing whitespace.
+		+ ")"
+	);
+
+	public synchronized void filterKarma( Message mes, Modules mods, IRCInterface irc )
 	{
 		if (mes instanceof PrivateEvent)
 		{
 			irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
 			return;
 		}
-		String special="";
 
-		ArrayList<KarmaObject> karmaObjs = new ArrayList();
-		HashSet used = new HashSet();
-
-		Matcher reasonMatch = Pattern.compile("(?x:^"
-				+ "([\\./a-zA-Z0-9_+-]+)" // The karma string.
-				+ "(\\+\\+|\\-\\-)" // Up or down.
-				+ "\\s+((?:because)|(?:for)" // Ensure proper english.
-				+ ".+?)" // The reason.
-				+ "$)")
-			.matcher(mes.getMessage());
+		Matcher reasonMatch = reasonPattern.matcher(mes.getMessage());
 
 		if (reasonMatch.matches())
 		{
+			// Find out which holds our name.
+			String name;
+			if (reasonMatch.group(1) != null)
+				name = reasonMatch.group(1).replaceAll("\\\\(.)", "$1");
+			else
+			{
+				// need verifiacation on this one.
+				name = reasonMatch.group(2);
+				if (exceptions.contains(name.toLowerCase()))
+					return;
+			}
+			boolean increase = reasonMatch.group(3).equals("++");
+
+			// Deal out the karma.
+			KarmaObject karmaObj = retrieveKarmaObject(name);
+			if (increase)
+			{
+				karmaObj.up++;
+				karmaObj.value++;
+			}
+			else
+			{
+				karmaObj.down++;
+				karmaObj.value--;
+			}
+			mods.odb.update(karmaObj);
+
+			// Store the reason too.
 			KarmaReasonObject reason = new KarmaReasonObject();
-			reason.string = reasonMatch.group(1);
-			reason.direction = (reasonMatch.group(2).equals("++") ? 1 : -1);
-			reason.reason = reasonMatch.group(3);
+			reason.string = name;
+			reason.reason = reasonMatch.group(4);
+			reason.direction = increase ? 1 : -1;
 			mods.odb.save(reason);
-			special=" (with reason)";
+
+			irc.sendContextReply(mes, "Given " + (increase ? "karma" : "less karma") + " to " + name + ", and understood your reasons. New karma is " + karmaObj.value + ".");
+			return;
 		}
 
-		Matcher karmaMatch = Pattern.compile(filterKarmaRegex).matcher(mes.getMessage());
+		// Not a reasoned match, then.
+		Matcher karmaMatch = karmaPattern.matcher(mes.getMessage());
 
-		String nick=mods.nick.getBestPrimaryNick(mes.getNick());
+		String nick = mods.nick.getBestPrimaryNick(mes.getNick());
 
+		HashSet used = new HashSet();
 		List<String> names = new ArrayList<String>();
-		while (karmaMatch.find() && karmaObjs.size()<5)
-		{
-			String name = karmaMatch.group(1);
+		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
 
-			name=name.replaceAll("-+","-");
+		while (karmaMatch.find() && karmaObjs.size() < 5)
+		{
+			String name;
+			if (karmaMatch.group(1) != null)
+				name = karmaMatch.group(1).replaceAll("\\\\(.)", "$1");
+			else
+			{
+				// need verifiacation on this one.
+				name = karmaMatch.group(2);
+				if (exceptions.contains(name.toLowerCase()))
+					continue;
+			}
 
 			// Have we already done this?
 			if (used.contains(name.toLowerCase()))
 				continue;
 			used.add(name.toLowerCase());
 
-			boolean increase = karmaMatch.group(2).equals("++");
+			boolean increase = karmaMatch.group(3).equals("++");
 
 			if (name.equalsIgnoreCase(nick))
-				increase=false;
+				increase = false;
 
-			List<KarmaObject> results = retrieveKarmaObjects("WHERE string = '" + name + "'", mods);
-			KarmaObject karmaObj;
-			if (results.size() == 0)
+			KarmaObject karmaObj = retrieveKarmaObject(name);
+			if (increase)
 			{
-				karmaObj = new KarmaObject();
-				karmaObj.string = name;
-				if (increase)
-				{
-					karmaObj.up=1;
-					karmaObj.value=1;
-				}
-				else
-				{
-					karmaObj.down=1;
-					karmaObj.value=-1;
-				}
+				karmaObj.up++;
+				karmaObj.value++;
 			}
 			else
 			{
-				karmaObj = results.get(0);
-				if (increase)
-				{
-					karmaObj.up++;
-					karmaObj.value++;
-				}
-				else
-				{
-					karmaObj.down++;
-					karmaObj.value--;
-				}
+				karmaObj.down++;
+				karmaObj.value--;
 			}
-			karmaObj.increase = increase;
-			karmaObjs.add(karmaObj);
-			names.add(name);
 
-			if (karmaMatch.start()==0) // If something is karma'd at the start of a line, don't allow anything else to be karma'd on that line.
-				break;
+			karmaObj.instName = name;
+			karmaObj.increase = increase;
+
+			karmaObjs.add(karmaObj);
 		}
 
-		saveKarmaObjects(karmaObjs, mods);
+		saveKarmaObjects(karmaObjs);
 
+		// No actual karma changes. Maybe someone said "c++" or something.
+		if (karmaObjs.size() == 0)
+			return;
 
 		// Generate a pretty reply, all actual processing is done now:
 
 		if (karmaObjs.size() == 1)
 		{
 			KarmaObject info = karmaObjs.get(0);
-			irc.sendContextReply(mes, (info.increase ? "Karma" : "Less karma") + " to " + names.get(0) + special + ", " + (info.increase ? "giving" : "leaving") + " a karma of " + info.value + ".");
+			irc.sendContextReply(mes, "Given " + (info.increase ? "karma" : "less karma") + " to " + info.instName + ". New karma is " + info.value + ".");
 			return;
 		}
 
@@ -201,7 +375,7 @@ public class Karma
 		for (int i=0; i<karmaObjs.size(); i++)
 		{
 			KarmaObject info = karmaObjs.get(i);
-			output.append(names.get(i));
+			output.append(info.instName);
 			output.append(info.increase ? " up" : " down");
 			output.append(" (now " + info.value + ")");
 			if (i != karmaObjs.size() - 1)
@@ -213,12 +387,16 @@ public class Karma
 			}
 		}
 		output.append(".");
+
 		irc.sendContextReply( mes, output.toString());
 	}
 
 	private String postfix(int n)
 	{
-		switch (n%10)
+		if (n % 100 >= 11 && n % 100 <= 13)
+			return "th";
+
+		switch (n % 10)
 		{
 			case 1: return "st";
 			case 2: return "nd";
@@ -227,9 +405,9 @@ public class Karma
 		return "th";
 	}
 
-	private void commandScores(Message mes, Modules mods, IRCInterface irc, boolean asc) throws ChoobException
+	private void commandScores(Message mes, Modules mods, IRCInterface irc, boolean asc)
 	{
-		List<KarmaObject> karmaObjs = retrieveKarmaObjects("SORT " + (asc ? "ASC" : "DESC") + " INTEGER value LIMIT (5)", mods);
+		List<KarmaObject> karmaObjs = retrieveKarmaObjects("SORT " + (asc ? "ASC" : "DESC") + " INTEGER value LIMIT (5)");
 
 		StringBuffer output = new StringBuffer((asc ? "Low" : "High" ) + " Scores: ");
 
@@ -254,7 +432,7 @@ public class Karma
 	public String[] helpCommandHighScores = {
 		"Find out what has the highest karma"
 	};
-	public void commandHighScores(Message mes, Modules mods, IRCInterface irc) throws ChoobException
+	public void commandHighScores(Message mes)
 	{
 		commandScores(mes, mods, irc, false);
 	}
@@ -262,21 +440,32 @@ public class Karma
 	public String[] helpCommandLowScores = {
 		"Find out what has the lowest karma"
 	};
-	public void commandLowScores(Message mes, Modules mods, IRCInterface irc) throws ChoobException
+	public void commandLowScores(Message mes)
 	{
 		commandScores(mes, mods, irc, true);
 	}
 
-	private void saveKarmaObjects (List<KarmaObject> karmaObjs, Modules mods) throws ChoobException
+	private void saveKarmaObjects(List<KarmaObject> karmaObjs)
 	{
 		for (KarmaObject karmaObj: karmaObjs)
-			if (karmaObj.id==0)
-				mods.odb.save(karmaObj);
-			else
-				mods.odb.update(karmaObj);
+			mods.odb.update(karmaObj);
 	}
 
-	private List<KarmaObject> retrieveKarmaObjects(String clause, Modules mods) throws ChoobException
+	private KarmaObject retrieveKarmaObject(String name)
+	{
+		List<KarmaObject> results = mods.odb.retrieve(KarmaObject.class, "WHERE string = \"" + name.replaceAll("\"", "\\\\\"") + "\"");
+		if (results.size() == 0)
+		{
+			KarmaObject newObj = new KarmaObject();
+			newObj.string = name;
+			mods.odb.save(newObj);
+			return newObj;
+		}
+		else
+			return results.get(0);
+	}
+
+	private List<KarmaObject> retrieveKarmaObjects(String clause)
 	{
 		return mods.odb.retrieve(KarmaObject.class, clause);
 	}
@@ -286,29 +475,22 @@ public class Karma
 		"<Object> [<Object> ...]",
 		"<Object> is the name of something to get the karma of"
 	};
-	public void commandGet (Message mes, Modules mods, IRCInterface irc) throws ChoobException
+	public void commandGet (Message mes, Modules mods, IRCInterface irc)
 	{
 		List<String> params = mods.util.getParams( mes );
 		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
 		List<String> names = new ArrayList<String>();
-		if (params.size()>1)
+
+		if (params.size() > 1)
 			for (int i=1; i<params.size(); i++)
 			{
 				String name = params.get(i);
 				names.add(name);
-				List<KarmaObject> results = retrieveKarmaObjects("WHERE string = '" + name + "'", mods);
-				if (results.size()!=0)
-					karmaObjs.add((KarmaObject)results.get(0));
-				else
-				{
-					KarmaObject karmaObj = new KarmaObject();
-					karmaObj.string = name;
-					karmaObj.value = 0;
-					karmaObjs.add(karmaObj);
-				}
+				KarmaObject karmaObj = retrieveKarmaObject(name);
+				karmaObjs.add(karmaObj);
 			}
 
-		if (karmaObjs.size()==1)
+		if (karmaObjs.size() == 1)
 		{
 			irc.sendContextReply(mes, karmaObjs.get(0).string + " has a karma of " + karmaObjs.get(0).value + ".");
 			return;
@@ -338,7 +520,7 @@ public class Karma
 		"<Object> is the name of something to set the karma of",
 		"<Value> is the value to set the karma to"
 	};
-	public void commandSet( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	public synchronized void commandSet( Message mes, Modules mods, IRCInterface irc )
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.karma.set"), mes.getNick());
 
@@ -348,12 +530,11 @@ public class Karma
 
 		for (int i=1; i<params.size(); i++)
 		{
-			KarmaObject karmaObj;
 			String param = params.get(i);
 			String[] items = param.split("=");
 			if (items.length != 2)
 			{
-				irc.sendContextReply(mes, "Bad syntax: Use OBJECT=VALUE OBJECT=VALUE ...");
+				irc.sendContextReply(mes, "Bad syntax: Use <Object>=<Value> [<Object>=<Value> ...]");
 				return;
 			}
 
@@ -371,14 +552,7 @@ public class Karma
 
 			names.add(name);
 
-			List<KarmaObject> results = retrieveKarmaObjects("WHERE string = '" + name + "'", mods);
-			if (results.size()==0)
-			{
-				karmaObj = new KarmaObject();
-				karmaObj.string = name;
-			}
-			else
-				karmaObj = results.get(0);
+			KarmaObject karmaObj = retrieveKarmaObject(name);
 
 			karmaObj.value = val;
 			karmaObjs.add(karmaObj);
@@ -390,7 +564,7 @@ public class Karma
 			return;
 		}
 
-		saveKarmaObjects(karmaObjs, mods);
+		saveKarmaObjects(karmaObjs);
 
 		StringBuffer output = new StringBuffer("Karma adjustment");
 		output.append(karmaObjs.size() == 1 ? "" : "s");
@@ -421,13 +595,13 @@ public class Karma
 		irc.sendContextReply(mes, "No chance, matey.");
 	}
 
-	public void webList(PrintWriter out, String params, String[] user) throws ChoobException
+	public void webList(PrintWriter out, String params, String[] user)
 	{
 		out.println("HTTP/1.0 200 OK");
 		out.println("Content-Type: text/html");
 		out.println();
 
-		List<KarmaObject> res = retrieveKarmaObjects("WHERE 1 SORT INTEGER value", mods);
+		List<KarmaObject> res = retrieveKarmaObjects("WHERE 1 SORT INTEGER value");
 
 
 		out.println(res.size());
