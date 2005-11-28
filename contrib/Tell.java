@@ -102,7 +102,7 @@ public class Tell
 
 		if (targets.length > MAXTARGETS)
 		{
-			irc.sendContextReply(mes, "Sorry, you're only allowed " + MAXTARGETS + " targets for a given tell");
+			irc.sendContextReply(mes, "Sorry, you're only allowed " + MAXTARGETS + " targets for a given tell.");
 			return;
 		}
 
@@ -129,7 +129,7 @@ public class Tell
 		}
 		});
 
-		irc.sendContextReply(mes, "Okay, will " + tellObj.type + " upon next speaking. (Sent to " + done.size() + " " + (done.size() == 1 ? "person" : "people") + ").");
+		irc.sendContextReply(mes, "Okay, will " + tellObj.type + " upon next speaking. (Sent to " + done.size() + " " + (done.size() == 1 ? "person" : "people") + ".)");
 	}
 
 	public String[] helpCommandGet = {
