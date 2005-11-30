@@ -677,7 +677,7 @@ public class Quote
 		else if (count == 1)
 			irc.sendContextReply( mes, "There's just the one quote..." );
 		else
-			irc.sendContextReply( mes, "There's " + count + " quotes!" );
+			irc.sendContextReply( mes, "There are " + count + " quotes!" );
 	}
 
 	// quotekarma, quoteinfo
