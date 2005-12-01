@@ -80,8 +80,14 @@ final class ChoobDecoderTask extends ChoobTask
 		// Process event calls first
 		tasks.addAll(modules.plugin.getPlugMan().eventTasks(event));
 
+		boolean ignoreTriggers = false;
+		if (event instanceof UserEvent && ((UserEvent)event).getNick().toLowerCase().indexOf("bot") != -1)
+		{
+			ignoreTriggers = true;
+		}
+
 		// Then filters
-		if (event instanceof FilterEvent)
+		if (!ignoreTriggers && event instanceof FilterEvent)
 		{
 			// FilterEvents are messages
 			Message mes = (Message) event;
@@ -92,7 +98,7 @@ final class ChoobDecoderTask extends ChoobTask
 		}
 
 		// Now if it's a message, deal with that too
-		if (event instanceof CommandEvent)
+		if (!ignoreTriggers && event instanceof CommandEvent)
 		{
 			// CommandEvents are messages
 			Message mes = (Message) event;

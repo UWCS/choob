@@ -514,9 +514,6 @@ public final class Choob extends PircBot
 
 	private synchronized void spinThread(Event ev)
 	{
-		if (ev instanceof UserEvent && ((UserEvent)ev).getNick().toLowerCase().indexOf("bot")!=-1)
-			return;
-
 		ChoobTask task = new ChoobDecoderTask(ev);
 
 		ChoobThreadManager.queueTask(task);
