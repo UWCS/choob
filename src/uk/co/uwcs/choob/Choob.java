@@ -143,7 +143,9 @@ public final class Choob extends PircBot
 		exitCode = -1;
 		
 		// Connect to the IRC server.
-		connect(conf.getSettingFallback("server","irc.uwcs.co.uk"));
+		connect(conf.getSettingFallback("server","irc.uwcs.co.uk"),
+			Integer.parseInt(conf.getSettingFallback("port", "6667")),
+			conf.getSettingFallback("password", null));
 
 		// Set mode +B (is a bot)
 		sendRawLineViaQueue("MODE " + getName() + " +B");
