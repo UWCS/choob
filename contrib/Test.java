@@ -140,6 +140,31 @@ public class Test
 		}
 	}
 
+	// Test the stack is working.
+/*	public void commandStack ( Message mes, Modules mods, IRCInterface irc ) throws ChoobNoSuchCallException
+	{
+		int i = 0;
+		for(String s = ChoobThread.getPluginName(0); s != null; s = ChoobThread.getPluginName(++i))
+			irc.sendContextReply( mes, "Command stack: " + ChoobThread.currentThread().toString() + "(" + i + "): " + s );
+		apiStack(mes, mods, irc, 5);
+	}
+
+	public void apiStack ( Message mes, Modules mods, IRCInterface irc, Integer j ) throws ChoobNoSuchCallException
+	{
+		System.out.println("Stacking!");
+		if ( j == 0 )
+		{
+			int i = 0;
+			// Should be 6: One for command, then 6 API calls, but one of which direct.
+			for(String s = ChoobThread.getPluginName(0); s != null; s = ChoobThread.getPluginName(++i))
+				irc.sendContextReply( mes, "API Stack: " + ChoobThread.currentThread().toString() + "(" + i + "): " + s );
+		}
+		else
+		{
+			mods.plugin.callAPI("Test", "Stack", mes, mods, irc, new Integer(j - 1));
+		}
+	}*/
+
 /*	public void onPluginLoaded (PluginLoaded mes, Modules mods, IRCInterface irc)
 	{
 		irc.sendMessage("#bots", "Yay! Plugin loaded! Name is: " + mes.getPluginName());

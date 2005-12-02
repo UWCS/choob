@@ -99,7 +99,18 @@ public final class PluginModule
 	 */
 	public Object callAPI(String pluginName, String APIString, Object... params) throws ChoobNoSuchCallException
 	{
-		return dPlugMan.doAPI(pluginName, APIString, params);
+		boolean done = false;
+		try
+		{
+			ChoobThread.pushPluginStatic(pluginName);
+			done = true;
+			return dPlugMan.doAPI(pluginName, APIString, params);
+		}
+		finally
+		{
+			if (done)
+				ChoobThread.popPluginStatic();
+		}
 	}
 
 	/**
@@ -114,7 +125,18 @@ public final class PluginModule
 	public Object callGeneric(String pluginName, String type, String name, Object... params) throws ChoobNoSuchCallException
 	{
 		AccessController.checkPermission(new ChoobPermission("generic." + type));
-		return dPlugMan.doGeneric(pluginName, type, name, params);
+		boolean done = false;
+		try
+		{
+			ChoobThread.pushPluginStatic(pluginName);
+			done = true;
+			return dPlugMan.doGeneric(pluginName, type, name, params);
+		}
+		finally
+		{
+			if (done)
+				ChoobThread.popPluginStatic();
+		}
 	}
 
 	/**

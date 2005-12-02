@@ -18,6 +18,13 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 	private ChoobThreadManager()
 	{
 		super(5, 20, (long)60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+		setThreadFactory( new ThreadFactory() {
+			int count = 0;
+			public Thread newThread(Runnable r) {
+				ChoobThread thread = new ChoobThread(r, "choob-" + ++count);
+				return thread;
+			}
+		});
 		this.waitObjects = new HashMap<String,Semaphore>();
 		this.queues = new HashMap<String,BlockingQueue<ChoobTask>>();
 	}
@@ -25,12 +32,15 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 	protected void afterExecute(Runnable runTask, Throwable thrown)
 	{
 		super.afterExecute(runTask, thrown);
+
 		ChoobTask task = (ChoobTask) runTask;
 		String pluginName = task.getPluginName();
 
-		// Is it a system task?
+		// Was it a system task?
 		if (pluginName == null)
 			return;
+
+		ChoobThread.clearPluginsStatic(); // Make sure stack is clean
 
 		// Before we finish up, do we have more for this plugin?
 		BlockingQueue<ChoobTask> queue = getQueue(pluginName);
@@ -42,8 +52,22 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 			System.out.println("Back-queued plugin task for " + pluginName + " now queued.");
 		}
 		else
+		{
 			// If not, let someone else have a chance.
 			getWaitObject(pluginName).release();
+		}
+	}
+
+	protected void beforeExecute(Thread thread, Runnable task)
+	{
+		// Queue the plugin up onto the stack
+		String pluginName = ((ChoobTask)task).getPluginName();
+
+		// System task?
+		if (pluginName == null)
+			return;
+
+		((ChoobThread)thread).pushPlugin(pluginName);
 	}
 
 	static void initialise()
