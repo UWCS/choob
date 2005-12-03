@@ -1120,5 +1120,39 @@ public class Quote
 		}
 		return search.toString();
 	}
+
+	public void onJoin( ChannelJoin ev, Modules mods, IRCInterface irc )
+	{
+		if (ev.getLogin().equals("Choob"))
+			return;
+
+		boolean joinMessage = true;
+		boolean joinQuote = true;
+		try
+		{
+			String mesVal = (String)mods.plugin.callAPI("Options", "GetUserOption", ev.getNick(), "joinmessage");
+			joinMessage = (mesVal == null) || (mesVal.equals("1"));
+			System.out.println("mesVal: " + mesVal);
+			String quoteVal = (String)mods.plugin.callAPI("Options", "GetUserOption", ev.getNick(), "joinquote");
+			joinQuote = (quoteVal == null) || (quoteVal.equals("1"));
+			System.out.println("quoteVal: " + quoteVal);
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+		}
+	
+		String quote = null;
+		if ( joinQuote && joinMessage )
+			quote = apiSingleLineQuote( ev.getNick(), ev.getContext() );
+
+		if ( joinMessage )
+		{
+			if (quote == null)
+				irc.sendContextMessage( ev, "Hello, " + ev.getNick() + "!");
+			else
+				irc.sendContextMessage( ev, "Hello, " + ev.getNick() + ": \"" + quote + "\"");
+		}
+	}
+
 }
 

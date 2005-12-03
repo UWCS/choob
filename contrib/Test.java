@@ -83,7 +83,7 @@ public class Test
 		irc.sendContextReply( con, "Ooh, yes please.");
 	}
 
-	public void onJoin( ChannelJoin ev, Modules mods, IRCInterface irc )
+/*	public void onJoin( ChannelJoin ev, Modules mods, IRCInterface irc )
 	{
 		if (ev.getLogin().equals("Choob"))
 			return;
@@ -97,15 +97,18 @@ public class Test
 		{
 		}
 
-		if (quote == null)
-			irc.sendContextMessage( ev, "Hello, " + ev.getNick() + "!");
-		else
-			irc.sendContextMessage( ev, "Hello, " + ev.getNick() + ": \"" + quote + "\"");
-	}
+		if ( !ev.getNick().toLowerCase().startsWith("murph") )
+		{
+			if (quote == null)
+				irc.sendContextMessage( ev, "Hello, " + ev.getNick() + "!");
+			else
+				irc.sendContextMessage( ev, "Hello, " + ev.getNick() + ": \"" + quote + "\"");
+		}
+	}*/
 
 	public void onPart( ChannelPart ev, Modules mod, IRCInterface irc )
 	{
-		irc.sendContextMessage( ev, "Bye, " + ev.getNick() + "!");
+		//irc.sendContextMessage( ev, "Bye, " + ev.getNick() + "!");
 	}
 
 	public void commandAPI ( Message mes, Modules mods, IRCInterface irc ) throws ChoobException

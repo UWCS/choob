@@ -29,7 +29,7 @@ public class ChoobThread extends Thread
 	{
 		Thread executing = Thread.currentThread();
 		if (!(executing instanceof ChoobThread))
-			throw new RuntimeException("ChoobThread static calls accessed from outside a ChoobThread!");
+			throw new RuntimeException("ChoobThread static calls accessed from outside a ChoobThread (" + executing.getName() + "!");
 		return (ChoobThread)executing;
 	}
 
@@ -66,7 +66,7 @@ public class ChoobThread extends Thread
 			// Slightly quicker.
 			return thread.pluginName;
 		else if (i < thread.pluginStack.size())
-			return thread.pluginStack.get(i);
+			return thread.pluginStack.get(thread.pluginStack.size() - (i + 1));
 		else
 			return null;
 	}
