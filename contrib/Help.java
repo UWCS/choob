@@ -34,6 +34,13 @@ public class Help
 		this.mods = mods;
 	}
 
+	public String[] helpTopics = { "Using", "Api" };
+
+	public String[] helpUsing = {
+		"Use " + Colors.BOLD + "'!help pluginname'" + Colors.NORMAL + " to get a list of help topics for a plugin, if such help exists. To query a specific help topic use " + Colors.BOLD + "'!help pluginname.topicname'" + Colors.NORMAL + ", for instance, to view this help directly, use " + Colors.BOLD + "'!help help.using'" + Colors.NORMAL + ". " + Colors.BOLD + "'!help.plugins'" + Colors.NORMAL + " will give you a list of plugins, " + Colors.BOLD + "'!help.commands'" + Colors.NORMAL + " will give you the full command list."
+	};
+
+
 	public String[] helpApi = {
 		  "Help is a plugin that lets you add help to other plugins. To do so,"
 		+ " you simply need to provide generic calls of type 'help' for each"
@@ -62,12 +69,23 @@ public class Help
 		String fullTopic, topicParams;
 		if (params.size() == 1)
 		{
-			fullTopic = "help";
+			fullTopic = "help.using";
 			topicParams = "";
 		}
 		else if (params.size() == 2)
 		{
 			fullTopic = params.get(1);
+			if (fullTopic.equalsIgnoreCase("plugins"))
+			{
+				commandPlugins(mes);
+				return;
+			}
+			if (fullTopic.equalsIgnoreCase("commands"))
+			{
+				wholeCommandList(mes);
+				return;
+			}
+
 			topicParams = "";
 		}
 		else
@@ -323,19 +341,23 @@ public class Help
 		"<plugin>",
 		"<plugin> is the name of a loaded plugin."
 	};
+
+	private void wholeCommandList(Message mes)
+	{
+		String rep="";
+
+		String[] plugins = mods.plugin.plugins();
+		for (int j=0; j<plugins.length; j++)
+			rep += commandString(plugins[j], true, true) + " ";
+		irc.sendContextReply(mes, rep);
+	}
+
 	public void commandCommands( Message mes )
 	{
 		String plugin = mods.util.getParamString(mes);
 
 		if (plugin.equals(""))
-		{
-			String rep="";
-
-			String[] plugins = mods.plugin.plugins();
-			for (int j=0; j<plugins.length; j++)
-				rep += commandString(plugins[j], true, true) + " ";
-			irc.sendContextReply(mes, rep);
-		}
+			wholeCommandList(mes);
 		else
 		{
 			irc.sendContextReply(mes, commandString(plugin, false, true));
