@@ -362,6 +362,15 @@ public class Alias
 				return;
 			}
 
+			final Pattern validconv=Pattern.compile("^[a-zA-Z0-9]+\\.[a-zA-Z0-9]+.*");
+
+			if (!validconv.matcher(converted).matches())
+			{
+				System.err.println("Invalid alias: " + aliasName + " -> " + converted);
+				return;
+			}
+
+
 			int spacePos = converted.indexOf(' ');
 			String extra = "";
 			if (spacePos == -1)
