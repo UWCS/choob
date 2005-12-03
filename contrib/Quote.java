@@ -797,7 +797,7 @@ public class Quote
 		}
 		catch ( NumberFormatException e )
 		{
-			irc.sendContextReply( mes, "The text " + param + " is not a valid number!" );
+			irc.sendContextReply( mes, "'" + param + "' is not a valid integer!" );
 			return;
 		}
 		synchronized(recentQuotes)
@@ -860,8 +860,7 @@ public class Quote
 		}
 		catch ( NumberFormatException e )
 		{
-			irc.sendContextReply( mes, "The text " + params.get(2) + " is not a valid number!" );
-			return;
+			// History dictates that this be ignored.
 		}
 
 		if ( params.get(1).toLowerCase().equals("down") )
