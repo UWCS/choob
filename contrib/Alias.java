@@ -398,7 +398,7 @@ public class Alias
 
 		String converted = alias.converted;
 
-		String newText, commandName, pluginName;
+		String commandName, pluginName;
 		if (converted.indexOf("$") == -1)
 		{
 			// Make sure command name is valid...
@@ -426,7 +426,6 @@ public class Alias
 
 			pluginName = converted.substring(0, dotPos);
 			commandName = converted.substring(dotPos + 1, spacePos);
-			newText = irc.getTrigger() + aliasName + extra + cmdParams;
 		}
 		else
 		{
@@ -620,16 +619,15 @@ public class Alias
 				pos = converted.indexOf('$', pos);
 			}
 			newCom.append(converted.substring(oldPos, convEnd + 1));
-			newText = newCom.toString();
+			String newText = newCom.toString();
+
+			// Only need to do this here...
+			mes = (Message)mes.cloneEvent( newText );
 		}
-
-		Message newMes = (Message)mes.cloneEvent( newText );
-
-		System.out.println("Converted " + text + " -> " + newText);
 
 		try
 		{
-			mods.plugin.queueCommand( pluginName, commandName, newMes );
+			mods.plugin.queueCommand( pluginName, commandName, mes );
 		}
 		catch (ChoobNoSuchCallException e)
 		{
