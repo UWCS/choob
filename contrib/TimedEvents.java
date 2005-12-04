@@ -28,7 +28,7 @@ public class TimedEvents
 	private Modules mods;
 	private IRCInterface irc;
 
-	public TimedEvents(Modules mods, IRCInterface irc) throws ChoobException
+	public TimedEvents(Modules mods, IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -51,7 +51,7 @@ public class TimedEvents
 		"<When> is a non-empty time of the form [<Days>d][<Hours>h][<Minutes>m][<Seconds>s]",
 		"<Command> is the command to execute"
 	};
-	public void commandIn( Message mes ) throws ChoobException
+	public void commandIn( Message mes )
 	{
 		// Stop recursion
 		if (mes.getSynthLevel() > 1) {
@@ -108,7 +108,7 @@ public class TimedEvents
 		"<When> is a time of the form HH:MM[:SS]",
 		"<Command> is the command to execute"
 	};
-	public void commandAt( Message mes ) throws ChoobException
+	public void commandAt( Message mes )
 	{
 		// Stop recursion
 		if (mes.getSynthLevel() > 1) {
@@ -226,7 +226,7 @@ public class TimedEvents
 		return period;
 	}
 
-	public synchronized void interval( Object parameter ) throws ChoobException
+	public synchronized void interval( Object parameter )
 	{
 		if (parameter != null && parameter instanceof TimedEvent) {
 			// It's a message to be redelivered
@@ -260,7 +260,7 @@ public class TimedEvents
 	public String[] helpCommandLast = {
 		"Find out what the last queued event to be executed was."
 	};
-	public void commandLast( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	public void commandLast( Message mes, Modules mods, IRCInterface irc )
 	{
 		if (lastDelivery != null)
 		{

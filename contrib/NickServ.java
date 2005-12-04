@@ -220,7 +220,7 @@ public class NickServ
 			return;
 		}
 
-		List params = mods.util.getParams( mes );
+		List<String> params = mods.util.getParams( mes );
 
 		if (infooverride)
 		{
@@ -229,7 +229,30 @@ public class NickServ
 		}
 		else
 		{
-			if ( ! ((String)params.get(0)).toLowerCase().equals("status") )
+			if ( mes.getMessage().matches(".*(?i:/msg NickServ IDENTIFY).*") )
+			{
+				// must identify
+				String pass = null;
+				try
+				{
+					pass = (String)mods.plugin.callAPI("Options", "GetGeneralOption", "password");
+				}
+				catch (ChoobNoSuchCallException e)
+				{
+					System.err.println("Options plugin not loaded; can't get NickServ password.");
+					return;
+				}
+
+				if (pass != null)
+				{
+					System.err.println("Sending NickServ password!");
+					irc.sendContextMessage(mes, "IDENTIFY " + pass);
+				}
+				else
+					System.err.println("Password option for plugin NickServ not set...");
+				return;
+			}
+			else if ( ! params.get(0).toLowerCase().equals("status") )
 				return; // Wrong type of message!
 		}
 

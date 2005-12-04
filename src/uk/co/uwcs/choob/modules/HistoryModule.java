@@ -88,7 +88,7 @@ public final class HistoryModule
 	 * @param mes The message object to find.
 	 * @return Either a message ID, or -1 if the message didn't exist.
 	 */
-	public int getMessageID( Message mes ) throws ChoobException
+	public int getMessageID( Message mes )
 	{
 		Connection dbCon = null;
 		PreparedStatement stat = null;
@@ -121,7 +121,7 @@ public final class HistoryModule
 		catch( SQLException e )
 		{
 			System.err.println("Could not read history line from database: " + e);
-			throw new ChoobException("SQL Error reading from database.");
+			throw new ChoobError("SQL Error reading from database.");
 		}
 		finally
 		{
@@ -133,7 +133,7 @@ public final class HistoryModule
 			catch (SQLException e)
 			{
 				System.err.println("Could not read history line from database: " + e);
-				throw new ChoobException("SQL Error reading from database.");
+				throw new ChoobError("SQL Error reading from database.");
 			}
 			finally
 			{
@@ -147,7 +147,7 @@ public final class HistoryModule
 	 * @param messageID The message ID, as returned from getMessageID.
 	 * @return The message object or null if it didn't exist.
 	 */
-	public Message getMessage( int messageID ) throws ChoobException
+	public Message getMessage( int messageID )
 	{
 		System.out.println("getMessage");
 		Connection dbCon = null;
@@ -206,7 +206,7 @@ public final class HistoryModule
 		catch( SQLException e )
 		{
 			System.err.println("Could not read history line from database: " + e);
-			throw new ChoobException("SQL Error reading from database.");
+			throw new ChoobError("SQL Error reading from database.");
 		}
 		finally
 		{
@@ -218,7 +218,7 @@ public final class HistoryModule
 			catch (SQLException e)
 			{
 				System.err.println("Could not read history line from database: " + e);
-				throw new ChoobException("SQL Error reading from database.");
+				throw new ChoobError("SQL Error reading from database.");
 			}
 			finally
 			{
@@ -232,7 +232,7 @@ public final class HistoryModule
 	 * @param cause The "cause" - only messages that occurred before this are processed
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public Message getLastMessage( Message cause ) throws ChoobException
+	public Message getLastMessage( Message cause )
 	{
 		if (cause instanceof ChannelEvent)
 			return getLastMessage(((ChannelEvent)cause).getChannel(), cause);
@@ -244,7 +244,7 @@ public final class HistoryModule
 	 * @param channel The channel to read
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public Message getLastMessage( String channel ) throws ChoobException
+	public Message getLastMessage( String channel )
 	{
 		return getLastMessage(channel, null);
 	}
@@ -255,7 +255,7 @@ public final class HistoryModule
 	 * @param cause The "cause" - only messages that occurred before this are processed
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public Message getLastMessage( String channel, Message cause ) throws ChoobException
+	public Message getLastMessage( String channel, Message cause )
 	{
 		List<Message> ret = getLastMessages(channel, cause, 1);
 		if (ret.size() == 1)
@@ -270,7 +270,7 @@ public final class HistoryModule
 	 * @param count The maximal number of messages to return.
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public List<Message> getLastMessages( String channel, int count ) throws ChoobException
+	public List<Message> getLastMessages( String channel, int count )
 	{
 		return getLastMessages(channel, null, count);
 	}
@@ -281,7 +281,7 @@ public final class HistoryModule
 	 * @param count The maximal number of messages to return.
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public List<Message> getLastMessages( Message cause, int count ) throws ChoobException
+	public List<Message> getLastMessages( Message cause, int count )
 	{
 		if (cause instanceof ChannelEvent)
 			return getLastMessages(((ChannelEvent)cause).getChannel(), cause, count);
@@ -295,7 +295,7 @@ public final class HistoryModule
 	 * @param count The maximal number of messages to return.
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public List<Message> getLastMessages( final String channel, Message cause, int count ) throws ChoobException
+	public List<Message> getLastMessages( final String channel, Message cause, int count )
 	{
 		Connection dbCon = null;
 		PreparedStatement stat = null;
@@ -362,7 +362,7 @@ public final class HistoryModule
 		catch( SQLException e )
 		{
 			System.err.println("Could not read history line from database: " + e);
-			throw new ChoobException("SQL Error reading from database.");
+			throw new ChoobError("SQL Error reading from database.");
 		}
 		finally
 		{
@@ -374,7 +374,7 @@ public final class HistoryModule
 			catch (SQLException e)
 			{
 				System.err.println("Could not read history line from database: " + e);
-				throw new ChoobException("SQL Error reading from database.");
+				throw new ChoobError("SQL Error reading from database.");
 			}
 			finally
 			{
