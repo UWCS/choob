@@ -72,8 +72,8 @@ public class Seen
 		if (seen.primaryTime > 0)
 		{
 			// Have spoken
-			String primaryTime = DateFormat.getInstance().format(new Date(seen.primaryTime));
-			String secondaryTime = DateFormat.getInstance().format(new Date(seen.secondaryTime));
+			String primaryTime = (new Date(seen.primaryTime)).toString();
+			String secondaryTime = (new Date(seen.secondaryTime)).toString();
 			switch(seen.secondaryType)
 			{
 				case 0:
@@ -101,7 +101,7 @@ public class Seen
 		else
 		{
 			// Haven't spoken
-			String secondaryTime = DateFormat.getInstance().format(new Date(seen.secondaryTime));
+			String secondaryTime = (new Date(seen.secondaryTime)).toString();
 			switch(seen.secondaryType)
 			{
 				case 0:
