@@ -485,14 +485,14 @@ public class Karma
 			for (int i=1; i<params.size(); i++)
 			{
 				String name = params.get(i);
-				names.add(name);
 				KarmaObject karmaObj = retrieveKarmaObject(name);
+				karmaObj.instName = name;
 				karmaObjs.add(karmaObj);
 			}
 
 		if (karmaObjs.size() == 1)
 		{
-			irc.sendContextReply(mes, karmaObjs.get(0).string + " has a karma of " + karmaObjs.get(0).value + ".");
+			irc.sendContextReply(mes, karmaObjs.get(0).instName + " has a karma of " + karmaObjs.get(0).value + " (" + karmaObjs.get(0).up + " up, " + karmaObjs.get(0).down + " down).");
 			return;
 		}
 
@@ -500,7 +500,7 @@ public class Karma
 
 		for (int i=0; i<karmaObjs.size(); i++)
 		{
-			output.append(names.get(i));
+			output.append(karmaObjs.get(i).instName);
 			output.append(": " + karmaObjs.get(i).value);
 			if (i != karmaObjs.size() - 1)
 			{
@@ -550,10 +550,9 @@ public class Karma
 				return;
 			}
 
-			names.add(name);
-
 			KarmaObject karmaObj = retrieveKarmaObject(name);
 
+			karmaObj.instName = name;
 			karmaObj.value = val;
 			karmaObjs.add(karmaObj);
 		}
@@ -571,7 +570,7 @@ public class Karma
 		output.append(": ");
 		for (int i=0; i<karmaObjs.size(); i++)
 		{
-			output.append(names.get(i));
+			output.append(karmaObjs.get(i).instName);
 			output.append(": now ");
 			output.append(karmaObjs.get(i).value);
 			if (i != karmaObjs.size() - 1)
