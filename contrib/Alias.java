@@ -59,7 +59,7 @@ public class Alias
 	{
 		List<String> params = mods.util.getParams(mes, 2);
 
-		if (params.size() <= 2)
+		if (params.size() <= 2 || params.get(1).equals(""))
 		{
 			irc.sendContextReply(mes, "Syntax: Alias.Add <Name> <Alias>");
 			return;
@@ -67,6 +67,12 @@ public class Alias
 
 		String name = params.get(1).replaceAll(validator, "").toLowerCase();
 		String conv = params.get(2);
+
+		if (name.equals(""))
+		{
+			irc.sendContextReply(mes, "Syntax: Alias.Add <Name> <Alias>");
+			return;
+		}
 
 		AliasObject alias = getAlias(name);
 
@@ -107,13 +113,19 @@ public class Alias
 	{
 		List<String> params = mods.util.getParams(mes, 1);
 
-		if (params.size() <= 1)
+		if (params.size() <= 1 || params.get(1).equals(""))
 		{
 			irc.sendContextReply(mes, "Syntax: Alias.Remove <aliasname>");
 			return;
 		}
 
 		String name = params.get(1).replaceAll(validator, "").toLowerCase();
+
+		if (name.equals(""))
+		{
+			irc.sendContextReply(mes, "Syntax: Alias.Remove <Name>");
+			return;
+		}
 
 		AliasObject alias = getAlias(name);
 
@@ -193,13 +205,19 @@ public class Alias
 	{
 		List<String> params = mods.util.getParams(mes, 1);
 
-		if (params.size() <= 1)
+		if (params.size() <= 1 || params.get(1).equals(""))
 		{
 			irc.sendContextReply(mes, "Please specify the name of the alias to show.");
 			return;
 		}
 
 		String name = params.get(1).replaceAll(validator,"").toLowerCase();
+
+		if (name.equals(""))
+		{
+			irc.sendContextReply(mes, "Syntax: Alias.Show <Name>");
+			return;
+		}
 
 		AliasObject alias = getAlias(name);
 
@@ -218,13 +236,19 @@ public class Alias
 	{
 		List<String> params = mods.util.getParams(mes, 1);
 
-		if (params.size() <= 1)
+		if (params.size() <= 1 || params.get(1).equals(""))
 		{
 			irc.sendContextReply(mes, "Please specify the name of the alias to lock.");
 			return;
 		}
 
 		String name = params.get(1).replaceAll(validator,"").toLowerCase();
+
+		if (name.equals(""))
+		{
+			irc.sendContextReply(mes, "Syntax: Alias.Lock <Name>");
+			return;
+		}
 
 		AliasObject alias = getAlias(name);
 
@@ -250,13 +274,19 @@ public class Alias
 	{
 		List<String> params = mods.util.getParams(mes, 1);
 
-		if (params.size() <= 1)
+		if (params.size() <= 1 || params.get(1).equals(""))
 		{
 			irc.sendContextReply(mes, "Please specify the name of the alias to unlock.");
 			return;
 		}
 
 		String name = params.get(1).replaceAll(validator,"").toLowerCase();
+
+		if (name.equals(""))
+		{
+			irc.sendContextReply(mes, "Syntax: Alias.Unlock <Name>");
+			return;
+		}
 
 		AliasObject alias = getAlias(name);
 
@@ -324,17 +354,21 @@ public class Alias
 			cmdEnd = text.length();
 			cmdParams = "";
 		}
+		else if (cmdEnd <= offset)
+			return; // null alias! Oh noes!
 		else
-		{
 			cmdParams = text.substring(cmdEnd);
-		}
 
 		int dotIndex = text.indexOf('.', offset);
 		// Real command, not an alias...
 		if (dotIndex != -1 && dotIndex < cmdEnd)
 			return;
 
-		String aliasName = text.substring(offset, cmdEnd);
+		String aliasName = text.substring(offset, cmdEnd).replaceAll(validator, "");
+
+		if (aliasName.equals(""))
+			return;
+		
 		AliasObject alias = getAlias( aliasName );
 
 		if (alias == null)
@@ -358,7 +392,7 @@ public class Alias
 			int dotPos = converted.indexOf('.');
 			if (dotPos == -1)
 			{
-				System.err.println("Invalid alias: " + aliasName + " -> " + converted);
+				irc.sendContextReply(mes, "Invalid alias: " + aliasName + " -> " + converted);
 				return;
 			}
 
@@ -366,10 +400,9 @@ public class Alias
 
 			if (!validconv.matcher(converted).matches())
 			{
-				System.err.println("Invalid alias: " + aliasName + " -> " + converted);
+				irc.sendContextReply(mes, "Invalid alias: " + aliasName + " -> " + converted);
 				return;
 			}
-
 
 			int spacePos = converted.indexOf(' ');
 			String extra = "";
@@ -393,7 +426,7 @@ public class Alias
 			int spacePos = converted.indexOf(' ');
 			if (dotPos == -1 || spacePos == -1 || dotPos >= spacePos - 1)
 			{
-				System.err.println("Invalid alias: " + aliasName + " -> " + converted);
+				irc.sendContextReply(mes, "Invalid alias: " + aliasName + " -> " + converted);
 				return;
 			}
 
