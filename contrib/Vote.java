@@ -141,7 +141,7 @@ public class Vote
 		vote.responses = responseString.toString();
 
 		mods.odb.save(vote);
-		mods.interval.callBack( vote, 10 * 1000, vote.id );
+		mods.interval.callBack( vote, 60 * 1000, vote.id );
 
 		activeVotes.put(mes.getContext(), vote.id);
 
