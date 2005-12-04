@@ -79,7 +79,7 @@ public class Karma
 	public String[] apiReason(String name)
 	{
 		List<KarmaReasonObject> results;
-		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = '" + name.replaceAll("\"", "\\\\\"") + "' ORDER BY RAND() LIMIT 1");
+		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + name.replaceAll("\"", "\\\\\"") + "\" ORDER BY RAND() LIMIT 1");
 
 		if (results.size() == 0)
 			return null;
@@ -94,7 +94,7 @@ public class Karma
 	public String[] apiReason(String name, boolean up)
 	{
 		List<KarmaReasonObject> results;
-		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = '" + name.replaceAll("\"", "\\\\\"") + "' AND direction = '" + (up ? 1 : -1) + "' ORDER BY RAND() LIMIT 1");
+		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + name.replaceAll("\"", "\\\\\"") + "\" AND direction = '" + (up ? 1 : -1) + "' ORDER BY RAND() LIMIT 1");
 
 		if (results.size() == 0)
 			return null;
@@ -118,7 +118,7 @@ public class Karma
 		String[] reason;
 		if (name.equals(""))
 		{
-			reason = apiReason(true);
+			reason = apiReason();
 			if (reason != null)
 				name = reason[0];
 		}
@@ -168,12 +168,12 @@ public class Karma
 		String[] reason;
 		if (name.equals(""))
 		{
-			reason = apiReason(true);
+			reason = apiReason(false);
 			if (reason != null)
 				name = reason[0];
 		}
 		else
-			reason = apiReason(name, true);
+			reason = apiReason(name, false);
 
 		if (reason != null)
 			irc.sendContextReply(mes, name + " has lost karma " + reason[1]);
@@ -204,7 +204,7 @@ public class Karma
 			// Quoted string
 			+ "\""
 			+ "("
-				+ "(?:\\\\.|[^\"\\\\]+)*" // C-style quoting
+				+ "(?:\\\\.|[^\"\\\\])+" // C-style quoting
 			+ ")"
 			+ "\""
 		+ "|"
@@ -228,7 +228,7 @@ public class Karma
 			// Quoted string
 			+ "\""
 			+ "("
-				+ "(?:\\\\.|[^\"\\\\]+)*" // C-style quoting
+				+ "(?:\\\\.|[^\"\\\\])+" // C-style quoting
 			+ ")"
 			+ "\""
 		+ "|"
