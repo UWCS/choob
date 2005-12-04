@@ -64,40 +64,47 @@ public class Vote
 
 	public String[] helpCommandCall = {
 		"Call a vote for channel members to vote on. See Vote.Examples.",
-		"[\"<Question>\"] [ ( <Response>, <Response>, ... ) ]",
+		"[ <Question> ] [ ( <Response>, <Response>, ... ) ]",
 		"<Quoestion> is an optional question (default: \"Which is best?\")",
 		"<Response> is a comma seperated list of responses"
 	};
 	public synchronized void commandCall( Message mes )
 	{
-		String paramString = mods.util.getParamString( mes );
+		String paramString = mods.util.getParamString( mes ).trim();
 
-		int pos = paramString.indexOf('"');
-		String question;
-		if (pos == 0 && paramString.charAt(0) == '"')
+		String question = "Which is best?";
+		String[] options = new String[] { "Yes", "No" };
+		int pos = -1;
+		if (paramString.charAt(0) == '"')
 		{
 			// Has question.
 			int endPos = paramString.indexOf('"', 1);
 			question = paramString.substring(1, endPos);
 			pos = paramString.indexOf('(', endPos);
 		}
-		else if (pos == -1)
+		else if (paramString.charAt(0) != '(')
 		{
-			pos = paramString.indexOf('(');
-			if (pos == -1)
+			int endPos = paramString.indexOf('(');
+			if (endPos == -1)
 			{
-				irc.sendContextReply(mes, "Sorry, you need either a question or some options. Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
-				return;
+				question = paramString.trim();
 			}
-			question = "Which is best?";
+			else
+			{
+				question = paramString.substring(0, endPos).trim();
+				pos = endPos;
+			}
+		}
+		else if (paramString.indexOf('(') == -1)
+		{
+			irc.sendContextReply(mes, "Sorry, you need either a question or some options. Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
+			return;
 		}
 		else
 		{
-			irc.sendContextReply(mes, "Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
-			return;
+			pos = paramString.indexOf('(');
 		}
 
-		String[] options;
 		if (pos != -1)
 		{
 			int endPos = paramString.indexOf(')', pos);
@@ -119,10 +126,13 @@ public class Vote
 			// Remove trailing/leading spaces.
 			options[0] = options[0].trim();
 			options[options.length - 1] = options[options.length - 1].trim();
-		}
-		else
-		{
-			options = new String[] { "Yes", "No" };
+
+			// Anything after the end?
+			if (paramString.substring(endPos).trim().length() != 1)
+			{
+				irc.sendContextReply(mes, "Invalid option string! Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
+				return;
+			}
 		}
 
 		ActiveVote vote = new ActiveVote();
