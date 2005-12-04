@@ -89,6 +89,14 @@ public final class Choob extends PircBot
 			System.exit(5);
 			return;
 		}
+		
+		// Use sensible charset, ignoring the platform-default.
+		try
+		{
+			setEncoding("ISO-8859-1");
+		}
+		catch(UnsupportedEncodingException e)
+		{}
 
 		// Create a new IRC interface
 		irc = new IRCInterface( this );
