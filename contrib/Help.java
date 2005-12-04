@@ -94,7 +94,7 @@ public class Help
 			topicParams = params.get(2);
 		}
 
-		Matcher topicMatcher = Pattern.compile("([^\\s.]+)(?:\\.([^\\s.]+)(?:\\.([^ .]+))?)?").matcher(fullTopic);
+		Matcher topicMatcher = Pattern.compile("([^\\s.]+)(?:\\.([^\\s.]+)(?:\\.([^\\s.]+))?)?").matcher(fullTopic);
 		if (!topicMatcher.matches())
 		{
 			irc.sendContextReply( mes, "Help topics must be of the form <plugin>, <plugin>.<name>, or <plugin>.<type>.<name>." );
@@ -113,149 +113,215 @@ public class Help
 			topic = topicMatcher.group(3);
 			type = topicMatcher.group(2);
 		}
-		if (topic == null)
-			topic = "topics";
 
-		String help;
-		try
+		boolean didAlias = false;
+		if (topic == null)
 		{
-			if (!topic.toLowerCase().equals("topics"))
+			topic = "topics";
+			String alias = null;
+			// First check for alias...
+			try
 			{
-				// Help on some specific thingy.
-				Object ret;
-				if (type == null)
+				alias = (String)mods.plugin.callAPI("Alias", "Get", plugin);
+			}
+			catch (ChoobNoSuchCallException e)
+			{
+				// No alias plugin ==> must be plugin name
+			}
+
+			if (alias != null)
+			{
+				int spacePos = alias.indexOf(' ');
+				if (spacePos == -1)
+					spacePos = alias.length();
+
+				int dotPos = alias.indexOf('.');
+				if (dotPos == -1 || dotPos >= spacePos - 1)
 				{
-					try
-					{
-						ret = callMethod(plugin, "command" + topic, topicParams);
-						type = "command";
-					}
-					catch (ChoobNoSuchCallException e)
-					{
-						ret = callMethod(plugin, topic, topicParams);
-						type = "";
-					}
+					// Die! This alias seems invalid!
+					irc.sendContextReply( mes, plugin + " appears to be aliased to the invalid alias " + alias );
 				}
 				else
-					ret = callMethod(plugin, type + topic, topicParams);
-
-				if (ret == null)
 				{
-					irc.sendContextReply( mes, "Gah! That topic had help, but the help seems to be broken." );
-					return;
+					String thisPlugin = alias.substring(0, dotPos);
+					String thisCommand = alias.substring(dotPos + 1, spacePos);
+					String thisHelp = apiGetCallHelp( thisPlugin, "command", thisCommand, null);
+					if (thisHelp == null)
+						irc.sendContextReply( mes, "Sorry, " + plugin + " is aliased to the non-existant command " + alias );
+					else 
+						irc.sendContextReply( mes, plugin + " is aliased to \"" + alias + "\". Help for " + thisPlugin + "." + thisCommand + ": " + thisHelp );
 				}
-				else if (ret instanceof String[])
+				didAlias = true;
+			}
+		}
+
+		String help;
+		if (!topic.toLowerCase().equals("topics"))
+		{
+			help = apiGetCallHelp( plugin, type, topic, topicParams );
+		}
+		else
+		{
+			help = apiGetPluginHelp( plugin, type, topicParams );
+		}
+
+		if (help == null)
+		{
+			if (!didAlias)
+				irc.sendContextReply( mes, "Topic " + topic + " in plugin " + plugin + " didn't exist!" );
+		}
+		else
+		{
+			if (!didAlias)
+				irc.sendContextReply( mes, help );
+			else
+				irc.sendContextReply( mes, "Help for plugin " + plugin + ": " + help );
+		}
+	}
+
+	public String apiGetPluginHelp( String plugin, String type, String topicParams )
+	{
+		String help;
+
+		String commands = commandString(plugin, true, false);
+		if (commands == null)
+			return null;
+
+		Object ret;
+		try
+		{
+			if (type == null)
+				ret = callMethod(plugin, "topics", topicParams);
+			else
+				ret = callMethod(plugin, type + "topics", topicParams);
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			ret = null;
+		}
+
+		StringBuilder buf = new StringBuilder("Commands: ");
+		buf.append(commands);
+
+		if (ret == null)
+		{
+			buf.append(" No extra topics.");
+		}
+		else if (ret instanceof String[])
+		{
+			String[] topics = (String[])ret;
+			if (topics.length == 1)
+			{
+				buf.append(" Extra help topic: ");
+				buf.append(topics[0]);
+			}
+			else if (topics.length > 1)
+			{
+				buf.append(" Extra help topics: ");
+				for(int i=0; i<topics.length; i++)
 				{
-					String[] helpArr = (String[])ret;
-					if (type.toLowerCase().equals("command"))
+					buf.append(topics[i]);
+					if (i < topics.length - 2)
+						buf.append(", ");
+					else if (i == topics.length - 2)
+						buf.append(" and ");
+				}
+			}
+			buf.append(".");
+		}
+		else
+		{
+			buf.append(ret.toString());
+		}
+		help = buf.toString();
+
+		return help;
+	}
+
+	public String apiGetCallHelp( String plugin, String type, String topic, String topicParams )
+	{
+		try
+		{
+			String help;
+
+			// Help on some specific thingy.
+			Object ret;
+			if (type == null)
+			{
+				try
+				{
+					ret = callMethod(plugin, "command" + topic, topicParams);
+					type = "command";
+				}
+				catch (ChoobNoSuchCallException e)
+				{
+					ret = callMethod(plugin, topic, topicParams);
+					type = "";
+				}
+			}
+			else
+				ret = callMethod(plugin, type + topic, topicParams);
+
+			if (ret == null)
+			{
+				System.err.println("Gah! Topic " + topic + " in plugin " + plugin + " had help, but the help seems to be broken." );
+				return null;
+			}
+			else if (ret instanceof String[])
+			{
+				String[] helpArr = (String[])ret;
+				if (type.toLowerCase().equals("command"))
+				{
+					if (helpArr.length < 2)
 					{
-						if (helpArr.length < 2)
-						{
-							help = helpArr[0];
-						}
-						else
-						{
-							StringBuilder buf = new StringBuilder();
-							buf.append( helpArr[0] );
-							buf.append( " Syntax: '" );
-							buf.append( plugin + "." + topic );
-							buf.append( " " );
-							buf.append( helpArr[1] );
-							buf.append( "'" );
-							if (helpArr.length > 2)
-							{
-								buf.append(" where ");
-								for(int i=2; i<helpArr.length; i++)
-								{
-									buf.append(helpArr[i]);
-									if (i < helpArr.length - 1)
-										buf.append(" and ");
-								}
-							}
-							buf.append(".");
-							help = buf.toString();
-						}
+						help = helpArr[0];
 					}
-					else // Assume of type API.
+					else
 					{
 						StringBuilder buf = new StringBuilder();
-						for(int i=0; i<helpArr.length; i++)
+						buf.append( helpArr[0] );
+						buf.append( " Syntax: '" );
+						buf.append( plugin + "." + topic );
+						buf.append( " " );
+						buf.append( helpArr[1] );
+						buf.append( "'" );
+						if (helpArr.length > 2)
 						{
-							buf.append( helpArr[i] );
-							if (i < helpArr.length - 1)
-								buf.append(" ");
+							buf.append(" where ");
+							for(int i=2; i<helpArr.length; i++)
+							{
+								buf.append(helpArr[i]);
+								if (i < helpArr.length - 1)
+									buf.append(" and ");
+							}
 						}
+						buf.append(".");
 						help = buf.toString();
 					}
 				}
-				else
+				else // Assume of type API.
 				{
-					help = ret.toString();
+					StringBuilder buf = new StringBuilder();
+					for(int i=0; i<helpArr.length; i++)
+					{
+						buf.append( helpArr[i] );
+						if (i < helpArr.length - 1)
+							buf.append(" ");
+					}
+					help = buf.toString();
 				}
 			}
 			else
 			{
-				Object ret;
-				try
-				{
-					if (type == null)
-						ret = callMethod(plugin, "topics", topicParams);
-					else
-						ret = callMethod(plugin, type + "topics", topicParams);
-				}
-				catch (ChoobNoSuchCallException e)
-				{
-					ret = null;
-				}
-
-				StringBuilder buf = new StringBuilder("Commands: ");
-				buf.append(commandString(plugin, true, false));
-				if (ret == null)
-				{
-					buf.append(" No extra topics.");
-				}
-				else if (ret instanceof String[])
-				{
-					String[] topics = (String[])ret;
-					if (topics.length == 1)
-					{
-						buf.append(" Extra help topic: ");
-						buf.append(topics[0]);
-					}
-					else if (topics.length > 1)
-					{
-						buf.append(" Extra help topics: ");
-						for(int i=0; i<topics.length; i++)
-						{
-							buf.append(topics[i]);
-							if (i < topics.length - 2)
-								buf.append(", ");
-							else if (i == topics.length - 2)
-								buf.append(" and ");
-						}
-					}
-					buf.append(".");
-				}
-				else
-				{
-					buf.append(ret.toString());
-				}
-				help = buf.toString();
+				help = ret.toString();
 			}
-		}
-		catch (ChoobNoSuchPluginException e)
-		{
-			System.out.println(e.toString());
-			irc.sendContextReply( mes, "Plugin " + plugin + " didn't exist!" );
-			return;
+
+			return help;
 		}
 		catch (ChoobNoSuchCallException e)
 		{
-			System.out.println(e.toString());
-			irc.sendContextReply( mes, "Topic " + topic + " in plugin " + plugin + " didn't exist!" );
-			return;
+			return null;
 		}
-		irc.sendContextReply( mes, help );
 	}
 
 	public String[] helpCommandPlugins = {
@@ -298,7 +364,7 @@ public class Help
 
 		if (commands == null)
 		{
-			return "That plugin doesn't exist!";
+			return null;
 		}
 		else if (commands.length == 0)
 		{
@@ -354,17 +420,22 @@ public class Help
 
 	public void commandCommands( Message mes )
 	{
-		String plugin = mods.util.getParamString(mes);
+		List<String> params = mods.util.getParams(mes, 2);
 
-		if (plugin.equals(""))
+		if (params.size() == 1)
 			wholeCommandList(mes);
 		else
 		{
-			irc.sendContextReply(mes, commandString(plugin, false, true));
+			String plugin = params.get(1);
+			String commands = commandString(plugin, false, true);
+			if (commands == null)
+				irc.sendContextReply(mes, "Plugin " + plugin + "doesn't exist!");
+			else
+				irc.sendContextReply(mes, commands);
 		}
 	}
 
-	private Object callMethod(String plugin, String topic, String param) throws ChoobException
+	private Object callMethod(String plugin, String topic, String param) throws ChoobNoSuchCallException
 	{
 		try
 		{

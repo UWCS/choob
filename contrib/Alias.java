@@ -55,7 +55,7 @@ public class Alias
 		"<Name> is the name of the alias to add",
 		"<Alias> is the alias content. See Alias.Syntax"
 	};
-	public void commandAdd( Message mes ) throws ChoobException
+	public void commandAdd( Message mes ) 
 	{
 		List<String> params = mods.util.getParams(mes, 2);
 
@@ -109,7 +109,7 @@ public class Alias
 		"<Name>",
 		"<Name> is the name of the alias to remove",
 	};
-	public void commandRemove( Message mes ) throws ChoobException
+	public void commandRemove( Message mes ) 
 	{
 		List<String> params = mods.util.getParams(mes, 1);
 
@@ -159,7 +159,7 @@ public class Alias
 		"[<Which>]",
 		"<Which> is either not present for all unlocked, 'locked' or 'all'"
 	};
-	public void commandList( Message mes ) throws ChoobException
+	public void commandList( Message mes ) 
 	{
 		String clause = "locked = 0";
 
@@ -201,7 +201,7 @@ public class Alias
 		"<Alias>",
 		"<Alias> is the name of the alias to show"
 	};
-	public void commandShow( Message mes ) throws ChoobException
+	public void commandShow( Message mes )
 	{
 		List<String> params = mods.util.getParams(mes, 1);
 
@@ -227,12 +227,25 @@ public class Alias
 			irc.sendContextReply(mes, "'" + alias.name + "'" + (alias.locked ? "[LOCKED]" : "") + " was aliased to '" + alias.converted + "' by '" + alias.owner + "'.");
 	}
 
+	public String apiGet( String name )
+	{
+		if (name == null)
+			return null;
+
+		AliasObject alias = getAlias(name);
+
+		if (alias == null)
+			return null;
+		else
+			return alias.converted;
+	}
+
 	public String[] helpCommandLock = {
 		"Lock an alias so that no-one but its owner can change it.",
 		"<Alias>",
 		"<Alias> is the name of the alias to lock"
 	};
-	public void commandLock( Message mes ) throws ChoobException
+	public void commandLock( Message mes )
 	{
 		List<String> params = mods.util.getParams(mes, 1);
 
@@ -270,7 +283,7 @@ public class Alias
 		"<Alias>",
 		"<Alias> is the name of the alias to unlock"
 	};
-	public void commandUnlock( Message mes ) throws ChoobException
+	public void commandUnlock( Message mes ) 
 	{
 		List<String> params = mods.util.getParams(mes, 1);
 
@@ -311,7 +324,7 @@ public class Alias
 		}
 	}
 
-	private AliasObject getAlias( String name ) throws ChoobException
+	private AliasObject getAlias( String name ) 
 	{
 		String alias = name.replaceAll(validator,"").toLowerCase();
 
@@ -323,13 +336,13 @@ public class Alias
 			return results.get(0);
 	}
 
-	public void onPrivateMessage( Message mes ) throws ChoobException
+	public void onPrivateMessage( Message mes ) 
 	{
 		onMessage( mes );
 	}
 
 	// Muhahahahahahahahaha --bucko
-	public void onMessage( Message mes ) throws ChoobException
+	public void onMessage( Message mes ) 
 	{
 		String text = mes.getMessage();
 
@@ -614,6 +627,13 @@ public class Alias
 
 		System.out.println("Converted " + text + " -> " + newText);
 
-		mods.plugin.queueCommand( pluginName, commandName, newMes );
+		try
+		{
+			mods.plugin.queueCommand( pluginName, commandName, newMes );
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			irc.sendContextReply(mes, "Sorry, that command is an alias (\"" + alias.converted + "\", made by " + alias.owner + ") that points to an invalid command!");
+		}
 	}
 }
