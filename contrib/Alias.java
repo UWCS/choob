@@ -91,7 +91,7 @@ public class Alias
 					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
 			}
 
-			oldAlias = " (was " + alias.converted + ")";
+			oldAlias = " (was '" + alias.converted + "')";
 
 			alias.converted = conv;
 			alias.owner = nick;
@@ -224,7 +224,7 @@ public class Alias
 		if (alias == null)
 			irc.sendContextReply(mes, "Alias not found.");
 		else
-			irc.sendContextReply(mes, "'" + alias.name + "'" + (alias.locked ? "[LOCKED]" : "") + " was aliased to '" + alias.converted + "' by '" + alias.owner + "'.");
+			irc.sendContextReply(mes, "'" + alias.name + "'" + (alias.locked ? " (LOCKED)" : "") + " was aliased to '" + alias.converted + "' by '" + alias.owner + "'.");
 	}
 
 	public String apiGet( String name )
@@ -270,11 +270,11 @@ public class Alias
 			// No need to NS check here.
 			alias.locked = true;
 			mods.odb.update(alias);
-			irc.sendContextReply(mes, "Locked " + name + "!");
+			irc.sendContextReply(mes, "Locked '" + name + "'!");
 		}
 		else
 		{
-			irc.sendContextReply(mes, "Alias " + name + " not found.");
+			irc.sendContextReply(mes, "Alias '" + name + "' not found.");
 		}
 	}
 
@@ -316,11 +316,11 @@ public class Alias
 
 			alias.locked = false;
 			mods.odb.update(alias);
-			irc.sendContextReply(mes, "Unlocked " + name + "!");
+			irc.sendContextReply(mes, "Unlocked '" + name + "'!");
 		}
 		else
 		{
-			irc.sendContextReply(mes, "Alias " + name + " not found.");
+			irc.sendContextReply(mes, "Alias '" + name + "' not found.");
 		}
 	}
 
@@ -405,7 +405,7 @@ public class Alias
 			int dotPos = converted.indexOf('.');
 			if (dotPos == -1)
 			{
-				irc.sendContextReply(mes, "Invalid alias: " + aliasName + " -> " + converted);
+				irc.sendContextReply(mes, "Invalid alias: '" + aliasName + "' -> '" + converted + "'");
 				return;
 			}
 
@@ -413,7 +413,7 @@ public class Alias
 
 			if (!validconv.matcher(converted).matches())
 			{
-				irc.sendContextReply(mes, "Invalid alias: " + aliasName + " -> " + converted);
+				irc.sendContextReply(mes, "Invalid alias: '" + aliasName + "' -> '" + converted + "'");
 				return;
 			}
 
@@ -439,7 +439,7 @@ public class Alias
 			int spacePos = converted.indexOf(' ');
 			if (dotPos == -1 || spacePos == -1 || dotPos >= spacePos - 1)
 			{
-				irc.sendContextReply(mes, "Invalid alias: " + aliasName + " -> " + converted);
+				irc.sendContextReply(mes, "Invalid alias: '" + aliasName + "' -> '" + converted + "'");
 				return;
 			}
 
@@ -633,7 +633,7 @@ public class Alias
 		}
 		catch (ChoobNoSuchCallException e)
 		{
-			irc.sendContextReply(mes, "Sorry, that command is an alias (\"" + alias.converted + "\", made by " + alias.owner + ") that points to an invalid command!");
+			irc.sendContextReply(mes, "Sorry, that command is an alias ('" + alias.converted + "', made by '" + alias.owner + "') that points to an invalid command!");
 		}
 	}
 }
