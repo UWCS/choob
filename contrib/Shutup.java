@@ -82,7 +82,7 @@ public class Shutup
 			irc.sendContextReply(mes, "Yay, I'm free to speak in '" + mes.getContext() + "' again!");
 		}
 		else
-			irc.sendContextReply(mes, "I'm not shut-up!");
+			irc.sendContextReply(mes, "But I can already speak!");
 	}
 
 	public String[] helpCommandCheck = {
@@ -91,9 +91,9 @@ public class Shutup
 	public void commandCheck( Message mes, Modules mods, IRCInterface irc )
 	{
 		if (mods.pc.isProtected(mes.getContext()))
-			irc.sendContextReply(mes, "Yes, shut-up.");
+			irc.sendContextReply(mes, "Can't speak!");
 		else
-			irc.sendContextReply(mes, "Nope, not shut-up.");
+			irc.sendContextReply(mes, "Can speak!");
 	}
 
 	public void interval(Object strChannel)
