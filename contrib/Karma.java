@@ -200,6 +200,7 @@ public class Karma
 	// If you change this, change reasonPattern too.
 	private static Pattern karmaPattern = Pattern.compile(
 		  "(?x:"
+		+ "(?: ^ | (?<=\\s) )" // Anchor at start of string or whitespace.
 		+ "(?:"
 			// Quoted string
 			+ "\""
@@ -209,13 +210,13 @@ public class Karma
 			+ "\""
 		+ "|"
 			// Plain string
-			+ "\\b"
 			+ "("
-				+ "(?:[\\./a-zA-Z0-9_]|-(?=[\\./a-zA-Z0-9_])[^-]){3,}" // 3 chars anywhere
+				+ "[\\./a-zA-Z0-9_]{3,}" // 3 chars anywhere
 			+ ")"
 		+ ")"
 		+ "( \\+\\+ | \\-\\- )" // The actual karma change
-		+ "(?: \\W | $ )" // Need either non-alphanum or end-of-string now.
+		+ "[\\)\\.,]?" // Allowed to terminate with full stop/close bracket etc.
+		+ "(?: (?=\\s) | $ )" // Need either whitespace or end-of-string now.
 		+ ")"
 	);
 
@@ -233,9 +234,8 @@ public class Karma
 			+ "\""
 		+ "|"
 			// Plain string
-			+ "\\b"
 			+ "("
-				+ "(?:[\\./a-zA-Z0-9_]|-(?=[\\./a-zA-Z0-9_])[^-]){3,}" // Limited selection, and >3 chars.
+				+ "[\\./a-zA-Z0-9_]{3,}" // Limited selection, and >3 chars.
 			+ ")"
 		+ ")"
 		+ "( \\+\\+ | \\-\\- )" // The actual karma change
