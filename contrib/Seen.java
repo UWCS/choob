@@ -133,7 +133,7 @@ public class Seen
 	{
 		String sortNick = mods.nick.getBestPrimaryNick(nick).replaceAll("(\\W)", "\\\\$1");
 
-		List<SeenObj> objs = mods.odb.retrieve( SeenObj.class, "WHERE nick = \"" + nick + "\"" );
+		List<SeenObj> objs = mods.odb.retrieve( SeenObj.class, "WHERE name = \"" + sortNick + "\"" );
 
 		if ( objs.size() == 0 )
 		{
