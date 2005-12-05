@@ -203,6 +203,16 @@ public final class IRCInterface
 
 		bot.sendAction(target, message);
 	}
+	
+	/**
+	 * Sends a raw IRC line to the server. Very dangerous!
+	 * @param line The line of text to send. Should not be terminated with \n.
+	 */
+	public void sendRawLine(String line)
+	{
+		AccessController.checkPermission(new ChoobPermission("message.send.raw"));
+		bot.sendRawLineViaQueue(line);
+	}
 
 	public void join(String channel) throws ChoobException
 	{

@@ -61,6 +61,7 @@ public final class HorriblePerlScript
 		inheritance.put("NickChange", new String[] { "IRCEvent", "UserEvent", "NickChangeEvent", });
 
 		inheritance.put("UnknownEvent", new String[] { "IRCEvent", });
+		inheritance.put("ServerResponse", new String[] { "IRCEvent", "ServerEvent", });
 
 		inheritance.put("ChannelModes", new String[] { "IRCEvent", "ChannelEvent", "MultiModeEvent", });
 		inheritance.put("UserModes", new String[] { "IRCEvent", "MultiModeEvent", });
@@ -83,6 +84,7 @@ public final class HorriblePerlScript
 		interfaces.put("NickChangeEvent", new String[] { "newNick" });
 		interfaces.put("ContextEvent", new String[] { "(!String)context" });
 		interfaces.put("ParamEvent", new String[] { "param" });
+		interfaces.put("ServerEvent", new String[] { "(int)code", "response" });
 
 		notinterfaces.add("Event");
 
@@ -134,6 +136,7 @@ public final class HorriblePerlScript
 
 		handlers.add(new String[] { "Topic", "ChannelTopic", "channel", null, "message", null, "nick", null, "(long)date", null, "(boolean)changed", null } );
 		handlers.add(new String[] { "Unknown", "UnknownEvent", "line", null } );
+		handlers.add(new String[] { "ServerResponse", "ServerResponse", "(int)code", null, "response", null } );
 		handlers.add(new String[] { "UserMode", "UserModes", "targetNick", null, "nick", null, "login", null, "hostname", null, "modes", null } );
 		handlers.add(new String[] { "Voice", "ChannelUserMode", "channel", null, "nick", null, "login", null, "hostname", null, "target", null, "mode", "\"v\"", "(boolean)set", "true" } );
 
