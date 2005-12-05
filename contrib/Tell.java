@@ -230,6 +230,11 @@ public class Tell
 		spew(ev.getNick());
 	}
 
+	public void onNickChange( NickChange ev )
+	{
+		spew(ev.getNewNick());
+	}
+
 	private int nsStatus( String nick )
 	{
 		try
