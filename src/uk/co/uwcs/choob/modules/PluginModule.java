@@ -86,7 +86,10 @@ public final class PluginModule
 		else
 			bot.onPluginLoaded(pluginName);
 
-		addPluginToDb(pluginName);
+		addPluginToDb(pluginName, URL);
+	}
+	
+	public void reloadPlugin(String pluginName) throws ChoobException {
 	}
 
 	/**
@@ -193,46 +196,37 @@ public final class PluginModule
 	{
 		return plugMan.commands(pluginName);
 	}
-
-	public void loadDbPlugins( Modules modules ) throws Exception
-	{
+	
+	
+	/*private void loadDbPlugins( Modules modules ) throws Exception {
 		AccessController.checkPermission(new ChoobPermission("canLoadSavedPlugins"));
-
+		
 		Connection dbCon = broker.getConnection();
-
+		
 		PreparedStatement getSavedPlugins = dbCon.prepareStatement("SELECT * FROM LoadedPlugins");
-
+		
 		ResultSet savedPlugins = getSavedPlugins.executeQuery();
-
+		
 		savedPlugins.first();
-
-		do
-		{
-			addPlugin( savedPlugins.getString("PluginName"), null );
-		}
-		while( savedPlugins.next() );
-	}
-
-	private void addPluginToDb(String pluginName) throws ChoobException
-	{
-		Connection dbCon=null;
-		try
-		{
-			dbCon= broker.getConnection();
-			PreparedStatement pluginReplace = dbCon.prepareStatement("REPLACE INTO LoadedPlugins VALUES(?,?)");
-
-			pluginReplace.setString(1,pluginName);
-			pluginReplace.setString(2,"SunHaxPluginManager");
-
+		
+		do {
+			addPlugin(savedPlugins.getString("PluginName"), null);
+		} while (savedPlugins.next());
+	}*/
+	
+	private void addPluginToDb(String pluginName, String URL) throws ChoobException {
+		Connection dbCon = null;
+		try {
+			dbCon = broker.getConnection();
+			PreparedStatement pluginReplace = dbCon.prepareStatement("INSERT IGNORE Plugins (PluginName, URL) VALUES (?, ?)");
+			
+			pluginReplace.setString(1, pluginName);
+			pluginReplace.setString(2, URL);
+			
 			pluginReplace.executeUpdate();
-		}
-		catch (SQLException e)
-		{
-			System.err.println("SQL Exception: " + e);
+		} catch (SQLException e) {
 			throw new ChoobException("SQL Exception while adding the plugin to the database...");
-		}
-		finally
-		{
+		} finally {
 			broker.freeConnection(dbCon);
 		}
 	}

@@ -22,42 +22,43 @@ USE `choob`;
 -- --------------------------------------------------------
 
 --
--- Table structure for table `CorePlugins`
+-- Table structure for table `Plugins`
 --
 -- Creation: Nov 04, 2005 at 12:58 PM
 --
 
-DROP TABLE IF EXISTS `CorePlugins`;
-CREATE TABLE IF NOT EXISTS `CorePlugins` (
+DROP TABLE IF EXISTS `Plugins`;
+CREATE TABLE IF NOT EXISTS `Plugins` (
   `PluginName` varchar(64) NOT NULL default '',
   `URL` mediumtext NOT NULL,
+  `CorePlugin` tinyint(1) NOT NULL default 0,
   PRIMARY KEY  (`PluginName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `CorePlugins`
+-- Dumping data for table `Plugins`
 --
 
-INSERT INTO `CorePlugins` VALUES ('Alias', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Alias.java');
-INSERT INTO `CorePlugins` VALUES ('Dict', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Dict.java');
-INSERT INTO `CorePlugins` VALUES ('Events', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Events.java');
-INSERT INTO `CorePlugins` VALUES ('Factoids', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Factoids.java');
-INSERT INTO `CorePlugins` VALUES ('Help', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Help.java');
-INSERT INTO `CorePlugins` VALUES ('Karma', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Karma.java');
-INSERT INTO `CorePlugins` VALUES ('Lectures', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Lectures.java');
-INSERT INTO `CorePlugins` VALUES ('Lookup', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Lookup.java');
-INSERT INTO `CorePlugins` VALUES ('MFJ', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MFJ.java');
-INSERT INTO `CorePlugins` VALUES ('MiscMsg', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MiscMsg.java');
-INSERT INTO `CorePlugins` VALUES ('NickServ', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java');
-INSERT INTO `CorePlugins` VALUES ('Plugin', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Plugin.java');
-INSERT INTO `CorePlugins` VALUES ('Quote', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Quote.java');
-INSERT INTO `CorePlugins` VALUES ('Security', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Security.java');
-INSERT INTO `CorePlugins` VALUES ('Seen', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Seen.java');
-INSERT INTO `CorePlugins` VALUES ('Shutup', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Shutup.java');
-INSERT INTO `CorePlugins` VALUES ('Talk', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Talk.java');
-INSERT INTO `CorePlugins` VALUES ('Tell', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Tell.java');
-INSERT INTO `CorePlugins` VALUES ('Test', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Test.java');
-INSERT INTO `CorePlugins` VALUES ('TimedEvents', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/TimedEvents.java');
+INSERT INTO `Plugins` VALUES ('Alias', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Alias.java', 1);
+INSERT INTO `Plugins` VALUES ('Dict', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Dict.java', 1);
+INSERT INTO `Plugins` VALUES ('Events', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Events.java', 1);
+INSERT INTO `Plugins` VALUES ('Factoids', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Factoids.java', 1);
+INSERT INTO `Plugins` VALUES ('Help', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Help.java', 1);
+INSERT INTO `Plugins` VALUES ('Karma', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Karma.java', 1);
+INSERT INTO `Plugins` VALUES ('Lectures', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Lectures.java', 1);
+INSERT INTO `Plugins` VALUES ('Lookup', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Lookup.java', 1);
+INSERT INTO `Plugins` VALUES ('MFJ', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MFJ.java', 1);
+INSERT INTO `Plugins` VALUES ('MiscMsg', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MiscMsg.java', 1);
+INSERT INTO `Plugins` VALUES ('NickServ', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java', 1);
+INSERT INTO `Plugins` VALUES ('Plugin', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Plugin.java', 1);
+INSERT INTO `Plugins` VALUES ('Quote', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Quote.java', 1);
+INSERT INTO `Plugins` VALUES ('Security', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Security.java', 1);
+INSERT INTO `Plugins` VALUES ('Seen', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Seen.java', 1);
+INSERT INTO `Plugins` VALUES ('Shutup', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Shutup.java', 1);
+INSERT INTO `Plugins` VALUES ('Talk', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Talk.java', 1);
+INSERT INTO `Plugins` VALUES ('Tell', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Tell.java', 1);
+INSERT INTO `Plugins` VALUES ('Test', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Test.java', 1);
+INSERT INTO `Plugins` VALUES ('TimedEvents', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/TimedEvents.java', 1);
 
 -- --------------------------------------------------------
 
@@ -132,25 +133,6 @@ CREATE TABLE IF NOT EXISTS `History` (
 -- Dumping data for table `History`
 --
 
-
--- --------------------------------------------------------
-
---
--- Table structure for table `LoadedPlugins`
---
--- Creation: Nov 04, 2005 at 12:58 PM
---
-
-DROP TABLE IF EXISTS `LoadedPlugins`;
-CREATE TABLE IF NOT EXISTS `LoadedPlugins` (
-  `Name` varchar(255) NOT NULL default '',
-  `Source` longtext NOT NULL,
-  PRIMARY KEY  (`Name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Dumping data for table `LoadedPlugins`
---
 
 -- --------------------------------------------------------
 

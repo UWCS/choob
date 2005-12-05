@@ -259,7 +259,7 @@ public final class Choob extends PircBot
 			// We need to have an initial set of plugins that ought to be loaded as core.
 
 			Connection dbConnection = broker.getConnection();
-			PreparedStatement coreplugSmt = dbConnection.prepareStatement("SELECT * FROM CorePlugins;");
+			PreparedStatement coreplugSmt = dbConnection.prepareStatement("SELECT * FROM Plugins WHERE CorePlugin = 1;");
 			ResultSet coreplugResults = coreplugSmt.executeQuery();
 			if ( coreplugResults.first() )
 				do
@@ -510,6 +510,10 @@ public final class Choob extends PircBot
 
 	protected void onUnknown(String line) {
 		spinThread(new UnknownEvent("onUnknown", System.currentTimeMillis(), ((int)(Math.random()*127))));
+	}
+
+	protected void onServerResponse(int code, String response) {
+		spinThread(new ServerResponse("onServerResponse", System.currentTimeMillis(), ((int)(Math.random()*127)), code, response));
 	}
 
 	protected void onUserMode(String targetNick, String nick, String login, String hostname, String modes) {
