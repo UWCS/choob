@@ -69,9 +69,8 @@ public class TimedEvents
 		String time = params.get(1);
 		String command = params.get(2);
 
-		int period;
+		long period;
 		try {
-			// This try/catch doesn't seem to work!
 			period = apiDecodePeriod(time);
 		} catch (NumberFormatException e) {
 			irc.sendContextReply(mes, "Bad time format: " + time + ". Examples: 10h, 5m2s, 3d2h.");
@@ -194,7 +193,7 @@ public class TimedEvents
 		irc.sendContextReply(mes, "OK, will do at " + cal.getTime() + ".");
 	}
 
-	public int apiDecodePeriod(String time) throws NumberFormatException {
+	public long apiDecodePeriod(String time) throws NumberFormatException {
 		int period = 0;
 
 		int currentPos = -1;
