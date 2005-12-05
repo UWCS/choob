@@ -105,7 +105,7 @@ public class TimedEvents
 	public String[] helpCommandAt = {
 		"Make a command execute in the future.",
 		"<When> <Command>",
-		"<When> is a time of the form HH:MM[:SS]",
+		"<When> is a time of the form HH[:]MM[[:]SS][am|pm]",
 		"<Command> is the command to execute"
 	};
 	public void commandAt( Message mes )
@@ -135,10 +135,10 @@ public class TimedEvents
 
 		// Java--
 		GregorianCalendar cal = new GregorianCalendar();
-		Matcher ma = Pattern.compile("([0-9]|1[0-9]|2[0-3]):([0-5][0-9])(?::([0-5][0-9]))? ?(am|pm)?").matcher(time);
+		Matcher ma = Pattern.compile("([0-9]|1[0-9]|2[0-3]):?([0-5][0-9])(?::?([0-5][0-9]))?(am|pm)?").matcher(time);
 		if (!ma.matches())
 		{
-			irc.sendContextReply(mes, "Bad date format: " + time + ".");
+			irc.sendContextReply(mes, "Bad time format: " + time + ".");
 			return;
 		}
 
