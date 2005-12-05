@@ -14,7 +14,7 @@ public final class ProtectedChannels
 {
 	List <String>channels=Collections.synchronizedList(new ArrayList<String>());
 
-	public Boolean isProtected (String channel)
+	public boolean isProtected (String channel)
 	{
 		return channels.contains(channel);
 	}
