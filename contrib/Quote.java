@@ -389,7 +389,7 @@ public class Quote
 				quoteLine.quoteID = quote.id;
 				quoteLine.id = 0;
 				quoteLine.lineNumber = i;
-				quoteLine.nick = lines.get(i).getNick();
+				quoteLine.nick = mods.nick.getBestPrimaryNick(lines.get(i).getNick());
 				quoteLine.message = lines.get(i).getMessage();
 				quoteLine.isAction = (lines.get(i) instanceof ChannelAction);
 				save(quoteLine);
@@ -472,7 +472,7 @@ public class Quote
 			}
 			QuoteLine quoteLine = new QuoteLine();
 			quoteLine.lineNumber = i;
-			quoteLine.nick = nick;
+			quoteLine.nick = mods.nick.getBestPrimaryNick(nick);
 			quoteLine.message = text;
 			quoteLine.isAction = action;
 			content[i] = quoteLine;
