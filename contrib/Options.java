@@ -222,7 +222,7 @@ public class Options
 
 	public String apiGetUserOption( String nickName, String optionName )
 	{
-		String userName = mods.security.getRootUser( mods.nick.getBEstPrimaryNick( nickName ) );
+		String userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( nickName ) );
 		if (userName == null)
 			userName = nickName;
 

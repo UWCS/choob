@@ -1,4 +1,3 @@
-import uk.co.uwcs.choob.*;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
 import uk.co.uwcs.choob.modules.*;
@@ -33,6 +32,7 @@ public class Voter
  */
 public class Vote
 {
+	private static boolean SPAMMY = true;
 	private Modules mods;
 	private IRCInterface irc;
 	private Map<String,Integer> activeVotes = new HashMap<String,Integer>();
@@ -167,12 +167,8 @@ public class Vote
 		vote.finishTime = System.currentTimeMillis() + duration;
 
 		StringBuilder responseString = new StringBuilder("Abstain");
-		StringBuilder responseOutput = new StringBuilder("0 for Abstain");
 		for(int i=0; i<options.length; i++)
-		{
 			responseString.append("," + options[i]);
-			responseOutput.append(", " + (i + 1) + " for " + options[i]);
-		}
 		vote.responses = responseString.toString();
 
 		mods.odb.save(vote);
@@ -180,8 +176,23 @@ public class Vote
 
 		activeVotes.put(mes.getContext(), vote.id);
 
-		irc.sendContextReply(mes, "OK, called vote on \"" + question + "\"! You have " + durationString + " to use 'Vote.Vote <Number>' here or 'Vote.Vote " + vote.id + " <Number>' elsewhere, where <Number> is one of:");
-		irc.sendContextReply(mes, responseOutput + ".");
+		if (SPAMMY) // TODO: Make this an option
+		{
+			irc.sendContextReply(mes, "OK, called vote #" + vote.id + " on \"" + question + "\"! You have " + durationString + ".");
+			String trigger = irc.getTrigger();
+			irc.sendContextReply(mes, trigger + "Vote.Vote 0  ==>  Abstain");
+			for(int i=0; i<options.length; i++)
+				irc.sendContextReply(mes, trigger + "Vote.Vote " + (i + 1) + "  ==>  " + options[i]);
+		}
+		else
+		{
+			StringBuilder responseOutput = new StringBuilder("0 for Abstain");
+			for(int i=0; i<options.length; i++)
+				responseOutput.append(", " + (i + 1) + " for " + options[i]);
+
+			irc.sendContextReply(mes, "OK, called vote on \"" + question + "\"! You have " + durationString + " to use 'Vote.Vote <Number>' here or 'Vote.Vote " + vote.id + " <Number>' elsewhere, where <Number> is one of:");
+			irc.sendContextReply(mes, responseOutput + ".");
+		}
 	}
 
 	// TODO: export this.
@@ -350,7 +361,7 @@ public class Vote
 					max = counts[i];
 			}
 
-			StringBuilder results = new StringBuilder();
+			List<String> results = new ArrayList<String>();
 			boolean first1 = true;
 			List<String> winners = null;
 			for(int i = max; i >= 0; i--)
@@ -362,26 +373,44 @@ public class Vote
 
 				if (elts.size() > 0)
 				{
-					if (!first1)
-						results.append("; ");
-					else
+					if (first1)
 						winners = elts;
-
 					first1 = false;
 
+					StringBuilder thisResult = new StringBuilder();
 					boolean first2 = true;
 					for(String name: elts)
 					{
 						if (!first2)
-							results.append(", ");
+							thisResult.append(", ");
 						first2 = false;
-						results.append(name);
+						thisResult.append(name);
 					}
-					results.append(" with " + i);
+					thisResult.append(" with " + i);
+					results.add(thisResult.toString());
 				}
 			}
-			results.append(".");
-			irc.sendMessage(vote.channel, "Vote on \"" + vote.text + "\" has ended! Results: " + results);
+			if (SPAMMY)
+			{
+				irc.sendMessage(vote.channel, "Vote on \"" + vote.text + "\" has ended! Results:");
+				for(String result: results)
+					irc.sendMessage(vote.channel, result);
+			}
+			else
+			{
+				StringBuilder resultText = new StringBuilder();
+				boolean first2 = true;
+				for(String result: results)
+				{
+					if (!first2)
+						resultText.append("; ");
+					first2 = false;
+					resultText.append(result);
+				}
+				resultText.append(".");
+				irc.sendMessage(vote.channel, "Vote on \"" + vote.text + "\" has ended! Results: " + resultText);
+			}
+
 			if (winners.size() == 1)
 				irc.sendMessage(vote.channel, "Democracy has spoken; " + winners.get(0) + " is the winner!");
 			else

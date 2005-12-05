@@ -50,6 +50,7 @@ INSERT INTO `Plugins` VALUES ('Lookup', 'http://svn.uwcs.co.uk/repos/choob/trunk
 INSERT INTO `Plugins` VALUES ('MFJ', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MFJ.java', 1);
 INSERT INTO `Plugins` VALUES ('MiscMsg', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/MiscMsg.java', 1);
 INSERT INTO `Plugins` VALUES ('NickServ', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java', 1);
+INSERT INTO `Plugins` VALUES ('Options', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Options.java', 1);
 INSERT INTO `Plugins` VALUES ('Plugin', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Plugin.java', 1);
 INSERT INTO `Plugins` VALUES ('Quote', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Quote.java', 1);
 INSERT INTO `Plugins` VALUES ('Security', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Security.java', 1);
@@ -59,6 +60,7 @@ INSERT INTO `Plugins` VALUES ('Talk', 'http://svn.uwcs.co.uk/repos/choob/trunk/c
 INSERT INTO `Plugins` VALUES ('Tell', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Tell.java', 1);
 INSERT INTO `Plugins` VALUES ('Test', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Test.java', 1);
 INSERT INTO `Plugins` VALUES ('TimedEvents', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/TimedEvents.java', 1);
+INSERT INTO `Plugins` VALUES ('Vote', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Vote.java', 1);
 
 -- --------------------------------------------------------
 
@@ -103,6 +105,8 @@ INSERT INTO `GroupMembers` VALUES (1, 14);
 INSERT INTO `GroupMembers` VALUES (1, 15);
 INSERT INTO `GroupMembers` VALUES (1, 16);
 INSERT INTO `GroupMembers` VALUES (1, 17);
+INSERT INTO `GroupMembers` VALUES (1, 31);
+INSERT INTO `GroupMembers` VALUES (1, 32);
 INSERT INTO `GroupMembers` VALUES (4, 3);
 
 -- --------------------------------------------------------
@@ -244,8 +248,6 @@ CREATE TABLE IF NOT EXISTS `UserNodes` (
 
 INSERT INTO `UserNodes` VALUES (15, 'Alias', 2);
 INSERT INTO `UserNodes` VALUES (2, 'anonymous', 3);
-INSERT INTO `UserNodes` VALUES (27, 'bucko', 0);
-INSERT INTO `UserNodes` VALUES (28, 'bucko', 1);
 INSERT INTO `UserNodes` VALUES (26, 'dict', 2);
 INSERT INTO `UserNodes` VALUES (19, 'Events', 2);
 INSERT INTO `UserNodes` VALUES (20, 'Factoids', 2);
@@ -263,8 +265,6 @@ INSERT INTO `UserNodes` VALUES (6, 'Plugin', 2);
 INSERT INTO `UserNodes` VALUES (5, 'plugindevs', 3);
 INSERT INTO `UserNodes` VALUES (17, 'Quote', 2);
 INSERT INTO `UserNodes` VALUES (1, 'root', 3);
-INSERT INTO `UserNodes` VALUES (29, 'sadiq', 0);
-INSERT INTO `UserNodes` VALUES (30, 'sadiq', 1);
 INSERT INTO `UserNodes` VALUES (7, 'Security', 2);
 INSERT INTO `UserNodes` VALUES (10, 'Seen', 2);
 INSERT INTO `UserNodes` VALUES (24, 'Shutup', 2);
@@ -272,6 +272,8 @@ INSERT INTO `UserNodes` VALUES (11, 'Talk', 2);
 INSERT INTO `UserNodes` VALUES (14, 'Tell', 2);
 INSERT INTO `UserNodes` VALUES (18, 'Test', 2);
 INSERT INTO `UserNodes` VALUES (12, 'TimedEvents', 2);
+INSERT INTO `UserNodes` VALUES (31, 'Options', 2);
+INSERT INTO `UserNodes` VALUES (32, 'Vote', 2);
 
 --
 -- Constraints for dumped tables
