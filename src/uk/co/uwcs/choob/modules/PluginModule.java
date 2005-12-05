@@ -89,7 +89,16 @@ public final class PluginModule
 		addPluginToDb(pluginName, URL);
 	}
 	
+	/**
+	 * Reloads a plugin which has been loaded previously, but may not be loaded currently.
+	 *
+	 * This method simply looks up the last source URL for the plugin, and calls addPlugin with it.
+	 * @param pluginName Name of the plugin to reload.
+	 * @throws Exception Thrown if there's a syntactical error in the plugin's source.
+	 */
 	public void reloadPlugin(String pluginName) throws ChoobException {
+		String URL = getPluginURL(pluginName);
+		addPlugin(pluginName, URL);
 	}
 
 	/**
@@ -198,21 +207,23 @@ public final class PluginModule
 	}
 	
 	
-	/*private void loadDbPlugins( Modules modules ) throws Exception {
-		AccessController.checkPermission(new ChoobPermission("canLoadSavedPlugins"));
-		
-		Connection dbCon = broker.getConnection();
-		
-		PreparedStatement getSavedPlugins = dbCon.prepareStatement("SELECT * FROM LoadedPlugins");
-		
-		ResultSet savedPlugins = getSavedPlugins.executeQuery();
-		
-		savedPlugins.first();
-		
-		do {
-			addPlugin(savedPlugins.getString("PluginName"), null);
-		} while (savedPlugins.next());
-	}*/
+	private String getPluginURL(String pluginName) throws ChoobException {
+		Connection dbCon = null;
+		try {
+			dbCon = broker.getConnection();
+			PreparedStatement sqlGetURL = dbCon.prepareStatement("SELECT URL FROM Plugins WHERE PluginName = ?");
+			sqlGetURL.setString(1, pluginName);
+			ResultSet url = sqlGetURL.executeQuery();
+			
+			url.first();
+			
+			return url.getString("URL");
+		} catch (SQLException e) {
+			throw new ChoobException("SQL Exception while finding the plugin in the database.");
+		} finally {
+			broker.freeConnection(dbCon);
+		}
+	}
 	
 	private void addPluginToDb(String pluginName, String URL) throws ChoobException {
 		Connection dbCon = null;

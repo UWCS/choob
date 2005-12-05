@@ -79,6 +79,33 @@ public class Plugin
 			e.printStackTrace();
 		}
 	}
+	
+	public String[] helpReload = {
+		"Reloads an existing plugin.",
+		"<Name>",
+		"<Name> is the name of the plugin"
+	};
+	public void commandReload(Message mes, Modules mods, IRCInterface irc) {
+		List<String> params = mods.util.getParams(mes);
+		String pluginName = params.get(1);
+		
+		mods.security.checkNickPerm(new ChoobPermission("plugin.load." + pluginName.toLowerCase()), mes.getNick());
+		
+		try {
+			mods.security.addGroup("plugin." + pluginName.toLowerCase());
+		} catch (ChoobException e) {
+		}
+		
+		irc.sendContextReply(mes, "Reloading plugin '" + pluginName + "'...");
+		
+		try {
+			mods.plugin.reloadPlugin(pluginName);
+			irc.sendContextReply(mes, "Plugin reloaded OK!");
+		} catch (Exception e) {
+			irc.sendContextReply(mes, "Error reloading plugin, see log for more details. " + e);
+			e.printStackTrace();
+		}
+	}
 
 	public String[] helpLoadPlugin = {
 		"See Load.",
