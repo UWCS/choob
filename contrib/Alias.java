@@ -398,7 +398,7 @@ public class Alias
 
 		String converted = alias.converted;
 
-		String commandName, pluginName;
+		String commandName, pluginName, newText;
 		if (converted.indexOf("$") == -1)
 		{
 			// Make sure command name is valid...
@@ -426,6 +426,7 @@ public class Alias
 
 			pluginName = converted.substring(0, dotPos);
 			commandName = converted.substring(dotPos + 1, spacePos);
+			newText = irc.getTrigger() + aliasName + extra + cmdParams;
 		}
 		else
 		{
@@ -619,11 +620,14 @@ public class Alias
 				pos = converted.indexOf('$', pos);
 			}
 			newCom.append(converted.substring(oldPos, convEnd + 1));
-			String newText = newCom.toString();
-
-			// Only need to do this here...
-			mes = (Message)mes.cloneEvent( newText );
+			newText = newCom.toString();
 		}
+
+		// Only need to do this here...
+		mes = (Message)mes.cloneEvent( newText );
+
+		// XXX This is a hack. We should change the event to simply have a setMessage(). Or something.
+		mods.history.addLog( mes ); // Needed in case a plugin needs to retrieve authoritative message.
 
 		try
 		{
