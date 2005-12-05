@@ -53,7 +53,7 @@ public class Options
 		String nickName = mes.getNick();
 
 		mods.security.checkNS(nickName);
-		String userName = mods.security.getRootUser(nickName);
+		String userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( nickName ) );
 
 		if (userName == null)
 		{
@@ -156,7 +156,7 @@ public class Options
 	};
 	public void commandGet( Message mes )
 	{
-		String userName = mods.security.getRootUser( mes.getNick() );
+		String userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( mes.getNick() ) );
 
 		if (userName == null)
 			userName = mes.getNick();
@@ -222,7 +222,7 @@ public class Options
 
 	public String apiGetUserOption( String nickName, String optionName )
 	{
-		String userName = mods.security.getRootUser(nickName);
+		String userName = mods.security.getRootUser( mods.nick.getBEstPrimaryNick( nickName ) );
 		if (userName == null)
 			userName = nickName;
 
@@ -269,7 +269,7 @@ public class Options
 
 	public void apiSetUserOption( String nickName, String optionName, String value )
 	{
-		String userName = mods.security.getRootUser(nickName);
+		String userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( nickName ) );
 		if (userName == null)
 			userName = nickName;
 

@@ -56,17 +56,22 @@ public class Vote
 		  "Examples of CallVote:",
 		  "'Vote.Call (Bananas, Oranges)' to ask people to choose the best out"
 		+ " of bananas and oranges.",
-		  "'Vote.Call \"Do you like George Bush?\"' to ask for opinions on our"
+		  "'Vote.Call Do you like George Bush?' to ask for opinions on our"
 		+ " favourite US president.",
-		  "'Vote.Call \"Longest?\" (String, Snake, Worm)' to ask which people"
-		+ " think is the longest."
+		  "'Vote.Call Longest? (String, Snake, Worm)' to ask which people"
+		+ " think is the longest.",
+		  "'Vote.Call \"Democracy sucks?\" 1d' to call a one day vote on the"
+		+ " state of democracy.",
+		  "'Vote.Call Best Regime? (Totalitarianism, Communism) 10s' to call a"
+		+ " lightning poll on the virtues of extremes."
 	};
 
 	public String[] helpCommandCall = {
 		"Call a vote for channel members to vote on. See Vote.Examples.",
-		"[ <Question> ] [ ( <Response>, <Response>, ... ) ]",
-		"<Quoestion> is an optional question (default: \"Which is best?\")",
-		"<Response> is a comma seperated list of responses"
+		"[ <Question> ] [ ( <Responses> ) ] [ <Duration> ]",
+		"<Question> is an optional question (default: \"Which is best?\")",
+		"<Responses> is an optional comma seperated list of responses (default: Yes, No)",
+		"<Duration> is an optional duration to run the vote of the form [<Days>d][<Hours>h][<Minutes>m][<Seconds>s] (default: 60s)"
 	};
 	public synchronized void commandCall( Message mes )
 	{
@@ -127,10 +132,30 @@ public class Vote
 			options[0] = options[0].trim();
 			options[options.length - 1] = options[options.length - 1].trim();
 
-			// Anything after the end?
-			if (paramString.substring(endPos).trim().length() != 1)
+			pos = endPos + 1;
+		}
+		else
+		{
+			pos = paramString.length();
+		}
+
+		// Anything after the end?
+		String remain = paramString.substring(pos).trim();
+		long duration = 60 * 1000;
+		String durationString = "60s";
+		if (remain.length() != 0)
+		{
+			try
 			{
-				irc.sendContextReply(mes, "Invalid option string! Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
+				duration = apiDecodePeriod(remain) * 1000;
+				if (duration > 300000) // 5 mins
+					durationString = "until " + new Date(System.currentTimeMillis() + duration);
+				else
+					durationString = remain;
+			}
+			catch (NumberFormatException e)
+			{
+				irc.sendContextReply(mes, "Invalid duration string! Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
 				return;
 			}
 		}
@@ -139,7 +164,7 @@ public class Vote
 		vote.caller = mes.getNick();
 		vote.channel = mes.getContext();
 		vote.text = question;
-		vote.finishTime = System.currentTimeMillis() + 60 * 1000; // TODO
+		vote.finishTime = System.currentTimeMillis() + duration;
 
 		StringBuilder responseString = new StringBuilder("Abstain");
 		StringBuilder responseOutput = new StringBuilder("0 for Abstain");
@@ -151,11 +176,45 @@ public class Vote
 		vote.responses = responseString.toString();
 
 		mods.odb.save(vote);
-		mods.interval.callBack( vote, 60 * 1000, vote.id );
+		mods.interval.callBack( vote, duration, vote.id );
 
 		activeVotes.put(mes.getContext(), vote.id);
 
-		irc.sendContextReply(mes, "OK, called vote on \"" + question + "\"! Use 'Vote.Vote <Number>' here or 'Vote.Vote " + vote.id + " <Number>' elsewhere, where <Number> is: " + responseOutput + ".");
+		irc.sendContextReply(mes, "OK, called vote on \"" + question + "\"! You have " + durationString + " to use 'Vote.Vote <Number>' here or 'Vote.Vote " + vote.id + " <Number>' elsewhere, where <Number> is one of:");
+		irc.sendContextReply(mes, responseOutput + ".");
+	}
+
+	// TODO: export this.
+	public long apiDecodePeriod(String time) throws NumberFormatException {
+		int period = 0;
+
+		int currentPos = -1;
+		int lastPos = 0;
+
+		if ( (currentPos = time.indexOf('d', lastPos)) >= 0 ) {
+			period += 60 * 60 * 24 * Integer.valueOf(time.substring(lastPos, currentPos));
+			lastPos = currentPos + 1;
+		}
+
+		if ( (currentPos = time.indexOf('h', lastPos)) >= 0 ) {
+			period += 60 * 60 * Integer.valueOf(time.substring(lastPos, currentPos));
+			lastPos = currentPos + 1;
+		}
+
+		if ( (currentPos = time.indexOf('m', lastPos)) >= 0 ) {
+			period += 60 * Integer.valueOf(time.substring(lastPos, currentPos));
+			lastPos = currentPos + 1;
+		}
+
+		if ( (currentPos = time.indexOf('s', lastPos)) >= 0 ) {
+			period += Integer.valueOf(time.substring(lastPos, currentPos));
+			lastPos = currentPos + 1;
+		}
+
+		if (lastPos != time.length())
+			throw new NumberFormatException("Invalid time format: " + time);
+
+		return period;
 	}
 
 	public String[] helpCommandVote = {
@@ -166,7 +225,7 @@ public class Vote
 	};
 	public synchronized void commandVote( Message mes )
 	{
-		List<String> params = mods.util.getParams(mes, 3);
+		List<String> params = mods.util.getParams(mes, 2);
 
 		int voteID;
 		String response;
@@ -187,13 +246,19 @@ public class Vote
 			try
 			{
 				voteID = Integer.parseInt(params.get(1));
+				response = params.get(2);
 			}
 			catch (NumberFormatException e)
 			{
-				irc.sendContextReply(mes, "Sorry, " + params.get(1) + " is not a valid vote ID!");
-				return;
+				Integer voteIDInt = activeVotes.get(mes.getContext());
+				if (voteIDInt == null)
+				{
+					irc.sendContextReply(mes, "Sorry, " + params.get(1) + " is not a valid vote ID!");
+					return;
+				}
+				voteID = voteIDInt;
+				response = params.get(1) + " " + params.get(2);
 			}
-			response = params.get(2);
 		}
 		else
 		{
@@ -277,7 +342,7 @@ public class Vote
 				}
 			});
 
-			// Gah! Inefficient, but Java doesn't proved a useful enough sort method!
+			// Gah! Inefficient, but Java doesn't provide a useful enough sort method!
 			int max = 0;
 			for(int i=0; i<counts.length; i++)
 			{
@@ -285,23 +350,56 @@ public class Vote
 					max = counts[i];
 			}
 
-			StringBuffer results = new StringBuffer();
-			int win = -1;
+			StringBuilder results = new StringBuilder();
+			boolean first1 = true;
+			List<String> winners = null;
 			for(int i = max; i >= 0; i--)
 			{
+				List<String> elts = new ArrayList<String>();
 				for(int j=0; j<counts.length; j++)
-				{
 					if (counts[j] == i)
+						elts.add(responses[j]);
+
+				if (elts.size() > 0)
+				{
+					if (!first1)
+						results.append("; ");
+					else
+						winners = elts;
+
+					first1 = false;
+
+					boolean first2 = true;
+					for(String name: elts)
 					{
-						if (win == -1)
-							win = j;
-						results.append(responses[j] + " with " + i + ", ");
+						if (!first2)
+							results.append(", ");
+						first2 = false;
+						results.append(name);
 					}
+					results.append(" with " + i);
 				}
 			}
-			results.append("and so the powers that be have picked " + responses[win] + " as the winner!");
-
+			results.append(".");
 			irc.sendMessage(vote.channel, "Vote on \"" + vote.text + "\" has ended! Results: " + results);
+			if (winners.size() == 1)
+				irc.sendMessage(vote.channel, "Democracy has spoken; " + winners.get(0) + " is the winner!");
+			else
+			{
+				StringBuilder output = new StringBuilder();
+				for(int i=0; i<winners.size(); i++)
+				{
+					output.append(winners.get(i));
+					if (i != winners.size() - 1)
+						output.append(", ");
+					if (i == winners.size() - 2)
+						output.append("and ");
+				}
+				irc.sendMessage(vote.channel, "Result is a draw: " + output + " all got " + max + " votes!");
+			}
+			// Should these be enabled?
+			//irc.sendMessage(vote.caller, "Vote on \"" + vote.text + "\" has ended! Results: " + results);
+			//irc.sendMessage(vote.caller, "The powers that be have picked " + responses[win] + " as the winner!");
 		}
 	}
 }
