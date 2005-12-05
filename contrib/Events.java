@@ -209,7 +209,7 @@ public class Events
 			String[] ev= events.get(c);
 			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
 			Date dat=new Date(Long.parseLong(ev[4])*(long)1000);
-			boolean finished=(new Date()).compareTo(da)>0;
+			boolean finished=(new Date()).compareTo(dat)>0;
 			int eid=0;
 			try
 			{
@@ -248,7 +248,9 @@ public class Events
 		{
 			String[] ev= events.get(c);
 			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
-			boolean finished=(new Date()).compareTo(da)>0;
+			Date dat=new Date(Long.parseLong(ev[4])*(long)1000);
+			boolean finished=(new Date()).compareTo(dat)>0;
+
 			int eid=0;
 			try
 			{
@@ -300,7 +302,8 @@ public class Events
 		{
 			String[] ev= events.get(c);
 			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
-			boolean finished=(new Date()).compareTo(da)>0;
+			Date dat=new Date(Long.parseLong(ev[4])*(long)1000);
+			boolean finished=(new Date()).compareTo(dat)>0;
 			if (!finished)
 				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
@@ -339,7 +342,8 @@ public class Events
 		{
 			String[] ev= events.get(c);
 			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
-			boolean finished=(new Date()).compareTo(da)>0;
+			Date dat=new Date(Long.parseLong(ev[4])*(long)1000);
+			boolean finished=(new Date()).compareTo(dat)>0;
 			if (!finished)
 				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
@@ -357,12 +361,19 @@ public class Events
 	{
 		ArrayList<String[]> events=readEventsData();
 		int c=events.size();
+
+		if (c==0)
+		{
+			irc.sendContextReply(mes, "There are no events! :'(");
+			return;
+		}
 		String rep="";
-		while (c--!=0)
+		while (c-->0)
 		{
 			String[] ev= events.get(c);
 			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
-			boolean finished=(new Date()).compareTo(da)>0;
+			Date dat=new Date(Long.parseLong(ev[4])*(long)1000);
+			boolean finished=(new Date()).compareTo(dat)>0;
 			rep+=Colors.BOLD + ev[2] + Colors.NORMAL + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + stupidStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + (c!=0 ? ", " : ".");
 		}
 		irc.sendContextReply(mes, "Events: " + rep);
