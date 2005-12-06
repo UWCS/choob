@@ -33,6 +33,7 @@ public class Alias
 	{
 		this.mods = mods;
 		this.irc = irc;
+		filterTriggerRegex = irc.getTriggerRegex();
 	}
 
 	public String[] helpSyntax = {
@@ -336,13 +337,9 @@ public class Alias
 			return results.get(0);
 	}
 
-	public void onPrivateMessage( Message mes ) 
-	{
-		onMessage( mes );
-	}
-
 	// Muhahahahahahahahaha --bucko
-	public void onMessage( Message mes ) 
+	public String filterTriggerRegex;
+	public void filterTrigger( Message mes ) 
 	{
 		String text = mes.getMessage();
 
