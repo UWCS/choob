@@ -110,7 +110,7 @@ public class Security
 			irc.sendContextReply( mes, "The user could not be deleted: " + e );
 			return;
 		}
-		irc.sendContextReply( mes, "OK, user added!" );
+		irc.sendContextReply( mes, "OK, user deleted!" );
 	}
 
 	public String[] helpUsingLink = {

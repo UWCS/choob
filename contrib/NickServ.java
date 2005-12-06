@@ -37,7 +37,7 @@ public class NickServ
 	/** Enable horrible hacks. If you know which network you're going to be using the bot on, finalize this, and all of the other code will get removed by the compiler. */
 	boolean infooverride=false;
 
-	final Pattern ValidInfoReply=Pattern.compile("^(?:\\s*Nickname: ([^\\s]+) ?(<< ONLINE >>)?)|(?:The nickname \\[([^\\s]+)\\] is not registered)$");
+	final Pattern validInfoReply=Pattern.compile("^(?:\\s*Nickname: ([^\\s]+) ?(<< ONLINE >>)?)|(?:The nickname \\[([^\\s]+)\\] is not registered)$");
 
 	public NickServ(Modules mods, IRCInterface irc)
 	{
@@ -204,12 +204,12 @@ public class NickServ
 		if ( ! mes.getNick().toLowerCase().equals( "nickserv" ) )
 			return; // Not from NickServ --> also don't care
 
-		if (infooverride == false && mes.getMessage().trim().toLowerCase().equals("unknown command [status]"))
+		if (!infooverride && mes.getMessage().trim().toLowerCase().equals("unknown command [status]"))
 		{
 			// Ohes nose, horribly broken network! Let's pretend that it didn't just slap us in the face with a glove.
 			System.err.println("Reverting to badly broken NickServ handling.");
 
-			infooverride=true;
+			infooverride = true;
 
 			synchronized (nickChecks)
 			{
@@ -222,10 +222,29 @@ public class NickServ
 
 		List<String> params = mods.util.getParams( mes );
 
+		String nick;
+		int status;
 		if (infooverride)
 		{
-			if (mes.getMessage().indexOf("Nickname: ") ==-1 && mes.getMessage().indexOf("The nickname [") ==-1)
+			if (mes.getMessage().indexOf("Nickname: ") == -1 && mes.getMessage().indexOf("The nickname [") == -1)
 				return; // Wrong type of message!
+
+			Matcher ma = validInfoReply.matcher(Colors.removeFormattingAndColors(mes.getMessage()));
+
+			if (!ma.matches())
+				return;
+
+			nick = ma.group(1);
+
+			if (nick == null)
+			{
+				// Unregistered
+				nick = ma.group(3);
+				status = 0;
+			}
+			else
+				// Registered
+				status = (ma.group(2) == null || ma.group(2).equals("")) ? 1 : 3;
 		}
 		else
 		{
@@ -252,32 +271,33 @@ public class NickServ
 					System.err.println("Password option for plugin NickServ not set...");
 				return;
 			}
-			else if ( ! params.get(0).toLowerCase().equals("status") )
+			else if ( params.size() > 2 && params.get(1).equalsIgnoreCase("is") )
+			{
+				// Online! But not registered (I'd hope)
+				nick = params.get(0);
+				status = 1;
+			}
+			else if ( params.size() == 4 && params.get(0).equalsIgnoreCase("nickname") && params.get(2).equalsIgnoreCase("isn't") && params.get(3).equalsIgnoreCase("registered.") )
+			{
+				// Registered but offline.
+				nick = Colors.removeFormattingAndColors(params.get(1));
+				status = 0;
+			}
+			else if ( params.get(0).equalsIgnoreCase("status") )
+			{
+				nick = (String)params.get(1);
+				status = Integer.valueOf((String)params.get(2));
+
+				if (status == 0)
+				{
+					// We'd like 0 = not registered, 1 = offline/not identified.
+					// As such we need to check existence too. now.
+					irc.sendContextMessage(mes, "INFO " + nick);
+					return;
+				}
+			}
+			else
 				return; // Wrong type of message!
-		}
-
-		String nick;
-		int status;
-
-
-		if (!infooverride /* && statuscommand*/)
-		{
-			nick = (String)params.get(1);
-			status = Integer.valueOf((String)params.get(2));
-		}
-		else
-		{
-			Matcher ma=ValidInfoReply.matcher(Colors.removeFormattingAndColors(mes.getMessage()));
-
-			if (!ma.matches())
-				return;
-
-			nick = ma.group(1);
-
-			if (nick==null)
-				nick=ma.group(3);
-
-			status = (ma.group(2)!=null && !ma.group(2).equals("") ? 3 : 0);
 		}
 
 		ResultObj result = getNickCheck( nick.toLowerCase() );

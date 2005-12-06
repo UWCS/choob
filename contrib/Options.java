@@ -53,11 +53,24 @@ public class Options
 		String nickName = mes.getNick();
 
 		mods.security.checkNS(nickName);
-		String userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( nickName ) );
+		String userName = mods.security.getRootUser( nickName );
 
 		if (userName == null)
 		{
-			irc.sendContextReply( mes, "Sorry, you need to register your username with the bot first. See Help.Help Security.AddUser." );
+			String primaryNick = mods.nick.getBestPrimaryNick( nickName );
+			String rootNick = mods.security.getRootUser(primaryNick);
+			if (nickName.equals( primaryNick ))
+				// They can't have registered their nick at all.
+				irc.sendContextReply( mes, "Sorry, you need to register your username with the bot first. See Help.Help Security.AddUser." );
+
+			else if ( rootNick != null )
+				// Registered but not linked.
+				irc.sendContextReply( mes, "Sorry, you need to link your username with " + rootNick + " first. See Help.Help Security.UsingLink." );
+
+			else
+				// Not registered, and not primary.
+				irc.sendContextReply( mes, "Sorry, you need to register your username (" + primaryNick + ") with the bot first. See Help.Help Security.AddUser." );
+
 			return;
 		}
 
@@ -206,6 +219,11 @@ public class Options
 
 	public String apiGetGeneralOption( String optionName )
 	{
+		return apiGetGeneralOption(optionName, null);
+	}
+
+	public String apiGetGeneralOption( String optionName, String defult )
+	{
 		String pluginName = ChoobThread.getPluginName(1);
 		if (pluginName == null)
 			pluginName = "*Choob*"; // Hopefully an invalid plugin name. :)
@@ -215,12 +233,17 @@ public class Options
 			+ " pluginName = '" + pluginName.replaceAll("(['\\\\])", "\\\\$1") + "'");
 
 		if (options.size() == 0)
-			return null;
+			return defult;
 		else
 			return options.get(0).optionValue;
 	}
 
 	public String apiGetUserOption( String nickName, String optionName )
+	{
+		return apiGetUserOption( nickName, optionName, null );
+	}
+
+	public String apiGetUserOption( String nickName, String optionName, String defult )
 	{
 		String userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( nickName ) );
 		if (userName == null)
@@ -236,7 +259,7 @@ public class Options
 			+ " pluginName = '" + pluginName.replaceAll("(['\\\\])", "\\\\$1") + "'");
 
 		if (options.size() == 0)
-			return null;
+			return defult;
 		else
 			return options.get(0).optionValue;
 	}
@@ -267,11 +290,12 @@ public class Options
 		}
 	}
 
-	public void apiSetUserOption( String nickName, String optionName, String value )
+	// WARNING: Run getBestPrimaryNick on this, and check NickServ first in your plugin!
+	public void apiSetUserOption( String userName, String optionName, String value )
 	{
-		String userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( nickName ) );
-		if (userName == null)
-			userName = nickName;
+		String rootUser = mods.security.getRootUser( userName );
+		if (rootUser != null)
+			userName = rootUser;
 
 		String pluginName = ChoobThread.getPluginName(1);
 		if (pluginName == null)

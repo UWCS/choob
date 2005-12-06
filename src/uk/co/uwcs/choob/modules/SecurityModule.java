@@ -1041,18 +1041,18 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				int userID = results.getInt(1);
 				stat.close();
 
-				// Add user.
+				// First, unbind the user.
+				stat = dbConn.prepareStatement("DELETE FROM GroupMembers WHERE MemberID = ?");
+				stat.setInt(1, userID);
+				if (stat.executeUpdate() == 0)
+					System.err.println("Ack! No rows updated in user member delete!");
+
+				// Delete user.
 				stat = dbConn.prepareStatement("DELETE FROM UserNodes WHERE NodeID = ?");
 				stat.setInt(1, userID);
 				if (stat.executeUpdate() == 0)
 					System.err.println("Ack! No rows updated in user delete!");
 				stat.close();
-
-				// Now bind it.
-				stat = dbConn.prepareStatement("DELETE FROM GroupMembers WHERE MemberID = ?");
-				stat.setInt(1, userID);
-				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user member delete!");
 
 				// Done!
 				dbConn.commit();
