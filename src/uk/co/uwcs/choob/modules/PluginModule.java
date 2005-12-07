@@ -303,7 +303,7 @@ public final class PluginModule
 			ResultSet names = sqlPlugins.executeQuery();
 
 			String[] plugins = new String[0];
-			if (names.first())
+			if (!names.first())
 				return plugins;
 
 			List<String> plugList = new ArrayList<String>();
