@@ -420,7 +420,7 @@ public class Help
 					else
 						aliasCommand = alias.substring(0, pos);
 
-					buf.append( Colors.BOLD + command + Colors.NORMAL + " is an alias to '" + alias + "'; help for '" + Colors.BOLD + aliasCommand + Colors.NORMAL + "':" );
+					buf.append( Colors.BOLD + command + Colors.NORMAL + " is an alias to '" + alias + "'; help for '" + Colors.BOLD + aliasCommand + Colors.NORMAL + "': " );
 
 					command = aliasCommand;
 					buf.append( help[0] );

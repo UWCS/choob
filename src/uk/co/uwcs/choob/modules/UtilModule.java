@@ -93,21 +93,23 @@ public final class UtilModule
 			for(int i=0; i<count; i++)
 			{
 				tempList.add( text.substring( lastPos, currentPos ) );
+
+				// Make sure we skip "empty" parameters.
 				do
 				{
 					lastPos = currentPos + 1;
 					currentPos = text.indexOf(' ', lastPos);
 
-					// I don't think there's a possible race condition here.
+					// I don't think there's a possible infinite loop condition here.
 					// Also note that lastPos can't be -1, so an indexOf fail doesn't break this, either.
-					// Make sure we skip "empty" parameters.
 				}
 				while (currentPos == lastPos);
 
 				if (currentPos == -1)
 				{
 					// Last parameter!
-					tempList.add( text.substring( lastPos ).trim() );
+					if (lastPos < text.length() && text.charAt(lastPos) != ' ')
+						tempList.add( text.substring( lastPos ).trim() );
 					break;
 				}
 			}
@@ -116,11 +118,10 @@ public final class UtilModule
 
 		if (currentPos != -1) {
 			// Above loop finished without already slurping the final
-			// parameter.
-			tempList.add( text.substring( lastPos ).trim() );
+			// parameter. If there was one.
+			if (lastPos < text.length() && text.charAt(lastPos) != ' ')
+				tempList.add( text.substring( lastPos ).trim() );
 		}
-
-		System.out.println("Done.");
 
 		return tempList;
 	}
