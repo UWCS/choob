@@ -79,7 +79,7 @@ public class Tell
 		List<String> params = mods.util.getParams(mes, 2);
 		if (params.size() <= 2)
 		{
-			irc.sendContextReply(mes, "Syntax: Tell.Send <Nick>[,<Nick>...] <Message>");
+			irc.sendContextReply(mes, "Syntax: 'Tell.Send " + helpCommandSend[1] + "'");
 			return;
 		}
 
@@ -241,6 +241,22 @@ public class Tell
 					}
 					// If all the above ran and we're allowed to send, nsStatus
 					// is 3. Otherwise it's >= -1, <= 2.
+					if (nsStatus == -1)
+					{
+						try
+						{
+							if ( mods.plugin.callAPI("Options", "GetUserOption", nick, "Unsecure", "1" ).equals("1") )
+								nsStatus = nsStatus( nick );
+						}
+						catch (ChoobNoSuchCallException e) {
+							// Use default.
+							nsStatus = nsStatus( nick );
+						}
+					}
+					// If all the above ran and we're allowed to send, nsStatus
+					// is 3. Otherwise it's >= -1, <= 2.
+					if (nsStatus != 3)
+						continue;
 					if (nsStatus != 3)
 						continue;
 				}

@@ -46,13 +46,14 @@ public class NickServ
 		this.mods = mods;
 		if (infooverride==false)
 			// Check ensure that our NickServ is sane, and, if not, enable workarounds.
-			mods.interval.callBack(null, 1);
+			mods.interval.callBack(null, 100);
 	}
 
 	// This is triggered by the constructor.
 	public synchronized void interval( Object parameter, Modules mods, IRCInterface irc ) throws ChoobException
 	{
-		apiCheck("ignore-me"); // It's completely irrelevant what this nick is.
+		String nick = "ignore-me"; // It's completely irrelevant what this nick is.
+		ResultObj result = getNewNickCheck( nick );
 	}
 
 	public void destroy(Modules mods)

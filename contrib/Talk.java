@@ -31,9 +31,9 @@ public class Talk
 		"<Text>",
 		"<Text> is the text to say"
 	};
-	public void commandSay( Message con, Modules modules, IRCInterface irc )
+	public void commandSay( Message mes, Modules modules, IRCInterface irc )
 	{
-		irc.sendContextMessage(con, modules.util.getParamString(con));
+		irc.sendContextMessage(mes, modules.util.getParamString(mes));
 	}
 
 	public String[] helpCommandReply = {
@@ -41,9 +41,9 @@ public class Talk
 		"<Text>",
 		"<Text> is the text with which to reply"
 	};
-	public void commandReply( Message con, Modules modules, IRCInterface irc )
+	public void commandReply( Message mes, Modules modules, IRCInterface irc )
 	{
-		irc.sendContextReply(con, modules.util.getParamString(con));
+		irc.sendContextReply(mes, modules.util.getParamString(mes));
 	}
 
 	public String[] helpCommandMsg = {
@@ -52,16 +52,16 @@ public class Talk
 		"<Target> is the destination",
 		"<Text> is the message to send"
 	};
-	public void commandMsg( Message con, Modules modules, IRCInterface irc )
+	public void commandMsg( Message mes, Modules modules, IRCInterface irc )
 	{
-		String params = modules.util.getParamString(con);
+		String params = modules.util.getParamString(mes);
 		int spacePos = params.indexOf(' ');
 		if (spacePos == -1) {
-			irc.sendContextReply(con, "Not enough parameters!");
+			irc.sendContextReply(mes, "Syntax: '" + helpCommandMsg[1] + "'.");
 		} else {
 			String target = params.substring(0, spacePos);
 			String message = params.substring(spacePos + 1);
-			irc.sendTaggedMessage(target, message, con);
+			irc.sendMessage(target, mes.getNick() + " says: " + message);
 		}
 	}
 
@@ -70,9 +70,9 @@ public class Talk
 		"<Text>",
 		"<Text> is the text that describes what to do"
 	};
-	public void commandMe( Message con, Modules modules, IRCInterface irc )
+	public void commandMe( Message mes, Modules modules, IRCInterface irc )
 	{
-		irc.sendContextAction(con, modules.util.getParamString(con));
+		irc.sendContextAction(mes, modules.util.getParamString(mes));
 	}
 
 	public String[] helpCommandDescribe = {
@@ -81,16 +81,16 @@ public class Talk
 		"<Target> is the destination",
 		"<Text> is the thing to do"
 	};
-	public void commandDescribe( Message con, Modules modules, IRCInterface irc )
+	public void commandDescribe( Message mes, Modules modules, IRCInterface irc )
 	{
-		String params = modules.util.getParamString(con);
+		String params = modules.util.getParamString(mes);
 		int spacePos = params.indexOf(' ');
 		if (spacePos == -1) {
-			irc.sendContextReply(con, "Not enough parameters!");
+			irc.sendContextReply(mes, "Syntax: '" + helpCommandDescribe[1] + "'.");
 		} else {
 			String target = params.substring(0, spacePos);
 			String message = params.substring(spacePos + 1);
-			irc.sendTaggedAction(target, message, con);
+			irc.sendAction(target, message + " (From " + mes.getNick() + ".)");
 		}
 	}
 }

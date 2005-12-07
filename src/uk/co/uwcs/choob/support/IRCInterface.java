@@ -11,6 +11,8 @@ import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.modules.*;
 import uk.co.uwcs.choob.support.events.*;
 import java.security.AccessController;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * The primary way for plugins to pass feedback to IRC.
@@ -20,8 +22,9 @@ public final class IRCInterface
 	private Choob bot;
 	private Modules mods;
 
-	public final static int MAX_MESSAGE_LENGTH=400; 		// Arbiatary hax!
-	public final static int MAX_MESSAGE_TRUNCATION=100;
+	public final static int MAX_MESSAGE_LENGTH = 400; // Arbiatary hax!
+	public final static int MAX_MESSAGE_TRUNCATION = 100;
+	public final static int MAX_MESSAGES = 3; // Max messages before /msg is employed instead.
 
 	/** Creates a new instance of IRCInterface */
 	public IRCInterface(Choob bot)
@@ -37,84 +40,159 @@ public final class IRCInterface
 	}
 
 	/**
-	 * Similar to the sendContextReply function, except sends an action instead of a message.
-	 * @param ev The Message object to target the reply at.
-	 * @param message A String of the /me you want to send.
+	 * Cleanse a message of bad things like newlines.
+	 * @param message The text to cleanse.
+	 * @return a safe string.
 	 */
-	public void sendContextAction(Message ev, String message)
+	public String cleanse(String message)
 	{
-		bot.sendAction(ev.getContext(), message);
+		// TODO: See if there's any other nasties.
+		if (message.indexOf('\n') != -1)
+			return message.substring(0, message.indexOf('\n'));
+		return message;
 	}
 
-	// Break apart a message and send it, Target, Message, Prefix.
-	private void sendMessage(String t, String m, String p)
+	/**
+	 * Similar to the sendContextReply function, except sends an action instead of a message.
+	 * @param context A context object to target the reply at.
+	 * @param message A String of the /me you want to send.
+	 */
+	public void sendContextAction(ContextEvent context, String message)
 	{
-		if (t==null || m==null)
-			return;
+		message = cleanse(message);
+		// Can't really cutSting an action...
+		if (message.length() > MAX_MESSAGE_LENGTH)
+			message = message.substring(0, MAX_MESSAGE_LENGTH - 3) + "...";
 
-		m=m.trim();
+		String target, thePrefix;
+		if( context instanceof PrivateEvent || mods.pc.isProtected(context.getContext()))
+			bot.sendAction(((UserEvent)context).getNick(), message);
+		else
+			bot.sendAction(context.getContext(), message);
+	}
 
-		if (m.length()==0)
-			return;
+	/**
+	 * Break a part a list of messages into deliverable chunks.
+	 * @param messages The strings to break apart.
+	 * @param prefix A length to ensure space for in the cut strings.
+	 * @return A list of strings, cut to the max message length.
+	 */
+	public List<String> cutStrings(List<String> messages, int prefix)
+	{
+		List<String> ret = new ArrayList<String>();
+		for(String line: messages)
+			ret.addAll(cutString(cleanse(line), prefix));
+		return ret;
+	}
 
-		if (m.length() > MAX_MESSAGE_LENGTH)
-			do
+	/**
+	 * Break a part a message into deliverable chunks.
+	 * @param message The string to break apart.
+	 * @param prefix A length to ensure space for in the cut strings.
+	 * @return A list of strings, cut to the max message length.
+	 */
+	public List<String> cutString(String message, int prefix)
+	{
+		int max_length = MAX_MESSAGE_LENGTH - prefix;
+		List<String> lines = new ArrayList<String>();
+		int pos = 0;
+		while (true)
+		{
+			if (message.length() - pos > max_length)
 			{
-				int maxsublen=Math.min(MAX_MESSAGE_LENGTH, m.length());
-				String submes=m.substring(0, maxsublen);
-				int lio=submes.lastIndexOf(' ');
-				int mlen=m.length();
+				// must do some cutting.
+				int spacePos = message.lastIndexOf(' ', pos + max_length);
 
-				if (lio==-1 || MAX_MESSAGE_LENGTH-lio > MAX_MESSAGE_TRUNCATION)
+				if (spacePos == -1 || pos + max_length - spacePos > MAX_MESSAGE_TRUNCATION)
 				{
-					if (mlen>0)
-						bot.sendMessage(t, submes + (mlen > MAX_MESSAGE_LENGTH ? "..." : ""));
-					m=p+m.substring(maxsublen);
+					// If we're here, need to cut a word...
+					int newPos = pos + max_length - 3;
+					lines.add(message.substring(pos, newPos) + "...");
+					pos = newPos;
 				}
 				else
 				{
-					bot.sendMessage(t, m.substring(0, lio));
-					m=p+m.substring(Math.min(lio, mlen));
+					// Have a nice word break.
+					lines.add(message.substring(pos, spacePos));
+					pos = spacePos + 1;
 				}
 			}
-			while (m.length() > p.length() );
-		else
-		{
-			bot.sendMessage(t, m);
+			else
+			{
+				// End of string.
+				lines.add(message.substring(pos));
+				break;
+			}
 		}
-
+		return lines;
 	}
 
 	/**
 	 * Sends an in-context response to an event. Automatically decides between replying in the channel the event was triggered from, and private messaging the response.
 	 * This is the best function to call, unless you never want the reply to appear in the channel.
-	 * @param ev The Message object to target the reply at.
-	 * @param message A String of the message you want to send.
-	 * @param prefix If in a channel, should the reply be prefixed with "{Nick}: "?
+	 * @param context A context to reply in.
+	 * @param messages A list of Strings containing the message you want to send.
+	 * @param prefix If in a channel, should the reply be prefixed with "&lt;Nick&gt;: "?
 	 */
-	public void sendContextReply(ContextEvent ev, String message, boolean prefix)
+	public void sendContextReply(ContextEvent context, List<String> messages, boolean prefix)
 	{
-		if ( !(ev instanceof UserEvent) )
-			return; // XXX!?!
+		if ( !(context instanceof UserEvent) )
+			throw new IllegalArgumentException("ConextEvent " + context + " passed to sendContextReply was not a contextEvent!");
 
-		String sprefix="";
-		String target=null;
-		if( ev instanceof PrivateEvent)
-			target=((UserEvent)ev).getNick();
-		else if ( mods.pc.isProtected(ev.getContext()) ) // It's a channel
-			target=((UserEvent)ev).getNick();
-		else
-		{
-			if (prefix)
-				sprefix = ((UserEvent)ev).getNick() + ": ";
+		String nick = ((UserEvent)context).getNick();
+		List<String> bits = cutStrings(messages, nick.length() + 2);
 
-			target=ev.getContext();
-			message=sprefix+message;
-		}
-
-		sendMessage(target, message, sprefix);
+		privateSendContextMessage(context, bits, prefix);
 	}
 
+	/**
+	 * Sends an in-context response to an event. Automatically decides between replying in the channel the event was triggered from, and private messaging the response.
+	 * This is the best function to call, unless you never want the reply to appear in the channel.
+	 * @param context A context to reply in.
+	 * @param message A String containing the message you want to send.
+	 * @param prefix If in a channel, should the reply be prefixed with "&lt;Nick&gt;: "?
+	 */
+	public void sendContextReply(ContextEvent context, String message, boolean prefix)
+	{
+		if ( !(context instanceof UserEvent) )
+			throw new IllegalArgumentException("ConextEvent " + context + " passed to sendContextReply was not a contextEvent!");
+
+		String nick = ((UserEvent)context).getNick();
+		List<String> bits = cutString(cleanse(message), nick.length() + 2);
+
+		privateSendContextMessage(context, bits, prefix);
+	}
+
+	private void privateSendContextMessage(ContextEvent context, List<String> lines, boolean prefix)
+	{
+		String nick = ((UserEvent)context).getNick();
+		String target, thePrefix;
+		if( context instanceof PrivateEvent || mods.pc.isProtected(context.getContext()))
+		{
+			// Must send in private
+			target = nick;
+			thePrefix = "";
+		}
+		else if ( lines.size() > MAX_MESSAGES )
+		{
+			bot.sendMessage(context.getContext(), nick + ": Sorry, the output is too long! Private messaging it to you!");
+			target = nick;
+			thePrefix = "";
+		}
+		else
+		{
+			// Send to channel
+			if (prefix)
+				thePrefix = nick + ": ";
+			else
+				thePrefix = "";
+
+			target = context.getContext();
+		}
+
+		for(String line: lines)
+			bot.sendMessage(target, thePrefix + line);
+	}
 
 	/**
 	 * See getTriggerRegex in Choob.
@@ -133,19 +211,43 @@ public final class IRCInterface
 	}
 
 	/**
-	 * Facilitate the optional third parameter to sendContextReply.
+	 * Send a simple reply to an event.
+	 * @param context A context to reply in.
+	 * @param message A String containing the message you want to send.
 	 */
-	public void sendContextReply(ContextEvent ev, String message)
+	public void sendContextReply(ContextEvent context, String message)
 	{
-		sendContextReply(ev, message, true);
+		sendContextReply(context, message, true);
+	}
+
+	/**
+	 * Send a block of lines as a single reply.
+	 * @param context A context to reply in.
+	 * @param messages A list of Strings containing the message you want to send.
+	 */
+	public void sendContextReply(ContextEvent context, List<String> lines)
+	{
+		sendContextReply(context, lines, true);
 	}
 
 	/**
 	 * Alias of sendContextReply that doesn't prefix the message with "{Nick}: "
+	 * @param context A context to reply in.
+	 * @param message A String containing the message you want to send.
 	 */
-	public void sendContextMessage(ContextEvent ev, String message)
+	public void sendContextMessage(ContextEvent context, String message)
 	{
-		sendContextReply(ev, message, false);
+		sendContextReply(context, message, false);
+	}
+
+	/**
+	 * Send a block of lines as a single reply.
+	 * @param context A context to reply in.
+	 * @param messages A list of Strings containing the message you want to send.
+	 */
+	public void sendContextMessage(ContextEvent context, List<String> lines)
+	{
+		sendContextReply(context, lines, false);
 	}
 
 	/**
@@ -158,38 +260,11 @@ public final class IRCInterface
 	{
 		AccessController.checkPermission(new ChoobPermission("message.send.privmsg"));
 
-		sendMessage(target, message, "");
+		List<String> lines = cutString(cleanse(message), 0);
+
+		for (String line: lines)
+			bot.sendMessage(target, line);
 	}
-
-	/**
-	 * Sends a message to the target you specify, may be a #channel, having post-fixed it with the user's nick.
-	 * This should be more-avaliable than sendMessage(), so it can be used in commands like !msg.
-	 * The security of this function relies on plugins not being able to construct events...
-	 * @param target A String of the target you want to recive the message.
-	 * @param message A String of the message you want to send.
-	 * @param ev The UserEvent that the Nick is to be pulled from.
-	 */
-	public void sendTaggedMessage(String target, String message, UserEvent ev)
-	{
-		AccessController.checkPermission(new ChoobPermission("message.send.tagged.privmsg"));
-
-		sendMessage(target, message + " (" + ev.getNick() + ")", "");
-	}
-	/**
-	 * Sends an action to the target you specify, may be a #channel, having post-fixed it with the user's nick.
-	 * This should be more-avaliable than sendAction(), so it can be used in commands like !describe.
-	 * The security of this function relies on plugins not being able to construct events...
-	 * @param target A String of the target you want to recive the message.
-	 * @param message A String of the message you want to send.
-	 * @param ev The UserEvent that the Nick is to be pulled from.
-	 */
-	public void sendTaggedAction(String target, String message, UserEvent ev)
-	{
-		AccessController.checkPermission(new ChoobPermission("message.send.tagged.action"));
-
-		bot.sendAction(target, message + " (" + ev.getNick() + ")");
-	}
-
 
 	/**
 	 * Sends an action to the target you specify, may be a #channel.
@@ -201,9 +276,14 @@ public final class IRCInterface
 	{
 		AccessController.checkPermission(new ChoobPermission("message.send.action"));
 
-		bot.sendAction(target, message);
+		message = cleanse(message);
+		// Can't really cutSting an action...
+		if (message.length() > MAX_MESSAGE_LENGTH)
+			message = message.substring(0, MAX_MESSAGE_LENGTH - 3) + "...";
+
+		bot.sendAction(target, cleanse(message));
 	}
-	
+
 	/**
 	 * Sends a raw IRC line to the server. Very dangerous!
 	 * @param line The line of text to send. Should not be terminated with \n.
