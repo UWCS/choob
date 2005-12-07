@@ -7,7 +7,7 @@ import java.util.*;
 
 public class Plugin
 {
-	public String[] helpLoad = {
+	public String[] helpCommandLoad = {
 		"Load a plugin.",
 		"[<Name>] <URL>",
 		"<Name> is an optional name for the plugin (if you don't give one, it'll be guessed from the URL)",
@@ -79,8 +79,8 @@ public class Plugin
 			e.printStackTrace();
 		}
 	}
-	
-	public String[] helpReload = {
+
+	public String[] helpCommandReload = {
 		"Reloads an existing plugin.",
 		"<Name>",
 		"<Name> is the name of the plugin"
@@ -90,12 +90,7 @@ public class Plugin
 		String pluginName = params.get(1);
 		
 		mods.security.checkNickPerm(new ChoobPermission("plugin.load." + pluginName.toLowerCase()), mes.getNick());
-		
-		try {
-			mods.security.addGroup("plugin." + pluginName.toLowerCase());
-		} catch (ChoobException e) {
-		}
-		
+
 		irc.sendContextReply(mes, "Reloading plugin '" + pluginName + "'...");
 		
 		try {
@@ -107,11 +102,91 @@ public class Plugin
 		}
 	}
 
-	public String[] helpLoadPlugin = {
-		"See Load.",
+	public String[] helpCommandDetach = {
+		"Stops a plugin executing any new tasks.",
+		"<Name>",
+		"<Name> is the name of the plugin"
 	};
-	public void commandLoadPlugin( Message mes, Modules mods, IRCInterface irc )
-	{
-		commandLoad(mes, mods, irc);
+	public void commandDetach(Message mes, Modules mods, IRCInterface irc) {
+		List<String> params = mods.util.getParams(mes);
+		String pluginName = params.get(1);
+
+		mods.security.checkNickPerm(new ChoobPermission("plugin.unload." + pluginName.toLowerCase()), mes.getNick());
+
+		try {
+			mods.plugin.detachPlugin(pluginName);
+			irc.sendContextReply(mes, "Plugin detached OK! (It might still be running stuff, though.)");
+		} catch (ChoobNoSuchPluginException e) {
+			irc.sendContextReply(mes, "Plugin " + pluginName + " isn't loaded!");
+		}
+	}
+
+	public String[] helpCommandSetCore = {
+		"Makes a plugin a core plugin.",
+		"<Name>",
+		"<Name> is the name of the plugin"
+	};
+	public void commandSetCore(Message mes, Modules mods, IRCInterface irc) {
+		List<String> params = mods.util.getParams(mes);
+		String pluginName = params.get(1);
+
+		mods.security.checkNickPerm(new ChoobPermission("plugin.core"), mes.getNick());
+
+		try {
+			mods.plugin.setCorePlugin(pluginName, true);
+			irc.sendContextReply(mes, "Plugin is now core!");
+		} catch (ChoobNoSuchPluginException e) {
+			irc.sendContextReply(mes, "Plugin " + pluginName + " doesn't exist!");
+		}
+	}
+
+	public String[] helpCommandUnsetCore = {
+		"Makes a core plugin no longer core.",
+		"<Name>",
+		"<Name> is the name of the plugin"
+	};
+	public void commandUnsetCore(Message mes, Modules mods, IRCInterface irc) {
+		List<String> params = mods.util.getParams(mes);
+		String pluginName = params.get(1);
+
+		mods.security.checkNickPerm(new ChoobPermission("plugin.core"), mes.getNick());
+
+		try {
+			mods.plugin.setCorePlugin(pluginName, false);
+			irc.sendContextReply(mes, "Plugin is no longer core!");
+		} catch (ChoobNoSuchPluginException e) {
+			irc.sendContextReply(mes, "Plugin " + pluginName + " doesn't exist!");
+		}
+	}
+
+	public String[] helpCommandList = {
+		"List all known plugins."
+	};
+	public void commandList(Message mes, Modules mods, IRCInterface irc) {
+		// Get all plugins.
+		String[] plugins = mods.plugin.getAllPlugins(false);
+		Arrays.sort(plugins);
+
+		// Hash all core plugins.
+		String[] corePlugins = mods.plugin.getAllPlugins(true);
+		Set<String> coreSet = new HashSet<String>();
+		for(int i=0; i<corePlugins.length; i++)
+			coreSet.add(corePlugins[i]);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("Plugin list (core marked with *): ");
+		for(int i=0; i<plugins.length; i++)
+		{
+			buf.append(plugins[i]);
+			if (coreSet.contains(plugins[i]))
+				buf.append("*");
+			if (i == plugins.length - 2)
+				buf.append(" and ");
+			else if (i != plugins.length - 1)
+				buf.append(", ");
+		}
+		buf.append(".");
+
+		irc.sendContextReply(mes, buf.toString());
 	}
 }

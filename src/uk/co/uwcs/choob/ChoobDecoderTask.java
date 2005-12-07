@@ -164,7 +164,8 @@ final class ChoobDecoderTask extends ChoobTask
 							// It's actually pretty hard to work out how long
 							// it'll be before they next won't get ignored if
 							// we change the queue length...
-							irc.sendMessage(mes.getNick(), "You're flooding, ignored. Please wait at least " + (AVERAGE_MESSAGE_GAP/1000.0) + "s between your messages.");
+							if (recent.warn())
+								irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least " + (AVERAGE_MESSAGE_GAP/1000.0) + "s between your messages.");
 							return;
 						}
 					}

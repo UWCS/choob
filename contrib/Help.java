@@ -542,10 +542,15 @@ public class Help
 		// TODO: Put description etc in here too.
 		String[] returnArr = new String[2];
 
-		String[] commands = mods.plugin.commands(plugin);
-
-		if (commands == null)
+		String[] commands;
+		try
+		{
+			commands = mods.plugin.getPluginCommands(plugin);
+		}
+		catch (ChoobNoSuchPluginException e)
+		{
 			return null;
+		}
 
 		StringBuilder buf = new StringBuilder();
 		for(int i=0; i<commands.length; i++)
@@ -591,7 +596,7 @@ public class Help
 		}
 		else
 		{
-			return new String[] { "Help for " + topic + " was of an unknown format." };
+			return new String[] { "Help for " + plugin + " was of an unknown format." };
 		}
 
 		return returnArr;
@@ -662,7 +667,7 @@ public class Help
 	};
 	public void commandPlugins( Message mes )
 	{
-		String[] plugins = mods.plugin.plugins();
+		String[] plugins = mods.plugin.getLoadedPlugins();
 
 		StringBuilder buf = new StringBuilder("Plugins: ");
 		for(int i=0; i<plugins.length; i++)
@@ -687,13 +692,17 @@ public class Help
 
 	private String commandString(String plugin)
 	{
-		String[] commands = mods.plugin.commands(plugin);
-
-		if (commands == null)
+		String[] commands;
+		try
+		{
+			commands = mods.plugin.getPluginCommands(plugin);
+		}
+		catch (ChoobNoSuchPluginException e)
 		{
 			return null;
 		}
-		else if (commands.length == 0)
+
+		if (commands.length == 0)
 		{
 			return "None";
 		}
@@ -723,7 +732,7 @@ public class Help
 	{
 		List<String> output = new ArrayList<String>();
 
-		String[] plugins = mods.plugin.plugins();
+		String[] plugins = mods.plugin.getLoadedPlugins();
 		if (isLong)
 		{
 			for (int j=0; j<plugins.length; j++)

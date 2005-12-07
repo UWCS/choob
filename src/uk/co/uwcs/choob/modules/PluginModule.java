@@ -100,16 +100,28 @@ public final class PluginModule
 	public void reloadPlugin(String pluginName) throws ChoobException {
 		String URL = getPluginURL(pluginName);
 		if (URL == null)
+			throw new ChoobNoSuchPluginException(pluginName);
 		addPlugin(pluginName, URL);
 	}
 
 	/**
 	 * Calmly stops a loaded plugin from queuing any further tasks. Existing tasks will run until they finish.
 	 * @param pluginName Name of the plugin to reload.
+	 * @throws ChoobNoSuchPluginException Thrown if the plugin doesn't exist.
 	 */
 	public void detachPlugin(String pluginName) throws ChoobNoSuchPluginException {
 		dPlugMan.unloadPlugin(pluginName);
 		bot.onPluginUnLoaded(pluginName);
+	}
+
+	/**
+	 * Calmly stops a loaded plugin from queuing any further tasks. Existing tasks will run until they finish.
+	 * @param pluginName Name of the plugin to reload.
+	 * @throws ChoobNoSuchPluginException Thrown if the plugin doesn't exist.
+	 */
+	public void setCorePlugin(String pluginName, boolean isCore) throws ChoobNoSuchPluginException {
+		AccessController.checkPermission(new ChoobPermission("plugin.core"));
+		setCoreStatus(pluginName, isCore);
 	}
 
 	/**
@@ -216,20 +228,98 @@ public final class PluginModule
 		}
 	}
 
+	/**
+	 * Get a task to run the interval handler in a plugin.
+	 * @param plugin The name of the plugin to run the interval on.
+	 * @param param The parameter to pass to the interval handler.
+	 * @return A ChoobTask that will run the handler.
+	 */
 	public ChoobTask doInterval(String plugin, Object param)
 	{
 		AccessController.checkPermission(new ChoobPermission("interval"));
 		return dPlugMan.intervalTask(plugin, param);
 	}
 
-	public String[] plugins()
+	/**
+	 * Get a list of loaded plugins.
+	 * @return Names of all loaded plugins.
+	 */
+	public String[] getLoadedPlugins()
 	{
 		return dPlugMan.plugins();
 	}
 
-	public String[] commands(String pluginName)
+	/**
+	 * Get a list of loaded plugins.
+	 * @param pluginName plugin name to query
+	 * @return Names of all commands in the plugin.
+	 */
+	public String[] getPluginCommands(String pluginName) throws ChoobNoSuchPluginException
 	{
-		return dPlugMan.commands(pluginName);
+		String[] commands = dPlugMan.commands(pluginName);
+		if (commands == null)
+			throw new ChoobNoSuchPluginException(pluginName);
+		return commands;
+	}
+
+	/**
+	 * Get a list of known plugins.
+	 * @param onlyCore whether to only return known core plugins
+	 * @return Names of all loaded plugins.
+	 */
+	public String[] getAllPlugins(boolean onlyCore)
+	{
+		return getPluginList(onlyCore);
+	}
+
+	private void setCoreStatus(String pluginName, boolean isCore) throws ChoobNoSuchPluginException {
+		Connection dbCon = null;
+		try {
+			dbCon = broker.getConnection();
+			PreparedStatement sqlSetCore = dbCon.prepareStatement("UPDATE Plugins SET CorePlugin = ? WHERE PluginName = ?");
+			sqlSetCore.setInt(1, isCore ? 1 : 0);
+			sqlSetCore.setString(2, pluginName);
+			if (sqlSetCore.executeUpdate() == 0)
+				throw new ChoobNoSuchPluginException(pluginName);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new ChoobInternalError("SQL Exception while setting core status on the plugin.");
+		} finally {
+			if (dbCon != null)
+				broker.freeConnection(dbCon);
+		}
+	}
+
+	private String[] getPluginList(boolean onlyCore) {
+		Connection dbCon = null;
+		try {
+			dbCon = broker.getConnection();
+			PreparedStatement sqlPlugins;
+			if (onlyCore)
+				sqlPlugins = dbCon.prepareStatement("SELECT PluginName FROM Plugins WHERE CorePlugin = 1");
+			else
+				sqlPlugins = dbCon.prepareStatement("SELECT PluginName FROM Plugins");
+
+			ResultSet names = sqlPlugins.executeQuery();
+
+			String[] plugins = new String[0];
+			if (names.first())
+				return plugins;
+
+			List<String> plugList = new ArrayList<String>();
+			do
+			{
+				plugList.add(names.getString(1));
+			}
+			while(names.next());
+			return plugList.toArray(plugins);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new ChoobInternalError("SQL Exception while setting core status on the plugin.");
+		} finally {
+			if (dbCon != null)
+				broker.freeConnection(dbCon);
+		}
 	}
 
 	private String getPluginURL(String pluginName) throws ChoobNoSuchPluginException {
@@ -245,12 +335,14 @@ public final class PluginModule
 
 			return url.getString("URL");
 		} catch (SQLException e) {
+			e.printStackTrace();
 			throw new ChoobInternalError("SQL Exception while finding the plugin in the database.");
 		} finally {
-			broker.freeConnection(dbCon);
+			if (dbCon != null)
+				broker.freeConnection(dbCon);
 		}
 	}
-	
+
 	private void addPluginToDb(String pluginName, String URL) {
 		Connection dbCon = null;
 		try {
@@ -262,6 +354,7 @@ public final class PluginModule
 			
 			pluginReplace.executeUpdate();
 		} catch (SQLException e) {
+			e.printStackTrace();
 			throw new ChoobInternalError("SQL Exception while adding the plugin to the database...");
 		} finally {
 			broker.freeConnection(dbCon);
