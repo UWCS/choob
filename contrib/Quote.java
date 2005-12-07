@@ -118,10 +118,10 @@ public class Quote
 		String chan = ((ChannelEvent)mes).getChannel();
 		List<Message> history = mods.history.getLastMessages( mes, HISTORY );
 
-		String param = mods.util.getParamString(mes);
+		String param = mods.util.getParamString(mes).trim();
 
 		// Default is privmsg
-		if ( param.equals("") || ((param.charAt(0) < '0' || param.charAt(0) > '9') && param.charAt(0) != '/' && param.indexOf(':') == -1) )
+		if ( param.equals("") || ((param.charAt(0) < '0' || param.charAt(0) > '9') && param.charAt(0) != '/' && param.indexOf(':') == -1 && param.indexOf(' ') == -1) )
 			param = "privmsg:" + param;
 
 		final List<Message> lines = new ArrayList<Message>();
@@ -176,7 +176,7 @@ public class Quote
 			for(int i=offset + size - 1; i>=offset; i--)
 				lines.add(history.get(i));
 		}
-		else if (param.charAt(0) != '/' && param.indexOf(':') == -1)
+		else if (param.charAt(0) != '/' && param.indexOf(':') == -1 && param.indexOf(' ') == -1)
 		{
 			// It's a nickname.
 			String bits[] = param.split("\\s+");
@@ -263,8 +263,8 @@ public class Quote
 		else
 		{
 			// Final case: Regex quoting.
-			// Matches anything of the form [NICK:]/REGEX/ [[NICK:]/REGEX/]
-			Matcher ma = Pattern.compile("(?:([^\\s:]+):)?/((?:\\\\.|[^\\\\/])+)/(?:\\s+(?:([^\\s:]+):)?/((?:\\\\.|[^\\\\/])+)/)?").matcher(param);
+			// Matches anything of the form [NICK{:| }]/REGEX/ [[NICK{:| }]/REGEX/]
+			Matcher ma = Pattern.compile("(?:([^\\s:]+)[:\\s])?/((?:\\\\.|[^\\\\/])+)/(?:\\s+(?:([^\\s:]+)[:\\s])?/((?:\\\\.|[^\\\\/])+)/)?").matcher(param);
 			if (!ma.matches())
 			{
 				irc.sendContextReply(mes, "Sorry, your string looked like a regex quote but I couldn't decipher it.");
@@ -400,7 +400,7 @@ public class Quote
 		// Remember this quote for later...
 		addLastQuote(mes.getContext(), quote, 1);
 
-		irc.sendContextReply( mes, "OK, added quote " + quote.id + ": " + formatPreview(quoteLines) );
+		irc.sendContextReply( mes, "OK, added quote " + quote.lines + " line quote #" + quote.id + ": " + formatPreview(quoteLines) );
 	}
 
 	public String[] helpCommandAdd = {
