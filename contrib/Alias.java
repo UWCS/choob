@@ -21,6 +21,7 @@ public class AliasObject
 	public String converted;
 	public String owner;
 	public boolean locked;
+	public String help;
 }
 
 public class Alias
@@ -33,8 +34,9 @@ public class Alias
 	{
 		this.mods = mods;
 		this.irc = irc;
-		filterTriggerRegex = irc.getTriggerRegex();
 	}
+
+	public String[] helpTopics = { "Syntax", "HelpExamples" };
 
 	public String[] helpSyntax = {
 		  "Aliases use a clever alias syntax: You can either just give a"
@@ -103,6 +105,70 @@ public class Alias
 			mods.odb.save(new AliasObject(name, conv, nick));
 
 		irc.sendContextReply(mes, "Aliased '" + name + "' to '" + conv + "'" + oldAlias + ".");
+	}
+
+	public String[] helpHelpExamples = {
+		"Some alias help examples:",
+		"'Alias.AddHelp dance Dance with someone! ||| [ <Nick> ] ||| <Nick> is someone to dance with'",
+		"'Alias.AddHelp time Get the current time.'",
+		"'Alias.AddHelp msg Send a message to someone. ||| <Target> <Message> ||| <Target> is the person to send to ||| <Message> is the message to send'"
+	};
+
+	public String[] helpCommandAddHelp = {
+		"Add help to an alias. See HelpExamples for examples.",
+		"<Name> <Summary> [ ||| <Syntax> [ ||| <Param> <Description> [ ||| <Param> <Description> ... ] ] ]",
+		"<Summary> is a brief summary of the command",
+		"<Syntax> is the syntax, minus the command name",
+		"<Param> is a parameter from the syntax",
+		"<Description> is the description of that parameter"
+	};
+	public void commandAddHelp(Message mes) {
+		List<String> params = mods.util.getParams(mes, 2);
+
+		if (params.size() <= 2 || params.get(1).equals(""))
+		{
+			irc.sendContextReply(mes, "Syntax: 'Alias.AddHelp " + helpCommandAddHelp[1] + "'.");
+			return;
+		}
+
+		String name = params.get(1).replaceAll(validator, "").toLowerCase();
+
+		if (name.equals(""))
+		{
+			irc.sendContextReply(mes, "Syntax: 'Alias.AddHelp " + helpCommandAddHelp[1] + "'.");
+			return;
+		}
+
+		// TODO - check help.
+		String[] help = params.get(2).split("\\s*\\|\\|\\|\\s*");
+
+		AliasObject alias = getAlias(name);
+
+		String nick = mods.security.getRootUser(mes.getNick());
+		if (nick == null)
+			nick = mes.getNick();
+
+		if (alias != null)
+		{
+			if (alias.locked)
+			{
+				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
+					mods.security.checkNS(mes.getNick());
+				else
+					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
+			}
+
+			alias.help = params.get(2);
+			alias.owner = nick;
+
+			mods.odb.update(alias);
+
+			irc.sendContextReply(mes, "OK, " + help.length + " lines of help created for '" + name + "'.");
+		}
+		else
+		{
+			irc.sendContextReply(mes, "Sorry, couldn't find an alias of that name!");
+		}
 	}
 
 	public String[] helpCommandRemove = {
@@ -241,6 +307,19 @@ public class Alias
 			return alias.converted;
 	}
 
+	public String[] apiGetHelp( String name )
+	{
+		if (name == null)
+			return null;
+
+		AliasObject alias = getAlias(name);
+
+		if (alias == null || alias.help == null)
+			return null;
+		else
+			return alias.help.split("\\s*\\|\\|\\|\\s*");
+	}
+
 	public String[] helpCommandLock = {
 		"Lock an alias so that no-one but its owner can change it.",
 		"<Alias>",
@@ -337,8 +416,8 @@ public class Alias
 			return results.get(0);
 	}
 
-	// Muhahahahahahahahaha --bucko
-	public String filterTriggerRegex;
+	// Trigger on everything, but is a trigger, not an event ==> takes account of ignore etc.
+	public String filterTriggerRegex = "";
 	public void filterTrigger( Message mes ) 
 	{
 		String text = mes.getMessage();

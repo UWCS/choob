@@ -300,12 +300,17 @@ public class Help
 
 		String[] help = apiGetPluginHelpLines( plugin, type, topicParams );
 
+		if (help == null)
+			return lines;
+
 		if (isLong)
 		{
 			if (help[0] == null && help[1] == null)
 				lines.add( "No help for plugin " + plugin + "." );
 			else
 			{
+				if (didAlias)
+					lines.add( "Help for plugin " + Colors.BOLD + plugin + Colors.NORMAL + ":" );
 				if (help[0] != null)
 					lines.add( "Commands for " + Colors.BOLD + plugin + Colors.NORMAL + ": " + help[0] );
 				if (help[1] != null)
@@ -466,7 +471,7 @@ public class Help
 		Object ret = null;
 		try
 		{
-			ret = mods.plugin.callAPI("Alias", "Help", command);
+			ret = mods.plugin.callAPI("Alias", "GetHelp", command);
 		}
 		catch (ChoobNoSuchCallException e) { } // Leave it null
 
@@ -497,7 +502,7 @@ public class Help
 					newHelp[i] = help[i];
 				help = newHelp;
 			}
-			return doCallHelp( command, "command", isLong, plugin + "." + newCommand, help );
+			return doCallHelp( command, "command", isLong, alias, help );
 		}
 		else if (ret instanceof String[])
 		{
@@ -534,6 +539,10 @@ public class Help
 		String[] returnArr = new String[2];
 
 		String[] commands = mods.plugin.commands(plugin);
+
+		if (commands == null)
+			return null;
+
 		StringBuilder buf = new StringBuilder();
 		for(int i=0; i<commands.length; i++)
 		{
