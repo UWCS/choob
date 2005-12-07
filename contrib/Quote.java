@@ -2,7 +2,6 @@ import uk.co.uwcs.choob.*;
 import uk.co.uwcs.choob.modules.*;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
-import java.sql.*;
 import java.util.*;
 import java.util.regex.*;
 import java.text.*;
@@ -680,13 +679,13 @@ public class Quote
 			irc.sendContextReply( mes, "There are " + count + " quotes!" );
 	}
 
-	// quotekarma, quoteinfo
-	public String[] helpCommandInfo = {
+	// quotekarma, quotesummary
+	public String[] helpCommandSummary = {
 		"Get a summary of matching quotes.",
 		"[ <Clause> [ <Clause> ... ]]",
 		"<Clause> is a clause to select quotes with (see Quote.UsingGet)"
 	};
-	public void commandInfo( Message mes ) throws ChoobException
+	public void commandSummary( Message mes ) throws ChoobException
 	{
 		String whereClause = getClause( mods.util.getParamString(mes) );
 		List<Integer> quoteKarmas = mods.odb.retrieveInt( QuoteObject.class, "SELECT score " + whereClause );
@@ -719,6 +718,61 @@ public class Quote
 			irc.sendContextReply( mes, "I only found one quote; karma is " + total + "." );
 		else
 			irc.sendContextReply( mes, "Found " + count + " quotes. The total karma is " + total + ", average " + avKarma + ". " + nonZeroCount + " quotes had a karma; average for these is " + avNonZeroKarma + ". Min karma is " + min + " and max is " + max + "." );
+	}
+
+	public String[] helpCommandInfo = {
+		"Get info about a particular quote.",
+		"[ <QuoteID> ]",
+		"<QuoteID> is the ID of a quote"
+	};
+	public void commandInfo( Message mes ) throws ChoobException
+	{
+		int quoteID = -1;
+		List<String> params =  mods.util.getParams(mes);
+		if ( params.size() > 2 )
+		{
+			irc.sendContextReply( mes, "Syntax: 'Quote.Info " + helpCommandInfo[1] + "'." );
+			return;
+		}
+
+		// Check input
+		try
+		{
+			if ( params.size() == 2 )
+				quoteID = Integer.parseInt( params.get(1) );
+		}
+		catch ( NumberFormatException e )
+		{
+			irc.sendContextReply( mes, "Syntax: 'Quote.Info " + helpCommandInfo[1] + "'." );
+			return;
+		}
+
+		if (quoteID == -1)
+		{
+			synchronized(recentQuotes)
+			{
+				String context = mes.getContext();
+				List<RecentQuote> recent = recentQuotes.get(context);
+				if (recent == null || recent.size() == 0)
+				{
+					irc.sendContextReply( mes, "Sorry, no quotes seen from here!" );
+					return;
+				}
+
+				quoteID = recent.get(0).quote.id;
+			}
+		}
+
+		List<QuoteObject> quotes = mods.odb.retrieve( QuoteObject.class, "WHERE id = " + quoteID );
+		if (quotes.size() == 0)
+		{
+			irc.sendContextReply( mes, "Quote " + quoteID + " does not exist!" );
+			return;
+		}
+
+		QuoteObject quote = quotes.get(0);
+
+		irc.sendContextReply(mes, "Quote #" + quote.id + ": Quoted by " + quote.quoter + " on " + (new Date(quote.time)) + ". This is a " + quote.lines + " line quote with a karma of " + quote.score + " (" + quote.up + " up, " + quote.down + " down)." );
 	}
 
 	public String[] helpCommandRemove = {

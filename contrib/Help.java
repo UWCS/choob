@@ -301,7 +301,12 @@ public class Help
 		String[] help = apiGetPluginHelpLines( plugin, type, topicParams );
 
 		if (help == null)
+		{
+			if (!didAlias)
+				lines.add( "Sorry, plugin " + Colors.BOLD + plugin + Colors.NORMAL + " doesn't exist!" );
+
 			return lines;
+		}
 
 		if (isLong)
 		{
