@@ -367,6 +367,8 @@ public class Help
 						aliasCommand = alias.substring(0, pos);
 
 					lines.add( Colors.BOLD + command + Colors.NORMAL + " is an alias to '" + alias + "'; help for '" + Colors.BOLD + aliasCommand + Colors.NORMAL + "' follows:" );
+
+					command = aliasCommand;
 					lines.add( Colors.BOLD + command + Colors.NORMAL + ": " + help[0] );
 				}
 				else
@@ -419,6 +421,8 @@ public class Help
 						aliasCommand = alias.substring(0, pos);
 
 					buf.append( Colors.BOLD + command + Colors.NORMAL + " is an alias to '" + alias + "'; help for '" + Colors.BOLD + aliasCommand + Colors.NORMAL + "':" );
+
+					command = aliasCommand;
 					buf.append( help[0] );
 				}
 				else
@@ -587,8 +591,7 @@ public class Help
 		}
 		else
 		{
-			// XXX: Insecure?
-			returnArr[1] = ret.toString();
+			return new String[] { "Help for " + topic + " was of an unknown format." };
 		}
 
 		return returnArr;
@@ -645,7 +648,7 @@ public class Help
 			}
 			else
 			{
-				return new String[] { ret.toString() };
+				return new String[] { "Help for " + topic + " was of an unknown format." };
 			}
 		}
 		catch (ChoobNoSuchCallException e)

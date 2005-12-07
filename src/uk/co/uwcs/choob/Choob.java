@@ -98,11 +98,17 @@ public final class Choob extends PircBot
 		catch(UnsupportedEncodingException e)
 		{}
 
+		// Install security manager etc.
+		setupSecurity();
+
 		// Create a new IRC interface
 		irc = new IRCInterface( this );
 
 		// Initialise our modules.
 		modules = new Modules(broker, pluginMap, intervalList, this, irc );
+
+		// Set up the threading stuff.
+		init();
 
 		// Get the modules.
 		irc.grabMods();
@@ -119,10 +125,6 @@ public final class Choob extends PircBot
 
 		// Set Version (the comment).
 		this.setVersion("Choob SVN - http://svn.uwcs.co.uk/repos/choob/");
-
-
-		// Set up the threading stuff.
-		init();
 
 		// Enable debugging output.
 		setVerbose(true);
@@ -181,7 +183,7 @@ public final class Choob extends PircBot
 	/**
 	 * Initialises the Choob thread poll as well as loading the few core plugins that ought to be present at start.
 	 */
-	public void init()
+	private void init()
 	{
 		// Create our list of threads
 		int c;
@@ -190,6 +192,42 @@ public final class Choob extends PircBot
 
 		watcher.start();
 
+		// This is needed to properly initialise a ChoobProtectionDomain.
+		ChoobPluginManager.initialise( modules, irc );
+
+		// Initialise the thread manager, too
+		ChoobThreadManager.initialise( );
+		ChoobDecoderTask.initialise( broker, modules, irc );
+
+		try
+		{
+			// We need to have an initial set of plugins that ought to be loaded as core.
+
+			Connection dbConnection = broker.getConnection();
+			PreparedStatement coreplugSmt = dbConnection.prepareStatement("SELECT * FROM Plugins WHERE CorePlugin = 1;");
+			ResultSet coreplugResults = coreplugSmt.executeQuery();
+			if ( coreplugResults.first() )
+				do
+				{
+					System.out.println("Plugin loading: " + coreplugResults.getString("PluginName"));
+					modules.plugin.addPlugin(coreplugResults.getString("PluginName"), coreplugResults.getString("URL"));
+				}
+				while ( coreplugResults.next() );
+
+			coreplugSmt.close();
+
+			broker.freeConnection(dbConnection);
+		}
+		catch( Exception e )
+		{
+			e.printStackTrace();
+			// If we failed to load the core plugins, we've got issues.
+			throw new RuntimeException("Failed to load core plugin list!", e);
+		}
+	}
+
+	private void setupSecurity()
+	{
 		// TODO - make this a proper class
 		java.security.Policy.setPolicy( new java.security.Policy()
 		{
@@ -246,39 +284,6 @@ public final class Choob extends PircBot
 		// to grant ourselves permissions. :( -- bucko
 		if ( System.getSecurityManager() == null )
 			System.setSecurityManager(new SecurityManager());
-
-		// This is needed to properly initialise a ChoobProtectionDomain.
-		ChoobPluginManager.initialise( modules, irc );
-
-		// Initialise the thread manager, too
-		ChoobThreadManager.initialise( );
-		ChoobDecoderTask.initialise( broker, modules, irc );
-
-		try
-		{
-			// We need to have an initial set of plugins that ought to be loaded as core.
-
-			Connection dbConnection = broker.getConnection();
-			PreparedStatement coreplugSmt = dbConnection.prepareStatement("SELECT * FROM Plugins WHERE CorePlugin = 1;");
-			ResultSet coreplugResults = coreplugSmt.executeQuery();
-			if ( coreplugResults.first() )
-				do
-				{
-					System.out.println("Plugin loading: " + coreplugResults.getString("PluginName"));
-					modules.plugin.addPlugin(coreplugResults.getString("PluginName"), coreplugResults.getString("URL"));
-				}
-				while ( coreplugResults.next() );
-
-			coreplugSmt.close();
-
-			broker.freeConnection(dbConnection);
-		}
-		catch( Exception e )
-		{
-			e.printStackTrace();
-			// If we failed to load the core plugins, we've got issues.
-			throw new RuntimeException("Failed to load core plugin list!", e);
-		}
 	}
 
 	/**

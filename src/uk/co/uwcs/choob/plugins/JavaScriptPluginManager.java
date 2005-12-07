@@ -123,7 +123,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 		return plug;
 	}
 
-	protected void destroyPlugin(String pluginName) throws ChoobException {
+	protected void destroyPlugin(String pluginName) {
 		// Update bot's overall command list, for spell-check-based suggestions.
 		String[] oldCommands = new String[0];
 		synchronized(pluginMap)

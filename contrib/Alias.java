@@ -117,6 +117,7 @@ public class Alias
 	public String[] helpCommandAddHelp = {
 		"Add help to an alias. See HelpExamples for examples.",
 		"<Name> <Summary> [ ||| <Syntax> [ ||| <Param> <Description> [ ||| <Param> <Description> ... ] ] ]",
+		"<Name> is the name of the alias to alter",
 		"<Summary> is a brief summary of the command",
 		"<Syntax> is the syntax, minus the command name",
 		"<Param> is a parameter from the syntax",
@@ -164,6 +165,57 @@ public class Alias
 			mods.odb.update(alias);
 
 			irc.sendContextReply(mes, "OK, " + help.length + " lines of help created for '" + name + "'.");
+		}
+		else
+		{
+			irc.sendContextReply(mes, "Sorry, couldn't find an alias of that name!");
+		}
+	}
+
+	public String[] helpCommandRemoveHelp = {
+		"Remove help from an alias.",
+		"<Name>",
+		"<Name> is the name of the alias to alter"
+	};
+	public void commandRemoveHelp(Message mes) {
+		List<String> params = mods.util.getParams(mes, 2);
+
+		if (params.size() <= 1 || params.get(1).equals(""))
+		{
+			irc.sendContextReply(mes, "Syntax: 'Alias.RemoveHelp " + helpCommandRemoveHelp[1] + "'.");
+			return;
+		}
+
+		String name = params.get(1).replaceAll(validator, "").toLowerCase();
+
+		if (name.equals(""))
+		{
+			irc.sendContextReply(mes, "Syntax: 'Alias.RemoveHelp " + helpCommandRemoveHelp[1] + "'.");
+			return;
+		}
+
+		AliasObject alias = getAlias(name);
+
+		String nick = mods.security.getRootUser(mes.getNick());
+		if (nick == null)
+			nick = mes.getNick();
+
+		if (alias != null)
+		{
+			if (alias.locked)
+			{
+				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
+					mods.security.checkNS(mes.getNick());
+				else
+					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
+			}
+
+			alias.help = null;
+			alias.owner = nick;
+
+			mods.odb.update(alias);
+
+			irc.sendContextReply(mes, "OK, removed help for '" + name + "'.");
 		}
 		else
 		{

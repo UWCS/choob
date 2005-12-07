@@ -34,9 +34,7 @@ public abstract class ChoobPluginManager
 	// Ensure derivative classes have permissions...
 	public ChoobPluginManager()
 	{
-		SecurityManager sm = System.getSecurityManager();
-		if (sm != null)
-			sm.checkPermission(new ChoobPermission("pluginmanager"));
+		AccessController.checkPermission(new ChoobPermission("root"));
 	}
 
 	public final static void initialise(Modules modules, IRCInterface irc)
@@ -61,7 +59,7 @@ public abstract class ChoobPluginManager
 	}
 
 	protected abstract Object createPlugin(String pluginName, URL fromLocation) throws ChoobException;
-	protected abstract void destroyPlugin(String pluginName) throws ChoobException;
+	protected abstract void destroyPlugin(String pluginName);
 
 	/**
 	 * (Re)loads a plugin from an URL and a plugin name. Note that in the case
@@ -74,9 +72,7 @@ public abstract class ChoobPluginManager
 	 */
 	public final boolean loadPlugin(String pluginName, URL fromLocation) throws ChoobException
 	{
-		SecurityManager sm = System.getSecurityManager();
-		if (sm != null)
-			sm.checkPermission(new ChoobPermission("plugin.load."+pluginName));
+		AccessController.checkPermission(new ChoobPermission("plugin.load."+pluginName));
 
 		// Make sure we're ready to add commands.
 		if (commands.get(pluginName.toLowerCase()) == null)
@@ -110,11 +106,9 @@ public abstract class ChoobPluginManager
 			return false;
 	}
 
-	public final void unloadPlugin(String pluginName) throws ChoobException
+	public final void unloadPlugin(String pluginName) throws ChoobNoSuchPluginException
 	{
-		SecurityManager sm = System.getSecurityManager();
-		if (sm != null)
-			sm.checkPermission(new ChoobPermission("plugin.unload."+pluginName));
+		AccessController.checkPermission(new ChoobPermission("plugin.unload." + pluginName));
 
 		ChoobPluginManager man;
 		synchronized(pluginMap)

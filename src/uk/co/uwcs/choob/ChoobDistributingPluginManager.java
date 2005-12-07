@@ -35,7 +35,7 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	}
 
 	// Should never be called
-	protected void destroyPlugin(String pluginName) throws ChoobException
+	protected void destroyPlugin(String pluginName)
 	{}
 
 	/**

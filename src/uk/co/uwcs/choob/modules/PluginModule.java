@@ -17,6 +17,7 @@ import java.net.*;
 import java.lang.reflect.*;
 import java.sql.*;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.AccessControlException;
 
 /**
@@ -28,7 +29,7 @@ public final class PluginModule
 	private Map pluginMap;
 	private DbConnectionBroker broker;
 	private Modules mods;
-	private ChoobPluginManager plugMan;
+	private ChoobPluginManager hsPlugMan;
 	private ChoobPluginManager dPlugMan;
 	private ChoobPluginManager jsPlugMan;
 	private Choob bot;
@@ -41,7 +42,7 @@ public final class PluginModule
 		this.pluginMap = pluginMap;
 		this.broker = broker;
 		this.mods = mods;
-		this.plugMan = new HaxSunPluginManager(mods, irc);
+		this.hsPlugMan = new HaxSunPluginManager(mods, irc);
 		this.dPlugMan = new ChoobDistributingPluginManager();
 		this.jsPlugMan = new JavaScriptPluginManager(mods, irc);
 		this.bot=bot;
@@ -61,7 +62,7 @@ public final class PluginModule
 	 * This method also calls the create() method on any new plugin.
 	 * @param URL URL to the source of the plugin.
 	 * @param pluginName Name for the class of the new plugin.
-	 * @throws Exception Thrown if there's a syntactical error in the plugin's source.
+	 * @throws ChoobException Thrown if there's a syntactical error in the plugin's source.
 	 */
 	public void addPlugin(String pluginName, String URL) throws ChoobException {
 		URL srcURL;
@@ -78,7 +79,7 @@ public final class PluginModule
 		if (srcURL.getFile().endsWith(".js"))
 			existed = jsPlugMan.loadPlugin(pluginName, srcURL);
 		else
-			existed = plugMan.loadPlugin(pluginName, srcURL);
+			existed = hsPlugMan.loadPlugin(pluginName, srcURL);
 
 		// Inform plugins, if they want to know.
 		if (existed)
@@ -88,17 +89,27 @@ public final class PluginModule
 
 		addPluginToDb(pluginName, URL);
 	}
-	
+
 	/**
 	 * Reloads a plugin which has been loaded previously, but may not be loaded currently.
 	 *
 	 * This method simply looks up the last source URL for the plugin, and calls addPlugin with it.
 	 * @param pluginName Name of the plugin to reload.
-	 * @throws Exception Thrown if there's a syntactical error in the plugin's source.
+	 * @throws ChoobException Thrown if there's a syntactical error in the plugin's source.
 	 */
 	public void reloadPlugin(String pluginName) throws ChoobException {
 		String URL = getPluginURL(pluginName);
+		if (URL == null)
 		addPlugin(pluginName, URL);
+	}
+
+	/**
+	 * Calmly stops a loaded plugin from queuing any further tasks. Existing tasks will run until they finish.
+	 * @param pluginName Name of the plugin to reload.
+	 */
+	public void detachPlugin(String pluginName) throws ChoobNoSuchPluginException {
+		dPlugMan.unloadPlugin(pluginName);
+		bot.onPluginUnLoaded(pluginName);
 	}
 
 	/**
@@ -109,19 +120,26 @@ public final class PluginModule
 	 * @throws ChoobNoSuchCallException If the call could not be resolved.
 	 * @throws ChoobInvocationError If the call threw an exception.
 	 */
-	public Object callAPI(String pluginName, String APIString, Object... params) throws ChoobNoSuchCallException
+	public Object callAPI(final String pluginName, String APIString, Object... params) throws ChoobNoSuchCallException
 	{
-		boolean done = false;
+		AccessController.doPrivileged(new PrivilegedAction() {
+			public Object run() {
+				ChoobThread.pushPluginStatic(pluginName);
+				return null;
+			}
+		});
 		try
 		{
-			ChoobThread.pushPluginStatic(pluginName);
-			done = true;
 			return dPlugMan.doAPI(pluginName, APIString, params);
 		}
 		finally
 		{
-			if (done)
-				ChoobThread.popPluginStatic();
+			AccessController.doPrivileged(new PrivilegedAction() {
+				public Object run() {
+					ChoobThread.popPluginStatic();
+					return null;
+				}
+			});
 		}
 	}
 
@@ -134,20 +152,28 @@ public final class PluginModule
 	 * @throws ChoobNoSuchCallException If the call could not be resolved.
 	 * @throws ChoobInvocationError If the call threw an exception.
 	 */
-	public Object callGeneric(String pluginName, String type, String name, Object... params) throws ChoobNoSuchCallException
+	public Object callGeneric(final String pluginName, String type, String name, Object... params) throws ChoobNoSuchCallException
 	{
 		AccessController.checkPermission(new ChoobPermission("generic." + type));
-		boolean done = false;
+
+		AccessController.doPrivileged(new PrivilegedAction() {
+			public Object run() {
+				ChoobThread.pushPluginStatic(pluginName);
+				return null;
+			}
+		});
 		try
 		{
-			ChoobThread.pushPluginStatic(pluginName);
-			done = true;
 			return dPlugMan.doGeneric(pluginName, type, name, params);
 		}
 		finally
 		{
-			if (done)
-				ChoobThread.popPluginStatic();
+			AccessController.doPrivileged(new PrivilegedAction() {
+				public Object run() {
+					ChoobThread.popPluginStatic();
+					return null;
+				}
+			});
 		}
 	}
 
@@ -198,34 +224,34 @@ public final class PluginModule
 
 	public String[] plugins()
 	{
-		return plugMan.plugins();
+		return dPlugMan.plugins();
 	}
 
 	public String[] commands(String pluginName)
 	{
-		return plugMan.commands(pluginName);
+		return dPlugMan.commands(pluginName);
 	}
-	
-	
-	private String getPluginURL(String pluginName) throws ChoobException {
+
+	private String getPluginURL(String pluginName) throws ChoobNoSuchPluginException {
 		Connection dbCon = null;
 		try {
 			dbCon = broker.getConnection();
 			PreparedStatement sqlGetURL = dbCon.prepareStatement("SELECT URL FROM Plugins WHERE PluginName = ?");
 			sqlGetURL.setString(1, pluginName);
 			ResultSet url = sqlGetURL.executeQuery();
-			
-			url.first();
-			
+
+			if (!url.first())
+				throw new ChoobNoSuchPluginException(pluginName);
+
 			return url.getString("URL");
 		} catch (SQLException e) {
-			throw new ChoobException("SQL Exception while finding the plugin in the database.");
+			throw new ChoobInternalError("SQL Exception while finding the plugin in the database.");
 		} finally {
 			broker.freeConnection(dbCon);
 		}
 	}
 	
-	private void addPluginToDb(String pluginName, String URL) throws ChoobException {
+	private void addPluginToDb(String pluginName, String URL) {
 		Connection dbCon = null;
 		try {
 			dbCon = broker.getConnection();
@@ -236,7 +262,7 @@ public final class PluginModule
 			
 			pluginReplace.executeUpdate();
 		} catch (SQLException e) {
-			throw new ChoobException("SQL Exception while adding the plugin to the database...");
+			throw new ChoobInternalError("SQL Exception while adding the plugin to the database...");
 		} finally {
 			broker.freeConnection(dbCon);
 		}

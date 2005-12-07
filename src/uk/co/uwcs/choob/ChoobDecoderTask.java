@@ -7,25 +7,46 @@ import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
 import java.util.regex.*;
 
+
+// Keeps track of the most recent messages from people.
 final class LastEvents
 {
-	long lastmes[]={0,5000,10000};
-	int stor=0;
+	private long lastmes[];
+	static final int LENGTH = 3; // Number of message times to remember.
+	static final int DELAY = 5000; // Warn once every (this) ms.
+	private int lastOffset;
+	private long nextWarn;
 
 	LastEvents()
 	{
-		save();
+		lastmes = new long[LENGTH];
+		for(int i=0; i<LENGTH; i++)
+			lastmes[i] = 0;
+		lastOffset = 0;
+		nextWarn = 0; // Always warn on first offense.
 	}
 
 	public long average()
 	{
-		return (lastmes[(1+stor)%3]-lastmes[(0+stor)%3]+lastmes[(2+stor)%3]-lastmes[(1+stor)%3]) / 2;
+		return (lastmes[lastOffset] - lastmes[(lastOffset + 1) % LENGTH]) / LENGTH;
 	}
 
-	public void save()
+	public boolean warn()
 	{
-		stor%=3;
-		lastmes[stor++]=(new java.util.Date()).getTime();
+		long time = System.currentTimeMillis();
+		if (time > nextWarn)
+		{
+			nextWarn = time + DELAY;
+			return true;
+		}
+		else
+			return false;
+	}
+
+	public void newEvent()
+	{
+		lastOffset = (lastOffset + 1) % LENGTH;
+		lastmes[lastOffset] = System.currentTimeMillis();
 	}
 }
 
@@ -40,7 +61,8 @@ final class ChoobDecoderTask extends ChoobTask
 	private Event event;
 
 	static Map<String,LastEvents>lastMessage = Collections.synchronizedMap(new HashMap<String,LastEvents>()); // Nick, Timestamp.
-	static final long AVERAGE_MESSAGE_GAP=2000;
+
+	static final long AVERAGE_MESSAGE_GAP = 2000; // If message rate from one user exceeds this, ignore them.
 
 	static void initialise(DbConnectionBroker dbBroker, Modules modules, IRCInterface irc)
 	{
@@ -77,6 +99,10 @@ final class ChoobDecoderTask extends ChoobTask
 			//}
 		}
 
+		// Log every Message we recieve.
+		if (event instanceof Message)
+			modules.history.addLog( (Message) event );
+
 		// Process event calls first
 		tasks.addAll(modules.plugin.getPlugMan().eventTasks(event));
 
@@ -92,9 +118,6 @@ final class ChoobDecoderTask extends ChoobTask
 			// FilterEvents are messages
 			Message mes = (Message) event;
 			tasks.addAll(modules.plugin.getPlugMan().filterTasks(mes));
-
-			// For now, only FilterEvents will be logged...
-			modules.history.addLog( (Message) event );
 		}
 
 		// Now if it's a message, deal with that too
@@ -129,24 +152,25 @@ final class ChoobDecoderTask extends ChoobTask
 				ma = commandPattern.matcher(matchAgainst);
 				if( ma.matches() )
 				{
-					LastEvents la=lastMessage.get(mes.getNick());
-					if (la==null)
+					LastEvents recent = lastMessage.get(mes.getNick());
+					if (recent == null)
 						lastMessage.put(mes.getNick(), new LastEvents());
 					else
 					{
-						la.save();
-						long laa=la.average();
-						if (laa<AVERAGE_MESSAGE_GAP)
+						recent.newEvent();
+						long average = recent.average();
+						if (average < AVERAGE_MESSAGE_GAP)
 						{
-							irc.sendMessage(mes.getNick(), "You're flooding, ignored. Please wait at least " + (AVERAGE_MESSAGE_GAP-laa) + "ms before your next message.");
+							// It's actually pretty hard to work out how long
+							// it'll be before they next won't get ignored if
+							// we change the queue length...
+							irc.sendMessage(mes.getNick(), "You're flooding, ignored. Please wait at least " + (AVERAGE_MESSAGE_GAP/1000.0) + "s between your messages.");
 							return;
 						}
 					}
 
 					String pluginName  = ma.group(1);
 					String commandName = ma.group(2);
-
-					System.out.println("Plugin name: " + pluginName + ", Command name: " + commandName + ".");
 
 					ChoobTask task = modules.plugin.getPlugMan().commandTask(pluginName, commandName, mes);
 					if (task != null)

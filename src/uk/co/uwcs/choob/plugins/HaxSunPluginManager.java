@@ -322,13 +322,24 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return pluginObj;
 	}
 
-	protected void destroyPlugin(String pluginName) throws ChoobException
+	protected void destroyPlugin(String pluginName)
 	{
+		String[] oldCommands = new String[0];
+		synchronized(allPlugins)
+		{
+			List<String> coms = allPlugins.getCommands(pluginName);
+			if (coms != null)
+				oldCommands = (String[])coms.toArray(oldCommands);
+		}
+
 		// Cleanup is actually pretty easy.
 		synchronized(allPlugins)
 		{
 			allPlugins.resetPlugin(pluginName, null);
 		}
+
+		for(int i=0; i<oldCommands.length; i++)
+			removeCommand(oldCommands[i]);
 	}
 
 	/**
