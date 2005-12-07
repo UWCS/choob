@@ -772,7 +772,10 @@ public class Quote
 
 		QuoteObject quote = quotes.get(0);
 
-		irc.sendContextReply(mes, "Quote #" + quote.id + ": Quoted by " + quote.quoter + " on " + (new Date(quote.time)) + ". This is a " + quote.lines + " line quote with a karma of " + quote.score + " (" + quote.up + " up, " + quote.down + " down)." );
+		if (quote.time == 0)
+			irc.sendContextReply(mes, "Quote #" + quote.id + ": Quoted by " + quote.quoter + " at Bob knows when. This is a " + quote.lines + " line quote with a karma of " + quote.score + " (" + quote.up + " up, " + quote.down + " down)." );
+		else
+			irc.sendContextReply(mes, "Quote #" + quote.id + ": Quoted by " + quote.quoter + " on " + (new Date(quote.time)) + ". This is a " + quote.lines + " line quote with a karma of " + quote.score + " (" + quote.up + " up, " + quote.down + " down)." );
 	}
 
 	public String[] helpCommandRemove = {
