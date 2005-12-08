@@ -75,8 +75,15 @@ public class Alias
 		{
 			// Alias recursion?
 			int spacePos = conv.indexOf(' ');
+			String actualParams;
 			if (spacePos == -1)
+			{
 				spacePos = conv.length();
+				actualParams = "";
+			}
+			else
+				actualParams = conv.substring(spacePos + 1);
+
 			String subAlias = conv.substring(0, spacePos).replaceAll(validator, "");
 			AliasObject alias = getAlias(subAlias);
 
@@ -94,7 +101,7 @@ public class Alias
 			for(int i=2; i<params.size(); i++)
 				aliasParams[i-2] = params.get(i);
 
-			String newText = applyAlias(subAlias, alias.converted, aliasParams, conv);
+			String newText = applyAlias(subAlias, alias.converted, aliasParams, actualParams);
 			if (newText == null)
 			{
 				irc.sendContextReply(mes, "Sorry, you tried to use a recursive alias to '" + subAlias + "' - but the alias text ('" + alias.converted + "') is invalid!");
@@ -582,11 +589,11 @@ public class Alias
 		String extra = "";
 		if (spacePos == -1)
 			spacePos = newText.length();
-		else
-			extra = newText.substring(spacePos);
 
 		String pluginName = newText.substring(0, dotPos);
 		String commandName = newText.substring(dotPos + 1, spacePos);
+
+		newText = pluginName + "." + commandName + newText.substring(spacePos);
 
 		mes = (Message)mes.cloneEvent( irc.getTrigger() + newText );
 
@@ -612,12 +619,10 @@ public class Alias
 
 		if (alias.indexOf("$") == -1)
 		{
-			int spacePos = alias.indexOf(' ');
-			String extra = "";
-			if (spacePos != -1)
-				extra = alias.substring(spacePos);
-
-			return name + extra + " " + origParams;
+			if (origParams != null && origParams.length() > 0)
+				return alias + " " + origParams;
+			else
+				return alias;
 		}
 		else
 		{
@@ -638,7 +643,6 @@ public class Alias
 				}
 
 				char next = alias.charAt(pos + 1);
-				System.out.println("Found: $" + next);
 				if (next == '$')
 				{
 					newCom.append("$");
@@ -680,7 +684,6 @@ public class Alias
 					{
 						// LIES!
 					}
-					System.out.println("Numeric: " + paramNo);
 					if (paramNo < params.length)
 						newCom.append(params[paramNo]);
 					pos = end;
@@ -714,7 +717,6 @@ public class Alias
 							// End of number!
 							if (test == '-' || test == ']')
 							{
-								System.out.println("Breaking on " + test);
 								int paramNo = -1;
 								try
 								{
@@ -756,7 +758,7 @@ public class Alias
 						}
 						else if (lastParam == -1)
 						{
-							lastParam = params.length - 1;
+							lastParam = params.length;
 						}
 
 						// Process output now.
