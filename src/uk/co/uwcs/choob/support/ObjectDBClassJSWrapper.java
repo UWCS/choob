@@ -31,16 +31,6 @@ public final class ObjectDBClassJSWrapper implements ObjectDBClass {
 					}
 				}
 				
-				//if (cls instanceof InterpretedFunction) {
-				//	System.out.println("  INTERPRETED!");
-				//}
-				
-				
-				//if (cx.lastInterpreterFrame != null) {
-				//	source = Interpreter.getSourcePositionFromStack(cx, new int[0]);
-				//}
-				//getSourcePositionFromStack
-				//salkdjs
 				return "plugin." + plugName + "." + ctorName;
 			} catch (NoSuchFieldException e) {
 				// Do nothing.
