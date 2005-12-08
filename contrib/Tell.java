@@ -309,6 +309,14 @@ public class Tell
 
 	public void onNickChange( NickChange ev )
 	{
+		try
+		{
+			Thread.sleep(1000);
+		}
+		catch (InterruptedException e)
+		{
+			// Bah, who cares? :)
+		}
 		spew(ev.getNewNick());
 	}
 

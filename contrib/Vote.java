@@ -12,8 +12,11 @@ public class ActiveVote
 	public int id;
 	public String text;
 	public String responses; // comma-seperated
+	public String results; // same as responses
 	public String caller;
 	public String channel;
+	public boolean finished;
+	public long startTime;
 	public long finishTime;
 }
 
@@ -44,7 +47,7 @@ public class Vote
 
 		// Reload all old queued objects...
 		long time = System.currentTimeMillis();
-		List<ActiveVote> votes = mods.odb.retrieve(ActiveVote.class, "WHERE 1");
+		List<ActiveVote> votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0");
 		for(ActiveVote vote: votes)
 		{
 			mods.interval.callBack( vote, vote.finishTime - time, vote.id );
@@ -85,7 +88,7 @@ public class Vote
 			// Has question.
 			int endPos = paramString.indexOf('"', 1);
 			question = paramString.substring(1, endPos);
-			pos = paramString.indexOf('(', endPos);
+			pos = endPos + 1;
 		}
 		else if (paramString.charAt(0) != '(')
 		{
@@ -112,27 +115,29 @@ public class Vote
 
 		if (pos != -1)
 		{
-			int endPos = paramString.indexOf(')', pos);
-			if (endPos == -1)
+			int startPos = paramString.indexOf('(', pos);
+			int endPos = paramString.indexOf(')', startPos);
+			if (endPos != -1)
 			{
-				options = new String[0];
+				options = paramString.substring(startPos + 1, endPos).split("\\s*,\\s*");
+			}
+
+			if ( options.length == 0 || endPos == -1 )
+			{
+				if (startPos != -1)
+				{
+					irc.sendContextReply(mes, "Invalid option string! Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
+					return;
+				}
 			}
 			else
 			{
-				options = paramString.substring(pos + 1, endPos).split("\\s*,\\s*");
+				// Remove trailing/leading spaces.
+				options[0] = options[0].trim();
+				options[options.length - 1] = options[options.length - 1].trim();
+
+				pos = endPos + 1;
 			}
-
-			if ( options.length == 0 )
-			{
-				irc.sendContextReply(mes, "Invalid option string! Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
-				return;
-			}
-
-			// Remove trailing/leading spaces.
-			options[0] = options[0].trim();
-			options[options.length - 1] = options[options.length - 1].trim();
-
-			pos = endPos + 1;
 		}
 		else
 		{
@@ -164,6 +169,9 @@ public class Vote
 		vote.caller = mes.getNick();
 		vote.channel = mes.getContext();
 		vote.text = question;
+		vote.finished = false;
+		vote.results = "";
+		vote.startTime = System.currentTimeMillis();
 		vote.finishTime = System.currentTimeMillis() + duration;
 
 		StringBuilder responseString = new StringBuilder("Abstain");
@@ -192,6 +200,152 @@ public class Vote
 
 			irc.sendContextReply(mes, "OK, called vote on \"" + question + "\"! You have " + durationString + " to use 'Vote.Vote <Number>' here or 'Vote.Vote " + vote.id + " <Number>' elsewhere, where <Number> is one of:");
 			irc.sendContextReply(mes, responseOutput + ".");
+		}
+	}
+
+	public String[] helpCommandActiveVotes = {
+		"List all active votes."
+	};
+	public void commandActiveVotes(Message mes)
+	{
+		List<ActiveVote> votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0");
+
+		Map<String,List<ActiveVote>> map = new HashMap<String,List<ActiveVote>>();
+		List<String> channels = new ArrayList<String>();
+		for(ActiveVote vote: votes)
+		{
+			List<ActiveVote> chanVotes = map.get(vote.channel);
+			if (chanVotes == null)
+			{
+				chanVotes = new ArrayList<ActiveVote>();
+				map.put(vote.channel, chanVotes);
+				channels.add(vote.channel);
+			}
+			chanVotes.add(vote);
+		}
+
+		if (channels.size() == 0)
+		{
+			irc.sendContextReply(mes, "Sorry, no active votes!");
+		}
+		else if (votes.size() < 6 || mes instanceof PrivateEvent)
+		{
+			StringBuilder buf = new StringBuilder();
+			buf.append("Active votes: ");
+			for(int i=0; i<channels.size(); i++)
+			{
+				buf.append(channels.get(i) + ": ");
+				List<ActiveVote> chanVotes = map.get(channels.get(i));
+				for(int j=0; j<chanVotes.size(); j++)
+				{
+					ActiveVote vote = chanVotes.get(j);
+					buf.append("\"" + vote.text + "\" (ID " + vote.id + ")");
+					if (j != chanVotes.size() - 1)
+						buf.append(", ");
+				}
+				if (i != channels.size() - 1)
+					buf.append("; ");
+			}
+			buf.append(".");
+			irc.sendContextReply(mes, buf.toString());
+		}
+		else
+		{
+			// Shorter form for lots of votes...
+			StringBuilder buf = new StringBuilder();
+			buf.append("Too many active votes; listing only IDs: ");
+			for(int i=0; i<channels.size(); i++)
+			{
+				buf.append(channels.get(i) + ": ");
+				List<ActiveVote> chanVotes = map.get(channels.get(i));
+				for(int j=0; j<chanVotes.size(); j++)
+				{
+					ActiveVote vote = chanVotes.get(j);
+					buf.append("" + vote.id);
+					if (j != chanVotes.size() - 1)
+						buf.append(", ");
+				}
+				if (i != channels.size() - 1)
+					buf.append("; ");
+			}
+			buf.append(".");
+			irc.sendContextReply(mes, buf.toString());
+		}
+	}
+
+	public String[] helpCommandInfo = {
+		"Get info on a vote.",
+		"<VoteID>",
+		"<VoteID> is the ID of a vote to query"
+	};
+	public void commandInfo(Message mes)
+	{
+		List<String> params = mods.util.getParams(mes, 1);
+
+		if (params.size() == 1)
+		{
+			irc.sendContextReply(mes, "Syntax: 'VoteInfo " + helpCommandInfo[1] + "'.");
+			return;
+		}
+
+		int voteID;
+		try
+		{
+			voteID = Integer.parseInt(params.get(1));
+		}
+		catch (NumberFormatException e)
+		{
+			irc.sendContextReply(mes, "Sorry, " + params.get(1) + " is not a valid vote ID!");
+			return;
+		}
+
+		List<ActiveVote> votes = mods.odb.retrieve(ActiveVote.class, "WHERE id = " + voteID);
+
+		if (votes.size() == 0)
+		{
+			irc.sendContextReply(mes, "Sorry, that vote doesn't exist!");
+			return;
+		}
+
+		ActiveVote vote = votes.get(0);
+		if (vote.finished)
+		{
+			// Vote finished.
+			StringBuilder output = new StringBuilder();
+			output.append("Vote " + vote.id + " (\"" + vote.text + "\") finished. It was called by " + vote.caller);
+			output.append(" " + apiEncodePeriod(vote.startTime) + " and finished " + apiEncodePeriod(vote.finishTime));
+			output.append(". Responses: ");
+			String[] responses = vote.responses.split(",");
+			String[] results = vote.results.split(",");
+			for(int i=0; i<responses.length; i++)
+			{
+				output.append(responses[i] + " with " + results[i]);
+				if (i == responses.length - 2)
+					output.append(" and ");
+				else if (i != responses.length - 1)
+					output.append(", ");
+			}
+			output.append(".");
+			irc.sendContextReply(mes, output.toString());
+		}
+		else
+		{
+			// Vote still running.
+			StringBuilder output = new StringBuilder();
+			output.append("Vote " + vote.id + " (\"" + vote.text + "\") is still running. It was called by " + vote.caller);
+			output.append(" " + apiEncodePeriod(vote.startTime) + " and finishes " + apiEncodePeriod(vote.finishTime));
+			output.append(". Responses: ");
+			String[] responses = vote.responses.split(",");
+			for(int i=0; i<responses.length; i++)
+			{
+				output.append(responses[i]);
+				if (i == responses.length - 2)
+					output.append(" and ");
+				else if (i != responses.length - 1)
+					output.append(", ");
+			}
+			output.append(".");
+			irc.sendContextReply(mes, output.toString());
 		}
 	}
 
@@ -226,6 +380,67 @@ public class Vote
 			throw new NumberFormatException("Invalid time format: " + time);
 
 		return period;
+	}
+
+	public String apiEncodePeriod(long time)
+	{
+		int TOOLONG = 60 * 60 * 1000; // One hour
+		long remain = time - System.currentTimeMillis();
+		boolean past;
+		if (remain < 0)
+		{
+			past = true;
+			remain = -remain;
+		}
+		else
+		{
+			past = false;
+		}
+
+		if (remain > TOOLONG)
+			return "at " + (new Date(time));
+
+		StringBuilder out = new StringBuilder();
+
+		if (!past)
+			out.append("in ");
+
+		int got = 0; // Number of fields we've got.
+		remain /= 1000;
+		if (remain > 60 * 60 * 24)
+		{
+			long days = remain / (60 * 60 * 24);
+			got++;
+			out.append("" + days + " days");
+			remain = remain % (60 * 60 * 24);
+		}
+		if (remain > 60 * 60)
+		{
+			long hours = remain / (60 * 60);
+			if (got > 0)
+				out.append(", ");
+			got++;
+			out.append("" + hours + " hours");
+			remain = remain % (60 * 60);
+		}
+		if (remain > 60 && got < 2)
+		{
+			long mins = remain / 60;
+			if (got > 0)
+				out.append(", ");
+			got++;
+			out.append("" + mins + " mins");
+			remain = remain % 60;
+		}
+		if (got == 0 || (got == 1 && remain > 0))
+		{
+			out.append("" + remain + " secs");
+		}
+
+		if (past)
+			out.append(" ago");
+
+		return out.toString();
 	}
 
 	public String[] helpCommandVote = {
@@ -344,15 +559,6 @@ public class Vote
 			for(Voter voter: votes)
 				counts[voter.response]++;
 
-			// Delete all the buggers!
-			mods.odb.runTransaction( new ObjectDBTransaction() {
-				public void run() {
-					delete(vote);
-					for(Voter voter: votes)
-						delete(voter);
-				}
-			});
-
 			// Gah! Inefficient, but Java doesn't provide a useful enough sort method!
 			int max = 0;
 			for(int i=0; i<counts.length; i++)
@@ -362,8 +568,10 @@ public class Vote
 			}
 
 			List<String> results = new ArrayList<String>();
-			boolean first1 = true;
+			boolean first1 = true, first0 = true;
 			List<String> winners = null;
+			StringBuilder newResponses = new StringBuilder();
+			StringBuilder newResults = new StringBuilder();
 			for(int i = max; i >= 0; i--)
 			{
 				List<String> elts = new ArrayList<String>();
@@ -381,6 +589,15 @@ public class Vote
 					boolean first2 = true;
 					for(String name: elts)
 					{
+						if (!first0)
+						{
+							newResponses.append(",");
+							newResults.append(",");
+						}
+						first0 = false;
+						newResponses.append(name);
+						newResults.append("" + i);
+
 						if (!first2)
 							thisResult.append(", ");
 						first2 = false;
@@ -390,6 +607,19 @@ public class Vote
 					results.add(thisResult.toString());
 				}
 			}
+			vote.finished = true;
+			vote.responses = newResponses.toString();
+			vote.results = newResults.toString();
+
+				// Delete all the buggers!
+			mods.odb.runTransaction( new ObjectDBTransaction() {
+				public void run() {
+					update(vote);
+					for(Voter voter: votes)
+						delete(voter);
+				}
+			});
+
 			if (SPAMMY)
 			{
 				irc.sendMessage(vote.channel, "Vote on \"" + vote.text + "\" has ended! Results:");
