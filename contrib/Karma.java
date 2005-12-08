@@ -211,7 +211,7 @@ public class Karma
 		+ "|"
 			// Plain string
 			+ "("
-				+ "[\\./a-zA-Z0-9_]{3,}" // 3 chars anywhere
+				+ "[\\./a-zA-Z0-9_]{2,}" // >=2 chars anywhere
 			+ ")"
 		+ ")"
 		+ "( \\+\\+ | \\-\\- )" // The actual karma change
@@ -235,7 +235,7 @@ public class Karma
 		+ "|"
 			// Plain string
 			+ "("
-				+ "[\\./a-zA-Z0-9_]{3,}" // Limited selection, and >3 chars.
+				+ "[\\./a-zA-Z0-9_]{2,}" // Limited selection, and >=2 chars.
 			+ ")"
 		+ ")"
 		+ "( \\+\\+ | \\-\\- )" // The actual karma change
