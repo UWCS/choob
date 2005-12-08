@@ -125,15 +125,42 @@ public class MiscMsg
 		if (params.charAt(params.length()-1) == '?')
 			params = params.substring(0,params.length()-1);
 
-		// Did someone say.. horribly broken parser?
+		// Split primarily on "or" or "or,"
+		String[] tokens = params.split("(?:^|\\s*,?\\s*|\\s+)or(?:\\s*,?\\s*|\\s+|$)", -1);
 
-		ArrayList<String> replies = new ArrayList();
-		String[] tokens = params.split("(?:(?:\\sor)|,)\\s+");
+		// Then split the first group on ","
+		String[] tokens2 = tokens[0].split("\\s*,\\s*", -1);
 
-		for (int i=0; i<tokens.length; i++)
-			replies.add(tokens[i]);
+		int choice = rand.nextInt(tokens.length + tokens2.length - 1);
 
-		irc.sendContextReply(mes, "Answer to \"" + params + "\" is " + replies.get(rand.nextInt(replies.size())) + ".");
+		// Java can't see it's guaranteed to be set.
+		// Let's all laugh at its expense!
+		String output = null;
+		for(int i=0; i<tokens2.length; i++)
+		{
+			System.out.println(tokens2[i]);
+			if (tokens2[i].equals(""))
+			{
+				irc.sendContextReply(mes, "Reply number " + (i + 1) + " is empty!");
+				return;
+			}
+			if (i == choice)
+				output = tokens2[i];
+		}
+
+		for(int i=1; i<tokens.length; i++)
+		{
+			System.out.println(tokens[i]);
+			if (tokens[i].equals(""))
+			{
+				irc.sendContextReply(mes, "Reply number " + (tokens2.length + i) + " is empty!");
+				return;
+			}
+			if (tokens2.length + i - 1 == choice)
+				output = tokens[i];
+		}
+
+		irc.sendContextReply(mes, "Answer to \"" + params + "\" is " + output + ".");
 	}
 
 	public String[] helpCommand8Ball = {
