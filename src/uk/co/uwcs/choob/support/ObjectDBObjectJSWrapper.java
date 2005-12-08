@@ -67,9 +67,13 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 			
 			for (int i = 0; i < props.length; i++) {
 				if (props[i] instanceof String) {
-					fields.add((String)props[i]);
+					String name = (String)props[i];
+					// Don't save props starting "_".
+					if (!name.startsWith("_")) {
+						fields.add(name);
+					}
 				} else if (props[i] instanceof Number) {
-					fields.add(props[i].toString());
+					// Don't do anything for numeric properties.
 				} else {
 					System.err.println("WARNING: [ObjectDBObjectJSWrapper.getFields] Unexpected property type: " + props[i].getClass().getName());
 				}
