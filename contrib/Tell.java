@@ -276,21 +276,29 @@ public class Tell
 
 	public void onAction( ChannelAction ev )
 	{
+		if (ev.getSynthLevel() > 0)
+			return;
 		spew(ev.getNick());
 	}
 
 	public void onMessage( ChannelMessage ev )
 	{
+		if (ev.getSynthLevel() > 0)
+			return;
 		spew(ev.getNick());
 	}
 
 	public void onPrivateMessage( PrivateMessage ev )
 	{
+		if (ev.getSynthLevel() > 0)
+			return;
 		spew(ev.getNick());
 	}
 
 	public void onPrivateAction( PrivateAction ev )
 	{
+		if (ev.getSynthLevel() > 0)
+			return;
 		spew(ev.getNick());
 	}
 
