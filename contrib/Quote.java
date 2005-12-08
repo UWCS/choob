@@ -1178,38 +1178,81 @@ public class Quote
 		return search.toString();
 	}
 
+	public String[] optionsUser = { "JoinMessage", "JoinQuote", "NoJoinMessage", "NoJoinQuote" };
+	public boolean optionCheckUserJoinQuote( String optionValue, String userName ) { return _optionCheck( optionValue ); }
+	public boolean optionCheckUserJoinMessage( String optionValue, String userName ) { return _optionCheck( optionValue ); }
+	public boolean optionCheckUserNoJoinQuote( String optionValue, String userName ) { return _optionCheck( optionValue ); }
+	public boolean optionCheckUserNoJoinMessage( String optionValue, String userName ) { return _optionCheck( optionValue ); }
+
+	private boolean _optionCheck(String optionValue)
+	{
+		if (optionValue.equals("1") || optionValue.equals("0"))
+			return true;
+
+		String[] bits = optionValue.split(",");
+		for(int i=0; i<bits.length; i++)
+		{
+			if (!bits[i].startsWith("#"))
+				return false;
+		}
+		return true;
+	}
+
+	private boolean shouldMessage( ChannelJoin ev )
+	{
+		return checkOption( ev, "JoinMessage", true ) && !checkOption( ev, "NoJoinMessage", false );
+	}
+
+	private boolean shouldQuote( ChannelJoin ev )
+	{
+		return checkOption( ev, "JoinQuote", true ) && !checkOption( ev, "NoJoinQuote", false );
+	}
+
+	private boolean checkOption( ChannelJoin ev, String name, boolean def )
+	{
+		try
+		{
+			String value = (String)mods.plugin.callAPI("Options", "GetUserOption", ev.getNick(), name, def ? "1" : "0");
+
+			if (value.equals("1"))
+				return true;
+			else if (value.equals("0"))
+				return false;
+
+			String[] bits = value.split(",");
+			String lcChan = ev.getChannel().toLowerCase();
+			for(int i=0; i<bits.length; i++)
+			{
+				System.out.println("Comparing " + lcChan + " and " + bits[i]);
+				if (bits[i].toLowerCase().equals(lcChan))
+					return true;
+			}
+			return false;
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			return true;
+		}
+	}
+
 	public void onJoin( ChannelJoin ev, Modules mods, IRCInterface irc )
 	{
 		if (ev.getLogin().equals("Choob"))
 			return;
 
-		boolean joinMessage = true;
-		boolean joinQuote = true;
-		try
+		if (shouldMessage(ev))
 		{
-			String mesVal = (String)mods.plugin.callAPI("Options", "GetUserOption", ev.getNick(), "joinmessage");
-			joinMessage = (mesVal == null) || (mesVal.equals("1"));
-			System.out.println("mesVal: " + mesVal);
-			String quoteVal = (String)mods.plugin.callAPI("Options", "GetUserOption", ev.getNick(), "joinquote");
-			joinQuote = (quoteVal == null) || (quoteVal.equals("1"));
-			System.out.println("quoteVal: " + quoteVal);
-		}
-		catch (ChoobNoSuchCallException e)
-		{
-		}
-	
-		String quote = null;
-		if ( joinQuote && joinMessage )
-			quote = apiSingleLineQuote( ev.getNick(), ev.getContext() );
+			String quote;
+			if ( shouldQuote(ev) )
+				quote = apiSingleLineQuote( ev.getNick(), ev.getContext() );
+			else
+				quote = null;
 
-		if ( joinMessage )
-		{
 			if (quote == null)
 				irc.sendContextMessage( ev, "Hello, " + ev.getNick() + "!");
 			else
 				irc.sendContextMessage( ev, "Hello, " + ev.getNick() + ": \"" + quote + "\"");
 		}
 	}
-
 }
 

@@ -39,6 +39,152 @@ public class Options
 		this.mods = mods;
 	}
 
+	public String[] helpCommandList = {
+		"List available user plugin options.",
+		"[ <Plugin> ]",
+		"<Plugin> is the optional name of the plugin to list for (default: All)"
+	};
+	public void commandList( Message mes )
+	{
+		List<String> params = mods.util.getParams( mes );
+
+		// Parse input
+		if (params.size() > 2)
+		{
+			irc.sendContextReply( mes, "Syntax: 'Options.List " + helpCommandList[1] + "'." );
+			return;
+		}
+		else if (params.size() == 1)
+		{
+			// List all.
+			StringBuilder output = new StringBuilder("Options: ");
+
+			String[] plugins = mods.plugin.getLoadedPlugins();
+			boolean first = true;
+			for(int j=0; j<plugins.length; j++)
+			{
+				String[] options = _getUserOptions(plugins[j]);
+
+				if (options == null)
+					continue;
+
+				if (!first)
+					output.append("; ");
+				first = false;
+				output.append(plugins[j] + ": ");
+
+				for(int i=0; i<options.length; i++)
+				{
+					output.append(options[i]);
+					if (i == options.length - 2)
+						output.append(" and ");
+					else if (i != options.length - 1)
+						output.append(", ");
+				}
+			}
+			output.append(".");
+			irc.sendContextReply(mes, output.toString());
+		}
+		else
+		{
+			// Passed plugin name.
+			String pluginName = params.get(1);
+
+			String[] options = _getUserOptions(pluginName);
+
+			if (options == null)
+			{
+				irc.sendContextReply(mes, "Either plugin " + pluginName + " did not exist, or it has no options!");
+				return;
+			}
+
+			StringBuilder output = new StringBuilder("Options for " + pluginName + ": ");
+			for(int i=0; i<options.length; i++)
+			{
+				output.append(options[i]);
+				if (i == options.length - 2)
+					output.append(" and ");
+				else if (i != options.length - 1)
+					output.append(", ");
+			}
+			output.append(".");
+			irc.sendContextReply(mes, output.toString());
+		}
+	}
+
+	public String[] helpCommandListGeneral = {
+		"List available general plugin options.",
+		"[ <Plugin> ]",
+		"<Plugin> is the optional name of the plugin to list for (default: All)"
+	};
+	public void commandListGeneral( Message mes )
+	{
+		List<String> params = mods.util.getParams( mes );
+
+		// Parse input
+		if (params.size() > 2)
+		{
+			irc.sendContextReply( mes, "Syntax: 'Options.ListGeneral " + helpCommandList[1] + "'." );
+			return;
+		}
+		else if (params.size() == 1)
+		{
+			// List all.
+			StringBuilder output = new StringBuilder("Options: ");
+
+			String[] plugins = mods.plugin.getLoadedPlugins();
+			boolean first = true;
+			for(int j=0; j<plugins.length; j++)
+			{
+				String[] options = _getGeneralOptions(plugins[j]);
+
+				if (options == null)
+					continue;
+
+				if (!first)
+					output.append("; ");
+				first = false;
+				output.append(plugins[j] + ": ");
+
+				for(int i=0; i<options.length; i++)
+				{
+					output.append(options[i]);
+					if (i == options.length - 2)
+						output.append(" and ");
+					else if (i != options.length - 1)
+						output.append(", ");
+				}
+			}
+			output.append(".");
+			irc.sendContextReply(mes, output.toString());
+		}
+		else
+		{
+			// Passed plugin name.
+			String pluginName = params.get(1);
+
+			String[] options = _getGeneralOptions(pluginName);
+
+			if (options == null)
+			{
+				irc.sendContextReply(mes, "Either plugin " + pluginName + " did not exist, or it has no options!");
+				return;
+			}
+
+			StringBuilder output = new StringBuilder("Options for " + pluginName + ": ");
+			for(int i=0; i<options.length; i++)
+			{
+				output.append(options[i]);
+				if (i == options.length - 2)
+					output.append(" and ");
+				else if (i != options.length - 1)
+					output.append(", ");
+			}
+			output.append(".");
+			irc.sendContextReply(mes, output.toString());
+		}
+	}
+
 	public String[] helpCommandSet = {
 		"Set an option for a plugin for just you.",
 		"<Plugin> <Name>=<Value>",
@@ -85,6 +231,14 @@ public class Options
 		if (vals.length != 2)
 		{
 			irc.sendContextReply( mes, "Syntax: Options.Set <Plugin> <Name>=<Value>" );
+			return;
+		}
+
+		// Check the option is OK
+		String err = _checkUserOption( params.get(1), vals[0].toLowerCase(), vals[1], userName );
+		if (err != null)
+		{
+			irc.sendContextReply( mes, "Could not set the option! Error: " + err );
 			return;
 		}
 
@@ -165,16 +319,41 @@ public class Options
 	}
 
 	public String[] helpCommandGet = {
-		"Get your personal option values for plugins."
+		"Get your personal option values for plugins.",
+		"[ <Plugin> ]",
+		"<Plugin> is the plugin to limit options to (default: All)"
 	};
 	public void commandGet( Message mes )
 	{
+		List<String> params = mods.util.getParams(mes);
+
+		String pluginName;
+		if (params.size() > 2)
+		{
+			irc.sendContextReply(mes, "Syntax: 'Options.Get " + helpCommandGet[1] + "'.");
+			return;
+		}
+		else if (params.size() == 2)
+		{
+			pluginName = params.get(1);
+		}
+		else
+		{
+			pluginName = null;
+		}
+
 		String userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( mes.getNick() ) );
 
 		if (userName == null)
 			userName = mes.getNick();
 
-		List<UserOption> options = mods.odb.retrieve( UserOption.class,
+		List<UserOption> options;
+		if (pluginName != null)
+			options = mods.odb.retrieve( UserOption.class,
+			  "WHERE userName = '" + userName.replaceAll("(['\\\\])", "\\\\$1") + "'"
+			+ " AND pluginName = '" + pluginName.replaceAll("(['\\\\])", "\\\\$1") + "'");
+		else
+			options = mods.odb.retrieve( UserOption.class,
 			  "WHERE userName = '" + userName.replaceAll("(['\\\\])", "\\\\$1") + "'");
 
 		if (options.size() == 0)
@@ -183,24 +362,59 @@ public class Options
 		}
 		else
 		{
-			StringBuilder out = new StringBuilder("Options:");
+			StringBuilder out = new StringBuilder();
+			if (pluginName == null)
+				out.append("Options:");
+			else
+				out.append("Options for " + pluginName + ":");
+
 			for(UserOption option: options)
 			{
-				out.append(" " + option.pluginName + "." + option.optionName + "=" + option.optionValue);
+				if (pluginName == null)
+					out.append(" " + option.pluginName + "." + option.optionName + "=" + option.optionValue);
+				else
+					out.append(" " + option.optionName + "=" + option.optionValue);
 			}
 			irc.sendContextReply( mes, out.toString() );
 		}
 	}
 
 	public String[] helpCommandGetGeneral = {
-		"Get all global option values for all plugins."
+		"Get all global option values for all plugins.",
+		"<Plugin>",
+		"<Plugin> is the plugin to limit options to (warning: some plugins contain passwords!)"
 	};
 	public void commandGetGeneral( Message mes )
 	{
+		List<String> params = mods.util.getParams(mes);
+
+		String pluginName;
+		if (params.size() != 2)
+		{
+			if (params.size() == 1 && mes instanceof PrivateEvent)
+			{
+				pluginName = null;
+			}
+			else
+			{
+				irc.sendContextReply(mes, "Syntax: 'Options.GetGeneral " + helpCommandGetGeneral[1] + "'. Warning! Some plugins save passwords!");
+				return;
+			}
+		}
+		else
+		{
+			pluginName = params.get(1);
+		}
+
 		// TODO - make plugin owners always able to set this. Or something.
 		mods.security.checkNickPerm(new ChoobPermission("plugin.options.get"), mes.getNick());
 
-		List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class, "WHERE 1");
+		List<GeneralOption> options;
+		if (pluginName != null)
+			options = mods.odb.retrieve( GeneralOption.class,
+			  "WHERE pluginName = '" + pluginName.replaceAll("(['\\\\])", "\\\\$1") + "'");
+		else
+			options = mods.odb.retrieve( GeneralOption.class, "WHERE 1");
 
 		if (options.size() == 0)
 		{
@@ -208,10 +422,18 @@ public class Options
 		}
 		else
 		{
-			StringBuilder out = new StringBuilder("Options:");
+			StringBuilder out = new StringBuilder();
+			if (pluginName == null)
+				out.append("Options:");
+			else
+				out.append("Options for " + pluginName + ":");
+
 			for(GeneralOption option: options)
 			{
-				out.append(" " + option.pluginName + "." + option.optionName + "=" + option.optionValue);
+				if (pluginName == null)
+					out.append(" " + option.pluginName + "." + option.optionName + "=" + option.optionValue);
+				else
+					out.append(" " + option.optionName + "=" + option.optionValue);
 			}
 			irc.sendContextReply( mes, out.toString() );
 		}
@@ -320,6 +542,59 @@ public class Options
 			UserOption option = options.get(0);
 			option.optionValue = value;
 			mods.odb.update(option);
+		}
+	}
+
+	private String[] _getUserOptions( String pluginName )
+	{
+		try
+		{
+			return (String[])mods.plugin.callGeneric(pluginName, "options", "User");
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			return null;
+		}
+	}
+
+	private String[] _getGeneralOptions( String pluginName )
+	{
+		try
+		{
+			return (String[])mods.plugin.callGeneric(pluginName, "options", "General");
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			return null;
+		}
+	}
+
+	private String _checkUserOption( String pluginName, String optionName, String optionValue, String userName )
+	{
+		try
+		{
+			if( (Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckUser", optionName, optionValue, userName) )
+				return null;
+			else
+				return "Invalid option value!";
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			try
+			{
+				if( (Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckUser" + optionName, optionValue, userName) )
+					return null;
+				else
+					return "Invalid option value!";
+			}
+			catch (ChoobNoSuchCallException f)
+			{
+				return "Unknown option!";
+			}
+		}
+		catch (ClassCastException e)
+		{
+			return "Invalid option check return value!";
 		}
 	}
 }

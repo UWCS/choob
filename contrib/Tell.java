@@ -163,6 +163,10 @@ public class Tell
 		}
 	}
 
+	public String[] optionsUser = { "Secure", "Insecure" };
+	public boolean optionCheckUserSecure( String value, String userName ) { return value.equals("1") || value.equals("0"); }
+	public boolean optionCheckUserInsecure( String value, String userName ) { return value.equals("1") || value.equals("0"); }
+
 	private synchronized void spew( String nick )
 	{
 		// Use the cache
@@ -245,7 +249,7 @@ public class Tell
 					{
 						try
 						{
-							if ( mods.plugin.callAPI("Options", "GetUserOption", nick, "Unsecure", "1" ).equals("1") )
+							if ( mods.plugin.callAPI("Options", "GetUserOption", nick, "Insecure", "1" ).equals("1") )
 								nsStatus = nsStatus( nick );
 						}
 						catch (ChoobNoSuchCallException e) {

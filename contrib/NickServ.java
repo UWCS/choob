@@ -197,6 +197,9 @@ public class NickServ
 		return result;
 	}
 
+	public String[] optionsGeneral = { "Password" };
+	public boolean optionCheckGeneralPassword( String value ) { return true; }
+
 	public void onPrivateNotice( Message mes )
 	{
 		if ( ! (mes instanceof PrivateNotice) )
