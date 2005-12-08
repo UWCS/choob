@@ -64,12 +64,44 @@ public class Alias
 
 		if (params.size() <= 2 || params.get(1).equals(""))
 		{
-			irc.sendContextReply(mes, "Syntax: Alias.Add <Name> <Alias>");
+			irc.sendContextReply(mes, "Syntax: 'Alias.Add " + helpCommandAdd[1] + "'.");
 			return;
 		}
 
 		String name = params.get(1).replaceAll(validator, "").toLowerCase();
 		String conv = params.get(2);
+
+		if (conv.indexOf('.') == -1 || (conv.indexOf(' ') != -1 && conv.indexOf(' ') < conv.indexOf('.')))
+		{
+			// Alias recursion?
+			int spacePos = conv.indexOf(' ');
+			if (spacePos == -1)
+				spacePos = conv.length();
+			String subAlias = conv.substring(0, spacePos).replaceAll(validator, "");
+			AliasObject alias = getAlias(subAlias);
+
+			if (alias == null)
+			{
+				irc.sendContextReply(mes, "Sorry, you tried to use a recursive alias to '" + subAlias + "' - but '" + subAlias + "' doesn't exist!");
+				return;
+			}
+
+			String aliasText = alias.converted;
+
+			// Rebuild params with no upper limit.
+			params = mods.util.getParams(mes);
+			String[] aliasParams = new String[params.size() - 2];
+			for(int i=2; i<params.size(); i++)
+				aliasParams[i-2] = params.get(i);
+
+			String newText = applyAlias(subAlias, alias.converted, aliasParams, conv);
+			if (newText == null)
+			{
+				irc.sendContextReply(mes, "Sorry, you tried to use a recursive alias to '" + subAlias + "' - but the alias text ('" + alias.converted + "') is invalid!");
+				return;
+			}
+			conv = newText;
+		}
 
 		if (name.equals(""))
 		{
@@ -487,28 +519,34 @@ public class Alias
 			return;
 		}
 
-		// Text is everything up to the next space...
-		int cmdEnd = text.indexOf(' ', offset);
-		String cmdParams;
-		if (cmdEnd == -1)
-		{
+		int dotIndex = text.indexOf('.', offset);
+
+		int cmdEnd = text.indexOf(' ', offset) + 1;
+		if (cmdEnd == 0)
 			cmdEnd = text.length();
-			cmdParams = "";
+
+		// Real command, not an alias...
+		// Drop out.
+		if (dotIndex != -1 && dotIndex < cmdEnd)
+		{
+			return;
 		}
-		else if (cmdEnd <= offset)
+
+		// Text is everything up to the next space...
+		String cmdParams;
+		if (cmdEnd <= offset)
+		{
 			return; // null alias! Oh noes!
+		}
 		else
 			cmdParams = text.substring(cmdEnd);
-
-		int dotIndex = text.indexOf('.', offset);
-		// Real command, not an alias...
-		if (dotIndex != -1 && dotIndex < cmdEnd)
-			return;
 
 		String aliasName = text.substring(offset, cmdEnd).replaceAll(validator, "");
 
 		if (aliasName.equals(""))
+		{
 			return;
+		}
 		
 		AliasObject alias = getAlias( aliasName );
 
@@ -524,63 +562,73 @@ public class Alias
 			return;
 		}
 
-		String converted = alias.converted;
+		String aliasText = alias.converted;
 
-		String commandName, pluginName, newText;
-		if (converted.indexOf("$") == -1)
+		String[] params = new String[0];
+		List<String> paramList = mods.util.getParams(mes);
+		params = paramList.toArray(params);
+
+		String newText = applyAlias(aliasName, aliasText, params, cmdParams);
+
+		if (newText == null)
 		{
-			// Make sure command name is valid...
-			int dotPos = converted.indexOf('.');
-			if (dotPos == -1)
-			{
-				irc.sendContextReply(mes, "Invalid alias: '" + aliasName + "' -> '" + converted + "'");
-				return;
-			}
+			irc.sendContextReply(mes, "Invalid alias: '" + aliasName + "' -> '" + aliasText + "'.");
+			return;
+		}
 
-			final Pattern validconv=Pattern.compile("^[a-zA-Z0-9]+\\.[a-zA-Z0-9]+.*");
+		// Extract command name etc. We know they're non-null.
+		int dotPos = newText.indexOf('.');
+		int spacePos = newText.indexOf(' ');
+		String extra = "";
+		if (spacePos == -1)
+			spacePos = newText.length();
+		else
+			extra = newText.substring(spacePos);
 
-			if (!validconv.matcher(converted).matches())
-			{
-				irc.sendContextReply(mes, "Invalid alias: '" + aliasName + "' -> '" + converted + "'");
-				return;
-			}
+		String pluginName = newText.substring(0, dotPos);
+		String commandName = newText.substring(dotPos + 1, spacePos);
 
-			int spacePos = converted.indexOf(' ');
+		mes = (Message)mes.cloneEvent( irc.getTrigger() + newText );
+
+		// XXX This is a hack. We should change the event to simply have a setMessage(). Or something.
+		mods.history.addLog( mes ); // Needed in case a plugin needs to retrieve authoritative message.
+
+		try
+		{
+			mods.plugin.queueCommand( pluginName, commandName, mes );
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			irc.sendContextReply(mes, "Sorry, that command is an alias ('" + alias.converted + "', made by '" + alias.owner + "') that points to an invalid command!");
+		}
+	}
+
+	private String applyAlias(String name, String alias, String[] params, String origParams)
+	{
+		// Make sure command name is valid...
+		final Pattern validconv=Pattern.compile("^[a-zA-Z0-9]+\\.[a-zA-Z0-9]+.*");
+		if (!validconv.matcher(alias).matches())
+			return null;
+
+		if (alias.indexOf("$") == -1)
+		{
+			int spacePos = alias.indexOf(' ');
 			String extra = "";
-			if (spacePos == -1)
-				spacePos = converted.length();
-			else
-				extra = converted.substring(spacePos);
+			if (spacePos != -1)
+				extra = alias.substring(spacePos);
 
-			pluginName = converted.substring(0, dotPos);
-			commandName = converted.substring(dotPos + 1, spacePos);
-			newText = irc.getTrigger() + aliasName + extra + cmdParams;
+			return name + extra + " " + origParams;
 		}
 		else
 		{
 			// Advanced syntax
-			List<String> paramList = mods.util.getParams(mes);
-			String[] params = new String[paramList.size()];
-			params = paramList.toArray(params);
+			StringBuilder newCom = new StringBuilder();
 
-			int dotPos = converted.indexOf('.');
-			int spacePos = converted.indexOf(' ');
-			if (dotPos == -1 || spacePos == -1 || dotPos >= spacePos - 1)
-			{
-				irc.sendContextReply(mes, "Invalid alias: '" + aliasName + "' -> '" + converted + "'");
-				return;
-			}
-
-			pluginName = converted.substring(0, dotPos);
-			commandName = converted.substring(dotPos + 1, spacePos);
-
-			StringBuilder newCom = new StringBuilder(irc.getTrigger());
-
-			int pos = converted.indexOf('$'), oldPos = 0;
-			int convEnd = converted.length() - 1;
+			int pos = alias.indexOf('$'), oldPos = 0;
+			int convEnd = alias.length() - 1;
 			while (pos != -1)
 			{
-				newCom.append(converted.substring(oldPos, pos));
+				newCom.append(alias.substring(oldPos, pos));
 
 				// Sanity check for $ at end of alias...
 				if (pos == convEnd)
@@ -589,7 +637,7 @@ public class Alias
 					break;
 				}
 
-				char next = converted.charAt(pos + 1);
+				char next = alias.charAt(pos + 1);
 				System.out.println("Found: $" + next);
 				if (next == '$')
 				{
@@ -617,7 +665,7 @@ public class Alias
 					{
 						if (end > convEnd)
 							break;
-						char test = converted.charAt(end);
+						char test = alias.charAt(end);
 						if (test < '0' || test > '9')
 							break;
 						// Another number!
@@ -626,7 +674,7 @@ public class Alias
 					int paramNo = 0;
 					try
 					{
-						paramNo = Integer.parseInt(converted.substring(pos + 1, end));
+						paramNo = Integer.parseInt(alias.substring(pos + 1, end));
 					}
 					catch (NumberFormatException e)
 					{
@@ -639,18 +687,18 @@ public class Alias
 				}
 				else if (next == '[')
 				{
-					if (converted.length() < pos + 3)
+					if (alias.length() < pos + 3)
 						break;
 					int firstParam = -1, lastParam = -1;
 					int newPos = pos + 2;
-					char test = converted.charAt(newPos);
+					char test = alias.charAt(newPos);
 
 					// First param is '-' - set firstParam to be undefined.
 					if (test == '-')
 					{
 						firstParam = -2;
 						newPos++;
-						test = converted.charAt(newPos);
+						test = alias.charAt(newPos);
 					}
 
 					// Begin eating params.
@@ -661,7 +709,7 @@ public class Alias
 						{
 							if (end > convEnd)
 								break;
-							test = converted.charAt(end);
+							test = alias.charAt(end);
 
 							// End of number!
 							if (test == '-' || test == ']')
@@ -670,7 +718,7 @@ public class Alias
 								int paramNo = -1;
 								try
 								{
-									paramNo = Integer.parseInt(converted.substring(newPos, end));
+									paramNo = Integer.parseInt(alias.substring(newPos, end));
 								}
 								catch (NumberFormatException e)
 								{
@@ -745,25 +793,10 @@ public class Alias
 					pos++;
 				}
 				oldPos = pos;
-				pos = converted.indexOf('$', pos);
+				pos = alias.indexOf('$', pos);
 			}
-			newCom.append(converted.substring(oldPos, convEnd + 1));
-			newText = newCom.toString();
-		}
-
-		// Only need to do this here...
-		mes = (Message)mes.cloneEvent( newText );
-
-		// XXX This is a hack. We should change the event to simply have a setMessage(). Or something.
-		mods.history.addLog( mes ); // Needed in case a plugin needs to retrieve authoritative message.
-
-		try
-		{
-			mods.plugin.queueCommand( pluginName, commandName, mes );
-		}
-		catch (ChoobNoSuchCallException e)
-		{
-			irc.sendContextReply(mes, "Sorry, that command is an alias ('" + alias.converted + "', made by '" + alias.owner + "') that points to an invalid command!");
+			newCom.append(alias.substring(oldPos, convEnd + 1));
+			return newCom.toString();
 		}
 	}
 }
