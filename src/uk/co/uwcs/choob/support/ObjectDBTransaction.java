@@ -9,15 +9,15 @@ import bsh.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.lang.reflect.*;
-import java.lang.reflect.Constructor;
 import java.util.regex.*;
 import java.sql.*;
 import java.lang.String;
+import java.lang.reflect.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import org.mozilla.javascript.*;
 
 public class ObjectDBTransaction // Needs to be non-final
 {
@@ -117,7 +117,12 @@ public class ObjectDBTransaction // Needs to be non-final
 		return new ObjectDBError("An SQL exception occurred while processing this operation.", e);
 	}
 
-	public final List<?> retrieve(final Class storedClass, String clause)
+	public final List<?> retrieve(Object storedClass, String clause)
+	{
+		return retrieve(NewClassWrapper(storedClass), clause);
+	}
+	
+	public final List<?> retrieve(final ObjectDBClass storedClass, String clause)
 	{
 		String sqlQuery;
 
@@ -164,17 +169,17 @@ public class ObjectDBTransaction // Needs to be non-final
 
 			String baseQuery = "SELECT ClassID, FieldName, FieldBigInt, FieldDouble, FieldString FROM ObjectStore LEFT JOIN ObjectStoreData ON ObjectStore.ObjectID = ObjectStoreData.ObjectID WHERE ClassName = '" + storedClass.getName() + "' AND (";
 
-			Map<String,Field> fieldCache = new HashMap<String,Field>();
+			Map<String,Type> fieldTypeCache = new HashMap<String,Type>();
 
-			Field idField;
-			try
-			{
-				idField = storedClass.getField( "id" );
-			}
-			catch( NoSuchFieldException e )
-			{
-				throw new ObjectDBError("Object of type " + storedClass + " has no id field!");
-			}
+			//FIXME:Field idField;
+			//FIXME:try
+			//FIXME:{
+			//FIXME:	idField = storedClass.getField( "id" );
+			//FIXME:}
+			//FIXME:catch( NoSuchFieldException e )
+			//FIXME:{
+			//FIXME:	throw new ObjectDBError("Object of type " + storedClass + " has no id field!");
+			//FIXME:}
 
 			if( allObjects.first() )
 			{
@@ -216,7 +221,7 @@ public class ObjectDBTransaction // Needs to be non-final
 						throw new ObjectDBError ("Inconsistent database state: One or more objects of type " + storedClass.getName() + " in ObjectStore did not exist in ObjectStoreData.");
 					}
 
-					Object tempObject = null; // This will be set immediately, because 0 is not a valid ID.
+					ObjectDBObject tempObject = null; // This will be set immediately, because 0 is not a valid ID.
 					int id = 0;
 
 					try
@@ -229,9 +234,12 @@ public class ObjectDBTransaction // Needs to be non-final
 								int newId = result.getInt(1);
 								if (newId != id)
 								{
-									tempObject = storedClass.newInstance();
-									objects.set(idMap.get(newId), tempObject);
-									idField.setInt( tempObject, newId );
+									Object newObject = storedClass.newInstance();
+									// Store the real object, then...
+									objects.set(idMap.get(newId), newObject);
+									// ...wrap the object so we are able to use it!
+									tempObject = NewObjectWrapper(newObject);
+									tempObject.setId(newId);
 									id = newId;
 								}
 
@@ -244,41 +252,40 @@ public class ObjectDBTransaction // Needs to be non-final
 									// have all fields initialised to default.
 									continue;
 								}
-								Field tempField = fieldCache.get(name);
-								if (tempField == null)
+								
+								Type fieldType = fieldTypeCache.get(name);
+								if (fieldType == null)
 								{
-									tempField = storedClass.getField( name );
-									fieldCache.put( name, tempField );
+									fieldType = tempObject.getFieldType(name);
+									fieldTypeCache.put(name, fieldType);
 								}
 
-								Type theType = tempField.getType();
-
-								if( theType == String.class )
+								if (fieldType == String.class)
 								{
-									tempField.set( tempObject, result.getString(5) );
+									tempObject.setFieldValue(name, result.getString(5));
 								}
-								else if( theType == Integer.TYPE )
+								else if (fieldType == Integer.TYPE)
 								{
-									tempField.setInt( tempObject, (int)result.getLong(3) );
+									tempObject.setFieldValue(name, (int)result.getLong(3));
 								}
-								else if( theType == Long.TYPE )
+								else if (fieldType == Long.TYPE)
 								{
-									tempField.setLong( tempObject, result.getLong(3) );
+									tempObject.setFieldValue(name, result.getLong(3));
 								}
-								else if( theType == Boolean.TYPE )
+								else if (fieldType == Boolean.TYPE)
 								{
-									tempField.setBoolean( tempObject, result.getLong(3) == 1 );
+									tempObject.setFieldValue(name, result.getLong(3) == 1);
 								}
-								else if( theType == Float.TYPE )
+								else if (fieldType == Float.TYPE)
 								{
-									tempField.setFloat( tempObject, (float)result.getDouble(4) );
+									tempObject.setFieldValue(name, (float)result.getDouble(4));
 								}
-								else if( theType == Double.TYPE )
+								else if (fieldType == Double.TYPE)
 								{
-									tempField.setDouble( tempObject, result.getDouble(4) );
+									tempObject.setFieldValue(name, result.getDouble(4));
 								}
 							}
-							catch( NoSuchFieldException e )
+							catch (NoSuchFieldException e)
 							{
 								e.printStackTrace();
 								// Ignore this, as per spec.
@@ -312,7 +319,12 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	public final List<Integer> retrieveInt(Class storedClass, String clause)
+	public final List<Integer> retrieveInt(Object storedClass, String clause)
+	{
+		return retrieveInt(NewClassWrapper(storedClass), clause);
+	}
+	
+	public final List<Integer> retrieveInt(final ObjectDBClass storedClass, String clause)
 	{
 		String sqlQuery;
 
@@ -394,64 +406,29 @@ public class ObjectDBTransaction // Needs to be non-final
 			cleanUp(objStat);
 		}
 	}
-
-	private final int getId( Object obj )
+	
+	public final void delete(Object strObj)
 	{
-		try
-		{
-			final Object obj2 = obj;
-			return (Integer)AccessController.doPrivileged(new PrivilegedExceptionAction() {
-					public Object run() throws NoSuchFieldException, IllegalAccessException {
-					Field f = obj2.getClass().getField("id");
-					return f.getInt( obj2 );
-					}
-					});
-		}
-		catch( PrivilegedActionException e )
-		{
-			// Must be a NoSuchFieldException...
-			throw new ObjectDBError("Class " + obj.getClass() + " does not have a unique 'id' property. Please add one.");
-		}
+		delete(NewObjectWrapper(strObj));
 	}
-
-	private final void setId( Object obj, int value )
-	{
-		try
-		{
-			final Object obj2 = obj;
-			final int val2 = value;
-			AccessController.doPrivileged(new PrivilegedExceptionAction() {
-					public Object run() throws NoSuchFieldException, IllegalAccessException {
-					Field f = obj2.getClass().getField("id");
-					f.setInt( obj2, val2 );
-					return null;
-					}
-					});
-		}
-		catch( PrivilegedActionException e )
-		{
-			// Must be a NoSuchFieldException...
-			throw new ObjectDBError("Class " + obj.getClass() + " does not have a unique 'id' property. Please add one.");
-		}
-	}
-
-	public final void delete( Object strObj )
+	
+	public final void delete(ObjectDBObject strObj)
 	{
 		checkPermission(strObj.getClass().getName());
 		PreparedStatement delete = null, deleteData = null;
 		try
 		{
-			int id = getId( strObj );
-
+			int id = strObj.getId();
+			
 			PreparedStatement retrieveID = dbConn.prepareStatement("SELECT ObjectID FROM ObjectStore WHERE ClassName = ? AND ClassID = ?;");
-
-			retrieveID.setString(1, strObj.getClass().getName() );
+			
+			retrieveID.setString(1, strObj.getClassName());
 			retrieveID.setInt(2, id);
-
+			
 			ResultSet resultID = retrieveID.executeQuery();
-
+			
 			int objectID;
-
+			
 			if( resultID.first() )
 			{
 				objectID = resultID.getInt("ObjectID");
@@ -460,17 +437,17 @@ public class ObjectDBTransaction // Needs to be non-final
 			{
 				throw new ObjectDBError("Object for deletion does not exist.");
 			}
-
+			
 			delete = dbConn.prepareStatement("DELETE FROM ObjectStore WHERE ObjectID = ?");
-
+			
 			delete.setInt(1, objectID);
-
+			
 			deleteData = dbConn.prepareStatement("DELETE FROM ObjectStoreData WHERE ObjectID = ?");
-
+			
 			deleteData.setInt(1, objectID);
-
+			
 			deleteData.executeUpdate();
-
+			
 			delete.executeUpdate();
 		}
 		catch (SQLException e)
@@ -484,7 +461,12 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
-	public final void update( Object strObj )
+	public final void update(Object strObj)
+	{
+		update(NewObjectWrapper(strObj));
+	}
+	
+	public final void update(ObjectDBObject strObj)
 	{
 		_store(strObj, true);
 	}
@@ -494,65 +476,70 @@ public class ObjectDBTransaction // Needs to be non-final
 		throw new ObjectDBError("This transaction has no run() method...");
 	}
 
-	public final void save( Object strObj )
+	public final void save(Object strObj)
+	{
+		save(NewObjectWrapper(strObj));
+	}
+	
+	public final void save(ObjectDBObject strObj)
 	{
 		_store(strObj, false);
 	}
 
-	private final void _store( Object strObj, boolean replace )
+	private final void _store(ObjectDBObject strObj, boolean replace)
 	{
-		checkPermission(strObj.getClass().getName());
+		checkPermission(strObj.getClassName());
 		PreparedStatement stat = null, field;
 		try
 		{
-			int id = getId( strObj );
-
+			int id = strObj.getId();
+			
 			boolean setId = false;
-
+			
 			if( id == 0 )
 			{
 				stat = dbConn.prepareStatement("SELECT MAX(ClassID) FROM ObjectStore WHERE ClassName = ?;");
-
-				stat.setString(1, strObj.getClass().getName());
-
+				
+				stat.setString(1, strObj.getClassName());
+				
 				ResultSet ids = stat.executeQuery();
-
+				
 				if( ids.first() )
 					id = ids.getInt(1)+1;
 				else
 					id = 1;
-
+				
 				stat.close();
-
+				
 				setId = true;
 			}
-
+			
 			int objId = 0;
-
+			
 			// If there might be a collision, we need the old object ID.
 			if (replace)
 			{
 				stat = dbConn.prepareStatement("SELECT ObjectID FROM ObjectStore WHERE ClassName = ? AND ClassID = ?;");
-
-				stat.setString(1, strObj.getClass().getName());
+				
+				stat.setString(1, strObj.getClassName());
 				stat.setInt(2, id);
-
+				
 				stat.execute();
-
+				
 				ResultSet ids = stat.executeQuery();
-
+				
 				if( ids.first() )
 					objId = ids.getInt(1);
-
+				
 				stat.close();
 			}
-
+			
 			// There's no collision (more specifically, if there is one, we're boned).
 			if (objId == 0)
 			{
 				stat = dbConn.prepareStatement("INSERT INTO ObjectStore VALUES(NULL,?,?);");
 
-				stat.setString(1, strObj.getClass().getName());
+				stat.setString(1, strObj.getClassName());
 				stat.setInt(2, id);
 
 				stat.execute();
@@ -571,68 +558,68 @@ public class ObjectDBTransaction // Needs to be non-final
 			else
 				stat = dbConn.prepareStatement("INSERT INTO ObjectStoreData VALUES(?,?,?,?,?);");
 
-			Field[] fields = strObj.getClass().getFields();
+			String[] fields = strObj.getFields();
 
 			for( int c = 0 ; c < fields.length ; c++ )
 			{
-				Field tempField = fields[c];
+				String fieldName = fields[c];
 
-				if( !tempField.getName().equals("id") )
+				if( !fieldName.equals("id") )
 				{
 					boolean foundType = true;
-
+					
 					stat.setInt(1, objId);
-
-					Type theType = tempField.getType();
-
+					
 					try
 					{
+						Type theType = strObj.getFieldType(fieldName);
+						
 						if( theType == java.lang.Integer.TYPE )
 						{
-							int theVal = tempField.getInt(strObj);
-							stat.setString(2, tempField.getName());
+							int theVal = ((Integer)strObj.getFieldValue(fieldName)).intValue();
+							stat.setString(2, fieldName);
 							stat.setLong(3, theVal);
 							stat.setDouble(4, theVal);
 							stat.setString(5, Integer.toString(theVal));
 						}
 						else if( theType == java.lang.Long.TYPE )
 						{
-							long theVal = tempField.getLong(strObj);
-							stat.setString(2, tempField.getName());
+							long theVal = ((Long)strObj.getFieldValue(fieldName)).longValue();
+							stat.setString(2, fieldName);
 							stat.setLong(3, theVal);
 							stat.setDouble(4, theVal);
 							stat.setString(5, Long.toString(theVal));
 						}
 						else if( theType == java.lang.Boolean.TYPE )
 						{
-							boolean theVal = tempField.getBoolean(strObj);
-							stat.setString(2, tempField.getName());
+							boolean theVal = ((Boolean)strObj.getFieldValue(fieldName)).booleanValue();
+							stat.setString(2, fieldName);
 							stat.setLong(3, theVal ? 1 : 0);
 							stat.setDouble(4, theVal ? 1 : 0);
 							stat.setString(5, theVal ? "1" : "0");
 						}
 						else if( theType == java.lang.Float.TYPE )
 						{
-							float theVal = tempField.getFloat(strObj);
-							stat.setString(2, tempField.getName());
+							float theVal = ((Float)strObj.getFieldValue(fieldName)).floatValue();
+							stat.setString(2, fieldName);
 							stat.setLong(3, (long)theVal);
 							stat.setDouble(4, theVal);
 							stat.setString(5, Float.toString(theVal));
 						}
 						else if( theType == java.lang.Double.TYPE )
 						{
-							double theVal = tempField.getDouble(strObj);
-							stat.setString(2, tempField.getName());
+							double theVal = ((Double)strObj.getFieldValue(fieldName)).doubleValue();
+							stat.setString(2, fieldName);
 							stat.setLong(3, (long)theVal);
 							stat.setDouble(4, theVal);
 							stat.setString(5, Double.toString(theVal));
 						}
 						else if( theType == String.class )
 						{
-							stat.setString(2, tempField.getName());
+							stat.setString(2, fieldName);
 							stat.setLong(3, 0); // XXX - parse these or not parse these?
 							stat.setDouble(4, 0);
-							stat.setString(5, (String)tempField.get(strObj));
+							stat.setString(5, (String)strObj.getFieldValue(fieldName));
 						}
 						else
 							foundType = false;
@@ -642,7 +629,11 @@ public class ObjectDBTransaction // Needs to be non-final
 							stat.executeUpdate();
 						}
 					}
-					catch ( IllegalAccessException e )
+					catch (NoSuchFieldException e)
+					{
+						// Should never happen, but if it does, just ignore.
+					}
+					catch (IllegalAccessException e)
 					{
 						// Should never happen, but if it does, just ignore.
 					}
@@ -651,7 +642,7 @@ public class ObjectDBTransaction // Needs to be non-final
 
 			// Set the ID only AFTER we store!
 			if (setId)
-				setId( strObj, id );
+				strObj.setId(id);
 		}
 		catch (SQLException e)
 		{
@@ -681,5 +672,32 @@ public class ObjectDBTransaction // Needs to be non-final
 			permCache.put(clsName, new Object());
 		}
 		// Non-null cache ==> we passed this check before.
+	}
+	
+	private final ObjectDBClass NewClassWrapper(Object obj)
+	{
+		// Create the correct wrapper here.
+		if (obj instanceof Class) {
+			return new ObjectDBClassJavaWrapper(obj);
+		}
+		if (obj instanceof Function) {
+			return new ObjectDBClassJSWrapper(obj);
+		}
+		return null;
+	}
+	
+	private final ObjectDBObject NewObjectWrapper(Object obj)
+	{
+		// Create the correct wrapper here.
+		try {
+			if (obj instanceof org.mozilla.javascript.NativeObject) {
+				return new ObjectDBObjectJSWrapper(obj);
+			}
+			return new ObjectDBObjectJavaWrapper(obj);
+		} catch (ChoobException e) {
+		} catch (NoSuchFieldException e) {
+			// Do nothing and let it fail?
+		}
+		return null;
 	}
 }

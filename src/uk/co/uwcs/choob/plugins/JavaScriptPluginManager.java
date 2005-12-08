@@ -237,11 +237,11 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 						JavaScriptPluginMethod method = (JavaScriptPluginMethod)export;
 						Function function = method.getFunction();
 
-						return mapJSToJava(function.call(cx, scope, inst, params));
+						return JSUtils.mapJSToJava(function.call(cx, scope, inst, params));
 					}
 					if (export instanceof JavaScriptPluginProperty) {
 						JavaScriptPluginProperty prop = (JavaScriptPluginProperty)export;
-						return mapJSToJava(prop.getValue());
+						return JSUtils.mapJSToJava(prop.getValue());
 					}
 					throw new ChoobError("Unknown export type for " + export.getName() + ".");
 
@@ -288,65 +288,6 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 			}
 		}
 		return null;
-	}
-
-	private Object mapJSToJava(Object jsObject) {
-		// Most Native* types from Rhino are automatically converted, or
-		// something. Arrays, however, definately are not. This code will map
-		// JS arrays into Java ones. It tries to use sensible types, as well.
-
-		if (jsObject instanceof NativeArray) {
-			NativeArray ary = (NativeArray)jsObject;
-			int aryLen = (int)ary.getLength();
-
-			Object[]  aryO = new Object [aryLen];
-			String[]  aryS = new String [aryLen];
-			boolean[] aryB = new boolean[aryLen];
-			double[]  aryN = new double [aryLen];
-			boolean isStringArray  = true;
-			boolean isBooleanArray = true;
-			boolean isNumberArray  = true;
-
-			for (int i = 0; i < aryLen; i++) {
-				Object item = ary.get(i, ary);
-
-				aryO[i] = mapJSToJava(item);
-
-				if (isStringArray) {
-					if (item instanceof String) {
-						aryS[i] = (String)item;
-					} else {
-						isStringArray = false;
-					}
-				}
-				if (isBooleanArray) {
-					if (item instanceof Boolean) {
-						aryB[i] = ((Boolean)item).booleanValue();
-					} else {
-						isBooleanArray = false;
-					}
-				}
-				if (isNumberArray) {
-					if (item instanceof Number) {
-						aryN[i] = ((Number)item).doubleValue();
-					} else {
-						isNumberArray = false;
-					}
-				}
-			}
-
-			if (isStringArray) {
-				return aryS;
-			}
-			if (isBooleanArray) {
-				return aryB;
-			}
-			if (isNumberArray) {
-				return aryN;
-			}
-			return aryO;
-		}
-		return jsObject;
 	}
 }
 
@@ -704,7 +645,7 @@ final class JavaScriptPluginProperty extends JavaScriptPluginExport {
 		super(plugin, name);
 	}
 
-	public Object getValue() throws ChoobException {
+	public Object getValue() throws NoSuchFieldException {
 		String[] parts = getName().split("\\.");
 		Scriptable obj = getPlugin().getInstance();
 
@@ -714,18 +655,12 @@ final class JavaScriptPluginProperty extends JavaScriptPluginExport {
 		return obj;
 	}
 
-	private static Scriptable getObjectProp(Scriptable obj, String prop) throws ChoobException {
-		while (obj != null) {
-			Object val = obj.get(prop, obj);
-			if (val != Scriptable.NOT_FOUND) {
-				if (!(val instanceof Scriptable)) {
-					throw new ChoobException("Property '" + prop + "' is not valid!");
-				}
-				return (Scriptable)val;
-			}
-			obj = obj.getPrototype();
+	private static Scriptable getObjectProp(Scriptable obj, String prop) throws NoSuchFieldException {
+		Object val = JSUtils.getProperty(obj, prop);
+		if (!(val instanceof Scriptable)) {
+			throw new NoSuchFieldException(prop);
 		}
-		throw new ChoobException("No property called '" + prop + "' found.");
+		return (Scriptable)val;
 	}
 }
 
@@ -742,8 +677,10 @@ final class JavaScriptPlugin {
 			scope = cx.initStandardObjects();
 			// Set up dump() and dumpln() functions.
 			try {
-				scope.put("dump", scope, new FunctionObject("dump", JavaScriptPluginManager.class.getMethod("dump", String.class), scope));
-				scope.put("dumpln", scope, new FunctionObject("dumpln", JavaScriptPluginManager.class.getMethod("dumpln", String.class), scope));
+				int flags = ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT;
+				ScriptableObject.defineProperty(scope, "__jsplugman_pluginName", pluginName, flags);
+				ScriptableObject.defineProperty(scope, "dump", new FunctionObject("dump", JavaScriptPluginManager.class.getMethod("dump", String.class), scope), flags);
+				ScriptableObject.defineProperty(scope, "dumpln", new FunctionObject("dumpln", JavaScriptPluginManager.class.getMethod("dumpln", String.class), scope), flags);
 			} catch(NoSuchMethodException e) {
 				System.err.println("Method not found: " + e);
 				// Ignore for now.

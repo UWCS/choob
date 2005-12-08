@@ -47,6 +47,11 @@ public final class ObjectDbModule
 	 */
 	public List retrieve(Class storedClass, String clause)
 	{
+		return retrieve((Object)storedClass, clause);
+	}
+	
+	public List retrieve(Object storedClass, String clause)
+	{
 		Connection dbConn = null;
 		try
 		{
@@ -70,6 +75,11 @@ public final class ObjectDbModule
 	}
 
 	public List<Integer> retrieveInt(Class storedClass, String clause)
+	{
+		return retrieveInt((Object)storedClass, clause);
+	}
+	
+	public List<Integer> retrieveInt(Object storedClass, String clause)
 	{
 		Connection dbConn = null;
 		try
