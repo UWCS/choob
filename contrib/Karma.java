@@ -265,10 +265,12 @@ public class Karma
 
 		Matcher reasonMatch = reasonPattern.matcher(mes.getMessage());
 
+		boolean hasReason = false;
 		if (reasonMatch.matches())
 		{
 			// Find out which holds our name.
 			String name;
+			boolean skip = false;
 			if (reasonMatch.group(1) != null)
 				name = reasonMatch.group(1).replaceAll("\\\\(.)", "$1");
 			else
@@ -276,33 +278,21 @@ public class Karma
 				// need verifiacation on this one.
 				name = reasonMatch.group(2);
 				if (exceptions.contains(name.toLowerCase()))
-					return;
+					skip = true;
 			}
-			boolean increase = reasonMatch.group(3).equals("++");
-
-			// Deal out the karma.
-			KarmaObject karmaObj = retrieveKarmaObject(name);
-			if (increase)
+			if (!skip)
 			{
-				karmaObj.up++;
-				karmaObj.value++;
-			}
-			else
-			{
-				karmaObj.down++;
-				karmaObj.value--;
-			}
-			mods.odb.update(karmaObj);
+				boolean increase = reasonMatch.group(3).equals("++");
 
-			// Store the reason too.
-			KarmaReasonObject reason = new KarmaReasonObject();
-			reason.string = name;
-			reason.reason = reasonMatch.group(4);
-			reason.direction = increase ? 1 : -1;
-			mods.odb.save(reason);
+				// Store the reason too.
+				KarmaReasonObject reason = new KarmaReasonObject();
+				reason.string = name;
+				reason.reason = reasonMatch.group(4);
+				reason.direction = increase ? 1 : -1;
+				mods.odb.save(reason);
 
-			irc.sendContextReply(mes, "Given " + (increase ? "karma" : "less karma") + " to " + name + ", and understood your reasons. New karma is " + karmaObj.value + ".");
-			return;
+				hasReason = true;
+			}
 		}
 
 		// Not a reasoned match, then.
@@ -366,7 +356,10 @@ public class Karma
 		if (karmaObjs.size() == 1)
 		{
 			KarmaObject info = karmaObjs.get(0);
-			irc.sendContextReply(mes, "Given " + (info.increase ? "karma" : "less karma") + " to " + info.instName + ". New karma is " + info.value + ".");
+			if (hasReason)
+				irc.sendContextReply(mes, "Given " + (info.increase ? "karma" : "less karma") + " to " + info.instName + ", and understood your reasons. New karma is " + info.value + ".");
+			else
+				irc.sendContextReply(mes, "Given " + (info.increase ? "karma" : "less karma") + " to " + info.instName + ". New karma is " + info.value + ".");
 			return;
 		}
 
@@ -377,6 +370,8 @@ public class Karma
 			KarmaObject info = karmaObjs.get(i);
 			output.append(info.instName);
 			output.append(info.increase ? " up" : " down");
+			if (i == 0 && hasReason)
+				output.append(", with reason");
 			output.append(" (now " + info.value + ")");
 			if (i != karmaObjs.size() - 1)
 			{

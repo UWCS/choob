@@ -1220,7 +1220,6 @@ public class Quote
 		Boolean opt2 = checkOption(ev, "No" + name, true, false);
 		// Logic: If disabled via list of chans in Yes, then never show a quote.
 		// Else, show one unless it's set to false specifically, or for all chans.
-		System.out.println("Opts: " + opt1 + " " + opt2 + ".");
 		if (opt1 == null)
 		{
 			return false;
@@ -1231,7 +1230,6 @@ public class Quote
 				return false;
 		}
 
-		System.out.println("Opts: " + opt1 + " " + opt2 + ".");
 		opt1 = checkOption(ev, name, false, true);
 		opt2 = checkOption(ev, "No" + name, false, false);
 		if (opt1 == null)
@@ -1256,7 +1254,6 @@ public class Quote
 				value = (String)mods.plugin.callAPI("Options", "GetGeneralOption", name, def ? "1" : "0");
 			else
 				value = (String)mods.plugin.callAPI("Options", "GetUserOption", ev.getNick(), name, def ? "1" : "0");
-			System.out.println("Value: " + global + " " + name + " " + value);
 
 			if (value.equals("1"))
 				return true;
