@@ -187,10 +187,10 @@ public class Options
 
 	public String[] helpCommandSet = {
 		"Set an option for a plugin for just you.",
-		"<Plugin> <Name>=<Value>",
+		"<Plugin> <Name>=[<Value>]",
 		"<Plugin> is the name of the plugin to set for",
 		"<Name> is the name of the option to set",
-		"<Value> is the value to set the option to"
+		"<Value> is the value to set the option to (omit to unset)"
 	};
 	public void commandSet( Message mes )
 	{
@@ -223,23 +223,45 @@ public class Options
 		// Parse input
 		if (params.size() != 3)
 		{
-			irc.sendContextReply( mes, "Syntax: Options.Set <Plugin> <Name>=<Value>" );
+			irc.sendContextReply( mes, "Syntax: 'Options.Set " + helpCommandSet[1] + "'." );
 			return;
 		}
 
-		String[] vals = params.get(2).split("=");
+		String[] vals = params.get(2).split("=", -1);
 		if (vals.length != 2)
 		{
-			irc.sendContextReply( mes, "Syntax: Options.Set <Plugin> <Name>=<Value>" );
+			irc.sendContextReply( mes, "Syntax: 'Options.Set " + helpCommandSet[1] + "'." );
 			return;
 		}
 
 		// Check the option is OK
-		String err = _checkUserOption( params.get(1), vals[0].toLowerCase(), vals[1], userName );
-		if (err != null)
+		if (vals[1].length() > 0)
 		{
-			irc.sendContextReply( mes, "Could not set the option! Error: " + err );
-			return;
+			String err = _checkUserOption( params.get(1), vals[0].toLowerCase(), vals[1], userName );
+			if (err != null)
+			{
+				irc.sendContextReply( mes, "Could not set the option! Error: " + err );
+				return;
+			}
+		}
+		else
+		{
+			String[] opts = _getUserOptions( params.get(1) );
+			boolean found = false;
+			if (opts != null)
+			{
+				String opt = vals[0].toLowerCase();
+				for(int i=0; i<opts.length; i++)
+				{
+					if (opts[i].toLowerCase().equals(opt))
+						found = true;
+				}
+			}
+			if (!found)
+			{
+				irc.sendContextReply( mes, "Unknown option: " + params.get(1) + "." + vals[0] );
+				return;
+			}
 		}
 
 		// OK, have an option.
@@ -251,10 +273,17 @@ public class Options
 		if ( options.size() >= 1 )
 		{
 			UserOption option = options.get(0);
-			option.optionValue = vals[1];
-			mods.odb.update(option);
+			if (vals[1].length() > 0)
+			{
+				option.optionValue = vals[1];
+				mods.odb.update(option);
+			}
+			else
+			{
+				mods.odb.delete(option);
+			}
 		}
-		else
+		else if (vals[1].length() > 0)
 		{
 			UserOption option = new UserOption();
 			option.pluginName = params.get(1);
@@ -264,7 +293,7 @@ public class Options
 			mods.odb.save(option);
 		}
 
-		irc.sendContextReply( mes, "OK, set " + vals[0] + " in " + params.get(1) + " for " + userName + " to " + vals[1] + "." );
+		irc.sendContextReply( mes, "OK, set " + vals[0] + " in " + params.get(1) + " for " + userName + " to '" + vals[1] + "'." );
 	}
 
 	public String[] helpCommandSetGeneral = {
@@ -281,19 +310,48 @@ public class Options
 		// Parse input
 		if (params.size() != 3)
 		{
-			irc.sendContextReply( mes, "Syntax: Options.Set <Plugin> <Name>=<Value>" );
+			irc.sendContextReply( mes, "Syntax: 'Options.SetGeneral " + helpCommandSetGeneral[1] + "'." );
 			return;
 		}
 
-		String[] vals = params.get(2).split("=");
+		String[] vals = params.get(2).split("=", -1);
 		if (vals.length != 2)
 		{
-			irc.sendContextReply( mes, "Syntax: Options.Set <Plugin> <Name>=<Value>" );
+			irc.sendContextReply( mes, "Syntax: 'Options.SetGeneral " + helpCommandSetGeneral[1] + "'." );
 			return;
 		}
 
 		// TODO - make plugin owners always able to set this. Or something.
 		mods.security.checkNickPerm(new ChoobPermission("plugin.options.set." + params.get(1)), mes.getNick());
+
+		if (vals[1].length() > 0)
+		{
+			String err = _checkGeneralOption( params.get(1), vals[0].toLowerCase(), vals[1] );
+			if (err != null)
+			{
+				irc.sendContextReply( mes, "Could not set the option! Error: " + err );
+				return;
+			}
+		}
+		else
+		{
+			String[] opts = _getGeneralOptions( params.get(1) );
+			boolean found = false;
+			if ( opts != null )
+			{
+				String opt = vals[0].toLowerCase();
+				for(int i=0; i<opts.length; i++)
+				{
+					if (opts[i].toLowerCase().equals(opt))
+						found = true;
+				}
+			}
+			if (!found)
+			{
+				irc.sendContextReply( mes, "Unknown option: " + params.get(1) + "." + vals[0] );
+				return;
+			}
+		}
 
 		// OK, have an option.
 		List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class,
@@ -303,10 +361,17 @@ public class Options
 		if ( options.size() >= 1 )
 		{
 			GeneralOption option = options.get(0);
-			option.optionValue = vals[1];
-			mods.odb.update(option);
+			if (vals[1].length() > 0)
+			{
+				option.optionValue = vals[1];
+				mods.odb.update(option);
+			}
+			else
+			{
+				mods.odb.delete(option);
+			}
 		}
-		else
+		else if (vals[1].length() > 0)
 		{
 			GeneralOption option = new GeneralOption();
 			option.pluginName = params.get(1);
@@ -315,7 +380,7 @@ public class Options
 			mods.odb.save(option);
 		}
 
-		irc.sendContextReply( mes, "OK, set " + vals[0] + " in " + params.get(1) + " to " + vals[1] + "." );
+		irc.sendContextReply( mes, "OK, set " + vals[0] + " in " + params.get(1) + " to '" + vals[1] + "'." );
 	}
 
 	public String[] helpCommandGet = {
@@ -498,6 +563,8 @@ public class Options
 
 		if (options.size() == 0)
 		{
+			if (value == null)
+				return;
 			GeneralOption option = new GeneralOption();
 			option.pluginName = pluginName;
 			option.optionName = optionName;
@@ -507,8 +574,15 @@ public class Options
 		else
 		{
 			GeneralOption option = options.get(0);
-			option.optionValue = value;
-			mods.odb.update(option);
+			if (value == null)
+			{
+				mods.odb.delete(option);
+			}
+			else
+			{
+				option.optionValue = value;
+				mods.odb.update(option);
+			}
 		}
 	}
 
@@ -530,6 +604,8 @@ public class Options
 
 		if (options.size() == 0)
 		{
+			if (value == null)
+				return;
 			UserOption option = new UserOption();
 			option.pluginName = pluginName;
 			option.userName = userName;
@@ -540,8 +616,15 @@ public class Options
 		else
 		{
 			UserOption option = options.get(0);
-			option.optionValue = value;
-			mods.odb.update(option);
+			if (value == null)
+			{
+				mods.odb.delete(option);
+			}
+			else
+			{
+				option.optionValue = value;
+				mods.odb.update(option);
+			}
 		}
 	}
 
@@ -583,6 +666,35 @@ public class Options
 			try
 			{
 				if( (Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckUser" + optionName, optionValue, userName) )
+					return null;
+				else
+					return "Invalid option value!";
+			}
+			catch (ChoobNoSuchCallException f)
+			{
+				return "Unknown option!";
+			}
+		}
+		catch (ClassCastException e)
+		{
+			return "Invalid option check return value!";
+		}
+	}
+
+	private String _checkGeneralOption( String pluginName, String optionName, String optionValue )
+	{
+		try
+		{
+			if( (Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckGeneral", optionName, optionValue) )
+				return null;
+			else
+				return "Invalid option value!";
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			try
+			{
+				if( (Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckGeneral" + optionName, optionValue) )
 					return null;
 				else
 					return "Invalid option value!";

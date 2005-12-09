@@ -1184,6 +1184,12 @@ public class Quote
 	public boolean optionCheckUserNoJoinQuote( String optionValue, String userName ) { return _optionCheck( optionValue ); }
 	public boolean optionCheckUserNoJoinMessage( String optionValue, String userName ) { return _optionCheck( optionValue ); }
 
+	public String[] optionsGeneral = { "JoinMessage", "JoinQuote", "NoJoinMessage", "NoJoinQuote" };
+	public boolean optionCheckGeneralJoinQuote( String optionValue ) { return _optionCheck( optionValue ); }
+	public boolean optionCheckGeneralJoinMessage( String optionValue ) { return _optionCheck( optionValue ); }
+	public boolean optionCheckGeneralNoJoinQuote( String optionValue ) { return _optionCheck( optionValue ); }
+	public boolean optionCheckGeneralNoJoinMessage( String optionValue ) { return _optionCheck( optionValue ); }
+
 	private boolean _optionCheck(String optionValue)
 	{
 		if (optionValue.equals("1") || optionValue.equals("0"))
@@ -1200,19 +1206,57 @@ public class Quote
 
 	private boolean shouldMessage( ChannelJoin ev )
 	{
-		return checkOption( ev, "JoinMessage", true ) && !checkOption( ev, "NoJoinMessage", false );
+		return checkOption( ev, "JoinMessage" );
 	}
 
 	private boolean shouldQuote( ChannelJoin ev )
 	{
-		return checkOption( ev, "JoinQuote", true ) && !checkOption( ev, "NoJoinQuote", false );
+		return checkOption( ev, "JoinQuote" );
 	}
 
-	private boolean checkOption( ChannelJoin ev, String name, boolean def )
+	private boolean checkOption( ChannelJoin ev, String name )
+	{
+		Boolean opt1 = checkOption(ev, name, true, true);
+		Boolean opt2 = checkOption(ev, "No" + name, true, false);
+		// Logic: If disabled via list of chans in Yes, then never show a quote.
+		// Else, show one unless it's set to false specifically, or for all chans.
+		System.out.println("Opts: " + opt1 + " " + opt2 + ".");
+		if (opt1 == null)
+		{
+			return false;
+		}
+		else
+		{
+			if (opt2 != null && opt2)
+				return false;
+		}
+
+		System.out.println("Opts: " + opt1 + " " + opt2 + ".");
+		opt1 = checkOption(ev, name, false, true);
+		opt2 = checkOption(ev, "No" + name, false, false);
+		if (opt1 == null)
+		{
+			return false;
+		}
+		else
+		{
+			if (opt2 != null && opt2)
+				return false;
+		}
+
+		return true;
+	}
+
+	private Boolean checkOption( ChannelJoin ev, String name, boolean global, boolean def )
 	{
 		try
 		{
-			String value = (String)mods.plugin.callAPI("Options", "GetUserOption", ev.getNick(), name, def ? "1" : "0");
+			String value;
+			if (global)
+				value = (String)mods.plugin.callAPI("Options", "GetGeneralOption", name, def ? "1" : "0");
+			else
+				value = (String)mods.plugin.callAPI("Options", "GetUserOption", ev.getNick(), name, def ? "1" : "0");
+			System.out.println("Value: " + global + " " + name + " " + value);
 
 			if (value.equals("1"))
 				return true;
@@ -1223,15 +1267,14 @@ public class Quote
 			String lcChan = ev.getChannel().toLowerCase();
 			for(int i=0; i<bits.length; i++)
 			{
-				System.out.println("Comparing " + lcChan + " and " + bits[i]);
 				if (bits[i].toLowerCase().equals(lcChan))
 					return true;
 			}
-			return false;
+			return null;
 		}
 		catch (ChoobNoSuchCallException e)
 		{
-			return true;
+			return def;
 		}
 	}
 
