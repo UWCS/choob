@@ -125,7 +125,7 @@ public class MiscMsg
 			return;
 		}
 
-		if (params.indexOf(',')==-1 && params.indexOf(" or ")==-1)
+		if (params.indexOf(" or ")==-1)
 		{
 			irc.sendContextReply(mes, "Answer to \"" + params + "\" is " + (rand.nextBoolean() ? "yes" : "no" ) + ".");
 			return;
@@ -135,8 +135,8 @@ public class MiscMsg
 		if (params.charAt(params.length()-1) == '?')
 			params = params.substring(0,params.length()-1);
 
-		// Split primarily on "or" or "or,"
-		String[] tokens = params.split("(?:^|\\s*,?\\s*|\\s+)or(?:\\s*,?\\s*|\\s+|$)", -1);
+		// Pre: String contains " or ", split on " or " or ", ";
+		String[] tokens = params.split("(?:, )|(?: or )");
 
 		int choice = rand.nextInt(tokens.length);
 
