@@ -1188,30 +1188,40 @@ public class Quote
 		return search.toString();
 	}
 
-	public String[] optionsUser = { "JoinMessage", "JoinQuote", "NoJoinMessage", "NoJoinQuote" };
+	public String[] optionsUser = { "JoinMessage", "JoinQuote" };
+	public String[] optionsUserDefaults = { "1", "1" };
 	public boolean optionCheckUserJoinQuote( String optionValue, String userName ) { return _optionCheck( optionValue ); }
 	public boolean optionCheckUserJoinMessage( String optionValue, String userName ) { return _optionCheck( optionValue ); }
-	public boolean optionCheckUserNoJoinQuote( String optionValue, String userName ) { return _optionCheck( optionValue ); }
-	public boolean optionCheckUserNoJoinMessage( String optionValue, String userName ) { return _optionCheck( optionValue ); }
 
-	public String[] optionsGeneral = { "JoinMessage", "JoinQuote", "NoJoinMessage", "NoJoinQuote" };
+	public String[] optionsGeneral = { "JoinMessage", "JoinQuote" };
+	public String[] optionsGeneralDefaults = { "1", "1" };
 	public boolean optionCheckGeneralJoinQuote( String optionValue ) { return _optionCheck( optionValue ); }
 	public boolean optionCheckGeneralJoinMessage( String optionValue ) { return _optionCheck( optionValue ); }
-	public boolean optionCheckGeneralNoJoinQuote( String optionValue ) { return _optionCheck( optionValue ); }
-	public boolean optionCheckGeneralNoJoinMessage( String optionValue ) { return _optionCheck( optionValue ); }
 
+	// format: {0,1}[:<chanlist>]
 	private boolean _optionCheck(String optionValue)
 	{
-		if (optionValue.equals("1") || optionValue.equals("0"))
-			return true;
+		String[] parts = optionValue.split(":", -1);
 
-		String[] bits = optionValue.split(",");
-		for(int i=0; i<bits.length; i++)
+		if (parts.length > 2)
+			return false;
+
+		if (!parts[0].equals("1") && !parts[0].equals("0"))
+			return false;
+
+		if (parts.length > 1)
 		{
-			if (!bits[i].startsWith("#"))
-				return false;
+			// Make sure they're all channels.
+			String[] chans = parts[1].split(",");
+			for(int i=0; i<chans.length; i++)
+			{
+				if (!chans[i].startsWith("#"))
+					return false;
+			}
+			return true;
 		}
-		return true;
+		else
+			return true;
 	}
 
 	private boolean shouldMessage( ChannelJoin ev )
@@ -1226,68 +1236,51 @@ public class Quote
 
 	private boolean checkOption( ChannelJoin ev, String name )
 	{
-		Boolean opt1 = checkOption(ev, name, true, true);
-		Boolean opt2 = checkOption(ev, "No" + name, true, false);
-		// Logic: If disabled via list of chans in Yes, then never show a quote.
-		// Else, show one unless it's set to false specifically, or for all chans.
-		if (opt1 == null)
-		{
-			return false;
-		}
-		else
-		{
-			if (opt2 != null && opt2)
-				return false;
-		}
-
-		opt1 = checkOption(ev, name, false, true);
-		opt2 = checkOption(ev, "No" + name, false, false);
-		if (opt1 == null)
-		{
-			return false;
-		}
-		else
-		{
-			if (opt2 != null && opt2)
-				return false;
-		}
-
-		return true;
+		return checkOption(ev, name, true) && checkOption(ev, name, false);
 	}
 
-	private Boolean checkOption( ChannelJoin ev, String name, boolean global, boolean def )
+	private boolean checkOption( ChannelJoin ev, String name, boolean global )
 	{
 		try
 		{
 			String value;
 			if (global)
-				value = (String)mods.plugin.callAPI("Options", "GetGeneralOption", name, def ? "1" : "0");
+				value = (String)mods.plugin.callAPI("Options", "GetGeneralOption", name, "1");
 			else
-				value = (String)mods.plugin.callAPI("Options", "GetUserOption", ev.getNick(), name, def ? "1" : "0");
+				value = (String)mods.plugin.callAPI("Options", "GetUserOption", ev.getNick(), name, "1");
 
-			if (value.equals("1"))
-				return true;
-			else if (value.equals("0"))
-				return false;
+			String[] parts = value.split(":", -1);
+			boolean soFar;
+			if (parts[0].equals("1"))
+				soFar = true;
+			else
+				soFar = false;
 
-			String[] bits = value.split(",");
-			String lcChan = ev.getChannel().toLowerCase();
-			for(int i=0; i<bits.length; i++)
+			if (parts.length > 1)
 			{
-				if (bits[i].toLowerCase().equals(lcChan))
-					return true;
+				// If it's in the list, same, else invert.
+				String[] chans = parts[1].split(",");
+				String lcChan = ev.getChannel().toLowerCase();
+				for(int i=0; i<chans.length; i++)
+				{
+					if (chans[i].toLowerCase().equals(lcChan))
+						return soFar;
+				}
+				return !soFar;
 			}
-			return null;
+			else
+				// No list, so always same as first param.
+				return soFar;
 		}
 		catch (ChoobNoSuchCallException e)
 		{
-			return def;
+			return true;
 		}
 	}
 
 	public void onJoin( ChannelJoin ev, Modules mods, IRCInterface irc )
 	{
-		if (ev.getLogin().equals("Choob"))
+		if (ev.getLogin().equals("Choob")) // XXX
 			return;
 
 		if (shouldMessage(ev))
