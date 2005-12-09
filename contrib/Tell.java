@@ -174,6 +174,7 @@ public class Tell
 	}
 
 	public String[] optionsUser = { "Secure", "Insecure" };
+	public String[] optionsUserDefaults = { "0", "0" };
 	public boolean optionCheckUserSecure( String value, String userName ) { return value.equals("1") || value.equals("0"); }
 	public boolean optionCheckUserInsecure( String value, String userName ) { return value.equals("1") || value.equals("0"); }
 

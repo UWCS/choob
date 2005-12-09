@@ -74,6 +74,7 @@ public class Options
 			for(int j=0; j<plugins.length; j++)
 			{
 				String[] options = _getUserOptions(plugins[j]);
+				String[] defaults = _getUserOptionDefaults(plugins[j]);
 
 				if (options == null)
 					continue;
@@ -86,6 +87,8 @@ public class Options
 				for(int i=0; i<options.length; i++)
 				{
 					output.append(options[i]);
+					if (defaults != null && defaults[i] != null)
+						output.append(" (default: " + defaults[i] + ")");
 					if (i == options.length - 2)
 						output.append(" and ");
 					else if (i != options.length - 1)
@@ -101,6 +104,7 @@ public class Options
 			String pluginName = params.get(1);
 
 			String[] options = _getUserOptions(pluginName);
+			String[] defaults = _getUserOptionDefaults(pluginName);
 
 			if (options == null)
 			{
@@ -112,6 +116,8 @@ public class Options
 			for(int i=0; i<options.length; i++)
 			{
 				output.append(options[i]);
+				if (defaults != null && defaults[i] != null)
+					output.append(" (default: " + defaults[i] + ")");
 				if (i == options.length - 2)
 					output.append(" and ");
 				else if (i != options.length - 1)
@@ -147,6 +153,7 @@ public class Options
 			for(int j=0; j<plugins.length; j++)
 			{
 				String[] options = _getGeneralOptions(plugins[j]);
+				String[] defaults = _getGeneralOptionDefaults(plugins[j]);
 
 				if (options == null)
 					continue;
@@ -159,6 +166,8 @@ public class Options
 				for(int i=0; i<options.length; i++)
 				{
 					output.append(options[i]);
+					if (defaults != null && defaults[i] != null)
+						output.append(" (default: " + defaults[i] + ")");
 					if (i == options.length - 2)
 						output.append(" and ");
 					else if (i != options.length - 1)
@@ -174,6 +183,7 @@ public class Options
 			String pluginName = params.get(1);
 
 			String[] options = _getGeneralOptions(pluginName);
+			String[] defaults = _getGeneralOptionDefaults(pluginName);
 
 			if (options == null)
 			{
@@ -185,6 +195,8 @@ public class Options
 			for(int i=0; i<options.length; i++)
 			{
 				output.append(options[i]);
+				if (defaults != null && defaults[i] != null)
+					output.append(" (default: " + defaults[i] + ")");
 				if (i == options.length - 2)
 					output.append(" and ");
 				else if (i != options.length - 1)
@@ -650,11 +662,35 @@ public class Options
 		}
 	}
 
+	private String[] _getUserOptionDefaults( String pluginName )
+	{
+		try
+		{
+			return (String[])mods.plugin.callGeneric(pluginName, "options", "UserDefaults");
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			return null;
+		}
+	}
+
 	private String[] _getGeneralOptions( String pluginName )
 	{
 		try
 		{
 			return (String[])mods.plugin.callGeneric(pluginName, "options", "General");
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			return null;
+		}
+	}
+
+	private String[] _getGeneralOptionDefaults( String pluginName )
+	{
+		try
+		{
+			return (String[])mods.plugin.callGeneric(pluginName, "options", "GeneralDefaults");
 		}
 		catch (ChoobNoSuchCallException e)
 		{
