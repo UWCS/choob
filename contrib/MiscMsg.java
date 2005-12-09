@@ -53,7 +53,7 @@ public class MiscMsg
 	}
 
 	public String[] helpCommandRandom = {
-		"Get with a random number.",
+		"Generate a random number.",
 		"[<Max>]",
 		"<Max> is the optional maximum to return"
 	};

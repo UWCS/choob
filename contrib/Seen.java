@@ -7,9 +7,9 @@ import java.text.*;
 
 /**
  * Choob nickserv checker
- * 
+ *
  * @author bucko
- * 
+ *
  * Anyone who needs further docs for this module has some serious Java issues.
  * :)
  */
@@ -43,10 +43,13 @@ public class Seen
 	Modules mods;
 	IRCInterface irc;
 
+	long lockedUntil;
+
 	public Seen(Modules mods, IRCInterface irc)
 	{
 		this.irc = irc;
 		this.mods = mods;
+		lockedUntil=0;
 	}
 
 	public String[] helpTopics = { "Using" };
@@ -63,6 +66,11 @@ public class Seen
 	};
 	public void commandSeen( Message mes ) throws ChoobException
 	{
+		if (lockedUntil>(new GregorianCalendar()).getTimeInMillis())
+		{
+			irc.sendContextReply(mes, "An sql exception occoured sometime, Seen offline for a few minutes.");
+			return;
+		}
 		String nick = mods.nick.getBestPrimaryNick(mods.util.getParamString( mes ));
 
 		if (nick.toLowerCase().equals(mods.nick.getBestPrimaryNick(mes.getNick()).toLowerCase()))
@@ -75,7 +83,7 @@ public class Seen
 		SeenObj seen = getSeen( nick, false );
 		if (seen == null)
 		{
-			irc.sendContextReply( mes, "Sorry, no such luck! I've not seen " + nick + "!" );
+			irc.sendContextReply( mes, "Sorry, no such luck! I don't remember seeing " + nick + "!" );
 			return;
 		}
 
@@ -117,7 +125,7 @@ public class Seen
 				case 0:
 					// Nothing
 					// Can this even happen?
-					irc.sendContextReply( mes, "Sorry, no such luck! I've not seen " + seen.nick + "!" );
+					irc.sendContextReply( mes, "Sorry, no such luck! I don't remember seeing  " + seen.nick + "!" );
 					break;
 				case 1:
 					// Nick Change
@@ -139,11 +147,25 @@ public class Seen
 		}
 	}
 
-	private SeenObj getSeen(String nick, boolean create) throws ChoobException
+	private SeenObj getSeen(String nick, boolean create) // throws ChoobException
 	{
+		if (lockedUntil>(new GregorianCalendar()).getTimeInMillis())
+			return new SeenObj();
+
 		String sortNick = mods.nick.getBestPrimaryNick(nick).replaceAll("(\\W)", "\\\\$1");
 
-		List<SeenObj> objs = mods.odb.retrieve( SeenObj.class, "WHERE name = \"" + sortNick + "\"" );
+		List<SeenObj> objs;
+		try
+		{
+			objs=mods.odb.retrieve( SeenObj.class, "WHERE name = \"" + sortNick + "\"" );
+		}
+		catch (Exception e)
+		{
+			lockedUntil=(new GregorianCalendar()).getTimeInMillis()+(2*60*1000);
+			System.err.println("Seen suppressed error:");
+			e.printStackTrace();
+			objs=new ArrayList<SeenObj>();
+		}
 
 		if ( objs.size() == 0 )
 		{
@@ -167,13 +189,27 @@ public class Seen
 		}
 	}
 
-	// Synchronized, since update appears to be non thread safe...
-	private synchronized void saveSeen(SeenObj seen) throws ChoobException
+	private void saveSeen(SeenObj seen) throws ChoobException
 	{
-		if (seen.id == 0)
-			mods.odb.save(seen);
-		else
-			mods.odb.update(seen);
+		if (lockedUntil>(new GregorianCalendar()).getTimeInMillis())
+			return;
+
+		try
+		{
+			if (seen.id == 0)
+				mods.odb.save(seen);
+			else
+				synchronized (this)
+				{
+					mods.odb.update(seen);
+				}
+		}
+		catch (Exception e)
+		{
+			lockedUntil=(new GregorianCalendar()).getTimeInMillis()+(2*60*1000);
+			System.err.println("Seen suppressed error:");
+			e.printStackTrace();
+		}
 	}
 
 	// Expire old checks when appropriate...

@@ -5,7 +5,6 @@ import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
 import java.util.regex.*;
 
-
 // Note: This send/watch couple will break if someone changes their primary nick between the send and the receive, assuming they change their base nick.. it could be done otherwise, but Faux can't think of a way that doesn't involve mass database rapeage on every line sent by irc.
 // This entire plugin could do with some caching.
 
@@ -156,7 +155,7 @@ public class Tell
 	public void commandGet( Message mes )
 	{
 		clearCache(mes.getNick());
-		spew( mes.getNick() );
+		loudspew( mes.getNick() );
 		irc.sendContextReply(mes, "OK, if you had any tells, I just sent 'em. :)");
 	}
 
@@ -178,7 +177,20 @@ public class Tell
 	public boolean optionCheckUserSecure( String value, String userName ) { return value.equals("1") || value.equals("0"); }
 	public boolean optionCheckUserInsecure( String value, String userName ) { return value.equals("1") || value.equals("0"); }
 
-	private synchronized void spew( String nick )
+	private synchronized void spew (String nick)
+	{
+		try
+		{
+			loudspew(nick);
+		}
+		catch (Exception e)
+		{
+			System.err.println("Tell.spew suppressed error:");
+			e.printStackTrace();
+		}
+	}
+
+	private synchronized void loudspew( String nick )
 	{
 		// Use the cache
 		boolean willSkip = false;
