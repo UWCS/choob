@@ -128,35 +128,20 @@ public class MiscMsg
 		// Split primarily on "or" or "or,"
 		String[] tokens = params.split("(?:^|\\s*,?\\s*|\\s+)or(?:\\s*,?\\s*|\\s+|$)", -1);
 
-		// Then split the first group on ","
-		String[] tokens2 = tokens[0].split("\\s*,\\s*", -1);
-
-		int choice = rand.nextInt(tokens.length + tokens2.length - 1);
+		int choice = rand.nextInt(tokens.length);
 
 		// Java can't see it's guaranteed to be set.
 		// Let's all laugh at its expense!
 		String output = null;
-		for(int i=0; i<tokens2.length; i++)
+
+		for(int i=0; i<tokens.length; i++)
 		{
-			System.out.println(tokens2[i]);
-			if (tokens2[i].equals(""))
+			if (tokens[i].equals(""))
 			{
 				irc.sendContextReply(mes, "Reply number " + (i + 1) + " is empty!");
 				return;
 			}
 			if (i == choice)
-				output = tokens2[i];
-		}
-
-		for(int i=1; i<tokens.length; i++)
-		{
-			System.out.println(tokens[i]);
-			if (tokens[i].equals(""))
-			{
-				irc.sendContextReply(mes, "Reply number " + (tokens2.length + i) + " is empty!");
-				return;
-			}
-			if (tokens2.length + i - 1 == choice)
 				output = tokens[i];
 		}
 
