@@ -31,7 +31,7 @@ public final class UtilModule
 
 	public void updateTrigger()
 	{
-		this.triggerPattern = Pattern.compile(this.irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE);
+		this.triggerPattern = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE);
 	}
 
 	/** Get the offset of the trigger in the list of arguments */

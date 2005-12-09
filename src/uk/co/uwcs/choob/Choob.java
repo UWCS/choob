@@ -107,18 +107,20 @@ public final class Choob extends PircBot
 		// Initialise our modules.
 		modules = new Modules(broker, pluginMap, intervalList, this, irc );
 
-		// Set up the threading stuff.
-		init();
+		// Set the name from the config file.
+		this.setName(conf.getSettingFallback("botName", "Choob"));
+
+		// Set the bot's hostname.
+		this.setLogin("Choob");
+
+		// Name changed now...
+		modules.util.updateTrigger();
 
 		// Get the modules.
 		irc.grabMods();
 
-		// Set the name from the config file.
-		this.setName(conf.getSettingFallback("botName", "Choob"));
-		modules.util.updateTrigger();
-
-		// Set the bot's hostname.
-		this.setLogin("Choob");
+		// Set up the threading stuff, load plugins, etc.
+		init();
 
 		// Disable PircBot's flood protection, reducing percieved lag.
 		this.setMessageDelay(0);
@@ -292,7 +294,7 @@ public final class Choob extends PircBot
 	 */
 	public String getTriggerRegex()
 	{
-		return "^(?:" +trigger +
+		return "^(?i:" + trigger +
 				"|" + getName().replaceAll("([^a-zA-Z0-9-])", "\\\\$1") + "[,:]\\s*" +
 				"|bot[,:]\\s*)";
 	}
