@@ -79,7 +79,7 @@ public class Karma
 	public String[] apiReason(String name)
 	{
 		List<KarmaReasonObject> results;
-		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + name.replaceAll("\"", "\\\\\"") + "\" ORDER BY RAND() LIMIT 1");
+		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + name.replaceAll("([\"\\\\])", "\\\\$1") + "\" ORDER BY RAND() LIMIT 1");
 
 		if (results.size() == 0)
 			return null;
@@ -94,7 +94,7 @@ public class Karma
 	public String[] apiReason(String name, boolean up)
 	{
 		List<KarmaReasonObject> results;
-		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + name.replaceAll("\"", "\\\\\"") + "\" AND direction = '" + (up ? 1 : -1) + "' ORDER BY RAND() LIMIT 1");
+		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + name.replaceAll("([\"\\\\])", "\\\\$1") + "\" AND direction = '" + (up ? 1 : -1) + "' ORDER BY RAND() LIMIT 1");
 
 		if (results.size() == 0)
 			return null;
