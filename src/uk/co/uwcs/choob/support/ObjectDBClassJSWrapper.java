@@ -31,7 +31,7 @@ public final class ObjectDBClassJSWrapper implements ObjectDBClass {
 					}
 				}
 				
-				return "plugin." + plugName + "." + ctorName;
+				return "plugins." + plugName + "." + ctorName;
 			} catch (NoSuchFieldException e) {
 				// Do nothing.
 			}
