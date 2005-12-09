@@ -28,6 +28,16 @@ public class Alias
 {
 	private final String validator="[^A-Za-z_0-9]+";
 
+	public String[] info()
+	{
+		return new String[] {
+			"Command aliasing plugin.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	private Modules mods;
 	private IRCInterface irc;
 	public Alias(Modules mods, IRCInterface irc)

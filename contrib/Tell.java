@@ -25,6 +25,16 @@ public class Tell
 	private static int MAXTARGETS = 7;
 	private static long CACHEEXPIRE = 60 * 60 * 1000; // 5 mins
 
+	public String[] info()
+	{
+		return new String[] {
+			"A plugin to allow users to leave each other messages.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	private Modules mods;
 	private IRCInterface irc;
 

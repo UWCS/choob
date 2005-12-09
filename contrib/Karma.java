@@ -38,6 +38,16 @@ public class Karma
 		exceptions.add("visualj");
 	}
 
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin to keep track of the \"karma\" of stuff.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	private Modules mods;
 	private IRCInterface irc;
 	public Karma (Modules mods, IRCInterface irc)

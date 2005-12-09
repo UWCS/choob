@@ -32,6 +32,4 @@ class Faux
 	{
 		irc.sendContextReply(con, "You just lost the game!");
 	}
-
-
 }

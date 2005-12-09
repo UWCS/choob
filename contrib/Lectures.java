@@ -12,6 +12,24 @@ import java.text.DateFormatSymbols;
 
 public class Lectures
 {
+	public String[] info()
+	{
+		return new String[] {
+			"University of Warwick lectures querying plugin.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
+	private Modules mods;
+	private IRCInterface irc;
+	public Lectures(IRCInterface irc, Modules mods)
+	{
+		this.mods = mods;
+		this.irc = irc;
+	}
+
 	SimpleDateFormat df=new SimpleDateFormat("h:mm a 'on' EEEE");
 
 	final String days[] = (new DateFormatSymbols()).getWeekdays();

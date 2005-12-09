@@ -16,12 +16,30 @@ import org.jibble.pircbot.Colors;
 
 public class Talk
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin which allows users to make the bot speak.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
+	private Modules mods;
+	private IRCInterface irc;
+	public Talk(Modules mods, IRCInterface irc)
+	{
+		this.mods = mods;
+		this.irc = irc;
+	}
+
 	public String[] helpCommandShout = {
 		"Give a yell to deafen countries.",
 		"<Text>",
 		"<Text> is the text to yell"
 	};
-	public void commandShout( Message mes, Modules mods, IRCInterface irc )
+	public void commandShout( Message mes )
 	{
 		irc.sendContextReply(mes, Colors.BOLD + mods.util.getParamString(mes));
 	}
@@ -31,9 +49,9 @@ public class Talk
 		"<Text>",
 		"<Text> is the text to say"
 	};
-	public void commandSay( Message mes, Modules modules, IRCInterface irc )
+	public void commandSay( Message mes )
 	{
-		irc.sendContextMessage(mes, modules.util.getParamString(mes));
+		irc.sendContextMessage(mes, mods.util.getParamString(mes));
 	}
 
 	public String[] helpCommandReply = {
@@ -41,9 +59,9 @@ public class Talk
 		"<Text>",
 		"<Text> is the text with which to reply"
 	};
-	public void commandReply( Message mes, Modules modules, IRCInterface irc )
+	public void commandReply( Message mes )
 	{
-		irc.sendContextReply(mes, modules.util.getParamString(mes));
+		irc.sendContextReply(mes, mods.util.getParamString(mes));
 	}
 
 	public String[] helpCommandMsg = {
@@ -52,9 +70,9 @@ public class Talk
 		"<Target> is the destination",
 		"<Text> is the message to send"
 	};
-	public void commandMsg( Message mes, Modules modules, IRCInterface irc )
+	public void commandMsg( Message mes )
 	{
-		String params = modules.util.getParamString(mes);
+		String params = mods.util.getParamString(mes);
 		int spacePos = params.indexOf(' ');
 		if (spacePos == -1) {
 			irc.sendContextReply(mes, "Syntax: '" + helpCommandMsg[1] + "'.");
@@ -70,9 +88,9 @@ public class Talk
 		"<Text>",
 		"<Text> is the text that describes what to do"
 	};
-	public void commandMe( Message mes, Modules modules, IRCInterface irc )
+	public void commandMe( Message mes )
 	{
-		irc.sendContextAction(mes, modules.util.getParamString(mes));
+		irc.sendContextAction(mes, mods.util.getParamString(mes));
 	}
 
 	public String[] helpCommandDescribe = {
@@ -81,9 +99,9 @@ public class Talk
 		"<Target> is the destination",
 		"<Text> is the thing to do"
 	};
-	public void commandDescribe( Message mes, Modules modules, IRCInterface irc )
+	public void commandDescribe( Message mes )
 	{
-		String params = modules.util.getParamString(mes);
+		String params = mods.util.getParamString(mes);
 		int spacePos = params.indexOf(' ');
 		if (spacePos == -1) {
 			irc.sendContextReply(mes, "Syntax: '" + helpCommandDescribe[1] + "'.");

@@ -29,8 +29,18 @@ public class DictionaryException extends ChoobException
 
 public class Dict
 {
-	Modules mods;
-	IRCInterface irc;
+	public String[] info()
+	{
+		return new String[] {
+			"Dict.org dictionary lookup plugin.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
+	private Modules mods;
+	private IRCInterface irc;
 	public Dict(Modules mods, IRCInterface irc)
 	{
 		this.mods=mods;

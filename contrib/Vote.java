@@ -35,6 +35,16 @@ public class Voter
  */
 public class Vote
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Allows users to create polls to query about stuff.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	private static boolean SPAMMY = true;
 	private Modules mods;
 	private IRCInterface irc;

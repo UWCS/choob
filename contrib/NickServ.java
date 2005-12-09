@@ -25,6 +25,16 @@ public class ResultObj
 
 public class NickServ
 {
+	public String[] info()
+	{
+		return new String[] {
+			"NickServ checker plugin.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	private static int TIMEOUT = 10000; // Timeout on nick checks.
 //	private static int CACHE_TIMEOUT = 3600000; // Timeout on nick check cache (1 hour).
 	// ^^ Can only be used once we can verify a user is in a channel and thus trust their online-ness.

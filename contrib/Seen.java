@@ -30,6 +30,16 @@ public class SeenObj
 
 public class Seen
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin which keeps track of when the bot last saw people.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	Modules mods;
 	IRCInterface irc;
 

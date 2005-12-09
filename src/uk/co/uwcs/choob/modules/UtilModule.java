@@ -44,6 +44,11 @@ public final class UtilModule
 		return 0;
 	}
 
+	public String getVersion()
+	{
+		return "SVN";
+	}
+
 	/** Get the parameter string (ie. message without the command) from a Message object */
 	public String getParamString( Message mes )
 	{

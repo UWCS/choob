@@ -7,6 +7,16 @@ import java.util.regex.*;
 
 public class Shutup
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin to allow people to manipulate the protected channels in the bot.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	final class LastMessage
 	{
 		static final int COMMANDS_TO_WATCH=4;			// How many commands to track?

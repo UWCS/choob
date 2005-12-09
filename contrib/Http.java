@@ -16,6 +16,16 @@ public class HashedStringObject
 
 public class Http
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin that implements a simple HTTP server.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	private Modules mods;
 	private IRCInterface irc;
 

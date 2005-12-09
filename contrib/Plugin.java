@@ -7,13 +7,31 @@ import java.util.*;
 
 public class Plugin
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin loader/manipulator.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
+	private Modules mods;
+	private IRCInterface irc;
+	public Plugin(Modules mods, IRCInterface irc)
+	{
+		this.mods = mods;
+		this.irc = irc;
+	}
+
 	public String[] helpCommandLoad = {
 		"Load a plugin.",
 		"[<Name>] <URL>",
 		"<Name> is an optional name for the plugin (if you don't give one, it'll be guessed from the URL)",
 		"<URL> is the URL from which to load the plugin"
 	};
-	public void commandLoad( Message mes, Modules mods, IRCInterface irc )
+	public void commandLoad( Message mes )
 	{
 		// First, do auth!
 		List<String> params = mods.util.getParams( mes );
@@ -85,10 +103,16 @@ public class Plugin
 		"<Name>",
 		"<Name> is the name of the plugin"
 	};
-	public void commandReload(Message mes, Modules mods, IRCInterface irc) {
+	public void commandReload(Message mes) {
 		List<String> params = mods.util.getParams(mes);
+		if (params.size() == 1)
+		{
+			irc.sendContextReply(mes, "Syntax: 'Plugin.Reload " + helpCommandReload[1] + "'.");
+			return;
+		}
+
 		String pluginName = params.get(1);
-		
+
 		mods.security.checkNickPerm(new ChoobPermission("plugin.load." + pluginName.toLowerCase()), mes.getNick());
 
 		irc.sendContextReply(mes, "Reloading plugin '" + pluginName + "'...");
@@ -107,8 +131,14 @@ public class Plugin
 		"<Name>",
 		"<Name> is the name of the plugin"
 	};
-	public void commandDetach(Message mes, Modules mods, IRCInterface irc) {
+	public void commandDetach(Message mes) {
 		List<String> params = mods.util.getParams(mes);
+		if (params.size() == 1)
+		{
+			irc.sendContextReply(mes, "Syntax: 'Plugin.Detach " + helpCommandDetach[1] + "'.");
+			return;
+		}
+
 		String pluginName = params.get(1);
 
 		mods.security.checkNickPerm(new ChoobPermission("plugin.unload." + pluginName.toLowerCase()), mes.getNick());
@@ -126,8 +156,14 @@ public class Plugin
 		"<Name>",
 		"<Name> is the name of the plugin"
 	};
-	public void commandSetCore(Message mes, Modules mods, IRCInterface irc) {
+	public void commandSetCore(Message mes) {
 		List<String> params = mods.util.getParams(mes);
+		if (params.size() == 1)
+		{
+			irc.sendContextReply(mes, "Syntax: 'Plugin.SetCore " + helpCommandSetCore[1] + "'.");
+			return;
+		}
+
 		String pluginName = params.get(1);
 
 		mods.security.checkNickPerm(new ChoobPermission("plugin.core"), mes.getNick());
@@ -145,8 +181,14 @@ public class Plugin
 		"<Name>",
 		"<Name> is the name of the plugin"
 	};
-	public void commandUnsetCore(Message mes, Modules mods, IRCInterface irc) {
+	public void commandUnsetCore(Message mes) {
 		List<String> params = mods.util.getParams(mes);
+		if (params.size() == 1)
+		{
+			irc.sendContextReply(mes, "Syntax: 'Plugin.UnsetCore " + helpCommandUnsetCore[1] + "'.");
+			return;
+		}
+
 		String pluginName = params.get(1);
 
 		mods.security.checkNickPerm(new ChoobPermission("plugin.core"), mes.getNick());
@@ -162,7 +204,7 @@ public class Plugin
 	public String[] helpCommandList = {
 		"List all known plugins."
 	};
-	public void commandList(Message mes, Modules mods, IRCInterface irc) {
+	public void commandList(Message mes) {
 		// Get all plugins.
 		String[] plugins = mods.plugin.getAllPlugins(false);
 		Arrays.sort(plugins);
@@ -188,5 +230,39 @@ public class Plugin
 		buf.append(".");
 
 		irc.sendContextReply(mes, buf.toString());
+	}
+
+	public String[] helpCommandInfo = {
+		"Get info about a plugin.",
+		"<Plugin>",
+		"<Plugin> is the name of the plugin"
+	};
+	public void commandInfo(Message mes)
+	{
+		List<String> params = mods.util.getParams(mes);
+		if (params.size() == 1)
+		{
+			irc.sendContextReply(mes, "Syntax: 'Plugin.Info " + helpCommandInfo[1] + "'.");
+			return;
+		}
+
+		String pluginName = params.get(1);
+		String[] info;
+		try
+		{
+			info = (String[])mods.plugin.callGeneric(pluginName, "Info", "");
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			irc.sendContextReply(mes, "Oi! Plugin " + pluginName + " isn't loaded. (Or has no info...)");
+			return;
+		}
+		catch (ClassCastException e)
+		{
+			irc.sendContextReply(mes, "Plugin " + pluginName + " had invalid info!");
+			return;
+		}
+
+		irc.sendContextReply(mes, pluginName + ": " + info[0] + " By " + info[1] + " <" + info[2] + ">; version is " + info[3] + ".");
 	}
 }

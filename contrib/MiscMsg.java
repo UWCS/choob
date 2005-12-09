@@ -8,6 +8,16 @@ import java.io.*;
 
 public class MiscMsg
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin to do miscellaneous short message commands.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	private IRCInterface irc;
 	private Modules mods;
 	public MiscMsg(Modules mods, IRCInterface irc)

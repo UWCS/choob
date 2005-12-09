@@ -9,7 +9,25 @@ import java.io.*;
 
 public class Test
 {
-	public void commandSecurity( Message con, Modules mods, IRCInterface irc )
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin containing various test routines.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
+	private Modules mods;
+	private IRCInterface irc;
+	public Test(Modules mods, IRCInterface irc)
+	{
+		this.mods = mods;
+		this.irc = irc;
+	}
+
+	public void commandSecurity( Message con )
 	{
 		String priv = mods.util.getParamString( con );
 
@@ -25,35 +43,35 @@ public class Test
 			irc.sendContextReply(con, "You don't have " + priv + "!" );
 	}
 
-	public void commandJoin( Message con, Modules mods, IRCInterface irc ) throws ChoobException
+	public void commandJoin( Message con ) throws ChoobException
 	{
 		irc.join(mods.util.getParamString(con));
 		irc.sendContextReply(con, "Okay!");
 	}
 
-	public void commandPart( Message con, Modules mods, IRCInterface irc ) throws ChoobException
+	public void commandPart( Message con ) throws ChoobException
 	{
 		irc.part(mods.util.getParamString(con));
 		irc.sendContextReply(con, "Okay!");
 	}
 
 
-	public void commandPirate( Message con, Modules mods, IRCInterface irc )
+	public void commandPirate( Message con )
 	{
 		irc.sendContextReply(con, "Yarr!");
 	}
 
-	public void commandPiratey( Message con, Modules mods, IRCInterface irc )
+	public void commandPiratey( Message con )
 	{
 		irc.sendContextReply(con, "(:;test.piratey:)");
 	}
 
-	public void commandInMy( Message con, Modules mods, IRCInterface irc )
+	public void commandInMy( Message con )
 	{
 		irc.sendContextMessage(con, "..Pants!");
 	}
 
-	public void commandExit( Message con, Modules mods, IRCInterface irc ) throws ChoobException
+	public void commandExit( Message con ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams( con );
 		if (params.size() > 1) {
@@ -63,7 +81,7 @@ public class Test
 		}
 	}
 
-	public void commandRestart( Message con, Modules mods, IRCInterface irc ) throws ChoobException
+	public void commandRestart( Message con ) throws ChoobException
 	{
 		irc.restart("Restarting...");
 	}
@@ -83,7 +101,7 @@ public class Test
 		irc.sendContextReply( con, "Ooh, yes please.");
 	}
 
-/*	public void onJoin( ChannelJoin ev, Modules mods, IRCInterface irc )
+/*	public void onJoin( ChannelJoin ev )
 	{
 		if (ev.getLogin().equals("Choob"))
 			return;
@@ -111,13 +129,13 @@ public class Test
 		//irc.sendContextMessage( ev, "Bye, " + ev.getNick() + "!");
 	}
 
-	public void commandAPI ( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	public void commandAPI ( Message mes ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams( mes );
 		irc.sendContextReply(mes, mods.plugin.callAPI( params.get(1), params.get(2), params.get(3) ).toString());
 	}
 
-	public void commandGeneric ( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	public void commandGeneric ( Message mes ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams( mes );
 		if (params.size() == 5)
@@ -126,7 +144,7 @@ public class Test
 			irc.sendContextReply(mes, mods.plugin.callGeneric( params.get(1), params.get(2), params.get(3) ).toString());
 	}
 
-	public void commandWait (Message mes, Modules mods, IRCInterface irc)
+	public void commandWait (Message mes)
 	{
 		Object test = new Object();
 		synchronized(test)
@@ -144,7 +162,7 @@ public class Test
 	}
 
 	// Test the stack is working.
-/*	public void commandStack ( Message mes, Modules mods, IRCInterface irc ) throws ChoobNoSuchCallException
+/*	public void commandStack ( Message mes ) throws ChoobNoSuchCallException
 	{
 		int i = 0;
 		for(String s = ChoobThread.getPluginName(0); s != null; s = ChoobThread.getPluginName(++i))
@@ -152,7 +170,7 @@ public class Test
 		apiStack(mes, mods, irc, 5);
 	}
 
-	public void apiStack ( Message mes, Modules mods, IRCInterface irc, Integer j ) throws ChoobNoSuchCallException
+	public void apiStack ( Message mes, Integer j ) throws ChoobNoSuchCallException
 	{
 		System.out.println("Stacking!");
 		if ( j == 0 )
@@ -168,22 +186,22 @@ public class Test
 		}
 	}*/
 
-/*	public void onPluginLoaded (PluginLoaded mes, Modules mods, IRCInterface irc)
+/*	public void onPluginLoaded (PluginLoaded mes)
 	{
 		irc.sendMessage("#bots", "Yay! Plugin loaded! Name is: " + mes.getPluginName());
 	}
 
-	public void onPluginUnLoaded (PluginUnLoaded mes, Modules mods, IRCInterface irc)
+	public void onPluginUnLoaded (PluginUnLoaded mes)
 	{
 		irc.sendMessage("#bots", "Boo! Plugin unloaded! Name is: " + mes.getPluginName());
 	}
 
-	public void onPluginReLoaded (PluginReLoaded mes, Modules mods, IRCInterface irc)
+	public void onPluginReLoaded (PluginReLoaded mes)
 	{
 		irc.sendMessage("#bots", "Boo! Plugin reloaded! Name is: " + mes.getPluginName());
 	}*/
 
-	/*public void commandWhoreApi ( Message mes, Modules mods, IRCInterface irc ) throws ChoobException
+	/*public void commandWhoreApi ( Message mes ) throws ChoobException
 	{
 		for(int i=0; i < 100000; i++)
 			try { mods.plugin.callAPI("Test", "Whore", "Iteration" + i, mes); } catch ( ChoobNoSuchCallException e ) { }

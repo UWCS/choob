@@ -26,7 +26,25 @@ public class Factoids
 {
 	public String filterFactoidsRegex = "(\\w{4,})\\s+(?:is|was)\\s+(.{4,})";
 
-	public void filterFactoids( Message msg, Modules mods, IRCInterface irc ) throws ChoobException
+	public String[] info()
+	{
+		return new String[] {
+			"Factoid watching/query plugin.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
+	private Modules mods;
+	private IRCInterface irc;
+	public Factoids(Modules mods, IRCInterface irc)
+	{
+		this.mods = mods;
+		this.irc = irc;
+	}
+
+	public void filterFactoids( Message msg ) throws ChoobException
 	{
 		Matcher factoidMatcher = (Pattern.compile( filterFactoidsRegex )).matcher( msg.getMessage() );
 
@@ -55,7 +73,7 @@ public class Factoids
 		"<Name>",
 		"<Name> is the name of the object to enquire about"
 	};
-	public void commandWhatIs( Message msg, Modules mods, IRCInterface irc ) throws ChoobException
+	public void commandWhatIs( Message msg ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams(msg, 1);
 

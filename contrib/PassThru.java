@@ -15,6 +15,16 @@ import java.text.*;
 
 public class PassThru
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Hack plugin to allow smoother transition between bots.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	Modules mods;
 	IRCInterface irc;
 

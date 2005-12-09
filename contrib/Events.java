@@ -35,6 +35,16 @@ public class Events
 	private final static int SIGNUPCURRENT=7;
 	private final static int SIGNUPMAX=6;
 
+	public String[] info()
+	{
+		return new String[] {
+			"CompSoc events watcher/info plugin.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	public Events(Modules mods, IRCInterface irc) throws ChoobException
 	{
 		this.mods = mods;

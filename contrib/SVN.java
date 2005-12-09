@@ -8,12 +8,26 @@ import java.util.*;
 
 public class SVN
 {
-	public SVN( Modules mods )
+	public String[] info()
 	{
-		mods.interval.callBack( null, 100 );
+		return new String[] {
+			"Watches the Choob SVN for new versions.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
 	}
 
-	public synchronized void interval( Object parameter, Modules mods, IRCInterface irc ) throws ChoobException
+	private Modules mods;
+	private IRCInterface irc;
+	public SVN( Modules mods, IRCInterface irc )
+	{
+		mods.interval.callBack( null, 100 );
+		this.irc = irc;
+		this.mods = mods;
+	}
+
+	public synchronized void interval( Object parameter ) throws ChoobException
 	{
 		URL svnURL;
 		try

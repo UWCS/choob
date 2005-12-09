@@ -24,6 +24,16 @@ public class TimedEvent
  */
 public class TimedEvents
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Allows users to save events to be executed in the future.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	private TimedEvent lastDelivery = null;
 	private Modules mods;
 	private IRCInterface irc;

@@ -69,6 +69,16 @@ public class Quote
 		recentQuotes = new HashMap<String,List<RecentQuote>>();
 	}
 
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin to allow users to create a database of infamous quotes.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	public String[] helpTopics = { "UsingCreate", "CreateExamples", "UsingGet" };
 
 	public String[] helpUsingCreate = {

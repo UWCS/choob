@@ -25,6 +25,16 @@ import org.jibble.pircbot.Colors;
 
 public class Help
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin to allow one to obtain help.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	Modules mods;
 	IRCInterface irc;
 

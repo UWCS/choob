@@ -22,30 +22,27 @@ class Fish
 
 		if ( coreplugResults.first() )
 			do
-							{
-								if (flag==0) {
-									flag = 1;
-								} else {
-									irc.sendContextMessage(con, coreplugResults.getString("Text"));
-								}
-							}
+			{
+				if (flag==0) {
+					flag = 1;
+				} else {
+					irc.sendContextMessage(con, coreplugResults.getString("Text"));
+				}
+			}
 			while ( coreplugResults.next() );
 
 		broker.freeConnection(dbConnection);
-
-
 	}
-
 
 	public void commandWUBRS( Message con, Modules mods, IRCInterface irc )
 	{
 		URL yahoo = new URL("http://www.wubrs.org.uk/quote.php");
-        URLConnection yc = yahoo.openConnection();
-        BufferedReader in = new BufferedReader(new InputStreamReader(yc.getInputStream()));
-        String inputLine;
+		URLConnection yc = yahoo.openConnection();
+		BufferedReader in = new BufferedReader(new InputStreamReader(yc.getInputStream()));
+		String inputLine;
 
-        while ((inputLine = in.readLine()) != null)
-            irc.sendContextMessage(con, inputLine);
-        in.close();
+		while ((inputLine = in.readLine()) != null)
+			irc.sendContextMessage(con, inputLine);
+		in.close();
 	}
 }

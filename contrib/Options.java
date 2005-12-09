@@ -30,6 +30,16 @@ public class GeneralOption
 
 public class Options
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin to allow plugins to provide user-settable options.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	Modules mods;
 	IRCInterface irc;
 

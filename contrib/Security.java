@@ -12,6 +12,16 @@ import java.util.regex.*;
  */
 public class Security
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Security manipulation plugin.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
 	private static int TIMEOUT = 300;
 	private Map<String,List<String>> linkMap;
 	private Modules mods;

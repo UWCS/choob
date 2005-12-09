@@ -10,6 +10,24 @@ import javax.naming.directory.*;
 
 public class Lookup
 {
+	public String[] info()
+	{
+		return new String[] {
+			"DNS lookup plugin.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			mods.util.getVersion()
+		};
+	}
+
+	private IRCInterface irc;
+	private Modules mods;
+	public Lookup(Modules mods, IRCInterface irc)
+	{
+		this.irc = irc;
+		this.mods = mods;
+	}
+
 	private static final Hashtable env = new Hashtable();
 	static
 	{
@@ -72,7 +90,7 @@ public class Lookup
 		"<Domain> is the domain name",
 		"<Record> is the optional record type"
 	};
-	public void commandLookupIn( Message mes, Modules mods, IRCInterface irc )
+	public void commandLookupIn( Message mes )
 	{
 
 		List<String> params = mods.util.getParams(mes, 2);
