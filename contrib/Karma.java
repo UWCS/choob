@@ -275,7 +275,7 @@ public class Karma
 				name = reasonMatch.group(1).replaceAll("\\\\(.)", "$1");
 			else
 			{
-				// need verifiacation on this one.
+				// need verification on this one.
 				name = reasonMatch.group(2);
 				if (exceptions.contains(name.toLowerCase()))
 					skip = true;
@@ -311,7 +311,7 @@ public class Karma
 				name = karmaMatch.group(1).replaceAll("\\\\(.)", "$1");
 			else
 			{
-				// need verifiacation on this one.
+				// need verification on this one.
 				name = karmaMatch.group(2);
 				if (exceptions.contains(name.toLowerCase()))
 					continue;
@@ -448,7 +448,7 @@ public class Karma
 
 	private KarmaObject retrieveKarmaObject(String name)
 	{
-		List<KarmaObject> results = mods.odb.retrieve(KarmaObject.class, "WHERE string = \"" + name.replaceAll("\"", "\\\\\"") + "\"");
+		List<KarmaObject> results = mods.odb.retrieve(KarmaObject.class, "WHERE string = \"" + name.replaceAll("([\"\\\\])", "\\\\$1") + "\"");
 		if (results.size() == 0)
 		{
 			KarmaObject newObj = new KarmaObject();
