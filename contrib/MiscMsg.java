@@ -125,33 +125,47 @@ public class MiscMsg
 			return;
 		}
 
-		if (params.indexOf(" or ")==-1)
-		{
-			irc.sendContextReply(mes, "Answer to \"" + params + "\" is " + (rand.nextBoolean() ? "yes" : "no" ) + ".");
-			return;
-		}
-
 		// Cut off a question mark, if any.
 		if (params.charAt(params.length()-1) == '?')
 			params = params.substring(0,params.length()-1);
 
 		// Pre: String contains " or ", split on " or " or ", ";
-		String[] tokens = params.split("(?:, )|(?: or )");
+		String[] tokens = params.split("(?:^|\\s*,\\s*|\\s+)or(?:\\s*,\\s*|\\s+|$)");
+		if (tokens.length <= 1)
+		{
+			irc.sendContextReply(mes, "Answer to \"" + params + "\" is " + (rand.nextBoolean() ? "yes" : "no" ) + ".");
+			return;
+		}
 
-		int choice = rand.nextInt(tokens.length);
+		// Then split the first group on ","
+		String[] tokens2 = tokens[0].split("\\s*,\\s*");
+
+		int choice = rand.nextInt(tokens.length + tokens2.length - 1);
 
 		// Java can't see it's guaranteed to be set.
 		// Let's all laugh at its expense!
 		String output = null;
-
-		for(int i=0; i<tokens.length; i++)
+		for(int i=0; i<tokens2.length; i++)
 		{
-			if (tokens[i].equals(""))
+			System.out.println(tokens2[i]);
+			if (tokens2[i].equals(""))
 			{
 				irc.sendContextReply(mes, "Reply number " + (i + 1) + " is empty!");
 				return;
 			}
 			if (i == choice)
+				output = tokens2[i];
+		}
+
+		for(int i=1; i<tokens.length; i++)
+		{
+			System.out.println(tokens[i]);
+			if (tokens[i].equals(""))
+			{
+				irc.sendContextReply(mes, "Reply number " + (tokens2.length + i) + " is empty!");
+				return;
+			}
+			if (tokens2.length + i - 1 == choice)
 				output = tokens[i];
 		}
 

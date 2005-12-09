@@ -1198,6 +1198,25 @@ public class Quote
 	public boolean optionCheckGeneralJoinQuote( String optionValue ) { return _optionCheck( optionValue ); }
 	public boolean optionCheckGeneralJoinMessage( String optionValue ) { return _optionCheck( optionValue ); }
 
+	public String[] helpOptionJoinQuote = {
+		  "Determine whether or not you recieve a quote upon joining a channel.",
+		  "Set this to \"0\" to disable quotes, \"1\" to enable them (default),"
+		+ " or \"<N>:<Chans>\" with <N> \"0\" or \"1\" and <Chans> a"
+		+ " comma-seperated list of channels to apply <N> to. Other channels get"
+		+ " the opposite.",
+		  "Example: \"1:#bots\" to enable only for #bots, or \"0:#compsoc,#tech\""
+		+ " to enable everywhere but #compsoc and #tech."
+	};
+	public String[] helpOptionJoinMessage = {
+		  "Determine whether or not you recieve a message upon joining a channel.",
+		  "Set this to \"0\" to disable quotes, \"1\" to enable them (default),"
+		+ " or \"<N>:<Chans>\" with <N> \"0\" or \"1\" and <Chans> a"
+		+ " comma-seperated list of channels to apply <N> to. Other channels get"
+		+ " the opposite.",
+		  "Example: \"1:#bots\" to enable only for #bots, or \"0:#compsoc,#tech\""
+		+ " to enable everywhere but #compsoc and #tech."
+	};
+
 	// format: {0,1}[:<chanlist>]
 	private boolean _optionCheck(String optionValue)
 	{

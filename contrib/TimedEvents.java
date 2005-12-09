@@ -112,9 +112,10 @@ public class TimedEvents
 	}
 
 	public String[] helpCommandAt = {
-		"Make a command execute in the future.",
-		"<When> <Command>",
-		"<When> is a time of the form HH[:]MM[[:]SS][am|pm]",
+		"Make a command execute at a specified time in the future.",
+		"[ <Date> ] <Time> <Command>",
+		"<Date> is an (optional) date of the form DD/MM/YY[YY]",
+		"<Time> is a time of the form HH[:]MM[[:]SS][am|pm]",
 		"<Command> is the command to execute"
 	};
 	public void commandAt( Message mes )
@@ -129,26 +130,71 @@ public class TimedEvents
 		List<String> params = mods.util.getParams(mes, 2);
 
 		if (params.size() <= 2) {
-			irc.sendContextReply(mes, "Syntax is: TimedEvents.At <When> <Command>");
+			irc.sendContextReply(mes, "Syntax: 'TimedEvents.At " + helpCommandAt[1] + "'.");
 			return;
 		}
 
 		String time = params.get(1);
 		String command = params.get(2);
 
-		// Does the command have a trigger?
-		Matcher trigMatch = Pattern.compile(irc.getTriggerRegex()).matcher(command);
-		if (trigMatch.find())
-			// Yes. Blat it. We'll add it later.
-			command = command.substring(trigMatch.end());
-
-		// Java--
 		GregorianCalendar cal = new GregorianCalendar();
-		Matcher ma = Pattern.compile("((?:0?[0-9])|(?:1[0-9])|(?:2[0-3])):?([0-5][0-9])(?::?([0-5][0-9]))?(am|pm)?").matcher(time);
+
+		boolean dateSet = false;
+		Pattern timePat = Pattern.compile("(0?[0-9]|1[0-9]|2[0-3]):?([0-5][0-9])(?::?([0-5][0-9]))?(am|pm)?");
+		Matcher ma = timePat.matcher(time);
 		if (!ma.matches())
 		{
-			irc.sendContextReply(mes, "Bad time format: " + time + ".");
-			return;
+			// OK, not a time then. Is it a date?
+			ma = Pattern.compile("(\\d{1,2})/(\\d{1,2})(?:/(\\d{2}(?:\\d{2})?))?").matcher(time);
+			if (!ma.matches())
+			{
+				irc.sendContextReply(mes, "Bad date/time format: " + time + ".");
+				return;
+			}
+
+			if (ma.group(3) != null)
+			{
+				int year = Integer.parseInt(ma.group(3));
+				// Y3K bug!
+				if (year < 100)
+					year += 2000;
+				cal.set(Calendar.YEAR, year);
+			}
+
+			int month = Integer.parseInt(ma.group(2));
+			if (month > 12 || month == 0)
+			{
+				irc.sendContextReply(mes, "Invalid month: " + month + "!");
+				return;
+			}
+			cal.set(Calendar.MONTH, month - 1);
+
+			int day = Integer.parseInt(ma.group(1));
+			// TODO: check? This will be difficult.
+			if (day > 31 || day == 0)
+			{
+				irc.sendContextReply(mes, "Invalid day of month: " + day + "!");
+				return;
+			}
+			cal.set(Calendar.DAY_OF_MONTH, day);
+
+			// (Oh, the humanity!)
+			int spacePos = command.indexOf(' ');
+			if (spacePos == -1 || spacePos == command.length() - 1)
+			{
+				irc.sendContextReply(mes, "Syntax: 'TimedEvents.At " + helpCommandAt[1] + "'.");
+				return;
+			}
+
+			time = command.substring(0, spacePos);
+			command = command.substring(spacePos + 1);
+			ma = timePat.matcher(time);
+			if (!ma.matches())
+			{
+				irc.sendContextReply(mes, "Bad time format: " + time + ".");
+				return;
+			}
+			dateSet = true;
 		}
 
 		int h,m,s;
@@ -181,7 +227,21 @@ public class TimedEvents
 		cal.set(Calendar.SECOND, s);
 
 		if (cal.getTimeInMillis() < System.currentTimeMillis())
-			cal.add(Calendar.DAY_OF_MONTH, 1);
+		{
+			if (dateSet)
+			{
+				irc.sendContextReply(mes, "Can't make things happen in the past!");
+				return;
+			}
+			else
+				cal.add(Calendar.DAY_OF_MONTH, 1);
+		}
+
+		// Does the command have a trigger?
+		Matcher trigMatch = Pattern.compile(irc.getTriggerRegex()).matcher(command);
+		if (trigMatch.find())
+			// Yes. Blat it. We'll add it later.
+			command = command.substring(trigMatch.end());
 
 		TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
