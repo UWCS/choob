@@ -255,7 +255,7 @@ public final class IRCInterface
 	/**
 	 * Send a block of lines as a single reply.
 	 * @param context A context to reply in.
-	 * @param messages A String[] containing the message you want to send.
+	 * @param lines A String[] containing the message you want to send.
 	 */
 	public void sendContextReply(ContextEvent context, String[] lines)
 	{
@@ -265,7 +265,7 @@ public final class IRCInterface
 	/**
 	 * Send a block of lines as a single reply.
 	 * @param context A context to reply in.
-	 * @param messages A list of Strings containing the message you want to send.
+	 * @param lines A list of Strings containing the message you want to send.
 	 */
 	public void sendContextReply(ContextEvent context, List<String> lines)
 	{
@@ -285,7 +285,7 @@ public final class IRCInterface
 	/**
 	 * Send a block of lines as a single reply.
 	 * @param context A context to reply in.
-	 * @param messages A String[] containing the message you want to send.
+	 * @param lines A String[] containing the message you want to send.
 	 */
 	public void sendContextMessage(ContextEvent context, String[] lines)
 	{
@@ -295,7 +295,7 @@ public final class IRCInterface
 	/**
 	 * Send a block of lines as a single reply.
 	 * @param context A context to reply in.
-	 * @param messages A list of Strings containing the message you want to send.
+	 * @param lines A list of Strings containing the message you want to send.
 	 */
 	public void sendContextMessage(ContextEvent context, List<String> lines)
 	{
@@ -357,14 +357,14 @@ public final class IRCInterface
 		AccessController.checkPermission(new ChoobPermission("state.part." + channel));
 		bot.partChannel(channel);
 	}
-	
+
 	public void quit(String message) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("state.quit"));
 		bot.setExitCode(0);
 		bot.quitServer(message);
 	}
-	
+
 	public void restart(String message) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("state.quit"));
