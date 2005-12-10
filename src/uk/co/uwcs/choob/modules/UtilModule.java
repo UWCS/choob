@@ -90,7 +90,7 @@ public final class UtilModule
 		String text = mes.getMessage();
 		int offset = getTriggerOffset(text);
 
-		return text.substring(offset).split("\\s+", count);
+		return text.substring(offset).split("\\s+", count + 1);
 	}
 
 	public List<String> getParams( Message mes, int count )

@@ -251,9 +251,9 @@ public class Alias
 		"<Name> is the name of the alias to alter"
 	};
 	public void commandRemoveHelp(Message mes) {
-		String[] params = mods.util.getParamArray(mes, 2);
+		String[] params = mods.util.getParamArray(mes);
 
-		if (params.length <= 1)
+		if (params.length != 2)
 		{
 			throw new ChoobBadSyntaxError();
 		}
@@ -302,9 +302,9 @@ public class Alias
 	};
 	public void commandRemove( Message mes ) 
 	{
-		String[] params = mods.util.getParamArray(mes, 1);
+		String[] params = mods.util.getParamArray(mes);
 
-		if (params.length <= 1)
+		if (params.length != 2)
 		{
 			throw new ChoobBadSyntaxError();
 		}
@@ -345,7 +345,7 @@ public class Alias
 		String params[] = mods.util.getParamArray(mes);
 
 		String clause = "locked = 1";
-		if (params.length > 3)
+		if (params.length > 2)
 			throw new ChoobBadSyntaxError();
 		else if (params.length == 2)
 		{
@@ -388,14 +388,14 @@ public class Alias
 
 	public String[] helpCommandShow = {
 		"Give information about an alias.",
-		"<Alias>",
-		"<Alias> is the name of the alias to show"
+		"<Name>",
+		"<Name> is the name of the alias to show"
 	};
 	public void commandShow( Message mes )
 	{
-		String[] params = mods.util.getParamArray(mes, 1);
+		String[] params = mods.util.getParamArray(mes);
 
-		if (params.length <= 1)
+		if (params.length != 2)
 		{
 			throw new ChoobBadSyntaxError();
 		}
@@ -450,14 +450,14 @@ public class Alias
 
 	public String[] helpCommandLock = {
 		"Lock an alias so that no-one but its owner can change it.",
-		"<Alias>",
-		"<Alias> is the name of the alias to lock"
+		"<Name>",
+		"<Name> is the name of the alias to lock"
 	};
 	public void commandLock( Message mes )
 	{
-		String[] params = mods.util.getParamArray(mes, 1);
+		String[] params = mods.util.getParamArray(mes);
 
-		if (params.length <= 1)
+		if (params.length != 2)
 		{
 			throw new ChoobBadSyntaxError();
 		}
@@ -481,14 +481,14 @@ public class Alias
 
 	public String[] helpCommandUnlock = {
 		"Unlock an alias so that anyone can change it.",
-		"<Alias>",
-		"<Alias> is the name of the alias to unlock"
+		"<Name>",
+		"<Name> is the name of the alias to unlock"
 	};
 	public void commandUnlock( Message mes )
 	{
-		String[] params = mods.util.getParamArray(mes, 1);
+		String[] params = mods.util.getParamArray(mes);
 
-		if (params.length <= 1)
+		if (params.length != 2)
 		{
 			throw new ChoobBadSyntaxError();
 		}
