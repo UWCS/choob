@@ -169,6 +169,11 @@ public class Help
 	 * /_/   \_\_|  |___| /_/   \_\_____|___/_/   \_\____/|_____|____/
 	 */
 	// These are used for core help bits, and just alias to other bits of code.
+	public String[] apiGetHelp( String topic )
+	{
+		return _apiGetHelp(topic, true, MODE_ALL);
+	}
+
 	public String[] apiGetHelp( String topic, Boolean isLong )
 	{
 		return _apiGetHelp(topic, isLong, MODE_ALL);
@@ -600,7 +605,10 @@ public class Help
 					// Command help has defined form
 					if (help.length == 2 || mode == MODE_SYNTAX)
 					{
-						lines.add( formatSyntax(command + " " + help[1]) + "." );
+						if (help.length == 1)
+							lines.add( "No syntax for " + formatCommand(command) + "!" );
+						else
+							lines.add( formatSyntax(command + " " + help[1]) + "." );
 					}
 					else if (help.length > 2)
 					{
@@ -658,7 +666,12 @@ public class Help
 				if (type.equalsIgnoreCase("command"))
 				{
 					if (help.length == 2 || mode == MODE_SYNTAX)
-						buf.append( " " + formatSyntax(command + " " + help[1]) + "." );
+					{
+						if (help.length == 1)
+							buf.append( "No syntax for " + formatCommand(command) + "!" );
+						else
+							buf.append( " " + formatSyntax(command + " " + help[1]) + "." );
+					}
 					else if (help.length > 2)
 					{
 						buf.append( " " + formatSyntax(command + " " + help[1]) + ", where " );

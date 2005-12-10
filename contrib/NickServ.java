@@ -209,6 +209,9 @@ public class NickServ
 
 	public String[] optionsGeneral = { "Password" };
 	public boolean optionCheckGeneralPassword( String value ) { return true; }
+	public String[] helpOptionPassword = {
+		"Set this to the bot's NickServ password to make it identify with NickServ."
+	};
 
 	public void onPrivateNotice( Message mes )
 	{

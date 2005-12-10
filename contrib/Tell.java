@@ -85,8 +85,8 @@ public class Tell
 
 	public synchronized void commandSend( Message mes )
 	{
-		List<String> params = mods.util.getParams(mes, 2);
-		if (params.size() <= 2)
+		String[] params = mods.util.getParamArray(mes, 2);
+		if (params.length <= 2)
 		{
 			irc.sendContextReply(mes, "Syntax: 'Tell.Send " + helpCommandSend[1] + "'");
 			return;
@@ -97,17 +97,16 @@ public class Tell
 		// Note: This is intentionally not translated to a primary nick.
 		tellObj.from = mes.getNick();
 
-		tellObj.message = params.get(2); // 'Message'.
+		tellObj.message = params[2]; // 'Message'.
 
 		tellObj.date = mes.getMillis();
 
-		System.out.println("Command: " + params.get(0));
-		if (params.get(0).toLowerCase().equals("ask"))
+		if (params[0].toLowerCase().equals("ask"))
 			tellObj.type = "ask";
 		else
 			tellObj.type = "tell";
 
-		final String[] targets = params.get(1).split(",");
+		final String[] targets = params[1].split(",");
 
 		if (targets.length > MAXTARGETS)
 		{
@@ -172,10 +171,13 @@ public class Tell
 		}
 	}
 
-	public String[] optionsUser = { "Secure", "Insecure" };
-	public String[] optionsUserDefaults = { "0", "0" };
-	public boolean optionCheckUserSecure( String value, String userName ) { return value.equals("1") || value.equals("0"); }
-	public boolean optionCheckUserInsecure( String value, String userName ) { return value.equals("1") || value.equals("0"); }
+	public String[] optionsUser = { "Secure" };
+	public String[] optionsUserDefaults = { "1" };
+	public boolean optionCheckUserSecure( String value, String userName ) { return value.equals("0") || value.equals("1") || value.equals("2"); }
+	public String[] helpOptionSecure = {
+		"Choose the security level of your tells.",
+		"Set this to \"0\" to not have secure tells (no NickServ required), \"1\" to make them require NickServ, or \"2\" to make them require both NickServ and that your nicknames are linked in the bot."
+	};
 
 	private synchronized void spew (String nick)
 	{
@@ -223,67 +225,71 @@ public class Tell
 				TellObject tellObj = (TellObject)results.get(i);
 				if (tellObj.nickServ)
 				{
-					// This is a secure tell. One of several things can happen.
-					// If Secure is not set, we require only NS auth.
-					// Otherwise, we check if rootNick was set. If so, we
-					// require both NS auth and that testNick is linked to
-					// rootNick.
 					if (nsStatus == -1)
 					{
+						// NickServ not yet checked...
+
+						// First pick up the setting of Secure.
+						int secureOption;
 						try
 						{
-							if ( mods.plugin.callAPI("Options", "GetUserOption", nick, "Secure", "0" ).equals("1") )
-							{
-								// If secure tell is set, we require the
-								// actual nickname to be explicitly linked
-								// to the root.
+							String val = (String)mods.plugin.callAPI("Options", "GetUserOption", nick, "Secure", "1" );
+							secureOption = Integer.parseInt(val);
+						}
+						catch (Throwable e)
+						{
+							// No such call(default) or number format issue(!)
+							secureOption = 1;
+						}
+						if (secureOption > 2 || secureOption < 0)
+							secureOption = 1;
 
-								// If not, just the primary will do.
-								String secureRootNick = mods.security.getRootUser( nick );
-								if (rootNick != null)
-								{
-									// rootNick is set and we're directed at it.
-									// Hence must check root of real nick is
-									// equal to rootNick.
-									if ( !rootNick.equalsIgnoreCase(secureRootNick) )
-										nsStatus = -2;
-								}
-								else
-								{
-									// rootNick is NOT set. Since Secure
-									// operates on bot users, and the user
-									// hasn't registered his, we tell him to
-									// bugger off.
-									nsStatus = -3;
-								}
+						// This is a secure tell. One of several things can happen.
+						if ( secureOption == 2 )
+						{
+							// If secure tell is set, we require the
+							// actual nickname to be explicitly linked
+							// to the root.
+							String secureRootNick = mods.security.getRootUser( nick );
+							if (rootNick != null)
+							{
+								// rootNick is set and we're directed at it.
+								// Hence must check root of real nick is
+								// equal to rootNick.
+								if ( !rootNick.equalsIgnoreCase(secureRootNick) )
+									nsStatus = -2;
+							}
+							else
+							{
+								// rootNick is NOT set. Since Secure
+								// operates on bot users, and the user
+								// hasn't registered his, we tell him to
+								// bugger off.
+								nsStatus = -3;
 							}
 						}
-						catch (ChoobNoSuchCallException e) { } // Since default is 0, don't care
+						else
+						{
+							// If not, just the primary will do.
+						}
+
 						if (nsStatus == -1)
 						{
-							// Either not secure tell, or properly linked.
-							// We still require NS auth.
-							nsStatus = nsStatus( nick );
-						}
-					}
-					// If all the above ran and we're allowed to send, nsStatus
-					// is 3. Otherwise it's >= -1, <= 2.
-					if (nsStatus == -1)
-					{
-						try
-						{
-							if ( mods.plugin.callAPI("Options", "GetUserOption", nick, "Insecure", "1" ).equals("1") )
+							// No errors from the above...
+							if (secureOption != 0)
+							{
+								// We require NS auth.
 								nsStatus = nsStatus( nick );
-						}
-						catch (ChoobNoSuchCallException e) {
-							// Use default.
-							nsStatus = nsStatus( nick );
+							}
+							else
+							{
+								// We don't require NS auth.
+								nsStatus = 3;
+							}
 						}
 					}
 					// If all the above ran and we're allowed to send, nsStatus
 					// is 3. Otherwise it's >= -1, <= 2.
-					if (nsStatus != 3)
-						continue;
 					if (nsStatus != 3)
 						continue;
 				}
@@ -291,11 +297,11 @@ public class Tell
 				mods.odb.delete(results.get(i));
 			}
 			if (nsStatus == -2)
-				irc.sendMessage(nick, "Hi! I think you have tells, and you have set Secure, but your nickname isn't linked to " + rootNick + ". See Help.Help Security.UsingLink to do this, then do Tell.Get.");
+				irc.sendMessage(nick, "Hi! I think you have tells, and you have set Secure=2, but your nickname isn't linked to " + rootNick + ". See Help.Help Security.UsingLink to do this, then do Tell.Get.");
 			else if (nsStatus == -3)
-				irc.sendMessage(nick, "Hi! I think you have tells, and you have set Secure, but you haven't actually registered " + testNick + " with the bot. Since this defeats the point of secure tells, I suggest you register it (Security.AddUser), then link this nickname to it (See Help.Help Security.UsingLink).");
+				irc.sendMessage(nick, "Hi! I think you have tells, and you have set Secure=2, but you haven't actually registered " + testNick + " with the bot. Since this defeats the point of secure tells, I suggest you register it (Security.AddUser), then link this nickname to it (See Help.Help Security.UsingLink).");
 			else if (nsStatus == 0)
-				irc.sendMessage(nick, "Hi! I think you (" + testNick + ") have tells, but you haven't actually registered your nickname with NickServ. Since " + testNick + " was registered and you haven't set the Unsecure option, you need to register with this nickname or change to " + testNick + " to pick up your tells.");
+				irc.sendMessage(nick, "Hi! I think you (" + testNick + ") have tells, but you haven't actually registered your nickname with NickServ. Since " + testNick + " was registered and you haven't set Secure=0, you need to register with this nickname or change to " + testNick + " to pick up your tells.");
 			else if (nsStatus > 0 && nsStatus < 3)
 				irc.sendMessage(nick, "Hi! You have tells, but you're not identified with NickServ! Once you've done so, use the Tell.Get command.");
 		}

@@ -56,15 +56,14 @@ public class Options
 	};
 	public void commandList( Message mes )
 	{
-		List<String> params = mods.util.getParams( mes );
+		String[] params = mods.util.getParamArray( mes );
 
 		// Parse input
-		if (params.size() > 2)
+		if (params.length > 2)
 		{
-			irc.sendContextReply( mes, "Syntax: 'Options.List " + helpCommandList[1] + "'." );
-			return;
+			throw new ChoobBadSyntaxError();
 		}
-		else if (params.size() == 1)
+		else if (params.length == 1)
 		{
 			// List all.
 			StringBuilder output = new StringBuilder("Options: ");
@@ -101,7 +100,7 @@ public class Options
 		else
 		{
 			// Passed plugin name.
-			String pluginName = params.get(1);
+			String pluginName = params[1];
 
 			String[] options = _getUserOptions(pluginName);
 			String[] defaults = _getUserOptionDefaults(pluginName);
@@ -135,15 +134,14 @@ public class Options
 	};
 	public void commandListGeneral( Message mes )
 	{
-		List<String> params = mods.util.getParams( mes );
+		String[] params = mods.util.getParamArray( mes );
 
 		// Parse input
-		if (params.size() > 2)
+		if (params.length > 2)
 		{
-			irc.sendContextReply( mes, "Syntax: 'Options.ListGeneral " + helpCommandList[1] + "'." );
-			return;
+			throw new ChoobBadSyntaxError();
 		}
-		else if (params.size() == 1)
+		else if (params.length == 1)
 		{
 			// List all.
 			StringBuilder output = new StringBuilder("Options: ");
@@ -180,7 +178,7 @@ public class Options
 		else
 		{
 			// Passed plugin name.
-			String pluginName = params.get(1);
+			String pluginName = params[1];
 
 			String[] options = _getGeneralOptions(pluginName);
 			String[] defaults = _getGeneralOptionDefaults(pluginName);
@@ -216,7 +214,7 @@ public class Options
 	};
 	public void commandSet( Message mes )
 	{
-		List<String> params = mods.util.getParams( mes, 2 );
+		String[] params = mods.util.getParamArray( mes, 2 );
 
 		String nickName = mes.getNick();
 
@@ -243,23 +241,21 @@ public class Options
 		}
 
 		// Parse input
-		if (params.size() != 3)
+		if (params.length != 3)
 		{
-			irc.sendContextReply( mes, "Syntax: 'Options.Set " + helpCommandSet[1] + "'." );
-			return;
+			throw new ChoobBadSyntaxError();
 		}
 
-		String[] vals = params.get(2).split("=", -1);
+		String[] vals = params[2].split("=", -1);
 		if (vals.length != 2)
 		{
-			irc.sendContextReply( mes, "Syntax: 'Options.Set " + helpCommandSet[1] + "'." );
-			return;
+			throw new ChoobBadSyntaxError();
 		}
 
 		// Check the option is OK
 		if (vals[1].length() > 0)
 		{
-			String err = _checkUserOption( params.get(1), vals[0].toLowerCase(), vals[1], userName );
+			String err = _checkUserOption( params[1], vals[0].toLowerCase(), vals[1], userName );
 			if (err != null)
 			{
 				irc.sendContextReply( mes, "Could not set the option! Error: " + err );
@@ -268,7 +264,7 @@ public class Options
 		}
 		else
 		{
-			String[] opts = _getUserOptions( params.get(1) );
+			String[] opts = _getUserOptions( params[1] );
 			boolean found = false;
 			if (opts != null)
 			{
@@ -281,7 +277,7 @@ public class Options
 			}
 			if (!found)
 			{
-				irc.sendContextReply( mes, "Unknown option: " + params.get(1) + "." + vals[0] );
+				irc.sendContextReply( mes, "Unknown option: " + params[1] + "." + vals[0] );
 				return;
 			}
 		}
@@ -290,7 +286,7 @@ public class Options
 		List<UserOption> options = mods.odb.retrieve( UserOption.class,
 			  "WHERE optionName = '" + vals[0].replaceAll("(['\\\\])", "\\\\$1") + "' AND "
 			+ " userName = '" + userName.replaceAll("(['\\\\])", "\\\\$1") + "' AND "
-			+ " pluginName = '" + params.get(1).replaceAll("(['\\\\])", "\\\\$1") + "'");
+			+ " pluginName = '" + params[1].replaceAll("(['\\\\])", "\\\\$1") + "'");
 
 		if ( options.size() >= 1 )
 		{
@@ -308,14 +304,14 @@ public class Options
 		else if (vals[1].length() > 0)
 		{
 			UserOption option = new UserOption();
-			option.pluginName = params.get(1);
+			option.pluginName = params[1];
 			option.userName = userName;
 			option.optionName = vals[0];
 			option.optionValue = vals[1];
 			mods.odb.save(option);
 		}
 
-		irc.sendContextReply( mes, "OK, set " + vals[0] + " in " + params.get(1) + " for " + userName + " to '" + vals[1] + "'." );
+		irc.sendContextReply( mes, "OK, set " + vals[0] + " in " + params[1] + " for " + userName + " to '" + vals[1] + "'." );
 	}
 
 	public String[] helpCommandSetGeneral = {
@@ -327,28 +323,26 @@ public class Options
 	};
 	public void commandSetGeneral( Message mes )
 	{
-		List<String> params = mods.util.getParams( mes, 2 );
+		String[] params = mods.util.getParamArray( mes, 2 );
 
 		// Parse input
-		if (params.size() != 3)
+		if (params.length != 3)
 		{
-			irc.sendContextReply( mes, "Syntax: 'Options.SetGeneral " + helpCommandSetGeneral[1] + "'." );
-			return;
+			throw new ChoobBadSyntaxError();
 		}
 
-		String[] vals = params.get(2).split("=", -1);
+		String[] vals = params[2].split("=", -1);
 		if (vals.length != 2)
 		{
-			irc.sendContextReply( mes, "Syntax: 'Options.SetGeneral " + helpCommandSetGeneral[1] + "'." );
-			return;
+			throw new ChoobBadSyntaxError();
 		}
 
 		// TODO - make plugin owners always able to set this. Or something.
-		mods.security.checkNickPerm(new ChoobPermission("plugin.options.set." + params.get(1)), mes.getNick());
+		mods.security.checkNickPerm(new ChoobPermission("plugin.options.set." + params[1]), mes.getNick());
 
 		if (vals[1].length() > 0)
 		{
-			String err = _checkGeneralOption( params.get(1), vals[0].toLowerCase(), vals[1] );
+			String err = _checkGeneralOption( params[1], vals[0].toLowerCase(), vals[1] );
 			if (err != null)
 			{
 				irc.sendContextReply( mes, "Could not set the option! Error: " + err );
@@ -357,7 +351,7 @@ public class Options
 		}
 		else
 		{
-			String[] opts = _getGeneralOptions( params.get(1) );
+			String[] opts = _getGeneralOptions( params[1] );
 			boolean found = false;
 			if ( opts != null )
 			{
@@ -370,7 +364,7 @@ public class Options
 			}
 			if (!found)
 			{
-				irc.sendContextReply( mes, "Unknown option: " + params.get(1) + "." + vals[0] );
+				irc.sendContextReply( mes, "Unknown option: " + params[1] + "." + vals[0] );
 				return;
 			}
 		}
@@ -378,7 +372,7 @@ public class Options
 		// OK, have an option.
 		List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class,
 			  "WHERE optionName = '" + vals[0].replaceAll("(['\\\\])", "\\\\$1") + "' AND "
-			+ " pluginName = '" + params.get(1).replaceAll("(['\\\\])", "\\\\$1") + "'");
+			+ " pluginName = '" + params[1].replaceAll("(['\\\\])", "\\\\$1") + "'");
 
 		if ( options.size() >= 1 )
 		{
@@ -396,13 +390,13 @@ public class Options
 		else if (vals[1].length() > 0)
 		{
 			GeneralOption option = new GeneralOption();
-			option.pluginName = params.get(1);
+			option.pluginName = params[1];
 			option.optionName = vals[0];
 			option.optionValue = vals[1];
 			mods.odb.save(option);
 		}
 
-		irc.sendContextReply( mes, "OK, set " + vals[0] + " in " + params.get(1) + " to '" + vals[1] + "'." );
+		irc.sendContextReply( mes, "OK, set " + vals[0] + " in " + params[1] + " to '" + vals[1] + "'." );
 	}
 
 	public String[] helpCommandGet = {
@@ -412,17 +406,16 @@ public class Options
 	};
 	public void commandGet( Message mes )
 	{
-		List<String> params = mods.util.getParams(mes);
+		String[] params = mods.util.getParamArray(mes);
 
 		String pluginName;
-		if (params.size() > 2)
+		if (params.length > 2)
 		{
-			irc.sendContextReply(mes, "Syntax: 'Options.Get " + helpCommandGet[1] + "'.");
-			return;
+			throw new ChoobBadSyntaxError();
 		}
-		else if (params.size() == 2)
+		else if (params.length == 2)
 		{
-			pluginName = params.get(1);
+			pluginName = params[1];
 		}
 		else
 		{
@@ -473,24 +466,23 @@ public class Options
 	};
 	public void commandGetGeneral( Message mes )
 	{
-		List<String> params = mods.util.getParams(mes);
+		String[] params = mods.util.getParamArray(mes);
 
 		String pluginName;
-		if (params.size() != 2)
+		if (params.length != 2)
 		{
-			if (params.size() == 1 && mes instanceof PrivateEvent)
+			if (params.length == 1 && mes instanceof PrivateEvent)
 			{
 				pluginName = null;
 			}
 			else
 			{
-				irc.sendContextReply(mes, "Syntax: 'Options.GetGeneral " + helpCommandGetGeneral[1] + "'. Warning! Some plugins save passwords!");
-				return;
+				throw new ChoobBadSyntaxError();
 			}
 		}
 		else
 		{
-			pluginName = params.get(1);
+			pluginName = params[1];
 		}
 
 		// TODO - make plugin owners always able to set this. Or something.
@@ -523,6 +515,44 @@ public class Options
 					out.append(" " + option.optionName + "=" + option.optionValue);
 			}
 			irc.sendContextReply( mes, out.toString() );
+		}
+	}
+
+	public String[] helpCommandHelp = {
+		"Get help on an option.",
+		"<Plugin> <Name>",
+		"<Plugin> is the name of the plugin the option lives in",
+		"<Name> is the name of the option"
+	};
+	public void commandHelp( Message mes )
+	{
+		String[] params = mods.util.getParamArray(mes);
+
+		String pluginName, optionName;
+		if (params.length == 2)
+		{
+			String[] bits = params[1].split("\\.");
+			if (bits.length != 2)
+				throw new ChoobBadSyntaxError();
+
+			pluginName = bits[0];
+			optionName = bits[1];
+		}
+		else if (params.length == 3)
+		{
+			pluginName = params[1];
+			optionName = params[2];
+		}
+		else
+			throw new ChoobBadSyntaxError();
+
+		try
+		{
+			irc.sendContextReply(mes, (String[])mods.plugin.callAPI("Help", "GetHelp", pluginName + ".option." + optionName ));
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			irc.sendContextReply(mes, "Sorry, the help plugin isn't loaded!");
 		}
 	}
 
