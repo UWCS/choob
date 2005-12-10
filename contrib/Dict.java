@@ -147,7 +147,7 @@ public class Dict
 			throw new DictionaryException("Error reading site: " + e, e);
 		}
 
-		if (page.indexOf("<p>No spelling suggestions were found.</p>")==-1)
+		if (page.indexOf("<p>No spelling suggestions were found.</p>")!=-1)
 			return "No suggestions were found for '" + item + "'.";
 
 		Matcher ma=Pattern.compile("(?s)\r?\nSuggestions:<br>(.*?)<p>No entry was found in the dictionary. Would you like to").matcher(page);
