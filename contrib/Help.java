@@ -726,11 +726,11 @@ public class Help
 
 	private String formatSyntax(String text)
 	{
-		return "Syntax: '" + formatSyntaxInternal(text) + "'";
+		return "Syntax: '" + formatSyntaxInternal(text, true) + "'";
 	}
 
 	Pattern paramPattern = Pattern.compile("<\\w+>");
-	private String formatSyntaxInternal(String text)
+	private String formatSyntaxInternal(String text, boolean resolve)
 	{
 		StringBuilder result = new StringBuilder();
 
@@ -738,7 +738,10 @@ public class Help
 
 		result.append(irc.getTrigger());
 
-		result.append(formatCommand(bits[0]));
+		if (resolve)
+			result.append(formatFullCommand(bits[0]));
+		else
+			result.append(formatCommand(bits[0]));
 
 		if (bits.length == 2)
 		{
@@ -760,7 +763,7 @@ public class Help
 
 	private String formatAlias(String text)
 	{
-		return formatSyntaxInternal(text);
+		return formatSyntaxInternal(text, false);
 	}
 
 	private String formatPlugin(String text)
@@ -770,10 +773,7 @@ public class Help
 
 	private String formatCommand(String text)
 	{
-		if (text.indexOf('.') == -1)
-			return Colors.BOLD + text + Colors.NORMAL;
-		else
-			return Colors.BOLD + formatFullCommand(text) + Colors.NORMAL;
+		return Colors.BOLD + text + Colors.NORMAL;
 	}
 
 	private String formatFullCommand(String text)
@@ -782,16 +782,14 @@ public class Help
 		try
 		{
 			String core = (String)mods.plugin.callAPI("Alias", "GetCoreAlias", text);
-			System.out.println("Core: " + core);
 			if (core == null)
-				return text;
+				return Colors.BOLD + text + Colors.NORMAL;
 			else
-				return core;
+				return Colors.BOLD + core + Colors.NORMAL;
 		}
 		catch (ChoobNoSuchCallException e)
 		{
-			System.out.println("No core...");
-			return text;
+			return Colors.BOLD + text + Colors.NORMAL;
 		}
 	}
 
@@ -799,7 +797,7 @@ public class Help
 	private String formatRef(String text)
 	{
 		String[] bits = text.split(" ", 2);
-		return bits[0] + " '" + formatSyntaxInternal("Help.Help " + bits[1]) + "'";
+		return bits[0] + " '" + formatSyntaxInternal("Help.Help " + bits[1], true) + "'";
 	}
 
 	private String formatTopic(String text)
