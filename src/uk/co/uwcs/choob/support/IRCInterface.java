@@ -86,6 +86,20 @@ public final class IRCInterface
 	}
 
 	/**
+	 * Break a part a list of messages into deliverable chunks.
+	 * @param messages The strings to break apart.
+	 * @param prefix A length to ensure space for in the cut strings.
+	 * @return A list of strings, cut to the max message length.
+	 */
+	public List<String> cutStrings(String[] messages, int prefix)
+	{
+		List<String> ret = new ArrayList<String>();
+		for(String line: messages)
+			ret.addAll(cutString(cleanse(line), prefix));
+		return ret;
+	}
+
+	/**
 	 * Break a part a message into deliverable chunks.
 	 * @param message The string to break apart.
 	 * @param prefix A length to ensure space for in the cut strings.
@@ -125,6 +139,24 @@ public final class IRCInterface
 			}
 		}
 		return lines;
+	}
+
+	/**
+	 * Sends an in-context response to an event. Automatically decides between replying in the channel the event was triggered from, and private messaging the response.
+	 * This is the best function to call, unless you never want the reply to appear in the channel.
+	 * @param context A context to reply in.
+	 * @param messages A Strings[] containing the message you want to send.
+	 * @param prefix If in a channel, should the reply be prefixed with "&lt;Nick&gt;: "?
+	 */
+	public void sendContextReply(ContextEvent context, String[] messages, boolean prefix)
+	{
+		if ( !(context instanceof UserEvent) )
+			throw new IllegalArgumentException("ConextEvent " + context + " passed to sendContextReply was not a contextEvent!");
+
+		String nick = ((UserEvent)context).getNick();
+		List<String> bits = cutStrings(messages, nick.length() + 2);
+
+		privateSendContextMessage(context, bits, prefix);
 	}
 
 	/**
@@ -223,6 +255,16 @@ public final class IRCInterface
 	/**
 	 * Send a block of lines as a single reply.
 	 * @param context A context to reply in.
+	 * @param messages A String[] containing the message you want to send.
+	 */
+	public void sendContextReply(ContextEvent context, String[] lines)
+	{
+		sendContextReply(context, lines, true);
+	}
+
+	/**
+	 * Send a block of lines as a single reply.
+	 * @param context A context to reply in.
 	 * @param messages A list of Strings containing the message you want to send.
 	 */
 	public void sendContextReply(ContextEvent context, List<String> lines)
@@ -238,6 +280,16 @@ public final class IRCInterface
 	public void sendContextMessage(ContextEvent context, String message)
 	{
 		sendContextReply(context, message, false);
+	}
+
+	/**
+	 * Send a block of lines as a single reply.
+	 * @param context A context to reply in.
+	 * @param messages A String[] containing the message you want to send.
+	 */
+	public void sendContextMessage(ContextEvent context, String[] lines)
+	{
+		sendContextReply(context, lines, false);
 	}
 
 	/**

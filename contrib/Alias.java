@@ -22,12 +22,11 @@ public class AliasObject
 	public String owner;
 	public boolean locked;
 	public String help;
+	public String core;
 }
 
 public class Alias
 {
-	private final String validator="[^A-Za-z_0-9]+";
-
 	public String[] info()
 	{
 		return new String[] {
@@ -70,16 +69,15 @@ public class Alias
 	};
 	public void commandAdd( Message mes ) 
 	{
-		List<String> params = mods.util.getParams(mes, 2);
+		String[] params = mods.util.getParamArray(mes, 2);
 
-		if (params.size() <= 2 || params.get(1).equals(""))
+		if (params.length <= 2)
 		{
-			irc.sendContextReply(mes, "Syntax: 'Alias.Add " + helpCommandAdd[1] + "'.");
-			return;
+			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params.get(1).replaceAll(validator, "").toLowerCase();
-		String conv = params.get(2);
+		String name = params[1];
+		String conv = params[2];
 
 		if (conv.indexOf('.') == -1 || (conv.indexOf(' ') != -1 && conv.indexOf(' ') < conv.indexOf('.')))
 		{
@@ -94,7 +92,7 @@ public class Alias
 			else
 				actualParams = conv.substring(spacePos + 1);
 
-			String subAlias = conv.substring(0, spacePos).replaceAll(validator, "");
+			String subAlias = conv.substring(0, spacePos);
 			AliasObject alias = getAlias(subAlias);
 
 			if (alias == null)
@@ -106,10 +104,10 @@ public class Alias
 			String aliasText = alias.converted;
 
 			// Rebuild params with no upper limit.
-			params = mods.util.getParams(mes);
-			String[] aliasParams = new String[params.size() - 2];
-			for(int i=2; i<params.size(); i++)
-				aliasParams[i-2] = params.get(i);
+			params = mods.util.getParamArray(mes);
+			String[] aliasParams = new String[params.length - 2];
+			for(int i=2; i<params.length; i++)
+				aliasParams[i-2] = params[i];
 
 			String newText = applyAlias(subAlias, alias.converted, aliasParams, actualParams);
 			if (newText == null)
@@ -156,6 +154,39 @@ public class Alias
 		irc.sendContextReply(mes, "Aliased '" + name + "' to '" + conv + "'" + oldAlias + ".");
 	}
 
+	public String[] helpCommandSetCoreAlias = {
+		"Make an alias a 'core' alias.",
+		"<Command> <Alias>",
+		"<Command> is the name of the command",
+		"<Alias> is the name of the alias"
+	};
+	public void commandSetCoreAlias(Message mes) {
+		String[] params = mods.util.getParamArray(mes);
+
+		if (params.length != 3)
+		{
+			throw new ChoobBadSyntaxError();
+		}
+
+		String command = params[1];
+		String aliasName = params[2];
+
+		mods.security.checkNickPerm(new ChoobPermission("plugin.alias.setcore"), mes.getNick());
+
+		// Sanity check
+		AliasObject alias = getAlias(aliasName);
+		if (alias == null)
+		{
+			irc.sendContextReply(mes, "Alias " + aliasName + " does not exist!");
+			return;
+		}
+
+		alias.core = command;
+		mods.odb.update(alias);
+
+		irc.sendContextReply(mes, "OK, " + command + " set to have " + aliasName + " as core alias!");
+	}
+
 	public String[] helpHelpExamples = {
 		"Some alias help examples:",
 		"'Alias.AddHelp dance Dance with someone! ||| [ <Nick> ] ||| <Nick> is someone to dance with'",
@@ -173,24 +204,17 @@ public class Alias
 		"<Description> is the description of that parameter"
 	};
 	public void commandAddHelp(Message mes) {
-		List<String> params = mods.util.getParams(mes, 2);
+		String[] params = mods.util.getParamArray(mes, 2);
 
-		if (params.size() <= 2 || params.get(1).equals(""))
+		if (params.length <= 2)
 		{
-			irc.sendContextReply(mes, "Syntax: 'Alias.AddHelp " + helpCommandAddHelp[1] + "'.");
-			return;
+			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params.get(1).replaceAll(validator, "").toLowerCase();
-
-		if (name.equals(""))
-		{
-			irc.sendContextReply(mes, "Syntax: 'Alias.AddHelp " + helpCommandAddHelp[1] + "'.");
-			return;
-		}
+		String name = params[1];
 
 		// TODO - check help.
-		String[] help = params.get(2).split("\\s*\\|\\|\\|\\s*");
+		String[] help = params[2].split("\\s*\\|\\|\\|\\s*");
 
 		AliasObject alias = getAlias(name);
 
@@ -208,7 +232,7 @@ public class Alias
 					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
 			}
 
-			alias.help = params.get(2);
+			alias.help = params[2];
 			alias.owner = nick;
 
 			mods.odb.update(alias);
@@ -227,15 +251,14 @@ public class Alias
 		"<Name> is the name of the alias to alter"
 	};
 	public void commandRemoveHelp(Message mes) {
-		List<String> params = mods.util.getParams(mes, 2);
+		String[] params = mods.util.getParamArray(mes, 2);
 
-		if (params.size() <= 1 || params.get(1).equals(""))
+		if (params.length <= 1)
 		{
-			irc.sendContextReply(mes, "Syntax: 'Alias.RemoveHelp " + helpCommandRemoveHelp[1] + "'.");
-			return;
+			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params.get(1).replaceAll(validator, "").toLowerCase();
+		String name = params[1];
 
 		if (name.equals(""))
 		{
@@ -279,21 +302,14 @@ public class Alias
 	};
 	public void commandRemove( Message mes ) 
 	{
-		List<String> params = mods.util.getParams(mes, 1);
+		String[] params = mods.util.getParamArray(mes, 1);
 
-		if (params.size() <= 1 || params.get(1).equals(""))
+		if (params.length <= 1)
 		{
-			irc.sendContextReply(mes, "Syntax: Alias.Remove <aliasname>");
-			return;
+			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params.get(1).replaceAll(validator, "").toLowerCase();
-
-		if (name.equals(""))
-		{
-			irc.sendContextReply(mes, "Syntax: Alias.Remove <Name>");
-			return;
-		}
+		String name = params[1];
 
 		AliasObject alias = getAlias(name);
 
@@ -301,7 +317,6 @@ public class Alias
 		if (nick == null)
 			nick = mes.getNick();
 
-		String oldAlias = ""; // Set to content of old alias, if there was one.
 		if (alias != null)
 		{
 			if (alias.locked)
@@ -311,8 +326,6 @@ public class Alias
 				else
 					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
 			}
-
-			oldAlias = " (was " + alias.converted + ")";
 
 			mods.odb.delete(alias);
 
@@ -325,17 +338,26 @@ public class Alias
 	public String[] helpCommandList = {
 		"List all aliases.",
 		"[<Which>]",
-		"<Which> is either not present for all unlocked, 'locked' or 'all'"
+		"<Which> is either 'locked', or 'unlocked' or 'all' (default: 'locked')"
 	};
-	public void commandList( Message mes ) 
+	public void commandList( Message mes )
 	{
-		String clause = "locked = 0";
+		String params[] = mods.util.getParamArray(mes);
 
-		String parm = mods.util.getParamString(mes).toLowerCase();
-		if (parm.equals("locked"))
-			clause = "locked = 1";
-		else if (parm.equals("all"))
-			clause = "1";
+		String clause = "locked = 1";
+		if (params.length > 3)
+			throw new ChoobBadSyntaxError();
+		else if (params.length == 2)
+		{
+			if (params[1].equals("locked"))
+				clause = "locked = 1";
+			else if (params[1].equals("unlocked"))
+				clause = "locked = 0";
+			else if (params[1].equals("all"))
+				clause = "1";
+			else
+				throw new ChoobBadSyntaxError();
+		}
 
 		List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE " + clause );
 
@@ -371,21 +393,14 @@ public class Alias
 	};
 	public void commandShow( Message mes )
 	{
-		List<String> params = mods.util.getParams(mes, 1);
+		String[] params = mods.util.getParamArray(mes, 1);
 
-		if (params.size() <= 1 || params.get(1).equals(""))
+		if (params.length <= 1)
 		{
-			irc.sendContextReply(mes, "Please specify the name of the alias to show.");
-			return;
+			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params.get(1).replaceAll(validator,"").toLowerCase();
-
-		if (name.equals(""))
-		{
-			irc.sendContextReply(mes, "Syntax: Alias.Show <Name>");
-			return;
-		}
+		String name = params[1];
 
 		AliasObject alias = getAlias(name);
 
@@ -421,6 +436,18 @@ public class Alias
 			return alias.help.split("\\s*\\|\\|\\|\\s*");
 	}
 
+	public String apiGetCoreAlias( String name )
+	{
+		String command = name.replaceAll("([\\\\\"])","\\\\$1").toLowerCase();
+
+		List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE core = \"" + command + "\"" );
+
+		if (results.size() == 0)
+			return name;
+		else
+			return results.get(0).name;
+	}
+
 	public String[] helpCommandLock = {
 		"Lock an alias so that no-one but its owner can change it.",
 		"<Alias>",
@@ -428,21 +455,14 @@ public class Alias
 	};
 	public void commandLock( Message mes )
 	{
-		List<String> params = mods.util.getParams(mes, 1);
+		String[] params = mods.util.getParamArray(mes, 1);
 
-		if (params.size() <= 1 || params.get(1).equals(""))
+		if (params.length <= 1)
 		{
-			irc.sendContextReply(mes, "Please specify the name of the alias to lock.");
-			return;
+			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params.get(1).replaceAll(validator,"").toLowerCase();
-
-		if (name.equals(""))
-		{
-			irc.sendContextReply(mes, "Syntax: Alias.Lock <Name>");
-			return;
-		}
+		String name = params[1];
 
 		AliasObject alias = getAlias(name);
 
@@ -464,23 +484,16 @@ public class Alias
 		"<Alias>",
 		"<Alias> is the name of the alias to unlock"
 	};
-	public void commandUnlock( Message mes ) 
+	public void commandUnlock( Message mes )
 	{
-		List<String> params = mods.util.getParams(mes, 1);
+		String[] params = mods.util.getParamArray(mes, 1);
 
-		if (params.size() <= 1 || params.get(1).equals(""))
+		if (params.length <= 1)
 		{
-			irc.sendContextReply(mes, "Please specify the name of the alias to unlock.");
-			return;
+			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params.get(1).replaceAll(validator,"").toLowerCase();
-
-		if (name.equals(""))
-		{
-			irc.sendContextReply(mes, "Syntax: Alias.Unlock <Name>");
-			return;
-		}
+		String name = params[1];
 
 		AliasObject alias = getAlias(name);
 
@@ -507,9 +520,9 @@ public class Alias
 
 	private AliasObject getAlias( String name ) 
 	{
-		String alias = name.replaceAll(validator,"").toLowerCase();
+		String alias = name.replaceAll("([\\\\\"])","\\\\$1").toLowerCase();
 
-		List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE name='" + alias + "'" );
+		List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE name = \"" + alias + "\"" );
 
 		if (results.size() == 0)
 			return null;
@@ -558,7 +571,7 @@ public class Alias
 		else
 			cmdParams = text.substring(cmdEnd);
 
-		String aliasName = text.substring(offset, cmdEnd).replaceAll(validator, "");
+		String aliasName = text.substring(offset, cmdEnd);
 
 		if (aliasName.equals(""))
 		{

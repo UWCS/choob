@@ -62,21 +62,21 @@ public final class UtilModule
 	}
 
 	/** Split the parameters of a Message event into a List of Strings */
-	public List<String> getParams( Message mes )
+	public String[] getParamArray( Message mes )
 	{
 		String text = mes.getMessage();
 		int offset = getTriggerOffset(text);
 
-		List<String> tempList = new LinkedList<String>();
+		return text.substring(offset).split("\\s+");
+	}
 
-		StringTokenizer tokens = new StringTokenizer(text.substring(offset), " ");
-
-		while( tokens.hasMoreTokens() )
-		{
-			tempList.add( tokens.nextToken() );
-		}
-
-		return tempList;
+	public List<String> getParams( Message mes )
+	{
+		String[] params = getParamArray( mes );
+		List<String> temp = new ArrayList(params.length);
+		for(String param: params)
+			temp.add(param);
+		return temp;
 	}
 
 	/**
@@ -85,49 +85,20 @@ public final class UtilModule
 	 *
 	 * Note that the command token is /NOT/ included in the count!
 	 */
-	public List<String> getParams( Message mes, int count )
+	public String[] getParamArray( Message mes, int count )
 	{
 		String text = mes.getMessage();
 		int offset = getTriggerOffset(text);
 
-		List<String> tempList = new LinkedList<String>();
+		return text.substring(offset).split("\\s+", count);
+	}
 
-		int currentPos = text.indexOf(' ', offset);
-		int lastPos = offset;
-		if (currentPos != -1)
-			for(int i=0; i<count; i++)
-			{
-				tempList.add( text.substring( lastPos, currentPos ) );
-
-				// Make sure we skip "empty" parameters.
-				do
-				{
-					lastPos = currentPos + 1;
-					currentPos = text.indexOf(' ', lastPos);
-
-					// I don't think there's a possible infinite loop condition here.
-					// Also note that lastPos can't be -1, so an indexOf fail doesn't break this, either.
-				}
-				while (currentPos == lastPos);
-
-				if (currentPos == -1)
-				{
-					// Last parameter!
-					if (lastPos < text.length() && text.charAt(lastPos) != ' ')
-						tempList.add( text.substring( lastPos ).trim() );
-					break;
-				}
-			}
-		else
-			tempList.add( text );
-
-		if (currentPos != -1) {
-			// Above loop finished without already slurping the final
-			// parameter. If there was one.
-			if (lastPos < text.length() && text.charAt(lastPos) != ' ')
-				tempList.add( text.substring( lastPos ).trim() );
-		}
-
-		return tempList;
+	public List<String> getParams( Message mes, int count )
+	{
+		String[] params = getParamArray( mes, count );
+		List<String> temp = new ArrayList(params.length);
+		for(String param: params)
+			temp.add(param);
+		return temp;
 	}
 }

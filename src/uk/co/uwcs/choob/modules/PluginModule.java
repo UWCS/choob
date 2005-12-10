@@ -33,6 +33,7 @@ public final class PluginModule
 	private ChoobPluginManager dPlugMan;
 	private ChoobPluginManager jsPlugMan;
 	private Choob bot;
+	private IRCInterface irc;
 
 	/**
 	 * Creates a new instance of the PluginModule.
@@ -45,7 +46,8 @@ public final class PluginModule
 		this.hsPlugMan = new HaxSunPluginManager(mods, irc);
 		this.dPlugMan = new ChoobDistributingPluginManager();
 		this.jsPlugMan = new JavaScriptPluginManager(mods, irc);
-		this.bot=bot;
+		this.bot = bot;
+		this.irc = irc;
 	}
 
 	public ChoobPluginManager getPlugMan()
@@ -206,25 +208,51 @@ public final class PluginModule
 			throw new ChoobNoSuchCallException(pluginName, "command " + command);
 	}
 
-	public String exceptionReply(Throwable e, String pluginName)
+	public void exceptionReply(Message mes, Throwable e, String pluginName)
 	{
 		if (pluginName == null)
 		{
-			if (e instanceof ChoobException || e instanceof ChoobError)
-				return "A plugin went wrong: " + e.getMessage();
+			if (e instanceof ChoobBadSyntaxError)
+			{
+				try
+				{
+					String[] params = mods.util.getParamArray(mes);
+					String[] guts = (String[])callAPI("Help", "GetSyntax", params[0]);
+					irc.sendContextReply(mes, guts);
+				}
+				catch (ChoobNoSuchCallException f)
+				{
+					irc.sendContextReply(mes, "Bad syntax! Unfortunately, I don't have Help loaded to tell you what it should be.");
+				}
+			}
+			else if (e instanceof ChoobException || e instanceof ChoobError)
+				irc.sendContextReply(mes, "A plugin went wrong: " + e.getMessage());
 			else if (e instanceof AccessControlException)
-				return "D'oh! A plugin needs permission " + ChoobAuthError.getPermissionText(((AccessControlException)e).getPermission()) + "!";
+				irc.sendContextReply(mes, "D'oh! A plugin needs permission " + ChoobAuthError.getPermissionText(((AccessControlException)e).getPermission()) + "!");
 			else
-				return "The plugin author was too lazy to trap the exception: " + e;
+				irc.sendContextReply(mes, "The plugin author was too lazy to trap the exception: " + e);
 		}
 		else
 		{
-			if (e instanceof ChoobException || e instanceof ChoobError)
-				return "Plugin " + pluginName + " went wrong: " + e.getMessage();
+			if (e instanceof ChoobBadSyntaxError)
+			{
+				try
+				{
+					String[] params = mods.util.getParamArray(mes);
+					String[] guts = (String[])callAPI("Help", "GetSyntax", params[0]);
+					irc.sendContextReply(mes, guts);
+				}
+				catch (ChoobNoSuchCallException f)
+				{
+					irc.sendContextReply(mes, "Bad syntax! Unfortunately, I don't have Help loaded to tell you what it should be.");
+				}
+			}
+			else if (e instanceof ChoobException || e instanceof ChoobError)
+				irc.sendContextReply(mes, "Plugin " + pluginName + " went wrong: " + e.getMessage());
 			else if (e instanceof AccessControlException)
-				return "D'oh! Plugin " + pluginName + " needs permission " + ChoobAuthError.getPermissionText(((AccessControlException)e).getPermission()) + "!";
+				irc.sendContextReply(mes, "D'oh! Plugin " + pluginName + " needs permission " + ChoobAuthError.getPermissionText(((AccessControlException)e).getPermission()) + "!");
 			else
-				return "The author of plugin " + pluginName + " was too lazy to trap the exception: " + e;
+				irc.sendContextReply(mes, "The author of plugin " + pluginName + " was too lazy to trap the exception: " + e);
 		}
 	}
 

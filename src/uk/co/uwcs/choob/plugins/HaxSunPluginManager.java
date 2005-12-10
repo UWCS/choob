@@ -418,8 +418,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 					{
 						Throwable cause = e.getCause();
 
-						irc.sendContextReply((Message)param,
-							mods.plugin.exceptionReply(cause, pluginName));
+						mods.plugin.exceptionReply((Message)param, cause, pluginName);
 					}
 					System.err.println("Exception invoking method " + meth);
 					e.getCause().printStackTrace();
