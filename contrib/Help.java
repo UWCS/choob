@@ -289,7 +289,11 @@ public class Help
 						String newCommand = alias.substring(dotPos + 1, spacePos);
 
 						String[] help = _getCallHelpLines( newPlugin, "command", newCommand, null );
-						allHelp.addAll(formatCallHelp( plugin, "command", alias, help, isLong, mode ));
+						if (help == null)
+							allHelp.add( formatCommand(plugin) + " appears to be aliased to '" + formatAlias(alias) + "', but '" + formatCommand(newPlugin + "." + newCommand) + "' has no help!" );
+
+						else
+							allHelp.addAll(formatCallHelp( plugin, "command", alias, help, isLong, mode ));
 					}
 				}
 				else if (ret instanceof String[])
