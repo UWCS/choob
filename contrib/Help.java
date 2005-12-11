@@ -382,6 +382,7 @@ public class Help
 		List<String> output = new ArrayList<String>();
 
 		String[] plugins = mods.plugin.getLoadedPlugins();
+		Arrays.sort(plugins);
 		if (isLong)
 		{
 			for (int j=0; j<plugins.length; j++)
@@ -417,6 +418,7 @@ public class Help
 			else
 				return "does not exist";
 		}
+		Arrays.sort(commands);
 
 		if (commands.length == 0)
 		{
@@ -448,6 +450,7 @@ public class Help
 	public String[] apiGetPluginList()
 	{
 		String[] plugins = mods.plugin.getLoadedPlugins();
+		Arrays.sort(plugins);
 
 		StringBuilder buf = new StringBuilder("Plugins: ");
 		for(int i=0; i<plugins.length; i++)
