@@ -477,6 +477,7 @@ public class Karma
 
 	private KarmaObject retrieveKarmaObject(String name)
 	{
+		name = name.replaceAll(" ", "_");
 		List<KarmaObject> results = mods.odb.retrieve(KarmaObject.class, "WHERE string = \"" + name.replaceAll("([\"\\\\])", "\\\\$1") + "\"");
 		if (results.size() == 0)
 		{
