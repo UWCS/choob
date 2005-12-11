@@ -28,7 +28,7 @@ public class Calc
 
 	private static boolean hascoin = true;
 
-	public String[] helpCommandEval = {
+	public String[] helpCommandCalc = {
 		"Evaluates a mathematical expression.",
 		"<Expression>",
 		"<Expression> is some lovely mathematical expression"
