@@ -151,7 +151,7 @@ public class MathParser
 	public double termExpr() throws BadMathException
 	{
 		char current = expr.charAt(ptr);
-		if (current >= '0' && current <= '9')
+		if ((current >= '0' && current <= '9') || current == '-')
 			return numberExpr();
 		else if (current == '(')
 			return bracketExpr();
@@ -177,7 +177,7 @@ public class MathParser
 				}
 			}
 			char current = expr.charAt(ptr);
-			if ((current >= '0' && current <= '9') || current == '.')
+			if ((current >= '0' && current <= '9') || current == '.' || (current == '-' && ptr == origPtr))
 				ptr++;
 			else
 			{
