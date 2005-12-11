@@ -7,50 +7,7 @@ import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
 import java.util.regex.*;
 
-
-// Keeps track of the most recent messages from people.
-final class LastEvents
-{
-	private long lastmes[];
-	static final int LENGTH = 3; // Number of message times to remember.
-	static final int DELAY = 5000; // Warn once every (this) ms.
-	private int lastOffset;
-	private long nextWarn;
-
-	LastEvents()
-	{
-		lastmes = new long[LENGTH];
-		for(int i=0; i<LENGTH; i++)
-			lastmes[i] = 0;
-		lastOffset = 0;
-		nextWarn = 0; // Always warn on first offense.
-	}
-
-	public long average()
-	{
-		return (lastmes[lastOffset] - lastmes[(lastOffset + 1) % LENGTH]) / LENGTH;
-	}
-
-	public boolean warn()
-	{
-		long time = System.currentTimeMillis();
-		if (time > nextWarn)
-		{
-			nextWarn = time + DELAY;
-			return true;
-		}
-		else
-			return false;
-	}
-
-	public void newEvent()
-	{
-		lastOffset = (lastOffset + 1) % LENGTH;
-		lastmes[lastOffset] = System.currentTimeMillis();
-	}
-}
-
-final class ChoobDecoderTask extends ChoobTask
+public class ChoobDecoderTask extends ChoobTask
 {
 	private static DbConnectionBroker dbBroker;
 	private static Modules modules;
@@ -59,10 +16,6 @@ final class ChoobDecoderTask extends ChoobTask
 	private static Pattern aliasPattern;
 	private static Pattern commandPattern;
 	private Event event;
-
-	static Map<String,LastEvents>lastMessage = Collections.synchronizedMap(new HashMap<String,LastEvents>()); // Nick, Timestamp.
-
-	static final long AVERAGE_MESSAGE_GAP = 2000; // If message rate from one user exceeds this, ignore them.
 
 	static void initialise(DbConnectionBroker dbBroker, Modules modules, IRCInterface irc)
 	{
@@ -152,22 +105,21 @@ final class ChoobDecoderTask extends ChoobTask
 				ma = commandPattern.matcher(matchAgainst);
 				if( ma.matches() )
 				{
-					LastEvents recent = lastMessage.get(mes.getNick());
-					if (recent == null)
-						lastMessage.put(mes.getNick(), new LastEvents());
-					else
+					try
 					{
-						recent.newEvent();
-						long average = recent.average();
-						if (average < AVERAGE_MESSAGE_GAP)
+						int ret = (Integer)modules.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
+						if (ret != 0)
 						{
-							// It's actually pretty hard to work out how long
-							// it'll be before they next won't get ignored if
-							// we change the queue length...
-							if (recent.warn())
-								irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least " + (AVERAGE_MESSAGE_GAP/1000.0) + "s between your messages.");
+							if (ret == 1)
+								irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
 							return;
 						}
+					}
+					catch (ChoobNoSuchCallException e)
+					{ } // Ignore
+					catch (Throwable e)
+					{
+						System.err.println("Couldn't do antiflood call: " + e);
 					}
 
 					String pluginName  = ma.group(1);

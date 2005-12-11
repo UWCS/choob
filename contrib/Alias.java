@@ -592,6 +592,23 @@ public class Alias
 			return;
 		}
 
+		try
+		{
+			int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
+			if (ret != 0)
+			{
+				if (ret == 1)
+					irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
+				return;
+			}
+		}
+		catch (ChoobNoSuchCallException e)
+		{ } // ignore
+		catch (Throwable e)
+		{
+			System.err.println("Couldn't do antiflood call: " + e);
+		}
+
 		String aliasText = alias.converted;
 
 		String[] params = new String[0];

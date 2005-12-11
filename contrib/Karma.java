@@ -337,6 +337,25 @@ public class Karma
 			if (name.equalsIgnoreCase(nick))
 				increase = false;
 
+			// Karma flood check.
+			try
+			{
+				String key = mes.getNick() + ":" + name + ":" + increase;
+				int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", key, 15000, 2);
+				if (ret != 0)
+				{
+					if (ret == 1)
+						irc.sendContextReply(mes, "Karma flood! Don't do that.");
+					return;
+				}
+			}
+			catch (ChoobNoSuchCallException e)
+			{ } // ignore
+			catch (Throwable e)
+			{
+				System.err.println("Couldn't do antiflood call: " + e);
+			}
+
 			KarmaObject karmaObj = retrieveKarmaObject(name);
 			if (increase)
 			{
