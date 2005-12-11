@@ -145,16 +145,16 @@ public class Help
 	};
 	public void commandCommands( Message mes )
 	{
-		List<String> params = mods.util.getParams(mes, 2);
+		String[] params = mods.util.getParamArray(mes, 2);
 
-		if (params.size() == 1)
+		if (params.length == 1)
 			irc.sendContextReply(mes, apiGetCommandList(true));
 
-		else if (params.size() == 2)
-			irc.sendContextReply(mes, apiGetCommandList(params.get(1), true));
+		else if (params.length == 2)
+			irc.sendContextReply(mes, apiGetCommandList(params[1], true));
 
 		else
-			irc.sendContextReply(mes, apiGetSyntax(params.get(0)));
+			irc.sendContextReply(mes, apiGetSyntax(params[0]));
 	}
 
 	private static final int
@@ -373,7 +373,7 @@ public class Help
 	// These actually generate outputtable help.
 	public String[] apiGetCommandList(String pluginName, Boolean isLong)
 	{
-		return new String[] { _apiCommandList(null, isLong) };
+		return new String[] { _apiCommandList(pluginName, isLong) };
 	}
 
 	public String[] apiGetCommandList(Boolean isLong)
