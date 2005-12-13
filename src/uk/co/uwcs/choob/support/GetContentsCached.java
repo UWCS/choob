@@ -44,7 +44,7 @@ public final class GetContentsCached
 			return;
 
 		URLConnection site		= url.openConnection();
-		site.setRequestProperty("User-agent", "Choob!");
+		site.setRequestProperty("User-agent", "Opera/8.51 (X11; Linux x86_64; U; en)");
 		InputStream is			= site.getInputStream();
 		InputStreamReader isr	= new InputStreamReader(is);
 		BufferedReader br		= new BufferedReader(isr);

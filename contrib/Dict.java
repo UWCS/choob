@@ -155,7 +155,7 @@ public class Dict
 		if (ma.find())
 			return prettyReply(mods.scrape.readyForIrc("Suggestions for '" + item + "': " + ma.group(1).replaceAll("<br>",", ")), url.toString(), 1);
 		else
-			throw new DictionaryException("Error parsing reply.");
+			throw new DictionaryException("Error parsing dictionary.com's suggesions reply.");
 
 	}
 
@@ -274,7 +274,7 @@ public class Dict
 			return prettyReply(mods.scrape.readyForIrc(foo), url.toString(), lines);
 		}
 		else
-			throw new DictionaryException("Error parsing reply.");
+			throw new DictionaryException("Error parsing dictionary.com's default reply.");
 	}
 
 
@@ -294,7 +294,7 @@ public class Dict
 		if (ma.find())
 			return prettyReply(mods.scrape.readyForIrc(ma.group(1)), url.toString(), lines);
 		else
-			throw new DictionaryException("Error parsing reply.");
+			throw new DictionaryException("Error parsing wikipedia's reply.");
 	}
 
 	public String apiUrbanDictionary( String item ) throws DictionaryException
@@ -313,7 +313,7 @@ public class Dict
 		if (ma.find())
 			return prettyReply(mods.scrape.readyForIrc(ma.group(1)), url.toString(), lines);
 		else
-			throw new DictionaryException("Error parsing reply.");
+			throw new DictionaryException("Error parsing urbandictionary's reply.");
 	}
 
 	public String apiAcronymFinder( String item ) throws DictionaryException
@@ -327,7 +327,22 @@ public class Dict
 			throw new DictionaryException("Lookup what?");
 
 		URL url=generateURL("http://www.acronymfinder.com/af-query.asp?String=exact&Find=Find&Acronym=", item);
-		Matcher ma=getMatcher(url, "src=\"l.gif\" title=\"direct link\" ></a>&nbsp;(.*)");
+
+		String page;
+
+		try
+		{
+			page=mods.scrape.getContentsCached(url);
+		}
+		catch (Exception e)
+		{
+			throw new DictionaryException("Error reading site: " + e, e);
+		}
+
+		if (page.indexOf("support Java-based browsers/utilities, screen-scraping")!=-1)
+			throw new DictionaryException("Oh nose, acronymfinder have detected our screen-scraping h4x! Run, run and hide!");
+
+		Matcher ma=Pattern.compile("src=\"l.gif\" title=\"direct link\" ></a>&nbsp;(.*)").matcher(page);
 
 		StringBuilder s=new StringBuilder();
 
@@ -335,7 +350,7 @@ public class Dict
 			s.append(mods.scrape.readyForIrc(ma.group(1))).append(", ");
 
 		if (s.length()==0)
-			throw new DictionaryException("No matches identified.");
+			throw new DictionaryException("No matches identified on acronymfinder.");
 
 		s.setLength(s.length()-2);
 		s.append(".");
