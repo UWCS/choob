@@ -90,6 +90,12 @@ public class Vote
 	{
 		String paramString = mods.util.getParamString( mes ).trim();
 
+		if (paramString.length()==0)
+		{
+			irc.sendContextReply(mes, "Sorry, you're missing a few parameters. Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
+			return;
+		}
+
 		String question = "Which is best?";
 		String[] options = new String[] { "Yes", "No" };
 		int pos = -1;
