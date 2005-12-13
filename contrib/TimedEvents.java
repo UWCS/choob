@@ -93,6 +93,22 @@ public class TimedEvents
 			// Yes. Blat it. We'll add it later.
 			command = command.substring(trigMatch.end());
 
+		{
+			final int spacePos = command.indexOf(' ');
+
+			String actual_command;
+			if (spacePos==-1)
+				actual_command=command;
+			else
+				actual_command=command.substring(0, spacePos);
+
+			if (!validCommand(actual_command))
+			{
+				irc.sendContextReply(mes, "'" + actual_command + "' could not be identified as a valid command or alias, please try again.");
+				return;
+			}
+		}
+
 		TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
 		timedEvent.synthLevel = mes.getSynthLevel();
@@ -121,15 +137,16 @@ public class TimedEvents
 	public void commandAt( Message mes )
 	{
 		// Stop recursion
-		if (mes.getSynthLevel() > 1) {
+		if (mes.getSynthLevel() > 1)
+		{
 			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
 			return;
 		}
 
-		// XXX /Lots/ of duplicated code from in.
 		List<String> params = mods.util.getParams(mes, 2);
 
-		if (params.size() <= 2) {
+		if (params.size() <= 2)
+		{
 			irc.sendContextReply(mes, "Syntax: 'TimedEvents.At " + helpCommandAt[1] + "'.");
 			return;
 		}
@@ -243,6 +260,25 @@ public class TimedEvents
 			// Yes. Blat it. We'll add it later.
 			command = command.substring(trigMatch.end());
 
+
+		{
+			final int spacePos = command.indexOf(' ');
+
+			String actual_command;
+			if (spacePos==-1)
+				actual_command=command;
+			else
+				actual_command=command.substring(0, spacePos);
+
+			if (!validCommand(actual_command))
+			{
+				irc.sendContextReply(mes, "'" + actual_command + "' could not be identified as a valid command or alias, please try again.");
+				return;
+			}
+		}
+
+
+
 		TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
 		timedEvent.synthLevel = mes.getSynthLevel();
@@ -343,4 +379,18 @@ public class TimedEvents
 			irc.sendContextReply(mes, "Nobody queued nuffin', gov'ner.");
 	}
 
+	boolean validCommand(String command)
+	{
+		String[] bits=command.split("\\.");
+		if (bits.length == 2 && mods.plugin.commandExists(bits[0], bits[1]))
+			return true;
+		try
+		{
+			if (bits.length == 1 && mods.plugin.callAPI("Alias", "Get", bits[0].trim())!=null)
+				return true;
+		}
+		catch (ChoobNoSuchCallException e)
+		{}
+		return false;
+	}
 }

@@ -376,10 +376,10 @@ public final class PluginModule
 		try {
 			dbCon = broker.getConnection();
 			PreparedStatement pluginReplace = dbCon.prepareStatement("INSERT IGNORE Plugins (PluginName, URL) VALUES (?, ?)");
-			
+
 			pluginReplace.setString(1, pluginName);
 			pluginReplace.setString(2, URL);
-			
+
 			pluginReplace.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -387,6 +387,24 @@ public final class PluginModule
 		} finally {
 			broker.freeConnection(dbCon);
 		}
+	}
+
+	public boolean commandExists(String pluginName, String commandName)
+	{
+		String commands[];
+		try
+		{
+			commands=getPluginCommands(pluginName);
+		}
+		catch (ChoobNoSuchPluginException e)
+		{
+			return false;
+		}
+
+		for (int i = 0; i < commands.length; i++)
+			if (commands[i].equalsIgnoreCase(commandName))
+				return true;
+		return false;
 	}
 }
 
