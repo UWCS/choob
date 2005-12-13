@@ -3,6 +3,7 @@ import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
 import uk.co.uwcs.choob.modules.*;
 import java.util.*;
+import java.util.regex.*;
 import java.net.*;
 import java.util.Hashtable;
 import javax.naming.*;
@@ -19,6 +20,9 @@ public class Lookup
 			mods.util.getVersion()
 		};
 	}
+											// 0->199
+	private final static String token="(?:(?:1?[0-9]?[0-9])|(?:2[0-4][0-9])|(?:25[0-5]))";
+	private final static Pattern ipv4=Pattern.compile(token + "\\." + token + "\\." + token + "\\." + token);
 
 	private IRCInterface irc;
 	private Modules mods;
@@ -103,7 +107,10 @@ public class Lookup
 		else if (params.size() == 2)
 		{
 			domain = params.get(1);
-			record = "A";
+			if (ipv4.matcher(domain).matches())
+				record = "REV";
+			else
+				record = "A";
 		}
 		else
 		{
