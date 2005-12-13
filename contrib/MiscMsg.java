@@ -64,10 +64,7 @@ public class MiscMsg
 		{
 			max = Double.parseDouble(mods.util.getParamString(mes));
 		}
-		catch (NumberFormatException e) {
-			irc.sendContextReply(mes, "Sorry, " + mods.util.getParamString(mes) + " is not a valid number!");
-			return;
-		}
+		catch (NumberFormatException e) {}
 		irc.sendContextReply(mes, "Random number between 0 and " + max + " is " + new Random().nextDouble()*max + ".");
 	}
 
