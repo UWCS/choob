@@ -61,6 +61,7 @@ INSERT INTO `Plugins` VALUES ('Tell', 'http://svn.uwcs.co.uk/repos/choob/trunk/c
 INSERT INTO `Plugins` VALUES ('Test', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Test.java', 1);
 INSERT INTO `Plugins` VALUES ('TimedEvents', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/TimedEvents.java', 1);
 INSERT INTO `Plugins` VALUES ('Vote', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Vote.java', 1);
+INSERT INTO `Plugins` VALUES ('UserTypeCheck', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/UserTypeCheck.java', 1);
 
 -- --------------------------------------------------------
 
@@ -107,6 +108,7 @@ INSERT INTO `GroupMembers` VALUES (1, 16);
 INSERT INTO `GroupMembers` VALUES (1, 17);
 INSERT INTO `GroupMembers` VALUES (1, 31);
 INSERT INTO `GroupMembers` VALUES (1, 32);
+INSERT INTO `GroupMembers` VALUES (1, 33);
 INSERT INTO `GroupMembers` VALUES (4, 3);
 
 -- --------------------------------------------------------
@@ -274,6 +276,7 @@ INSERT INTO `UserNodes` VALUES (18, 'Test', 2);
 INSERT INTO `UserNodes` VALUES (12, 'TimedEvents', 2);
 INSERT INTO `UserNodes` VALUES (31, 'Options', 2);
 INSERT INTO `UserNodes` VALUES (32, 'Vote', 2);
+INSERT INTO `UserNodes` VALUES (33, 'UserTypeCheck', 2);
 
 --
 -- Constraints for dumped tables
