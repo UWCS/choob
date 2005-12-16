@@ -30,12 +30,13 @@ public class KarmaReasonObject
 public class Karma
 {
 	// Non-null == ignore.
-	private static Set exceptions = new HashSet();
+	private final static Set exceptions = new HashSet();
 	static
 	{
 		exceptions.add("c");
 		exceptions.add("dc");
 		exceptions.add("visualj");
+		exceptions.add("vc");
 	}
 
 	public String[] info()
@@ -133,12 +134,39 @@ public class Karma
 				name = reason[0];
 		}
 		else
-			reason = apiReason(name);
+		{
+			Matcher ma=karmaItemPattern.matcher(name);
+			if (ma.find())
+			{
+				reason = apiReason(getName(ma));
+				if (reason==null)
+					return;
+				name = reason[0];
+			}
+			else
+				return;
+		}
 
 		if (reason != null)
 			irc.sendContextReply(mes, name + " has " + reason[2] + " karma " + reason[1]);
 		else
 			irc.sendContextReply(mes, "Nobody has ever told me why " + name + " has changed karma. :(");
+	}
+
+	private void nullReason(Message mes, boolean direction)
+	{
+		String[] reason;
+		String name;
+		reason = apiReason(direction);
+		if (reason != null)
+			name = reason[0];
+		else
+		{
+			irc.sendContextReply(mes, "No karma reasons.");
+			return;
+		}
+
+		irc.sendContextReply(mes, name + " has " + (direction ? "gained" : "lost") + " karma " + reason[1]);
 	}
 
 	public String[] helpCommandReasonUp = {
@@ -153,12 +181,28 @@ public class Karma
 		String[] reason;
 		if (name.equals(""))
 		{
-			reason = apiReason(true);
-			if (reason != null)
-				name = reason[0];
+			nullReason(mes, true);
+			return;
 		}
 		else
-			reason = apiReason(name, true);
+		{
+			Matcher ma=karmaItemPattern.matcher(name);
+			if (ma.find())
+			{
+				reason = apiReason(getName(ma), true);
+				if (reason==null)
+				{
+					nullReason(mes, true);
+					return;
+				}
+				name = reason[0];
+			}
+			else
+			{
+				nullReason(mes, true);
+				return;
+			}
+		}
 
 		if (reason != null)
 			irc.sendContextReply(mes, name + " has gained karma " + reason[1]);
@@ -183,7 +227,26 @@ public class Karma
 				name = reason[0];
 		}
 		else
-			reason = apiReason(name, false);
+		{
+			Matcher ma=karmaItemPattern.matcher(name);
+			if (ma.find())
+			{
+				reason = apiReason(getName(ma), false);
+				if (reason==null)
+				{
+					nullReason(mes, false);
+					return;
+				}
+
+				name = reason[0];
+			}
+			else
+			{
+				nullReason(mes, false);
+				return;
+			}
+		}
+
 
 		if (reason != null)
 			irc.sendContextReply(mes, name + " has lost karma " + reason[1]);
@@ -205,51 +268,46 @@ public class Karma
 	// Let's just do a simple filter to pick up karma. This is lightweight and
 	// picks up anything that /could/ be karma (though not necessarily only
 	// karma)
-	public String filterKarmaRegex = "(?:\\+\\+|\\-\\-)\\B";
 
-	// If you change this, change reasonPattern too.
-	private static Pattern karmaPattern = Pattern.compile(
-		  "(?x:"
-		+ "(?: ^ | (?<=\\s) )" // Anchor at start of string or whitespace.
-		+ "(?:"
-			// Quoted string
+	// ++ or --:
+	final private static String plusplus_or_minusminus = "(\\+\\+|\\-\\-)";
+
+	// Quoted string:
+	final private static String c_style_quoted_string = "(?:"
 			+ "\""
 			+ "("
 				+ "(?:\\\\.|[^\"\\\\])+" // C-style quoting
 			+ ")"
 			+ "\""
-		+ "|"
-			// Plain string
-			+ "("
-				+ "[\\./a-zA-Z0-9_]{2,}" // >=2 chars anywhere
-			+ ")"
-		+ ")"
-		+ "( \\+\\+ | \\-\\- )" // The actual karma change
+			+ ")";
+
+	// Plain string of >=2 chars.
+	final private static String plain_karma = "("
+				+ "[\\./a-zA-Z0-9_]{2,}"
+			+ ")";
+
+	// Either a quoted or a valid plain karmaitem.
+	final private static String karma_item = "(?x:" + c_style_quoted_string + "|" + plain_karma + ")";
+
+	final private static Pattern karmaItemPattern = Pattern.compile(karma_item);
+
+	// If you change this, change reasonPattern too.
+	final private static Pattern karmaPattern = Pattern.compile(
+		  "(?x:"
+		+ "(?: ^ | (?<=\\b) )" // Anchor at start of string or a word boundary.
+		+ karma_item
+		+ plusplus_or_minusminus
 		+ "[\\)\\.,]?" // Allowed to terminate with full stop/close bracket etc.
 		+ "(?: (?=\\s) | $ )" // Need either whitespace or end-of-string now.
 		+ ")"
 	);
 
 	// If you change the first part of this, change karmaPattern too.
-	private static Pattern reasonPattern = Pattern.compile(
-		  "(?x:"
+	final private static Pattern reasonPattern = Pattern.compile(
+		"(?x:"
 		+ "^" // Anchor at start of string...
-
-		+ "(?:"
-			// Quoted string
-			+ "\""
-			+ "("
-				+ "(?:\\\\.|[^\"\\\\])+" // C-style quoting
-			+ ")"
-			+ "\""
-		+ "|"
-			// Plain string
-			+ "("
-				+ "[\\./a-zA-Z0-9_]{2,}" // Limited selection, and >=2 chars.
-			+ ")"
-		+ ")"
-		+ "( \\+\\+ | \\-\\- )" // The actual karma change
-
+		+ karma_item
+		+ plusplus_or_minusminus
 		+ "\\s+"
 		+ "("
 			// A "natural English" reason
@@ -264,6 +322,8 @@ public class Karma
 		+ "\\s*$" // Chew up all trailing whitespace.
 		+ ")"
 	);
+
+	public final String filterKarmaRegex = plusplus_or_minusminus + "\\B";
 
 	public synchronized void filterKarma( Message mes, Modules mods, IRCInterface irc )
 	{
@@ -502,17 +562,26 @@ public class Karma
 	};
 	public void commandGet (Message mes, Modules mods, IRCInterface irc)
 	{
-		List<String> params = mods.util.getParams( mes );
+		List<String> params = new ArrayList<String>();
+
+		Matcher ma=karmaItemPattern.matcher(mods.util.getParamString(mes));
+
+		while (ma.find())
+			params.add(getName(ma));
+
 		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
 		List<String> names = new ArrayList<String>();
 
-		if (params.size() > 1)
-			for (int i=1; i<params.size(); i++)
+		if (params.size() > 0)
+			for (int i=0; i<params.size(); i++)
 			{
 				String name = params.get(i);
-				KarmaObject karmaObj = retrieveKarmaObject(name);
-				karmaObj.instName = name;
-				karmaObjs.add(karmaObj);
+				if (name!=null)
+				{
+					KarmaObject karmaObj = retrieveKarmaObject(name);
+					karmaObj.instName = name;
+					karmaObjs.add(karmaObj);
+				}
 			}
 
 		if (karmaObjs.size() == 1)
@@ -639,5 +708,11 @@ public class Karma
 	}
 
 
+	private String getName (Matcher ma)
+	{
+		if (ma.group(1) != null)
+			return ma.group(1).replaceAll("\\\\(.)", "$1");
+		else
+			return ma.group(2);
+	}
 }
-
