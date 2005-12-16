@@ -60,9 +60,17 @@ public class ChoobDecoderTask extends ChoobTask
 		tasks.addAll(modules.plugin.getPlugMan().eventTasks(event));
 
 		boolean ignoreTriggers = false;
-		if (event instanceof UserEvent && ((UserEvent)event).getNick().toLowerCase().indexOf("bot") != -1)
+		if (event instanceof UserEvent)
 		{
-			ignoreTriggers = true;
+			try
+			{
+				if (1 == (Integer)ChoobDecoderTask.modules.plugin.callAPI("UserTypeCheck", "Status", ((UserEvent)event).getNick(), "bot"))
+					ignoreTriggers = true;
+			}
+			catch (ChoobNoSuchCallException e)
+			{
+				System.err.println("EXCEPTION: " + e.toString());
+			}
 		}
 
 		// Then filters
