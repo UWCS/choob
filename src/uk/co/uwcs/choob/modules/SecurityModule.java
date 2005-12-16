@@ -13,6 +13,7 @@ import java.sql.*;
 import java.security.*;
 import java.lang.reflect.*;
 import java.util.*;
+import uk.co.uwcs.choob.support.events.*;
 
 /**
  * Security manager for plugins, access control to anything requiring/checking
@@ -394,9 +395,11 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Get the node ID that corresponds to a node name
 	 */
-	private int getNodeIDFromUserName(String userName)
+	private int getNodeIDFromUserName(UserEvent userEvent)
 	{
-		return getNodeIDFromNodeName(userName, 0);
+		if (userEvent instanceof IRCRootEvent)
+			checkEvent((IRCRootEvent)userEvent);
+		return getNodeIDFromNodeName(userEvent.getNick(), 0);
 	}
 
 	/**
@@ -529,26 +532,29 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 	/**
 	 * Check if the given nickName is authed with NickServ (if NickServ is loaded).
-	 * @param nickName The nickname to check the permission on.
+	 * @param userEvent The event to validate and check the permission on.
 	 * @throws ChoobNSAuthError If the nick is not authorised.
 	 */
-	public void checkNS(String nickName) throws ChoobNSAuthError
+	public void checkNS(UserEvent userEvent) throws ChoobNSAuthError
 	{
-		if (!hasNS(nickName))
+		if (!hasNS(userEvent))
 			throw new ChoobNSAuthError();
 	}
 
 	/**
 	 * Check if the given nickName is authed with NickServ (if NickServ is loaded).
-	 * @param nickName The nickname to check the permission on.
+	 * @param userEvent The event to validate and check the permission on.
 	 * @return Whether the nick is authorised.
 	 */
-	public boolean hasNS(String nickName)
+	public boolean hasNS(UserEvent userEvent)
 	{
 		try
 		{
+			if (userEvent instanceof IRCRootEvent)
+				checkEvent((IRCRootEvent)userEvent);
+
 			//return (Boolean)mods.plugin.callAPI("NickServ", "Check", nickName, false);
-			return (Boolean)mods.plugin.callAPI("NickServ", "Check", nickName);
+			return (Boolean)mods.plugin.callAPI("NickServ", "Check", userEvent.getNick());
 		}
 		catch (ChoobNoSuchPluginException e)
 		{
@@ -569,29 +575,29 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Check if the given nickName has permission and is authed with NickServ (if NickServ is loaded).
 	 * @param permission The permission to check.
-	 * @param nickName The nickname to check the permission on.
+	 * @param userEvent The event to validate and check the permission on.
 	 * @throws ChoobAuthError If the nick is not authorised.
 	 */
-	public void checkNickPerm(Permission permission, String nickName) throws ChoobAuthError
+	public void checkNickPerm(Permission permission, UserEvent userEvent) throws ChoobAuthError
 	{
-		checkNS(nickName);
+		checkNS(userEvent);
 
-		if (!hasPerm(permission, nickName))
+		if (!hasPerm(permission, userEvent))
 			throw new ChoobUserAuthError(permission);
 	}
 
 	/**
 	 * Check if the given nickName has permission and is authed with NickServ (if NickServ is loaded).
 	 * @param permission The permission to check.
-	 * @param nickName The nickname to check the permission on.
+	 * @param userEvent The event to validate and check the permission on.
 	 * @return Whether the nick is authorised.
 	 */
-	public boolean hasNickPerm(Permission permission, String nickName)
+	public boolean hasNickPerm(Permission permission, UserEvent userEvent)
 	{
-		if (!hasNS(nickName))
+		if (!hasNS(userEvent))
 			return false;
 
-		if (!hasPerm(permission, nickName))
+		if (!hasPerm(permission, userEvent))
 			return false;
 
 		return true;
@@ -599,25 +605,25 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 	/**
 	 * Check if the given userName has permission. Better to use checkNickPerm.
-	 * @param permission
-	 * @param userName
+	 * @param permission The permission to check.
+	 * @param userEvent The event to validate and check the permission on.
 	 */
-	public void checkPerm(Permission permission, String userName) throws ChoobUserAuthError
+	public void checkPerm(Permission permission, UserEvent userEvent) throws ChoobUserAuthError
 	{
-		if (!hasPerm(permission, userName))
+		if (!hasPerm(permission, userEvent))
 			throw new ChoobUserAuthError(permission);
 	}
 
 	/**
 	 * Check if the given userName has permission. Better to use checkNickPerm.
-	 * @param permission
-	 * @param userName
+	 * @param permission The permission to check.
+	 * @param userEvent The event to validate and check the permission on.
 	 */
-	public boolean hasPerm(Permission permission, String userName)
+	public boolean hasPerm(Permission permission, UserEvent userEvent)
 	{
-		int userNode = getNodeIDFromUserName(userName);
+		int userNode = getNodeIDFromUserName(userEvent);
 
-		System.out.println("Checking permission on user " + userName + "(" + userNode + ")" + ": " + permission);
+		System.out.println("Checking permission on user " + userEvent.getNick() + "(" + userNode + ")" + ": " + permission);
 
 		if (userNode == -1)
 			if (anonID != -1)
@@ -780,14 +786,14 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @deprecated Perhaps?
 	 */
 	// TODO: Should this simply add plugin.pluginName to user.userName?
-	public void bindPlugin(String pluginName, String userName) throws ChoobException
+	public void bindPlugin(String pluginName, UserEvent userEvent) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("plugin.bind"));
 
-		int userID = getNodeIDFromUserName(userName);
+		int userID = getNodeIDFromUserName(userEvent);
 		if ( userID == -1 )
 		{
-			throw new ChoobException("User " + userName + " does not exist!");
+			throw new ChoobException("User " + userEvent.getNick() + " does not exist!");
 		}
 
 		Connection dbConn = null;
@@ -1463,4 +1469,17 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			}
 		}
 	}
+
+	private void checkEvent(IRCRootEvent e) throws ChoobEventExpired
+	// This should probably accept a generic form of all events.
+	{
+		if ((new java.util.Date()).getTime()-e.getMillis()>5000)
+		{
+			if (e instanceof MessageEvent)
+				throw new ChoobEventExpired("Security exception: " + e.getClass().getName() + " from " + new java.util.Date(e.getMillis()).toString() + " ('" + ((MessageEvent)e).getMessage() + "') has expired." );
+			else
+				throw new ChoobEventExpired("Security exception: " + e.getClass().getName() + " from " + new java.util.Date(e.getMillis()).toString() + " has expired." );
+		}
+	}
+
 }

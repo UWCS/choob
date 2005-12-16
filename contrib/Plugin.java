@@ -73,7 +73,7 @@ public class Plugin
 			}
 		}
 
-		mods.security.checkNickPerm( new ChoobPermission( "plugin.load." + classname.toLowerCase() ), mes.getNick() );
+		mods.security.checkNickPerm( new ChoobPermission( "plugin.load." + classname.toLowerCase() ), mes );
 
 		try
 		{
@@ -113,10 +113,10 @@ public class Plugin
 
 		String pluginName = params.get(1);
 
-		mods.security.checkNickPerm(new ChoobPermission("plugin.load." + pluginName.toLowerCase()), mes.getNick());
+		mods.security.checkNickPerm(new ChoobPermission("plugin.load." + pluginName.toLowerCase()), mes);
 
 		irc.sendContextReply(mes, "Reloading plugin '" + pluginName + "'...");
-		
+
 		try {
 			mods.plugin.reloadPlugin(pluginName);
 			irc.sendContextReply(mes, "Plugin reloaded OK!");
@@ -141,7 +141,7 @@ public class Plugin
 
 		String pluginName = params.get(1);
 
-		mods.security.checkNickPerm(new ChoobPermission("plugin.unload." + pluginName.toLowerCase()), mes.getNick());
+		mods.security.checkNickPerm(new ChoobPermission("plugin.unload." + pluginName.toLowerCase()), mes);
 
 		try {
 			mods.plugin.detachPlugin(pluginName);
@@ -166,7 +166,7 @@ public class Plugin
 
 		String pluginName = params.get(1);
 
-		mods.security.checkNickPerm(new ChoobPermission("plugin.core"), mes.getNick());
+		mods.security.checkNickPerm(new ChoobPermission("plugin.core"), mes);
 
 		try {
 			mods.plugin.setCorePlugin(pluginName, true);
@@ -191,7 +191,7 @@ public class Plugin
 
 		String pluginName = params.get(1);
 
-		mods.security.checkNickPerm(new ChoobPermission("plugin.core"), mes.getNick());
+		mods.security.checkNickPerm(new ChoobPermission("plugin.core"), mes);
 
 		try {
 			mods.plugin.setCorePlugin(pluginName, false);

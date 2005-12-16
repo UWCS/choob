@@ -41,7 +41,7 @@ public class Security
 	};
 	public void commandAddUser( Message mes )
 	{
-		mods.security.checkNS(mes.getNick());
+		mods.security.checkNS(mes);
 
 		List params = mods.util.getParams( mes );
 
@@ -64,7 +64,7 @@ public class Security
 			// Must check permission!
 			userName = (String)params.get(1);
 			// Sure, this will be checked for us. But what about the user who called us?
-			mods.security.checkPerm( new ChoobPermission("user.add") , mes.getNick() );
+			mods.security.checkPerm( new ChoobPermission("user.add") , mes);
 		}
 		// Can add the user...
 		try
@@ -91,7 +91,7 @@ public class Security
 	};
 	public void commandDelUser( Message mes )
 	{
-		mods.security.checkNS(mes.getNick());
+		mods.security.checkNS(mes);
 
 		List params = mods.util.getParams( mes );
 
@@ -108,7 +108,7 @@ public class Security
 			// Must check permission!
 			userName = (String)params.get(1);
 			// Sure, this will be checked for us. But what about the user who called us?
-			mods.security.checkPerm( new ChoobPermission("user.del") , mes.getNick() );
+			mods.security.checkPerm( new ChoobPermission("user.del") , mes );
 		}
 		// Can add the user...
 		try
@@ -143,7 +143,7 @@ public class Security
 	{
 		String userName = mes.getNick();
 
-		mods.security.checkNS(userName);
+		mods.security.checkNS(mes);
 
 		List params = mods.util.getParams( mes );
 		if (params.size() == 1)
@@ -194,9 +194,9 @@ public class Security
 	};
 	public void commandLink( Message mes )
 	{
-		List params = mods.util.getParams( mes );
+		List<String> params = mods.util.getParams( mes );
 
-		mods.security.checkNS(mes.getNick());
+		mods.security.checkNS(mes);
 
 		String rootName;
 		String leafName;
@@ -225,7 +225,7 @@ public class Security
 			rootName = (String)params.get(1);
 			leafName = (String)params.get(2);
 			// Sure, this will be checked for us. But what about the user who called us?
-			mods.security.checkPerm( new ChoobPermission("user.link") , mes.getNick() );
+			mods.security.checkPerm( new ChoobPermission("user.link") , mes);
 		}
 
 		// Can add the user...
@@ -287,7 +287,7 @@ public class Security
 	};
 	public void commandAddGroup( Message mes )
 	{
-		mods.security.checkNS(mes.getNick());
+		mods.security.checkNS(mes);
 
 		List params = mods.util.getParams( mes );
 
@@ -305,7 +305,7 @@ public class Security
 			boolean check = groupCheck(groupName, mes.getNick());
 			// Sure, this will be checked for us. But what about the user who called us?
 			if (!check)
-				mods.security.checkPerm( new ChoobPermission("group.add." + groupName) , mes.getNick() );
+				mods.security.checkPerm( new ChoobPermission("group.add." + groupName) , mes);
 		}
 		// Can add the user...
 		try
@@ -344,7 +344,7 @@ public class Security
 
 	private void doGroupMemberChange( Message mes, boolean isAdding )
 	{
-		mods.security.checkNS(mes.getNick());
+		mods.security.checkNS(mes);
 
 		List params = mods.util.getParams( mes );
 
@@ -366,7 +366,7 @@ public class Security
 			boolean check = groupCheck(parentName, mes.getNick());
 			// Sure, this will be checked for us. But what about the user who called us?
 			if (!check)
-				mods.security.checkPerm( new ChoobPermission("group.members." + parentName) , mes.getNick() );
+				mods.security.checkPerm( new ChoobPermission("group.members." + parentName) , mes);
 		}
 		// Can add the user...
 		try
@@ -487,7 +487,7 @@ public class Security
 
 	private void doPermChange( Message mes, boolean isGranting )
 	{
-		mods.security.checkNS(mes.getNick());
+		mods.security.checkNS(mes);
 
 		List params = mods.util.getParams( mes );
 
@@ -513,7 +513,7 @@ public class Security
 		boolean check = groupCheck(groupName, mes.getNick());
 		// Sure, this will be checked for us. But what about the user who called us?
 		if (!check)
-			mods.security.checkPerm( new ChoobPermission("group." + permString + groupName) , mes.getNick() );
+			mods.security.checkPerm( new ChoobPermission("group." + permString + groupName) , mes);
 
 		Permission permission = makePermission(permType, permName, actions);
 		if (permission == null)
@@ -523,7 +523,7 @@ public class Security
 		}
 
 		// Now check the user has the permission...
-		if (isGranting && ! mods.security.hasPerm( permission, mes.getNick() ) )
+		if (isGranting && ! mods.security.hasPerm( permission, mes) )
 		{
 			irc.sendContextReply( mes, "You can only grant privileges you yourself have!" );
 			return;

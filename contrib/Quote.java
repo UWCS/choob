@@ -421,7 +421,7 @@ public class Quote
 	public java.security.Permission permissionCommandAdd = new ChoobPermission("plugins.quote.add");
 	public void commandAdd(Message mes)
 	{
-		mods.security.checkNickPerm(permissionCommandAdd, mes.getNick());
+		mods.security.checkNickPerm(permissionCommandAdd, mes);
 
 		String params = mods.util.getParamString( mes );
 
@@ -974,7 +974,7 @@ public class Quote
 		{
 			if (quote.score == THRESHOLD - 1)
 			{
-				if (mods.security.hasNickPerm( new ChoobPermission( "quote.delete" ), mes.getNick() ))
+				if (mods.security.hasNickPerm( new ChoobPermission( "quote.delete" ), mes ))
 				{
 					quote.score++;
 					quote.up++;
@@ -995,7 +995,7 @@ public class Quote
 		}
 		else if (quote.score == THRESHOLD)
 		{
-			if (mods.security.hasNickPerm( new ChoobPermission( "quote.delete" ), mes.getNick() ))
+			if (mods.security.hasNickPerm( new ChoobPermission( "quote.delete" ), mes ))
 			{
 				quote.score--;
 				quote.down++;

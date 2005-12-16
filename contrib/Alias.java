@@ -67,7 +67,7 @@ public class Alias
 		"<Name> is the name of the alias to add",
 		"<Alias> is the alias content. See Alias.Syntax"
 	};
-	public void commandAdd( Message mes ) 
+	public void commandAdd( Message mes )
 	{
 		String[] params = mods.util.getParamArray(mes, 2);
 
@@ -136,9 +136,9 @@ public class Alias
 			if (alias.locked)
 			{
 				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
-					mods.security.checkNS(mes.getNick());
+					mods.security.checkNS(mes);
 				else
-					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
+					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
 			}
 
 			oldAlias = " (was '" + alias.converted + "')";
@@ -171,7 +171,7 @@ public class Alias
 		String command = params[1];
 		String aliasName = params[2];
 
-		mods.security.checkNickPerm(new ChoobPermission("plugin.alias.setcore"), mes.getNick());
+		mods.security.checkNickPerm(new ChoobPermission("plugin.alias.setcore"), mes);
 
 		// Sanity check
 		AliasObject alias = getAlias(aliasName);
@@ -227,9 +227,9 @@ public class Alias
 			if (alias.locked)
 			{
 				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
-					mods.security.checkNS(mes.getNick());
+					mods.security.checkNS(mes);
 				else
-					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
+					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
 			}
 
 			alias.help = params[2];
@@ -277,9 +277,9 @@ public class Alias
 			if (alias.locked)
 			{
 				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
-					mods.security.checkNS(mes.getNick());
+					mods.security.checkNS(mes);
 				else
-					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
+					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
 			}
 
 			alias.help = null;
@@ -300,7 +300,7 @@ public class Alias
 		"<Name>",
 		"<Name> is the name of the alias to remove",
 	};
-	public void commandRemove( Message mes ) 
+	public void commandRemove( Message mes )
 	{
 		String[] params = mods.util.getParamArray(mes);
 
@@ -322,9 +322,9 @@ public class Alias
 			if (alias.locked)
 			{
 				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
-					mods.security.checkNS(mes.getNick());
+					mods.security.checkNS(mes);
 				else
-					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
+					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
 			}
 
 			mods.odb.delete(alias);
@@ -504,9 +504,9 @@ public class Alias
 				nick = mes.getNick();
 
 			if (nick.toLowerCase().equals(alias.owner.toLowerCase()))
-				mods.security.checkNS(mes.getNick());
+				mods.security.checkNS(mes);
 			else
-				mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes.getNick());
+				mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
 
 			alias.locked = false;
 			mods.odb.update(alias);
@@ -518,7 +518,7 @@ public class Alias
 		}
 	}
 
-	private AliasObject getAlias( String name ) 
+	private AliasObject getAlias( String name )
 	{
 		String alias = name.replaceAll("([\\\\\"])","\\\\$1").toLowerCase();
 
@@ -532,7 +532,7 @@ public class Alias
 
 	// Trigger on everything, but is a trigger, not an event ==> takes account of ignore etc.
 	public String filterTriggerRegex = "";
-	public void filterTrigger( Message mes ) 
+	public void filterTrigger( Message mes )
 	{
 		String text = mes.getMessage();
 
@@ -577,7 +577,7 @@ public class Alias
 		{
 			return;
 		}
-		
+
 		AliasObject alias = getAlias( aliasName );
 
 		if (alias == null)

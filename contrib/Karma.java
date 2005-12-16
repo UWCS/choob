@@ -547,7 +547,7 @@ public class Karma
 	};
 	public synchronized void commandSet( Message mes, Modules mods, IRCInterface irc )
 	{
-		mods.security.checkNickPerm(new ChoobPermission("plugins.karma.set"), mes.getNick());
+		mods.security.checkNickPerm(new ChoobPermission("plugins.karma.set"), mes);
 
 		List<String> params = mods.util.getParams( mes );
 		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();

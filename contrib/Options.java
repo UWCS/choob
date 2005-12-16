@@ -7,7 +7,7 @@ import java.text.*;
 
 /**
  * Options plugin - allows other plugins to access options which users can set.
- * 
+ *
  * @author bucko
  */
 
@@ -218,7 +218,7 @@ public class Options
 
 		String nickName = mes.getNick();
 
-		mods.security.checkNS(nickName);
+		mods.security.checkNS(mes);
 		String userName = mods.security.getRootUser( nickName );
 
 		if (userName == null)
@@ -338,7 +338,7 @@ public class Options
 		}
 
 		// TODO - make plugin owners always able to set this. Or something.
-		mods.security.checkNickPerm(new ChoobPermission("plugin.options.set." + params[1]), mes.getNick());
+		mods.security.checkNickPerm(new ChoobPermission("plugin.options.set." + params[1]), mes);
 
 		if (vals[1].length() > 0)
 		{
@@ -486,7 +486,7 @@ public class Options
 		}
 
 		// TODO - make plugin owners always able to set this. Or something.
-		mods.security.checkNickPerm(new ChoobPermission("plugin.options.get"), mes.getNick());
+		mods.security.checkNickPerm(new ChoobPermission("plugin.options.get"), mes);
 
 		List<GeneralOption> options;
 		if (pluginName != null)

@@ -37,7 +37,7 @@ public class Test
 			return;
 		}
 
-		if ( mods.security.hasNickPerm( new ChoobPermission(priv), con.getNick() ) )
+		if ( mods.security.hasNickPerm( new ChoobPermission(priv), con ) )
 			irc.sendContextReply(con, "You do indeed have " + priv + "!" );
 		else
 			irc.sendContextReply(con, "You don't have " + priv + "!" );
