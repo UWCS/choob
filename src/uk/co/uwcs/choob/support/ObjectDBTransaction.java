@@ -414,7 +414,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	
 	public final void delete(ObjectDBObject strObj)
 	{
-		checkPermission(strObj.getClass().getName());
+		checkPermission(strObj.getClassName());
 		PreparedStatement delete = null, deleteData = null;
 		try
 		{
