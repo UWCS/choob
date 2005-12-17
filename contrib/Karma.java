@@ -592,20 +592,25 @@ public class Karma
 
 		StringBuffer output = new StringBuffer("Karmas: ");
 
-		for (int i=0; i<karmaObjs.size(); i++)
+		if (karmaObjs.size()!=0)
 		{
-			output.append(karmaObjs.get(i).instName);
-			output.append(": " + karmaObjs.get(i).value);
-			if (i != karmaObjs.size() - 1)
+			for (int i=0; i<karmaObjs.size(); i++)
 			{
-				if (i == karmaObjs.size() - 2)
-					output.append(" and ");
-				else
-					output.append(", ");
+				output.append(karmaObjs.get(i).instName);
+				output.append(": " + karmaObjs.get(i).value);
+				if (i != karmaObjs.size() - 1)
+				{
+					if (i == karmaObjs.size() - 2)
+						output.append(" and ");
+					else
+						output.append(", ");
+				}
 			}
+			output.append(".");
+			irc.sendContextReply( mes, output.toString());
 		}
-		output.append(".");
-		irc.sendContextReply( mes, output.toString());
+		else
+			irc.sendContextReply( mes, "Check the karma of what?");
 	}
 
 	public String[] helpCommandSet = {
