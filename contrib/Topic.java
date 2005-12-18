@@ -14,7 +14,7 @@ public class Topic
 			"Plugin to watch for topic changes.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			"$Rev: 485 $$Date: 2005-12-18 16:19:43 +0000 (Sun, 18 Dec 2005) $"
+			"$Rev$$Date$"
 		};
 	}
 
