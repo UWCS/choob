@@ -43,13 +43,18 @@
                         classMap.put(className.toLowerCase(), new Integer(0));
                 }
 
+                public ObjectDbClauseParser(String clause)
+                {
+                        this(new StringReader(clause));
+                }
+
                 public static void main(String args[])
                 {
                         try
                         {
                                 for(int i=0; i<args.length; i++)
                                 {
-                                        System.out.println(getSQL(args[i], args[++i]));
+                                        System.out.println(getSQL(args[i]));
                                 }
                         }
                         catch (ParseException e)
@@ -65,6 +70,13 @@
                                 throw new IllegalArgumentException("Null class name passed to getSQL...");
 
                         ObjectDbClauseParser parser = new ObjectDbClauseParser (clause, className);
+
+                        return parser.ODBExpr();
+                }
+
+                public static String getSQL(String clause) throws ParseException
+                {
+                        ObjectDbClauseParser parser = new ObjectDbClauseParser (clause);
 
                         return parser.ODBExpr();
                 }
@@ -451,7 +463,8 @@
                         type = TYPE_SELECT;
 
                         String realCols = (cols == null ? "s0.ClassID" : parseExpression(cols, HINT_UNKNOWN));
-                        {if (true) return "SELECT " + realCols + " FROM " + getTableJoin() + " WHERE " + where + " AND " + joinWhere + " GROUP BY s0.ClassID" + sort + limit;}
+                        String tableJoin = getTableJoin(); // Also updates joinWhere.
+                        {if (true) return "SELECT " + realCols + " FROM " + tableJoin + " WHERE " + where + " AND " + joinWhere + " GROUP BY s0.ClassID" + sort + limit;}
     throw new Error("Missing return statement in function");
   }
 
@@ -481,12 +494,21 @@
                                         update.append(", ");
                                 String name = getFieldName(col.getName());
                                 inserts.append("INSERT IGNORE INTO ObjectStoreData SELECT ObjectID, \"" + col.getName() + "\", NULL, NULL, NULL FROM ObjectStore WHERE ClassName = \"" + cls + "\";\n");
-                                update.append(name + ".FieldString = " + parseExpression((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN) + ", ");
-                                update.append(name + ".FieldBigInt = " + name + ".FieldString, ");
-                                update.append(name + ".FieldDouble = " + name + ".FieldString");
+
+                                // Parse once for strings
+                                int hint = getHint((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN, false);
+                                String result = parseExpression((SimpleNode)col.jjtGetChild(0), hint);
+                                update.append(name + ".FieldString = " + result + ", ");
+
+                                // And again for numerics
+                                hint = getHint((SimpleNode)col.jjtGetChild(0), HINT_NUMERIC, false);
+                                result = parseExpression((SimpleNode)col.jjtGetChild(0), hint);
+                                update.append(name + ".FieldBigInt = " + result + ", ");
+                                update.append(name + ".FieldDouble = " + result);
                         }
+                        String tableJoin = getTableJoin(); // Also updates joinWhere.
                         update.append(" WHERE " + where + " AND " + joinWhere);
-                        inserts.append("UPDATE " + getTableJoin() + " SET " + update.toString());
+                        inserts.append("UPDATE " + tableJoin + " SET " + update.toString());
                         {if (true) return inserts.toString();}
     throw new Error("Missing return statement in function");
   }
@@ -576,7 +598,8 @@
                         modifiedClasses.add(cls);
                         type = TYPE_DELETE;
 
-                        {if (true) return "DELETE FROM s0 USING " + getTableJoin() + " WHERE " + where + " AND " + joinWhere;}
+                        String tableJoin = getTableJoin(); // Also updates joinWhere.
+                        {if (true) return "DELETE FROM s0 USING " + tableJoin + " WHERE " + where + " AND " + joinWhere;}
     throw new Error("Missing return statement in function");
   }
 
