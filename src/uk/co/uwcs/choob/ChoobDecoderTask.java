@@ -62,6 +62,7 @@ public class ChoobDecoderTask extends ChoobTask
 		boolean ignoreTriggers = false;
 		if (event instanceof UserEvent)
 		{
+			// TODO - This should happen only when a trigger might actually be activated...
 			try
 			{
 				if (1 == (Integer)ChoobDecoderTask.modules.plugin.callAPI("UserTypeCheck", "Status", ((UserEvent)event).getNick(), "bot"))
@@ -69,6 +70,11 @@ public class ChoobDecoderTask extends ChoobTask
 			}
 			catch (ChoobNoSuchCallException e)
 			{
+				// This is fine.
+			}
+			catch (Throwable e)
+			{
+				// This isn't.
 				System.err.println("EXCEPTION: " + e.toString());
 			}
 		}
