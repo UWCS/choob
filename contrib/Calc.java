@@ -150,8 +150,10 @@ public class MathParser
 	// Either (additionExpr) or a number.
 	public double termExpr() throws BadMathException
 	{
+		if (expr.length()<=ptr)
+			throw err();
 		char current = expr.charAt(ptr);
-		if ((current >= '0' && current <= '9') || current == '-')
+		if ((current >= '0' && current <= '9') || current == '-' || current == '.')
 			return numberExpr();
 		else if (current == '(')
 			return bracketExpr();
@@ -209,7 +211,10 @@ public class MathParser
 		if (ptr < length)
 			return new BadMathException("Unexpected symbol at position " + ptr + ": " + expr.charAt(ptr));
 		else
-			return new BadMathException("Unexpected end of expression after " + expr.charAt(ptr-1));
+			if (ptr-1>0)
+				return new BadMathException("Unexpected end of expression after " + expr.charAt(ptr-1));
+			else
+				return new BadMathException("Unexpected empty string.");
 	}
 }
 
