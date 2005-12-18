@@ -171,12 +171,19 @@ public class Tell
 		}
 	}
 
-	public String[] optionsUser = { "Secure" };
-	public String[] optionsUserDefaults = { "1" };
+	public String[] optionsUser = { "Secure", "NickChange" };
+	public String[] optionsUserDefaults = { "1", "1" };
+
 	public boolean optionCheckUserSecure( String value, String userName ) { return value.equals("0") || value.equals("1") || value.equals("2"); }
 	public String[] helpOptionSecure = {
 		"Choose the security level of your tells.",
 		"Set this to \"0\" to not have secure tells (no NickServ required), \"1\" to make them require NickServ, or \"2\" to make them require both NickServ and that your nicknames are linked in the bot."
+	};
+
+	public boolean optionCheckUserNickChange( String value, String userName ) { return value.equals("0") || value.equals("1"); }
+	public String[] helpOptionNickChange = {
+		"Choose to have tells delivered on nick change.",
+		"Set this to \"0\" to not have tells delivered on nick change, default, \"1\", will deliver on nick change."
 	};
 
 	private synchronized void spew (String nick)
@@ -342,6 +349,14 @@ public class Tell
 
 	public void onNickChange( NickChange ev )
 	{
+		try
+		{
+			if (((String)mods.plugin.callAPI("Options", "GetUserOption", ev.getNewNick(), "NickChange", "1" )).equals("0"))
+				return;
+		}
+		catch (ChoobNoSuchCallException e)
+		{} // Non-issue.
+
 		try
 		{
 			Thread.sleep(1000);
