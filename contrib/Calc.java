@@ -147,7 +147,7 @@ public class MathParser
 		}
 	}
 
-	// Either (additionExpr) or a number.
+	// Either additionExpr(), bracketExpr(), funcExpr() or a number.
 	public double termExpr() throws BadMathException
 	{
 		if (expr.length()<=ptr)
@@ -157,10 +157,13 @@ public class MathParser
 			return numberExpr();
 		else if (current == '(')
 			return bracketExpr();
+		else if (Character.isLetter(current))
+			return funcExpr();
 		else
 			throw err();
 	}
 
+	// [0-9]+(?:\.[0-9]+)?
 	public double numberExpr() throws BadMathException
 	{
 		int origPtr = ptr;
@@ -195,6 +198,7 @@ public class MathParser
 		}
 	}
 
+	// ( additionExpr() )
 	public double bracketExpr() throws BadMathException
 	{
 		ptr++;
@@ -204,6 +208,46 @@ public class MathParser
 			throw err();
 		else
 			return inner;
+	}
+
+	// name bracketExpr()
+	public double funcExpr() throws BadMathException
+	{
+		int oldPtr = ptr;
+		char current = expr.charAt(ptr);
+		while(Character.isLetter(current))
+		{
+			System.out.println(current);
+			ptr++;
+			current = expr.charAt(ptr);
+		}
+		String name = expr.substring(oldPtr, ptr).toLowerCase();
+		if (current != '(')
+			throw new BadMathException(name + " must take bracketed operands!");
+
+		// Parse out the parameter.
+		double param = bracketExpr();
+
+		if (name.equals("sin"))
+			return Math.sin(param);
+		else if (name.equals("cos"))
+			return Math.cos(param);
+		else if (name.equals("tan"))
+			return Math.tan(param);
+		else if (name.equals("asin"))
+			return Math.asin(param);
+		else if (name.equals("acos"))
+			return Math.acos(param);
+		else if (name.equals("atan"))
+			return Math.atan(param);
+		else if (name.equals("log"))
+			return Math.log10(param);
+		else if (name.equals("ln"))
+			return Math.log(param);
+		else if (name.equals("exp"))
+			return Math.exp(param);
+		else
+			throw new BadMathException("Unknown function: " + name);
 	}
 
 	public BadMathException err()
