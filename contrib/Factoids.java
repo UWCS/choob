@@ -77,17 +77,22 @@ public class Factoids
 	{
 		List<String> params = mods.util.getParams(msg, 1);
 
-		List facts = mods.odb.retrieve( FactoidObject.class , "SORT RANDOM LIMIT (1) WHERE subject = \"" + params.get(1).toLowerCase() + "\"");
+		if (params.size()<2)
+		{
+			irc.sendContextReply(msg, "Whatis what?");
+			return;
+		}
+
+		final String item = params.get(1).replaceAll("\\?","");
+
+		List facts = mods.odb.retrieve( FactoidObject.class , "SORT RANDOM LIMIT (1) WHERE subject = \"" + item.toLowerCase() + "\"");
 
 		if( facts.size() > 0 )
 		{
 			FactoidObject fact = (FactoidObject)facts.get(0);
-
-			irc.sendContextReply( msg, params.get(1) + " is " + fact.info );
+			irc.sendContextReply( msg, item + " is " + fact.info );
 		}
 		else
-		{
-			irc.sendContextReply( msg, "I don't know anything about " + params.get(1) + "! Ask your mum.");
-		}
+			irc.sendContextReply( msg, "I don't know anything about " + item + "!");
 	}
 }
