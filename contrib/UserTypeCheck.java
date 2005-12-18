@@ -52,6 +52,16 @@ public class UserTypeCheck
 		mods.interval.callBack(null, 1);
 	}
 	
+	public String[] info()
+	{
+		return new String[] {
+			"XXX",
+			"XXX",
+			"$LastChangedDate$",
+			"$LastChangedRevision$"
+		};
+	}
+	
 	/* This is never called. WTF? */
 	public void destroy(Modules mods)
 	{
@@ -240,7 +250,7 @@ public class UserTypeCheck
 					return data;
 				}
 			}
-		
+			
 			// Create new data thing and send query off.
 			data = new UserTypeCheckResult();
 			data.hasChecked = false;
