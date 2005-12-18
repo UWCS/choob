@@ -427,7 +427,7 @@ public class Vote
 		{
 			long days = remain / (60 * 60 * 24);
 			got++;
-			out.append("" + days + " days");
+			out.append("" + days + " days").append(days==1 ? "" : "s").append(", ");
 			remain = remain % (60 * 60 * 24);
 		}
 		if (remain > 60 * 60)
@@ -436,7 +436,7 @@ public class Vote
 			if (got > 0)
 				out.append(", ");
 			got++;
-			out.append("" + hours + " hours");
+			out.append("" + hours + " hour").append(hours==1 ? "" : "s").append(", ");
 			remain = remain % (60 * 60);
 		}
 		if (remain > 60 && got < 2)
@@ -445,13 +445,11 @@ public class Vote
 			if (got > 0)
 				out.append(", ");
 			got++;
-			out.append("" + mins + " mins");
+			out.append("" + mins + " min").append(mins==1 ? "" : "s").append(", ");
 			remain = remain % 60;
 		}
 		if (got == 0 || (got == 1 && remain > 0))
-		{
-			out.append("" + remain + " secs");
-		}
+			out.append("" + remain + " sec").append(remain==1 ? "" : "s");
 
 		if (past)
 			out.append(" ago");
