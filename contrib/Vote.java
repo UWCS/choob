@@ -6,6 +6,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 import java.text.SimpleDateFormat;
+import org.jibble.pircbot.Colors;
 
 public class ActiveVote
 {
@@ -360,7 +361,7 @@ public class Vote
 				else if (i != responses.length - 1)
 					output.append(", ");
 			}
-			output.append(".");
+			output.append(". Use ").append(Colors.BOLD).append(irc.getTrigger()).append("vote.vote ").append(vote.id).append(" {choice}").append(Colors.BOLD).append(" to vote!");
 			irc.sendContextReply(mes, output.toString());
 		}
 	}
