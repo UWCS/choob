@@ -283,7 +283,7 @@ public class Karma
 
 	// Plain string of >=2 chars.
 	final private static String plain_karma = "("
-				+ "[\\./a-zA-Z0-9_]{2,}"
+				+ "[a-zA-Z0-9_]{2,}"
 			+ ")";
 
 	// Either a quoted or a valid plain karmaitem.
