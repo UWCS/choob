@@ -57,8 +57,8 @@ public class UserTypeCheck
 		return new String[] {
 			"XXX",
 			"XXX",
-			"$LastChangedDate$",
-			"$LastChangedRevision$"
+			"XXX",
+			"$Author$$Date$$Rev$"
 		};
 	}
 	
