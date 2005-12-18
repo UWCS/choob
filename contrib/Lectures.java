@@ -18,7 +18,7 @@ public class Lectures
 			"University of Warwick lectures querying plugin.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

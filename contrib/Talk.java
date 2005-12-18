@@ -22,7 +22,7 @@ public class Talk
 			"Plugin which allows users to make the bot speak.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

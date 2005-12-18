@@ -36,7 +36,7 @@ public class Options
 			"Plugin to allow plugins to provide user-settable options.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

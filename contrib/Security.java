@@ -18,7 +18,7 @@ public class Security
 			"Security manipulation plugin.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

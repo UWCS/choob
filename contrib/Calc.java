@@ -14,7 +14,7 @@ public class Calc
 			"Plugin to do some simple calculations.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

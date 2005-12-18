@@ -31,7 +31,7 @@ public class Help
 			"Plugin to allow one to obtain help.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

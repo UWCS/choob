@@ -42,7 +42,7 @@ public class Vote
 			"Allows users to create polls to query about stuff.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

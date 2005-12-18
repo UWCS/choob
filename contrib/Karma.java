@@ -45,7 +45,7 @@ public class Karma
 			"Plugin to keep track of the \"karma\" of stuff.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

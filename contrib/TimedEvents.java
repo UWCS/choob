@@ -30,7 +30,7 @@ public class TimedEvents
 			"Allows users to save events to be executed in the future.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

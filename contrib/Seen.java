@@ -36,7 +36,7 @@ public class Seen
 			"Plugin which keeps track of when the bot last saw people.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

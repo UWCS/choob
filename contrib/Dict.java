@@ -35,7 +35,7 @@ public class Dict
 			"Dict.org dictionary lookup plugin.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

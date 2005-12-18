@@ -30,7 +30,7 @@ public class Tell
 			"A plugin to allow users to leave each other messages.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

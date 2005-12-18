@@ -15,7 +15,7 @@ public class Test
 			"Plugin containing various test routines.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

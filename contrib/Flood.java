@@ -81,7 +81,7 @@ public class Flood
 			"Flood protection plugin.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

@@ -22,7 +22,7 @@ public class Http
 			"Plugin that implements a simple HTTP server.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

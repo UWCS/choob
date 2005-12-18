@@ -41,7 +41,7 @@ public class Events
 			"CompSoc events watcher/info plugin.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

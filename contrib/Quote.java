@@ -75,7 +75,7 @@ public class Quote
 			"Plugin to allow users to create a database of infamous quotes.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

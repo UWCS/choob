@@ -17,7 +17,7 @@ public class Lookup
 			"DNS lookup plugin.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 											// 0->199

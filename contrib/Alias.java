@@ -33,7 +33,7 @@ public class Alias
 			"Command aliasing plugin.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

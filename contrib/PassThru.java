@@ -21,7 +21,7 @@ public class PassThru
 			"Hack plugin to allow smoother transition between bots.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

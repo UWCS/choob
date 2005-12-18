@@ -13,7 +13,7 @@ public class Plugin
 			"Plugin loader/manipulator.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

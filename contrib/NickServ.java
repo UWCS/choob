@@ -31,7 +31,7 @@ public class NickServ
 			"NickServ checker plugin.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 

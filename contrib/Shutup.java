@@ -13,7 +13,7 @@ public class Shutup
 			"Plugin to allow people to manipulate the protected channels in the bot.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			mods.util.getVersion()
+			"$Rev$$Date$"
 		};
 	}
 
