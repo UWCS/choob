@@ -46,7 +46,7 @@ public final class UtilModule
 
 	public String getVersion()
 	{
-		return "SVN";
+		return "$Date$$Rev$";
 	}
 
 	/** Get the parameter string (ie. message without the command) from a Message object */

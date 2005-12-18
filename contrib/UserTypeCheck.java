@@ -52,16 +52,6 @@ public class UserTypeCheck
 		mods.interval.callBack(null, 1);
 	}
 	
-	public String[] info()
-	{
-		return new String[] {
-			"XXX",
-			"XXX",
-			"XXX",
-			"$Author$$Date$$Rev$"
-		};
-	}
-	
 	/* This is never called. WTF? */
 	public void destroy(Modules mods)
 	{
