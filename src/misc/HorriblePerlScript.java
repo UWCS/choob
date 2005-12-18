@@ -44,7 +44,7 @@ public final class HorriblePerlScript
 		inheritance.put("PrivateNotice", new String[] { "Message", "PrivateEvent", });
 		inheritance.put("ChannelNotice", new String[] { "Message", "ChannelEvent", });
 
-		inheritance.put("ChannelInfo", new String[] { "IRCEvent", "ChannelEvent", });
+		inheritance.put("ChannelInfo", new String[] { "IRCEvent", "MessageEvent", "ChannelEvent", });
 
 		inheritance.put("ChannelMode", new String[] { "IRCEvent", "ChannelEvent", "ModeEvent", });
 		inheritance.put("ChannelParamMode", new String[] { "ChannelMode", "ParamEvent", });
@@ -101,7 +101,7 @@ public final class HorriblePerlScript
 		handlers.add(new String[] { "Message", "ChannelMessage", "target", null, "nick", null, "login", null, "hostname", null, "message", null, "channel", "target" } );
 		handlers.add(new String[] { "PrivateMessage", "PrivateMessage", "nick", null, "login", null, "hostname", null, "message", null, "target", "null" } );
 		handlers.add(new String[] { "Action", "Action", "nick", null, "login", null, "hostname", null, "target", null, "message", null, "channel", "target" } );
-		handlers.add(new String[] { "ChannelInfo", "ChannelInfo", "channel", null, "(int)userCount", null, "topic", null } );
+		handlers.add(new String[] { "ChannelInfo", "ChannelInfo", "channel", null, "(int)userCount", null, "message", null } );
 
 		handlers.add(new String[] { "DeVoice", "ChannelUserMode", "channel", null, "nick", null, "login", null, "hostname", null, "target", null, "mode", "\"v\"", "(boolean)set", "false" } );
 		handlers.add(new String[] { "Deop", "ChannelUserMode", "channel", null, "nick", null, "login", null, "hostname", null, "target", null, "mode", "\"o\"", "(boolean)set", "false" } );

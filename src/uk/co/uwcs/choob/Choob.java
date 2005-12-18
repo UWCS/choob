@@ -400,8 +400,8 @@ public final class Choob extends PircBot
 			spinThread(new PrivateAction("onPrivateAction", System.currentTimeMillis(), ((int)(Math.random()*127)), message, nick, login, hostname, target));
 	}
 
-	protected void onChannelInfo(String channel, int userCount, String topic) {
-		spinThread(new ChannelInfo("onChannelInfo", System.currentTimeMillis(), ((int)(Math.random()*127)), channel));
+	protected void onChannelInfo(String channel, int userCount, String message) {
+		spinThread(new ChannelInfo("onChannelInfo", System.currentTimeMillis(), ((int)(Math.random()*127)), message, channel));
 	}
 
 	protected void onDeVoice(String channel, String nick, String login, String hostname, String target) {
