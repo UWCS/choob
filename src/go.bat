@@ -118,7 +118,7 @@ IF NOT EXIST "%JavaHome%\javac.exe" (
 )
 SET JavaHome=%JavaHome%
 
-ECHO Java JDK home: %JavaHome%
+ECHO Java JDK home      : %JavaHome%
 SET PATH=%PATH%;%JavaHome%
 
 REM Must find MySQL install location!
@@ -138,7 +138,35 @@ IF NOT EXIST "%MysqlHome%\mysql.exe" (
 	ECHO FATAL ERROR: Cannot find "mysql.exe".
 	GOTO :EOF
 )
-ECHO Mysql folder : %MysqlHome%
+ECHO Mysql folder       : %MysqlHome%
+
+REM Find Cygwin install.
+IF DEFINED CygwinHome GOTO :do-setup-cygwin-set
+SET CygwinHome=
+FOR /R "%ProgFiles32%\Cygwin" %%D IN (*.exe) DO (
+	SET File=%%~nxD
+	IF "!File!"=="bash.exe" (
+		SET CygwinHome=%%~dpD
+		GOTO :do-setup-cygwin-set
+	)
+)
+FOR /R "%SystemDrive%\Cygwin" %%D IN (*.exe) DO (
+	SET File=%%~nxD
+	IF "!File!"=="bash.exe" (
+		SET CygwinHome=%%~dpD
+		GOTO :do-setup-cygwin-set
+	)
+)
+:do-setup-cygwin-set
+IF NOT EXIST "%CygwinHome%\bash.exe" (
+	ECHO FATAL ERROR: Cannot find Cygwin bin folder.
+	ECHO              You can specify this using the "CygwinHome" environment
+	ECHO              variable. The folder specified must contain "bash.exe".
+	ECHO FATAL ERROR: Cannot find "bash.exe".
+	GOTO :EOF
+)
+ECHO Cygwin folder      : %CygwinHome%
+SET PATH=%PATH%;%CygwinHome%
 GOTO :EOF
 
 
@@ -160,6 +188,20 @@ IF %JavaC% LSS 4 (
 	GOTO :EOF
 )
 ECHO OK: 'javac' found in path.
+
+REM Check for bash in path.
+SET Bash=0
+FOR /F "usebackq tokens=1 delims=" %%f IN (`bash --help 2^>^&1`) DO (
+	SET /A Bash=Bash + 1
+)
+IF %Bash% LSS 10 (
+	ECHO FATAL ERROR: Bash is not in the path.
+	ECHO              You can fix this by correcting the PATH environment
+	ECHO              variable manually, or by running the SETUP mode of GO
+	ECHO              as well ^("go setup test"^).
+	GOTO :EOF
+)
+ECHO OK: 'bash' found in path.
 
 REM Check bot.conf.
 IF NOT EXIST "bot.conf" (
