@@ -80,7 +80,12 @@ public final class Choob extends PircBot
 		}
 		try
 		{
-			broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://" + conf.getSettingFallback("dbServer","localhost") + "/choob?autoReconnect=true&autoReconnectForPools=true&initialTimeout=1", conf.getSettingFallback("dbUser","choob"), conf.getSettingFallback("dbPass",""), 10, 20, logFile, 60);
+			broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://"
+					+ conf.getSettingFallback("dbServer","localhost")
+					+ "/choob?autoReconnect=true&"
+					+ "autoReconnectForPools=true&initialTimeout=1&"
+					+ "useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8",
+						conf.getSettingFallback("dbUser","choob"), conf.getSettingFallback("dbPass",""), 10, 20, logFile, 60);
 		}
 		catch (SQLException e)
 		{
@@ -89,7 +94,7 @@ public final class Choob extends PircBot
 			System.exit(5);
 			return;
 		}
-		
+
 		// Use sensible charset, ignoring the platform-default.
 		try
 		{
@@ -153,7 +158,7 @@ public final class Choob extends PircBot
 	void doConnect() throws IOException, IrcException
 	{
 		exitCode = -1;
-		
+
 		// Connect to the IRC server.
 		connect(conf.getSettingFallback("server","irc.uwcs.co.uk"),
 			Integer.parseInt(conf.getSettingFallback("port", "6667")),
@@ -307,7 +312,7 @@ public final class Choob extends PircBot
 	{
 		return trigger;
 	}
-	
+
 	public void setExitCode(int newExitCode) {
 		exitCode = newExitCode;
 	}
@@ -322,7 +327,7 @@ public final class Choob extends PircBot
 			System.out.println("Disconnected as planned.");
 			System.exit(exitCode);
 		}
-		
+
 		System.out.println ("Connection lost!");
 		for (;;)
 		{
