@@ -571,13 +571,13 @@ String ParseInsert() :
 		(
 			<K_INTO> string = ClassName()
 			{
-				if (cls != null)
+				if (cls == null)
 					cls = string;
 				else
 					throw new ParseException("INTO clause used on a query which already had an INTO class.");
 			}
 		)?
-		<K_SET> cols = FieldSetList()
+		<K_SET> cols = FullFieldSetList()
 		{
 			modifiedClasses.add(cls);
 			type = TYPE_INSERT;
@@ -591,7 +591,7 @@ String ParseInsert() :
 					idClause = parseExpression((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN);
 			}
 
-			StringBuffer query = new StringBuffer("INSERT INTO ObjectStore VALUES(" + idClause + ", '" + cls + "', id);\n");
+			StringBuffer query = new StringBuffer("INSERT INTO ObjectStore VALUES(DEFAULT, '" + cls + "', " + idClause + ");\n");
 			for(int i=0; i<cols.jjtGetNumChildren(); i++)
 			{
 				SimpleNode col = (SimpleNode)cols.jjtGetChild(i);
@@ -619,7 +619,7 @@ String ParseDelete() :
 		(
 			<K_FROM> string = ClassName()
 			{
-				if (cls != null)
+				if (cls == null)
 					cls = string;
 				else
 					throw new ParseException("FROM clause used on a query which already had a FROM class.");
@@ -911,6 +911,35 @@ SimpleNode ExpressionList() #ExpressionList :
 			<COMMA> ExpressionRoot()
 		)*
 		{ jjtThis.setName(""); return jjtThis; }
+	}
+
+void FullFieldSet() #FieldSet :
+	{
+		List list = new ArrayList();
+		String expr;
+		Token fieldName;
+	}
+	{
+		(
+			fieldName = <FIELDNAME>
+			{ jjtThis.setName(fieldName.image); }
+		|
+			fieldName = <IDNAME>
+			{ jjtThis.setName(fieldName.image); }
+		)
+			<K_EQUAL>
+			ExpressionRoot()
+	}
+
+SimpleNode FullFieldSetList() #FieldSetList :
+	{
+		List list = new ArrayList();
+		String string;
+	}
+	{
+		FullFieldSet()
+		( <COMMA> FullFieldSet() )*
+		{ return jjtThis; }
 	}
 
 void FieldSet() #FieldSet :

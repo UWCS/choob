@@ -286,17 +286,17 @@ INSERT INTO `UserNodes` VALUES (33, 'UserTypeCheck', 2);
 -- Constraints for table `GroupMembers`
 --
 ALTER TABLE `GroupMembers`
-  ADD CONSTRAINT `GroupMembers_ibfk_1` FOREIGN KEY (`GroupID`) REFERENCES `UserNodes` (`NodeID`),
-  ADD CONSTRAINT `GroupMembers_ibfk_2` FOREIGN KEY (`MemberID`) REFERENCES `UserNodes` (`NodeID`);
+  ADD CONSTRAINT `GroupMembers_ibfk_1` FOREIGN KEY (`GroupID`) REFERENCES `UserNodes` (`NodeID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `GroupMembers_ibfk_2` FOREIGN KEY (`MemberID`) REFERENCES `UserNodes` (`NodeID`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `ObjectStoreData`
 --
 ALTER TABLE `ObjectStoreData`
-  ADD CONSTRAINT `ObjectStoreData_ibfk_1` FOREIGN KEY (`ObjectID`) REFERENCES `ObjectStore` (`ObjectID`);
+  ADD CONSTRAINT `ObjectStoreData_ibfk_1` FOREIGN KEY (`ObjectID`) REFERENCES `ObjectStore` (`ObjectID`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `UserNodePermissions`
 --
 ALTER TABLE `UserNodePermissions`
-  ADD CONSTRAINT `UserNodePermissions_ibfk_1` FOREIGN KEY (`NodeID`) REFERENCES `UserNodes` (`NodeID`);
+  ADD CONSTRAINT `UserNodePermissions_ibfk_1` FOREIGN KEY (`NodeID`) REFERENCES `UserNodes` (`NodeID`) ON DELETE CASCADE;

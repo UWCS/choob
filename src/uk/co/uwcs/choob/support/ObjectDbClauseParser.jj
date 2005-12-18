@@ -571,13 +571,13 @@ String ParseInsert() :
 		(
 			<K_INTO> string = ClassName()
 			{
-				if (cls != null)
+				if (cls == null)
 					cls = string;
 				else
 					throw new ParseException("INTO clause used on a query which already had an INTO class.");
 			}
 		)?
-		<K_SET> cols = FieldSetList()
+		<K_SET> cols = FullFieldSetList()
 		{
 			modifiedClasses.add(cls);
 			type = TYPE_INSERT;
@@ -591,7 +591,7 @@ String ParseInsert() :
 					idClause = parseExpression((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN);
 			}
 
-			StringBuffer query = new StringBuffer("INSERT INTO ObjectStore VALUES(" + idClause + ", '" + cls + "', id);\n");
+			StringBuffer query = new StringBuffer("INSERT INTO ObjectStore VALUES(DEFAULT, '" + cls + "', " + idClause + ");\n");
 			for(int i=0; i<cols.jjtGetNumChildren(); i++)
 			{
 				SimpleNode col = (SimpleNode)cols.jjtGetChild(i);
@@ -619,7 +619,7 @@ String ParseDelete() :
 		(
 			<K_FROM> string = ClassName()
 			{
-				if (cls != null)
+				if (cls == null)
 					cls = string;
 				else
 					throw new ParseException("FROM clause used on a query which already had a FROM class.");
@@ -1077,6 +1077,92 @@ SimpleNode ExpressionList()                 :
                 }
 /*@egen*/
 		{ jjtn000.setName(""); return jjtn000; }/*@bgen(jjtree)*/
+                } catch (Throwable jjte000) {
+                  if (jjtc000) {
+                    jjtree.clearNodeScope(jjtn000);
+                    jjtc000 = false;
+                  } else {
+                    jjtree.popNode();
+                  }
+                  if (jjte000 instanceof RuntimeException) {
+                    throw (RuntimeException)jjte000;
+                  }
+                  if (jjte000 instanceof ParseException) {
+                    throw (ParseException)jjte000;
+                  }
+                  throw (Error)jjte000;
+                } finally {
+                  if (jjtc000) {
+                    jjtree.closeNodeScope(jjtn000, true);
+                  }
+                }
+/*@egen*/
+	}
+
+void FullFieldSet()           :
+	{/*@bgen(jjtree) FieldSet */
+                ObjectDBClauseNodeFieldSet jjtn000 = new ObjectDBClauseNodeFieldSet(JJTFIELDSET);
+                boolean jjtc000 = true;
+                jjtree.openNodeScope(jjtn000);
+/*@egen*/
+		List list = new ArrayList();
+		String expr;
+		Token fieldName;
+	}
+	{/*@bgen(jjtree) FieldSet */
+                try {
+/*@egen*/
+		(
+			fieldName = <FIELDNAME>
+			{ jjtn000.setName(fieldName.image); }
+		|
+			fieldName = <IDNAME>
+			{ jjtn000.setName(fieldName.image); }
+		)
+			<K_EQUAL>
+			ExpressionRoot()/*@bgen(jjtree)*/
+                } catch (Throwable jjte000) {
+                  if (jjtc000) {
+                    jjtree.clearNodeScope(jjtn000);
+                    jjtc000 = false;
+                  } else {
+                    jjtree.popNode();
+                  }
+                  if (jjte000 instanceof RuntimeException) {
+                    throw (RuntimeException)jjte000;
+                  }
+                  if (jjte000 instanceof ParseException) {
+                    throw (ParseException)jjte000;
+                  }
+                  throw (Error)jjte000;
+                } finally {
+                  if (jjtc000) {
+                    jjtree.closeNodeScope(jjtn000, true);
+                  }
+                }
+/*@egen*/
+	}
+
+SimpleNode FullFieldSetList()               :
+	{/*@bgen(jjtree) FieldSetList */
+                ObjectDBClauseNodeFieldSetList jjtn000 = new ObjectDBClauseNodeFieldSetList(JJTFIELDSETLIST);
+                boolean jjtc000 = true;
+                jjtree.openNodeScope(jjtn000);
+/*@egen*/
+		List list = new ArrayList();
+		String string;
+	}
+	{/*@bgen(jjtree) FieldSetList */
+                try {
+/*@egen*/
+		FullFieldSet()
+		( <COMMA> FullFieldSet() )*/*@bgen(jjtree)*/
+                {
+                  jjtree.closeNodeScope(jjtn000, true);
+                  jjtc000 = false;
+                }
+/*@egen*/
+		{ return jjtn000; }/*@bgen(jjtree)*/
                 } catch (Throwable jjte000) {
                   if (jjtc000) {
                     jjtree.clearNodeScope(jjtn000);

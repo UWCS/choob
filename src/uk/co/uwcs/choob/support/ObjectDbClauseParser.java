@@ -524,7 +524,7 @@
     case K_INTO:
       jj_consume_token(K_INTO);
       string = ClassName();
-                                if (cls != null)
+                                if (cls == null)
                                         cls = string;
                                 else
                                         {if (true) throw new ParseException("INTO clause used on a query which already had an INTO class.");}
@@ -534,7 +534,7 @@
       ;
     }
     jj_consume_token(K_SET);
-    cols = FieldSetList();
+    cols = FullFieldSetList();
                         modifiedClasses.add(cls);
                         type = TYPE_INSERT;
 
@@ -547,7 +547,7 @@
                                         idClause = parseExpression((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN);
                         }
 
-                        StringBuffer query = new StringBuffer("INSERT INTO ObjectStore VALUES(" + idClause + ", '" + cls + "', id);\n");
+                        StringBuffer query = new StringBuffer("INSERT INTO ObjectStore VALUES(DEFAULT, '" + cls + "', " + idClause + ");\n");
                         for(int i=0; i<cols.jjtGetNumChildren(); i++)
                         {
                                 SimpleNode col = (SimpleNode)cols.jjtGetChild(i);
@@ -573,7 +573,7 @@
     case K_FROM:
       jj_consume_token(K_FROM);
       string = ClassName();
-                                if (cls != null)
+                                if (cls == null)
                                         cls = string;
                                 else
                                         {if (true) throw new ParseException("FROM clause used on a query which already had a FROM class.");}
@@ -1172,6 +1172,97 @@
     throw new Error("Missing return statement in function");
   }
 
+  final public void FullFieldSet() throws ParseException {
+         /*@bgen(jjtree) FieldSet */
+                ObjectDBClauseNodeFieldSet jjtn000 = new ObjectDBClauseNodeFieldSet(JJTFIELDSET);
+                boolean jjtc000 = true;
+                jjtree.openNodeScope(jjtn000);List list = new ArrayList();
+                String expr;
+                Token fieldName;
+    try {
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case FIELDNAME:
+        fieldName = jj_consume_token(FIELDNAME);
+                          jjtn000.setName(fieldName.image);
+        break;
+      case IDNAME:
+        fieldName = jj_consume_token(IDNAME);
+                          jjtn000.setName(fieldName.image);
+        break;
+      default:
+        jj_la1[25] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
+      jj_consume_token(K_EQUAL);
+      ExpressionRoot();
+    } catch (Throwable jjte000) {
+                  if (jjtc000) {
+                    jjtree.clearNodeScope(jjtn000);
+                    jjtc000 = false;
+                  } else {
+                    jjtree.popNode();
+                  }
+                  if (jjte000 instanceof RuntimeException) {
+                    {if (true) throw (RuntimeException)jjte000;}
+                  }
+                  if (jjte000 instanceof ParseException) {
+                    {if (true) throw (ParseException)jjte000;}
+                  }
+                  {if (true) throw (Error)jjte000;}
+    } finally {
+                  if (jjtc000) {
+                    jjtree.closeNodeScope(jjtn000, true);
+                  }
+    }
+  }
+
+  final public SimpleNode FullFieldSetList() throws ParseException {
+         /*@bgen(jjtree) FieldSetList */
+                ObjectDBClauseNodeFieldSetList jjtn000 = new ObjectDBClauseNodeFieldSetList(JJTFIELDSETLIST);
+                boolean jjtc000 = true;
+                jjtree.openNodeScope(jjtn000);List list = new ArrayList();
+                String string;
+    try {
+      FullFieldSet();
+      label_8:
+      while (true) {
+        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+        case COMMA:
+          ;
+          break;
+        default:
+          jj_la1[26] = jj_gen;
+          break label_8;
+        }
+        jj_consume_token(COMMA);
+        FullFieldSet();
+      }
+                  jjtree.closeNodeScope(jjtn000, true);
+                  jjtc000 = false;
+                  {if (true) return jjtn000;}
+    } catch (Throwable jjte000) {
+                  if (jjtc000) {
+                    jjtree.clearNodeScope(jjtn000);
+                    jjtc000 = false;
+                  } else {
+                    jjtree.popNode();
+                  }
+                  if (jjte000 instanceof RuntimeException) {
+                    {if (true) throw (RuntimeException)jjte000;}
+                  }
+                  if (jjte000 instanceof ParseException) {
+                    {if (true) throw (ParseException)jjte000;}
+                  }
+                  {if (true) throw (Error)jjte000;}
+    } finally {
+                  if (jjtc000) {
+                    jjtree.closeNodeScope(jjtn000, true);
+                  }
+    }
+    throw new Error("Missing return statement in function");
+  }
+
   final public void FieldSet() throws ParseException {
          /*@bgen(jjtree) FieldSet */
                 ObjectDBClauseNodeFieldSet jjtn000 = new ObjectDBClauseNodeFieldSet(JJTFIELDSET);
@@ -1213,15 +1304,15 @@
                 String string;
     try {
       FieldSet();
-      label_8:
+      label_9:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
         case COMMA:
           ;
           break;
         default:
-          jj_la1[25] = jj_gen;
-          break label_8;
+          jj_la1[27] = jj_gen;
+          break label_9;
         }
         jj_consume_token(COMMA);
         FieldSet();
@@ -1273,13 +1364,13 @@
                                            order = "DESC";
           break;
         default:
-          jj_la1[26] = jj_gen;
+          jj_la1[28] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
         break;
       default:
-        jj_la1[27] = jj_gen;
+        jj_la1[29] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -1288,7 +1379,7 @@
                                               isInt = true;
         break;
       default:
-        jj_la1[28] = jj_gen;
+        jj_la1[30] = jj_gen;
         ;
       }
       t = jj_consume_token(FIELDNAME);
@@ -1300,7 +1391,7 @@
                                 {if (true) return "ORDER BY RAND()";}
       break;
     default:
-      jj_la1[29] = jj_gen;
+      jj_la1[31] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1323,7 +1414,7 @@
                                 {if (true) return "LIMIT " + t1.image;}
       break;
     default:
-      jj_la1[30] = jj_gen;
+      jj_la1[32] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1335,7 +1426,7 @@
   public Token token, jj_nt;
   private int jj_ntk;
   private int jj_gen;
-  final private int[] jj_la1 = new int[31];
+  final private int[] jj_la1 = new int[33];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static {
@@ -1343,10 +1434,10 @@
       jj_la1_1();
    }
    private static void jj_la1_0() {
-      jj_la1_0 = new int[] {0x4000,0x0,0xf0000,0x1f00,0x1f00,0x100,0x8000,0x1000,0x100,0x1000000,0x800000,0xc0500000,0x0,0x0,0x0,0x0,0x0,0x0,0xc0100000,0x0,0x0,0x20000000,0x20000000,0x0,0x0,0x0,0x6000000,0x6000000,0x8000000,0x1e000000,0x200000,};
+      jj_la1_0 = new int[] {0x4000,0x0,0xf0000,0x1f00,0x1f00,0x100,0x8000,0x1000,0x100,0x1000000,0x800000,0xc0500000,0x0,0x0,0x0,0x0,0x0,0x0,0xc0100000,0x0,0x0,0x20000000,0x20000000,0x0,0x0,0x0,0x0,0x0,0x6000000,0x6000000,0x8000000,0x1e000000,0x200000,};
    }
    private static void jj_la1_1() {
-      jj_la1_1 = new int[] {0x0,0x40000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe003,0xfc,0xfc,0x300,0x300,0xc00,0xc00,0x3fe003,0x380000,0x60000,0x0,0x40000,0x1000,0x1000,0x1000,0x0,0x0,0x0,0x40000,0x1000,};
+      jj_la1_1 = new int[] {0x0,0x40000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3fe003,0xfc,0xfc,0x300,0x300,0xc00,0xc00,0x3fe003,0x380000,0x60000,0x0,0x40000,0x1000,0x1000,0x60000,0x1000,0x1000,0x0,0x0,0x0,0x40000,0x1000,};
    }
 
   public ObjectDbClauseParser(java.io.InputStream stream) {
@@ -1355,7 +1446,7 @@
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 31; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 33; i++) jj_la1[i] = -1;
   }
 
   public void ReInit(java.io.InputStream stream) {
@@ -1365,7 +1456,7 @@
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 31; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 33; i++) jj_la1[i] = -1;
   }
 
   public ObjectDbClauseParser(java.io.Reader stream) {
@@ -1374,7 +1465,7 @@
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 31; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 33; i++) jj_la1[i] = -1;
   }
 
   public void ReInit(java.io.Reader stream) {
@@ -1384,7 +1475,7 @@
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 31; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 33; i++) jj_la1[i] = -1;
   }
 
   public ObjectDbClauseParser(ObjectDbClauseParserTokenManager tm) {
@@ -1392,7 +1483,7 @@
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 31; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 33; i++) jj_la1[i] = -1;
   }
 
   public void ReInit(ObjectDbClauseParserTokenManager tm) {
@@ -1401,7 +1492,7 @@
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 31; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 33; i++) jj_la1[i] = -1;
   }
 
   final private Token jj_consume_token(int kind) throws ParseException {
@@ -1456,7 +1547,7 @@
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 31; i++) {
+    for (int i = 0; i < 33; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
