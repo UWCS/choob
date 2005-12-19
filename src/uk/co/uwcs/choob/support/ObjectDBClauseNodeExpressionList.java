@@ -7,7 +7,7 @@ public class ObjectDBClauseNodeExpressionList extends SimpleNode {
     super(id);
   }
 
-  public ObjectDBClauseNodeExpressionList(ObjectDbClauseParser p, int id) {
+  public ObjectDBClauseNodeExpressionList(ObjectDBClauseParser p, int id) {
     super(p, id);
   }
 

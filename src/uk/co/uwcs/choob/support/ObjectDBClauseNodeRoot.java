@@ -7,7 +7,7 @@ public class ObjectDBClauseNodeRoot extends SimpleNode {
     super(id);
   }
 
-  public ObjectDBClauseNodeRoot(ObjectDbClauseParser p, int id) {
+  public ObjectDBClauseNodeRoot(ObjectDBClauseParser p, int id) {
     super(p, id);
   }
 

@@ -17,7 +17,11 @@ public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 	public String getClassName() {
 		return obj.getClass().getName();
 	}
-	
+
+	public ObjectDBClass getODBClass() {
+		return new ObjectDBClassJavaWrapper(getClass());
+	}
+
 	public int getId() {
 		try {
 			final Object obj2 = obj;

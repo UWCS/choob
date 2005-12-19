@@ -7,7 +7,7 @@ public class ObjectDBClauseNodeMul extends SimpleNode {
     super(id);
   }
 
-  public ObjectDBClauseNodeMul(ObjectDbClauseParser p, int id) {
+  public ObjectDBClauseNodeMul(ObjectDBClauseParser p, int id) {
     super(p, id);
   }
 

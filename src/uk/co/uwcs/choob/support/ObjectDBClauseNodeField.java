@@ -7,7 +7,7 @@ public class ObjectDBClauseNodeField extends SimpleNode {
     super(id);
   }
 
-  public ObjectDBClauseNodeField(ObjectDbClauseParser p, int id) {
+  public ObjectDBClauseNodeField(ObjectDBClauseParser p, int id) {
     super(p, id);
   }
 

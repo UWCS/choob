@@ -38,16 +38,29 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		} catch (NoSuchFieldException e) {
 			// Do nothing.
 		}
-		return "";
+		return ""; // XXX ?!
 	}
-	
+
+	public ObjectDBClass getODBClass() {
+		try {
+			Object ctor = getFieldValue("constructor");
+			if (ctor instanceof Function) {
+				ObjectDBClass cls = new ObjectDBClassJSWrapper((Function)ctor);
+				return cls;
+			}
+		} catch (NoSuchFieldException e) {
+			// Do nothing.
+		}
+		return null; // XXX ?!
+	}
+
 	public int getId() {
 		try {
 			return ((Number)getFieldValue("id")).intValue();
 		} catch (NoSuchFieldException e) {
 			// Should not occur (we check for "id" on creation).
 		}
-		return 0;
+		return 0; // XXX ?!
 	}
 	
 	public void setId(int id) {

@@ -7,7 +7,7 @@ public class ObjectDBClauseNodeConstant extends SimpleNode {
     super(id);
   }
 
-  public ObjectDBClauseNodeConstant(ObjectDbClauseParser p, int id) {
+  public ObjectDBClauseNodeConstant(ObjectDBClauseParser p, int id) {
     super(p, id);
   }
 

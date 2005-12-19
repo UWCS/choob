@@ -7,7 +7,7 @@ public class ObjectDBClauseNodeFieldSetList extends SimpleNode {
     super(id);
   }
 
-  public ObjectDBClauseNodeFieldSetList(ObjectDbClauseParser p, int id) {
+  public ObjectDBClauseNodeFieldSetList(ObjectDBClauseParser p, int id) {
     super(p, id);
   }
 

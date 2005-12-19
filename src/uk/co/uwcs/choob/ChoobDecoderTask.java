@@ -52,10 +52,6 @@ public class ChoobDecoderTask extends ChoobTask
 			//}
 		}
 
-		// Log every Message we recieve.
-		if (event instanceof Message)
-			modules.history.addLog( (Message) event );
-
 		// Process event calls first
 		tasks.addAll(modules.plugin.getPlugMan().eventTasks(event));
 

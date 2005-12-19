@@ -4,6 +4,11 @@ import java.lang.reflect.*;
 
 public interface ObjectDBObject {
 	/**
+	 * Gets the ObjectDBClass from which this object descends.
+	 */
+	ObjectDBClass getODBClass();
+
+	/**
 	 * Gets the class name of the object in a ObjectDB-compatible format.
 	 * @return The fully qualified class name (e.g. "plugin.MyPlugin.SomeClass").
 	 */

@@ -19,13 +19,13 @@ if [ misc/HorriblePerlScript.java -nt uk/co/uwcs/choob/Choob.java ]; then
 	fi
 fi
 
-if [ uk/co/uwcs/choob/support/ObjectDbClauseParser.jjt -nt uk/co/uwcs/choob/support/ObjectDbClauseParser.java ]; then
+if [ uk/co/uwcs/choob/support/ObjectDBClauseParser.jjt -nt uk/co/uwcs/choob/support/ObjectDBClauseParser.java ]; then
 	echo Recompiling ObjectDB parser...
-	if ! jjtree -OUTPUT_DIRECTORY=uk/co/uwcs/choob/support uk/co/uwcs/choob/support/ObjectDbClauseParser.jjt; then
+	if ! jjtree -OUTPUT_DIRECTORY=uk/co/uwcs/choob/support uk/co/uwcs/choob/support/ObjectDBClauseParser.jjt; then
 		echo "Failed to JJT-compile the ObjectDB Clause Parser."
 		exit 1
 	fi
-	if ! javacc -OUTPUT_DIRECTORY=uk/co/uwcs/choob/support uk/co/uwcs/choob/support/ObjectDbClauseParser.jj; then
+	if ! javacc -OUTPUT_DIRECTORY=uk/co/uwcs/choob/support uk/co/uwcs/choob/support/ObjectDBClauseParser.jj; then
 		echo "Failed to JJ-compile the ObjectDB Clause Parser."
 		exit 1
 	fi

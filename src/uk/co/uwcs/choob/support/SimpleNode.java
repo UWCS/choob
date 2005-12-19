@@ -6,13 +6,13 @@ public class SimpleNode implements Node {
 	protected Node parent;
 	protected Node[] children;
 	protected int id;
-	protected ObjectDbClauseParser parser;
+	protected ObjectDBClauseParser parser;
 
 	public SimpleNode(int i) {
 		id = i;
 	}
 
-	public SimpleNode(ObjectDbClauseParser p, int i) {
+	public SimpleNode(ObjectDBClauseParser p, int i) {
 		this(i);
 		parser = p;
 	}
@@ -51,7 +51,7 @@ public class SimpleNode implements Node {
 	   toString(String), otherwise overriding toString() is probably all
 	   you need to do. */
 
-	public String toString() { return ObjectDbClauseParserTreeConstants.jjtNodeName[id]; }
+	public String toString() { return ObjectDBClauseParserTreeConstants.jjtNodeName[id]; }
 	public String toString(String prefix) { return prefix + toString(); }
 
 	/* Override this method if you want to customize how the node dumps

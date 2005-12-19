@@ -7,7 +7,7 @@ public class ObjectDBClauseNodeFieldSet extends SimpleNode {
     super(id);
   }
 
-  public ObjectDBClauseNodeFieldSet(ObjectDbClauseParser p, int id) {
+  public ObjectDBClauseNodeFieldSet(ObjectDBClauseParser p, int id) {
     super(p, id);
   }
 

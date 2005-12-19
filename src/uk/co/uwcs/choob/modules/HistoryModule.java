@@ -301,8 +301,8 @@ public final class HistoryModule
 		PreparedStatement stat = null;
 		try
 		{
-			dbCon=dbBroker.getConnection();
-			stat = dbCon.prepareStatement("SELECT * FROM History WHERE Channel = ? AND Time < ? ORDER BY Time DESC LIMIT ?");
+			dbCon = dbBroker.getConnection();
+			stat = dbCon.prepareStatement("SELECT * FROM History WHERE Channel = ? AND Time < ? ORDER BY Time DESC, LineID DESC LIMIT ?");
 			stat.setString(1, channel);
 			stat.setLong(2, cause == null ? System.currentTimeMillis() : cause.getMillis() );
 			stat.setInt(3, count);
