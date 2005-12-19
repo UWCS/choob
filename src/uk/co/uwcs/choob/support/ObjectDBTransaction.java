@@ -377,7 +377,7 @@ public class ObjectDBTransaction // Needs to be non-final
 			// Now execute all that!
 			stat = dbConn.createStatement();
 			begin();
-			stat.executeUpdate("CREATE TABLE `" + clean("`", getTableName(obj)) + "` (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY)");
+			stat.executeUpdate("CREATE TABLE `" + clean("`", getTableName(obj)) + "` (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY) Type=InnoDB");
 			String initial = "ALTER TABLE `" + clean("`", getTableName(obj)) + "` ";
 			for(String query: statements)
 			{
