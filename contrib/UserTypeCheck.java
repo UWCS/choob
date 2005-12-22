@@ -23,11 +23,16 @@ public class UserTypeCheck
 	private IRCInterface irc;
 	private Map<String,UserTypeCheckResult> userChecks;
 	
+	/* Time that the API will wait for data to arrive */
+	private final int USER_DATA_WAIT = 10000; // 10 seconds
+	/* If true, cached requests will block until the live request times out */
+	private final boolean USER_DATA_CACHE_BLOCK = true;
 	/* The time between checks for expired cache items. */
 	private final int USER_DATA_INTERVAL = 30000; // 30 seconds
 	/* the time for which an entry is cached. */
 	private final int USER_DATA_TIMEOUT = USER_DATA_INTERVAL * 10; // 5 minutes
 	
+	/* Different flag types... */
 	private final int USER_TYPE_FLAG_BOT         = 1;
 	private final int USER_TYPE_FLAG_AWAY        = 2;
 	private final int USER_TYPE_FLAG_IRCOP       = 3;
@@ -36,6 +41,7 @@ public class UserTypeCheck
 	private final int USER_TYPE_FLAG__MIN = USER_TYPE_FLAG_BOT;
 	private final int USER_TYPE_FLAG__MAX = USER_TYPE_FLAG_SECURE;
 	
+	/* Return values from the API "check" */
 	private final int USER_TYPE_RV_ERROR = -1;
 	private final int USER_TYPE_RV_NO    =  0;
 	private final int USER_TYPE_RV_YES   =  1;
@@ -63,10 +69,8 @@ public class UserTypeCheck
 			Iterator<String> user = userChecks.keySet().iterator();
 			while(user.hasNext()) {
 				UserTypeCheckResult entry = userChecks.get(user.next());
-				//synchronized(entry)
-				//{
-					entry.notifyAll();
-				//}
+				//FIXME: synchronized?//
+				entry.notifyAll();
 			}
 		}
 	}
@@ -83,7 +87,7 @@ public class UserTypeCheck
 				nick = user.next();
 				UserTypeCheckResult entry = userChecks.get(nick);
 				if (entry.hasChecked && (System.currentTimeMillis() > entry.timestamp + USER_DATA_TIMEOUT)) {
-					System.out.println("Removed user check for " + nick + ".");
+					System.out.println("UTC: Data for user <" + nick + "> has expired.");
 					userChecks.remove(nick);
 					// Restart iterator, otherwise it gets all touchy.
 					user = userChecks.keySet().iterator();
@@ -187,8 +191,8 @@ public class UserTypeCheck
 			if (ev.getCode() == 318) {
 				userData.timestamp = System.currentTimeMillis();
 				userData.hasChecked = true;
-				System.out.println("Check for " + nickl +
-						 ": bot("   + (new Boolean(userData.isBot)).toString() + 
+				System.out.println("UTC: Data for user <" + nickl +
+						 ">: bot("   + (new Boolean(userData.isBot)).toString() + 
 						"); away(" + (new Boolean(userData.isAway)).toString() + 
 						"); ircop(" + (new Boolean(userData.isOperator)).toString() + 
 						"); reg("   + (new Boolean(userData.isRegistered)).toString() + 
@@ -202,8 +206,7 @@ public class UserTypeCheck
 	private int getStatus(String nick, int flag)
 	{
 		UserTypeCheckResult userData = getUserData(nick);
-		if ((userData == null) || !userData.hasChecked) {
-			System.out.println("Check for " + nick + " FAILED!");
+		if (userData == null) {
 			return USER_TYPE_RV_ERROR;
 		}
 		
@@ -233,8 +236,13 @@ public class UserTypeCheck
 			data = userChecks.get(nick);
 			
 			if (data != null) {
+				if (!USER_DATA_CACHE_BLOCK && !data.hasChecked) {
+					System.out.println("UTC: Check (cached) for user <" + nick + "> has no data!");
+					return null;
+				}
 				synchronized(data) {
 					if (!data.hasChecked) {
+						System.out.println("UTC: Check (cached) for user <" + nick + "> FAILED!");
 						return null;
 					}
 					return data;
@@ -250,12 +258,16 @@ public class UserTypeCheck
 		
 		synchronized(data) {
 			try {
-				data.wait(10000);
+				data.wait(USER_DATA_WAIT);
 			} catch (InterruptedException e) {
+				// Do nothing, as data.hasChecked will be false anyway.
+			}
+			if (!data.hasChecked) {
+				System.out.println("UTC: Check (live) for user <" + nick + "> FAILED!");
 				return null;
 			}
+			return data;
 		}
-		return data;
 	}
 	
 	private int mapBooleanToCheckRV(boolean in)
