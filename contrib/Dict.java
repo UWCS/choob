@@ -265,7 +265,7 @@ public class Dict
 		if (page.indexOf("No entry found")!=-1)
 			throw new DictionaryException("No matches found.");
 
-		Matcher ma=Pattern.compile("(?s)\r?\n<TABLE><TR><TD>(.*?)</TR></TABLE>").matcher(page);
+		Matcher ma=Pattern.compile("(?s)<!-- google_ad_region_start=def -->(.*?)<!-- google_ad_region_end=def -->").matcher(page);
 
 		if (ma.find())
 		{
