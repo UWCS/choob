@@ -6,6 +6,8 @@ import java.util.*;
 import java.security.*;
 import org.jibble.pircbot.Colors;
 import java.util.regex.*;
+import java.io.*;
+
 
 /**
  * Choob nickserv checker
@@ -34,6 +36,8 @@ public class NickServ
 			"$Rev$$Date$"
 		};
 	}
+
+	private boolean ip_overrides=false; // If this is enabled, all nickserv checks will also be validates against a /USERIP. This can be poked on, but will be automatically disabled if a nickserv check succeeds or the file fails to read.
 
 	private static int TIMEOUT = 10000; // Timeout on nick checks.
 //	private static int CACHE_TIMEOUT = 3600000; // Timeout on nick check cache (1 hour).
@@ -166,6 +170,8 @@ public class NickServ
 					public Object run()
 					{
 						irc.sendMessage("NickServ", (infooverride ? "INFO " : "STATUS ") + nick);
+						if (ip_overrides)
+							irc.sendRawLine("USERIP " + nick);
 						return null;
 					}
 				});
@@ -213,6 +219,73 @@ public class NickServ
 		"Set this to the bot's NickServ password to make it identify with NickServ."
 	};
 
+	public String[] helpCommandEnableOverride = {
+		"Private use only, mmkay?"
+	};
+	public void commandEnableOverride(Message mes)
+	{
+		ip_overrides=true;
+		irc.sendContextReply(mes, "Kay.");
+	}
+
+	public void onServerResponse(ServerResponse resp)
+	{
+		if (ip_overrides && resp.getCode()==340) // USERIP response, not avaliable through PircBOT, gogo magic numbers.
+		{
+			/*
+			 * General response ([]s as quotes):
+			 * [Botnick] :[Nick]=+[User]@[ip, or, more likely, hash]
+			 *
+			 * for (a terrible) example:
+			 * Choobie| :Faux=+Faux@87029A85.60BE439B.C4C3F075.IP
+			 */
+
+			Matcher ma=Pattern.compile("^[^ ]+ :([^=]+)=(.*)").matcher(resp.getResponse().trim());
+			if (!ma.find())
+			{
+				System.err.println("Unexpected non-match.");
+				return;
+			}
+			ResultObj result = getNickCheck( ma.group(1).trim().toLowerCase() );
+			if ( result == null )
+			{
+				// Something else handled it, we shouldn't be here.
+				ip_overrides=false;
+				return;
+			}
+
+			synchronized(result)
+			{
+				String line;
+
+				result.result = 1;
+
+				try
+				{
+					BufferedReader allowed = new BufferedReader(new FileReader("userip.list"));
+
+					while((line=allowed.readLine())!=null)
+						if (ma.group(2).equals(line))
+						{
+							result.result=3;
+							break;
+						}
+				}
+				catch (IOException e)
+				{
+					// e.printStackTrace();
+					ip_overrides=false;
+					System.err.println("Error reading userip.list, disabling overrides.");
+				}
+
+				result.time = System.currentTimeMillis();
+
+				result.notifyAll();
+			}
+		}
+	}
+
+
 	public void onPrivateNotice( Message mes )
 	{
 		if ( ! (mes instanceof PrivateNotice) )
@@ -220,6 +293,8 @@ public class NickServ
 
 		if ( ! mes.getNick().toLowerCase().equals( "nickserv" ) )
 			return; // Not from NickServ --> also don't care
+
+		ip_overrides=false;
 
 		if (!infooverride && mes.getMessage().trim().toLowerCase().equals("unknown command [status]"))
 		{
