@@ -1,4 +1,4 @@
-// Amorya
+/** @author Amorya */
 
 import uk.co.uwcs.choob.*;
 import uk.co.uwcs.choob.modules.*;

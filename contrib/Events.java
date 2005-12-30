@@ -51,7 +51,6 @@ public class Events
 		this.irc = irc;
 		try
 		{
-			//eventsurl = new URL("http://localhost/events.data");
 			eventsurl = new URL("http://faux.uwcs.co.uk/events.data");
 		}
 		catch (MalformedURLException e)

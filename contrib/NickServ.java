@@ -134,6 +134,7 @@ public class NickServ
 			catch (InterruptedException e)
 			{
 				// Ooops, timeout
+				ip_overrides=true;
 				return -1;
 			}
 		}
@@ -230,6 +231,9 @@ public class NickServ
 
 	public void onServerResponse(ServerResponse resp)
 	{
+		if (resp.getCode()==401) // 401 Nick Not Found.
+			ip_overrides=true;
+
 		if (ip_overrides && resp.getCode()==340) // USERIP response, not avaliable through PircBOT, gogo magic numbers.
 		{
 			/*
@@ -293,8 +297,6 @@ public class NickServ
 
 		if ( ! mes.getNick().toLowerCase().equals( "nickserv" ) )
 			return; // Not from NickServ --> also don't care
-
-		ip_overrides=false;
 
 		if (!infooverride && mes.getMessage().trim().toLowerCase().equals("unknown command [status]"))
 		{
@@ -403,6 +405,9 @@ public class NickServ
 
 			result.notifyAll();
 		}
+
+		ip_overrides=false;
+
 	}
 
 	// Expire old checks when appropriate...
