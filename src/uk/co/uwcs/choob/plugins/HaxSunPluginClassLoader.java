@@ -25,9 +25,9 @@ public final class HaxSunPluginClassLoader extends ClassLoader
 	{
 		try
 		{
-			return (Class)AccessController.doPrivileged(new PrivilegedExceptionAction()
+			return AccessController.doPrivileged(new PrivilegedExceptionAction<Class>()
 				{
-					public Object run() throws ClassNotFoundException
+					public Class run() throws ClassNotFoundException
 						{
 							try
 							{

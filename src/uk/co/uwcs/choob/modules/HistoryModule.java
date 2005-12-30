@@ -174,8 +174,8 @@ public final class HistoryModule
 				try
 				{
 					// Need privs to create events...
-					mes = (Message)AccessController.doPrivileged( new PrivilegedExceptionAction() {
-						public Object run() throws SQLException {
+					mes = AccessController.doPrivileged( new PrivilegedExceptionAction<Message>() {
+						public Message run() throws SQLException {
 							System.out.println("run");
 							if (type.equals(ChannelAction.class.getName()))
 								return new ChannelAction("onAction", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel, channel);
@@ -324,8 +324,8 @@ public final class HistoryModule
 					try
 					{
 						// Need privs to create events...
-						mes = (Message)AccessController.doPrivileged( new PrivilegedExceptionAction() {
-							public Object run() throws SQLException {
+						mes = AccessController.doPrivileged( new PrivilegedExceptionAction<Message>() {
+							public Message run() throws SQLException {
 								if (type.equals(ChannelAction.class.getName()))
 									return new ChannelAction("onAction", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel, channel);
 								else if (type.equals(ChannelMessage.class.getName()))

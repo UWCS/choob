@@ -73,7 +73,7 @@ public final class UtilModule
 	public List<String> getParams( Message mes )
 	{
 		String[] params = getParamArray( mes );
-		List<String> temp = new ArrayList(params.length);
+		List<String> temp = new ArrayList<String>(params.length);
 		for(String param: params)
 			temp.add(param);
 		return temp;
@@ -96,7 +96,7 @@ public final class UtilModule
 	public List<String> getParams( Message mes, int count )
 	{
 		String[] params = getParamArray( mes, count );
-		List<String> temp = new ArrayList(params.length);
+		List<String> temp = new ArrayList<String>(params.length);
 		for(String param: params)
 			temp.add(param);
 		return temp;

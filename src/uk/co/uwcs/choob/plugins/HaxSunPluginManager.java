@@ -83,8 +83,8 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		int ret;
 		try
 		{
-			ret = (Integer)AccessController.doPrivileged(new PrivilegedExceptionAction() {
-				public Object run() throws ChoobException {
+			ret = AccessController.doPrivileged(new PrivilegedExceptionAction<Integer>() {
+				public Integer run() throws ChoobException {
 					try
 					{
 						String[] newNames = new String[fileNames.length + 2];
@@ -497,7 +497,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		final Member meth2 = meth;
 		try
 		{
-			return AccessController.doPrivileged(new PrivilegedExceptionAction() {
+			return AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
 				public Object run() throws InvocationTargetException, IllegalAccessException {
 					if (meth2 instanceof Method)
 						return ((Method)meth2).invoke(plugin, params);

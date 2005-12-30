@@ -226,7 +226,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 
 		ProtectionDomain accessDomain = mods.security.getProtectionDomain(pluginName);
 		final AccessControlContext accessContext = new AccessControlContext(new ProtectionDomain[] { accessDomain });
-		final PrivilegedExceptionAction action = new PrivilegedExceptionAction() {
+		final PrivilegedExceptionAction<Object> action = new PrivilegedExceptionAction<Object>() {
 			public Object run() {
 				Context cx = Context.enter();
 				try {
@@ -705,8 +705,8 @@ final class JavaScriptPlugin {
 			ProtectionDomain accessDomain = mods.security.getProtectionDomain(pluginName);
 			AccessControlContext accessContext = new AccessControlContext(new ProtectionDomain[] { accessDomain });
 			try {
-				inst = (Scriptable)AccessController.doPrivileged(new PrivilegedExceptionAction() {
-						public Object run() throws ChoobException {
+				inst = AccessController.doPrivileged(new PrivilegedExceptionAction<Scriptable>() {
+						public Scriptable run() throws ChoobException {
 							return cxF.newObject(scopeF, pluginNameF, args);
 						}
 					}, accessContext);

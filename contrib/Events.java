@@ -45,7 +45,7 @@ public class Events
 		};
 	}
 
-	public Events(Modules mods, IRCInterface irc) throws ChoobException
+	public Events(Modules mods, IRCInterface irc) throws ChoobError
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -56,7 +56,7 @@ public class Events
 		}
 		catch (MalformedURLException e)
 		{
-			throw new ChoobException("Error in constant data.");
+			throw new ChoobError("Error in constant data.");
 		}
 		mods.interval.callBack(null, checkInterval);
 	}

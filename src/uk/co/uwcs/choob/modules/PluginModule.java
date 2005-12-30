@@ -136,7 +136,7 @@ public final class PluginModule
 	 */
 	public Object callAPI(final String pluginName, String APIString, Object... params) throws ChoobNoSuchCallException
 	{
-		AccessController.doPrivileged(new PrivilegedAction() {
+		AccessController.doPrivileged(new PrivilegedAction<Object>() {
 			public Object run() {
 				ChoobThread.pushPluginStatic(pluginName);
 				return null;
@@ -148,7 +148,7 @@ public final class PluginModule
 		}
 		finally
 		{
-			AccessController.doPrivileged(new PrivilegedAction() {
+			AccessController.doPrivileged(new PrivilegedAction<Object>() {
 				public Object run() {
 					ChoobThread.popPluginStatic();
 					return null;
@@ -170,7 +170,7 @@ public final class PluginModule
 	{
 		AccessController.checkPermission(new ChoobPermission("generic." + type));
 
-		AccessController.doPrivileged(new PrivilegedAction() {
+		AccessController.doPrivileged(new PrivilegedAction<Object>() {
 			public Object run() {
 				ChoobThread.pushPluginStatic(pluginName);
 				return null;
@@ -182,7 +182,7 @@ public final class PluginModule
 		}
 		finally
 		{
-			AccessController.doPrivileged(new PrivilegedAction() {
+			AccessController.doPrivileged(new PrivilegedAction<Object>() {
 				public Object run() {
 					ChoobThread.popPluginStatic();
 					return null;

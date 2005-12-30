@@ -703,8 +703,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			return true; // XXX should this be true?
 
 		// Should prevent circular checks...
-		return ((Boolean)AccessController.doPrivileged(new PrivilegedAction() {
-			public Object run() {
+		return (AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+			public Boolean run() {
 				int nodeID = getNodeIDFromPluginName( plugin );
 
 				// No such user!
