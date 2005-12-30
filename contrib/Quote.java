@@ -113,7 +113,7 @@ public class Quote
 
 	public String[] helpCommandCreate = {
 		"Create a new quote. See Quote.UsingCreate for more info.",
-		"[ [privmsg:][<Nick>] | action:[<Nick>] | [<Nick>:]/<Regex>/ [[<Nick>:]/<Regex>] ]",
+		"[ [privmsg:][<Nick>] | action:[<Nick>] | [<Nick>:]/<Regex>/ [[<Nick>:]/<Regex>/] ]",
 		"<Nick> is a nickname to quote",
 		"<Regex> is a regular expression to use to match lines"
 	};
@@ -332,19 +332,25 @@ public class Quote
 				else
 				{
 					// Matched the end; looking for the start.
-					if ((startNick == null || startNick.equals(nick))
-							&& line.getMessage().matches(startRegex))
+					if ((startNick == null || startNick.equals(nick)) && line.getMessage().matches(startRegex))
 					{
 						startIndex = i;
 						break;
 					}
 				}
 			}
-			if (startIndex == -1 || endIndex == -1)
+			if (startIndex == -1)
 			{
-				irc.sendContextReply(mes, "Sorry, no quote found!");
+				irc.sendContextReply(mes, "Sorry, start line not found.");
 				return;
 			}
+
+			if  (endIndex == -1)
+			{
+				irc.sendContextReply(mes, "Sorry, end line not found.");
+				return;
+			}
+
 			for(int i=startIndex; i>=endIndex; i--)
 				lines.add(history.get(i));
 		}
@@ -588,7 +594,7 @@ public class Quote
 		}
 
 		QuoteObject quote = (QuoteObject)quotes.get(0);
-		List lines = mods.odb.retrieve( QuoteLine.class, "WHERE quoteID = " + quote.id );
+		List lines = mods.odb.retrieve( QuoteLine.class, "WHERE quoteID = " + quote.id + " ORDER BY lineNumber");
 		Iterator l = lines.iterator();
 		if (!l.hasNext())
 		{
@@ -1040,6 +1046,10 @@ public class Quote
 
 			String user = null; // User for regexes. Used later.
 			int colon = param.indexOf(':');
+
+			if (colon > param.indexOf('/'))
+				colon=-1;
+
 			boolean fiddled = false; // Set to true if param already parsed
 			if (colon != -1)
 			{
@@ -1310,10 +1320,12 @@ public class Quote
 			else
 				quote = null;
 
+			final String greeting="Hello, ";
+
 			if (quote == null)
-				irc.sendContextMessage( ev, "Hello, " + ev.getNick() + "!");
+				irc.sendContextMessage( ev, greeting + ev.getNick() + "!");
 			else
-				irc.sendContextMessage( ev, "Hello, " + ev.getNick() + ": \"" + quote + "\"");
+				irc.sendContextMessage( ev, greeting + ev.getNick() + ": \"" + quote + "\"");
 		}
 	}
 }
