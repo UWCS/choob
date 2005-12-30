@@ -262,7 +262,7 @@ public class NickServ
 			{
 				String line;
 
-				result.result = 1;
+				result.result = 0;
 
 				try
 				{
