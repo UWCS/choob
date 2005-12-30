@@ -1,3 +1,5 @@
+/** @author Faux */
+
 import uk.co.uwcs.choob.*;
 import uk.co.uwcs.choob.modules.*;
 import uk.co.uwcs.choob.support.*;
@@ -18,7 +20,7 @@ public class Lectures
 			"University of Warwick lectures querying plugin.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			"$Rev$$Date$"
+			""
 		};
 	}
 
