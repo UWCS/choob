@@ -1046,9 +1046,11 @@ public class Quote
 
 			String user = null; // User for regexes. Used later.
 			int colon = param.indexOf(':');
+			int slash = param.indexOf('/');
 
-			if (colon > param.indexOf('/'))
-				colon=-1;
+			// If there is a /, make sure the color is before it.
+			if ((slash >= 0) && (colon > slash))
+				colon = -1;
 
 			boolean fiddled = false; // Set to true if param already parsed
 			if (colon != -1)
