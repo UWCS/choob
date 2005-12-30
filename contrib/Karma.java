@@ -294,7 +294,7 @@ public class Karma
 	// If you change this, change reasonPattern too.
 	final private static Pattern karmaPattern = Pattern.compile(
 		  "(?x:"
-		+ "(?: ^ | (?<=\\b) )" // Anchor at start of string or a word boundary.
+		+ "(?: ^ | (?<=\\s) )" // Anchor at start of string or a whitespace.
 		+ karma_item
 		+ plusplus_or_minusminus
 		+ "[\\)\\.,]?" // Allowed to terminate with full stop/close bracket etc.
