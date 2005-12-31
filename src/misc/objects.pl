@@ -39,7 +39,7 @@ my $dbh = DBI->connect("DBI:mysql:database=choob;host=$dbhost;port=3306", $dbuse
 
 my %params = ();
 foreach my $item (@ARGV) {
-	if ($item =~ /^--(class|sort|format)=(.*)$/) {
+	if ($item =~ /^--(class|sort|format|columns)=(.*)$/) {
 		$params{$1} = $2;
 	} elsif ($item =~ /^--(help)$/) {
 		$params{$1} = 1;
@@ -64,19 +64,21 @@ if ($params{help}) {
 	print <<HELP;
 Displays the objects in the bot's ObjectDB store.
 
-objects.pl [ --help | [ --class=CLASS [ --sort=SORT ] ] ]
+objects.pl [ --help | [ --class=CLASS [ --sort=SORT ] [ --columns=COLS ] ] ]
 
- --help   Shows this message.
- --class  Displays all the objects of a single class. Without this, a list
-          of known classes is displayed instead.
- --sort   Sorts the list by something other than "id".
- CLASS    Either a full-qualified class name, or just the final component.
- SORT     Controls the sort of the objects, and follows the format:
-            FIELD/CMP/DIR
-          Where:
-            FIELD  Specifies the object property to sort by.
-            CMP    Either "s" or "n" to indicate string or numeric sorting.
-            DIR    Either "a" or "d" for ascending/decending sorting.
+ --help     Shows this message.
+ --class    Displays all the objects of a single class. Without this, a list
+            of known classes is displayed instead.
+ --sort     Sorts the list by something other than "id".
+ --columns  Limits what columns are displays.
+ CLASS      Either a full-qualified class name, or just the final component.
+ SORT       Controls the sort of the objects, and follows the format:
+              FIELD/CMP/DIR
+            Where:
+              FIELD  Specifies the object property to sort by.
+              CMP    Either "s" or "n" to indicate string or numeric sorting.
+              DIR    Either "a" or "d" for ascending/decending sorting.
+ COLS       A comma-separated list of column names to display.
 HELP
 	exit;
 }
@@ -125,10 +127,16 @@ XML
 	my %columnLens = ( id => 0 );
 	my $itemMissing = "MISSING";
 	
+	if ($params{columns} && (",$params{columns}," !~ /,id,/)) {
+		pop @columns;
+		delete $columns{id};
+		delete $columnLens{id};
+	}
+	
 	foreach my $objectItem (@{$objectData}) {
 		unless (exists $objects{$objectItem->[0]}) {
 			$objects{$objectItem->[0]} = { id => $objectItem->[0] };
-			if (length($objectItem->[0]) > $columnLens{id}) {
+			if ((exists $columnLens{id}) && (length($objectItem->[0]) > $columnLens{id})) {
 				$columnLens{id} = length($objectItem->[0]);
 			}
 		}
@@ -144,6 +152,9 @@ XML
 				}
 			}
 			$columns{$objectItem->[1]} = $type;
+			if ($params{columns} && (",$params{columns}," !~ /,$objectItem->[1],/)) {
+				next;
+			}
 			push @columns, $objectItem->[1];
 		}
 		
