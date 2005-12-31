@@ -186,7 +186,7 @@ XML
 			push @columns, $colName;
 		}
 		
-		my $objectData = &getData("SELECT id, `" . join("`, `", @columns) . " FROM $table", []);
+		my $objectData = &getData("SELECT id, `" . join("`, `", @columns) . "` FROM $table", []);
 		
 		foreach my $objectItem (@{$objectData}) {
 			unless (exists $objects{$objectItem->[0]}) {
