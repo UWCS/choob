@@ -173,7 +173,7 @@ XML
 			}
 			
 			my $colType = "unknown";
-			if ($col->[1] =~ /^test$/) {
+			if ($col->[1] =~ /^text$/) {
 				$colType = "string";
 			} elsif ($col->[1] =~ /^(?:tiny|big)?int\(\d+\)$/) {
 				$colType = "int";
