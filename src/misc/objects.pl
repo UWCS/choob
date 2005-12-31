@@ -54,7 +54,7 @@ sub getData() {
 	my $sth = $dbh->prepare($sql);
 	$sth->execute(@{$params});
 	my $data;
-	if ($sql =~ /^\s*SELECT\s+/i) {
+	if ($sql =~ /^\s*(?:SHOW|SELECT)\s+/i) {
 		$data = $sth->fetchall_arrayref();
 	}
 	return $data;
@@ -92,6 +92,7 @@ unless ($params{class}) {
 		foreach my $table (@{$tables}) {
 			next unless ($table->[0] =~ /^_objectdb_(.*)/);
 			my $name = $1;
+			$name =~ s/_/./g;
 			my $className = $name;
 			if ($className =~ /\.([^.]+)$/) {
 				$className = $1;
