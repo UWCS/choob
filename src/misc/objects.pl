@@ -54,10 +54,39 @@ sub getData() {
 	my $sth = $dbh->prepare($sql);
 	$sth->execute(@{$params});
 	my $data;
-	if ($sql =~ /^\s*(?:SHOW|SELECT)\s+/i) {
+	if ($sql =~ /^\s*(?:SHOW|DESCRIBE|SELECT)\s+/i) {
 		$data = $sth->fetchall_arrayref();
 	}
 	return $data;
+}
+
+sub getClassList() {
+	my @rv;
+	
+	if ($params{m}) {
+		my $tables = &getData("SHOW TABLES", []);
+		foreach my $table (@{$tables}) {
+			next unless ($table->[0] =~ /^_objectdb_(.*)/);
+			my $name = $1;
+			$name =~ s/_/./g;
+			my $className = $name;
+			if ($className =~ /\.([^.]+)$/) {
+				$className = $1;
+			}
+			push @rv, { name => $name, short => $className };
+		}
+	} else {
+		my $objectClasses = &getData("SELECT DISTINCT ClassName FROM ObjectStore", []);
+		foreach my $class (@{$objectClasses}) {
+			my $className = $class->[0];
+			if ($className =~ /\.([^.]+)$/) {
+				$className = $1;
+			}
+			push @rv, { name => $class->[0], short => $className };
+		}
+	}
+	
+	return @rv;
 }
 
 if ($params{help}) {
@@ -87,27 +116,9 @@ HELP
 unless ($params{class}) {
 	print qq[Classes:\n];
 	
-	if ($params{m}) {
-		my $tables = &getData("SHOW TABLES", []);
-		foreach my $table (@{$tables}) {
-			next unless ($table->[0] =~ /^_objectdb_(.*)/);
-			my $name = $1;
-			$name =~ s/_/./g;
-			my $className = $name;
-			if ($className =~ /\.([^.]+)$/) {
-				$className = $1;
-			}
-			print qq[  $name ($className)\n];
-		}
-	} else {
-		my $objectClasses = &getData("SELECT DISTINCT ClassName FROM ObjectStore", []);
-		foreach my $class (@{$objectClasses}) {
-			my $className = $class->[0];
-			if ($className =~ /\.([^.]+)$/) {
-				$className = $1;
-			}
-			print qq[  $class->[0] ($className)\n];
-		}
+	my @classes = &getClassList();
+	foreach my $class (@classes) {
+		print qq[  $class->{name} ($class->{short})\n];
 	}
 	
 } else {
@@ -115,13 +126,13 @@ unless ($params{class}) {
 	my $format = $params{format} || "text";
 	
 	if ($className !~ /\./) {
-		my $objectClasses = &getData("SELECT DISTINCT ClassName FROM ObjectStore", []);
-		
 		my $re = quotemeta $className;
 		$re = qr/\.$re$/;
-		foreach my $class (@{$objectClasses}) {
-			if ($class->[0] =~ $re) {
-				$className = $class->[0];
+		
+		my @classes = &getClassList();
+		foreach my $class (@classes) {
+			if ($class->{name} =~ $re) {
+				$className = $class->{name};
 				last;
 			}
 		}
@@ -134,7 +145,6 @@ unless ($params{class}) {
 <?xml version="1.0" standalone="yes"?>
 XML
 	}
-	my $objectData = &getData("SELECT ObjectID, FieldName, FieldBigInt, FieldDouble, FieldString FROM ObjectStoreData WHERE ObjectID IN (SELECT ObjectID FROM ObjectStore WHERE ClassName = ?)", [$className]);
 	
 	my %objects = ();
 	my @columns = ("id");
@@ -148,44 +158,100 @@ XML
 		delete $columnLens{id};
 	}
 	
-	foreach my $objectItem (@{$objectData}) {
-		unless (exists $objects{$objectItem->[0]}) {
-			$objects{$objectItem->[0]} = { id => $objectItem->[0] };
-			if ((exists $columnLens{id}) && (length($objectItem->[0]) > $columnLens{id})) {
-				$columnLens{id} = length($objectItem->[0]);
-			}
-		}
-		unless (exists $columns{$objectItem->[1]}) {
-			my $type = "unknown";
-			if ((defined $objectItem->[2]) && (defined $objectItem->[3]) &&  (defined $objectItem->[4])) {
-				if (($objectItem->[2] != 0) || ($objectItem->[4] eq '0')) {
-					$type = "int";
-				} elsif ($objectItem->[3] != 0) {
-					$type = "double";
-				} elsif ($objectItem->[4]) {
-					$type = "string";
-				}
-			}
-			$columns{$objectItem->[1]} = $type;
-			if ($params{columns} && (",$params{columns}," !~ /,$objectItem->[1],/)) {
+	if ($params{m}) {
+		my $table = $className;
+		$table =~ s/\./_/g;
+		$table = "_objectdb_$table";
+		my $colData = &getData("DESCRIBE ?", [$table]);
+		
+		foreach my $col (@{$colData}) {
+			my $colName = $col->[0];
+			# Skip if it is already defined, or we're not supposed to list it.
+			next if (exists $columns{$colName});
+			if ($params{columns} && (",$params{columns}," !~ /,$colName,/)) {
 				next;
 			}
-			push @columns, $objectItem->[1];
+			
+			my $colType = "unknown";
+			if ($col->[1] =~ /^test$/) {
+				$colType = "string";
+			} elsif ($col->[1] =~ /^(?:tiny|big)?int\(\d+\)$/) {
+				$colType = "int";
+			} else {
+				print STDERR qq[WARNING: Unknown property type: $col->[1].\n];
+			}
+			
+			$columns{$colName} = $colType;
+			$columnLens{$colName} = length($colName);
+			push @columns, $colName;
 		}
 		
-		# Update column widths:
-		my $len = (defined $objectItem->[4] ? length($objectItem->[4]) : length($itemMissing));
-		my $collen = 0;
-		if (exists $columnLens{$objectItem->[1]}) {
-			$collen = $columnLens{$objectItem->[1]};
-		}
-		if ($len > $collen) {
-			$collen = $len;
-		}
-		$columnLens{$objectItem->[1]} = $collen;
+		my $objectData = &getData("SELECT id, `" . join("`, `", @columns) . " FROM ?", [$table]);
 		
-		# Save object value:
-		$objects{$objectItem->[0]}{$objectItem->[1]} = $objectItem->[4];
+		foreach my $objectItem (@{$objectData}) {
+			unless (exists $objects{$objectItem->[0]}) {
+				$objects{$objectItem->[0]} = { id => $objectItem->[0] };
+			}
+			
+			for (my $i = 0; $i < @columns; $i++) {
+				# Update column widths:
+				my $len = length($objectItem->[$i + 1]);
+				my $collen = 0;
+				if (exists $columnLens{$columns[$i]}) {
+					$collen = $columnLens{$columns[$i]};
+				}
+				if ($len > $collen) {
+					$collen = $len;
+				}
+				$columnLens{$columns[$i]} = $collen;
+				
+				# Save object value:
+				$objects{$objectItem->[0]}{$columns[$i]} = $objectItem->[$i + 1];
+			}
+		}
+		
+	} else {
+		my $objectData = &getData("SELECT ObjectID, FieldName, FieldBigInt, FieldDouble, FieldString FROM ObjectStoreData WHERE ObjectID IN (SELECT ObjectID FROM ObjectStore WHERE ClassName = ?)", [$className]);
+		
+		foreach my $objectItem (@{$objectData}) {
+			unless (exists $objects{$objectItem->[0]}) {
+				$objects{$objectItem->[0]} = { id => $objectItem->[0] };
+				if ((exists $columnLens{id}) && (length($objectItem->[0]) > $columnLens{id})) {
+					$columnLens{id} = length($objectItem->[0]);
+				}
+			}
+			unless (exists $columns{$objectItem->[1]}) {
+				my $type = "unknown";
+				if ((defined $objectItem->[2]) && (defined $objectItem->[3]) &&  (defined $objectItem->[4])) {
+					if (($objectItem->[2] != 0) || ($objectItem->[4] eq '0')) {
+						$type = "int";
+					} elsif ($objectItem->[3] != 0) {
+						$type = "double";
+					} elsif ($objectItem->[4]) {
+						$type = "string";
+					}
+				}
+				$columns{$objectItem->[1]} = $type;
+				if ($params{columns} && (",$params{columns}," !~ /,$objectItem->[1],/)) {
+					next;
+				}
+				push @columns, $objectItem->[1];
+			}
+			
+			# Update column widths:
+			my $len = (defined $objectItem->[4] ? length($objectItem->[4]) : length($itemMissing));
+			my $collen = 0;
+			if (exists $columnLens{$objectItem->[1]}) {
+				$collen = $columnLens{$objectItem->[1]};
+			}
+			if ($len > $collen) {
+				$collen = $len;
+			}
+			$columnLens{$objectItem->[1]} = $collen;
+			
+			# Save object value:
+			$objects{$objectItem->[0]}{$objectItem->[1]} = $objectItem->[4];
+		}
 	}
 	
 	my $sortCol = "id";
