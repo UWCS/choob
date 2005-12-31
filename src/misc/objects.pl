@@ -39,9 +39,9 @@ my $dbh = DBI->connect("DBI:mysql:database=choob;host=$dbhost;port=3306", $dbuse
 
 my %params = ();
 foreach my $item (@ARGV) {
-	if ($item =~ /^--(class|sort|format|columns)=(.*)$/) {
+	if ($item =~ /^-?-(class|sort|format|columns)=(.*)$/) {
 		$params{$1} = $2;
-	} elsif ($item =~ /^--(help)$/) {
+	} elsif ($item =~ /^-?-(help|m)$/) {
 		$params{$1} = 1;
 	} else {
 		print STDERR qq[Ignored unknown option: $item\n];
@@ -64,9 +64,10 @@ if ($params{help}) {
 	print <<HELP;
 Displays the objects in the bot's ObjectDB store.
 
-objects.pl [ --help | [ --class=CLASS [ --sort=SORT ] [ --columns=COLS ] ] ]
+objects.pl [--help | [[-m] --class=CLASS [--sort=SORT] [--columns=COLS]]]
 
  --help     Shows this message.
+ -m         Selects "multi-table" mode over the default, "single-table".
  --class    Displays all the objects of a single class. Without this, a list
             of known classes is displayed instead.
  --sort     Sorts the list by something other than "id".
@@ -84,15 +85,28 @@ HELP
 }
 
 unless ($params{class}) {
-	my $objectClasses = &getData("SELECT DISTINCT ClassName FROM ObjectStore", []);
-	
 	print qq[Classes:\n];
-	foreach my $class (@{$objectClasses}) {
-		my $className = $class->[0];
-		if ($className =~ /\.([^.]+)$/) {
-			$className = $1;
+	
+	if ($params{m}) {
+		my $tables = &getData("SHOW TABLES", []);
+		foreach my $table (@{$tables}) {
+			next unless ($table->[0] =~ /^_objectdb_(.*)/);
+			my $name = $1;
+			my $className = $name;
+			if ($className =~ /\.([^.]+)$/) {
+				$className = $1;
+			}
+			print qq[  $name ($className)\n];
 		}
-		print qq[  $class->[0] ($className)\n];
+	} else {
+		my $objectClasses = &getData("SELECT DISTINCT ClassName FROM ObjectStore", []);
+		foreach my $class (@{$objectClasses}) {
+			my $className = $class->[0];
+			if ($className =~ /\.([^.]+)$/) {
+				$className = $1;
+			}
+			print qq[  $class->[0] ($className)\n];
+		}
 	}
 	
 } else {
