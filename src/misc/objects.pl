@@ -162,7 +162,7 @@ XML
 		my $table = $className;
 		$table =~ s/\./_/g;
 		$table = "_objectdb_$table";
-		my $colData = &getData("DESCRIBE ?", [$table]);
+		my $colData = &getData("DESCRIBE $table", []);
 		
 		foreach my $col (@{$colData}) {
 			my $colName = $col->[0];
@@ -186,7 +186,7 @@ XML
 			push @columns, $colName;
 		}
 		
-		my $objectData = &getData("SELECT id, `" . join("`, `", @columns) . " FROM ?", [$table]);
+		my $objectData = &getData("SELECT id, `" . join("`, `", @columns) . " FROM $table", []);
 		
 		foreach my $objectItem (@{$objectData}) {
 			unless (exists $objects{$objectItem->[0]}) {
