@@ -342,7 +342,7 @@ public class Dict
 		if (page.indexOf("support Java-based browsers/utilities, screen-scraping")!=-1)
 			throw new DictionaryException("Oh nose, acronymfinder have detected our screen-scraping h4x! Run, run and hide!");
 
-		Matcher ma=Pattern.compile("src=\"l.gif\" title=\"direct link\" ></a>&nbsp;(.*)").matcher(page);
+		Matcher ma=Pattern.compile("(?s)src=\"l.gif\" title=\"direct link\" ></a>&nbsp;(.*?)</td>").matcher(page);
 
 		StringBuilder s=new StringBuilder();
 
