@@ -101,4 +101,65 @@ public final class UtilModule
 			temp.add(param);
 		return temp;
 	}
+
+	final static long[] getSt(long i)
+	{
+		final long w= (i / (7*24*60*60*1000)); i -= w*(7*24*60*60*1000);
+		final long d= (i / (24*60*60*1000)); i -= d*(24*60*60*1000);
+		final long h= (i / (60*60*1000)); i -= h*(60*60*1000);
+		final long m= (i / (60*1000)); i -= m*(60*1000);
+		final long s= (i / (1000)); i -= s*1000;
+		final long ms=(i); i -=ms;
+		final long st[]={w,d,h,m,s,ms};
+		return st;
+	}
+
+	public String timeMicroStamp(long i)
+	{
+		return timeMicroStamp(i, 2);
+	}
+
+	public String timeMicroStamp(long i, int corse)
+	{
+		final long st[]=getSt(i);
+		final String pr[]={"w","d","h","m","s","ms"};
+
+		String t="";
+		int c=corse;
+
+		while (0!=c--)
+			for (int j=0; j<st.length; j++)
+				if (st[j]!=0)
+				{
+					t+=st[j] + pr[j];
+					st[j]=0;
+					break;
+				}
+		return t;
+	}
+
+	public String timeLongStamp(long i)
+	{
+		return timeLongStamp(i, 2);
+	}
+
+	public String timeLongStamp(long i, int corse)
+	{
+		final long st[]=getSt(i);
+		final String pr[]={"week","day","hour","minute","second","millisecond"};
+
+		String t="";
+		int c=corse;
+
+		while (0!=c--)
+			for (int j=0; j<st.length; j++)
+				if (st[j]!=0)
+				{
+					t+=st[j] + " " + pr[j] + (st[j]!=1 ? "s" : "") + (c==0 ? "" : (c!=1 ? ", " : " and "));
+					st[j]=0;
+					break;
+				}
+
+		return t;
+	}
 }

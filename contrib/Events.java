@@ -82,7 +82,7 @@ public class Events
 				String[] n=ni.next();
 				String[] c=curr.get(Integer.parseInt(n[ID]));
 				if (c==null)
-					irc.sendMessage(announceChannel, "New event! " + n[NAME] + " at " + n[10] + " in " + stupidStamp((new Date(Long.parseLong(n[3])*(long)1000)).getTime() - (new Date()).getTime()) + ".");
+					irc.sendMessage(announceChannel, "New event! " + n[NAME] + " at " + n[10] + " in " + mods.util.timeMicroStamp((new Date(Long.parseLong(n[3])*(long)1000)).getTime() - (new Date()).getTime()) + ".");
 				else
 				{
 					if (!c[SIGNUPCURRENT].equals(n[SIGNUPCURRENT]))
@@ -139,39 +139,13 @@ public class Events
 						}
 						String sigts=sig.toString();
 						if (sigts.length()>2) sigts=sigts.substring(0, sigts.length()-2);
-						irc.sendMessage(announceChannel, "Signups for " + Colors.BOLD + n[NAME] + Colors.NORMAL + " (" + n[ID] + ") [" + stupidStamp((new Date(Long.parseLong(n[3])*(long)1000)).getTime() - (new Date()).getTime()) + "] now " + n[SIGNUPCURRENT] + "/" + n[SIGNUPMAX] + " (" + sigts + ").");
+						irc.sendMessage(announceChannel, "Signups for " + Colors.BOLD + n[NAME] + Colors.NORMAL + " (" + n[ID] + ") [" + mods.util.timeMicroStamp((new Date(Long.parseLong(n[3])*(long)1000)).getTime() - (new Date()).getTime()) + "] now " + n[SIGNUPCURRENT] + "/" + n[SIGNUPMAX] + " (" + sigts + ").");
 					}
 				}
 			}
 		}
 		current=ne;
 		mods.interval.callBack(null, checkInterval);
-	}
-
-	private String stupidStamp(long i)
-	{
-		System.out.println(i);
-
-		long w= (i / (7*24*60*60*1000)); i -= w*(7*24*60*60*1000);
-		long d= (i / (24*60*60*1000)); i -= d*(24*60*60*1000);
-		long h= (i / (60*60*1000)); i -= h*(60*60*1000);
-		long m= (i / (60*1000)); i -= m*(60*1000);
-		long s= (i / (1000)); i -= s*1000;
-		long ms=(i); i -=ms;
-		long st[]={w,d,h,m,s,ms};
-		String pr[]={"w","d","h","m","s","ms"};
-		String t="";
-		int c=2;
-		while (0!=c--)
-			for (int j=0; j<st.length; j++)
-				if (st[j]!=0)
-				{
-					t+=st[j] + pr[j];
-					st[j]=0;
-					break;
-				}
-
-		return t;
 	}
 
 	private ArrayList<String[]> readEventsData() throws ChoobException
@@ -270,7 +244,7 @@ public class Events
 				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
 					if (!ev[5].equals("X") && !ev[5].equals("-"))
-						irc.sendContextReply(mes, "Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev[1] + "&action=signup to sign-up for " + Colors.BOLD + ev[2] + Colors.NORMAL + (!finished ? " [" + stupidStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + ".");
+						irc.sendContextReply(mes, "Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev[1] + "&action=signup to sign-up for " + Colors.BOLD + ev[2] + Colors.NORMAL + (!finished ? " [" + mods.util.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + ".");
 					else
 					{
 						rep+="Event " + ev[1] + " matched, but does not accept sign-ups... ";
@@ -356,7 +330,7 @@ public class Events
 			if (!finished)
 				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
-					irc.sendContextReply(mes, "Signups for " + Colors.BOLD + ev[2] + Colors.NORMAL  + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + stupidStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + ": " + ev[8].replaceAll("([a-zA-Z])([^, ]+)","$1'$2") + ".");
+					irc.sendContextReply(mes, "Signups for " + Colors.BOLD + ev[2] + Colors.NORMAL  + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + mods.util.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + ": " + ev[8].replaceAll("([a-zA-Z])([^, ]+)","$1'$2") + ".");
 					return;
 				}
 		}
@@ -383,7 +357,7 @@ public class Events
 			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
 			Date dat=new Date(Long.parseLong(ev[4])*(long)1000);
 			boolean finished=(new Date()).compareTo(dat)>0;
-			rep+=Colors.BOLD + ev[2] + Colors.NORMAL + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + stupidStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + (c!=0 ? ", " : ".");
+			rep+=Colors.BOLD + ev[2] + Colors.NORMAL + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + mods.util.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + (c!=0 ? ", " : ".");
 		}
 		irc.sendContextReply(mes, "Events: " + rep);
 	}

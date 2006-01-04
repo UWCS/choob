@@ -35,6 +35,9 @@ public final class HistoryModule
 	 */
 	public void addLog( Message mes )
 	{
+		if (mes.getSynthLevel() > 0)
+			return;
+
 		AccessController.checkPermission(new ChoobPermission("history.add"));
 
 		Connection dbConnection = null;
@@ -98,18 +101,17 @@ public final class HistoryModule
 
 			if (mes instanceof ChannelEvent)
 			{
-				stat = dbCon.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Text = ? AND Time = ? AND Random = ? AND Channel = ?");
-				stat.setString(7, ((ChannelEvent)mes).getChannel());
+				stat = dbCon.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Time = ? AND Random = ? AND Channel = ?");
+				stat.setString(6, ((ChannelEvent)mes).getChannel());
 			}
 			else
-				stat = dbCon.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Text = ? AND Time = ? AND Random = ?"); // Checking if the channel is null causes speshulness here. The check is irrelevant, though, because it will be, because of the Type.
+				stat = dbCon.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Time = ? AND Random = ?"); // Checking if the channel is null causes speshulness here. The check is irrelevant, though, because it will be, because of the Type.
 
 			stat.setString(1, mes.getClass().getName());
 			stat.setString(2, mes.getNick());
 			stat.setString(3, mes.getNick()+"@"+mes.getHostname());
-			stat.setString(4, mes.getMessage());
-			stat.setLong(5, mes.getMillis());
-			stat.setInt(6, mes.getRandom());
+			stat.setLong(4, mes.getMillis());
+			stat.setInt(5, mes.getRandom());
 
 			ResultSet result = stat.executeQuery();
 

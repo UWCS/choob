@@ -25,7 +25,7 @@ public class Tv
 	private Modules mods;
 	private IRCInterface irc;
 
-	final static String[] cts = { "bbc1", "bbc2", "itv1", "ch4", "five" };
+	final static String[] cts = { "bbc1", "bbc2", "itv1", "ch4", "five", "sky_one", "sky_cinema1", "sky_cinema2", "sky_movies1", "sky_movies2", "sky_movies3", "sky_movies4", "sky_movies5", "sky_movies6", "sky_movies7", "sky_movies8", "sky_movies9" };
 
 	ChannelInfo[] chans=new ChannelInfo[cts.length];
 
@@ -54,7 +54,7 @@ public class Tv
 				{
 					chans[i]=getChannelInfo(cts[i]);
 				}
-				Thread.sleep(3000);
+				Thread.sleep(4000);
 			}
 		}
 		catch (Throwable t)

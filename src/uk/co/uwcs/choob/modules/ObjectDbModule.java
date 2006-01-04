@@ -49,7 +49,7 @@ public final class ObjectDbModule
 	{
 		return retrieve((Object)storedClass, clause);
 	}
-	
+
 	public List retrieve(Object storedClass, String clause)
 	{
 		Connection dbConn = null;
@@ -78,7 +78,7 @@ public final class ObjectDbModule
 	{
 		return retrieveInt((Object)storedClass, clause);
 	}
-	
+
 	public List<Integer> retrieveInt(Object storedClass, String clause)
 	{
 		Connection dbConn = null;
@@ -217,5 +217,25 @@ public final class ObjectDbModule
 			trans.finish();
 			broker.freeConnection( dbConn );
 		}
+	}
+
+	public Connection getConnection()
+	{
+		AccessController.checkPermission(new ChoobPermission("db.connection.checkout"));
+
+		try
+		{
+			return broker.getConnection();
+		}
+		catch (SQLException e)
+		{
+			throw new ChoobError("Sql Exception", e);
+		}
+	}
+
+	public void freeConnection(Connection c)
+	{
+		AccessController.checkPermission(new ChoobPermission("db.connection.checkin"));
+		broker.freeConnection( c );
 	}
 }
