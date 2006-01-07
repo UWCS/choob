@@ -265,4 +265,46 @@ public class Plugin
 
 		irc.sendContextReply(mes, pluginName + ": " + info[0] + " By " + info[1] + " <" + info[2] + ">; version is " + info[3] + ".");
 	}
+	
+	public String[] helpCommandSource = {
+		"Get the source URL for a plugin.",
+		"<Plugin>",
+		"<Plugin> is the name of the plugin"
+	};
+	public void commandSource(Message mes)
+	{
+		List<String> params = mods.util.getParams(mes);
+		if (params.size() == 1)
+		{
+			irc.sendContextReply(mes, "Syntax: 'Plugin.Source " + helpCommandInfo[1] + "'.");
+			return;
+		}
+		
+		String[] plugins = mods.plugin.getAllPlugins(false);
+		
+		String pluginName = params.get(1);
+		String source;
+		try
+		{
+			source = mods.plugin.getPluginSource(pluginName);
+		}
+		catch (ChoobNoSuchPluginException e)
+		{
+			irc.sendContextReply(mes, "Plugin " + pluginName + " has never been loaded.");
+			return;
+		}
+		
+		boolean loaded = false;
+		for (int i = 0; i < plugins.length; i++) {
+			if (plugins[i].equals(pluginName)) {
+				loaded = true;
+				break;
+			}
+		}
+		if (loaded) {
+			irc.sendContextReply(mes, pluginName + " is loaded from <" + source + ">.");
+		} else {
+			irc.sendContextReply(mes, pluginName + " was last loaded from <" + source + ">.");
+		}
+	}
 }

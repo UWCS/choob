@@ -299,6 +299,16 @@ public final class PluginModule
 	{
 		return getPluginList(onlyCore);
 	}
+	
+	/**
+	 * Get the source URL for the plugin, or where it was last loaded from.
+	 * @param pluginName The name of the plugin to get the source URL for.
+	 * @return URL string for the plugin.
+	 */
+	public String getPluginSource(String pluginName) throws ChoobNoSuchPluginException
+	{
+		return getPluginURL(pluginName);
+	}
 
 	private void setCoreStatus(String pluginName, boolean isCore) throws ChoobNoSuchPluginException {
 		Connection dbCon = null;
@@ -375,11 +385,12 @@ public final class PluginModule
 		Connection dbCon = null;
 		try {
 			dbCon = broker.getConnection();
-			PreparedStatement pluginReplace = dbCon.prepareStatement("INSERT IGNORE Plugins (PluginName, URL) VALUES (?, ?)");
-
+			PreparedStatement pluginReplace = dbCon.prepareStatement("INSERT INTO Plugins (PluginName, URL) VALUES (?, ?) ON DUPLICATE KEY UPDATE URL = ?");
+			
 			pluginReplace.setString(1, pluginName);
 			pluginReplace.setString(2, URL);
-
+			pluginReplace.setString(3, URL);
+			
 			pluginReplace.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();

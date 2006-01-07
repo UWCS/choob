@@ -698,12 +698,11 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	public boolean hasPluginPerm(final Permission permission, final String plugin)
 	{
-		System.out.println("Checking permission on plugin " + plugin + ": " + permission);
 		if (plugin == null)
 			return true; // XXX should this be true?
 
 		// Should prevent circular checks...
-		return (AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+		boolean rv = (AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
 			public Boolean run() {
 				int nodeID = getNodeIDFromPluginName( plugin );
 
@@ -716,6 +715,11 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				return hasPerm( permission, nodeID, true );
 			}
 		})).booleanValue();
+		
+		if (!rv) {
+			System.out.println("Plugin " + plugin + " lacks permission " + permission + ".");
+		}
+		return rv;
 	}
 
 	/* ===============================
