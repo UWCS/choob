@@ -31,6 +31,8 @@ public class Events
 
 	private final static int ID=1;
 	private final static int NAME=2;
+	private final static int START=3;
+	private final static int END=4;
 	private final static int SIGNUPNAMES=8;
 	private final static int SIGNUPCURRENT=7;
 	private final static int SIGNUPMAX=6;
@@ -354,10 +356,26 @@ public class Events
 		while (c-->0)
 		{
 			String[] ev= events.get(c);
-			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
-			Date dat=new Date(Long.parseLong(ev[4])*(long)1000);
-			boolean finished=(new Date()).compareTo(dat)>0;
-			rep+=Colors.BOLD + ev[2] + Colors.NORMAL + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + mods.util.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + (c!=0 ? ", " : ".");
+			Date da=new Date(Long.parseLong(ev[START])*(long)1000);
+			Date dat=new Date(Long.parseLong(ev[END])*(long)1000);
+
+			final boolean finished=(new Date()).compareTo(dat)>0;
+			final boolean inprogress=!finished && (new Date()).compareTo(da)>0;
+
+			rep+=Colors.BOLD + ev[2] +
+				Colors.NORMAL + (finished ? " (finished)" : "") +
+				" at " + ev[10] + " (" + ev[1] + ")" +
+				(!finished ?
+					(inprogress ?
+						" (" + Colors.BOLD + "on right now" + Colors.NORMAL + ", started " + mods.util.timeMicroStamp((new Date()).getTime() - da.getTime()) + " ago)"
+					:
+						" [" + mods.util.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]"
+					)
+				:
+					""
+				) +
+				(!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") +
+				(c!=0 ? ", " : ".");
 		}
 		irc.sendContextReply(mes, "Events: " + rep);
 	}
