@@ -206,21 +206,21 @@ public class Plugin
 	};
 	public void commandList(Message mes) {
 		// Get all plugins.
-		String[] plugins = mods.plugin.getAllPlugins(false);
+		String[] plugins = mods.plugin.getLoadedPlugins();
 		Arrays.sort(plugins);
 
 		// Hash all core plugins.
 		String[] corePlugins = mods.plugin.getAllPlugins(true);
 		Set<String> coreSet = new HashSet<String>();
 		for(int i=0; i<corePlugins.length; i++)
-			coreSet.add(corePlugins[i]);
+			coreSet.add(corePlugins[i].toLowerCase());
 
 		StringBuilder buf = new StringBuilder();
 		buf.append("Plugin list (core marked with *): ");
 		for(int i=0; i<plugins.length; i++)
 		{
 			buf.append(plugins[i]);
-			if (coreSet.contains(plugins[i]))
+			if (coreSet.contains(plugins[i].toLowerCase()))
 				buf.append("*");
 			if (i == plugins.length - 2)
 				buf.append(" and ");
@@ -280,9 +280,10 @@ public class Plugin
 			return;
 		}
 		
-		String[] plugins = mods.plugin.getAllPlugins(false);
+		String[] plugins = mods.plugin.getLoadedPlugins();
 		
 		String pluginName = params.get(1);
+		String pluginNameL = pluginName.toLowerCase();
 		String source;
 		try
 		{
@@ -296,7 +297,7 @@ public class Plugin
 		
 		boolean loaded = false;
 		for (int i = 0; i < plugins.length; i++) {
-			if (plugins[i].equals(pluginName)) {
+			if (plugins[i].toLowerCase().equals(pluginNameL)) {
 				loaded = true;
 				break;
 			}
