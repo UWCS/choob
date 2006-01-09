@@ -190,12 +190,8 @@ public class Karma
 			if (ma.find())
 			{
 				reason = apiReason(getName(ma), true);
-				if (reason==null)
-				{
-					nullReason(mes, true);
-					return;
-				}
-				name = reason[0];
+				if (reason !=null)
+					name = reason[0];
 			}
 			else
 			{
@@ -232,13 +228,8 @@ public class Karma
 			if (ma.find())
 			{
 				reason = apiReason(getName(ma), false);
-				if (reason==null)
-				{
-					nullReason(mes, false);
-					return;
-				}
-
-				name = reason[0];
+				if (reason != null)
+					name = reason[0];
 			}
 			else
 			{
