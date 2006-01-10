@@ -58,6 +58,16 @@ public class UserTypeCheck
 		mods.interval.callBack(null, 1);
 	}
 	
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin for getting and caching type info (is bot, is ircop, is registered, etc.), about a user",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			"$Rev$$Date$"
+		};
+	}
+
 	/* This is never called. WTF? */
 	public void destroy(Modules mods)
 	{
