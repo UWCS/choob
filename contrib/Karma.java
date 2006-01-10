@@ -716,7 +716,6 @@ public class Karma
 				String rpl = "Karma items matching '" + item + "': ";
 				for (int j = 0; j < odbItems.size(); j++) {
 					if (j >= 5) {
-						rpl += ", ...";
 						break;
 					}
 					KarmaObject ko = ((KarmaObject)odbItems.get(j));
@@ -724,6 +723,11 @@ public class Karma
 						rpl += ", ";
 					}
 					rpl += ko.string + " (" + ko.value + ")";
+				}
+				if (odbItems.size() > 5) {
+					rpl += ", ...";
+				} else {
+					rpl += ".";
 				}
 				irc.sendContextReply(mes, rpl);
 			}
