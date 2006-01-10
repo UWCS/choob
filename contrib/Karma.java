@@ -675,6 +675,73 @@ public class Karma
 		irc.sendContextReply( mes, output.toString());
 
 	}
+	
+	public String[] helpCommandSearch = {
+		"Finds existing karma items.",
+		"<Query> [<Query> ...]",
+		"<Query> is some text or a regular expression (in /.../) to find"
+	};
+	public void commandSearch(Message mes, Modules mods, IRCInterface irc)
+	{
+		List<String> params = mods.util.getParams(mes);
+		
+		if (params.size() <= 1) {
+			irc.sendContextReply(mes, "I nead something to find!");
+		}
+		
+		// Remove the command token.
+		params.remove(0);
+		
+		// Only 5 items please!
+		while (params.size() > 5)
+			params.remove(params.size() - 1);
+		
+		for (int i = 0; i < params.size(); i++) {
+			String item = params.get(i);
+			String odbQuery = "";
+			
+			if ((item.length() > 2) && item.startsWith("/") && item.endsWith("/")) {
+				// Regexp
+				odbQuery = "WHERE string RLIKE \"" + item.substring(1, item.length() - 1).replaceAll("\\\\", "\\\\\\\\") + "\"";
+			} else {
+				// Substring
+				odbQuery = "WHERE string RLIKE \"" + item.replaceAll("(\\W)", "\\\\$1") + "\"";
+			}
+			
+			List odbItems = mods.odb.retrieve(KarmaObject.class, odbQuery);
+			
+			if (odbItems.size() == 0) {
+				irc.sendContextReply(mes, "No karma items matched '" + item + "'.");
+			} else {
+				String rpl = "Karma items matching '" + item + "': ";
+				for (int j = 0; j < odbItems.size(); j++) {
+					if (j >= 5) {
+						rpl += ", ...";
+						break;
+					}
+					KarmaObject ko = ((KarmaObject)odbItems.get(j));
+					if (j > 0) {
+						rpl += ", ";
+					}
+					rpl += ko.string + " (" + ko.value + ")";
+				}
+				irc.sendContextReply(mes, rpl);
+			}
+		}
+		
+		
+		
+		
+		
+		//List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
+		//List<String> names = new ArrayList<String>();
+		
+		//if (params.size() > 0)
+		//	for (int i=0; i<params.size(); i++)
+		//	{
+		//	}
+	}
+	
 
 	public String[] helpCommandList = {
 		"Get a list of all karma objects.",
