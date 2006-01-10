@@ -231,8 +231,12 @@ public class NickServ
 
 	public void onServerResponse(ServerResponse resp)
 	{
-		if (resp.getCode()==401) // 401 Nick Not Found.
-			ip_overrides=true;
+		if (resp.getCode() == 401) // 401 Nick Not Found.
+		{
+			Matcher ma = Pattern.compile("^[^ ]+ ([^ ]+) ").matcher(resp.getResponse().trim());
+			if (ma.find() && ma.group(1).trim().toLowerCase().equals("nickserv"))
+				ip_overrides=true;
+		}
 
 		if (ip_overrides && resp.getCode()==340) // USERIP response, not avaliable through PircBOT, gogo magic numbers.
 		{
