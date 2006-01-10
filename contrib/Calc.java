@@ -203,11 +203,10 @@ public class MathParser
 	{
 		ptr++;
 		double inner = additionExpr();
-		ptr++;
-		if (ptr != length && expr.charAt(ptr-1) != ')')
+		if ((ptr >= length) || (expr.charAt(ptr) != ')'))
 			throw err();
-		else
-			return inner;
+		ptr++;
+		return inner;
 	}
 
 	// name bracketExpr()
@@ -219,6 +218,8 @@ public class MathParser
 		{
 			System.out.println(current);
 			ptr++;
+			if (ptr >= expr.length())
+				break;
 			current = expr.charAt(ptr);
 		}
 		String name = expr.substring(oldPtr, ptr).toLowerCase();
