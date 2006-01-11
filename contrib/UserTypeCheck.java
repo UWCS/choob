@@ -167,6 +167,15 @@ public class UserTypeCheck
 	
 	public void onServerResponse(ServerResponse ev)
 	{
+		// Check for a code we care about first. If we don't care about the
+		// code, we can bail right here. This saves on using the RegExp, and
+		// the |synchronized| stuff below.
+		int code = ev.getCode();
+		if ((code != 301) && (code != 307) && (code != 313)
+				&& (code != 318) && (code != 335) && (code != 671)) {
+			return;
+		}
+		
 		// ^([^ ]+) ([^ ]+) (.*)$
 		Matcher sp = SplitWhoisLine.matcher(ev.getResponse());
 		if (!sp.matches())
@@ -183,22 +192,22 @@ public class UserTypeCheck
 		}
 		
 		synchronized(userData) {
-			if (ev.getCode() == 335) {
+			if (code == 335) {
 				userData.isBot = true;
 			}
-			if (ev.getCode() == 301) {
+			if (code == 301) {
 				userData.isAway = true;
 			}
-			if (ev.getCode() == 313) {
+			if (code == 313) {
 				userData.isOperator = true;
 			}
-			if (ev.getCode() == 307) {
+			if (code == 307) {
 				userData.isRegistered = true;
 			}
-			if (ev.getCode() == 671) {
+			if (code == 671) {
 				userData.isSecure = true;
 			}
-			if (ev.getCode() == 318) {
+			if (code == 318) {
 				userData.timestamp = System.currentTimeMillis();
 				userData.hasChecked = true;
 				System.out.println("UTC: Data for user <" + nickl +
