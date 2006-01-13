@@ -22,10 +22,13 @@ public class UserTypeCheck
 	private Modules mods;
 	private IRCInterface irc;
 	private Map<String,UserTypeCheckResult> userChecks;
-	private int[] statsHourlyCalled;
-	private int[] statsHourlyWhoisd;
-	private int[] statsHourlyFailed;
-	private int statsHour;
+	private int[] statsCalled;
+	private int[] statsWhoisd;
+	private int[] statsFailed;
+	private int statsIndex;
+	private int statsLastHour;
+	
+	private final int STATS_COUNT = 24;
 	
 	/* Time that the API will wait for data to arrive */
 	private final int USER_DATA_WAIT = 10000; // 10 seconds
@@ -58,10 +61,11 @@ public class UserTypeCheck
 		this.irc = irc;
 		
 		userChecks = new HashMap<String,UserTypeCheckResult>();
-		statsHour = 0;
-		statsHourlyCalled = new int[12];
-		statsHourlyWhoisd = new int[12];
-		statsHourlyFailed = new int[12];
+		statsIndex = 0;
+		statsLastHour = 0;
+		statsCalled = new int[STATS_COUNT];
+		statsWhoisd = new int[STATS_COUNT];
+		statsFailed = new int[STATS_COUNT];
 		
 		mods.interval.callBack(null, 1);
 	}
@@ -115,23 +119,25 @@ public class UserTypeCheck
 		
 		// Update stats.
 		int newHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY) % 12;
-		if (statsHour != newHour) {
+		if (statsLastHour != newHour) {
+			statsLastHour = newHour;
+			
 			double totalC = 0;
 			double totalW = 0;
 			double totalF = 0;
-			for (int i = 0; i < 12; i++) {
-				totalC += statsHourlyCalled[i];
-				totalW += statsHourlyWhoisd[i];
-				totalF += statsHourlyFailed[i];
+			for (int i = 0; i < STATS_COUNT; i++) {
+				totalC += statsCalled[i];
+				totalW += statsWhoisd[i];
+				totalF += statsFailed[i];
 			}
-			System.out.println("UTC: Average API usage            : " + (totalC / 12) + "/hour");
-			System.out.println("UTC: Average WHOIS commands issued: " + (totalW / 12) + "/hour");
-			System.out.println("UTC: Average failed requests      : " + (totalF / 12) + "/hour");
+			System.out.println("UTC: Average API usage            : " + (totalC / STATS_COUNT) + "/hour");
+			System.out.println("UTC: Average WHOIS commands issued: " + (totalW / STATS_COUNT) + "/hour");
+			System.out.println("UTC: Average failed requests      : " + (totalF / STATS_COUNT) + "/hour");
 			
-			statsHour = newHour;
-			statsHourlyCalled[statsHour] = 0;
-			statsHourlyWhoisd[statsHour] = 0;
-			statsHourlyFailed[statsHour] = 0;
+			statsIndex++;
+			statsCalled[statsIndex] = 0;
+			statsWhoisd[statsIndex] = 0;
+			statsFailed[statsIndex] = 0;
 		}
 		
 		mods.interval.callBack(null, USER_DATA_INTERVAL);
@@ -179,7 +185,7 @@ public class UserTypeCheck
 	 */
 	public int apiStatus(String nick, String flag)
 	{
-		statsHourlyCalled[statsHour]++;
+		statsCalled[statsIndex]++;
 		String nickl = nick.toLowerCase();
 		String flagl = flag.toLowerCase();
 		if (flagl.equals("bot"))
@@ -286,12 +292,13 @@ public class UserTypeCheck
 			
 			if (data != null) {
 				if (!USER_DATA_CACHE_BLOCK && !data.hasChecked) {
+					statsFailed[statsIndex]++;
 					System.out.println("UTC: Check (cached) for user <" + nick + "> has no data!");
 					return null;
 				}
 				synchronized(data) {
 					if (!data.hasChecked) {
-						statsHourlyFailed[statsHour]++;
+						statsFailed[statsIndex]++;
 						System.out.println("UTC: Check (cached) for user <" + nick + "> FAILED!");
 						return null;
 					}
@@ -304,7 +311,7 @@ public class UserTypeCheck
 			data.hasChecked = false;
 			userChecks.put(nick, data);
 		}
-		statsHourlyWhoisd[statsHour]++;
+		statsWhoisd[statsIndex]++;
 		irc.sendRawLine("WHOIS " + nick);
 		
 		synchronized(data) {
@@ -314,6 +321,7 @@ public class UserTypeCheck
 				// Do nothing, as data.hasChecked will be false anyway.
 			}
 			if (!data.hasChecked) {
+				statsFailed[statsIndex]++;
 				System.out.println("UTC: Check (live) for user <" + nick + "> FAILED!");
 				return null;
 			}
