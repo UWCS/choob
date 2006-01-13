@@ -62,7 +62,7 @@ public class UserTypeCheck
 		
 		userChecks = new HashMap<String,UserTypeCheckResult>();
 		statsIndex = 0;
-		statsLastHour = 0;
+		statsLastHour = -1;
 		statsCalled = new int[STATS_COUNT];
 		statsWhoisd = new int[STATS_COUNT];
 		statsFailed = new int[STATS_COUNT];
@@ -118,7 +118,7 @@ public class UserTypeCheck
 		}
 		
 		// Update stats.
-		int newHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY) % 12;
+		int newHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
 		if (statsLastHour != newHour) {
 			statsLastHour = newHour;
 			
@@ -134,7 +134,7 @@ public class UserTypeCheck
 			System.out.println("UTC: Average WHOIS commands issued: " + (totalW / STATS_COUNT) + "/hour");
 			System.out.println("UTC: Average failed requests      : " + (totalF / STATS_COUNT) + "/hour");
 			
-			statsIndex++;
+			statsIndex = (statsIndex + 1) % STATS_COUNT;
 			statsCalled[statsIndex] = 0;
 			statsWhoisd[statsIndex] = 0;
 			statsFailed[statsIndex] = 0;
