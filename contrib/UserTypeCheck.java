@@ -118,7 +118,8 @@ public class UserTypeCheck
 		}
 		
 		// Update stats.
-		int newHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+		//int newHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+		int newHour = (new Date()).getHours();
 		if (statsLastHour != newHour) {
 			statsLastHour = newHour;
 			
