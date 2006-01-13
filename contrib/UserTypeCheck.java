@@ -118,30 +118,26 @@ public class UserTypeCheck
 		}
 		
 		// Update stats.
-		try {
-			int newHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-			if (statsLastHour != newHour) {
-				statsLastHour = newHour;
-				
-				double totalC = 0;
-				double totalW = 0;
-				double totalF = 0;
-				for (int i = 0; i < STATS_COUNT; i++) {
-					totalC += statsCalled[i];
-					totalW += statsWhoisd[i];
-					totalF += statsFailed[i];
-				}
-				System.out.println("UTC: Average API usage            : " + (totalC / STATS_COUNT) + "/hour");
-				System.out.println("UTC: Average WHOIS commands issued: " + (totalW / STATS_COUNT) + "/hour");
-				System.out.println("UTC: Average failed requests      : " + (totalF / STATS_COUNT) + "/hour");
-				
-				statsIndex = (statsIndex + 1) % STATS_COUNT;
-				statsCalled[statsIndex] = 0;
-				statsWhoisd[statsIndex] = 0;
-				statsFailed[statsIndex] = 0;
+		int newHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+		if (statsLastHour != newHour) {
+			statsLastHour = newHour;
+			
+			double totalC = 0;
+			double totalW = 0;
+			double totalF = 0;
+			for (int i = 0; i < STATS_COUNT; i++) {
+				totalC += statsCalled[i];
+				totalW += statsWhoisd[i];
+				totalF += statsFailed[i];
 			}
-		} catch (Exception e) {
-			System.err.println("UTC ERROR: " + e);
+			System.out.println("UTC: Average API usage            : " + (totalC / STATS_COUNT) + "/hour");
+			System.out.println("UTC: Average WHOIS commands issued: " + (totalW / STATS_COUNT) + "/hour");
+			System.out.println("UTC: Average failed requests      : " + (totalF / STATS_COUNT) + "/hour");
+			
+			statsIndex = (statsIndex + 1) % STATS_COUNT;
+			statsCalled[statsIndex] = 0;
+			statsWhoisd[statsIndex] = 0;
+			statsFailed[statsIndex] = 0;
 		}
 		
 		mods.interval.callBack(null, USER_DATA_INTERVAL);
