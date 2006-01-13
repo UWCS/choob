@@ -108,7 +108,7 @@ public class UserTypeCheck
 				// those still in progress.
 				nick = user.next();
 				UserTypeCheckResult entry = userChecks.get(nick);
-				if (entry.hasChecked && (System.currentTimeMillis() > entry.timestamp + USER_DATA_TIMEOUT)) {
+				if (System.currentTimeMillis() > entry.timestamp + USER_DATA_TIMEOUT) {
 					System.out.println("UTC: Data for user <" + nick + "> has expired.");
 					userChecks.remove(nick);
 					// Restart iterator, otherwise it gets all touchy.
@@ -309,6 +309,7 @@ public class UserTypeCheck
 			// Create new data thing and send query off.
 			data = new UserTypeCheckResult();
 			data.hasChecked = false;
+			data.timestamp = System.currentTimeMillis();
 			userChecks.put(nick, data);
 		}
 		statsWhoisd[statsIndex]++;
