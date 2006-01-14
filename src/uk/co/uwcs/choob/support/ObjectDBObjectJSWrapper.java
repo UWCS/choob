@@ -83,7 +83,15 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 					String name = (String)props[i];
 					// Don't save props starting "_".
 					if (!name.startsWith("_")) {
-						fields.add(name);
+						// Check we like the type of the prop...
+						try {
+							Type valType = getFieldType(name);
+							if (valType != null) {
+								fields.add(name);
+							}
+						} catch (NoSuchFieldException e) {
+							// Should never happen here!
+						}
 					}
 				} else if (props[i] instanceof Number) {
 					// Don't do anything for numeric properties.
@@ -102,14 +110,12 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 	public Type getFieldType(String name) throws NoSuchFieldException {
 		Object val = getFieldValue(name);
 		if (val == null) {
-			System.err.println("WARNING: [ObjectDBObjectJSWrapper.getFieldType] Property '" + name + "' does not exist.");
 			return null;
 		}
 		
 		String type = ScriptRuntime.typeof(val);
 		
 		if (type.equals("undefined") || type.equals("object") || type.equals("function") || type.equals("xml")) {
-			System.err.println("WARNING: [ObjectDBObjectJSWrapper.getFieldType] Property '" + name + "' of type '" + type + "' cannot be saved to the ObjectDB.");
 			return null;
 		}
 		if (type.equals("string")) {
@@ -121,7 +127,6 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		if (type.equals("boolean")) {
 			return Boolean.TYPE;
 		}
-		System.err.println("WARNING: [ObjectDBObjectJSWrapper.getFieldType] Property '" + name + "' had unknown 'typeof' result: " + type);
 		return null;
 	}
 	
