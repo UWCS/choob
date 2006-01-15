@@ -214,4 +214,13 @@ public class MiscMsg
 
 		irc.sendContextReply(mes, rep.toString());
 	}
+
+	public String[] helpCommandUptime = {
+		"Find out how long the bot has been running for.",
+	};
+
+	public void commandUptime( Message mes )
+	{
+		irc.sendContextReply(mes, "I have been up " + mods.util.timeLongStamp((new Date()).getTime() - mods.util.getStartTime(), 3) + ".");
+	}
 }

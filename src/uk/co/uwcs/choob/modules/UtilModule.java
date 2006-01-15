@@ -23,10 +23,13 @@ public final class UtilModule
 	private IRCInterface irc;
 	private Pattern triggerPattern;
 
+	long starttime;
+
 	/** Creates a new instance of UtilModule */
 	UtilModule( IRCInterface irc ) {
 		this.irc = irc;
 		updateTrigger();
+		starttime=(new java.util.Date()).getTime();
 	}
 
 	public void updateTrigger()
@@ -161,5 +164,10 @@ public final class UtilModule
 				}
 
 		return t;
+	}
+
+	public long getStartTime()
+	{
+		return starttime;
 	}
 }
