@@ -466,16 +466,28 @@ public class Alias
 
 		AliasObject alias = getAlias(name);
 
-		if (alias != null)
+		if (alias.locked == true)
 		{
-			// No need to NS check here.
-			alias.locked = true;
-			mods.odb.update(alias);
-			irc.sendContextReply(mes, "Locked '" + name + "'!");
+			irc.sendContextReply(mes, "'" + name + "' is already locked!");
 		}
 		else
 		{
-			irc.sendContextReply(mes, "Alias '" + name + "' not found.");
+			if (alias != null)
+			{
+				// No need to NS check here.
+
+				final String originalOwner=alias.owner;
+
+				alias.locked = true;
+				alias.owner = mes.getNick();
+
+				mods.odb.update(alias);
+				irc.sendContextReply(mes, "Locked " + (!originalOwner.equals(alias.owner) ? "and taken ownership of alias by " + originalOwner + ": " : "") + "'" + name + "': " + alias.converted);
+			}
+			else
+			{
+				irc.sendContextReply(mes, "Alias '" + name + "' not found.");
+			}
 		}
 	}
 
