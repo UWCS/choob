@@ -415,7 +415,7 @@ public class Quote
 		// Remember this quote for later...
 		addLastQuote(mes.getContext(), quote, 1);
 
-		irc.sendContextReply( mes, "OK, added quote " + quote.lines + " line quote #" + quote.id + ": " + formatPreview(quoteLines) );
+		irc.sendContextReply( mes, "OK, added " + quote.lines + " line quote #" + quote.id + ": " + formatPreview(quoteLines) );
 	}
 
 	public String[] helpCommandAdd = {
@@ -1057,6 +1057,9 @@ public class Quote
 			{
 				String first = param.substring(0, colon).toLowerCase();
 				param = param.substring(colon + 1);
+
+				if (param.length()==0)
+					throw new ChoobError("Empty selector: " + first);
 
 				if (param.charAt(0) == '/')
 				{
