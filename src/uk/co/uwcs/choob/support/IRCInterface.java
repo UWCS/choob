@@ -207,7 +207,7 @@ public final class IRCInterface
 		}
 		else if ( lines.size() > MAX_MESSAGES )
 		{
-			bot.sendMessage(context.getContext(), nick + ": Sorry, the output is too long! Private messaging it to you!");
+			privateSendMessage(context.getContext(), nick + ": Sorry, the output is too long! Private messaging it to you!");
 			target = nick;
 			thePrefix = "";
 		}
@@ -223,7 +223,7 @@ public final class IRCInterface
 		}
 
 		for(String line: lines)
-			bot.sendMessage(target, thePrefix + line);
+			privateSendMessage(target, thePrefix + line);
 	}
 
 	/**
@@ -315,7 +315,14 @@ public final class IRCInterface
 		List<String> lines = cutString(cleanse(message), 0);
 
 		for (String line: lines)
-			bot.sendMessage(target, line);
+			privateSendMessage(target, line);
+	}
+
+	private void privateSendMessage(String target, String message)
+	{
+		if (target.trim().equalsIgnoreCase(bot.getName()))
+			return;
+		bot.sendMessage(target, message);
 	}
 
 	/**
