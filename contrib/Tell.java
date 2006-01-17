@@ -5,9 +5,6 @@ import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
 import java.util.regex.*;
 
-// Note: This send/watch couple will break if someone changes their primary nick between the send and the receive, assuming they change their base nick.. it could be done otherwise, but Faux can't think of a way that doesn't involve mass database rapeage on every line sent by irc.
-// This entire plugin could do with some caching.
-
 public class TellObject
 {
 	public int id;
@@ -76,12 +73,68 @@ public class Tell
 		+ " try again. Note that NickServ status is also cached."
 	};
 
+	public synchronized int apiInject(String from, String[] targets, String message, String type)
+	{
+		return doTell(from, targets, message, (new Date()).getTime(), type);
+	}
+
 	public String[] helpCommandSend = {
 		"Send a tell to the given nickname.",
 		"<Nick>[,<Nick>...] <Message>",
 		"<Nick> is the target of the tell",
 		"<Message> is the content"
 	};
+
+	synchronized int doTell(final String from, final String[] targets, final String message, final long date, final String type)
+	{
+		final TellObject tellObj = new TellObject();
+
+		// Note: This is intentionally not translated to a primary nick.
+		tellObj.from = from;
+
+		tellObj.message = message;
+
+		tellObj.date = date;
+
+		tellObj.type = type;
+
+		if (targets.length > MAXTARGETS)
+			return 1;
+
+		final List<String> done = new ArrayList<String>(MAXTARGETS);
+
+		mods.odb.runTransaction(
+			new ObjectDBTransaction()
+			{
+				public void run()
+				{
+					done.clear();
+					for(int i=0; i<targets.length; i++)
+					{
+						tellObj.id = 0;
+
+						String targetNick = mods.nick.getBestPrimaryNick(targets[i]);
+						String rootTargetNick = mods.security.getRootUser(targetNick);
+
+						tellObj.target = rootTargetNick != null ? rootTargetNick : targetNick;
+
+						// Make sure we don't dup targets.
+						if (done.contains(tellObj.target))
+							continue;
+
+						tellObj.nickServ = nsStatus(tellObj.target) > 0;
+
+						clearCache(tellObj.target);
+						save(tellObj);
+						done.add(tellObj.target);
+					}
+				}
+			}
+		);
+
+		return 16+done.size();
+
+	}
 
 	public synchronized void commandSend( Message mes )
 	{
@@ -92,60 +145,26 @@ public class Tell
 			return;
 		}
 
-		final TellObject tellObj = new TellObject();
+		final boolean question=params[2].indexOf('?', params[2].length()-5)!=-1; // It's a question if it has a "?" within 5 characters of it's end. (ie. "? :)").
 
-		// Note: This is intentionally not translated to a primary nick.
-		tellObj.from = mes.getNick();
+		final String type=question ? "ask" : "tell";
 
-		tellObj.message = params[2]; // 'Message'.
+		final int res=doTell(mes.getNick(), params[1].split(","), params[2], mes.getMillis(), type);
 
-		tellObj.date = mes.getMillis();
-
-		if (params[0].toLowerCase().equals("ask"))
-			tellObj.type = "ask";
-		else
-			tellObj.type = "tell";
-
-		final String[] targets = params[1].split(",");
-
-		if (targets.length > MAXTARGETS)
+		if (res>16)
 		{
-			irc.sendContextReply(mes, "Sorry, you're only allowed " + MAXTARGETS + " targets for a given tell.");
+			irc.sendContextReply(mes, "Okay, will " + type + " upon next speaking. (Sent to " + (res-16) + " " + ((res-16) == 1 ? "person" : "people") + ".)");
 			return;
 		}
 
-		final List<String> done = new ArrayList<String>(MAXTARGETS);
-
-		// Yeah, I don't really understand vim's indenting here either.
-		mods.odb.runTransaction(
-				new ObjectDBTransaction()
-				{
-					public void run()
+		switch (res)
 		{
-			done.clear();
-			for(int i=0; i<targets.length; i++)
-		{
-			tellObj.id = 0;
+			case 1:
+				irc.sendContextReply(mes, "Sorry, you're only allowed " + MAXTARGETS + " targets for a given tell.");
+				break;
 
-			String targetNick = mods.nick.getBestPrimaryNick(targets[i]);
-			String rootTargetNick = mods.security.getRootUser(targetNick);
-
-			tellObj.target = rootTargetNick != null ? rootTargetNick : targetNick;
-
-			// Make sure we don't dup targets.
-			if (done.contains(tellObj.target))
-				continue;
-
-			tellObj.nickServ = nsStatus(tellObj.target) > 0;
-
-			clearCache(tellObj.target);
-			save(tellObj);
-			done.add(tellObj.target);
 		}
-		}
-		});
 
-		irc.sendContextReply(mes, "Okay, will " + tellObj.type + " upon next speaking. (Sent to " + done.size() + " " + (done.size() == 1 ? "person" : "people") + ".)");
 	}
 
 	public String[] helpCommandGet = {
