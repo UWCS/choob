@@ -51,9 +51,22 @@ public final class ChoobWatcherThread extends Thread
 						tempIt.remove();
 						ChoobTask t = mods.plugin.doInterval(tempInterval.getPlugin(), tempInterval.getParameter());
 						if (t != null)
-							ChoobThreadManager.queueTask(t);
+						{
+							try
+							{
+								ChoobThreadManager.queueTask(t);
+							}
+							catch (Exception e)
+							{
+								System.err.println("Plugin " + tempInterval.getPlugin() + " got exception queuing task.");
+								System.err.println(e);
+								e.printStackTrace();
+							}
+						}
 						else
+						{
 							System.err.println("Plugin manager for plugin " + tempInterval.getPlugin() + " returned a null doInterval ChoobTask.");
+						}
 					}
 					else if (next > tempInterval.getTrigger())
 						next = tempInterval.getTrigger();
