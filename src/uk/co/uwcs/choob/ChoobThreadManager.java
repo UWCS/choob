@@ -40,6 +40,8 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		if (pluginName == null)
 			return;
 
+		System.out.println("afterExecute (" + pluginName + "): " + ChoobThread.getPluginStack());
+		
 		ChoobThread.clearPluginsStatic(); // Make sure stack is clean
 
 		// Before we finish up, do we have more for this plugin?
@@ -68,6 +70,7 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 			return;
 
 		((ChoobThread)thread).pushPlugin(pluginName);
+		System.out.println("beforeExecute (" + pluginName + "): " + ChoobThread.getPluginStack());
 	}
 
 	static void initialise()
