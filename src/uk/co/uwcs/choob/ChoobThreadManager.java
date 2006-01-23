@@ -50,8 +50,8 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		if (next != null)
 		{
 			// If so, just queue that. Don't relinquish the semaphore.
-			exe.execute(next);
 			System.out.println("Queued plugin task for " + pluginName + " now runnable.");
+			exe.execute(next);
 		}
 		else
 		{
