@@ -196,7 +196,7 @@ XML
 			
 			for (my $i = 0; $i < @columns; $i++) {
 				# Update column widths:
-				my $len = length($objectItem->[$i + 1]);
+				my $len = length(defined $objectItem->[$i + 1] ? $objectItem->[$i + 1] : $itemMissing);
 				my $collen = 0;
 				if (exists $columnLens{$columns[$i]}) {
 					$collen = $columnLens{$columns[$i]};
