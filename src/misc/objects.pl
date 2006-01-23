@@ -44,7 +44,8 @@ foreach my $item (@ARGV) {
 	} elsif ($item =~ /^-?-(help|m)$/) {
 		$params{$1} = 1;
 	} else {
-		print STDERR qq[Ignored unknown option: $item\n];
+		print STDERR qq[Unknown option: $item\n];
+		exit 1;
 	}
 }
 
