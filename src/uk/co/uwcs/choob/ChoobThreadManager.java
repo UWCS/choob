@@ -51,7 +51,7 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		{
 			// If so, just queue that. Don't relinquish the semaphore.
 			exe.execute(next);
-			//FU:System.out.println("Back-queued plugin task for " + pluginName + " now queued.");
+			System.out.println("Queued plugin task for " + pluginName + " now runnable.");
 		}
 		else
 		{
@@ -118,6 +118,8 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 			execute(task);
 			return;
 		}
+		System.out.println("queue (" + pluginName + "): " + ChoobThread.getPluginStack());
+		
 		Semaphore sem = getWaitObject(pluginName);
 		if (sem.tryAcquire())
 		{
@@ -132,7 +134,7 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 			if (!queue.offer(task))
 				// And the queue is full. Time to pop.
 				throw new RejectedExecutionException("Plugin " + pluginName + " has too many queued tasks!");
-			//FU:System.out.println("Plugin task back-queued for " + pluginName + ".");
+			System.out.println("Plugin task for " + pluginName + " queued.");
 		}
 	}
 }
