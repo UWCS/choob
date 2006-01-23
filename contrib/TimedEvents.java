@@ -131,7 +131,7 @@ public class TimedEvents
 		"Make a command execute at a specified time in the future.",
 		"[ <Date> ] <Time> <Command>",
 		"<Date> is an (optional) date of the form DD/MM/YY[YY]",
-		"<Time> is a time of the form HH[:]MM[[:]SS][am|pm]",
+		"<Time> is a time of the form HH[[:]MM[[:]SS]][am|pm]",
 		"<Command> is the command to execute"
 	};
 	public void commandAt( Message mes )
@@ -157,7 +157,7 @@ public class TimedEvents
 		GregorianCalendar cal = new GregorianCalendar();
 
 		boolean dateSet = false;
-		Pattern timePat = Pattern.compile("(0?[0-9]|1[0-9]|2[0-3]):?([0-5][0-9])(?::?([0-5][0-9]))?(am|pm)?");
+		Pattern timePat = Pattern.compile("(0?[0-9]|1[0-9]|2[0-3])(?::?([0-5][0-9])(?::?([0-5][0-9]))?)?(am|pm)?");
 		Matcher ma = timePat.matcher(time);
 		if (!ma.matches())
 		{
@@ -218,7 +218,10 @@ public class TimedEvents
 		try
 		{
 			h = Integer.parseInt(ma.group(1));
-			m = Integer.parseInt(ma.group(2));
+
+			m = 0;
+			if (ma.group(2) != null)
+				m = Integer.parseInt(ma.group(2));
 			s = 0;
 
 			if (ma.group(3) != null)
