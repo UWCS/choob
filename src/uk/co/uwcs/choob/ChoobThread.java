@@ -59,11 +59,15 @@ public class ChoobThread extends Thread
 	
 	public static String getPluginStack()
 	{
-		String rv = ChoobThread.currentThread().toString();
-		int i = 0;
-		for (String s = ChoobThread.getPluginName(0); s != null; s = ChoobThread.getPluginName(++i))
-		{
-			rv += ", " + s;
+		String rv = "?";
+		try {
+			rv = ChoobThread.currentThread().toString();
+			int i = 0;
+			for (String s = ChoobThread.getPluginName(0); s != null; s = ChoobThread.getPluginName(++i))
+			{
+				rv += ", " + s;
+			}
+		} catch (Exception e) {
 		}
 		return rv;
 	}
