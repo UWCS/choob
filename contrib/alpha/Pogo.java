@@ -13,7 +13,7 @@ import java.io.*;
 
 public class Pogo
 {
-	Modules mods;
+	public Modules mods;
 	IRCInterface irc;
 
 	static ServerThread servthread;
@@ -78,14 +78,9 @@ public class Pogo
 		ServerThread.serv=null;
 	}
 
-	public String filterTriggerRegex = "";
-	public void filterTrigger( Message mes )
+	public void commandInvoke( Message mes )
 	{
-		String text = mes.getMessage();
-
-		Matcher matcher = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE).matcher(text);
-		if (!matcher.find())
-			return;
+		String text = mods.util.getParamString(mes);
 
 		String[] items=text.split("\\|");
 		if (items.length<=1)
@@ -107,6 +102,8 @@ public class Pogo
 
 	private void doCommand(String text, Message mes)
 	{
+		System.out.println("New command: " + text);
+
 		Matcher matcher = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE).matcher(text);
 
 		if (matcher.find())
@@ -173,6 +170,7 @@ final class ServerThread extends Thread
 
 	public ServerThread(Pogo p) throws IOException
 	{
+		System.out.println("New server");
 		serv=new ServerSocket(3090);
 
 		this.p=p;
@@ -205,6 +203,7 @@ final class ClientHandler extends Thread
 
 	public ClientHandler(Socket cs, Pogo p) throws IOException
 	{
+		System.out.println("New clienthandler");
 		sock=cs;
 		in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 		out = new PrintWriter(sock.getOutputStream(), true);
@@ -217,8 +216,10 @@ final class ClientHandler extends Thread
 		String inputLine;
 		try
 		{
+			System.out.println("[pogo] Waiting for line.");
 			while ((inputLine = in.readLine()) != null)
 			{
+				System.out.println("line" + inputLine);
 				Matcher ma=Pattern.compile("^REG\\s+([a-z]+)$").matcher(inputLine);
 				if (ma.matches())
 				{
@@ -230,12 +231,12 @@ final class ClientHandler extends Thread
 						out.print("OK REG " + command + "\n");
 					}
 					else
-						out.print("ERR in reg" + "\n");
+						out.print("ERR in REG" + "\n");
 
 				}
 				else
 				{
-					ma=Pattern.compile("^([0-9]+)\\s+(.*)$").matcher(inputLine);
+					ma=Pattern.compile("^([0-9\\.]+)\\s+(.*)$").matcher(inputLine);
 					if (ma.matches())
 					{
 						final Message m=contexts.get(ma.group(1));
@@ -283,8 +284,10 @@ final class ClientHandler extends Thread
 
 	public void inform(String command, Message context)
 	{
-		final String key = ((Integer)(Math.abs((new Random()).nextInt()))).toString();
+		final String key = ((Float)(Math.abs((new Random()).nextFloat()))).toString();
 		contexts.put(key, context);
+
+		System.out.println("To plugin: '" + key + "\t" + command.replaceFirst("\\s+","\t") + "\n" + "'");
 
 		out.print(key + "\t" + command.replaceFirst("\\s+","\t") + "\n");
 		out.flush();
