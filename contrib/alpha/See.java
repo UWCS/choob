@@ -27,13 +27,10 @@ public class See
 
 	public final synchronized void commandBodyClock( Message mes ) throws SQLException
 	{
-		final String nick=mods.util.getParamString(mes).trim();
+		String nick=mods.util.getParamString(mes).trim();
 
-		if (nick.length() < 3)
-		{
-			irc.sendContextReply(mes, "Please specify a real nick.");
-			return;
-		}
+		if (nick.equals(""))
+			nick=mes.getNick();
 
 		final Connection conn=mods.odb.getConnection();
 
@@ -43,7 +40,7 @@ public class See
 			stat.execute("DROP TEMPORARY TABLE IF EXISTS `tempt1`, `tempt2`; ");
 
 			{
-				final PreparedStatement s=conn.prepareStatement("CREATE TEMPORARY TABLE `tempt1` AS SELECT `Time` FROM `History` WHERE (CASE INSTR(`Nick`,'|') WHEN 0 THEN `Nick` ELSE LEFT(`Nick`, INSTR(`Nick`,'|')-1) END)=? ORDER BY `Time`; ");
+				final PreparedStatement s=conn.prepareStatement("CREATE TEMPORARY TABLE `tempt1` AS SELECT `Time` FROM `History` WHERE `Time` > " +  (System.currentTimeMillis()-(1000*60*60*24*5)) + " AND (CASE INSTR(`Nick`,'|') WHEN 0 THEN `Nick` ELSE LEFT(`Nick`, INSTR(`Nick`,'|')-1) END)=? ORDER BY `Time`; ");
 				s.setString(1, nick);
 				s.executeUpdate();
 			}
@@ -69,9 +66,11 @@ public class See
 			final Timestamp gotup=rs.getTimestamp("end");
 			final long diff=rs.getTimestamp("end").getTime() - rs.getTimestamp("start").getTime();
 
-			final long bodyclock=8+(((new java.util.Date()).getTime()-gotup.getTime())/1000/60/60); // int division?
+			final float bodyclock=8.0f+(((float)((new java.util.Date()).getTime()-gotup.getTime()))/1000.0f/60.0f/60.0f);
 
-			ret+=nick + " probably got up " + timeStamp(gotup) + " ago after " + mods.util.timeLongStamp(diff, 1) + " of sleep, making their body-clock time about " + bodyclock + ":00";
+			final long minutes=(Math.round((bodyclock-Math.floor(bodyclock))*60.0f));
+
+			ret+=nick + " probably got up " + timeStamp(gotup) + " ago after " + mods.util.timeLongStamp(diff, 1) + " of sleep, making their body-clock time about " + ((int)Math.floor(bodyclock)) + ":" + (minutes < 10 ? "0" : "") + minutes;
 
 			irc.sendContextReply(mes, ret + ".");
 		}
