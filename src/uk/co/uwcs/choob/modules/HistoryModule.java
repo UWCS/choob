@@ -304,10 +304,11 @@ public final class HistoryModule
 		try
 		{
 			dbCon = dbBroker.getConnection();
-			stat = dbCon.prepareStatement("SELECT * FROM History WHERE Channel = ? AND Time < ? ORDER BY Time DESC, LineID DESC LIMIT ?");
+			stat = dbCon.prepareStatement("SELECT * FROM History WHERE Channel = ? AND Time < ? AND Time > ? - 60*60*12*1000 ORDER BY Time DESC, LineID DESC LIMIT ?");
 			stat.setString(1, channel);
 			stat.setLong(2, cause == null ? System.currentTimeMillis() : cause.getMillis() );
-			stat.setInt(3, count);
+			stat.setLong(3, cause == null ? System.currentTimeMillis() : cause.getMillis() );
+			stat.setInt(4, count);
 
 			final ResultSet result = stat.executeQuery();
 
