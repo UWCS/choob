@@ -61,13 +61,44 @@ public class Alias
 		+ " 'Bar.Baz $3 $[1-2]', 'Foo 1 2 3' will become 'Bar.Baz 3 1 2'."
 	};
 
+
+/*
+	public void commandLoopBack( Message mes )
+	{
+		try{
+			Message[] returnedMessages = (Message[])mods.plugin.callEVAL("Alias", "LoopBack", mes);
+			Message ret;
+			for (int i = 0; i < returnedMessages.length; i++)
+			{
+				ret = returnedMessages[i];
+				if (ret.getAction())
+				{
+					irc.sendAction(ret.getTarget(),ret.getMessage());
+				}
+				else
+				{
+					if (ret.getPrefix())
+						irc.sendMessage(ret.getTarget(),ret.getNick() + ": " + ret.getMessage());
+					else
+						irc.sendMessage(ret.getTarget(),ret.getMessage());
+				}
+			}
+
+		} catch (ChoobNoSuchCallException e) {return;}
+	}
+*/
+	public Message[] cmdLoopBack( Message mes )
+	{
+		return mes.contextMessage("Success");
+	}
+
 	public String[] helpCommandAdd = {
 		"Add an alias to the bot.",
 		"<Name> <Alias>",
 		"<Name> is the name of the alias to add",
 		"<Alias> is the alias content. See Alias.Syntax"
 	};
-	public void commandAdd( Message mes )
+	/*public void commandAdd( Message mes )
 	{
 		String[] params = mods.util.getParamArray(mes, 2);
 
@@ -152,6 +183,91 @@ public class Alias
 			mods.odb.save(new AliasObject(name, conv, nick));
 
 		irc.sendContextReply(mes, "Aliased '" + name + "' to '" + conv + "'" + oldAlias + ".");
+	}*/
+
+	public Message[] cmdAdd( Message mes )
+	{
+		String[] params = mods.util.getParamArray(mes, 2);
+
+		if (params.length <= 2)
+		{
+			throw new ChoobBadSyntaxError();
+		}
+
+		String name = params[1];
+		String conv = params[2];
+
+		if (conv.indexOf('.') == -1 || (conv.indexOf(' ') != -1 && conv.indexOf(' ') < conv.indexOf('.')))
+		{
+			// Alias recursion?
+			int spacePos = conv.indexOf(' ');
+			String actualParams;
+			if (spacePos == -1)
+			{
+				spacePos = conv.length();
+				actualParams = "";
+			}
+			else
+				actualParams = conv.substring(spacePos + 1);
+
+			String subAlias = conv.substring(0, spacePos);
+			AliasObject alias = getAlias(subAlias);
+
+			if (alias == null)
+			{
+				return mes.contextReply("Sorry, you tried to use a recursive alias to '" + subAlias + "' - but '" + subAlias + "' doesn't exist!");
+			}
+
+			String aliasText = alias.converted;
+
+			// Rebuild params with no upper limit.
+			params = mods.util.getParamArray(mes);
+			String[] aliasParams = new String[params.length - 2];
+			for(int i=2; i<params.length; i++)
+				aliasParams[i-2] = params[i];
+
+			String newText = applyAlias(subAlias, alias.converted, aliasParams, actualParams, mes);
+
+			if (newText == null)
+			{
+				return mes.contextReply("Sorry, you tried to use a recursive alias to '" + subAlias + "' - but the alias text ('" + alias.converted + "') is invalid!");
+			}
+			conv = newText;
+		}
+
+		if (name.equals(""))
+		{
+			return mes.contextReply("Syntax: Alias.Add <Name> <Alias>");
+		}
+
+		AliasObject alias = getAlias(name);
+
+		String nick = mods.security.getRootUser(mes.getNick());
+		if (nick == null)
+			nick = mes.getNick();
+
+		String oldAlias = ""; // Set to content of old alias, if there was one.
+		if (alias != null)
+		{
+			if (alias.locked)
+			{
+				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
+					mods.security.checkNS(mes);
+				else
+					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
+			}
+
+			oldAlias = " (was '" + alias.converted + "')";
+
+			alias.converted = conv;
+			alias.owner = nick;
+
+			mods.odb.update(alias);
+		}
+		else
+			mods.odb.save(new AliasObject(name, conv, nick));
+
+		return mes.contextReply("Aliased '" + name + "' to '" + conv + "'" + oldAlias + ".");
 	}
 
 	public String[] helpCommandSetCoreAlias = {
@@ -160,7 +276,7 @@ public class Alias
 		"<Command> is the name of the command",
 		"<Alias> is the name of the alias"
 	};
-	public void commandSetCoreAlias(Message mes) {
+	public Message[] cmdSetCoreAlias(Message mes) {
 		String[] params = mods.util.getParamArray(mes);
 
 		if (params.length != 3)
@@ -177,14 +293,13 @@ public class Alias
 		AliasObject alias = getAlias(aliasName);
 		if (alias == null)
 		{
-			irc.sendContextReply(mes, "Alias " + aliasName + " does not exist!");
-			return;
+			return mes.contextReply("Alias " + aliasName + " does not exist!");
 		}
 
 		alias.core = command;
 		mods.odb.update(alias);
 
-		irc.sendContextReply(mes, "OK, " + command + " set to have " + aliasName + " as core alias!");
+		return mes.contextReply("OK, " + command + " set to have " + aliasName + " as core alias!");
 	}
 
 	public String[] helpHelpExamples = {
@@ -203,7 +318,7 @@ public class Alias
 		"<Param> is a parameter from the syntax",
 		"<Description> is the description of that parameter"
 	};
-	public void commandAddHelp(Message mes) {
+	public Message[] cmdAddHelp(Message mes) {
 		String[] params = mods.util.getParamArray(mes, 2);
 
 		if (params.length <= 2)
@@ -237,11 +352,11 @@ public class Alias
 
 			mods.odb.update(alias);
 
-			irc.sendContextReply(mes, "OK, " + help.length + " lines of help created for '" + name + "'.");
+			return mes.contextReply("OK, " + help.length + " lines of help created for '" + name + "'.");
 		}
 		else
 		{
-			irc.sendContextReply(mes, "Sorry, couldn't find an alias of that name!");
+			return mes.contextReply("Sorry, couldn't find an alias of that name!");
 		}
 	}
 
@@ -250,7 +365,7 @@ public class Alias
 		"<Name>",
 		"<Name> is the name of the alias to alter"
 	};
-	public void commandRemoveHelp(Message mes) {
+	public Message[] cmdRemoveHelp(Message mes) {
 		String[] params = mods.util.getParamArray(mes);
 
 		if (params.length != 2)
@@ -262,8 +377,7 @@ public class Alias
 
 		if (name.equals(""))
 		{
-			irc.sendContextReply(mes, "Syntax: 'Alias.RemoveHelp " + helpCommandRemoveHelp[1] + "'.");
-			return;
+			return mes.contextReply("Syntax: 'Alias.RemoveHelp " + helpCommandRemoveHelp[1] + "'.");
 		}
 
 		AliasObject alias = getAlias(name);
@@ -287,11 +401,11 @@ public class Alias
 
 			mods.odb.update(alias);
 
-			irc.sendContextReply(mes, "OK, removed help for '" + name + "'.");
+			return mes.contextReply( "OK, removed help for '" + name + "'.");
 		}
 		else
 		{
-			irc.sendContextReply(mes, "Sorry, couldn't find an alias of that name!");
+			return mes.contextReply("Sorry, couldn't find an alias of that name!");
 		}
 	}
 
@@ -300,7 +414,7 @@ public class Alias
 		"<Name>",
 		"<Name> is the name of the alias to remove",
 	};
-	public void commandRemove( Message mes )
+	public Message[] cmdRemove( Message mes )
 	{
 		String[] params = mods.util.getParamArray(mes);
 
@@ -329,10 +443,10 @@ public class Alias
 
 			mods.odb.delete(alias);
 
-			irc.sendContextReply(mes, "Deleted '" + alias.name + "', was aliased to '" + alias.converted + "'.");
+			return mes.contextReply("Deleted '" + alias.name + "', was aliased to '" + alias.converted + "'.");
 		}
 		else
-			irc.sendContextReply(mes, "Alias not found.");
+			return mes.contextReply("Alias not found.");
 	}
 
 	public String[] helpCommandList = {
@@ -340,7 +454,7 @@ public class Alias
 		"[<Which>]",
 		"<Which> is either 'locked', or 'unlocked' or 'all' (default: 'locked')"
 	};
-	public void commandList( Message mes )
+	public Message[] cmdList( Message mes )
 	{
 		String params[] = mods.util.getParamArray(mes);
 
@@ -362,7 +476,7 @@ public class Alias
 		List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE " + clause );
 
 		if (results.size() == 0)
-			irc.sendContextReply(mes, "No aliases.");
+			return mes.contextReply("No aliases.");
 		else
 		{
 			String list = "Alias list: ";
@@ -382,7 +496,7 @@ public class Alias
 				}
 			}
 			list += ".";
-			irc.sendContextReply(mes, list);
+			return mes.contextReply(list);
 		}
 	}
 
@@ -391,7 +505,7 @@ public class Alias
 		"<Name>",
 		"<Name> is the name of the alias to show"
 	};
-	public void commandShow( Message mes )
+	public Message[] cmdShow( Message mes )
 	{
 		String[] params = mods.util.getParamArray(mes);
 
@@ -405,9 +519,9 @@ public class Alias
 		AliasObject alias = getAlias(name);
 
 		if (alias == null)
-			irc.sendContextReply(mes, "Alias not found.");
+			return mes.contextReply("Alias not found.");
 		else
-			irc.sendContextReply(mes, "'" + alias.name + "'" + (alias.locked ? " (LOCKED)" : "") + " was aliased to '" + alias.converted + "' by '" + alias.owner + "'.");
+			return mes.contextReply("'" + alias.name + "'" + (alias.locked ? " (LOCKED)" : "") + " was aliased to '" + alias.converted + "' by '" + alias.owner + "'.");
 	}
 
 	public String apiGet( String name )
@@ -453,7 +567,7 @@ public class Alias
 		"<Name>",
 		"<Name> is the name of the alias to lock"
 	};
-	public void commandLock( Message mes )
+	public Message[] cmdLock( Message mes )
 	{
 		String[] params = mods.util.getParamArray(mes);
 
@@ -468,7 +582,7 @@ public class Alias
 
 		if (alias.locked == true)
 		{
-			irc.sendContextReply(mes, "'" + name + "' is already locked!");
+			return mes.contextReply("'" + name + "' is already locked!");
 		}
 		else
 		{
@@ -482,11 +596,11 @@ public class Alias
 				alias.owner = mes.getNick();
 
 				mods.odb.update(alias);
-				irc.sendContextReply(mes, "Locked " + (!originalOwner.equals(alias.owner) ? "and taken ownership of alias by " + originalOwner + ": " : "") + "'" + name + "': " + alias.converted);
+				return mes.contextReply("Locked " + (!originalOwner.equals(alias.owner) ? "and taken ownership of alias by " + originalOwner + ": " : "") + "'" + name + "': " + alias.converted);
 			}
 			else
 			{
-				irc.sendContextReply(mes, "Alias '" + name + "' not found.");
+				return mes.contextReply( "Alias '" + name + "' not found.");
 			}
 		}
 	}
@@ -496,7 +610,7 @@ public class Alias
 		"<Name>",
 		"<Name> is the name of the alias to unlock"
 	};
-	public void commandUnlock( Message mes )
+	public Message[] cmdUnlock( Message mes )
 	{
 		String[] params = mods.util.getParamArray(mes);
 
@@ -522,11 +636,11 @@ public class Alias
 
 			alias.locked = false;
 			mods.odb.update(alias);
-			irc.sendContextReply(mes, "Unlocked '" + name + "'!");
+			return mes.contextReply("Unlocked '" + name + "'!");
 		}
 		else
 		{
-			irc.sendContextReply(mes, "Alias '" + name + "' not found.");
+			return mes.contextReply("Alias '" + name + "' not found.");
 		}
 	}
 
@@ -540,6 +654,251 @@ public class Alias
 			return null;
 		else
 			return results.get(0);
+	}
+
+
+	private String[] split(String message)
+	{
+		try
+		{
+		if (message.replaceAll("\\\\\\{","").replaceAll("\\\\\\}","").matches(".*\\{.*\\}.*")) 
+		{
+			int currentOpenBracket = 0;
+			int currentCloseBracket = 0;
+			//has at least one open/close brackets
+			for(int i = 0; i < message.length(); i++)
+			{
+				if ((message.charAt(i) == '{') && ((i == 0) || (message.charAt(i - 1) != '\\')))
+				{
+					currentOpenBracket = i; 
+				}
+				else if ((message.charAt(i) == '}') && ((i == 0) || (message.charAt(i - 1) != '\\')))
+				{
+					currentCloseBracket = i;
+				 	break;
+				}
+				
+			}
+
+			String prefix = (message.substring(0, currentOpenBracket));
+			String command = (message.substring(currentOpenBracket + 1));
+			String suffix = (message.substring(currentCloseBracket+1));
+			command = command.substring(0,currentCloseBracket - prefix.length() -1);
+			String[] returnString = new String[3];
+			returnString[0] = prefix;
+			returnString[1] = command;
+			returnString[2] = suffix;
+			return returnString;
+		}
+		}catch (Exception e) 
+		{
+			System.err.println("FAILED to split " + message + " with exception " + e); 
+		}
+		
+		String[] returnString = new String[3];
+		returnString[0] = "";
+		returnString[1] = (message.replaceAll("\\{","\\\\\\{")).replaceAll("\\}","\\\\\\}");
+		returnString[2] = "";
+		return returnString;	
+	}
+
+
+	private boolean isFlooding(Message mes)
+	{
+		try
+		{
+			int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
+			if (ret != 0)
+			{
+				if (ret == 1)
+				return true;
+			}
+		}
+		catch (ChoobNoSuchCallException e)
+		{ return false;} // Ignore
+		catch (Throwable e)
+		{
+			System.err.println("Couldn't do antiflood call: " + e);
+			return false;
+		}
+		return false;
+	}
+	private final static int MAX_EXPANSION = 10;
+	private void loopback(Message mes)
+	{
+		//split up
+		//expand aliases
+		//execute command
+		//recombine
+		//repeat until no longer contains brackets, or hit recursion limit
+		String commands = mes.getMessage().replaceFirst("(?i)" + irc.getTriggerRegex(),"");;
+		byte counter = 0;
+		while ((commands.replaceAll("\\\\\\{","").replaceAll("\\\\\\}","").matches(".*?\\{.*\\}.*")) && (counter < MAX_EXPANSION))
+		{
+			counter++;
+			String[] splitCommands = split(commands);
+			String prefix = splitCommands[0];
+			String command = splitCommands[1].replaceFirst("(?i)" + irc.getTriggerRegex(),"");
+			String suffix = splitCommands[2];
+
+			int dotIndex = command.indexOf('.');
+	
+			int cmdEnd = command.indexOf(' ');
+			if (cmdEnd == 0)
+				cmdEnd = command.length();
+
+			// Real command, not an alias...
+			// run the command
+			if (dotIndex != -1 && dotIndex < cmdEnd)
+			{
+
+				if (isFlooding(mes)) 
+				{
+					irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
+					return;
+				}
+
+				String plugin = command.substring(0,dotIndex);
+				String method = command.substring(dotIndex + 1, cmdEnd);
+				try{
+					Message[] result = mods.plugin.callCmd(plugin,method,  mes.cloneEvent(irc.getTrigger() + command));
+					//concat multiple lines
+					String resultString = "";
+					for (int i = 0; i < result.length; i++)
+					{
+						resultString = resultString + result[i].getMessage();
+					}
+
+					commands = prefix + resultString + suffix;
+
+					continue;
+				}catch (ChoobNoSuchCallException e) 
+				{ 
+					System.out.println(e);
+					irc.sendContextReply(mes,"Command: " + plugin + "." + method +" not found.");
+					 return;
+				}catch (Exception e)
+				{
+					mods.plugin.exceptionReply(mes, e, plugin);
+					return;
+				}				
+
+			}else
+			{
+				//if an alias 
+	
+				int aliasEnd = command.indexOf(' ');
+				if (aliasEnd < 1) aliasEnd = command.length();
+				if (aliasEnd < 1) return;
+	
+				AliasObject alias = getAlias(command.substring(0,aliasEnd));
+				
+				String aliasText = alias.converted;
+	
+				Message fakeMessage = mes.duplicate(irc.getTrigger() + command);
+		
+				String[] params = new String[0];
+				List<String> paramList = mods.util.getParams(fakeMessage);
+				params = paramList.toArray(params);
+		
+				String newText = applyAlias(command.replaceAll("\\s.*",""), aliasText, params, command.replaceFirst(".*?\\s",""), fakeMessage);
+	
+		
+				if (newText == null)
+				{
+					irc.sendContextReply(fakeMessage, "Invalid alias: '" + command.replaceAll("\\s.*","") + "' -> '" + aliasText + "'.");
+					return;
+				}
+		
+				// Extract command name etc. We know they're non-null.
+				int dotPos = newText.indexOf('.');
+				int spacePos = newText.indexOf(' ');
+				String extra = "";
+				if (spacePos == -1)
+					spacePos = newText.length();
+		
+				String pluginName = newText.substring(0, dotPos);
+				String commandName = newText.substring(dotPos + 1, spacePos);
+		
+				newText = pluginName + "." + commandName + newText.substring(spacePos);
+				fakeMessage = fakeMessage.duplicate(irc.getTrigger() + newText);
+	
+				try{
+					Message[] result = mods.plugin.callCmd(pluginName,commandName, fakeMessage);
+					//concat multiple lines
+					String resultString = "";
+					for (int i = 0; i < result.length; i++)
+					{
+						resultString = resultString + result[i].getMessage();
+					}
+					commands = prefix + resultString + suffix;
+					continue;
+				}catch (ChoobNoSuchCallException e) 
+				{ 
+					System.out.println(e);
+					irc.sendContextReply(mes,"Command: " + pluginName + "." + commandName +" not found.");
+					return;
+				}catch (Exception e)
+				{
+					mods.plugin.exceptionReply(mes, e, pluginName);
+					return;
+				}	
+			}
+		}
+		if (counter == MAX_EXPANSION)
+		{
+			irc.sendContextReply(mes,"Max recursion limit hit, stopping");
+			return;
+		}
+
+		//expansion done, let normal alias handle it
+
+		commands = irc.getTrigger() + commands;
+		filterTrigger(mes.duplicate(commands));
+		return;
+	}
+
+	private boolean runCommand(String cmdPluginName, String cmdCmdName,Message mes)
+	{
+		if (isFlooding(mes)) 
+		{
+			irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
+			return false;
+		}
+
+
+		try{
+			Message[] returnedMessages = mods.plugin.callCmd(cmdPluginName,cmdCmdName, mes);
+			Message ret;
+			for (int i = 0; i < returnedMessages.length; i++)
+			{
+				ret = returnedMessages[i];
+				if (ret.getAction())
+				{
+					irc.sendAction(ret.getTarget(),ret.getMessage());
+				}
+				else
+				{
+					if (ret.getPrefix() && (mes.getTarget() != null)) 
+					{
+						irc.sendMessage(ret.getTarget(),ret.getNick() + ": " + ret.getMessage());
+			
+					}
+					else
+					{
+						irc.sendMessage(ret.getTarget(),ret.getMessage());
+
+					}
+				}
+			}
+			return true;
+		}
+		catch (ChoobNoSuchCallException e) { System.out.println(e); return false;}
+		catch (Exception e)
+		{
+			mods.plugin.exceptionReply(mes, e, cmdPluginName);
+			return true;
+		}
 	}
 
 	// Trigger on everything, but is a trigger, not an event ==> takes account of ignore etc.
@@ -561,6 +920,16 @@ public class Alias
 			return;
 		}
 
+		//check for LOOPBACK 
+		if (text.replaceAll("\\\\\\{","").replaceAll("\\\\\\}","").matches(".*\\{.*\\}.*"))
+		{
+			loopback(mes);
+			return;
+		}
+
+		//unescape the escaped brackets
+		text = text.replaceAll("\\\\\\{","{").replaceAll("\\\\\\}","}");
+
 		int dotIndex = text.indexOf('.', offset);
 
 		int cmdEnd = text.indexOf(' ', offset) + 1;
@@ -568,10 +937,15 @@ public class Alias
 			cmdEnd = text.length();
 
 		// Real command, not an alias...
-		// Drop out.
+		// run the command
 		if (dotIndex != -1 && dotIndex < cmdEnd)
 		{
-			return;
+			if (runCommand(text.substring(0,dotIndex).replaceFirst("(?i)" + irc.getTriggerRegex(),""),text.substring(dotIndex + 1, cmdEnd).replaceAll("\\s",""),mes)) return;
+			else
+			{
+				//perhaps inform user of error
+				return;
+			}
 		}
 
 		// Text is everything up to the next space...
@@ -647,11 +1021,23 @@ public class Alias
 
 		newText = pluginName + "." + commandName + newText.substring(spacePos);
 
-		mes = (Message)mes.cloneEvent( irc.getTrigger() + newText );
+		if (runCommand(pluginName,commandName,mes.duplicate(newText))) 
+		{
+			/*mes = (Message)mes.cloneEvent( irc.getTrigger() + newText );
+	
+			// XXX This is a hack. We should change the event to simply have a setMessage(). Or something.
+			mods.history.addLog( mes ); // Needed in case a plugin needs to retrieve authoritative message.
+			*/
+			return;
+		}
+		else
+		{
+			//perhaps inform user of error
+			return;
+		}
 
-		// XXX This is a hack. We should change the event to simply have a setMessage(). Or something.
-		mods.history.addLog( mes ); // Needed in case a plugin needs to retrieve authoritative message.
 
+/*
 		try
 		{
 			mods.plugin.queueCommand( pluginName, commandName, mes );
@@ -660,6 +1046,7 @@ public class Alias
 		{
 			irc.sendContextReply(mes, "Sorry, that command is an alias ('" + alias.converted + "', made by '" + alias.owner + "') that points to an invalid command!");
 		}
+*/
 	}
 
 	private String applyAlias(String name, String alias, String[] params, String origParams, Message mes)

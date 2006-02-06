@@ -258,6 +258,7 @@ public abstract class ChoobPluginManager
 	 */
 	abstract public Object doAPI(String pluginName, String APIName, Object... params) throws ChoobNoSuchCallException;
 
+	abstract public Message[] doCmd(String pluginName, String cmdName, Object... params) throws ChoobNoSuchCallException;
 	/**
 	 * Attempt to perform an API call on a contained plugin.
 	 * @param prefix The prefix (ie. type) of call.

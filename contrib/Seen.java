@@ -212,6 +212,25 @@ public class Seen
 		}
 	}
 
+	public Boolean apiSeen( String nick , Long period , String channelName )
+	{
+		if ((nick.matches("internal.*")) || (channelName.matches("internal.*"))) return new Boolean(true);
+
+		boolean inChannelNow = mods.nick.isInChannel(nick,channelName).booleanValue();
+
+		if (inChannelNow == true) return new Boolean(true);
+
+		if (nick.equals("")) return new Boolean(false);
+		try {
+			SeenObj returnedSeen = getSeen(nick,false);
+			if (returnedSeen == null) return new Boolean(false); 
+			else {
+				if (period.doubleValue() == 0) return new Boolean(true);
+				else {  if ( returnedSeen.primaryTime  > (System.currentTimeMillis() - period.doubleValue() )) return new Boolean(true); else return new Boolean(false);}
+			}
+		} 	catch (Exception e) { return new Boolean(false);}
+	}
+
 	// Expire old checks when appropriate...
 
 	public void onMessage( ChannelMessage mes ) throws ChoobException

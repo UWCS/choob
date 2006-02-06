@@ -27,51 +27,53 @@ public class Test
 		this.irc = irc;
 	}
 
-	public void commandSecurity( Message con )
+	public Message[] cmdSecurity( Message con )
 	{
 		String priv = mods.util.getParamString( con );
 
 		if (priv.trim().equals(""))
 		{
-			irc.sendContextReply(con, "You have to specify an argument.");
-			return;
+			return con.contextReply("You have to specify an argument.");
 		}
 
 		if ( mods.security.hasNickPerm( new ChoobPermission(priv), con ) )
-			irc.sendContextReply(con, "You do indeed have " + priv + "!" );
+			return con.contextReply("You do indeed have " + priv + "!" );
 		else
-			irc.sendContextReply(con, "You don't have " + priv + "!" );
+			return con.contextReply("You don't have " + priv + "!" );
 	}
 
-	public void commandJoin( Message con ) throws ChoobException
+	public Message[] cmdJoin( Message con ) throws ChoobException
 	{
 		irc.join(mods.util.getParamString(con));
-		irc.sendContextReply(con, "Okay!");
+		return con.contextReply( "Okay!");
 	}
 
-	public void commandPart( Message con ) throws ChoobException
+	public Message[] cmdPart( Message con ) throws ChoobException
 	{
 		irc.part(mods.util.getParamString(con));
-		irc.sendContextReply(con, "Okay!");
+		return con.contextReply( "Okay!");
 	}
 
 
-	public void commandPirate( Message con )
+	public Message[] cmdPirate( Message con )
 	{
-		irc.sendContextReply(con, "Yarr!");
+		return con.contextReply( "Yarr!");
 	}
 
-	public void commandPiratey( Message con )
+	public Message[] cmdPiratey( Message con )
 	{
-		irc.sendContextReply(con, "(:;test.piratey:)");
+		return con.contextReply( "(:;test.piratey:)");
 	}
 
-	public void commandInMy( Message con )
+	public Message[] cmdInMy( Message mes )
 	{
-		irc.sendContextMessage(con, "..Pants!");
+		try{	Message[] returnedMessages = mods.plugin.callCmd("Alias","add", mes);return returnedMessages; } catch (Exception e) { System.out.println("error " + e);}
+		irc.sendContextMessage(mes, "Hello");
+
+		return mes.contextMessage("..Pants!");
 	}
 
-	public void commandExit( Message con ) throws ChoobException
+	public Message[] commandExit( Message con ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams( con );
 		if (params.size() > 1) {
@@ -79,6 +81,7 @@ public class Test
 		} else {
 			irc.quit("Bye bye!");
 		}
+		return new Message[0];
 	}
 
 	public void commandRestart( Message con ) throws ChoobException
@@ -129,22 +132,22 @@ public class Test
 		//irc.sendContextMessage( ev, "Bye, " + ev.getNick() + "!");
 	}
 
-	public void commandAPI ( Message mes ) throws ChoobException
+	public Message[] cmdAPI ( Message mes ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams( mes );
-		irc.sendContextReply(mes, mods.plugin.callAPI( params.get(1), params.get(2), params.get(3) ).toString());
+		return mes.contextReply(mods.plugin.callAPI( params.get(1), params.get(2), params.get(3) ).toString());
 	}
 
-	public void commandGeneric ( Message mes ) throws ChoobException
+	public Message[] cmdGeneric ( Message mes ) throws ChoobException
 	{
 		List<String> params = mods.util.getParams( mes );
 		if (params.size() == 5)
-			irc.sendContextReply(mes, mods.plugin.callGeneric( params.get(1), params.get(2), params.get(3), params.get(4) ).toString());
+			return mes.contextReply(mods.plugin.callGeneric( params.get(1), params.get(2), params.get(3), params.get(4) ).toString());
 		else
-			irc.sendContextReply(mes, mods.plugin.callGeneric( params.get(1), params.get(2), params.get(3) ).toString());
+			return mes.contextReply(mods.plugin.callGeneric( params.get(1), params.get(2), params.get(3) ).toString());
 	}
 
-	public void commandWait (Message mes)
+	public Message[] commandWait (Message mes)
 	{
 		Object test = new Object();
 		synchronized(test)
@@ -155,9 +158,9 @@ public class Test
 			}
 			catch (InterruptedException e)
 			{
-				irc.sendContextReply(mes, "Interrupted!");
+				return mes.contextReply( "Interrupted!");
 			}
-			irc.sendContextReply(mes, "OK, waited.");
+			return mes.contextReply( "OK, waited.");
 		}
 	}
 

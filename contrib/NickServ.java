@@ -40,10 +40,11 @@ public class NickServ
 	private boolean ip_overrides=false; // If this is enabled, all nickserv checks will also be validates against a /USERIP. This can be poked on, but will be automatically disabled if a nickserv check succeeds or the file fails to read.
 
 	private static int TIMEOUT = 10000; // Timeout on nick checks.
+
 //	private static int CACHE_TIMEOUT = 3600000; // Timeout on nick check cache (1 hour).
 	// ^^ Can only be used once we can verify a user is in a channel and thus trust their online-ness.
-	private static int CACHE_TIMEOUT = 300000; // Timeout on nick check cache (5 mins).
-
+	//private static int CACHE_TIMEOUT = 300000; // Timeout on nick check cache (5 mins).
+	private static int CACHE_TIMEOUT = 5000;
 	private Map<String,ResultObj> nickChecks;
 	Modules mods;
 	IRCInterface irc;
@@ -85,6 +86,7 @@ public class NickServ
 		}
 	}
 
+
 	public String[] helpApi = {
 		  "NickServ allows your plugin to poke NickServ and get auth status on"
 		+ " nicknames. It gives you two API methods: Check and Status. Both"
@@ -98,7 +100,8 @@ public class NickServ
 		"[<NickName>]",
 		"<NickName> is an optional nick to check"
 	};
-	public void commandCheck( Message mes ) throws ChoobException
+
+	public Message[] cmdCheck( Message mes ) throws ChoobException
 	{
 		String nick = mods.util.getParamString( mes );
 		if (nick.length() == 0)
@@ -107,16 +110,18 @@ public class NickServ
 		int check1 = (Integer)mods.plugin.callAPI("NickServ", "Status", nick);
 		if ( check1 == 3 )
 		{
-			irc.sendContextReply(mes, nick + " is authed (" + check1 + ")!");
+			return mes.contextReply(nick + " is authed (" + check1 + ")!");
 		}
 		else
 		{
-			irc.sendContextReply(mes, nick + " is not authed (" + check1 + ")!");
+			return mes.contextReply(nick + " is not authed (" + check1 + ")!");
 		}
 	}
 
 	public int apiStatus( String nick )
 	{
+		if (nick.matches("internal.*")) return 3;
+
 		ResultObj result = getCachedNickCheck( nick.toLowerCase() );
 		if (result != null)
 		{
@@ -159,6 +164,14 @@ public class NickServ
 	private ResultObj getNewNickCheck( final String nick )
 	{
 		ResultObj result;
+		if (nick.matches("internal.*")) 
+		{
+			result = new ResultObj();
+			result.time = System.currentTimeMillis();
+			result.result = 3;
+			return result;
+		}
+
 		synchronized(nickChecks)
 		{
 			result = nickChecks.get( nick );
@@ -223,20 +236,16 @@ public class NickServ
 	public String[] helpCommandEnableOverride = {
 		"Private use only, mmkay?"
 	};
-	public void commandEnableOverride(Message mes)
+	public Message[] cmdEnableOverride(Message mes)
 	{
 		ip_overrides=true;
-		irc.sendContextReply(mes, "Kay.");
+		return mes.contextReply("Kay.");
 	}
 
 	public void onServerResponse(ServerResponse resp)
 	{
-		if (resp.getCode() == 401) // 401 Nick Not Found.
-		{
-			Matcher ma = Pattern.compile("^[^ ]+ ([^ ]+) ").matcher(resp.getResponse().trim());
-			if (ma.find() && ma.group(1).trim().toLowerCase().equals("nickserv"))
-				ip_overrides=true;
-		}
+		if (resp.getCode()==401) // 401 Nick Not Found.
+			ip_overrides=true;
 
 		if (ip_overrides && resp.getCode()==340) // USERIP response, not avaliable through PircBOT, gogo magic numbers.
 		{

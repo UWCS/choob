@@ -2,6 +2,7 @@ package uk.co.uwcs.choob;
 
 import java.util.concurrent.*;
 import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
 
 /**
@@ -131,4 +132,6 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 				throw new RejectedExecutionException("Plugin " + pluginName + " has too many queued tasks!");
 		}
 	}
+
+
 }

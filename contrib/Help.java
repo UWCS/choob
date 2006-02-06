@@ -79,9 +79,9 @@ public class Help
 		"<Topic> is either a plugin name or of the form <Plugin>.<Name> or <Plugin>.<Type>.<Name>",
 		"<Params> is an optional parameter to pass to the help"
 	};
-	public void commandHelp(Message mes)
+	public Message[] cmdHelp(Message mes)
 	{
-		irc.sendContextReply(mes, apiGetHelp(mods.util.getParamString(mes), true));
+		return mes.contextReply(apiGetHelp(mods.util.getParamString(mes), true));
 	}
 
 	public String[] helpCommandLongHelp = {
@@ -90,9 +90,9 @@ public class Help
 		"<Topic> is either a plugin name or of the form <Plugin>.<Name> or <Plugin>.<Type>.<Name>",
 		"<Params> is an optional parameter to pass to the help"
 	};
-	public void commandLongHelp(Message mes)
+	public Message[] cmdLongHelp(Message mes)
 	{
-		irc.sendContextReply(mes, apiGetHelp(mods.util.getParamString(mes), true));
+		return mes.contextReply(apiGetHelp(mods.util.getParamString(mes), true));
 	}
 
 	public String[] helpCommandBlockHelp = {
@@ -101,9 +101,9 @@ public class Help
 		"<Topic> is either a plugin name or of the form <Plugin>.<Name> or <Plugin>.<Type>.<Name>",
 		"<Params> is an optional parameter to pass to the help"
 	};
-	public void commandBlockHelp(Message mes)
+	public Message[] cmdBlockHelp(Message mes)
 	{
-		irc.sendContextReply(mes, apiGetHelp(mods.util.getParamString(mes), false));
+		return mes.contextReply(apiGetHelp(mods.util.getParamString(mes), false));
 	}
 
 	public String[] helpCommandSyntax = {
@@ -112,10 +112,10 @@ public class Help
 		"<Topic> is either a plugin name or of the form <Plugin>.<Name> or <Plugin>.<Type>.<Name>",
 		"<Params> is an optional parameter to pass to the help"
 	};
-	public void commandSyntax(Message mes)
+	public Message[] cmdSyntax(Message mes)
 	{
 		// TODO check
-		irc.sendContextReply(mes, apiGetSyntax(mods.util.getParamString(mes)));
+		return mes.contextReply(apiGetSyntax(mods.util.getParamString(mes)));
 	}
 
 	public String[] helpCommandSummary = {
@@ -124,18 +124,18 @@ public class Help
 		"<Topic> is either a plugin name or of the form <Plugin>.<Name> or <Plugin>.<Type>.<Name>",
 		"<Params> is an optional parameter to pass to the help"
 	};
-	public void commandSummary(Message mes)
+	public Message[] cmdSummary(Message mes)
 	{
-		irc.sendContextReply(mes, apiGetSummary(mods.util.getParamString(mes)));
+		return mes.contextReply(apiGetSummary(mods.util.getParamString(mes)));
 	}
 
 	// TODO - should these be here or in Plugin?
 	public String[] helpCommandPlugins = {
 		"Get a list of loaded plugins.",
 	};
-	public void commandPlugins( Message mes )
+	public Message[] cmdPlugins( Message mes )
 	{
-		irc.sendContextReply(mes, apiGetPluginList());
+		return mes.contextReply(apiGetPluginList());
 	}
 
 	public String[] helpCommandCommands = {
@@ -143,18 +143,18 @@ public class Help
 		"<Plugin>",
 		"<Plugin> is the name of a loaded plugin."
 	};
-	public void commandCommands( Message mes )
+	public Message[] cmdCommands( Message mes )
 	{
 		String[] params = mods.util.getParamArray(mes, 2);
 
 		if (params.length == 1)
-			irc.sendContextReply(mes, apiGetCommandList(true));
+			return mes.contextReply( apiGetCommandList(true));
 
 		else if (params.length == 2)
-			irc.sendContextReply(mes, apiGetCommandList(params[1], true));
+			return mes.contextReply(apiGetCommandList(params[1], true));
 
 		else
-			irc.sendContextReply(mes, apiGetSyntax(params[0]));
+			return mes.contextReply(apiGetSyntax(params[0]));
 	}
 
 	private static final int

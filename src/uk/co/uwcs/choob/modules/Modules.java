@@ -84,7 +84,7 @@ public final class Modules
 			plugin = new PluginModule(pluginMap, dbBroker, this, irc, bot);
 			history = new HistoryModule(dbBroker);
 			util = new UtilModule(irc);
-			nick = new NickModule();
+			nick = new NickModule(bot);
 			interval = new IntervalModule( intervalList, this );
 			synthetic = new SyntheticModule( bot );
 			security = new SecurityModule( dbBroker, this );

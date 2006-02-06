@@ -99,7 +99,7 @@ public class ChoobDecoderTask extends ChoobTask
 
 			if ( mafind || mes instanceof PrivateMessage )
 			{
-				// OK, it's a command!
+			/*	// OK, it's a command!
 
 				// Decode into a string we can match as a command.
 				int commandStart = (mafind ? ma.end() : 0);
@@ -139,6 +139,7 @@ public class ChoobDecoderTask extends ChoobTask
 					if (task != null)
 						tasks.add(task);
 				}
+			*/
 			}
 		}
 

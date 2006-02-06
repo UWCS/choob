@@ -1,7 +1,7 @@
 # This is an example bot.conf file. You _must_ have one for your Choob instance or it won't run.
 
 # Name of your bot
-botName=SomeChoob
+botName=loopbackBot
 
 # Username for the MySQL database running on localhost named Choob
 dbUser=choob
@@ -19,7 +19,7 @@ botTrigger=:
 server=irc.uwcs.co.uk
 
 # Space or comma seperated list of #channels to join on connecting.
-channels=#bots #choob
+channels=#bots
 
 # List of ||| seperated raw-commands to send on connection.
-connectstring=PRIVMSG NickServ :identify password
+connectstring=PRIVMSG NickServ :identify testtesttest

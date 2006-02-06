@@ -165,6 +165,19 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 		throw new ChoobNoSuchPluginException(pluginName, "api: " + APIName);
 	}
 
+	public Message[] doCmd(String pluginName, String cmdName, Object... params) throws ChoobNoSuchCallException
+	{
+		ChoobPluginManager man;
+		synchronized(pluginMap)
+		{
+			man = pluginMap.get(pluginName.toLowerCase());
+		}
+		if (man != null)
+			return man.doCmd(pluginName, cmdName, params);
+		throw new ChoobNoSuchPluginException(pluginName, "cmd" + cmdName);
+	}
+
+
 	/**
 	 * Attempt to perform an generic call on a contained plugin.
 	 * @param prefix The prefix (ie call type) of the call.

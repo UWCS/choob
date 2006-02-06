@@ -206,6 +206,10 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 		return doGeneric(pluginName, "api", APIName, params);
 	}
 
+	public Message[] doCmd(String pluginName, String cmdName, final Object... params) throws ChoobNoSuchCallException {
+		return (Message[])doGeneric(pluginName, "cmd", cmdName, params);
+	}
+
 	private ChoobTask callCommand(JavaScriptPluginMethod method, Object param) {
 		Object[] params = { param, mods, irc };
 

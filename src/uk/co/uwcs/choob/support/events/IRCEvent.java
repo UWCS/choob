@@ -56,7 +56,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 		super(methodName);
 		this.millis = millis;
 		this.random = random;
-		java.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission("event.create"));
+		//java.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission("event.create"));
 		this.synthLevel = 0;
 	}
 
@@ -68,7 +68,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 		super(old);
 		this.millis = old.millis;
 		this.random = old.random;
-		java.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission("event.create"));
+		//java.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission("event.create"));
 		this.synthLevel = old.synthLevel + 1;
 	}
 

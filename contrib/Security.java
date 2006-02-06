@@ -39,7 +39,7 @@ public class Security
 		"[<Name>]",
 		"<Name> is an optional username to add (if omitted, your nickname will be used; if specified you need the 'user.add' permission)"
 	};
-	public void commandAddUser( Message mes )
+	public Message[] cmdAddUser( Message mes )
 	{
 		mods.security.checkNS(mes);
 
@@ -51,13 +51,12 @@ public class Security
 		else if (params.size() == 3)
 		{
 			// Hacky alias
-			commandAddToGroup( mes );
-			return;
+			return cmdAddToGroup( mes );
+			
 		}
 		else if (params.size() > 2)
 		{
-			irc.sendContextReply( mes, "You may only specify one user!" );
-			return;
+			return mes.contextReply("You may only specify one user!" );
 		}
 		else
 		{
@@ -73,15 +72,13 @@ public class Security
 		}
 		catch ( ChoobException e )
 		{
-			irc.sendContextReply( mes, "The user could not be added: " + e );
-			return;
+			return mes.contextReply("The user could not be added: " + e );
 		}
 		catch ( SecurityException e )
 		{
-			irc.sendContextReply( mes, "Urgh. We got a security exception." );
-			return;
+			return mes.contextReply("Urgh. We got a security exception." );
 		}
-		irc.sendContextReply( mes, "OK, user added!" );
+		return mes.contextReply( "OK, user added!" );
 	}
 
 	public String[] helpCommandDelUser = {
@@ -89,7 +86,7 @@ public class Security
 		"[<Name>]",
 		"<Name> is an optional username to remove (if omitted, your nickname will be used; if specified you need the 'user.del' permission)"
 	};
-	public void commandDelUser( Message mes )
+	public Message[] cmdDelUser( Message mes )
 	{
 		mods.security.checkNS(mes);
 
@@ -100,8 +97,7 @@ public class Security
 			userName = mes.getNick();
 		else if (params.size() > 2)
 		{
-			irc.sendContextReply( mes, "You may only specify one user!" );
-			return;
+			return mes.contextReply("You may only specify one user!" );
 		}
 		else
 		{
@@ -117,10 +113,9 @@ public class Security
 		}
 		catch ( ChoobException e )
 		{
-			irc.sendContextReply( mes, "The user could not be deleted: " + e );
-			return;
+			return mes.contextReply("The user could not be deleted: " + e );
 		}
-		irc.sendContextReply( mes, "OK, user deleted!" );
+		return mes.contextReply("OK, user deleted!" );
 	}
 
 	public String[] helpUsingLink = {
@@ -139,7 +134,7 @@ public class Security
 		"<Nick> [<Nick> ...]",
 		"<Nick> is a nickname you'd like to link to your current one"
 	};
-	public void commandBeginLink( Message mes )
+	public Message[] cmdBeginLink( Message mes )
 	{
 		String userName = mes.getNick();
 
@@ -148,16 +143,15 @@ public class Security
 		List params = mods.util.getParams( mes );
 		if (params.size() == 1)
 		{
-			irc.sendContextReply(mes, "Syntax: Security.BeginLink <NICKNAME> [<NICKNAME> ...]");
-			return;
+			return mes.contextReply("Syntax: Security.BeginLink <NICKNAME> [<NICKNAME> ...]");
 		}
 
 		String rootName;
 		rootName = mods.security.getRootUser( userName );
 		if (rootName == null)
 		{
-			irc.sendContextReply(mes, "Your username has not been added to the bot. Try Security.AddUser first!");
-			return;
+			return	mes.contextReply("Your username has not been added to the bot. Try Security.AddUser first!");
+
 		}
 
 		List<String> nicks;
@@ -183,7 +177,7 @@ public class Security
 			nicks.add(((String)params.get(i)).toLowerCase());
 		}
 
-		irc.sendContextReply(mes, "OK, ready to link " + output + " to " + rootName + ". Change nickname, identify, then use \"Security.Link " + rootName + "\".");
+		return mes.contextReply("OK, ready to link " + output + " to " + rootName + ". Change nickname, identify, then use \"Security.Link " + rootName + "\".");
 	}
 
 	public String[] helpCommandLink = {
@@ -192,7 +186,7 @@ public class Security
 		"<Root> is the nickname to link to",
 		"<Leaf> is an optional nickname to link from (this defaults to your current nickname; if you specify this, it overrides BeginLink and you need the 'user.link' permission)",
 	};
-	public void commandLink( Message mes )
+	public Message[] cmdLink( Message mes )
 	{
 		List<String> params = mods.util.getParams( mes );
 
@@ -210,14 +204,12 @@ public class Security
 				nicks = linkMap.get(rootName.toLowerCase());
 			}
 			if (nicks == null || !nicks.contains( leafName.toLowerCase() )) {
-				irc.sendContextReply( mes, "You haven't called \"Security.BeginLink " + leafName + "\" as " + rootName + "! Please change to " + rootName + " and do this.");
-				return;
+				return mes.contextReply("You haven't called \"Security.BeginLink " + leafName + "\" as " + rootName + "! Please change to " + rootName + " and do this.");
 			}
 		}
 		else if (params.size() > 3)
 		{
-			irc.sendContextReply( mes, "Syntax: Security.Link <ROOT> [<LEAF>] - to link <LEAF> (or your current nick) to <ROOT>." );
-			return;
+			return mes.contextReply( "Syntax: Security.Link <ROOT> [<LEAF>] - to link <LEAF> (or your current nick) to <ROOT>." );
 		}
 		else
 		{
@@ -235,10 +227,9 @@ public class Security
 		}
 		catch ( ChoobException e )
 		{
-			irc.sendContextReply( mes, "The user could not be linked: " + e );
-			return;
+			return mes.contextReply("The user could not be linked: " + e );
 		}
-		irc.sendContextReply( mes, "OK, user " + leafName + " linked to root " + rootName + "!");
+		return mes.contextReply( "OK, user " + leafName + " linked to root " + rootName + "!");
 	}
 
 	public boolean groupCheck(String groupName, String userName)
@@ -285,7 +276,7 @@ public class Security
 		"<Name>",
 		"<Name> is the name of the group to add (if this isn't of the form 'user.<YourNick>.<Something>', you need the 'group.add.<Name>' permission)"
 	};
-	public void commandAddGroup( Message mes )
+	public Message[] cmdAddGroup( Message mes )
 	{
 		mods.security.checkNS(mes);
 
@@ -294,8 +285,7 @@ public class Security
 		String groupName;
 		if (params.size() != 2)
 		{
-			irc.sendContextReply( mes, "You must specify exactly one group!" );
-			return;
+			return mes.contextReply( "You must specify exactly one group!" );
 		}
 		else
 		{
@@ -314,10 +304,9 @@ public class Security
 		}
 		catch ( ChoobException e )
 		{
-			irc.sendContextReply( mes, "The group could not be added: " + e );
-			return;
+			return mes.contextReply("The group could not be added: " + e );
 		}
-		irc.sendContextReply( mes, "OK, group added!" );
+		return mes.contextReply("OK, group added!" );
 	}
 
 	public String[] helpCommandAddToGroup = {
@@ -326,9 +315,9 @@ public class Security
 		"<Parent> is the name of the group to add into",
 		"<Child> is the name of the group to add",
 	};
-	public void commandAddToGroup( Message mes )
+	public Message[] cmdAddToGroup( Message mes )
 	{
-		this.doGroupMemberChange(mes, true);
+		return this.doGroupMemberChange(mes, true);
 	}
 
 	public String[] helpCommandRemoveFromGroup = {
@@ -337,12 +326,12 @@ public class Security
 		"<Parent> is the name of the group to remove from",
 		"<Child> is the name of the group to remove",
 	};
-	public void commandRemoveFromGroup( Message mes )
+	public Message[] cmdRemoveFromGroup( Message mes )
 	{
-		this.doGroupMemberChange(mes, false);
+		return this.doGroupMemberChange(mes, false);
 	}
 
-	private void doGroupMemberChange( Message mes, boolean isAdding )
+	private Message[] doGroupMemberChange( Message mes, boolean isAdding )
 	{
 		mods.security.checkNS(mes);
 
@@ -353,8 +342,7 @@ public class Security
 		boolean isGroup = false;
 		if (params.size() != 3)
 		{
-			irc.sendContextReply( mes, "You must specify a child user/group and a parent group!" );
-			return;
+			return mes.contextReply("You must specify a child user/group and a parent group!" );
 		}
 		else
 		{
@@ -388,10 +376,9 @@ public class Security
 		}
 		catch ( ChoobException e )
 		{
-			irc.sendContextReply( mes, "The membership could not be altered: " + e );
-			return;
+			return mes.contextReply("The membership could not be altered: " + e );
 		}
-		irc.sendContextReply( mes, "OK, membership of " + childName + " in " + parentName + " altered!" );
+		return mes.contextReply("OK, membership of " + childName + " in " + parentName + " altered!" );
 	}
 
 	private Permission makePermission(String permType, String permName, String permActions)
@@ -467,9 +454,9 @@ public class Security
 		"<Name> is the permission's name (optional or not depends on the particular permission)",
 		"<Actions> is the permission's actions (optional or not depends on the particular permission)",
 	};
-	public void commandGrant( Message mes )
+	public Message[] cmdGrant( Message mes )
 	{
-		this.doPermChange( mes, true );
+		return this.doPermChange( mes, true );
 	}
 
 	public String[] helpCommandRevoke = {
@@ -480,12 +467,12 @@ public class Security
 		"<Name> is the permission's name (optional or not depends on the particular permission)",
 		"<Actions> is the permission's actions (optional or not depends on the particular permission)",
 	};
-	public void commandRevoke( Message mes )
+	public Message[] cmdRevoke( Message mes )
 	{
-		this.doPermChange( mes, false );
+		return this.doPermChange( mes, false );
 	}
 
-	private void doPermChange( Message mes, boolean isGranting )
+	private Message[] doPermChange( Message mes, boolean isGranting )
 	{
 		mods.security.checkNS(mes);
 
@@ -493,8 +480,7 @@ public class Security
 
 		if (params.size() < 3 || params.size() > 5)
 		{
-			irc.sendContextReply( mes, "You must specify a group and a permission!" );
-			return;
+			return mes.contextReply("You must specify a group and a permission!" );
 		}
 
 		String actions = null;
@@ -518,15 +504,13 @@ public class Security
 		Permission permission = makePermission(permType, permName, actions);
 		if (permission == null)
 		{
-			irc.sendContextReply( mes, "Unknown permission type, or missing name/actions: " + permType );
-			return;
+			return mes.contextReply("Unknown permission type, or missing name/actions: " + permType );
 		}
 
 		// Now check the user has the permission...
 		if (isGranting && ! mods.security.hasPerm( permission, mes) )
 		{
-			irc.sendContextReply( mes, "You can only grant privileges you yourself have!" );
-			return;
+			return mes.contextReply("You can only grant privileges you yourself have!" );
 		}
 
 		try
@@ -538,10 +522,9 @@ public class Security
 		}
 		catch ( ChoobException e )
 		{
-			irc.sendContextReply( mes, "The permission could not be changed: " + e );
-			return;
+			return mes.contextReply("The permission could not be changed: " + e );
 		}
-		irc.sendContextReply( mes, "OK, permission changed!" );
+		return mes.contextReply("OK, permission changed!" );
 	}
 
 	public String[] helpCommandFindPermission = {
@@ -552,14 +535,13 @@ public class Security
 		"<Name> is the permission's name (optional or not depends on the particular permission)",
 		"<Actions> is the permission's actions (optional or not depends on the particular permission)",
 	};
-	public void commandFindPermission( Message mes )
+	public Message[] cmdFindPermission( Message mes )
 	{
 		List params = mods.util.getParams( mes );
 
 		if (params.size() < 3 || params.size() > 5)
 		{
-			irc.sendContextReply( mes, "You must specify a group and a permission!" );
-			return;
+			return mes.contextReply( "You must specify a group and a permission!" );
 		}
 
 		String actions = null;
@@ -576,28 +558,26 @@ public class Security
 		Permission permission = makePermission(permType, permName, actions);
 		if (permission == null)
 		{
-			irc.sendContextReply( mes, "Unknown permission type: " + permType );
-			return;
+			return mes.contextReply("Unknown permission type: " + permType );
 		}
 
 		try
 		{
 			String[] perms = mods.security.findPermission( groupName, permission );
 			if (perms.length == 0)
-				irc.sendContextReply(mes, "The given group does not have this permission.");
+				return mes.contextReply("The given group does not have this permission.");
 			else
 			{
 				String reply = "Found permissions: ";
 				for(int i=0; i<perms.length - 1; i++)
 					reply += perms[i] + ",";
 				reply += perms[perms.length - 1] + ".";
-				irc.sendContextReply(mes, reply);
+				return mes.contextReply(reply);
 			}
 		}
 		catch ( ChoobException e )
 		{
-			irc.sendContextReply( mes, "The permission could not be found: " + e );
-			return;
+			return mes.contextReply("The permission could not be found: " + e );
 		}
 	}
 }

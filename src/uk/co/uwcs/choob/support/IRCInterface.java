@@ -249,6 +249,7 @@ public final class IRCInterface
 	 */
 	public void sendContextReply(ContextEvent context, String message)
 	{
+		AccessController.checkPermission(new ChoobPermission("message.send.toirc"));
 		sendContextReply(context, message, true);
 	}
 
@@ -259,6 +260,7 @@ public final class IRCInterface
 	 */
 	public void sendContextReply(ContextEvent context, String[] lines)
 	{
+		AccessController.checkPermission(new ChoobPermission("message.send.toirc"));
 		sendContextReply(context, lines, true);
 	}
 
@@ -269,6 +271,7 @@ public final class IRCInterface
 	 */
 	public void sendContextReply(ContextEvent context, List<String> lines)
 	{
+		AccessController.checkPermission(new ChoobPermission("message.send.toirc"));
 		sendContextReply(context, lines, true);
 	}
 
@@ -279,6 +282,7 @@ public final class IRCInterface
 	 */
 	public void sendContextMessage(ContextEvent context, String message)
 	{
+		AccessController.checkPermission(new ChoobPermission("message.send.toirc"));
 		sendContextReply(context, message, false);
 	}
 
@@ -289,6 +293,7 @@ public final class IRCInterface
 	 */
 	public void sendContextMessage(ContextEvent context, String[] lines)
 	{
+		AccessController.checkPermission(new ChoobPermission("message.send.toirc"));
 		sendContextReply(context, lines, false);
 	}
 
@@ -299,6 +304,7 @@ public final class IRCInterface
 	 */
 	public void sendContextMessage(ContextEvent context, List<String> lines)
 	{
+		AccessController.checkPermission(new ChoobPermission("message.send.toirc"));
 		sendContextReply(context, lines, false);
 	}
 

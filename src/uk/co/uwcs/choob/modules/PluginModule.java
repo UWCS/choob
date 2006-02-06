@@ -157,6 +157,32 @@ public final class PluginModule
 		}
 	}
 
+	public Message[] callCmd(final String pluginName, String cmdString, Object... params) throws ChoobNoSuchCallException
+	{
+		AccessController.checkPermission(new ChoobPermission("call.commands"));
+
+		AccessController.doPrivileged(new PrivilegedAction<Object>() {
+			public Object run() {
+				ChoobThread.pushPluginStatic(pluginName);
+				return null;
+			}
+		});
+		try
+		{
+			return dPlugMan.doCmd(pluginName, cmdString, params);
+		}
+		finally
+		{
+			AccessController.doPrivileged(new PrivilegedAction<Object>() {
+				public Object run() {
+					ChoobThread.popPluginStatic();
+					return null;
+				}
+			});
+		}
+	}
+
+
 	/**
 	 * Call the generic subroutine of type type and name name on plugin pluginName and return the result.
 	 * @param pluginName The name of the plugin to call.
@@ -198,6 +224,7 @@ public final class PluginModule
 	 * @param mes The message to pass to the routing
 	 * @throws ChoobNoSuchCallException If the call could not be resolved.
 	 */
+
 	public void queueCommand(String pluginName, String command, Message mes) throws ChoobNoSuchCallException
 	{
 		AccessController.checkPermission(new ChoobPermission("generic.command"));
@@ -207,6 +234,7 @@ public final class PluginModule
 		else
 			throw new ChoobNoSuchCallException(pluginName, "command " + command);
 	}
+
 
 	public void exceptionReply(Message mes, Throwable e, String pluginName)
 	{

@@ -529,6 +529,11 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return doGeneric(pluginName, "api", APIName, params);
 	}
 
+	public Message[] doCmd(String pluginName, String cmdName, final Object... params) throws ChoobNoSuchCallException
+	{
+		return (Message[])doGeneric(pluginName, "cmd", cmdName, params);
+	}
+
 	// Helper methods for the class below.
 	static boolean checkCommandSignature(Method meth)
 	{

@@ -31,7 +31,9 @@ public class Plugin
 		"<Name> is an optional name for the plugin (if you don't give one, it'll be guessed from the URL)",
 		"<URL> is the URL from which to load the plugin"
 	};
-	public void commandLoad( Message mes )
+
+
+	public Message[] cmdLoad( Message mes )
 	{
 		// First, do auth!
 		List<String> params = mods.util.getParams( mes );
@@ -50,16 +52,14 @@ public class Plugin
 				classname=ma.group(1);
 			else
 			{
-				irc.sendContextReply(mes, "Unable to parse url (" + url + ") -> classname, please specify.");
-				return;
+				return mes.contextReply( "Unable to parse url (" + url + ") -> classname, please specify.");
 			}
 		}
 		else
 		{
 			if( params.size() != 3 )
 			{
-				irc.sendContextReply(mes, "Syntax: [classname] url");
-				return;
+				return mes.contextReply("Syntax: [classname] url");
 			}
 			else
 			{
@@ -67,8 +67,7 @@ public class Plugin
 				classname=params.get(1);
 				if ( classname.indexOf("/") != -1 )
 				{
-					irc.sendContextReply(mes, "Arguments the other way around, you spoon.");
-					return;
+					return mes.contextReply("Arguments the other way around, you spoon.");
 				}
 			}
 		}
@@ -83,19 +82,20 @@ public class Plugin
 		{
 			// TODO: Make a groupExists() or something so we don't need to squelch this
 		}
-
-		irc.sendContextReply(mes, "Loading plugin '" + classname + "'...");
+		List<String> replies = new ArrayList<String>();
+		replies.add("Loading plugin '" + classname + "'...");
 
 		try
 		{
 			mods.plugin.addPlugin(classname, url);
-			irc.sendContextReply(mes, "Plugin loaded OK!");
+			replies.add("Plugin loaded OK!");
 		}
 		catch (Exception e)
 		{
-			irc.sendContextReply(mes, "Error loading plugin, see log for more details. " + e);
+			replies.add("Error loading plugin, see log for more details. " + e);
 			e.printStackTrace();
 		}
+		return mes.contextReply(replies);
 	}
 
 	public String[] helpCommandReload = {
@@ -103,27 +103,25 @@ public class Plugin
 		"<Name>",
 		"<Name> is the name of the plugin"
 	};
-	public void commandReload(Message mes) {
+	public Message[] cmdReload(Message mes) {
 		List<String> params = mods.util.getParams(mes);
 		if (params.size() == 1)
 		{
-			irc.sendContextReply(mes, "Syntax: 'Plugin.Reload " + helpCommandReload[1] + "'.");
-			return;
+			return mes.contextReply("Syntax: 'Plugin.Reload " + helpCommandReload[1] + "'.");
 		}
 
 		String pluginName = params.get(1);
-
 		mods.security.checkNickPerm(new ChoobPermission("plugin.load." + pluginName.toLowerCase()), mes);
-
-		irc.sendContextReply(mes, "Reloading plugin '" + pluginName + "'...");
-
+		List<String> replies = new ArrayList<String>();
+		replies.add( "Reloading plugin '" + pluginName + "'...");
 		try {
 			mods.plugin.reloadPlugin(pluginName);
-			irc.sendContextReply(mes, "Plugin reloaded OK!");
+			replies.add("Plugin reloaded OK!");
 		} catch (Exception e) {
-			irc.sendContextReply(mes, "Error reloading plugin, see log for more details. " + e);
+			replies.add( "Error reloading plugin, see log for more details. " + e);
 			e.printStackTrace();
 		}
+		return mes.contextReply(replies);
 	}
 
 	public String[] helpCommandDetach = {
@@ -131,12 +129,11 @@ public class Plugin
 		"<Name>",
 		"<Name> is the name of the plugin"
 	};
-	public void commandDetach(Message mes) {
+	public Message[] cmdDetach(Message mes) {
 		List<String> params = mods.util.getParams(mes);
 		if (params.size() == 1)
 		{
-			irc.sendContextReply(mes, "Syntax: 'Plugin.Detach " + helpCommandDetach[1] + "'.");
-			return;
+			return mes.contextReply( "Syntax: 'Plugin.Detach " + helpCommandDetach[1] + "'.");
 		}
 
 		String pluginName = params.get(1);
@@ -145,9 +142,9 @@ public class Plugin
 
 		try {
 			mods.plugin.detachPlugin(pluginName);
-			irc.sendContextReply(mes, "Plugin detached OK! (It might still be running stuff, though.)");
+			return mes.contextReply("Plugin detached OK! (It might still be running stuff, though.)");
 		} catch (ChoobNoSuchPluginException e) {
-			irc.sendContextReply(mes, "Plugin " + pluginName + " isn't loaded!");
+			return mes.contextReply("Plugin " + pluginName + " isn't loaded!");
 		}
 	}
 
@@ -156,12 +153,12 @@ public class Plugin
 		"<Name>",
 		"<Name> is the name of the plugin"
 	};
-	public void commandSetCore(Message mes) {
+	public Message[] cmdSetCore(Message mes) {
 		List<String> params = mods.util.getParams(mes);
 		if (params.size() == 1)
 		{
-			irc.sendContextReply(mes, "Syntax: 'Plugin.SetCore " + helpCommandSetCore[1] + "'.");
-			return;
+			return mes.contextReply( "Syntax: 'Plugin.SetCore " + helpCommandSetCore[1] + "'.");
+
 		}
 
 		String pluginName = params.get(1);
@@ -170,9 +167,9 @@ public class Plugin
 
 		try {
 			mods.plugin.setCorePlugin(pluginName, true);
-			irc.sendContextReply(mes, "Plugin is now core!");
+			return mes.contextReply("Plugin is now core!");
 		} catch (ChoobNoSuchPluginException e) {
-			irc.sendContextReply(mes, "Plugin " + pluginName + " doesn't exist!");
+			return mes.contextReply("Plugin " + pluginName + " doesn't exist!");
 		}
 	}
 
@@ -181,12 +178,11 @@ public class Plugin
 		"<Name>",
 		"<Name> is the name of the plugin"
 	};
-	public void commandUnsetCore(Message mes) {
+	public Message[] cmdUnsetCore(Message mes) {
 		List<String> params = mods.util.getParams(mes);
 		if (params.size() == 1)
 		{
-			irc.sendContextReply(mes, "Syntax: 'Plugin.UnsetCore " + helpCommandUnsetCore[1] + "'.");
-			return;
+			return mes.contextReply("Syntax: 'Plugin.UnsetCore " + helpCommandUnsetCore[1] + "'.");
 		}
 
 		String pluginName = params.get(1);
@@ -195,16 +191,16 @@ public class Plugin
 
 		try {
 			mods.plugin.setCorePlugin(pluginName, false);
-			irc.sendContextReply(mes, "Plugin is no longer core!");
+			return mes.contextReply("Plugin is no longer core!");
 		} catch (ChoobNoSuchPluginException e) {
-			irc.sendContextReply(mes, "Plugin " + pluginName + " doesn't exist!");
+			return mes.contextReply("Plugin " + pluginName + " doesn't exist!");
 		}
 	}
 
 	public String[] helpCommandList = {
 		"List all known plugins."
 	};
-	public void commandList(Message mes) {
+	public Message[] cmdList(Message mes) {
 		// Get all plugins.
 		String[] plugins = mods.plugin.getLoadedPlugins();
 		Arrays.sort(plugins);
@@ -229,7 +225,7 @@ public class Plugin
 		}
 		buf.append(".");
 
-		irc.sendContextReply(mes, buf.toString());
+		return mes.contextReply(buf.toString());
 	}
 
 	public String[] helpCommandInfo = {
@@ -237,13 +233,12 @@ public class Plugin
 		"<Plugin>",
 		"<Plugin> is the name of the plugin"
 	};
-	public void commandInfo(Message mes)
+	public Message[] cmdInfo(Message mes)
 	{
 		List<String> params = mods.util.getParams(mes);
 		if (params.size() == 1)
 		{
-			irc.sendContextReply(mes, "Syntax: 'Plugin.Info " + helpCommandInfo[1] + "'.");
-			return;
+			return mes.contextReply("Syntax: 'Plugin.Info " + helpCommandInfo[1] + "'.");
 		}
 
 		String pluginName = params.get(1);
@@ -254,16 +249,14 @@ public class Plugin
 		}
 		catch (ChoobNoSuchCallException e)
 		{
-			irc.sendContextReply(mes, "Oi! Plugin " + pluginName + " isn't loaded. (Or has no info...)");
-			return;
+			return mes.contextReply("Oi! Plugin " + pluginName + " isn't loaded. (Or has no info...)");
 		}
 		catch (ClassCastException e)
 		{
-			irc.sendContextReply(mes, "Plugin " + pluginName + " had invalid info!");
-			return;
+			return mes.contextReply("Plugin " + pluginName + " had invalid info!");
 		}
 
-		irc.sendContextReply(mes, pluginName + ": " + info[0] + " By " + info[1] + " <" + info[2] + ">; version is " + info[3] + ".");
+		return mes.contextReply(pluginName + ": " + info[0] + " By " + info[1] + " <" + info[2] + ">; version is " + info[3] + ".");
 	}
 	
 	public String[] helpCommandSource = {
@@ -271,13 +264,12 @@ public class Plugin
 		"<Plugin>",
 		"<Plugin> is the name of the plugin"
 	};
-	public void commandSource(Message mes)
+	public Message[] cmdSource(Message mes)
 	{
 		List<String> params = mods.util.getParams(mes);
 		if (params.size() == 1)
 		{
-			irc.sendContextReply(mes, "Syntax: 'Plugin.Source " + helpCommandInfo[1] + "'.");
-			return;
+			return mes.contextReply("Syntax: 'Plugin.Source " + helpCommandInfo[1] + "'.");
 		}
 		
 		String[] plugins = mods.plugin.getLoadedPlugins();
@@ -291,8 +283,7 @@ public class Plugin
 		}
 		catch (ChoobNoSuchPluginException e)
 		{
-			irc.sendContextReply(mes, "Plugin " + pluginName + " has never been loaded.");
-			return;
+			return mes.contextReply( "Plugin " + pluginName + " has never been loaded.");
 		}
 		
 		boolean loaded = false;
@@ -303,9 +294,9 @@ public class Plugin
 			}
 		}
 		if (loaded) {
-			irc.sendContextReply(mes, pluginName + " is loaded from <" + source + ">.");
+			return mes.contextReply(pluginName + " is loaded from <" + source + ">.");
 		} else {
-			irc.sendContextReply(mes, pluginName + " was last loaded from <" + source + ">.");
+			return mes.contextReply( pluginName + " was last loaded from <" + source + ">.");
 		}
 	}
 }

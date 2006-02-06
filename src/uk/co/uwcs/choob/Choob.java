@@ -128,7 +128,7 @@ public final class Choob extends PircBot
 		init();
 
 		// Disable PircBot's flood protection, reducing percieved lag.
-		this.setMessageDelay(0);
+		this.setMessageDelay(1500);
 
 		// Set Version (the comment).
 		this.setVersion("Choob SVN - http://svn.uwcs.co.uk/repos/choob/");

@@ -39,9 +39,9 @@ public class Talk
 		"<Text>",
 		"<Text> is the text to yell"
 	};
-	public void commandShout( Message mes )
+	public Message[] cmdShout( Message mes )
 	{
-		irc.sendContextReply(mes, Colors.BOLD + mods.util.getParamString(mes));
+		return mes.contextReply(Colors.BOLD + mods.util.getParamString(mes));
 	}
 
 	public String[] helpCommandSay = {
@@ -49,19 +49,20 @@ public class Talk
 		"<Text>",
 		"<Text> is the text to say"
 	};
-	public void commandSay( Message mes )
+	public Message[] cmdSay( Message mes )
 	{
-		irc.sendContextMessage(mes, mods.util.getParamString(mes));
+		return mes.contextMessage(mods.util.getParamString(mes));
 	}
+
 
 	public String[] helpCommandReply = {
 		"Get the bot to reply to you.",
 		"<Text>",
 		"<Text> is the text with which to reply"
 	};
-	public void commandReply( Message mes )
+	public Message[] cmdReply( Message mes )
 	{
-		irc.sendContextReply(mes, mods.util.getParamString(mes));
+		return mes.contextReply(mods.util.getParamString(mes));
 	}
 
 	public String[] helpCommandMsg = {
@@ -70,16 +71,16 @@ public class Talk
 		"<Target> is the destination",
 		"<Text> is the message to send"
 	};
-	public void commandMsg( Message mes )
+	public Message[] cmdMsg( Message mes )
 	{
 		String params = mods.util.getParamString(mes);
 		int spacePos = params.indexOf(' ');
 		if (spacePos == -1) {
-			irc.sendContextReply(mes, "Syntax: '" + helpCommandMsg[1] + "'.");
+			return mes.contextReply("Syntax: '" + helpCommandMsg[1] + "'.");
 		} else {
 			String target = params.substring(0, spacePos);
 			String message = params.substring(spacePos + 1);
-			irc.sendMessage(target, mes.getNick() + " says: " + message);
+			return mes.targetedMessage(mes.getNick() + " says: " + message,target);
 		}
 	}
 
@@ -88,9 +89,9 @@ public class Talk
 		"<Text>",
 		"<Text> is the text that describes what to do"
 	};
-	public void commandMe( Message mes )
+	public Message[] cmdMe( Message mes )
 	{
-		irc.sendContextAction(mes, mods.util.getParamString(mes));
+		return mes.contextAction(mods.util.getParamString(mes));
 	}
 
 	public String[] helpCommandDescribe = {
@@ -99,16 +100,16 @@ public class Talk
 		"<Target> is the destination",
 		"<Text> is the thing to do"
 	};
-	public void commandDescribe( Message mes )
+	public Message[] cmdDescribe( Message mes )
 	{
 		String params = mods.util.getParamString(mes);
 		int spacePos = params.indexOf(' ');
 		if (spacePos == -1) {
-			irc.sendContextReply(mes, "Syntax: '" + helpCommandDescribe[1] + "'.");
+			return mes.contextReply("Syntax: '" + helpCommandDescribe[1] + "'.");
 		} else {
 			String target = params.substring(0, spacePos);
 			String message = params.substring(spacePos + 1);
-			irc.sendAction(target, message + " (From " + mes.getNick() + ".)");
+			return mes.targetedAction(message + " (From " + mes.getNick() + ".)",target);
 		}
 	}
 }
