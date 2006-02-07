@@ -32,6 +32,8 @@ public class See
 		if (nick.equals(""))
 			nick=mes.getNick();
 
+		nick=mods.nick.getBestPrimaryNick(nick);
+
 		final Connection conn=mods.odb.getConnection();
 
 		{
@@ -40,7 +42,7 @@ public class See
 			stat.execute("DROP TEMPORARY TABLE IF EXISTS `tempt1`, `tempt2`; ");
 
 			{
-				final PreparedStatement s=conn.prepareStatement("CREATE TEMPORARY TABLE `tempt1` AS SELECT `Time` FROM `History` WHERE `Time` > " +  (System.currentTimeMillis()-(1000*60*60*24*5)) + " AND (CASE INSTR(`Nick`,'|') WHEN 0 THEN `Nick` ELSE LEFT(`Nick`, INSTR(`Nick`,'|')-1) END)=? ORDER BY `Time`; ");
+				final PreparedStatement s=conn.prepareStatement("CREATE TEMPORARY TABLE `tempt1` AS SELECT `Time` FROM `History` WHERE `Time` > " +  (System.currentTimeMillis()-(1000*60*60*24*5)) + " AND (CASE INSTR(`Nick`,'|') WHEN 0 THEN `Nick` ELSE LEFT(`Nick`, INSTR(`Nick`,'|')-1) END)=? AND `Channel`IS NULL ORDER BY `Time`; ");
 				s.setString(1, nick);
 				s.executeUpdate();
 			}
