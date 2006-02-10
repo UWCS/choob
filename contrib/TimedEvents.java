@@ -229,17 +229,25 @@ public class TimedEvents
 		}
 		catch (NumberFormatException e)
 		{
-			irc.sendContextReply( mes, "Bad date format: " + time + ".");
+			irc.sendContextReply( mes, "Bad time format: " + time + ".");
 			return;
 		}
 
 		if (ma.group(4) != null)
 		{
-			if (ma.group(4).equalsIgnoreCase("pm"))
+			if (ma.group(4).equalsIgnoreCase("am") || ma.group(4).equalsIgnoreCase("pm"))
 			{
-				if (h<12)
-					h+=12;
+				// AM or PM only allow an hour of 1 - 12.
+				if ((h < 1) || (h > 12)) {
+					irc.sendContextReply( mes, "Bad time format: " + time + ".");
+					return;
+				}
+				if (h == 12)
+					h = 0;
 			}
+			
+			if (ma.group(4).equalsIgnoreCase("pm"))
+				h += 12;
 		}
 
 		cal.set(Calendar.HOUR_OF_DAY, h);
