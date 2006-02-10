@@ -179,12 +179,23 @@ public class Tell
 
 	private void clearCache( String nick )
 	{
+		String pnick = mods.nick.getBestPrimaryNick(nick);
+		String rnick = mods.security.getRootUser(pnick);
+		if (rnick == null)
+			rnick = pnick;
+		
 		synchronized(tellCache)
 		{
 			Iterator<String> iter = tellCache.keySet().iterator();
 			while(iter.hasNext())
 			{
-				if (iter.next().equalsIgnoreCase(nick))
+				String item = iter.next();
+				String pitem = mods.nick.getBestPrimaryNick(item);
+				String ritem = mods.security.getRootUser(pitem);
+				if (ritem == null)
+					ritem = pitem;
+				
+				if (ritem.equalsIgnoreCase(rnick))
 					iter.remove();
 			}
 		}
@@ -231,18 +242,18 @@ public class Tell
 		}
 		if (willSkip)
 			return;
-
+		
 		// getBestPrimaryNick should be safe from injection
 		String testNick = mods.nick.getBestPrimaryNick( nick );
 		// rootNick won't, necessarily
 		String rootNick = mods.security.getRootUser( testNick );
-
+		
 		List<TellObject> results;
 		if (rootNick != null && !rootNick.equals(testNick))
 			results = mods.odb.retrieve (TellObject.class, "WHERE target = '" + testNick + "' OR target = '" + rootNick.replaceAll("(\\\\|\\\")","\\\\$1") + "'");
 		else
 			results = mods.odb.retrieve (TellObject.class, "WHERE target = '" + testNick + "'");
-
+		
 		if (results.size() != 0)
 		{
 			int nsStatus = -1;
@@ -254,7 +265,7 @@ public class Tell
 					if (nsStatus == -1)
 					{
 						// NickServ not yet checked...
-
+						
 						// First pick up the setting of Secure.
 						int secureOption;
 						try
@@ -269,7 +280,7 @@ public class Tell
 						}
 						if (secureOption > 2 || secureOption < 0)
 							secureOption = 1;
-
+						
 						// This is a secure tell. One of several things can happen.
 						if ( secureOption == 2 )
 						{
