@@ -122,6 +122,12 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 			return String.class;
 		}
 		if (type.equals("number")) {
+			if (val instanceof Integer)
+				return Integer.TYPE;
+			if (val instanceof Long)
+				return Long.TYPE;
+			if (val instanceof Float)
+				return Float.TYPE;
 			return Double.TYPE;
 		}
 		if (type.equals("boolean")) {
