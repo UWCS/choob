@@ -1041,87 +1041,87 @@ public class ObjectDBTransaction // Needs to be non-final
 			try
 			{
 				int id = strObj.getId();
-
+				
 				boolean setId = false;
-
+				
 				if( id == 0 )
 				{
 					stat = dbConn.prepareStatement("SELECT MAX(ClassID) FROM ObjectStore WHERE ClassName = ?;");
-
+					
 					stat.setString(1, strObj.getClassName());
-
+					
 					ResultSet ids = stat.executeQuery();
-
+					
 					if( ids.first() )
 						id = ids.getInt(1)+1;
 					else
 						id = 1;
-
+					
 					stat.close();
-
+					
 					setId = true;
 				}
-
+				
 				int objId = 0;
-
+				
 				// If there might be a collision, we need the old object ID.
 				if (replace)
 				{
 					stat = dbConn.prepareStatement("SELECT ObjectID FROM ObjectStore WHERE ClassName = ? AND ClassID = ?;");
-
+					
 					stat.setString(1, strObj.getClassName());
 					stat.setInt(2, id);
-
+					
 					stat.execute();
-
+					
 					ResultSet ids = stat.executeQuery();
-
+					
 					if( ids.first() )
 						objId = ids.getInt(1);
-
+					
 					stat.close();
 				}
-
+				
 				// There's no collision (more specifically, if there is one, we're boned).
 				if (objId == 0)
 				{
 					stat = dbConn.prepareStatement("INSERT INTO ObjectStore VALUES(NULL,?,?);");
-
+					
 					stat.setString(1, strObj.getClassName());
 					stat.setInt(2, id);
-
+					
 					stat.execute();
-
+					
 					ResultSet generatedKeys = stat.getGeneratedKeys();
-
+					
 					generatedKeys.first();
-
+					
 					objId = generatedKeys.getInt(1);
 				}
-
+				
 				stat.close();
-
+				
 				if (replace)
 					stat = dbConn.prepareStatement("REPLACE INTO ObjectStoreData VALUES(?,?,?,?,?);");
 				else
 					stat = dbConn.prepareStatement("INSERT INTO ObjectStoreData VALUES(?,?,?,?,?);");
-
+				
 				String[] fields = strObj.getFields();
-
+				
 				for( int c = 0 ; c < fields.length ; c++ )
 				{
 					String fieldName = fields[c];
-
+					
 					if( !fieldName.equals("id") )
 					{
 						boolean foundType = true;
-
+						
 						stat.setInt(1, objId);
-
+						
 						try
 						{
 							Type theType = strObj.getFieldType(fieldName);
-
+							
 							if( theType == java.lang.Integer.TYPE )
 							{
 								int theVal = ((Integer)strObj.getFieldValue(fieldName)).intValue();
@@ -1184,6 +1184,12 @@ public class ObjectDBTransaction // Needs to be non-final
 						catch (IllegalAccessException e)
 						{
 							// Should never happen, but if it does, just ignore.
+						}
+						catch (ClassCastException e)
+						{
+							System.err.println("ERROR: Cast exception saving object class '" + strObj.getClassName() + "' property '" + fieldName + "', check ObjectDB wrapper implementation.");
+							System.err.println(e);
+							e.printStackTrace();
 						}
 					}
 				}
