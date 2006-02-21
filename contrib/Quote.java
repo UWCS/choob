@@ -615,7 +615,21 @@ public class Quote
 	public void commandGet( Message mes ) throws ChoobException
 	{
 		String whereClause = getClause( mods.util.getParamString( mes ) );
-		List quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause );
+		List quotes;
+		try
+		{
+			quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause );
+		}
+		catch (ObjectDBError e)
+		{
+			if (e.getCause() instanceof java.sql.SQLException)
+			{
+				irc.sendContextReply( mes, "Could not retrieve: " + e.getCause() );
+				return;
+			}
+			else
+				throw e;
+		}
 
 		if (quotes.size() == 0)
 		{
