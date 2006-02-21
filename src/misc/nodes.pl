@@ -241,4 +241,8 @@ if ($web) {
 &showTree($tree, "", "    ");
 if ($web) {
 	print "</UL>\n";
+	print <<HTML;
+</BODY>
+</HTML>
+HTML
 }
