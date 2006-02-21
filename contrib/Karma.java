@@ -30,7 +30,7 @@ public class KarmaReasonObject
 public class Karma
 {
 	// Non-null == ignore.
-	private final static Set exceptions = new HashSet();
+	private final static Set<String> exceptions = new HashSet<String>();
 	static
 	{
 		exceptions.add("c");
@@ -318,6 +318,10 @@ public class Karma
 
 	public synchronized void filterKarma( Message mes, Modules mods, IRCInterface irc )
 	{
+		// Ignore lines that look like commands.
+		if (Pattern.compile(irc.getTriggerRegex()).matcher(mes.getMessage()).find())
+			return;
+
 		if (mes instanceof PrivateEvent)
 		{
 			irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
