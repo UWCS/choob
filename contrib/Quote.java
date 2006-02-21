@@ -57,7 +57,7 @@ public class Quote
 
 	private Modules mods;
 	private IRCInterface irc;
-	private Pattern ignorePattern;
+	final private Pattern ignorePattern;
 
 	public Quote( Modules mods, IRCInterface irc )
 	{
@@ -273,7 +273,16 @@ public class Quote
 		{
 			// Final case: Regex quoting.
 			// Matches anything of the form [NICK{:| }]/REGEX/ [[NICK{:| }]/REGEX/]
-			Matcher ma = Pattern.compile("(?:([^\\s:]+)[:\\s])?/((?:\\\\.|[^\\\\/])+)/(?:\\s+(?:([^\\s:]+)[:\\s])?/((?:\\\\.|[^\\\\/])+)/)?", Pattern.CASE_INSENSITIVE).matcher(param);
+
+			// What's allowed in the //s:
+			final String slashslashcontent="[^/]";
+
+			// The '[NICK{:| }]/REGEX/' bit:
+			final String token="(?:([^\\s:/]+)[:\\s])?/(" + slashslashcontent + "+)/";
+
+			// The '[NICK{:| }]/REGEX/ [[NICK{:| }]/REGEX/]' bit:
+			Matcher ma = Pattern.compile(token + "(?:\\s+" + token + ")?", Pattern.CASE_INSENSITIVE).matcher(param);
+
 			if (!ma.matches())
 			{
 				irc.sendContextReply(mes, "Sorry, your string looked like a regex quote but I couldn't decipher it.");
@@ -285,16 +294,16 @@ public class Quote
 			{
 				// The second parameter exists ==> multiline quote
 				startNick = ma.group(1);
-				startRegex = ".*" + ma.group(2) + ".*";
+				startRegex = "(?i).*" + ma.group(2) + ".*";
 				endNick = ma.group(3);
-				endRegex = ".*" + ma.group(4) + ".*";
+				endRegex = "(?i).*" + ma.group(4) + ".*";
 			}
 			else
 			{
 				startNick = null;
 				startRegex = null;
 				endNick = ma.group(1);
-				endRegex = ".*" + ma.group(2) + ".*";
+				endRegex = "(?i).*" + ma.group(2) + ".*";
 			}
 
 			if (startNick != null)
@@ -306,48 +315,61 @@ public class Quote
 			int endIndex = -1, startIndex = -1;
 			for(int i=0; i<history.size(); i++)
 			{
-				Message line = history.get(i);
-				String nick = mods.nick.getBestPrimaryNick( line.getNick() ).toLowerCase();
+				final Message line = history.get(i);
+
+				// Completely disregard lines that are quotey.
+				if (ignorePattern.matcher(line.getMessage()).find())
+					continue;
+
+				System.out.println("<" + line.getNick() + "> " + line.getMessage());
+
+				final String nick = mods.nick.getBestPrimaryNick( line.getNick() ).toLowerCase();
 				if ( endRegex != null )
 				{
-					// Not matched the end yet
-
-					// For this one, we must avoid triggering on quote commands.
-					if (ignorePattern.matcher(line.getMessage()).find())
-						continue;
+					// Not matched the end yet (the regex being null is an indicator for us having matched it, obviously. But only the end regex).
 
 					if ((endNick == null || endNick.equals(nick))
 							&& line.getMessage().matches(endRegex))
 					{
-						// But have now...
+						// But have matched now...
 						endRegex = null;
 						endIndex = i;
+
+						// If we weren't doing a multiline regex quote, this is actually the start index.
 						if ( startRegex == null )
 						{
 							startIndex = i;
+
+							// And hence we're done.
 							break;
 						}
 					}
 				}
-				else
+				else // ..the end has been matched, and we're doing a multiline, so we're looking for the start:
 				{
-					// Matched the end; looking for the start.
 					if ((startNick == null || startNick.equals(nick)) && line.getMessage().matches(startRegex))
 					{
+						// It matches, huzzah, we're done:
 						startIndex = i;
 						break;
 					}
 				}
 			}
-			if (startIndex == -1)
+
+			if  (endIndex == -1) // We failed to match the 'first' line:
 			{
-				irc.sendContextReply(mes, "Sorry, start line not found.");
+				if (startRegex == null) // We wern't going for a multi-line match:
+					irc.sendContextReply(mes, "Sorry, couldn't find the line you were after.");
+				else
+					irc.sendContextReply(mes, "Sorry, the second regex (for the ending line) didn't match anything, not checking for the start line.");
+
 				return;
 			}
 
-			if  (endIndex == -1)
+			if (startIndex == -1)
 			{
-				irc.sendContextReply(mes, "Sorry, end line not found.");
+				final Message endLine=history.get(endIndex);
+				irc.sendContextReply(mes, "Sorry, the first regex (for the start line) couldn't be matched before the end-line I chose: " + formatPreviewLine(endLine.getNick(), endLine.getMessage(), endLine instanceof ChannelAction));
 				return;
 			}
 
@@ -530,22 +552,30 @@ public class Quote
 		irc.sendContextReply( mes, "OK, added quote " + quote.id + ": " + formatPreview(quoteLines) );
 	}
 
+	private final String formatPreviewLine(final String nick, final String message, final boolean isAction)
+	{
+		String text, prefix;
+
+		if (message.length() > EXCERPT)
+			text = message.substring(0, 27) + "...";
+		else
+			text = message;
+
+		if (isAction)
+			prefix = "* " + nick;
+		else
+			prefix = "<" + nick + ">";
+
+		return prefix + " " + text;
+
+	}
+
 	private String formatPreview(List<QuoteLine> lines)
 	{
 		if (lines.size() == 1)
 		{
-			QuoteLine line = lines.get(0);
-			String text;
-			if (line.message.length() > EXCERPT)
-				text = line.message.substring(0, 27) + "...";
-			else
-				text = line.message;
-			String prefix;
-			if (line.isAction)
-				prefix = "* " + line.nick;
-			else
-				prefix = "<" + line.nick + ">";
-			return prefix + " " + text;
+			final QuoteLine line = lines.get(0);
+			return formatPreviewLine(line.nick, line.message, line.isAction);
 		}
 		else
 		{
