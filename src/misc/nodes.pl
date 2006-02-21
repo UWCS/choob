@@ -1,19 +1,36 @@
 #!/usr/bin/perl
 
-use warnings;
 use strict;
+use warnings;
 use CGI::Carp;
+
+my $web = (exists $ENV{GATEWAY_INTERFACE}) && ($ENV{GATEWAY_INTERFACE} =~ /^CGI/);
 
 $SIG{__WARN__} = sub {
 	my ($msg) = @_;
-	print "PERL WARNING: $msg\n";
-	print Carp::longmess($msg) . "\n";
+	if ($web) {
+		print "<DIV CLASS='warning'><B>Perl Warning</B> $msg</DIV>\n";
+		print "<!--\nPERL WARNING:\n" . Carp::longmess($msg) . " -->\n";
+	} else {
+		print "PERL WARNING: $msg\n";
+		print Carp::longmess($msg) . "\n";
+	}
 };
 $SIG{__DIE__} = sub {
 	my ($msg) = @_;
-	print "PERL FATAL ERROR: $msg\n";
-	print  Carp::longmess($msg) . "\n";
+	if ($web) {
+		print "<DIV CLASS='error'><B>Perl Fatal Error</B> $msg</DIV>\n";
+		print "<!--\nPERL ERROR:\n" . Carp::longmess($msg) . " -->\n";
+	} else {
+		print "PERL FATAL ERROR: $msg\n";
+		print  Carp::longmess($msg) . "\n";
+	}
 };
+
+if ($web) {
+	print "Content-Type: text/html\015\012";
+	print "\015\012";
+}
 
 my ($dbhost, $dbuser, $dbpass) = ("", "", "");
 if (open(CFG, "bot.conf") || open(CFG, "../bot.conf")) {
@@ -30,8 +47,7 @@ if (open(CFG, "bot.conf") || open(CFG, "../bot.conf")) {
 		}
 	}
 } else {
-	print "$!\n";
-	die "Unable to open bot.conf file! It must be in the current or parent directory to this script.";
+	die "Unable to open bot.conf file! It must be in the current or parent directory to this script. Error: '$!'";
 }
 
 use DBI;
@@ -128,6 +144,49 @@ sub buildTreeFrom() {
 sub showTree() {
 	my ($treenode, $indent, $indent2) = @_;
 	
+	if ($web) {
+		&showTreeWeb($treenode);
+	} else {
+		&showTreeText($treenode, $indent, $indent2);
+	}
+}
+
+sub showTreeWeb() {
+	my ($treenode) = @_;
+	
+	print "<LI>";
+	print $treenode->{name};
+	if ($treenode->{id} > 0) {
+		print " [" . $treenode->{id} . "]";
+	}
+	if ($treenode->{class} == -2) {
+		if ($treenode->{perm}) {
+			print " " . $treenode->{perm};
+			if ($treenode->{action}) {
+				print " " . $treenode->{action};
+			}
+		}
+	}
+	print " <SMALL><I> - ";
+	if ($treenode->{class} < 0) {
+		print $specialClass[-$treenode->{class}];
+	} else {
+		print $nodeClass[$treenode->{class}];
+	}
+	print "</I></SMALL>";
+	
+	print "<UL>\n";
+	foreach my $child (@{$treenode->{contents}}) {
+		&showTreeWeb($child);
+	}
+	print "</UL>\n";
+	
+	print "</LI>\n";
+}
+
+sub showTreeText() {
+	my ($treenode, $indent, $indent2) = @_;
+	
 	print $indent;
 	print " +- ";
 	print $treenode->{name};
@@ -154,13 +213,32 @@ sub showTree() {
 	for (my $i = 0; $i < @{$treenode->{contents}}; $i++) {
 		my $child = ${$treenode->{contents}}[$i];
 		if ($i < @{$treenode->{contents}}-1) {
-			&showTree($child, $indent, " |  ");
+			&showTreeText($child, $indent, " |  ");
 		} else {
-			&showTree($child, $indent, "    ");
+			&showTreeText($child, $indent, "    ");
 		}
 	}
 }
 
+if ($web) {
+	print <<HTML;
+<HTML>
+<HEAD>
+	<TITLE>Choob Nodes</TITLE>
+</HEAD>
+<BODY>
+	<H1>Choob Nodes</H1>
+HTML
+}
+
 my $tree = { id => 0 };
+
 &buildTreeFrom($tree);
+
+if ($web) {
+	print "<UL>\n";
+}
 &showTree($tree, "", "    ");
+if ($web) {
+	print "</UL>\n";
+}
