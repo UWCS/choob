@@ -698,22 +698,22 @@ public class Karma
 	public void commandSearch(Message mes, Modules mods, IRCInterface irc)
 	{
 		List<String> params = mods.util.getParams(mes);
-
+		
 		if (params.size() <= 1) {
 			irc.sendContextReply(mes, "I nead something to find!");
 		}
-
+		
 		// Remove the command token.
 		params.remove(0);
-
-		// Only 5 items please!
-		while (params.size() > 5)
+		
+		// Only 3 items please!
+		while (params.size() > 3)
 			params.remove(params.size() - 1);
-
+		
 		for (int i = 0; i < params.size(); i++) {
 			String item = params.get(i);
 			String odbQuery = "";
-
+			
 			if ((item.length() > 2) && item.startsWith("/") && item.endsWith("/")) {
 				// Regexp
 				odbQuery = "WHERE string RLIKE \"" + item.substring(1, item.length() - 1).replaceAll("\\\\", "\\\\\\\\") + "\"";
@@ -721,24 +721,26 @@ public class Karma
 				// Substring
 				odbQuery = "WHERE string RLIKE \"" + item.replaceAll("(\\W)", "\\\\$1") + "\"";
 			}
-
+			
 			List odbItems = mods.odb.retrieve(KarmaObject.class, odbQuery);
-
+			
 			if (odbItems.size() == 0) {
 				irc.sendContextReply(mes, "No karma items matched '" + item + "'.");
 			} else {
 				String rpl = "Karma items matching '" + item + "': ";
+				boolean cutOff = false;
 				for (int j = 0; j < odbItems.size(); j++) {
-					if (j >= 5) {
+					KarmaObject ko = ((KarmaObject)odbItems.get(j));
+					if (rpl.length() + ko.string.length() > 350) {
+						cutOff = true;
 						break;
 					}
-					KarmaObject ko = ((KarmaObject)odbItems.get(j));
 					if (j > 0) {
 						rpl += ", ";
 					}
 					rpl += ko.string + " (" + ko.value + ")";
 				}
-				if (odbItems.size() > 5) {
+				if (cutOff) {
 					rpl += ", ...";
 				} else {
 					rpl += ".";
