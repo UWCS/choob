@@ -958,7 +958,7 @@ public class Quote
 		"<Direction> is 'up' or 'down'",
 		"<ID> is an optional quote ID (default is to use the most recent)"
 	};
-	public void commandKarmaMod( Message mes ) throws ChoobException
+	public synchronized void commandKarmaMod( Message mes ) throws ChoobException
 	{
 		int quoteID = -1;
 		boolean up = true;
