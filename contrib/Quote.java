@@ -273,7 +273,7 @@ public class Quote
 		{
 			// Final case: Regex quoting.
 			// Matches anything of the form [NICK{:| }]/REGEX/ [[NICK{:| }]/REGEX/]
-			Matcher ma = Pattern.compile("(?:([^\\s:]+)[:\\s])?/((?:\\\\.|[^\\\\/])+)/(?:\\s+(?:([^\\s:]+)[:\\s])?/((?:\\\\.|[^\\\\/])+)/)?").matcher(param);
+			Matcher ma = Pattern.compile("(?:([^\\s:]+)[:\\s])?/((?:\\\\.|[^\\\\/])+)/(?:\\s+(?:([^\\s:]+)[:\\s])?/((?:\\\\.|[^\\\\/])+)/)?", Pattern.CASE_INSENSITIVE).matcher(param);
 			if (!ma.matches())
 			{
 				irc.sendContextReply(mes, "Sorry, your string looked like a regex quote but I couldn't decipher it.");
@@ -682,10 +682,10 @@ public class Quote
 	};
 	public void commandCount( Message mes ) throws ChoobException
 	{
-		String whereClause = getClause( mods.util.getParamString( mes ) );
-		List<Integer> quoteCounts = mods.odb.retrieveInt( QuoteObject.class, whereClause );
+		final String whereClause = getClause( mods.util.getParamString( mes ) );
+		final List quoteCounts = mods.odb.retrieve( QuoteObject.class, whereClause );
 
-		int count = quoteCounts.size();
+		final int count = quoteCounts.size();
 
 		if (count == 0)
 			irc.sendContextReply( mes, "Sorry, no quotes match!" );
@@ -1130,7 +1130,7 @@ public class Quote
 			{
 				// This is a regex, then.
 				// Get a matcher on th region from here to the end of the string...
-				Matcher ma = Pattern.compile("^(?:\\\\.|[^\\\\/])*?/").matcher(text).region(pos+1,text.length());
+				Matcher ma = Pattern.compile("^(?:\\\\.|[^\\\\/])*?/", Pattern.CASE_INSENSITIVE).matcher(text).region(pos+1,text.length());
 				if (!ma.find())
 					throw new ChoobError("Regular expression has no end!");
 				int end = ma.end();
