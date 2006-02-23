@@ -601,7 +601,6 @@ public class Alias
 		// Message extends IRCEvent, so this cast will always succeed.
 		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
 		
-		System.out.println("FLOOD: alias event = " + mes);
 		if (mesFlags.containsKey("alias.expanded"))
 		{
 			int recurseLevel = Integer.parseInt(mesFlags.get("alias.expanded")) + 1;
