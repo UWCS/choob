@@ -441,6 +441,11 @@ public final class HorriblePerlScript
 			// Preamble.
 			StringBuffer classContent = new StringBuffer("/**\n *\n * @author Horrible Perl Script. Ewwww.\n */\n\npackage uk.co.uwcs.choob.support.events;\nimport uk.co.uwcs.choob.support.events.*;\n\n");
 
+			if (className.equals("IRCEvent"))
+			{
+				classContent.append("import java.util.*;\n\n");
+			}
+			
 			// Class description.
 			classContent.append("public class ");
 			classContent.append(className);
@@ -471,6 +476,8 @@ public final class HorriblePerlScript
 			{
 				memberVariables.add("synthLevel");
 				paramTypes.put("synthLevel", "int");
+				memberVariables.add("synthFlags");
+				paramTypes.put("synthFlags", "Map<String,String>");
 			}
 
 			// Member variables now.
@@ -540,7 +547,7 @@ public final class HorriblePerlScript
 			for(String fieldName: memberVariables)
 			{
 				// Hack: Skip this.
-				if (fieldName.equals("synthLevel"))
+				if (fieldName.equals("synthLevel") || fieldName.equals("synthFlags"))
 					continue;
 				classContent.append("\t\tthis.");
 				classContent.append(fieldName + " = " + fieldName + ";\n");
@@ -550,6 +557,7 @@ public final class HorriblePerlScript
 			{
 				classContent.append("\t\tjava.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission(\"event.create\"));\n");
 				classContent.append("\t\tthis.synthLevel = 0;\n");
+				classContent.append("\t\tthis.synthFlags = new HashMap<String,String>();\n");
 			}
 			classContent.append("\t}\n\n");
 
@@ -578,7 +586,7 @@ public final class HorriblePerlScript
 			for(String fieldName: memberVariables)
 			{
 				// Hack: Skip this.
-				if (fieldName.equals("synthLevel"))
+				if (fieldName.equals("synthLevel") || fieldName.equals("synthFlags"))
 					continue;
 				if (myOverrides.contains(fieldName))
 					classContent.append("\t\tthis." + fieldName + " = " + fieldName + ";\n");
@@ -590,6 +598,10 @@ public final class HorriblePerlScript
 			{
 				classContent.append("\t\tjava.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission(\"event.create\"));\n");
 				classContent.append("\t\tthis.synthLevel = old.synthLevel + 1;\n");
+				classContent.append("\t\tthis.synthFlags = new HashMap<String,String>();\n");
+				classContent.append("\t\tfor (String prop : old.synthFlags.keySet()) {\n");
+				classContent.append("\t\t\tthis.synthFlags.put(prop, new String(((String)old.synthFlags.get(prop))));\n");
+				classContent.append("\t\t}\n");
 			}
 			classContent.append("\t}\n\n");
 
