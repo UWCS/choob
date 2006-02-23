@@ -634,7 +634,6 @@ public class Alias
 				System.err.println("Couldn't do antiflood call: " + e);
 			}
 		}
-		System.out.println("FLOOD: alias running = " + mes);
 
 		String aliasText = alias.converted;
 
