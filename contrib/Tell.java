@@ -153,7 +153,11 @@ public class Tell
 
 		if (res>16)
 		{
-			irc.sendContextReply(mes, "Okay, will " + type + " upon next speaking. (Sent to " + (res-16) + " " + ((res-16) == 1 ? "person" : "people") + ".)");
+			Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
+			if (!mesFlags.containsKey("timedevents.delayed"))
+			{
+				irc.sendContextReply(mes, "Okay, will " + type + " upon next speaking. (Sent to " + (res-16) + " " + ((res-16) == 1 ? "person" : "people") + ".)");
+			}
 			return;
 		}
 
