@@ -598,28 +598,44 @@ public class Alias
 			return;
 		}
 
-		// Stop recursion
-		if (mes.getSynthLevel() > 3) {
-			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
-			return;
-		}
-
-		try
+		// Message extends IRCEvent, so this cast will always succeed.
+		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
+		
+		System.out.println("FLOOD: alias event = " + mes);
+		if (mesFlags.containsKey("alias.expanded"))
 		{
-			int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
-			if (ret != 0)
-			{
-				if (ret == 1)
-					irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
+			int recurseLevel = Integer.parseInt(mesFlags.get("alias.expanded")) + 1;
+			
+			// Stop recursion
+			if (recurseLevel > 2) {
+				irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
 				return;
 			}
+			
+			mesFlags.put("alias.expanded", new Integer(recurseLevel).toString());
 		}
-		catch (ChoobNoSuchCallException e)
-		{ } // ignore
-		catch (Throwable e)
+		else
 		{
-			System.err.println("Couldn't do antiflood call: " + e);
+			mesFlags.put("alias.expanded", "1");
+			
+			try
+			{
+				int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
+				if (ret != 0)
+				{
+					if (ret == 1)
+						irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
+					return;
+				}
+			}
+			catch (ChoobNoSuchCallException e)
+			{ } // ignore
+			catch (Throwable e)
+			{
+				System.err.println("Couldn't do antiflood call: " + e);
+			}
 		}
+		System.out.println("FLOOD: alias running = " + mes);
 
 		String aliasText = alias.converted;
 

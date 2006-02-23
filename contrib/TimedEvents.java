@@ -13,6 +13,7 @@ public class TimedEvent
 	public int id;
 	public int mesID; // For duplication
 	public int synthLevel; // Remember this.
+	public String synthFlags;
 	public String command;
 	public long executeAt;
 }
@@ -63,11 +64,14 @@ public class TimedEvents
 	};
 	public void commandIn( Message mes )
 	{
+		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
+		
 		// Stop recursion
-		if (mes.getSynthLevel() > 1) {
+		if (mesFlags.containsKey("timedevents.delayed")) {
 			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
 			return;
 		}
+		mesFlags.put("timedevents.delayed", "1");
 
 		List<String> params = mods.util.getParams(mes, 2);
 
@@ -112,6 +116,7 @@ public class TimedEvents
 		TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
 		timedEvent.synthLevel = mes.getSynthLevel();
+		timedEvent.synthFlags = encodeSynthFlags(mesFlags);
 		timedEvent.command = command;
 		timedEvent.executeAt = System.currentTimeMillis() + period * 1000;
 
@@ -136,12 +141,14 @@ public class TimedEvents
 	};
 	public void commandAt( Message mes )
 	{
+		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
+		
 		// Stop recursion
-		if (mes.getSynthLevel() > 1)
-		{
+		if (mesFlags.containsKey("timedevents.delayed")) {
 			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
 			return;
 		}
+		mesFlags.put("timedevents.delayed", "1");
 
 		List<String> params = mods.util.getParams(mes, 2);
 
@@ -289,10 +296,10 @@ public class TimedEvents
 		}
 
 
-
 		TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
 		timedEvent.synthLevel = mes.getSynthLevel();
+		timedEvent.synthFlags = encodeSynthFlags(mesFlags);
 		timedEvent.command = command;
 		timedEvent.executeAt = cal.getTimeInMillis();
 
@@ -362,6 +369,10 @@ public class TimedEvents
 			// Resynth...
 			for(int i=0; i<timedEvent.synthLevel; i++)
 				newMes = (Message)newMes.cloneEvent(command);
+			
+			// Put back flags.
+			Map<String,String> mesFlags = ((IRCEvent)newMes).getSynthFlags();
+			decodeSynthFlags(mesFlags, timedEvent.synthFlags);
 
 			lastDelivery = timedEvent;
 
@@ -388,6 +399,32 @@ public class TimedEvents
 		}
 		else
 			irc.sendContextReply(mes, "Nobody queued nuffin', gov'ner.");
+	}
+	
+	String encodeSynthFlags(Map<String,String> flags)
+	{
+		String rv = "";
+		for (String prop : flags.keySet())
+		{
+			if (rv.length() > 0)
+				rv += ",";
+			rv += prop.replaceAll("(\\\\|\"|=|,)", "\\\\$1");
+			rv += "=";
+			rv += ((String)flags.get(prop)).replaceAll("(\\\\|\"|=|,)", "\\\\$1");
+		}
+		return rv;
+	}
+	
+	void decodeSynthFlags(Map<String,String> flags, String data)
+	{
+		if (data == null)
+			return;
+		String[] flagItems = data.split("(?<!\\\\),");
+		for (int i = 0; i < flagItems.length; i++)
+		{
+			String[] parts = flagItems[i].split("(?<!\\\\)=", 2);
+			flags.put(parts[0].replaceAll("\\\\([\\\\\"=,])", "$1"), parts[1].replaceAll("\\\\([\\\\\"=,])", "$1"));
+		}
 	}
 
 	boolean validCommand(String command)
