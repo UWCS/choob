@@ -204,7 +204,7 @@ public class Events
 			if (!finished)
 				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
-					irc.sendContextReply(mes, Colors.BOLD + ev[2] + Colors.NORMAL + " at " + ev[10] + " (" + ev[9] + ") (" + ev[1] + ") from " + (new SimpleDateFormat("EEEE d MMM H:mma").format(da)) + " to " + (new SimpleDateFormat("EEEE d MMM H:mma").format(dat)) + "." );
+					irc.sendContextReply(mes, Colors.BOLD + ev[2] + Colors.NORMAL + " at " + ev[10] + ( !"".equals(ev[9]) ? " (" + ev[9] + ")" : "") + " (" + ev[1] + ") from " + (new SimpleDateFormat("EEEE d MMM H:mma").format(da)) + " to " + (new SimpleDateFormat("EEEE d MMM H:mma").format(dat)) + "." );
 					return;
 				}
 		}
