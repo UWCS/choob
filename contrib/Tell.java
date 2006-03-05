@@ -16,6 +16,17 @@ public class TellObject
 	public boolean nickServ;
 }
 
+class TellData
+{
+	boolean valid;
+	int error;
+	String from;
+	String[] targets;
+	String message;
+	long date;
+	String type;
+}
+
 public class Tell
 {
 	private static int MAXTARGETS = 7;
@@ -75,7 +86,10 @@ public class Tell
 
 	public synchronized int apiInject(String from, String[] targets, String message, String type)
 	{
-		return doTell(from, targets, message, (new Date()).getTime(), type);
+		TellData tell = validateTell(from, targets, message, (new Date()).getTime(), type);
+		if (!tell.valid)
+			return tell.error;
+		return 16 + doTell(tell);
 	}
 
 	public String[] helpCommandSend = {
@@ -85,54 +99,78 @@ public class Tell
 		"<Message> is the content"
 	};
 
-	synchronized int doTell(final String from, final String[] targets, final String message, final long date, final String type)
+	synchronized TellData validateTell(final String from, final String[] targets, final String message, final long date, final String type)
 	{
+		TellData rv = new TellData();
+		rv.valid = true;
+		rv.error = 0;
+		rv.from = from;
+		rv.targets = null;
+		rv.message = message;
+		rv.date = date;
+		rv.type = type;
+		
+		// Only include unique targets.
+		final List<String> validTargets = new ArrayList<String>(MAXTARGETS);
+		for (int i = 0; i < targets.length; i++)
+		{
+			String targetNick = mods.nick.getBestPrimaryNick(targets[i]);
+			String rootTargetNick = mods.security.getRootUser(targetNick);
+			
+			String target = rootTargetNick != null ? rootTargetNick : targetNick;
+			
+			// Make sure we don't dup targets.
+			if (validTargets.contains(target))
+				continue;
+			
+			validTargets.add(target);
+		}
+		rv.targets = validTargets.toArray(new String[0]);
+		
+		// Check we're not going to too many people.
+		if (rv.targets.length > MAXTARGETS)
+			rv.error = 1;
+		
+		if (rv.error != 0)
+			rv.valid = false;
+		
+		return rv;
+	}
+
+	synchronized int doTell(TellData tell)
+	{
+		if (!tell.valid)
+			return 0;
+		
 		final TellObject tellObj = new TellObject();
 
 		// Note: This is intentionally not translated to a primary nick.
-		tellObj.from = from;
+		tellObj.from = tell.from;
+		tellObj.message = tell.message;
+		tellObj.date = tell.date;
+		tellObj.type = tell.type;
 
-		tellObj.message = message;
-
-		tellObj.date = date;
-
-		tellObj.type = type;
-
-		if (targets.length > MAXTARGETS)
-			return 1;
-
-		final List<String> done = new ArrayList<String>(MAXTARGETS);
+		final String[] targets = tell.targets;
 
 		mods.odb.runTransaction(
 			new ObjectDBTransaction()
 			{
 				public void run()
 				{
-					done.clear();
 					for(int i=0; i<targets.length; i++)
 					{
 						tellObj.id = 0;
-
-						String targetNick = mods.nick.getBestPrimaryNick(targets[i]);
-						String rootTargetNick = mods.security.getRootUser(targetNick);
-
-						tellObj.target = rootTargetNick != null ? rootTargetNick : targetNick;
-
-						// Make sure we don't dup targets.
-						if (done.contains(tellObj.target))
-							continue;
-
+						tellObj.target = targets[i];
 						tellObj.nickServ = nsStatus(tellObj.target) > 0;
 
 						clearCache(tellObj.target);
 						save(tellObj);
-						done.add(tellObj.target);
 					}
 				}
 			}
 		);
 
-		return 16+done.size();
+		return targets.length;
 
 	}
 
@@ -148,27 +186,32 @@ public class Tell
 		final boolean question=params[2].indexOf('?', params[2].length()-5)!=-1; // It's a question if it has a "?" within 5 characters of it's end. (ie. "? :)").
 
 		final String type=question ? "ask" : "tell";
-
-		final int res=doTell(mes.getNick(), params[1].split(","), params[2], mes.getMillis(), type);
-
-		if (res>16)
+		final String[] targets = params[1].split(",");
+		final long time = mes.getMillis();
+		
+		final TellData tell = validateTell(mes.getNick(), targets, params[2], time, type);
+		
+		if (!tell.valid)
 		{
-			Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
-			if (!mesFlags.containsKey("timedevents.delayed"))
+			switch (tell.error)
 			{
-				irc.sendContextReply(mes, "Okay, will " + type + " upon next speaking. (Sent to " + (res-16) + " " + ((res-16) == 1 ? "person" : "people") + ".)");
+				case 1:
+					irc.sendContextReply(mes, "Sorry, you're only allowed " + MAXTARGETS + " targets for a given tell.");
+					return;
+				default:
+					irc.sendContextReply(mes, "Unknown tell error code: " + tell.error);
+					return;
 			}
-			return;
 		}
-
-		switch (res)
+		
+		int count = tell.targets.length;
+		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
+		if (!mesFlags.containsKey("timedevents.delayed"))
 		{
-			case 1:
-				irc.sendContextReply(mes, "Sorry, you're only allowed " + MAXTARGETS + " targets for a given tell.");
-				break;
-
+			irc.sendContextReply(mes, "Okay, will " + type + " upon next speaking. (Sent to " + count + " " + (count == 1 ? "person" : "people") + ".)");
 		}
-
+		
+		doTell(tell);
 	}
 
 	public String[] helpCommandGet = {
