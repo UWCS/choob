@@ -163,7 +163,7 @@ public class Http
 				System.out.println("\"" + hash + "\"");
 				try
 				{
-					List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = \"" + hash + "\"");
+					List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = \"" + mods.odb.escapeString(hash) + "\"");
 					if (res.size() != 0)
 						out.println(res.get(0).string);
 					else
@@ -293,7 +293,7 @@ public class Http
 		hso.string=s;
 		hso.hash=((Integer)((hso.string.hashCode()%128)+256)).toString();
 
-		List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = '" + hso.hash + "'");
+		List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = '" + mods.odb.escapeString(hso.hash) + "'");
 		Iterator li=res.iterator();
 		while (li.hasNext())									// Slight overkill.
 			mods.odb.delete(li.next());

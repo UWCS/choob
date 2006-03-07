@@ -284,9 +284,9 @@ public class Options
 
 		// OK, have an option.
 		List<UserOption> options = mods.odb.retrieve( UserOption.class,
-			  "WHERE optionName = '" + vals[0].replaceAll("(['\\\\])", "\\\\$1") + "' AND "
-			+ " userName = '" + userName.replaceAll("(['\\\\])", "\\\\$1") + "' AND "
-			+ " pluginName = '" + params[1].replaceAll("(['\\\\])", "\\\\$1") + "'");
+			  "WHERE optionName = '" + mods.odb.escapeString(vals[0]) + "' AND "
+			+ " userName = '" + mods.odb.escapeString(userName) + "' AND "
+			+ " pluginName = '" + mods.odb.escapeString(params[1]) + "'");
 
 		if ( options.size() >= 1 )
 		{
@@ -371,8 +371,8 @@ public class Options
 
 		// OK, have an option.
 		List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class,
-			  "WHERE optionName = '" + vals[0].replaceAll("(['\\\\])", "\\\\$1") + "' AND "
-			+ " pluginName = '" + params[1].replaceAll("(['\\\\])", "\\\\$1") + "'");
+			  "WHERE optionName = '" + mods.odb.escapeString(vals[0]) + "' AND "
+			+ " pluginName = '" + mods.odb.escapeString(params[1]) + "'");
 
 		if ( options.size() >= 1 )
 		{
@@ -430,11 +430,11 @@ public class Options
 		List<UserOption> options;
 		if (pluginName != null)
 			options = mods.odb.retrieve( UserOption.class,
-			  "WHERE userName = '" + userName.replaceAll("(['\\\\])", "\\\\$1") + "'"
-			+ " AND pluginName = '" + pluginName.replaceAll("(['\\\\])", "\\\\$1") + "'");
+			  "WHERE userName = '" + mods.odb.escapeString(userName) + "'"
+			+ " AND pluginName = '" + mods.odb.escapeString(pluginName) + "'");
 		else
 			options = mods.odb.retrieve( UserOption.class,
-			  "WHERE userName = '" + userName.replaceAll("(['\\\\])", "\\\\$1") + "'");
+			  "WHERE userName = '" + mods.odb.escapeString(userName) + "'");
 
 		if (options.size() == 0)
 		{
@@ -491,7 +491,7 @@ public class Options
 		List<GeneralOption> options;
 		if (pluginName != null)
 			options = mods.odb.retrieve( GeneralOption.class,
-			  "WHERE pluginName = '" + pluginName.replaceAll("(['\\\\])", "\\\\$1") + "'");
+			  "WHERE pluginName = '" + mods.odb.escapeString(pluginName) + "'");
 		else
 			options = mods.odb.retrieve( GeneralOption.class, "WHERE 1");
 
@@ -568,8 +568,8 @@ public class Options
 			pluginName = "*Choob*"; // Hopefully an invalid plugin name. :)
 
 		List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class,
-			  "WHERE optionName = '" + optionName.replaceAll("(['\\\\])", "\\\\$1") + "' AND"
-			+ " pluginName = '" + pluginName.replaceAll("(['\\\\])", "\\\\$1") + "'");
+			  "WHERE optionName = '" + mods.odb.escapeString(optionName) + "' AND"
+			+ " pluginName = '" + mods.odb.escapeString(pluginName) + "'");
 
 		if (options.size() == 0)
 			return defult;
@@ -593,9 +593,9 @@ public class Options
 			pluginName = "*Choob*"; // Hopefully an invalid plugin name. :)
 
 		List<UserOption> options = mods.odb.retrieve( UserOption.class,
-			  "WHERE optionName = '" + optionName.replaceAll("(['\\\\])", "\\\\$1") + "' AND"
-			+ " userName = '" + userName.replaceAll("(['\\\\])", "\\\\$1") + "' AND"
-			+ " pluginName = '" + pluginName.replaceAll("(['\\\\])", "\\\\$1") + "'");
+			  "WHERE optionName = '" + mods.odb.escapeString(optionName) + "' AND"
+			+ " userName = '" + mods.odb.escapeString(userName) + "' AND"
+			+ " pluginName = '" + mods.odb.escapeString(pluginName) + "'");
 
 		if (options.size() == 0)
 			return defult;
@@ -610,8 +610,8 @@ public class Options
 			pluginName = "*Choob*"; // Hopefully an invalid plugin name. :)
 
 		List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class,
-			  "WHERE optionName = '" + optionName.replaceAll("(['\\\\])", "\\\\$1") + "' AND"
-			+ " pluginName = '" + pluginName.replaceAll("(['\\\\])", "\\\\$1") + "'");
+			  "WHERE optionName = '" + mods.odb.escapeString(optionName) + "' AND"
+			+ " pluginName = '" + mods.odb.escapeString(pluginName) + "'");
 
 		if (options.size() == 0)
 		{
@@ -650,9 +650,9 @@ public class Options
 			pluginName = "*Choob*"; // Hopefully an invalid plugin name. :)
 
 		List<UserOption> options = mods.odb.retrieve( UserOption.class,
-			  "WHERE optionName = '" + optionName.replaceAll("(['\\\\])", "\\\\$1") + "' AND"
-			+ " userName = '" + userName.replaceAll("(['\\\\])", "\\\\$1") + "' AND"
-			+ " pluginName = '" + pluginName.replaceAll("(['\\\\])", "\\\\$1") + "'");
+			  "WHERE optionName = '" + mods.odb.escapeString(optionName) + "' AND"
+			+ " userName = '" + mods.odb.escapeString(userName) + "' AND"
+			+ " pluginName = '" + mods.odb.escapeString(pluginName) + "'");
 
 		if (options.size() == 0)
 		{

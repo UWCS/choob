@@ -40,8 +40,7 @@ public class Topic
 
 	private synchronized TopicStr getTopic(String chan)
 	{
-		chan = chan.replaceAll("([\\\\\"])", "\\\\$1");
-		List<TopicStr> results = mods.odb.retrieve(TopicStr.class, "WHERE chan = \"" + chan + "\"");
+		List<TopicStr> results = mods.odb.retrieve(TopicStr.class, "WHERE chan = \"" + mods.odb.escapeString(chan) + "\"");
 		if (results.size() == 0)
 		{
 			TopicStr topic = new TopicStr();

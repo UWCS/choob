@@ -1136,7 +1136,7 @@ public class Quote
 				{
 					if (param.length() < 1)
 						throw new ChoobError("Empty quoter nickname.");
-					clauses.add("quoter = \"" + param.replaceAll("(\\W)", "\\\\1") + "\"");
+					clauses.add("quoter = \"" + mods.odb.escapeString(param) + "\"");
 					fiddled = true;
 				}
 				else if (first.equals("score"))
@@ -1179,9 +1179,9 @@ public class Quote
 					throw new ChoobError("Regular expression has no end!");
 				int end = ma.end();
 				String regex = text.substring(pos + 1, end - 1);
-				clauses.add("join"+joins+".message RLIKE \"" + regex.replaceAll("(\\W)", "$1") + "\"");
+				clauses.add("join"+joins+".message RLIKE \"" + mods.odb.escapeString(regex) + "\"");
 				if (user != null)
-					clauses.add("join"+joins+".nick = \"" + user.replaceAll("(\\W)", "$1") + "\"");
+					clauses.add("join"+joins+".nick = \"" + mods.odb.escapeString(user) + "\"");
 				clauses.add("join"+joins+".quoteID = id");
 				joins++;
 
@@ -1205,7 +1205,7 @@ public class Quote
 			{
 				// This is a name
 				user = mods.nick.getBestPrimaryNick( param );
-				clauses.add("join"+joins+".nick = \"" + user.replaceAll("(\\W)", "\\\\1") + "\"");
+				clauses.add("join"+joins+".nick = \"" + mods.odb.escapeString(user) + "\"");
 				clauses.add("join"+joins+".quoteID = id");
 				joins++;
 			}

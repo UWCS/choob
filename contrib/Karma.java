@@ -90,7 +90,7 @@ public class Karma
 	public String[] apiReason(String name)
 	{
 		List<KarmaReasonObject> results;
-		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + name.replaceAll("([\"\\\\])", "\\\\$1") + "\" ORDER BY RAND() LIMIT 1");
+		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\" ORDER BY RAND() LIMIT 1");
 
 		if (results.size() == 0)
 			return null;
@@ -105,7 +105,7 @@ public class Karma
 	public String[] apiReason(String name, boolean up)
 	{
 		List<KarmaReasonObject> results;
-		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + name.replaceAll("([\"\\\\])", "\\\\$1") + "\" AND direction = '" + (up ? 1 : -1) + "' ORDER BY RAND() LIMIT 1");
+		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\" AND direction = '" + (up ? 1 : -1) + "' ORDER BY RAND() LIMIT 1");
 
 		if (results.size() == 0)
 			return null;
@@ -554,7 +554,7 @@ public class Karma
 	private KarmaObject retrieveKarmaObject(String name)
 	{
 		name = name.replaceAll(" ", "_");
-		List<KarmaObject> results = mods.odb.retrieve(KarmaObject.class, "WHERE string = \"" + name.replaceAll("([\"\\\\])", "\\\\$1") + "\"");
+		List<KarmaObject> results = mods.odb.retrieve(KarmaObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\"");
 		if (results.size() == 0)
 		{
 			KarmaObject newObj = new KarmaObject();
@@ -727,10 +727,10 @@ public class Karma
 			
 			if ((item.length() > 2) && item.startsWith("/") && item.endsWith("/")) {
 				// Regexp
-				odbQuery = "WHERE string RLIKE \"" + item.substring(1, item.length() - 1).replaceAll("\\\\", "\\\\\\\\") + "\"";
+				odbQuery = "WHERE string RLIKE \"" + mods.odb.escapeString(item.substring(1, item.length() - 1)) + "\"";
 			} else {
 				// Substring
-				odbQuery = "WHERE string RLIKE \"" + item.replaceAll("(\\W)", "\\\\$1") + "\"";
+				odbQuery = "WHERE string RLIKE \"" + mods.odb.escapeString(item) + "\"";
 			}
 			
 			List odbItems = mods.odb.retrieve(KarmaObject.class, odbQuery);

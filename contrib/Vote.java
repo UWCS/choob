@@ -540,7 +540,7 @@ public class Vote
 		}
 
 		// Have they already voted?
-		List<Voter> voted = mods.odb.retrieve(Voter.class, "WHERE voteID = " + voteID + " AND nick = \"" + mes.getNick().replaceAll("([\\\\\"])", "\\\\$1") + "\"");
+		List<Voter> voted = mods.odb.retrieve(Voter.class, "WHERE voteID = " + voteID + " AND nick = \"" + mods.odb.escapeString(mes.getNick()) + "\"");
 
 		if (voted.size() == 1)
 		{

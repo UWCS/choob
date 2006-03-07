@@ -40,6 +40,11 @@ public final class ObjectDbModule
 		this.mods = mods;
 	}
 
+	public String escapeString(String text)
+	{
+		return text.replaceAll("(\\W)", "\\\\$1");
+	}
+
 	/**
 	 * Retrieve a list of classes matching the specified classtype and clause.
 	 * @param storedClass The .class of the object you want to retrieve.

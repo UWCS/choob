@@ -297,9 +297,9 @@ public class Tell
 		
 		List<TellObject> results;
 		if (rootNick != null && !rootNick.equals(testNick))
-			results = mods.odb.retrieve (TellObject.class, "WHERE target = '" + testNick + "' OR target = '" + rootNick.replaceAll("(\\\\|\\\")","\\\\$1") + "'");
+			results = mods.odb.retrieve (TellObject.class, "WHERE target = '" + mods.odb.escapeString(testNick) + "' OR target = '" + mods.odb.escapeString(rootNick) + "'");
 		else
-			results = mods.odb.retrieve (TellObject.class, "WHERE target = '" + testNick + "'");
+			results = mods.odb.retrieve (TellObject.class, "WHERE target = '" + mods.odb.escapeString(testNick) + "'");
 		
 		if (results.size() != 0)
 		{

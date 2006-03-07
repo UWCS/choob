@@ -85,7 +85,7 @@ public class Factoids
 
 		final String item = params.get(1).replaceAll("\\?","");
 
-		List facts = mods.odb.retrieve( FactoidObject.class , "SORT RANDOM LIMIT (1) WHERE subject = \"" + item.toLowerCase() + "\"");
+		List facts = mods.odb.retrieve( FactoidObject.class , "SORT RANDOM LIMIT (1) WHERE subject = \"" + mods.odb.escapeString(item.toLowerCase()) + "\"");
 
 		if( facts.size() > 0 )
 		{

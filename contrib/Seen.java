@@ -157,7 +157,7 @@ public class Seen
 		List<SeenObj> objs;
 		try
 		{
-			objs=mods.odb.retrieve( SeenObj.class, "WHERE name = \"" + sortNick + "\"" );
+			objs=mods.odb.retrieve( SeenObj.class, "WHERE name = \"" + mods.odb.escapeString(sortNick) + "\"" );
 		}
 		catch (Exception e)
 		{

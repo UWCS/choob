@@ -438,9 +438,9 @@ public class Alias
 
 	public String apiGetCoreAlias( String name )
 	{
-		String command = name.replaceAll("([\\\\\"])","\\\\$1").toLowerCase();
+		String command = name.toLowerCase();
 
-		List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE core = \"" + command + "\"" );
+		List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE core = \"" + mods.odb.escapeString(command) + "\"" );
 
 		if (results.size() == 0)
 			return name;
