@@ -216,6 +216,10 @@ public class Seen
 
 	public void onMessage( ChannelMessage mes ) throws ChoobException
 	{
+		// If the event has been faked, don't count it!
+		if (mes.getSynthLevel() > 0)
+			return;
+		
 		SeenObj seen = getSeen( mes.getNick(), true );
 		seen.nick = mes.getNick();
 		seen.primaryTime = System.currentTimeMillis();
