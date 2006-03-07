@@ -322,12 +322,6 @@ public class Karma
 		if (Pattern.compile(irc.getTriggerRegex()).matcher(mes.getMessage()).find())
 			return;
 
-		if (mes instanceof PrivateEvent)
-		{
-			irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
-			return;
-		}
-
 		Matcher reasonMatch = reasonPattern.matcher(mes.getMessage());
 
 		boolean hasReason = false;
@@ -347,6 +341,13 @@ public class Karma
 			}
 			if (!skip)
 			{
+				// Wait until we know there's a real karma change going on.
+				if (mes instanceof PrivateEvent)
+				{
+					irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
+					return;
+				}
+				
 				boolean increase = reasonMatch.group(3).equals("++");
 
 				// Store the reason too.
@@ -372,6 +373,7 @@ public class Karma
 		while (karmaMatch.find() && karmaObjs.size() < 5)
 		{
 			String name;
+			boolean skip = false;
 			if (karmaMatch.group(1) != null)
 				name = karmaMatch.group(1).replaceAll("\\\\(.)", "$1");
 			else
@@ -379,9 +381,18 @@ public class Karma
 				// need verification on this one.
 				name = karmaMatch.group(2);
 				if (exceptions.contains(name.toLowerCase()))
-					continue;
+					skip = true;
 			}
+			if (skip)
+				continue;
 
+			// Wait until we know there's a real karma change going on.
+			if (mes instanceof PrivateEvent)
+			{
+				irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
+				return;
+			}
+			
 			if (name.equals/*NOT IgnoreCase*/("me"))
 				name=nick;
 
