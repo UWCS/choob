@@ -948,7 +948,7 @@ public class Quote
 			if (count == 1)
 				irc.sendContextReply( mes, "Most recent quote ID: " + output + "." );
 			else
-				irc.sendContextReply( mes, "Most recent quote IDs: " + output + "." );
+				irc.sendContextReply( mes, "Most recent quote IDs (most recent first): " + output + "." );
 		}
 	}
 
