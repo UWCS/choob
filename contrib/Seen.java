@@ -141,7 +141,7 @@ public class Seen
 					break;
 				case 4:
 					// Quit
-					irc.sendContextReply( mes, seen.nick + " before quit with message \"" + seen.secondaryData + "\" at " + secondaryTime + ".");
+					irc.sendContextReply( mes, seen.nick + " quit with message \"" + seen.secondaryData + "\" at " + secondaryTime + ".");
 					break;
 			}
 		}
