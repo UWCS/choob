@@ -50,7 +50,7 @@ public final class HistoryModule
 
 			insertLine.setString(1, mes.getClass().getName());
 			insertLine.setString(2, mes.getNick());
-			insertLine.setString(3, mes.getNick()+"@"+mes.getHostname());
+			insertLine.setString(3, mes.getLogin()+"@"+mes.getHostname());
 			String chan = null;
 			if (mes instanceof ChannelEvent)
 			{
@@ -109,7 +109,7 @@ public final class HistoryModule
 
 			stat.setString(1, mes.getClass().getName());
 			stat.setString(2, mes.getNick());
-			stat.setString(3, mes.getNick()+"@"+mes.getHostname());
+			stat.setString(3, mes.getLogin()+"@"+mes.getHostname());
 			stat.setLong(4, mes.getMillis());
 			stat.setInt(5, mes.getRandom());
 
