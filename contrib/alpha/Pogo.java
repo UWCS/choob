@@ -140,6 +140,9 @@ public class Pogo
 				pipecommands.remove(mes);
 		}
 
+		if (text.length() > 320)
+			text = text.substring(0,320);
+
 		irc.sendContextReply(mes, text);
 	}
 
