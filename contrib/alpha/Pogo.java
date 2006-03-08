@@ -141,7 +141,7 @@ public class Pogo
 		}
 
 		if (text.length() > 320)
-			text = text.substring(0,320);
+			text = text.substring(0,320) + "...";
 
 		irc.sendContextReply(mes, text);
 	}
