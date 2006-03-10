@@ -355,7 +355,7 @@ public class Vote
 			String[] responses = vote.responses.split(",");
 			for(int i=0; i<responses.length; i++)
 			{
-				output.append(responses[i]);
+				output.append(i).append(") \"").append(responses[i]).append("\"");
 				if (i == responses.length - 2)
 					output.append(" and ");
 				else if (i != responses.length - 1)
