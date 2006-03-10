@@ -508,7 +508,7 @@ public class Vote
 		}
 
 		// OK, try to retrieve the vote.
-		List<ActiveVote> matching = mods.odb.retrieve(ActiveVote.class, "WHERE id = " + voteID);
+		List<ActiveVote> matching = mods.odb.retrieve(ActiveVote.class, "WHERE id = " + voteID + " AND finished = 0");
 
 		if (matching.size() == 0)
 		{
