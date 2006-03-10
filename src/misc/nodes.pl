@@ -38,7 +38,7 @@ if (open(CFG, "bot.conf") || open(CFG, "../bot.conf")) {
 	close(CFG);
 	
 	foreach my $conf (@conf) {
-		if ($conf =~ /^dbHost=(.*?)[\r\n]+$/) {
+		if ($conf =~ /^dbServer=(.*?)[\r\n]+$/) {
 			$dbhost = $1;
 		} elsif ($conf =~ /^dbUser=(.*?)[\r\n]+$/) {
 			$dbuser = $1;
