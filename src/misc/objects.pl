@@ -332,7 +332,7 @@ if ($params{help}) {
 				}
 				
 				# Update column widths:
-				my $len = (defined $objectItem->[4] ? length($objectItem->[4]) : length($itemMissing));
+				my $len = length(defined $objectItem->[4] ? $objectItem->[4] : $itemMissing);
 				my $collen = 0;
 				if (exists $columnLens{$objectItem->[1]}) {
 					$collen = $columnLens{$objectItem->[1]};
@@ -466,7 +466,7 @@ if ($params{help}) {
 			} elsif ($format eq 'XML') {
 				print qq[	<object id="$key">\n];
 				foreach my $col (@columns) {
-					if ($columns{$col} eq 'unknown') {
+					if (($columns{$col} eq 'unknown') || !(defined $objects{$key}{$col})) {
 						print qq[		<field name="$col" type="$columns{$col}"/>\n];
 					} else {
 						print qq[		<field name="$col" type="$columns{$col}">] . &escapeXML($objects{$key}{$col}) . qq[</field>\n];
