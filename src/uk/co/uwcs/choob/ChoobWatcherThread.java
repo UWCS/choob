@@ -8,6 +8,7 @@ package uk.co.uwcs.choob;
 
 import uk.co.uwcs.choob.support.*;
 import java.util.*;
+import java.util.concurrent.*;
 import uk.co.uwcs.choob.modules.*;
 
 /**
@@ -38,9 +39,12 @@ public final class ChoobWatcherThread extends Thread
 		{
 			long timeNow = (new Date()).getTime();
 			long next = timeNow + 1000;
+			List<Interval> requeuedIntervals;
+			
 			synchronized( intervalList )
 			{
 				Iterator<Interval> tempIt = intervalList.iterator();
+				requeuedIntervals = new ArrayList<Interval>();
 
 				while( tempIt.hasNext() )
 				{
@@ -56,6 +60,12 @@ public final class ChoobWatcherThread extends Thread
 							{
 								ChoobThreadManager.queueTask(t);
 							}
+							catch (RejectedExecutionException e)
+							{
+								// Plugin is at concurreny limit. Requeue task for later.
+								tempInterval.setTrigger(tempInterval.getTrigger() + 1000);
+								requeuedIntervals.add(tempInterval);
+							}
 							catch (Exception e)
 							{
 								System.err.println("Plugin " + tempInterval.getPlugin() + " got exception queuing task.");
@@ -70,6 +80,15 @@ public final class ChoobWatcherThread extends Thread
 					}
 					else if (next > tempInterval.getTrigger())
 						next = tempInterval.getTrigger();
+				}
+				
+				// Re-queue any items here.
+				// We need to kill the iterator before this will work.
+				tempIt = requeuedIntervals.iterator();
+				while (tempIt.hasNext())
+				{
+					Interval tempInterval = tempIt.next();
+					intervalList.add(tempInterval);
 				}
 			}
 
