@@ -167,6 +167,8 @@ public class Events
 		while (ma.find())
 		{
 			String [] nine=ma.group(9).split("\\|");
+			if (nine.length < 2)
+				nine = new String[] {"", ""}; // split acts unexpectedly with just "|", deal with it.
 			events.add(0, new String[] {"", ma.group(1), ma.group(2), ma.group(3), ma.group(4), ma.group(5), ma.group(6), ma.group(7), ma.group(8), nine[0], ma.group(10), nine[1]});
 		}
 		return events;
