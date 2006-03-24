@@ -109,31 +109,31 @@ public class Tell
 		rv.message = message;
 		rv.date = date;
 		rv.type = type;
-		
+
 		// Only include unique targets.
 		final List<String> validTargets = new ArrayList<String>(MAXTARGETS);
 		for (int i = 0; i < targets.length; i++)
 		{
 			String targetNick = mods.nick.getBestPrimaryNick(targets[i]);
 			String rootTargetNick = mods.security.getRootUser(targetNick);
-			
+
 			String target = rootTargetNick != null ? rootTargetNick : targetNick;
-			
+
 			// Make sure we don't dup targets.
 			if (validTargets.contains(target))
 				continue;
-			
+
 			validTargets.add(target);
 		}
 		rv.targets = validTargets.toArray(new String[0]);
-		
+
 		// Check we're not going to too many people.
 		if (rv.targets.length > MAXTARGETS)
 			rv.error = 1;
-		
+
 		if (rv.error != 0)
 			rv.valid = false;
-		
+
 		return rv;
 	}
 
@@ -141,7 +141,7 @@ public class Tell
 	{
 		if (!tell.valid)
 			return 0;
-		
+
 		final TellObject tellObj = new TellObject();
 
 		// Note: This is intentionally not translated to a primary nick.
@@ -186,11 +186,11 @@ public class Tell
 		final boolean question=params[2].indexOf('?', params[2].length()-5)!=-1; // It's a question if it has a "?" within 5 characters of it's end. (ie. "? :)").
 
 		final String type=question ? "ask" : "tell";
-		final String[] targets = params[1].split(",");
+		final String[] targets = params[1].split(", *");
 		final long time = mes.getMillis();
-		
+
 		final TellData tell = validateTell(mes.getNick(), targets, params[2], time, type);
-		
+
 		if (!tell.valid)
 		{
 			switch (tell.error)
@@ -203,14 +203,14 @@ public class Tell
 					return;
 			}
 		}
-		
+
 		int count = tell.targets.length;
 		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
 		if (!mesFlags.containsKey("timedevents.delayed"))
 		{
 			irc.sendContextReply(mes, "Okay, will " + type + " upon next speaking. (Sent to " + count + " " + (count == 1 ? "person" : "people") + ".)");
 		}
-		
+
 		doTell(tell);
 	}
 
@@ -230,7 +230,7 @@ public class Tell
 		String rnick = mods.security.getRootUser(pnick);
 		if (rnick == null)
 			rnick = pnick;
-		
+
 		synchronized(tellCache)
 		{
 			Iterator<String> iter = tellCache.keySet().iterator();
@@ -241,7 +241,7 @@ public class Tell
 				String ritem = mods.security.getRootUser(pitem);
 				if (ritem == null)
 					ritem = pitem;
-				
+
 				if (ritem.equalsIgnoreCase(rnick))
 					iter.remove();
 			}
@@ -289,18 +289,18 @@ public class Tell
 		}
 		if (willSkip)
 			return;
-		
+
 		// getBestPrimaryNick should be safe from injection
 		String testNick = mods.nick.getBestPrimaryNick( nick );
 		// rootNick won't, necessarily
 		String rootNick = mods.security.getRootUser( testNick );
-		
+
 		List<TellObject> results;
 		if (rootNick != null && !rootNick.equals(testNick))
 			results = mods.odb.retrieve (TellObject.class, "WHERE target = '" + mods.odb.escapeString(testNick) + "' OR target = '" + mods.odb.escapeString(rootNick) + "'");
 		else
 			results = mods.odb.retrieve (TellObject.class, "WHERE target = '" + mods.odb.escapeString(testNick) + "'");
-		
+
 		if (results.size() != 0)
 		{
 			int nsStatus = -1;
@@ -312,7 +312,7 @@ public class Tell
 					if (nsStatus == -1)
 					{
 						// NickServ not yet checked...
-						
+
 						// First pick up the setting of Secure.
 						int secureOption;
 						try
@@ -327,7 +327,7 @@ public class Tell
 						}
 						if (secureOption > 2 || secureOption < 0)
 							secureOption = 1;
-						
+
 						// This is a secure tell. One of several things can happen.
 						if ( secureOption == 2 )
 						{

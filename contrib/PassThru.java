@@ -8,9 +8,9 @@ import java.text.*;
 /**
  * Choob "passthrough" module.
  * You'll have to edit the source to change the nickname you want to pass through to.
- * 
+ *
  * @author bucko
- * 
+ *
  */
 
 public class PassThru
@@ -64,9 +64,8 @@ public class PassThru
 		irc.sendMessage( params.get(1), params.get(2) );
 	}
 
-	public void onPrivateMessage( PrivateMessage mes )
+	public synchronized void onPrivateMessage( PrivateMessage mes )
 	{
-		System.out.println("Test!");
 		ContextEvent context = reply.get(mes.getNick().toLowerCase());
 		if (context != null)
 			irc.sendContextReply( context, mes.getMessage() );

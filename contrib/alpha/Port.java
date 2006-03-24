@@ -72,7 +72,7 @@ public class Port
 	private void updateSources() throws IOException
 	{
 		ports=new HashMap<String, String>();
-		Matcher ma=mods.scrape.getMatcher(iana_numbers, (long)60*60*1000, "(.{17}) +([0-9]+)/(?:(?:tcp)|(?:upd)) +(.*)");
+		Matcher ma=mods.scrape.getMatcher(iana_numbers, (long)60*60*1000, "(.{17}) +([0-9]+)/(?:(?:tcp)|(?:udp)) +(.*)");
 		int i=0;
 		while (ma.find())
 		{
