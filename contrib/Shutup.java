@@ -17,127 +17,140 @@ public class Shutup
 		};
 	}
 
+	// LastMessage tracks the last few events for a single channel. It stores
+	// the timestamp for each message, and allows the retrieval of the 
+	// "difference" - the time between the most recent and oldest event.
 	final class LastMessage
 	{
-		static final int COMMANDS_TO_WATCH=4;			// How many commands to track?
-		long lastmes[]=new long[COMMANDS_TO_WATCH];
-
-		int stor=0;
-
+		static final int EVENTS_TO_WATCH = 4;
+		long lastmes[] = new long[EVENTS_TO_WATCH];
+		
+		int stor = 0;
+		
 		public LastMessage()
 		{
-			for (int i=0; i<COMMANDS_TO_WATCH; i++)
-				lastmes[i]=600000*i;
+			// Store times in the past, that are 600s apart (FIXME: why?).
+			for (int i = 0; i < EVENTS_TO_WATCH; i++)
+				lastmes[i] = 600000/*ms*/ * i;
 			save();
 		}
-
+		
+		// Returns the difference between the oldest and newest events.
 		public long difference()
 		{
-			return lastmes[(stor-1+COMMANDS_TO_WATCH)%COMMANDS_TO_WATCH]-lastmes[stor%COMMANDS_TO_WATCH];
+			return lastmes[(stor - 1 + EVENTS_TO_WATCH) % EVENTS_TO_WATCH] - lastmes[stor % EVENTS_TO_WATCH];
 		}
-
+		
+		// Stores the current time in the list, as the most recent event.
 		public void save()
 		{
-			stor%=COMMANDS_TO_WATCH;
-			lastmes[stor++]=(new java.util.Date()).getTime();
+			stor %= EVENTS_TO_WATCH;
+			lastmes[stor++] = (new java.util.Date()).getTime();
 		}
 	}
-
+	
 	Modules mods;
 	IRCInterface irc;
-
+	
 	public Shutup(Modules mods, IRCInterface irc)
 	{
-		this.mods=mods;
-		this.irc=irc;
+		this.mods = mods;
+		this.irc = irc;
 	}
-
-	static Map<String,LastMessage>lastMessage = Collections.synchronizedMap(new HashMap<String,LastMessage>()); // Channel, LastMessage
-
-	static final long MIN_TIME_DIFFERENCE=6000;			// Minimum time difference?
-
+	
+	// Stores the information about the last events for each channel separately.
+	static Map<String,LastMessage>lastMessage = Collections.synchronizedMap(new HashMap<String,LastMessage>());
+	
+	// Minimum time difference between oldest and newest events to trigger shut-up mode.
+	static final long MIN_TIME_DIFFERENCE = 6000;
+	
 	public String[] helpCommandAdd = {
 		"Make the bot shut up in the current channel.",
 	};
-	public void commandAdd( Message mes, Modules mods, IRCInterface irc )
+	public void commandAdd(Message mes, Modules mods, IRCInterface irc)
 	{
-		final String channel=mes.getContext();
-
+		final String channel = mes.getContext();
+		
 		if (mes instanceof PrivateEvent)
 		{
 			irc.sendContextReply(mes, "You can't shut me up in private!");
 			return;
 		}
-
+		
 		if (!mods.pc.isProtected(channel))
 		{
 			irc.sendContextReply(mes, "Okay, shutting up in " + channel + ".");
 			mods.pc.addProtected(channel);
 		}
 	}
-
+	
 	public String[] helpCommandRemove = {
 		"Make the bot wake up in the current channel.",
 	};
-	public void commandRemove( Message mes, Modules mods, IRCInterface irc )
+	public void commandRemove(Message mes, Modules mods, IRCInterface irc)
 	{
 		if (mes instanceof PrivateEvent)
 		{
 			irc.sendContextReply(mes, "You can't wake me up in private!");
 			return;
 		}
+		
 		if (mods.pc.isProtected(mes.getContext()))
 		{
 			mods.pc.removeProtected(mes.getContext());
 			irc.sendContextReply(mes, "Yay, I'm free to speak in '" + mes.getContext() + "' again!");
 		}
 		else
+		{
 			irc.sendContextReply(mes, "But I can already speak!");
+		}
 	}
-
+	
 	public String[] helpCommandCheck = {
 		"Check if the bot is shut up in the current channel.",
 	};
-	public void commandCheck( Message mes, Modules mods, IRCInterface irc )
+	public void commandCheck(Message mes, Modules mods, IRCInterface irc)
 	{
 		if (mods.pc.isProtected(mes.getContext()))
 			irc.sendContextReply(mes, "Can't speak!");
 		else
 			irc.sendContextReply(mes, "Can speak!");
 	}
-
+	
 	public void interval(Object strChannel)
 	{
-		String channel=(String)strChannel;
+		String channel = (String)strChannel;
 		mods.pc.removeProtected(channel);
 	}
-
-	public void onMessage( ChannelMessage mes ) throws ChoobException
+	
+	public void onMessage(ChannelMessage mes) throws ChoobException
 	{
-		String channel=mes.getContext();
-		if (channel==null)
+		String channel = mes.getContext();
+		if (channel == null)
 			return;
-
+		
 		Matcher matcher = Pattern.compile(irc.getTriggerRegex()).matcher(mes.getMessage());
 		if (!matcher.find())
 			return;
-
-		LastMessage la=lastMessage.get(channel);
-
-		if (la==null)
+		
+		LastMessage la = lastMessage.get(channel);
+		
+		if (la == null)
+		{
 			lastMessage.put(channel, new LastMessage());
+		}
 		else
 		{
 			la.save();
-			long laa=la.difference();
-			System.out.println(laa);
-			if (laa<MIN_TIME_DIFFERENCE)
+			long totalEventDelay = la.difference();
+			if (totalEventDelay < MIN_TIME_DIFFERENCE)
 			{
 				if (!mods.pc.isProtected(channel))
+				{
 					irc.sendMessage(channel, "Shutting up for a bit!");
-				mods.pc.addProtected(channel);
+					mods.pc.addProtected(channel);
+				}
 				mods.interval.callBack(channel, 25000);
-				return;
 			}
 		}
 	}
