@@ -25,8 +25,6 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 	 * keeps a command name --> function map in particular.
 	 */
 	private JavaScriptPluginMap pluginMap;
-	// The size of the reading buffer when loading JS files.
-	private static final int READER_CHUNK = 1024;
 	// For passing to plugin constructors.
 	private final Modules mods;
 	private final IRCInterface irc;
@@ -68,22 +66,18 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 		}
 		try {
 			/*
-			 * This lot reads the resource in in chunks, using a buffer, and
+			 * This lot reads the resource in in lines, using a buffer, and
 			 * simply keeps the code in a local variable (once it has be
 			 * evaluated in a plugin instances, it is no longer needed).
 			 */
 			con.connect();
 			InputStream stream = con.getInputStream();
 			InputStreamReader streamReader = new InputStreamReader(stream);
-			int read = 0;
-			char[] chars = new char[READER_CHUNK];
-			while (true) {
-				int r = streamReader.read(chars, 0, READER_CHUNK);
-				if (r == -1)
-					break;
-				for (int i = 0; i < r; i++)
-					code += chars[i];
-				read += r;
+			BufferedReader bufferedStreamReader = new BufferedReader(streamReader);
+			
+			String line;
+			while ((line = bufferedStreamReader.readLine()) != null) {
+				code += line + "\n";
 			}
 		} catch(IOException e) {
 			throw new ChoobException("Unable to fetch the source from <" + fromLocation + ">.");
