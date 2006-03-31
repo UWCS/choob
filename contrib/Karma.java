@@ -27,6 +27,35 @@ public class KarmaReasonObject
 	public String reason;
 }
 
+class KarmaSortByAbsValue implements Comparator<KarmaObject>
+{
+	public int compare(KarmaObject o1, KarmaObject o2) {
+		if (Math.abs(o1.value) > Math.abs(o2.value)) {
+			return -1;
+		}
+		if (Math.abs(o1.value) < Math.abs(o2.value)) {
+			return 1;
+		}
+		if (o1.up > o2.up) {
+			return -1;
+		}
+		if (o1.up < o2.up) {
+			return 1;
+		}
+		if (o1.down > o2.down) {
+			return -1;
+		}
+		if (o1.down < o2.down) {
+			return 1;
+		}
+		return 0;
+	}
+	
+	public boolean equals(Object obj) {
+		return false;
+	}
+}
+
 public class Karma
 {
 	// Non-null == ignore.
@@ -730,18 +759,20 @@ public class Karma
 				odbQuery = "WHERE string RLIKE \"" + mods.odb.escapeString(item.substring(1, item.length() - 1)) + "\"";
 			} else {
 				// Substring
-				odbQuery = "WHERE string RLIKE \"" + mods.odb.escapeString(item) + "\"";
+				odbQuery = "WHERE string LIKE \"%" + mods.odb.escapeString(item) + "%\"";
 			}
 			
-			List odbItems = mods.odb.retrieve(KarmaObject.class, odbQuery);
+			List<KarmaObject> odbItems = (List<KarmaObject>)mods.odb.retrieve(KarmaObject.class, odbQuery);
 			
 			if (odbItems.size() == 0) {
 				irc.sendContextReply(mes, "No karma items matched '" + item + "'.");
 			} else {
+				Collections.sort(odbItems, new KarmaSortByAbsValue());
+				
 				String rpl = "Karma items matching '" + item + "': ";
 				boolean cutOff = false;
 				for (int j = 0; j < odbItems.size(); j++) {
-					KarmaObject ko = ((KarmaObject)odbItems.get(j));
+					KarmaObject ko = odbItems.get(j);
 					if (rpl.length() + ko.string.length() > 350) {
 						cutOff = true;
 						break;
