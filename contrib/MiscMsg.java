@@ -263,7 +263,7 @@ public class MiscMsg
 			}
 		} else if ((params.size() >= 2) && dateMatcher.matches()) {
 			Date now = new Date();
-			DateFormat dayFmt = new SimpleDateFormat("EEE");
+			DateFormat dayFmt = new SimpleDateFormat("EEE, d MMM yyyy");
 			
 			if (dateMatcher.group(1) != null) {
 				now = (new GregorianCalendar(Integer.parseInt(dateMatcher.group(1)), Integer.parseInt(dateMatcher.group(2)) - 1, Integer.parseInt(dateMatcher.group(3)), 12, 0, 0)).getTime();
@@ -280,11 +280,7 @@ public class MiscMsg
 			String day = dayFmt.format(now);
 			String week = diffToTermWeek(diff);
 			
-			if (week.indexOf("week") != -1) {
-				irc.sendContextReply(mes, message + " is " + day + ", " + diffToTermWeek(diff) + ".");
-			} else {
-				irc.sendContextReply(mes, message + " is " + diffToTermWeek(diff) + ".");
-			}
+			irc.sendContextReply(mes, day + " is " + diffToTermWeek(diff) + ".");
 		} else if ((isNumber(params.get(1)) && (
 					((params.size() == 2)) ||
 					((params.size() == 4) && params.get(2).equals("term") && isNumber(params.get(3))) ||
