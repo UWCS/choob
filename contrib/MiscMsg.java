@@ -3,6 +3,7 @@ import uk.co.uwcs.choob.modules.*;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
+import java.util.regex.*;
 import java.text.*;
 import java.io.*;
 
@@ -223,4 +224,190 @@ public class MiscMsg
 	{
 		irc.sendContextReply(mes, "I have been up " + mods.util.timeLongStamp((new Date()).getTime() - mods.util.getStartTime(), 3) + ".");
 	}
+	
+	
+	public String[] helpCommandWeek = {
+		"Displays the week number for the current date or specified date/week.",
+		"[ <week> [OF TERM <term>] | RBW <week> | <date> ]",
+		"<week> is the week (or room booking week [RBW]) to look up",
+		"<term> is the term (1, 2 or 3 only)",
+		"<date> is the date, in \"yyyy-mm-dd\", \"d/m/yyyy\" or \"d mmm yyyy\" format."
+	};
+	
+	final int termStart = 1127692800; // 2005-09-26
+	
+	public void commandWeek(Message mes)
+	{
+		List<String> params = mods.util.getParams(mes);
+		String message = mods.util.getParamString(mes);
+		
+		Matcher dateMatcher = null;
+		if (params.size() >= 2) {
+			dateMatcher = Pattern.compile("^(?:(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)" +
+					"|(\\d\\d?)/(\\d\\d?)/(\\d\\d\\d?\\d?)" +
+					"|(\\d\\d?) (\\w\\w\\w) (\\d\\d\\d?\\d?))$", Pattern.CASE_INSENSITIVE).matcher(message);
+		}
+		
+		if (params.size() <= 1) {
+			Date now = new Date();
+			DateFormat dayFmt = new SimpleDateFormat("EEE");
+			
+			int diff = (int)Math.floor(((int)(now.getTime() / 1000) - termStart) / 86400);
+			String day = dayFmt.format(now);
+			String week = diffToTermWeek(diff);
+			
+			if (week.indexOf("week") != -1) {
+				irc.sendContextReply(mes, "It's " + day + ", " + diffToTermWeek(diff) + ".");
+			} else {
+				irc.sendContextReply(mes, "It's " + diffToTermWeek(diff) + ".");
+			}
+		} else if ((params.size() >= 2) && dateMatcher.matches()) {
+			Date now = new Date();
+			DateFormat dayFmt = new SimpleDateFormat("EEE");
+			
+			if (dateMatcher.group(1) != null) {
+				now = (new GregorianCalendar(Integer.parseInt(dateMatcher.group(1)), Integer.parseInt(dateMatcher.group(2)) - 1, Integer.parseInt(dateMatcher.group(3)), 12, 0, 0)).getTime();
+			} else if (dateMatcher.group(4) != null) {
+				now = (new GregorianCalendar(Integer.parseInt(dateMatcher.group(6)), Integer.parseInt(dateMatcher.group(5)) - 1, Integer.parseInt(dateMatcher.group(4)), 12, 0, 0)).getTime();
+			} else if (dateMatcher.group(7) != null) {
+				now = (new GregorianCalendar(Integer.parseInt(dateMatcher.group(9)), nameToMonth(dateMatcher.group(8)), Integer.parseInt(dateMatcher.group(7)), 12, 0, 0)).getTime();
+			} else {
+				irc.sendContextReply(mes, "Sorry, I can't parse that date. Please use yyyy-mm-dd, dd/mm/yyyy or dd mmm yyyy.");
+				return;
+			}
+			
+			int diff = (int)Math.floor(((int)(now.getTime() / 1000) - termStart) / 86400);
+			String day = dayFmt.format(now);
+			String week = diffToTermWeek(diff);
+			
+			if (week.indexOf("week") != -1) {
+				irc.sendContextReply(mes, message + " is " + day + ", " + diffToTermWeek(diff) + ".");
+			} else {
+				irc.sendContextReply(mes, message + " is " + diffToTermWeek(diff) + ".");
+			}
+		} else if ((isNumber(params.get(1)) && (
+					((params.size() == 2)) ||
+					((params.size() == 4) && params.get(2).equals("term") && isNumber(params.get(3))) ||
+					((params.size() == 5) && params.get(2).equals("of") && params.get(3).equals("term") && isNumber(params.get(4)))
+				)) ||
+					((params.size() == 3) && params.get(1).toLowerCase().equals("rbw") && isNumber(params.get(2)))) {
+			// Week number.
+			int weekNum = 0;
+			int num = 0;
+			boolean rbw = params.get(1).toLowerCase().equals("rbw");
+			
+			if (rbw) {
+				weekNum = Integer.parseInt(params.get(2));
+				num = weekNum;
+				if ((weekNum < 1) || (weekNum > 39)) {
+					irc.sendContextReply(mes, weekNum + " isn't a valid Room Booking week number. It must be between 1 and 39, inclusive.");
+					return;
+				}
+			} else {
+				weekNum = Integer.parseInt(params.get(1));
+				if (params.size() > 3) {
+					if ((weekNum < 1) || (weekNum > 10)) {
+						irc.sendContextReply(mes, weekNum + " isn't a valid week number. It must be between 1 and 10, inclusive.");
+						return;
+					}
+					int term = Integer.parseInt(params.get(params.size() - 1));
+					if ((term < 1) || (term > 3)) {
+						irc.sendContextReply(mes, term + " isn't a valid term. It must be between 1 and 3, inclusive.");
+						return;
+					}
+					weekNum += 10 * (term - 1);
+				}
+				if ((weekNum < 1) || (weekNum > 30)) {
+					irc.sendContextReply(mes, weekNum + " isn't a valid week number. It must be between 1 and 30, inclusive.");
+					return;
+				}
+				num = weekNum;
+				if (weekNum > 20) weekNum += 5;
+				if (weekNum > 10) weekNum += 4;
+			}
+			
+			DateFormat weekFmt = new SimpleDateFormat("EEE, d MMM yyyy");
+			
+			int dateSt = termStart + ((weekNum - 1) * 86400 * 7);
+			int dateEn = dateSt + (86400 * 6);
+			
+			if ((weekNum == 24) || (weekNum == 39)) {
+				dateEn -= (86400 * 2);
+			}
+			
+			String dateStS = weekFmt.format(new Date((long)dateSt * 1000));
+			String dateEnS = weekFmt.format(new Date((long)dateEn * 1000));
+			
+			irc.sendContextReply(mes, (rbw ? "Room Booking week " : "Week ") + num + " is from " + dateStS + " to " + dateEnS + ".");
+		} else {
+			irc.sendContextReply(mes, "Sorry, I don't know what you mean.");
+		}
+	}
+	
+	boolean isNumber(String item) {
+		try {
+			return (item.equals((new Integer(item)).toString()));
+		} catch(Exception e) {
+		}
+		return false;
+	}
+	
+	int nameToMonth(String name) {
+		name = name.toLowerCase();
+		
+		if (name.equals("jan")) return 0;
+		if (name.equals("feb")) return 1;
+		if (name.equals("mar")) return 2;
+		if (name.equals("apr")) return 3;
+		if (name.equals("may")) return 4;
+		if (name.equals("jun")) return 5;
+		if (name.equals("jul")) return 6;
+		if (name.equals("aug")) return 7;
+		if (name.equals("sep")) return 8;
+		if (name.equals("oct")) return 9;
+		if (name.equals("nov")) return 10;
+		if (name.equals("dec")) return 11;
+		return -1;
+	}
+	
+	String diffToTermWeek(int diff) {
+		//           Christmas             Easter
+		//  <term1>  <4 weeks>  <term2>  <5 weeks>  <term3>
+		// 0   -   10    -    14   -   24    -    29   -   39
+		
+		if (diff < -7 * 13) {
+			return "before the current academic year";
+		} else if (diff < 0) {
+			return "the summer holidays";
+		} else if (diff < 7 * 10 - 2) {
+			int week = (int)Math.floor(diff / 7) + 1;
+			int tw = week - 0;
+			int rbw = week + 0;
+			return "week " + week + " (week " + tw + " of term 1)";
+		} else if (diff < 7 * 14 - 0) {
+			int week = (int)Math.floor(diff / 7) - 9;
+			int rbw = week + 10;
+			return "week " + week + " of the Christmas holidays (room booking week " + rbw + ")";
+		} else if (diff < 7 * 24 - 2) {
+			int week = (int)Math.floor(diff / 7) - 3;
+			int tw = week - 10;
+			int rbw = week + 4;
+			return "week " + week + " (week " + tw + " of term 2, room booking week " + rbw + ")";
+		} else if (diff < 7 * 29 - 0) {
+			int week = (int)Math.floor(diff / 7) - 23;
+			int rbw = week + 24;
+			return "week " + week + " of the Easter holidays (room booking week " + rbw + ")";
+		} else if (diff < 7 * 39 - 2) {
+			int week = (int)Math.floor(diff / 7) - 8;
+			int tw = week - 20;
+			int rbw = week + 9;
+			return "week " + week + " (week " + tw + " of term 3, room booking week " + rbw + ")";
+		} else if(diff < 7 * 52) {
+			int week = (int)Math.floor(diff / 7) - 38;
+			return "week " + week + " of the summer holidays";
+		} else {
+			return "after the current academic year";
+		}
+	}
+
 }
