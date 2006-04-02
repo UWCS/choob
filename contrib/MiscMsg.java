@@ -271,7 +271,7 @@ public class MiscMsg
 				now = (new GregorianCalendar(Integer.parseInt(dateMatcher.group(6)), Integer.parseInt(dateMatcher.group(5)) - 1, Integer.parseInt(dateMatcher.group(4)), 12, 0, 0)).getTime();
 			} else if (dateMatcher.group(7) != null) {
 				int month = nameToMonth(dateMatcher.group(8));
-				if (motnh == -1) {
+				if (month == -1) {
 					irc.sendContextReply(mes, "Sorry, I can't parse that date. Please use yyyy-mm-dd, dd/mm/yyyy or dd mmm yyyy.");
 					return;
 				}
