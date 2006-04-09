@@ -21,6 +21,9 @@ public class MiscMsg
 
 	private IRCInterface irc;
 	private Modules mods;
+
+	final static Random rand = new Random();
+
 	public MiscMsg(Modules mods, IRCInterface irc)
 	{
 		this.mods = mods;
@@ -104,7 +107,6 @@ public class MiscMsg
 		}
 
 		String params = mods.util.getParamString(mes);
-		Random rand = new Random();
 
 		if (params.length() == 0)
 		{
@@ -222,10 +224,9 @@ public class MiscMsg
 
 	public void commandUptime( Message mes )
 	{
-		irc.sendContextReply(mes, "I have been up " + mods.util.timeLongStamp((new Date()).getTime() - mods.util.getStartTime(), 3) + ".");
+		irc.sendContextReply(mes, "I have been up " + mods.date.timeLongStamp((new Date()).getTime() - mods.util.getStartTime(), 3) + ".");
 	}
-	
-	
+
 	public String[] helpCommandWeek = {
 		"Displays the week number for the current date or specified date/week.",
 		"[ <week> [OF TERM <term>] | RBW <week> | <date> ]",
@@ -233,29 +234,29 @@ public class MiscMsg
 		"<term> is the term (1, 2 or 3 only)",
 		"<date> is the date, in \"yyyy-mm-dd\", \"d/m/yyyy\" or \"d mmm yyyy\" format."
 	};
-	
+
 	final int termStart = 1127692800; // 2005-09-26
-	
+
 	public void commandWeek(Message mes)
 	{
 		List<String> params = mods.util.getParams(mes);
 		String message = mods.util.getParamString(mes);
-		
+
 		Matcher dateMatcher = null;
 		if (params.size() >= 2) {
 			dateMatcher = Pattern.compile("^(?:(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)" +
 					"|(\\d\\d?)/(\\d\\d?)/(\\d\\d\\d?\\d?)" +
 					"|(\\d\\d?) (\\w\\w\\w) (\\d\\d\\d?\\d?))$", Pattern.CASE_INSENSITIVE).matcher(message);
 		}
-		
+
 		if (params.size() <= 1) {
 			Date now = new Date();
 			DateFormat dayFmt = new SimpleDateFormat("EEE");
-			
+
 			int diff = (int)Math.floor(((int)(now.getTime() / 1000) - termStart) / 86400);
 			String day = dayFmt.format(now);
 			String week = diffToTermWeek(diff);
-			
+
 			if (week.indexOf("week") != -1) {
 				irc.sendContextReply(mes, "It's " + day + ", " + diffToTermWeek(diff) + ".");
 			} else {
@@ -264,7 +265,7 @@ public class MiscMsg
 		} else if ((params.size() >= 2) && dateMatcher.matches()) {
 			Date now = new Date();
 			DateFormat dayFmt = new SimpleDateFormat("EEE, d MMM yyyy");
-			
+
 			if (dateMatcher.group(1) != null) {
 				now = (new GregorianCalendar(Integer.parseInt(dateMatcher.group(1)), Integer.parseInt(dateMatcher.group(2)) - 1, Integer.parseInt(dateMatcher.group(3)), 12, 0, 0)).getTime();
 			} else if (dateMatcher.group(4) != null) {
@@ -275,17 +276,17 @@ public class MiscMsg
 					irc.sendContextReply(mes, "Sorry, I can't parse that date. Please use yyyy-mm-dd, dd/mm/yyyy or dd mmm yyyy.");
 					return;
 				}
-				
+
 				now = (new GregorianCalendar(Integer.parseInt(dateMatcher.group(9)), month, Integer.parseInt(dateMatcher.group(7)), 12, 0, 0)).getTime();
 			} else {
 				irc.sendContextReply(mes, "Sorry, I can't parse that date. Please use yyyy-mm-dd, dd/mm/yyyy or dd mmm yyyy.");
 				return;
 			}
-			
+
 			int diff = (int)Math.floor(((int)(now.getTime() / 1000) - termStart) / 86400);
 			String day = dayFmt.format(now);
 			String week = diffToTermWeek(diff);
-			
+
 			irc.sendContextReply(mes, day + " is " + diffToTermWeek(diff) + ".");
 		} else if ((isNumber(params.get(1)) && (
 					((params.size() == 2)) ||
@@ -297,7 +298,7 @@ public class MiscMsg
 			int weekNum = 0;
 			int num = 0;
 			boolean rbw = params.get(1).toLowerCase().equals("rbw");
-			
+
 			if (rbw) {
 				weekNum = Integer.parseInt(params.get(2));
 				num = weekNum;
@@ -327,25 +328,25 @@ public class MiscMsg
 				if (weekNum > 20) weekNum += 5;
 				if (weekNum > 10) weekNum += 4;
 			}
-			
+
 			DateFormat weekFmt = new SimpleDateFormat("EEE, d MMM yyyy");
-			
+
 			int dateSt = termStart + ((weekNum - 1) * 86400 * 7);
 			int dateEn = dateSt + (86400 * 6);
-			
+
 			if ((weekNum == 24) || (weekNum == 39)) {
 				dateEn -= (86400 * 2);
 			}
-			
+
 			String dateStS = weekFmt.format(new Date((long)dateSt * 1000));
 			String dateEnS = weekFmt.format(new Date((long)dateEn * 1000));
-			
+
 			irc.sendContextReply(mes, (rbw ? "Room Booking week " : "Week ") + num + " is from " + dateStS + " to " + dateEnS + ".");
 		} else {
 			irc.sendContextReply(mes, "Sorry, I don't know what you mean.");
 		}
 	}
-	
+
 	boolean isNumber(String item) {
 		try {
 			return (item.equals((new Integer(item)).toString()));
@@ -353,10 +354,10 @@ public class MiscMsg
 		}
 		return false;
 	}
-	
+
 	int nameToMonth(String name) {
 		name = name.toLowerCase();
-		
+
 		if (name.equals("jan")) return 0;
 		if (name.equals("feb")) return 1;
 		if (name.equals("mar")) return 2;
@@ -371,12 +372,12 @@ public class MiscMsg
 		if (name.equals("dec")) return 11;
 		return -1;
 	}
-	
+
 	String diffToTermWeek(int diff) {
 		//           Christmas             Easter
 		//  <term1>  <4 weeks>  <term2>  <5 weeks>  <term3>
 		// 0   -   10    -    14   -   24    -    29   -   39
-		
+
 		if (diff < -7 * 13) {
 			return "before the current academic year";
 		} else if (diff < 0) {

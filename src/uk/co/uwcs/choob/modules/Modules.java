@@ -69,6 +69,11 @@ public final class Modules
 	 */
 	public ScraperModule scrape;
 
+	/**
+	 * An instance of the DateModule, a set of tools for manipulating dates.
+	 */
+	public DateModule date;
+
 	private DbConnectionBroker dbBroker;
 	private Map pluginMap;
 	private List intervalList;
@@ -81,16 +86,17 @@ public final class Modules
 	{
 		try
 		{
-			plugin = new PluginModule(pluginMap, dbBroker, this, irc, bot);
+			date = new DateModule();
 			history = new HistoryModule(dbBroker);
-			util = new UtilModule(irc);
-			nick = new NickModule();
 			interval = new IntervalModule( intervalList, this );
-			synthetic = new SyntheticModule( bot );
-			security = new SecurityModule( dbBroker, this );
-			pc = new ProtectedChannels();
+			nick = new NickModule();
 			odb = new ObjectDbModule( dbBroker, this );
+			pc = new ProtectedChannels();
+			plugin = new PluginModule(pluginMap, dbBroker, this, irc, bot);
 			scrape = new ScraperModule();
+			security = new SecurityModule( dbBroker, this );
+			synthetic = new SyntheticModule( bot );
+			util = new UtilModule(irc);
 		}
 		catch (ChoobException e)
 		{

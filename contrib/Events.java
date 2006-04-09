@@ -84,7 +84,7 @@ public class Events
 				String[] n=ni.next();
 				String[] c=curr.get(Integer.parseInt(n[ID]));
 				if (c==null)
-					irc.sendMessage(announceChannel, "New event! " + n[NAME] + " at " + n[10] + " in " + mods.util.timeMicroStamp((new Date(Long.parseLong(n[3])*(long)1000)).getTime() - (new Date()).getTime()) + ".");
+					irc.sendMessage(announceChannel, "New event! " + n[NAME] + " at " + n[10] + " in " + mods.date.timeMicroStamp((new Date(Long.parseLong(n[3])*(long)1000)).getTime() - (new Date()).getTime()) + ".");
 				else
 				{
 					if (!c[SIGNUPCURRENT].equals(n[SIGNUPCURRENT]))
@@ -141,7 +141,7 @@ public class Events
 						}
 						String sigts=sig.toString();
 						if (sigts.length()>2) sigts=sigts.substring(0, sigts.length()-2);
-						irc.sendMessage(announceChannel, "Signups for " + Colors.BOLD + n[NAME] + Colors.NORMAL + " (" + n[ID] + ") [" + mods.util.timeMicroStamp((new Date(Long.parseLong(n[3])*(long)1000)).getTime() - (new Date()).getTime()) + "] now " + n[SIGNUPCURRENT] + "/" + n[SIGNUPMAX] + " (" + sigts + ").");
+						irc.sendMessage(announceChannel, "Signups for " + Colors.BOLD + n[NAME] + Colors.NORMAL + " (" + n[ID] + ") [" + mods.date.timeMicroStamp((new Date(Long.parseLong(n[3])*(long)1000)).getTime() - (new Date()).getTime()) + "] now " + n[SIGNUPCURRENT] + "/" + n[SIGNUPMAX] + " (" + sigts + ").");
 					}
 				}
 			}
@@ -248,7 +248,7 @@ public class Events
 				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
 					if (!ev[5].equals("X") && !ev[5].equals("-"))
-						irc.sendContextReply(mes, "Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev[1] + "&action=signup to sign-up for " + Colors.BOLD + ev[2] + Colors.NORMAL + (!finished ? " [" + mods.util.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + ".");
+						irc.sendContextReply(mes, "Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev[1] + "&action=signup to sign-up for " + Colors.BOLD + ev[2] + Colors.NORMAL + (!finished ? " [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + ".");
 					else
 					{
 						rep+="Event " + ev[1] + " matched, but does not accept sign-ups... ";
@@ -335,9 +335,9 @@ public class Events
 				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
 					if (ev[SIGNUPCURRENT].equals("0"))
-						irc.sendContextReply(mes, "No signups for " + Colors.BOLD + ev[2] + Colors.NORMAL  + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + mods.util.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + "!");
+						irc.sendContextReply(mes, "No signups for " + Colors.BOLD + ev[2] + Colors.NORMAL  + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + "!");
 					else
-						irc.sendContextReply(mes, "Signups for " + Colors.BOLD + ev[2] + Colors.NORMAL  + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + mods.util.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + ": " + ( mes instanceof PrivateEvent ? ev[8] : ev[8].replaceAll("([a-zA-Z])([^, ]+)","$1'$2") ) + ".");
+						irc.sendContextReply(mes, "Signups for " + Colors.BOLD + ev[2] + Colors.NORMAL  + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + ": " + ( mes instanceof PrivateEvent ? ev[8] : ev[8].replaceAll("([a-zA-Z])([^, ]+)","$1'$2") ) + ".");
 					return;
 				}
 		}
@@ -372,9 +372,9 @@ public class Events
 				" at " + ev[10] + " (" + ev[1] + ")" +
 				(!finished ?
 					(inprogress ?
-						" (" + Colors.BOLD + "on right now" + Colors.NORMAL + ", started " + mods.util.timeMicroStamp((new Date()).getTime() - da.getTime()) + " ago)"
+						" (" + Colors.BOLD + "on right now" + Colors.NORMAL + ", started " + mods.date.timeMicroStamp((new Date()).getTime() - da.getTime()) + " ago)"
 					:
-						" [" + mods.util.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]"
+						" [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]"
 					)
 				:
 					""

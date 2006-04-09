@@ -82,7 +82,7 @@ public final class Choob extends PircBot
 		{
 			broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://"
 					+ conf.getSettingFallback("dbServer","localhost")
-					+ "/choob?autoReconnect=true&"
+					+ "/" + conf.getSettingFallback("database","choob") + "?autoReconnect=true&"
 					+ "autoReconnectForPools=true&initialTimeout=1&"
 					+ "useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8",
 						conf.getSettingFallback("dbUser","choob"), conf.getSettingFallback("dbPass",""), 10, 20, logFile, 60);

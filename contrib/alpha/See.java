@@ -22,7 +22,7 @@ public class See
 
 	String timeStamp(Timestamp d)
 	{
-		return mods.util.timeLongStamp((new java.util.Date()).getTime()-d.getTime(), 2);
+		return mods.date.timeLongStamp((new java.util.Date()).getTime()-d.getTime(), 2);
 	}
 
 	public final synchronized void commandBodyClock( Message mes ) throws SQLException
@@ -72,7 +72,7 @@ public class See
 
 			final long minutes=(Math.round((bodyclock-Math.floor(bodyclock))*60.0f));
 
-			ret+=nick + " probably got up " + timeStamp(gotup) + " ago after " + mods.util.timeLongStamp(diff, 1) + " of sleep, making their body-clock time about " + ((int)Math.floor(bodyclock)) + ":" + (minutes < 10 ? "0" : "") + minutes;
+			ret+=nick + " probably got up " + timeStamp(gotup) + " ago after " + mods.date.timeLongStamp(diff, 1) + " of sleep, making their body-clock time about " + ((int)Math.floor(bodyclock)) + ":" + (minutes < 10 ? "0" : "") + minutes;
 
 			irc.sendContextReply(mes, ret + ".");
 		}
