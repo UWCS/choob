@@ -6,6 +6,8 @@
 package uk.co.uwcs.choob.support.events;
 import uk.co.uwcs.choob.support.events.*;
 
+import java.util.*;
+
 public class IRCEvent extends Event implements IRCRootEvent
 {
 	/**
@@ -47,6 +49,19 @@ public class IRCEvent extends Event implements IRCRootEvent
 		 return synthLevel;
 	}
 
+	/**
+	 * synthFlags
+	 */
+	private final Map<String,String> synthFlags;
+
+	/**
+	 * Get the value of synthFlags
+	 * @return The value of synthFlags
+	 */
+	public Map<String,String> getSynthFlags() {
+		 return synthFlags;
+	}
+
 
 	/**
 	 * Construct a new IRCEvent.
@@ -58,6 +73,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 		this.random = random;
 		java.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission("event.create"));
 		this.synthLevel = 0;
+		this.synthFlags = new HashMap<String,String>();
 	}
 
 	/**
@@ -70,6 +86,10 @@ public class IRCEvent extends Event implements IRCRootEvent
 		this.random = old.random;
 		java.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission("event.create"));
 		this.synthLevel = old.synthLevel + 1;
+		this.synthFlags = new HashMap<String,String>();
+		for (String prop : old.synthFlags.keySet()) {
+			this.synthFlags.put(prop, new String(((String)old.synthFlags.get(prop))));
+		}
 	}
 
 	/**
@@ -88,7 +108,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 		if ( !super.equals(obj) )
 			return false;
 		IRCEvent thing = (IRCEvent)obj;
-		if ( true && (millis == thing.millis) && (random == thing.random) && (synthLevel == thing.synthLevel) )
+		if ( true && (millis == thing.millis) && (random == thing.random) && (synthLevel == thing.synthLevel) && (synthFlags == thing.synthFlags) )
 			return true;
 		return false;
 	}
@@ -100,6 +120,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 		out.append(", millis = " + millis);
 		out.append(", random = " + random);
 		out.append(", synthLevel = " + synthLevel);
+		out.append(", synthFlags = " + synthFlags);
 		out.append(")");
 		return out.toString();
 	}
