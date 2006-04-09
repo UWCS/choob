@@ -602,15 +602,9 @@ public final class ScraperModule
 			Character c=EntityMap.get(html.substring(p+1,semi));
 
 			if (c==null)
-			{
-				System.out.println(html.substring(lastp, semi));
 				buf.append(html.substring(lastp, semi+1));
-			}
 			else
-			{
-				buf.append(html.substring(lastp,p));
-				buf.append(c);
-			}
+				buf.append(html.substring(lastp,p)).append(c);
 
 			p=semi+1;
 			lastp=p;

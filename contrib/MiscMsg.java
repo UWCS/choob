@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.regex.*;
 import java.text.*;
 import java.io.*;
+import java.net.*;
 
 public class MiscMsg
 {
@@ -413,4 +414,64 @@ public class MiscMsg
 		}
 	}
 
+
+	public String[] helpCommandExchange = {
+		"Ask the magical 8 ball to sort out your life.",
+		"<from> <to> [ammount]",
+		"<from> is the three-letter code of the currency to convert from.",
+		"<to> is the three-letter code of the currency to convert to.",
+		"[ammount] is a number..",
+	};
+
+	public void commandExchange(Message mes)
+	{
+		String[] command = mods.util.getParamString(mes).replaceAll("[\\(\\),]+", " ").trim().split(" +");
+		if (command.length == 2)
+			command = new String[] { command[0], command[1], "1" };
+		if (command.length != 3)
+		{
+			irc.sendContextReply(mes, "Incorrect number of arguments specified.");
+			return;
+		}
+
+		command[0]=command[0].toUpperCase();
+		command[1]=command[1].toUpperCase();
+
+		URL url;
+		try
+		{
+			url = new URL("http://finance.yahoo.com/currency/convert?amt=" + URLEncoder.encode(command[2], "UTF-8") + "&from=" + URLEncoder.encode(command[0], "UTF-8") + "&to=" + URLEncoder.encode(command[1], "UTF-8") + "&submit=Convert");
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			irc.sendContextReply(mes, "Unexpected exception generating url.");
+			return;
+		}
+		catch (MalformedURLException e)
+		{
+			irc.sendContextReply(mes, "Error, malformed url generated.");
+			return;
+		}
+
+		String s;
+		try
+		{
+			s = mods.scrape.getContentsCached(url);
+		}
+		catch (IOException e)
+		{
+			irc.sendContextReply(mes, "Failed to read site.");
+			return;
+		}
+		Matcher fromFull = Pattern.compile("(?s)<td class=\"yfnc_tablehead1\"><b>Symbol</b></td>\\s*<td class=\"yfnc_tablehead1\"><b>([^\n]+?)</b></td>").matcher(s);
+		Matcher toFull = Pattern.compile("(?s)Rate</b></td>\\s*<td class=\"yfnc_tablehead1\"><b>([^\n]+?)</b></td>").matcher(s);
+		Matcher converted = Pattern.compile("(?s)[0-9]</td>\\s*<td class=\"yfnc_tabledata1\"><b>([^\n]+?)</b></td>").matcher(s);
+
+		if (fromFull.find() && toFull.find() && converted.find())
+			irc.sendContextReply(mes, command[2] + " " + command[0] + " (" + fromFull.group(1) + ") is " + converted.group(1) + " " + command[1] + " (" + toFull.group(1) + ").");
+		else
+			irc.sendContextReply(mes, "Failed to parse reply, unsupported currency? (http://finance.yahoo.com/currency for a list)");
+
+
+	}
 }
