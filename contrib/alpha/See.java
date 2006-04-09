@@ -22,7 +22,7 @@ public class See
 
 	String timeStamp(Timestamp d)
 	{
-		return mods.date.timeLongStamp((new java.util.Date()).getTime()-d.getTime(), 2);
+		return mods.date.timeStamp((new java.util.Date()).getTime()-d.getTime(), false, 3, uk.co.uwcs.choob.modules.DateModule.longtokens.minute);
 	}
 
 	public final synchronized void commandBodyClock( Message mes ) throws SQLException
@@ -42,7 +42,7 @@ public class See
 			stat.execute("DROP TEMPORARY TABLE IF EXISTS `tempt1`, `tempt2`; ");
 
 			{
-				final PreparedStatement s=conn.prepareStatement("CREATE TEMPORARY TABLE `tempt1` AS SELECT `Time` FROM `History` WHERE `Time` > " +  (System.currentTimeMillis()-(1000*60*60*24*5)) + " AND (CASE INSTR(`Nick`,'|') WHEN 0 THEN `Nick` ELSE LEFT(`Nick`, INSTR(`Nick`,'|')-1) END)=? AND `Channel`IS NULL ORDER BY `Time`; ");
+				final PreparedStatement s=conn.prepareStatement("CREATE TEMPORARY TABLE `tempt1` AS SELECT `Time` FROM `History` WHERE `Time` > " +  (System.currentTimeMillis()-(1000*60*60*24*5)) + " AND (CASE INSTR(`Nick`,'|') WHEN 0 THEN `Nick` ELSE LEFT(`Nick`, INSTR(`Nick`,'|')-1) END)=? AND `Channel`IS NOT NULL ORDER BY `Time`; ");
 				s.setString(1, nick);
 				s.executeUpdate();
 			}
@@ -60,19 +60,25 @@ public class See
 		String ret="";
 
 		if (!rs.last())
-		{
-			irc.sendContextReply(mes, "Haven't seen " + nick + "!");
-		}
+			irc.sendContextReply(mes, "I don't have enough information to work out the bodyclock for " + nick + ".");
 		else
 		{
 			final Timestamp gotup=rs.getTimestamp("end");
 			final long diff=rs.getTimestamp("end").getTime() - rs.getTimestamp("start").getTime();
 
-			final float bodyclock=8.0f+(((float)((new java.util.Date()).getTime()-gotup.getTime()))/1000.0f/60.0f/60.0f);
+			float bodyclock=8.0f+(((float)((new java.util.Date()).getTime()-gotup.getTime()))/(1000.0f*60.0f*60.0f));
 
-			final long minutes=(Math.round((bodyclock-Math.floor(bodyclock))*60.0f));
+			long minutes=(Math.round((bodyclock-Math.floor(bodyclock))*60.0f));
 
-			ret+=nick + " probably got up " + timeStamp(gotup) + " ago after " + mods.date.timeLongStamp(diff, 1) + " of sleep, making their body-clock time about " + ((int)Math.floor(bodyclock)) + ":" + (minutes < 10 ? "0" : "") + minutes;
+			if (minutes == 60)
+			{
+				minutes=0;
+				bodyclock++;
+			}
+
+			ret+=nick + " probably got up " + timeStamp(gotup) + " ago after " +
+				mods.date.timeStamp(diff, false, 2, uk.co.uwcs.choob.modules.DateModule.longtokens.hour) + " of sleep, making their body-clock time about " +
+				((int)Math.floor(bodyclock)) + ":" + (minutes < 10 ? "0" : "") + minutes;
 
 			irc.sendContextReply(mes, ret + ".");
 		}
