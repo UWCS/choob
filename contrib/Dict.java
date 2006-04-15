@@ -408,4 +408,84 @@ public class Dict
 			throw new DictionaryException("Unexpected exception.", e);
 		}
 	}
+
+	final int quotes = 4;
+	/**
+	 * @param id ID of quote to return, any invalid for "all".
+	 */
+	public String[] apiQuoteOfTheDay( int id ) throws DictionaryException
+	{
+		URL url=generateURL("http://quotationspage.com/qotd.html", "");
+
+		String page;
+
+		try
+		{
+			page=mods.scrape.getContentsCached(url);
+		}
+		catch (Exception e)
+		{
+			throw new DictionaryException("Error reading site: " + e, e);
+		}
+
+		Matcher ma=Pattern.compile("<dt class=\"quote\"><a title=\"Click for further information about this quotation\" href=\"/quote/[0-9]+.html\">(.*?)</a>.*?<a href=\"/quotes/.+?/\">(.+?)</a>").matcher(page);
+		List<String> ret = new ArrayList<String>();
+
+		int i=0;
+		while (ma.find())
+			ret.add(mods.scrape.readyForIrc(++i + ": \"" + ma.group(1) + "\" -- " + ma.group(2)));
+
+		System.out.println(ret.get(0));
+		if (ret.size() !=4 )
+			throw new DictionaryException("Unable to read quotes.");
+
+		if (id >=1 && id <=4)
+			return new String[] { ret.get(id-1) };
+
+		return ret.toArray(new String[] {});
+	}
+
+	private final int randomQuote()
+	{
+		return new Random().nextInt(quotes)+1;
+	}
+
+	public String[] helpCommandQuoteOfTheDay = {
+		"Returns one of the current Quotes of the Day from http://quotationspage.com/.",
+		"[<id>]",
+		"<id> is the optional quoteid to return. 'all' to recieve all of the quotes via. pm.",
+	};
+
+	public void commandQuoteOfTheDay(Message mes)
+	{
+		List<String> params = mods.util.getParams(mes);
+
+		int passid;
+		if (params.size() <= 1)
+			passid = randomQuote();
+		else
+			if (params.get(1).equalsIgnoreCase("all"))
+				passid = 0;
+			else
+				try
+				{
+					passid = Integer.parseInt(params.get(1));
+					if (passid > 4 || passid < 1)
+						passid = randomQuote();
+				}
+				catch (NumberFormatException e)
+				{
+					passid = randomQuote();
+				}
+
+		try
+		{
+			irc.sendContextReply(mes, apiQuoteOfTheDay(passid));
+		}
+		catch (DictionaryException e)
+		{
+			irc.sendContextReply(mes, "Unexpected error: " + e);
+		}
+
+	}
 }
