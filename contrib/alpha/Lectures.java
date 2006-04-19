@@ -10,16 +10,14 @@ import java.text.*;
 import java.io.*;
 import java.text.DateFormatSymbols;
 
-// NB: This will not work unless you've done at least some of the stuff in http://faux.uwcs.co.uk/Lectures.choob.rar.
-
 public class Lectures
 {
 	public String[] info()
 	{
 		return new String[] {
 			"University of Warwick lectures querying plugin.",
-			"The Choob Team",
-			"choob@uwcs.co.uk",
+			"Faux",
+			"ALPHA ALPHA",
 			""
 		};
 	}
@@ -32,41 +30,32 @@ public class Lectures
 		this.irc = irc;
 	}
 
-	SimpleDateFormat df=new SimpleDateFormat("h:mm a 'on' EEEE");
+
+	public String[] helpTopics = { "Using" };
+
+	public String[] helpUsing = {
+		  "You may want to start by using 'Lectures.AddLikeModules' with your course and year, for instance, second year CS students may try 'Lectures.AddLikeModules cs2%'.",
+		  "This will give you a starting list of modules. To see it, 'Lectures.ListModules'.",
+		  "'Lectures.AddModule' and 'Lectures.RemoveModule' allow you to fine-tune this list.",
+		  "'Lectures.NextLecture 3' (for instance) will tell your next three lectures are."
+	};
+
+
+	final SimpleDateFormat df=new SimpleDateFormat("h:mm a 'on' EEEE");
 
 	final String days[] = (new DateFormatSymbols()).getWeekdays();
 
-	public Lectures() throws ClassNotFoundException
-	{
-		Class.forName("com.mysql.jdbc.Driver");
-	}
-
 	private PreparedStatement getStatement(String query) throws SQLException
 	{
-		Connection con = DriverManager.getConnection("jdbc:mysql://localhost/timetable", "choob", "choob");
+		Connection con = mods.odb.getConnection();
 		return con.prepareStatement(query);
 	}
 
-	public void commandWhen( Message mes, Modules mods, IRCInterface irc ) throws SQLException
-	{
-		String s=mods.util.getParamString(mes);
-		if (s.toLowerCase().indexOf("next lecture")!=-1)
-		{
-			commandNextLecture(mes, mods, irc);
-			return;
-		}
-		else if (s.toLowerCase().indexOf("is ")==0)
-		{
-			if (s.indexOf("?")!=-1)
-			{
-				s=s.substring(3, s.indexOf("?"));
-				irc.sendContextReply(mes, s);
-				return;
-			}
-		}
-
-		irc.sendContextReply(mes, "Durno.");
-	}
+	public String[] helpCommandNextLecture = {
+		"Tells you when the next lecture for either you or a specified module is.",
+		"<Code or Number to display>",
+		"<Code or Number to display> is either a module code or an integer between 1 and 6."
+	};
 
 	public void commandNextLecture( Message mes, Modules mods, IRCInterface irc ) throws SQLException
 	{
@@ -104,6 +93,7 @@ public class Lectures
 			if (!rs.first())
 			{
 				irc.sendContextReply(mes, "Durno.");
+				s.close();
 				return;
 			}
 
@@ -120,7 +110,7 @@ public class Lectures
 		}
 		else
 		{
-			int modid=codeSuggestions(param, irc, mes);
+			int modid=codeSuggestions(param, mes);
 			if (modid==-1)
 				return;
 
@@ -133,10 +123,15 @@ public class Lectures
 
 			irc.sendContextReply(mes, "Thers is a " + rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + df.format(rs.getTimestamp("start")) + ".");
 
+			s.close();
+
 		}
 
 	}
 
+	public String[] helpCommandListModules = {
+		"Lists the modules you are registered for."
+	};
 	public void commandListModules(Message mes, Modules mods, IRCInterface irc ) throws SQLException
 	{
 		PreparedStatement s=getStatement("SELECT `modules`.`code` from `modules` INNER JOIN `usermods` on (`usermods`.`module`=`modules`.`module`) INNER JOIN `users`on (`users`.`userid`=`usermods`.`userid`) WHERE `nick`=?");
@@ -145,6 +140,7 @@ public class Lectures
 		if (!rs.first())
 		{
 			irc.sendContextMessage(mes, "You appear not to have any modules listed.");
+			s.close();
 			return;
 		}
 
@@ -158,6 +154,8 @@ public class Lectures
 		res=res.substring(0, res.length()-2) + ".";
 
 		irc.sendContextReply(mes, "You are registered for " + res);
+
+		s.close();
 	}
 
 	private synchronized int getUserId(String nick) throws SQLException
@@ -168,7 +166,11 @@ public class Lectures
 		ResultSet rs = s.executeQuery();
 
 		if (rs.first())
-			return rs.getInt("userid");
+		{
+			final int ret=rs.getInt("userid");
+			s.close();
+			return ret;
+		}
 
 		PreparedStatement r=getStatement("INSERT INTO `users` (`nick`) VALUES ( ? )");
 		r.setString(1, nick);
@@ -178,64 +180,141 @@ public class Lectures
 		rs = s.executeQuery();
 
 		if (rs.first())
-			return rs.getInt("userid");
+		{
+			final int ret=rs.getInt("userid");
+			s.close ();
+			return ret;
+		}
 		else
 			throw new SQLException("Unexpected result from SQL...");
 	}
 
-	private synchronized int codeSuggestions (String code, IRCInterface irc, Message mes) throws SQLException
+	private synchronized int codeSuggestions (String code, Message mes) throws SQLException
 	{
-		PreparedStatement s=getStatement("SELECT `module` from `modules` where `code` = ?");
-		s.setString(1, code);
-		ResultSet rs = s.executeQuery();
 		String sug;
-		if (rs.first())
-			return rs.getInt("module");
-
-		PreparedStatement t=getStatement("SELECT `code` from `modules` where `code` LIKE ? LIMIT 6;");
-		t.setString(1, "%" + code + "%"); // JDBC-- because this really shouldn't work.
-		ResultSet rt = t.executeQuery();
-
-		System.out.println(t);
-
-		if (!rt.first())
 		{
-			irc.sendContextReply(mes, "Module code not recognised.");
-			return -1;
+			PreparedStatement s=getStatement("SELECT `module` from `modules` where `code` = ?");
+			s.setString(1, code);
+			ResultSet rs = s.executeQuery();
+
+			if (rs.first())
+			{
+				final int ret=rs.getInt("module");
+				s.close();
+				return ret;
+			}
+
+			s.close();
 		}
 
-		sug="";
-		do
 		{
-			sug+=rt.getString("code") + ", ";
-		} while (rt.next());
+			PreparedStatement s=getStatement("SELECT `code` from `modules` where `code` LIKE ? LIMIT 6;");
+			s.setString(1, "%" + code + "%"); // JDBC-- because this really shouldn't work.
+			ResultSet rs = s.executeQuery();
 
+			if (!rs.first())
+			{
+				irc.sendContextReply(mes, "Module code not recognised.");
+				s.close();
+				return -1;
+			}
 
-		sug=sug.substring(0, sug.length()-2);
+			sug="";
+			do
+			{
+				sug+=rs.getString("code") + ", ";
+			} while (rs.next());
+
+			if (sug.length() != 0)
+				sug=sug.substring(0, sug.length()-2);
+
+			s.close();
+		}
 
 		if (sug.indexOf(",")==-1)
 		{
-			s.close();
-			s=getStatement("SELECT `module` from `modules` where `code` = ?");
+			PreparedStatement s=getStatement("SELECT `module` from `modules` where `code` = ?");
 			s.setString(1, sug);
-			rs=s.executeQuery();
+
+			ResultSet rs=s.executeQuery();
+
 			rs.first();
-			return rs.getInt("module");
+			final int ret = rs.getInt("module");
+			s.close();
+			return ret;
 		}
 		else
 		{
 			irc.sendContextReply(mes, "Module code not recognised. Did you mean: " + sug + "..?");
-			t.close();
+
 			return -1;
 		}
 	}
 
+	public String[] helpCommandAddLikeModules = {
+		"'Registers' you (rather indescriminantly) for a specified set of modules. % and _ are the wildcards.",
+		"<Code String>",
+		"<Code String> is the module(s) code to register for."
+	};
 
-	public synchronized void commandAddModule(Message mes, Modules mods, IRCInterface irc ) throws SQLException
+	public synchronized void commandAddLikeModules(Message mes ) throws SQLException
 	{
+		mods.security.checkNS(mes);
+
+		int uid=getUserId(mes.getNick());
+		final String code=mods.util.getParamString(mes);
+
+		PreparedStatement s=getStatement("INSERT INTO `usermods` (`userid`, `module`) VALUES (?, ?)");
+		s.setInt(1, uid);
+
+
+		PreparedStatement t=getStatement("SELECT `module` from `modules` where `code` LIKE ?;");
+		t.setString(1, code);
+		ResultSet rt = t.executeQuery();
+
+		if (!rt.first())
+		{
+			irc.sendContextReply(mes, "No modules matched '" + code + "'.");
+			s.close();
+			t.close();
+			return;
+		}
+
+		int i=0;
+
+		do
+		{
+			s.setInt(2,rt.getInt("module"));
+			try
+			{
+				s.executeUpdate();
+				i++;
+			}
+			catch (SQLException e)
+			{}
+		} while (rt.next());
+
+
+		s.close();
+		t.close();
+
+		irc.sendContextReply(mes, "Okay, added " + i + " module" + (i!=1 ? "s" : "") + "!");
+	}
+
+
+	public String[] helpCommandAddModule = {
+		"'Registers' you for a module.",
+		"<Code>",
+		"<Code> is the module code to register for."
+	};
+
+	public synchronized void commandAddModule(Message mes ) throws SQLException
+	{
+		mods.security.checkNS(mes);
+
 		int uid=getUserId(mes.getNick());
 
-		int modcode=codeSuggestions(mods.util.getParamString(mes), irc, mes);
+		int modcode=codeSuggestions(mods.util.getParamString(mes), mes);
 
 		if (modcode==-1)
 			return;
@@ -249,13 +328,24 @@ public class Lectures
 		irc.sendContextReply(mes, "Okay, added!");
 	}
 
-	public synchronized void commandRemoveModule(Message mes, Modules mods, IRCInterface irc ) throws SQLException
+	public String[] helpCommandRemoveModule = {
+		"'Unregisters' you for a module.",
+		"<Code>",
+		"<Code> is the module code to unregister for."
+	};
+
+	public synchronized void commandRemoveModule(Message mes ) throws SQLException
 	{
+		mods.security.checkNS(mes);
+
 		int uid=getUserId(mes.getNick());
 
-		int modcode=codeSuggestions(mods.util.getParamString(mes), irc, mes);
+		int modcode=codeSuggestions(mods.util.getParamString(mes),mes);
 
-		PreparedStatement s=getStatement("DELETE FROM `usermods` WHERE `userid` = ? AND `module` = ? LIMIT 1");
+		if (modcode==-1)
+			return;
+
+		PreparedStatement s = getStatement("DELETE FROM `usermods` WHERE `userid` = ? AND `module` = ? LIMIT 1");
 
 		s.setInt(1, uid);
 		s.setInt(2, modcode);
@@ -263,9 +353,12 @@ public class Lectures
 			irc.sendContextReply(mes, "Gone!");
 		else
 			irc.sendContextReply(mes, "Um?");
+
 		s.close();
 	}
 
+// Not checked or up-to-date:
+/*
 	public void webWeekly(Modules mods, IRCInterface irc, PrintWriter out, String params, String[] user) throws SQLException
 	{
 		out.println("HTTP/1.0 200 OK");
@@ -345,5 +438,5 @@ public class Lectures
 		out.println("</table></body></html>");
 
 	}
-
+*/
 }
