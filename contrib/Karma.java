@@ -50,7 +50,7 @@ class KarmaSortByAbsValue implements Comparator<KarmaObject>
 		}
 		return 0;
 	}
-	
+
 	public boolean equals(Object obj) {
 		return false;
 	}
@@ -376,7 +376,7 @@ public class Karma
 					irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
 					return;
 				}
-				
+
 				boolean increase = reasonMatch.group(3).equals("++");
 
 				// Store the reason too.
@@ -421,7 +421,7 @@ public class Karma
 				irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
 				return;
 			}
-			
+
 			if (name.equals/*NOT IgnoreCase*/("me"))
 				name=nick;
 
@@ -738,37 +738,39 @@ public class Karma
 	public void commandSearch(Message mes, Modules mods, IRCInterface irc)
 	{
 		List<String> params = mods.util.getParams(mes);
-		
+
 		if (params.size() <= 1) {
 			irc.sendContextReply(mes, "I nead something to find!");
 		}
-		
+
 		// Remove the command token.
 		params.remove(0);
-		
+
 		// Only 3 items please!
 		while (params.size() > 3)
 			params.remove(params.size() - 1);
-		
+
 		for (int i = 0; i < params.size(); i++) {
 			String item = params.get(i);
 			String odbQuery = "";
-			
+
+			final String andNotZero =  " AND NOT (up = 0 AND down = 0 AND value = 0)";
+
 			if ((item.length() > 2) && item.startsWith("/") && item.endsWith("/")) {
 				// Regexp
-				odbQuery = "WHERE string RLIKE \"" + mods.odb.escapeString(item.substring(1, item.length() - 1)) + "\"";
+				odbQuery = "WHERE string RLIKE \"" + mods.odb.escapeString(item.substring(1, item.length() - 1)) + "\"" + andNotZero;
 			} else {
 				// Substring
-				odbQuery = "WHERE string LIKE \"%" + mods.odb.escapeString(item) + "%\"";
+				odbQuery = "WHERE string LIKE \"%" + mods.odb.escapeString(item) + "%\"" + andNotZero;
 			}
-			
+
 			List<KarmaObject> odbItems = (List<KarmaObject>)mods.odb.retrieve(KarmaObject.class, odbQuery);
-			
+
 			if (odbItems.size() == 0) {
 				irc.sendContextReply(mes, "No karma items matched '" + item + "'.");
 			} else {
 				Collections.sort(odbItems, new KarmaSortByAbsValue());
-				
+
 				String rpl = "Karma items matching '" + item + "': ";
 				boolean cutOff = false;
 				for (int j = 0; j < odbItems.size(); j++) {
