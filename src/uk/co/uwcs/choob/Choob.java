@@ -540,8 +540,12 @@ public final class Choob extends PircBot
 
 	private synchronized void spinThread(Event ev)
 	{
+		// synthLevel is also checked in addLog();
 		if (ev instanceof Message && ((Message)ev).getSynthLevel() == 0)
 			modules.history.addLog((Message)ev);
+
+		if (ev instanceof ChannelKick)
+			modules.history.addLog((ChannelKick)ev);
 
 		ChoobTask task = new ChoobDecoderTask(ev);
 

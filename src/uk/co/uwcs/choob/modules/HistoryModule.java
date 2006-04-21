@@ -30,12 +30,13 @@ public final class HistoryModule
 
 	/**
 	 * Logs a line from IRC to the database.
-	 * @param mes {@link Message} object representing the line from IRC.
+	 * @param mes {@link IRCEvent} object representing the line from IRC.
 	 * @throws Exception Thrown from the database access, potential SQL or IO exceptions.
 	 */
-	public void addLog( Message mes )
+
+	public void addLog( IRCEvent ev )
 	{
-		if (mes.getSynthLevel() > 0)
+		if (ev instanceof Message && ((Message)ev).getSynthLevel() > 0)
 			return;
 
 		AccessController.checkPermission(new ChoobPermission("history.add"));
@@ -43,25 +44,43 @@ public final class HistoryModule
 		Connection dbConnection = null;
 
 		PreparedStatement insertLine = null;
+
 		try
 		{
-			dbConnection=dbBroker.getConnection();
+			dbConnection = dbBroker.getConnection();
+
 			insertLine = dbConnection.prepareStatement("INSERT INTO History VALUES(NULL,?,?,?,?,?,?,?)");
 
-			insertLine.setString(1, mes.getClass().getName());
-			insertLine.setString(2, mes.getNick());
-			insertLine.setString(3, mes.getLogin()+"@"+mes.getHostname());
-			String chan = null;
-			if (mes instanceof ChannelEvent)
+			if (ev instanceof Message)
 			{
-				chan = ((ChannelEvent)mes).getChannel();
+				Message mes = (Message)ev;
+				insertLine.setString(1, mes.getClass().getName());
+				insertLine.setString(2, mes.getNick());
+				insertLine.setString(3, mes.getLogin()+"@"+mes.getHostname());
+
+				String chan = null;
+				if (mes instanceof ChannelEvent)
+					chan = ((ChannelEvent)mes).getChannel();
+
+				insertLine.setString(4, chan);
+				insertLine.setString(5, mes.getMessage());
+				insertLine.setLong(6, mes.getMillis());
+				insertLine.setInt(7, mes.getRandom());
 			}
-			insertLine.setString(4, chan);
-			insertLine.setString(5, mes.getMessage());
-			insertLine.setLong(6, mes.getMillis());
-			insertLine.setInt(7, mes.getRandom());
+			else if (ev instanceof ChannelKick)
+			{
+				ChannelKick mes = (ChannelKick)ev;
+				insertLine.setString(1, mes.getClass().getName());
+				insertLine.setString(2, mes.getNick());
+				insertLine.setString(3, mes.getLogin()+"@"+mes.getHostname());
+				insertLine.setString(4, mes.getChannel());
+				insertLine.setString(5, mes.getMessage());
+				insertLine.setLong(6, mes.getMillis());
+				insertLine.setInt(7, mes.getRandom());
+			}
 
 			insertLine.executeUpdate();
+
 		}
 		catch( SQLException e )
 		{
@@ -85,6 +104,8 @@ public final class HistoryModule
 			}
 		}
 	}
+
+
 
 	/**
 	 * Get the ID of a message object.
