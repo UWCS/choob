@@ -1159,6 +1159,27 @@ public class Quote
 					score = true;
 					fiddled = true;
 				}
+				else if (first.equals("id"))
+				{
+					if (param.length() <= 1)
+						throw new ChoobError("Invalid/empty id selector.");
+
+					char op = param.charAt(0);
+					if (op != '>' && op != '<' && op != '=')
+						throw new ChoobError("Invalid id selector: " + param);
+
+					int value;
+					try
+					{
+						value = Integer.parseInt(param.substring(1));
+					}
+					catch (NumberFormatException e)
+					{
+						throw new ChoobError("Invalid id selector: " + param);
+					}
+					clauses.add("id " + op + " " + value);
+					fiddled = true;
+				}
 				// That's all the special cases out of the way. If we're still
 				// here, were's screwed...
 				else
