@@ -28,13 +28,18 @@ public final class HistoryModule
 		this.dbBroker = dbBroker;
 	}
 
+	public void addLog (Message m)
+	{
+		addLog((Event)m);
+	}
+
 	/**
 	 * Logs a line from IRC to the database.
 	 * @param mes {@link IRCEvent} object representing the line from IRC.
 	 * @throws Exception Thrown from the database access, potential SQL or IO exceptions.
 	 */
 
-	public void addLog( IRCEvent ev )
+	public void addLog( Event ev )
 	{
 		if (ev instanceof Message && ((Message)ev).getSynthLevel() > 0)
 			return;
