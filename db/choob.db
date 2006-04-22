@@ -282,8 +282,8 @@ DROP TABLE IF EXISTS `History`;
 CREATE TABLE `History` (
   `LineID` int(11) unsigned NOT NULL auto_increment,
   `Type` varchar(50) NOT NULL default '',
-  `Nick` varchar(32) NOT NULL default '',
-  `Hostmask` varchar(64) NOT NULL default '',
+  `Nick` varchar(64) NOT NULL default '',
+  `Hostmask` varchar(128) NOT NULL default '',
   `Channel` varchar(32) default NULL,
   `Text` text NOT NULL,
   `Time` bigint(20) NOT NULL default '0',
