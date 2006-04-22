@@ -141,7 +141,13 @@ public class Events
 						}
 						String sigts=sig.toString();
 						if (sigts.length()>2) sigts=sigts.substring(0, sigts.length()-2);
-						irc.sendMessage(announceChannel, "Signups for " + Colors.BOLD + n[NAME] + Colors.NORMAL + " (" + n[ID] + ") [" + mods.date.timeMicroStamp((new Date(Long.parseLong(n[3])*(long)1000)).getTime() - (new Date()).getTime()) + "] now " + n[SIGNUPCURRENT] + "/" + n[SIGNUPMAX] + " (" + sigts + ").");
+						irc.sendMessage(announceChannel,
+							"Signups for " + Colors.BOLD + n[NAME] + Colors.NORMAL +
+							" (" + n[ID] +
+							") [" + mods.date.timeMicroStamp((new Date(Long.parseLong(n[START])*(long)1000)).getTime() - (new Date()).getTime()) +
+							"] now " + n[SIGNUPCURRENT] + "/" + n[SIGNUPMAX] +
+							" (" + sigts + ")."
+						);
 					}
 				}
 			}
@@ -194,8 +200,8 @@ public class Events
 		while (c--!=0)
 		{
 			String[] ev= events.get(c);
-			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
-			Date dat=new Date(Long.parseLong(ev[4])*(long)1000);
+			Date da=new Date(Long.parseLong(ev[START])*(long)1000);
+			Date dat=new Date(Long.parseLong(ev[END])*(long)1000);
 			boolean finished=(new Date()).compareTo(dat)>0;
 			int eid=0;
 			try
@@ -206,7 +212,24 @@ public class Events
 			if (!finished)
 				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
-					irc.sendContextReply(mes, Colors.BOLD + ev[2] + Colors.NORMAL + " at " + ev[10] + ( !"".equals(ev[9]) ? " (" + ev[9] + ")" : "") + " (" + ev[1] + ") from " + (new SimpleDateFormat("EEEE d MMM H:mma").format(da)) + " to " + (new SimpleDateFormat("EEEE d MMM H:mma").format(dat)) + "." );
+					final String signup;
+
+					if (!ev[SIGNUPMAX].equals("0"))
+					{
+						if (!ev[SIGNUPCURRENT].equals("0"))
+							signup = " Currently " + ev[SIGNUPCURRENT] + " signup" + (ev[SIGNUPCURRENT].equals("1") ? "" : "s") + " out of " + ev[SIGNUPMAX] + ".";
+						else
+							signup = " Nobody has signed up yet.";
+					}
+					else
+						signup="";
+
+					irc.sendContextReply(mes,
+						Colors.BOLD + ev[2] + Colors.NORMAL +
+						" at " + ev[10] + ( !"".equals(ev[9]) ? " (" + ev[9] + ")" : "") + " (" + ev[1] +
+						") from " + (new SimpleDateFormat("EEEE d MMM H:mma").format(da)) + " to " + (new SimpleDateFormat("EEEE d MMM H:mma").format(dat)) + "." +
+						signup
+					);
 					return;
 				}
 		}
@@ -245,10 +268,15 @@ public class Events
 			}
 			catch (NumberFormatException e) { }
 			if (!finished)
-				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
+				if (ev[NAME].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
 					if (!ev[5].equals("X") && !ev[5].equals("-"))
-						irc.sendContextReply(mes, "Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev[1] + "&action=signup to sign-up for " + Colors.BOLD + ev[2] + Colors.NORMAL + (!finished ? " [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + ".");
+						irc.sendContextReply(mes,
+							"Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev[ID] + "&action=signup to sign-up for " +
+							Colors.BOLD + ev[2] + Colors.NORMAL +
+							(!finished ? " [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") +
+							"."
+						);
 					else
 					{
 						rep+="Event " + ev[1] + " matched, but does not accept sign-ups... ";
@@ -288,8 +316,8 @@ public class Events
 		while (c--!=0)
 		{
 			String[] ev= events.get(c);
-			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
-			Date dat=new Date(Long.parseLong(ev[4])*(long)1000);
+			Date da=new Date(Long.parseLong(ev[START])*(long)1000);
+			Date dat=new Date(Long.parseLong(ev[END])*(long)1000);
 			boolean finished=(new Date()).compareTo(dat)>0;
 			if (!finished)
 				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
@@ -328,16 +356,29 @@ public class Events
 		while (c--!=0)
 		{
 			String[] ev= events.get(c);
-			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
-			Date dat=new Date(Long.parseLong(ev[4])*(long)1000);
+			Date da=new Date(Long.parseLong(ev[START])*(long)1000);
+			Date dat=new Date(Long.parseLong(ev[END])*(long)1000);
 			boolean finished=(new Date()).compareTo(dat)>0;
 			if (!finished)
 				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
 				{
 					if (ev[SIGNUPCURRENT].equals("0"))
-						irc.sendContextReply(mes, "No signups for " + Colors.BOLD + ev[2] + Colors.NORMAL  + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + "!");
+						irc.sendContextReply(mes,
+							"No signups for " + Colors.BOLD + ev[NAME] + Colors.NORMAL +
+							(finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" +
+							(!finished ? " [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") +
+							"!"
+						);
 					else
-						irc.sendContextReply(mes, "Signups for " + Colors.BOLD + ev[2] + Colors.NORMAL  + (finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" + (!finished ? " [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") + (!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") + ": " + ( mes instanceof PrivateEvent ? ev[8] : ev[8].replaceAll("([a-zA-Z])([^, ]+)","$1'$2") ) + ".");
+						irc.sendContextReply(mes,
+							"Signups for " + Colors.BOLD + ev[NAME] + Colors.NORMAL  +
+							(finished ? " (finished)" : "") +
+							" at " + ev[10] + " (" + ev[ID] + ")" +
+							(!finished ? " [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") +
+							(!ev[SIGNUPMAX].equals("0") ? " [" + ev[SIGNUPCURRENT] + "/" + ev[SIGNUPMAX] + "]" : "") + ": " +
+							( mes instanceof PrivateEvent ? ev[SIGNUPNAMES] : ev[SIGNUPNAMES].replaceAll("([a-zA-Z])([^, ]+)","$1'$2") ) +
+							"."
+						);
 					return;
 				}
 		}
@@ -379,7 +420,7 @@ public class Events
 				:
 					""
 				) +
-				(!ev[6].equals("0") ? " [" + ev[7] + "/" + ev[6] + "]" : "") +
+				(!ev[SIGNUPMAX].equals("0") ? " [" + ev[SIGNUPCURRENT] + "/" + ev[SIGNUPMAX] + "]" : "") +
 				(c!=0 ? ", " : ".");
 		}
 		irc.sendContextReply(mes, "Events: " + rep);
