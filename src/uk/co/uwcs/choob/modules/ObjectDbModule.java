@@ -79,6 +79,9 @@ public final class ObjectDbModule
 		}
 	}
 
+	/**
+	 * This doesn't work.
+
 	public List<Integer> retrieveInt(Class storedClass, String clause)
 	{
 		return retrieveInt((Object)storedClass, clause);
@@ -107,6 +110,8 @@ public final class ObjectDbModule
 			broker.freeConnection( dbConn );
 		}
 	}
+
+	 */
 
 	/**
 	 * Delete a specific object from the database.

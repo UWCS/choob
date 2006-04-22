@@ -727,9 +727,13 @@ public class Quote
 	public void commandCount( Message mes ) throws ChoobException
 	{
 		final String whereClause = getClause( mods.util.getParamString( mes ) );
-		final List quoteCounts = mods.odb.retrieve( QuoteObject.class, whereClause );
+		final List<QuoteObject> quoteCounts = mods.odb.retrieve( QuoteObject.class, whereClause );
+		final Set<Integer> ids = new HashSet<Integer>();
 
-		final int count = quoteCounts.size();
+		for (QuoteObject q : quoteCounts)
+			ids.add(q.id);
+
+		final int count = ids.size();
 
 		if (count == 0)
 			irc.sendContextReply( mes, "Sorry, no quotes match!" );
@@ -748,7 +752,15 @@ public class Quote
 	public void commandSummary( Message mes ) throws ChoobException
 	{
 		String whereClause = getClause( mods.util.getParamString(mes) );
-		List<Integer> quoteKarmas = mods.odb.retrieveInt( QuoteObject.class, "SELECT score " + whereClause );
+		List<QuoteObject> quoteKarmasSpam = mods.odb.retrieve( QuoteObject.class, whereClause );
+
+		Map<Integer, QuoteObject> quoteKarmaIds = new HashMap<Integer, QuoteObject>();
+		for (QuoteObject q : quoteKarmasSpam)
+			quoteKarmaIds.put(q.id, q);
+
+		List<Integer> quoteKarmas = new ArrayList<Integer>();
+		for (QuoteObject q : quoteKarmaIds.values())
+			quoteKarmas.add(q.score);
 
 		int count = quoteKarmas.size();
 		int nonZeroCount = 0;
