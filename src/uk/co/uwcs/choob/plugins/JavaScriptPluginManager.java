@@ -62,6 +62,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 			// First thing's first; we must connect to the identified resource.
 			con = fromLocation.openConnection();
 		} catch(IOException e) {
+			e.printStackTrace();
 			throw new ChoobException("Unable to open a connection to the source location <" + fromLocation + ">.");
 		}
 		try {
@@ -80,6 +81,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 				code += line + "\n";
 			}
 		} catch(IOException e) {
+			e.printStackTrace();
 			throw new ChoobException("Unable to fetch the source from <" + fromLocation + ">.");
 		}
 
