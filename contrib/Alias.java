@@ -70,15 +70,25 @@ public class Alias
 	public void commandAdd( Message mes )
 	{
 		String[] params = mods.util.getParamArray(mes, 2);
-
+		
 		if (params.length <= 2)
 		{
 			throw new ChoobBadSyntaxError();
 		}
-
+		
 		String name = params[1];
 		String conv = params[2];
-
+		
+		// Validate name against unprintable characters.
+		for (int i = 0; i < name.length(); i++)
+		{
+			if (name.charAt(i) < 32)
+			{
+				irc.sendContextReply(mes, "Alias name contains disallowed characters. Try again!");
+				return;
+			}
+		}
+		
 		if (conv.indexOf('.') == -1 || (conv.indexOf(' ') != -1 && conv.indexOf(' ') < conv.indexOf('.')))
 		{
 			// Alias recursion?
