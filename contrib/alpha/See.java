@@ -78,7 +78,7 @@ public class See
 
 			ret+=nick + " probably got up " + timeStamp(gotup) + " ago after " +
 				mods.date.timeStamp(diff, false, 2, uk.co.uwcs.choob.modules.DateModule.longtokens.hour) + " of sleep, making their body-clock time about " +
-				((int)Math.floor(bodyclock)) + ":" + (minutes < 10 ? "0" : "") + minutes;
+				((int)Math.floor(bodyclock) % 24) + ":" + (minutes < 10 ? "0" : "") + minutes;
 
 			irc.sendContextReply(mes, ret + ".");
 		}
