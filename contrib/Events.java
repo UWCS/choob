@@ -18,8 +18,96 @@ public class Events
 	//  Id:                                         1        2          3       4       5       6       7         8                     9                                 10
 	//  Name:                                       id       name     start   end <signup>code max   current    names</signup>        desc.                             location
 
+	/** A class for holding information about a single event */
+	private class EventItem
+	{
+		/** Constructor from strings, as will be fed from the events_pattern matches */
+		public EventItem(
+			String sid,
+			String sname,
+			String sstart,
+			String send,
+			String ssignupCode,
+			String ssignupMax,
+			String ssignupCurrent,
+			String ssignupNames,
+			String sdesc,
+			String slocation
+		)
+		{
+			id            = Integer.parseInt(sid);
+			name          = sname;
+			start         = convertTimestamp(sstart);
+			end           = convertTimestamp(send);
+			signupCode    = ssignupCode;
+			signupMax     = Integer.parseInt(ssignupMax);
+			signupCurrent = Integer.parseInt(ssignupCurrent);
 
-	private static final String announceChannel="#bots";
+			// The description comes in as one string, pipe-seperated.
+			// What happens if it contains strictly> 1 pipe?
+			String [] descParts=sdesc.split("\\|");
+			if (descParts.length < 2)
+				descParts = new String[] {"", ""}; // split acts unexpectedly with just "|", deal with it.
+
+			shortdesc     = descParts[0];
+			longdesc      = descParts[1];
+			location      = slocation;
+
+			// The names come in in csv, break them up.
+			signupNames   = new ArrayList<String>();
+			for (String name : ssignupNames.split(","))
+				signupNames.add(name);
+		}
+
+		public int id;
+		public String name;
+		public Date start;
+		public Date end;
+		public String signupCode;
+		public int signupMax;
+		public int signupCurrent;
+		public ArrayList<String> signupNames;
+		public String shortdesc;
+		public String longdesc;
+		public String location;
+
+		private Date convertTimestamp(String timestamp)
+		{
+			return new Date(Long.parseLong(timestamp)*(long)1000);
+		}
+
+		public boolean finished()
+		{
+			return (new Date()).compareTo(end) > 0;
+		}
+
+		public boolean inprogress()
+		{
+			return !finished() && (new Date()).compareTo(start) > 0;
+		}
+	}
+
+	private enum Groups
+	{
+		_WHOLESTRING,
+		ID,
+		NAME,
+		START,
+		END,
+		SIGNUPCODE,
+		SIGNUPMAX,
+		SIGNUPCURRENT,
+		SIGNUPNAMES,
+		DESC,
+		LOCATION;
+
+		public String getFromMatcher(Matcher ma)
+		{
+			return ma.group(ordinal());
+		}
+	}
+
+	public static final String announceChannel="#bots";
 	private static final long checkInterval=60000; // The crond job is run every minute.
 
 	private Modules mods;
@@ -27,15 +115,7 @@ public class Events
 
 	private final URL eventsurl;
 
-	private ArrayList<String[]> current;
-
-	private final static int ID=1;
-	private final static int NAME=2;
-	private final static int START=3;
-	private final static int END=4;
-	private final static int SIGNUPNAMES=8;
-	private final static int SIGNUPCURRENT=7;
-	private final static int SIGNUPMAX=6;
+	private ArrayList<EventItem> current;
 
 	public String[] info()
 	{
@@ -62,103 +142,106 @@ public class Events
 		mods.interval.callBack(null, checkInterval);
 	}
 
+	private String microStampFromNow(Date d)
+	{
+		return mods.date.timeMicroStamp(d.getTime() - (new Date()).getTime());
+	}
 
 	public void interval(Object param) throws ChoobException
 	{
-		ArrayList<String[]> ne=readEventsData();
+		ArrayList<EventItem> ne = readEventsData();
+
 		if (current!=null && !current.equals(ne))
 		{
+			ListIterator<EventItem> ni = ne.listIterator();
 
-			ListIterator<String[]> ci=current.listIterator();
-			ListIterator<String[]> ni=ne.listIterator();
+			// Generate a hashmap of current (ie. before the change) event ids -> eventitems.
+			HashMap<Integer, EventItem>curr=new HashMap<Integer, EventItem>();
 
-			HashMap<Integer, String[]>curr=new HashMap<Integer, String[]>();
-			while (ci.hasNext())
+			for (EventItem c : current)
+				curr.put(c.id, c);
+
+
+			// Now, go through the new items..
+			for (EventItem n : ne)
 			{
-				String c[]=ci.next();
-				curr.put(Integer.parseInt(c[ID]), new String[] {"","",c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], c[10] }); // Strashmaps ftw.
-			}
+				// Get the corresponding event from the old items
+				EventItem corr=curr.get(n.id);
 
-			while (ni.hasNext())
-			{
-				String[] n=ni.next();
-				String[] c=curr.get(Integer.parseInt(n[ID]));
-				if (c==null)
-					irc.sendMessage(announceChannel, "New event! " + n[NAME] + " at " + n[10] + " in " + mods.date.timeMicroStamp((new Date(Long.parseLong(n[3])*(long)1000)).getTime() - (new Date()).getTime()) + ".");
+				if (corr==null)
+					// It doesn't exist, notify people:
+					irc.sendMessage(announceChannel,
+						"New event! " + n.name +
+						" at " + n.location + " in " +
+						mods.date.timeMicroStamp(n.start.getTime() - (new Date()).getTime()) + "."
+					);
 				else
 				{
-					if (!c[SIGNUPCURRENT].equals(n[SIGNUPCURRENT]))
+					// The event existed, do the signups differ?
+					if (!corr.signupNames.equals(n.signupNames))
 					{
-						// OH MY GOD WHATTF HAXBQ!
+						// Diff the lists.
 
-						String[] cn=c[SIGNUPNAMES].split(",");
-						String[] nn=n[SIGNUPNAMES].split(",");
+						HashSet <String> beforeSet = new HashSet<String>();
+						HashSet <String> afterSet  = new HashSet<String>();
 
-						HashSet <String> q=new HashSet<String>();
-						HashSet <String> r=new HashSet<String>();
+						// Create a set of names for each list, before (being the current names) and after (being the new ones).
+						for (String name : corr.signupNames)
+							beforeSet.add(name.trim());
 
-						for (int i=0; i<cn.length; i++)
-							q.add(cn[i].trim());
+						for (String name : n.signupNames)
+							afterSet.add(name.trim());
 
-						for (int i=0; i<nn.length; i++)
-							r.add(nn[i].trim());
+						Iterator <String>it = beforeSet.iterator();
 
-						Iterator <String>it=q.iterator();
-
+						// Go through the list of names that's were there "before". If it exists in the "after" list, remove it from both.
 						while (it.hasNext())
-						{
-							Object o=it.next();
-							if (r.remove(o))
+							if (afterSet.remove(it.next()))
 								it.remove();
-						}
-
-						it=r.iterator();
-
-						while (it.hasNext())
-						{
-							Object o=it.next();
-							if (q.remove(o))
-								it.remove();
-						}
-
 
 						StringBuilder sig=new StringBuilder();
 
-						it=q.iterator();
-						while (it.hasNext())
-						{
-							String name=it.next();
+						// Now, anything left in "before" is not in "after", so it's been removed:
+						for (String name : beforeSet)
 							if (name.length()>1)
-								sig.append("-" + name + ", ");
-						}
+								sig.append("-").append(name).append(", ");
 
-						it=r.iterator();
-						while (it.hasNext())
-						{
-							String name=it.next();
+						// Same applies for "after", anything in here isn't in "before", so it's been added.
+						for (String name : afterSet)
 							if (name.length()>1)
-								sig.append("+" + name + ", ");
+								sig.append("+").append(name).append(", ");
+
+
+						// Convert our stringbuilder to a String..
+						String sigts = sig.toString();
+
+						// If there's anything in the string.
+						if (sigts.length()>2)
+						{
+							// Remove the trailing comma.
+							sigts=sigts.substring(0, sigts.length()-2);
+
+							// Announce the change.
+							irc.sendMessage(announceChannel,
+								"Signups for " + Colors.BOLD + n.name + Colors.NORMAL +
+								" (" + n.id +
+								") [" + microStampFromNow(n.start) +
+								"] now " + n.signupCurrent + "/" + n.signupMax +
+								" (" + sigts + ")."
+							);
 						}
-						String sigts=sig.toString();
-						if (sigts.length()>2) sigts=sigts.substring(0, sigts.length()-2);
-						irc.sendMessage(announceChannel,
-							"Signups for " + Colors.BOLD + n[NAME] + Colors.NORMAL +
-							" (" + n[ID] +
-							") [" + mods.date.timeMicroStamp((new Date(Long.parseLong(n[START])*(long)1000)).getTime() - (new Date()).getTime()) +
-							"] now " + n[SIGNUPCURRENT] + "/" + n[SIGNUPMAX] +
-							" (" + sigts + ")."
-						);
 					}
 				}
 			}
 		}
-		current=ne;
+
+		current = ne;
 		mods.interval.callBack(null, checkInterval);
 	}
 
-	private ArrayList<String[]> readEventsData() throws ChoobException
+	private ArrayList<EventItem> readEventsData() throws ChoobException
 	{
-		ArrayList<String[]> events=new ArrayList();
+		ArrayList<EventItem> events=new ArrayList<EventItem>();
 		Matcher ma;
 
 		try
@@ -171,12 +254,19 @@ public class Events
 		}
 
 		while (ma.find())
-		{
-			String [] nine=ma.group(9).split("\\|");
-			if (nine.length < 2)
-				nine = new String[] {"", ""}; // split acts unexpectedly with just "|", deal with it.
-			events.add(0, new String[] {"", ma.group(1), ma.group(2), ma.group(3), ma.group(4), ma.group(5), ma.group(6), ma.group(7), ma.group(8), nine[0], ma.group(10), nine[1]});
-		}
+			events.add(new EventItem(
+				Groups.ID.getFromMatcher(ma),
+				Groups.NAME.getFromMatcher(ma),
+				Groups.START.getFromMatcher(ma),
+				Groups.END.getFromMatcher(ma),
+				Groups.SIGNUPCODE.getFromMatcher(ma),
+				Groups.SIGNUPMAX.getFromMatcher(ma),
+				Groups.SIGNUPCURRENT.getFromMatcher(ma),
+				Groups.SIGNUPNAMES.getFromMatcher(ma),
+				Groups.DESC.getFromMatcher(ma),
+				Groups.LOCATION.getFromMatcher(ma)
+			));
+
 		return events;
 	}
 
@@ -194,30 +284,31 @@ public class Events
 			return;
 		}
 
-		ArrayList<String[]> events=readEventsData();
-		int c=events.size();
-		String rep="";
-		while (c--!=0)
+		int eid=0;
+		try
 		{
-			String[] ev= events.get(c);
-			Date da=new Date(Long.parseLong(ev[START])*(long)1000);
-			Date dat=new Date(Long.parseLong(ev[END])*(long)1000);
-			boolean finished=(new Date()).compareTo(dat)>0;
-			int eid=0;
-			try
-			{
-				eid=Integer.parseInt(comp);
-			}
-			catch (NumberFormatException e) {}
-			if (!finished)
-				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
+			eid=Integer.parseInt(comp);
+		}
+		catch (NumberFormatException e) {}
+
+
+		ArrayList<EventItem> events = readEventsData();
+		int c = events.size();
+
+		// We can't use foreach here, as we need to go backwards.
+		while (c-- > 0)
+		{
+			EventItem ev = events.get(c);
+
+			if (!ev.finished())
+				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
 					final String signup;
 
-					if (!ev[SIGNUPMAX].equals("0"))
+					if (ev.signupMax != 0)
 					{
-						if (!ev[SIGNUPCURRENT].equals("0"))
-							signup = " Currently " + ev[SIGNUPCURRENT] + " signup" + (ev[SIGNUPCURRENT].equals("1") ? "" : "s") + " out of " + ev[SIGNUPMAX] + ".";
+						if (ev.signupCurrent != 0)
+							signup = " Currently " + ev.signupCurrent + " signup" + (ev.signupCurrent == 1 ? "" : "s") + " out of " + ev.signupMax + ".";
 						else
 							signup = " Nobody has signed up yet.";
 					}
@@ -225,9 +316,11 @@ public class Events
 						signup="";
 
 					irc.sendContextReply(mes,
-						Colors.BOLD + ev[2] + Colors.NORMAL +
-						" at " + ev[10] + ( !"".equals(ev[9]) ? " (" + ev[9] + ")" : "") + " (" + ev[1] +
-						") from " + (new SimpleDateFormat("EEEE d MMM H:mma").format(da)) + " to " + (new SimpleDateFormat("EEEE d MMM H:mma").format(dat)) + "." +
+						Colors.BOLD + ev.name + Colors.NORMAL +
+						" at " + ev.location +
+						( !"".equals(ev.shortdesc) ? " (" + ev.shortdesc + ")" : "") +
+						" (" + ev.id +
+						") from " + absoluteDateFormat(ev.start) + " to " + absoluteDateFormat(ev.end) + "." +
 						signup
 					);
 					return;
@@ -250,42 +343,41 @@ public class Events
 			return;
 		}
 
-		ArrayList<String[]> events=readEventsData();
-		int c=events.size();
-		String rep="";
-		System.out.println(comp);
-		while (c--!=0)
+		int eid=0;
+		try
 		{
-			String[] ev= events.get(c);
-			Date da=new Date(Long.parseLong(ev[3])*(long)1000);
-			Date dat=new Date(Long.parseLong(ev[4])*(long)1000);
-			boolean finished=(new Date()).compareTo(dat)>0;
+			eid=Integer.parseInt(comp);
+		}
+		catch (NumberFormatException e) { }
 
-			int eid=0;
-			try
-			{
-				eid=Integer.parseInt(comp);
-			}
-			catch (NumberFormatException e) { }
-			if (!finished)
-				if (ev[NAME].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
+		ArrayList<EventItem> events = readEventsData();
+		int c=events.size();
+
+		StringBuilder rep = new StringBuilder();
+
+		while (c-- > 0)
+		{
+			EventItem ev = events.get(c);
+
+			if (!ev.finished())
+				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
-					if (!ev[5].equals("X") && !ev[5].equals("-"))
+					if (!ev.signupCode.equals("X") && !ev.signupCode.equals("-"))
 						irc.sendContextReply(mes,
-							"Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev[ID] + "&action=signup to sign-up for " +
-							Colors.BOLD + ev[2] + Colors.NORMAL +
-							(!finished ? " [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") +
+							"Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev.id + "&action=signup to sign-up for " +
+							Colors.BOLD + ev.name + Colors.NORMAL +
+							(!ev.finished() ? " [" + microStampFromNow(ev.start) + "]" : "") +
 							"."
 						);
 					else
 					{
-						rep+="Event " + ev[1] + " matched, but does not accept sign-ups... ";
+						rep.append("Event ").append(ev.name).append(" matched, but does not accept sign-ups... ");
 						continue;
 					}
 					return;
 				}
 		}
-		irc.sendContextReply(mes, rep + "Event not found.");
+		irc.sendContextReply(mes, rep.toString() + "Event not found.");
 	}
 
 	public String[] helpCommandLink = {
@@ -302,10 +394,9 @@ public class Events
 			return;
 		}
 
-		ArrayList<String[]> events=readEventsData();
+		ArrayList<EventItem> events=readEventsData();
 		int c=events.size();
-		String rep="";
-		System.out.println(comp);
+
 		int eid=0;
 		try
 		{
@@ -313,20 +404,18 @@ public class Events
 		}
 		catch (NumberFormatException e) { }
 
-		while (c--!=0)
+		while (c-- > 0)
 		{
-			String[] ev= events.get(c);
-			Date da=new Date(Long.parseLong(ev[START])*(long)1000);
-			Date dat=new Date(Long.parseLong(ev[END])*(long)1000);
-			boolean finished=(new Date()).compareTo(dat)>0;
-			if (!finished)
-				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
+			EventItem ev= events.get(c);
+
+			if (!ev.finished())
+				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
-					irc.sendContextReply(mes, "http://www.warwickcompsoc.co.uk/events/details/?id=" + ev[1] + ".");
+					irc.sendContextReply(mes, "http://www.warwickcompsoc.co.uk/events/details/?id=" + ev.id + ".");
 					return;
 				}
 		}
-		irc.sendContextReply(mes, rep + "Event not found.");
+		irc.sendContextReply(mes, "Event not found.");
 	}
 
 	public String[] helpCommandSignups = {
@@ -343,46 +432,42 @@ public class Events
 			return;
 		}
 
-		ArrayList<String[]> events=readEventsData();
-		int c=events.size();
-		String rep="";
-		System.out.println(comp);
+		ArrayList<EventItem> events = readEventsData();
+		int c = events.size();
+
 		int eid=0;
 		try
 		{
 			eid=Integer.parseInt(comp);
 		}
 		catch (NumberFormatException e) { }
-		while (c--!=0)
+
+		while (c-- > 0)
 		{
-			String[] ev= events.get(c);
-			Date da=new Date(Long.parseLong(ev[START])*(long)1000);
-			Date dat=new Date(Long.parseLong(ev[END])*(long)1000);
-			boolean finished=(new Date()).compareTo(dat)>0;
-			if (!finished)
-				if (ev[2].toLowerCase().indexOf(comp)!=-1 || Integer.parseInt(ev[1])==eid)
+			EventItem ev = events.get(c);
+			if (!ev.finished())
+				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
-					if (ev[SIGNUPCURRENT].equals("0"))
+					if (ev.signupCurrent == 0)
 						irc.sendContextReply(mes,
-							"No signups for " + Colors.BOLD + ev[NAME] + Colors.NORMAL +
-							(finished ? " (finished)" : "") + " at " + ev[10] + " (" + ev[1] + ")" +
-							(!finished ? " [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") +
+							"No signups for " + Colors.BOLD + ev.name + Colors.NORMAL +
+							" at " + ev.location + " (" + ev.id + ")" +
+							" [" + microStampFromNow(ev.start) + "]" +
 							"!"
 						);
 					else
 						irc.sendContextReply(mes,
-							"Signups for " + Colors.BOLD + ev[NAME] + Colors.NORMAL  +
-							(finished ? " (finished)" : "") +
-							" at " + ev[10] + " (" + ev[ID] + ")" +
-							(!finished ? " [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]" : "") +
-							(!ev[SIGNUPMAX].equals("0") ? " [" + ev[SIGNUPCURRENT] + "/" + ev[SIGNUPMAX] + "]" : "") + ": " +
-							( mes instanceof PrivateEvent ? ev[SIGNUPNAMES] : ev[SIGNUPNAMES].replaceAll("([a-zA-Z])([^, ]+)","$1'$2") ) +
+							"Signups for " + Colors.BOLD + ev.name + Colors.NORMAL  +
+							" at " + ev.location + " (" + ev.id + ")" +
+							" [" + microStampFromNow(ev.start) + "]" +
+							(ev.signupMax != 0 ? " [" + ev.signupCurrent + "/" + ev.signupMax + "]" : "") + ": " +
+							nameList(ev.signupNames, mes) +
 							"."
 						);
 					return;
 				}
 		}
-		irc.sendContextReply(mes, rep + "Event not found.");
+		irc.sendContextReply(mes, "Event not found.");
 	}
 
 	public String[] helpCommandList = {
@@ -390,7 +475,7 @@ public class Events
 	};
 	public void commandList(Message mes) throws ChoobException
 	{
-		ArrayList<String[]> events=readEventsData();
+		ArrayList<EventItem> events=readEventsData();
 		int c=events.size();
 
 		if (c==0)
@@ -398,31 +483,51 @@ public class Events
 			irc.sendContextReply(mes, "There are no events! :'(");
 			return;
 		}
-		String rep="";
-		while (c-->0)
+
+		StringBuilder rep = new StringBuilder();
+		while (c-- > 0)
 		{
-			String[] ev= events.get(c);
-			Date da=new Date(Long.parseLong(ev[START])*(long)1000);
-			Date dat=new Date(Long.parseLong(ev[END])*(long)1000);
+			EventItem ev= events.get(c);
 
-			final boolean finished=(new Date()).compareTo(dat)>0;
-			final boolean inprogress=!finished && (new Date()).compareTo(da)>0;
-
-			rep+=Colors.BOLD + ev[2] +
-				Colors.NORMAL + (finished ? " (finished)" : "") +
-				" at " + ev[10] + " (" + ev[1] + ")" +
-				(!finished ?
-					(inprogress ?
-						" (" + Colors.BOLD + "on right now" + Colors.NORMAL + ", started " + mods.date.timeMicroStamp((new Date()).getTime() - da.getTime()) + " ago)"
+			rep.append(Colors.BOLD + ev.name + Colors.NORMAL)
+				.append(ev.finished() ? " (finished)" : "")
+				.append(" at " + ev.location + " (" + ev.id + ")")
+				.append(!ev.finished() ?
+					(ev.inprogress() ?
+						" (" + Colors.BOLD + "on right now" + Colors.NORMAL + ", started " + mods.date.timeMicroStamp((new Date()).getTime() - ev.start.getTime()) + " ago)"
 					:
-						" [" + mods.date.timeMicroStamp(da.getTime() - (new Date()).getTime()) + "]"
+						" [" + microStampFromNow(ev.start) + "]"
 					)
 				:
 					""
-				) +
-				(!ev[SIGNUPMAX].equals("0") ? " [" + ev[SIGNUPCURRENT] + "/" + ev[SIGNUPMAX] + "]" : "") +
-				(c!=0 ? ", " : ".");
+				)
+				.append(ev.signupMax != 0 ? " [" + ev.signupCurrent + "/" + ev.signupMax + "]" : "")
+				.append(c != 0 ? ", " : ".");
 		}
-		irc.sendContextReply(mes, "Events: " + rep);
+		irc.sendContextReply(mes, "Events: " + rep.toString());
 	}
+
+	/** Convert an arraylist of names into a string, b'reaking them up to prevent pings if not in pm. */
+	private static String nameList(ArrayList<String> names, Message mes)
+	{
+		String namelist = "";
+		for (String name : names)
+			namelist += name + ", ";
+
+		// Remove the trailing commaspace.
+		if (namelist.length() > 2)
+			namelist = namelist.substring(0, namelist.length()-2);
+
+		// If it's not in pm, break them up.
+		if (!(mes instanceof PrivateEvent))
+			namelist = namelist.replaceAll("([a-zA-Z])([^, ]+)","$1'$2");
+
+		return namelist;
+	}
+
+	private static String absoluteDateFormat(Date da)
+	{
+		return new SimpleDateFormat("EEEE d MMM H:mma").format(da);
+	}
+
 }
