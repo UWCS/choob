@@ -293,13 +293,8 @@ public class Events
 
 
 		ArrayList<EventItem> events = readEventsData();
-		int c = events.size();
 
-		// We can't use foreach here, as we need to go backwards.
-		while (c-- > 0)
-		{
-			EventItem ev = events.get(c);
-
+		for (EventItem ev : events)
 			if (!ev.finished())
 				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
@@ -325,7 +320,7 @@ public class Events
 					);
 					return;
 				}
-		}
+
 		irc.sendContextReply(mes, "Event not found.");
 	}
 
@@ -351,14 +346,10 @@ public class Events
 		catch (NumberFormatException e) { }
 
 		ArrayList<EventItem> events = readEventsData();
-		int c=events.size();
 
 		StringBuilder rep = new StringBuilder();
 
-		while (c-- > 0)
-		{
-			EventItem ev = events.get(c);
-
+		for (EventItem ev : events)
 			if (!ev.finished())
 				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
@@ -376,7 +367,7 @@ public class Events
 					}
 					return;
 				}
-		}
+
 		irc.sendContextReply(mes, rep.toString() + "Event not found.");
 	}
 
@@ -395,7 +386,6 @@ public class Events
 		}
 
 		ArrayList<EventItem> events=readEventsData();
-		int c=events.size();
 
 		int eid=0;
 		try
@@ -404,17 +394,14 @@ public class Events
 		}
 		catch (NumberFormatException e) { }
 
-		while (c-- > 0)
-		{
-			EventItem ev= events.get(c);
-
+		for (EventItem ev : events)
 			if (!ev.finished())
 				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
 					irc.sendContextReply(mes, "http://www.warwickcompsoc.co.uk/events/details/?id=" + ev.id + ".");
 					return;
 				}
-		}
+
 		irc.sendContextReply(mes, "Event not found.");
 	}
 
@@ -433,7 +420,6 @@ public class Events
 		}
 
 		ArrayList<EventItem> events = readEventsData();
-		int c = events.size();
 
 		int eid=0;
 		try
@@ -442,9 +428,7 @@ public class Events
 		}
 		catch (NumberFormatException e) { }
 
-		while (c-- > 0)
-		{
-			EventItem ev = events.get(c);
+		for (EventItem ev : events)
 			if (!ev.finished())
 				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
@@ -466,7 +450,6 @@ public class Events
 						);
 					return;
 				}
-		}
 		irc.sendContextReply(mes, "Event not found.");
 	}
 
@@ -478,17 +461,15 @@ public class Events
 		ArrayList<EventItem> events=readEventsData();
 		int c=events.size();
 
-		if (c==0)
+		if (events.isEmpty())
 		{
 			irc.sendContextReply(mes, "There are no events! :'(");
 			return;
 		}
 
 		StringBuilder rep = new StringBuilder();
-		while (c-- > 0)
+		for (EventItem ev : events)
 		{
-			EventItem ev= events.get(c);
-
 			rep.append(Colors.BOLD + ev.name + Colors.NORMAL)
 				.append(ev.finished() ? " (finished)" : "")
 				.append(" at " + ev.location + " (" + ev.id + ")")
@@ -502,7 +483,7 @@ public class Events
 					""
 				)
 				.append(ev.signupMax != 0 ? " [" + ev.signupCurrent + "/" + ev.signupMax + "]" : "")
-				.append(c != 0 ? ", " : ".");
+				.append(--c != 0 ? ", " : ".");
 		}
 		irc.sendContextReply(mes, "Events: " + rep.toString());
 	}
