@@ -506,9 +506,69 @@ public class Events
 		return namelist;
 	}
 
-	private static String absoluteDateFormat(Date da)
+	/** Prettyprint a date */
+	private final static String absoluteDateFormat(Date da)
 	{
-		return new SimpleDateFormat("EEEE d MMM H:mma").format(da);
+		// Some definitions.
+			final SimpleDateFormat formatter = new SimpleDateFormat("EEEE d MMM h:mma");
+			final SimpleDateFormat dayNameFormatter = new SimpleDateFormat("EEEE");
+			final Calendar cda = new GregorianCalendar();
+				cda.setTime(da);
+
+			final Calendar cnow = new GregorianCalendar();
+			final Date now = cnow.getTime();
+			final Date midnight = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH), 24, 0, 0).getTime();
+			final Date midnightTommorow = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH), 48, 0, 0).getTime();
+			final Date endOfThisWeek = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH) + 7, 0, 0, 0).getTime();
+		// </definitions>
+
+		if (da.compareTo(now) > 0) // It's in the future, we can cope with it.
+		{
+			if (da.compareTo(midnight) < 0) // It's before midnight tonight.
+				return shortTime(cda) + " " +            // 9pm
+					(cda.get(Calendar.HOUR_OF_DAY) < 18 ? "today" : "tonight");
+
+			if (da.compareTo(midnightTommorow) < 0) // It's before midnight tommorow and not before midnight today, it's tommorow.
+				return shortTime(cda) +                  // 9pm
+					" tommorow " +                       // tommorow
+					futurePeriodOfDayString(cda);        // evening
+
+			if (da.compareTo(endOfThisWeek) < 0) // It's not tommrow, but it is some time when the week-day names alone mean something.
+				return shortTime(cda) + " " +            // 9pm
+					dayNameFormatter.format(da) + " " +  // Monday
+					futurePeriodOfDayString(cda);        // evening
+
+		}
+
+		return formatter.format(da);
+	}
+
+	/** Convert a Calendar to "8pm", "7am", "7:30am" etc. */
+	private final static String shortTime(Calendar cda)
+	{
+		String rep = new Integer(cda.get(Calendar.HOUR)).toString();
+
+		// Don't show the minutes if they're 0.
+		if (cda.get(Calendar.MINUTE) != 0)
+			rep += ":" + cda.get(Calendar.MINUTE);
+
+		rep += (cda.get(Calendar.AM_PM) == Calendar.AM ? "am" : "pm");
+
+		return rep;
+	}
+
+	/** Work out if a calendar is in the morning, afternoon or evening. */
+	private final static String futurePeriodOfDayString(Calendar cda)
+	{
+		final int hour = cda.get(Calendar.HOUR_OF_DAY);
+
+		if (hour < 12)
+			return "morning";
+
+		if (hour < 18)
+			return "afternoon";
+
+		return "evening";
 	}
 
 }
