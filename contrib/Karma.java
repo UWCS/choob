@@ -359,6 +359,10 @@ public class Karma
 			// Find out which holds our name.
 			String name;
 			boolean skip = false;
+			// Group 1: quoted karma item
+			// Group 2: raw karma item
+			// Group 3: "++" or "--"
+			// Group 4: reason
 			if (reasonMatch.group(1) != null)
 				name = reasonMatch.group(1).replaceAll("\\\\(.)", "$1");
 			else
@@ -403,6 +407,9 @@ public class Karma
 		{
 			String name;
 			boolean skip = false;
+			// Group 1: quoted karma item
+			// Group 2: raw karma item
+			// Group 3: "++" or "--"
 			if (karmaMatch.group(1) != null)
 				name = karmaMatch.group(1).replaceAll("\\\\(.)", "$1");
 			else
