@@ -77,8 +77,9 @@ public class Events
 				signupNames.add(name);
 		}
 
+		private String name;
+
 		public int id;
-		public String name;
 		public Date start;
 		public Date end;
 		public SignupCodes signupCode;
@@ -108,6 +109,21 @@ public class Events
 		{
 			return !finished() && (new Date()).compareTo(start) > 0;
 		}
+
+		public String boldName()
+		{
+			return Colors.BOLD + name + Colors.NORMAL +
+				(cancelled() ? " (" + Colors.BOLD + "cancelled!" + Colors.NORMAL + ")" : "") +
+				(inprogress() && !cancelled() ? " (" + Colors.BOLD + "on right now!" + Colors.NORMAL + ")" : "");
+		}
+
+		public String boldNameShortDetails()
+		{
+			return boldName() +
+				" (" + id +") " +
+				(!finished() && !cancelled() && !inprogress() ? " [" + microStampFromNow(start) + "]" : "");
+		}
+
 	}
 
 	private enum Groups
@@ -246,10 +262,8 @@ public class Events
 
 							// Announce the change.
 							irc.sendMessage(announceChannel,
-								"Signups for " + Colors.BOLD + n.name + Colors.NORMAL +
-								" (" + n.id +
-								") [" + microStampFromNow(n.start) +
-								"] now " + n.signupCurrent + "/" + n.signupMax +
+								"Signups for " + n.boldNameShortDetails() +
+								" now " + n.signupCurrent + "/" + n.signupMax +
 								" (" + sigts + ")."
 							);
 						}
@@ -334,7 +348,7 @@ public class Events
 						signup="";
 
 					irc.sendContextReply(mes,
-						Colors.BOLD + ev.name + Colors.NORMAL +
+						ev.boldName() +
 						" at " + ev.location +
 						( !"".equals(ev.shortdesc) ? " (" + ev.shortdesc + ")" : "") +
 						" (" + ev.id +
@@ -379,16 +393,12 @@ public class Events
 					if (ev.signupCode == SignupCodes.SIGNUPSOPEN)
 						irc.sendContextReply(mes,
 							"Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev.id + "&action=signup to sign-up for " +
-							Colors.BOLD + ev.name + Colors.NORMAL +
-							(!ev.finished() ? " [" + microStampFromNow(ev.start) + "]" : "") +
+							ev.boldNameShortDetails() +
 							"."
 						);
 					else
 					{
-						rep.append(
-							Colors.BOLD + ev.name + Colors.NORMAL +
-							(!ev.finished() ? " [" + microStampFromNow(ev.start) + "]" : "")
-						).append(" matched, but is not currently accepting sign-ups... ");
+						rep.append(ev.boldNameShortDetails()).append(" matched, but is not currently accepting sign-ups... ");
 						continue;
 					}
 					return;
@@ -460,16 +470,13 @@ public class Events
 				{
 					if (ev.signupCurrent == 0)
 						irc.sendContextReply(mes,
-							"No signups for " + Colors.BOLD + ev.name + Colors.NORMAL +
-							" at " + ev.location + " (" + ev.id + ")" +
-							" [" + microStampFromNow(ev.start) + "]" +
-							"!"
+							"No signups for " + ev.boldNameShortDetails() +
+							" at " + ev.location + "!"
 						);
 					else
 						irc.sendContextReply(mes,
-							"Signups for " + Colors.BOLD + ev.name + Colors.NORMAL  +
-							" at " + ev.location + " (" + ev.id + ")" +
-							" [" + microStampFromNow(ev.start) + "]" +
+							"Signups for " + ev.boldNameShortDetails() +
+							" at " + ev.location +
 							(ev.signupMax != 0 ? " [" + ev.signupCurrent + "/" + ev.signupMax + "]" : "") + ": " +
 							nameList(ev.signupNames, mes) +
 							"."
@@ -496,18 +503,9 @@ public class Events
 		StringBuilder rep = new StringBuilder();
 		for (EventItem ev : events)
 		{
-			rep.append(Colors.BOLD + ev.name + Colors.NORMAL)
-				.append(ev.finished() ? " (finished)" : "")
+			rep.append(ev.boldName())
 				.append(" at " + ev.location + " (" + ev.id + ")")
-				.append(!ev.finished() ?
-					(ev.inprogress() ?
-						" (" + Colors.BOLD + "on right now" + Colors.NORMAL + ", started " + mods.date.timeMicroStamp((new Date()).getTime() - ev.start.getTime()) + " ago)"
-					:
-						" [" + microStampFromNow(ev.start) + "]"
-					)
-				:
-					""
-				)
+				.append(ev.inprogress() ? " (started " + mods.date.timeMicroStamp((new Date()).getTime() - ev.start.getTime()) + " ago)" : "")
 				.append(ev.signupMax != 0 ? " [" + ev.signupCurrent + "/" + ev.signupMax + "]" : "")
 				.append(--c != 0 ? ", " : ".");
 		}
