@@ -445,7 +445,7 @@ public final class HorriblePerlScript
 			{
 				classContent.append("import java.util.*;\n\n");
 			}
-			
+
 			// Class description.
 			classContent.append("public class ");
 			classContent.append(className);
@@ -600,7 +600,7 @@ public final class HorriblePerlScript
 				classContent.append("\t\tthis.synthLevel = old.synthLevel + 1;\n");
 				classContent.append("\t\tthis.synthFlags = new HashMap<String,String>();\n");
 				classContent.append("\t\tfor (String prop : old.synthFlags.keySet()) {\n");
-				classContent.append("\t\t\tthis.synthFlags.put(prop, new String(((String)old.synthFlags.get(prop))));\n");
+				classContent.append("\t\t\tthis.synthFlags.put(prop, new String((old.synthFlags.get(prop))));\n");
 				classContent.append("\t\t}\n");
 			}
 			classContent.append("\t}\n\n");

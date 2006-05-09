@@ -176,7 +176,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			classOut.flush();
 			classOut.close();
 		}
-		return (String[])fileNames.toArray(new String[fileNames.size()]);
+		return fileNames.toArray(new String[fileNames.size()]);
 	}
 
 	protected Object createPlugin(String pluginName, URL source) throws ChoobException
@@ -261,7 +261,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 							arg[j]=mods;
 						else
 							throw new ChoobException("Unknown parameter in constructor.");
-				pluginObj = c[i].newInstance((Object [])arg);
+				pluginObj = c[i].newInstance(arg);
 				break;
 			}
 			catch (IllegalAccessException e)
@@ -305,13 +305,13 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		{
 			List<String> coms = allPlugins.getCommands(pluginName);
 			if (coms != null)
-				oldCommands = (String[])coms.toArray(oldCommands);
+				oldCommands = coms.toArray(oldCommands);
 
 			allPlugins.resetPlugin(pluginName, pluginObj);
 
 			coms = allPlugins.getCommands(pluginName);
 			if (coms != null)
-				newCommands = (String[])coms.toArray(newCommands);
+				newCommands = coms.toArray(newCommands);
 		}
 
 		for(int i=0; i<oldCommands.length; i++)
@@ -329,7 +329,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		{
 			List<String> coms = allPlugins.getCommands(pluginName);
 			if (coms != null)
-				oldCommands = (String[])coms.toArray(oldCommands);
+				oldCommands = coms.toArray(oldCommands);
 		}
 
 		// Cleanup is actually pretty easy.

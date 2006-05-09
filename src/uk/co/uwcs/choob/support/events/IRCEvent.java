@@ -88,7 +88,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 		this.synthLevel = old.synthLevel + 1;
 		this.synthFlags = new HashMap<String,String>();
 		for (String prop : old.synthFlags.keySet()) {
-			this.synthFlags.put(prop, new String(((String)old.synthFlags.get(prop))));
+			this.synthFlags.put(prop, new String((old.synthFlags.get(prop))));
 		}
 	}
 

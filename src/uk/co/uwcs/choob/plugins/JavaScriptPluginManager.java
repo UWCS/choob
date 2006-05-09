@@ -75,7 +75,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 			InputStream stream = con.getInputStream();
 			InputStreamReader streamReader = new InputStreamReader(stream);
 			BufferedReader bufferedStreamReader = new BufferedReader(streamReader);
-			
+
 			String line;
 			while ((line = bufferedStreamReader.readLine()) != null) {
 				code += line + "\n";
@@ -98,7 +98,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 			// Get list of commands for plugin before setting up new one.
 			commands = pluginMap.getCommands(pluginName);
 			if (commands != null)
-				oldCommands = (String[])commands.toArray(oldCommands);
+				oldCommands = commands.toArray(oldCommands);
 
 			// Clear the old instance's map data and load the new plugin map.
 			pluginMap.unloadPluginMap(pluginName);
@@ -107,7 +107,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 			// Get list of commands for newly loaded plugin.
 			commands = pluginMap.getCommands(pluginName);
 			if (commands != null)
-				newCommands = (String[])commands.toArray(newCommands);
+				newCommands = commands.toArray(newCommands);
 		}
 
 		// Update bot's command list now.
@@ -129,7 +129,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 			// Get list of commands for plugin before setting up new one.
 			commands = pluginMap.getCommands(pluginName);
 			if (commands != null)
-				oldCommands = (String[])commands.toArray(oldCommands);
+				oldCommands = commands.toArray(oldCommands);
 
 			// Clear the old instance's map data.
 			pluginMap.unloadPluginMap(pluginName);

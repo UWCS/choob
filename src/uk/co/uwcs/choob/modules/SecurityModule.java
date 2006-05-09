@@ -128,11 +128,11 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		PermissionCollection perms;
 		synchronized(nodeMap)
 		{
-			perms = (PermissionCollection)nodeMap.get(nodeID);
+			perms = nodeMap.get(nodeID);
 			if (perms == null)
 			{
 				updateNodePermissions(nodeID);
-				perms = (PermissionCollection)nodeMap.get(nodeID);
+				perms = nodeMap.get(nodeID);
 			}
 		}
 		return perms;
@@ -715,7 +715,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				return hasPerm( permission, nodeID, true );
 			}
 		})).booleanValue();
-		
+
 		if (!rv) {
 			System.out.println("Plugin " + plugin + " lacks permission " + permission + ".");
 		}
@@ -1380,7 +1380,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			}
 		}
 		String[] retVal = new String[foundPerms.size()];
-		return (String[])foundPerms.toArray(retVal);
+		return foundPerms.toArray(retVal);
 	}
 
 	/**
@@ -1408,7 +1408,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			}
 		}
 		String[] retVal = new String[foundPerms.size()];
-		return (String[])foundPerms.toArray(retVal);
+		return foundPerms.toArray(retVal);
 	}
 
 	public void revokePermission(String groupName, Permission permission) throws ChoobException

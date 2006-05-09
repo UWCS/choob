@@ -130,7 +130,7 @@ public abstract class ChoobPluginManager
 		{
 			Set<String> keys = pluginMap.keySet();
 			String[] ret = new String[keys.size()];
-			return (String[])keys.toArray(ret);
+			return keys.toArray(ret);
 		}
 	}
 
@@ -145,7 +145,7 @@ public abstract class ChoobPluginManager
 			if (coms == null)
 				return null;
 			String[] ret = new String[coms.size()];
-			return (String[])coms.toArray(ret);
+			return coms.toArray(ret);
 		}
 	}
 

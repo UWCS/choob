@@ -17,12 +17,12 @@ IF "%CompareFileDates%"=="1" (
 CALL :compare-file-dates uk\co\uwcs\choob\support\ObjectDbClauseParser.jjt uk\co\uwcs\choob\support\ObjectDbClauseParser.java
 IF "%CompareFileDates%"=="1" (
 	ECHO Recompiling ObjectDB parser...
-	jjtree -OUTPUT_DIRECTORY:uk/co/uwcs/choob/support uk/co/uwcs/choob/support/ObjectDbClauseParser.jjt
+	jjtree -JDK_VERSION:"1.5" -OUTPUT_DIRECTORY:uk/co/uwcs/choob/support uk/co/uwcs/choob/support/ObjectDbClauseParser.jjt
 	IF NOT "%ERRORLEVEL%"=="0" (
 		ECHO Failed to JJT-compile the ObjectDB Clause Parser.
 		EXIT /B 1
 	)
-	javacc -OUTPUT_DIRECTORY:uk/co/uwcs/choob/support uk/co/uwcs/choob/support/ObjectDbClauseParser.jj
+	javacc -JDK_VERSION:"1.5" -OUTPUT_DIRECTORY:uk/co/uwcs/choob/support uk/co/uwcs/choob/support/ObjectDbClauseParser.jj
 	IF NOT "%ERRORLEVEL%"=="0" (
 		ECHO Failed to JJ-compile the ObjectDB Clause Parser.
 		EXIT /B 1

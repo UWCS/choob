@@ -73,12 +73,12 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 							irc.sendContextReply(ev, "Command " + plugin + "." + command + " not found. Perhaps you meant " + suggestions.get(0) + "?");
 						else
 						{
-							StringBuffer buf = new StringBuffer("Command " + plugin + "." + command + " not found. Perhaps you meant one of: ");
+							StringBuilder buf = new StringBuilder("Command " + plugin + "." + command + " not found. Perhaps you meant one of: ");
 							Iterator<String> it = suggestions.iterator();
-							buf.append((String)it.next());
+							buf.append(it.next());
 							while(it.hasNext())
 							{
-								String sug = (String)it.next();
+								String sug = it.next();
 								if (it.hasNext())
 									buf.append(", ");
 								else
@@ -121,7 +121,7 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 		ChoobPluginManager[] mans = new ChoobPluginManager[0];
 		synchronized(pluginManagers)
 		{
-			mans = (ChoobPluginManager[])pluginManagers.toArray(mans);
+			mans = pluginManagers.toArray(mans);
 		}
 		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
 		for(int i=0; i<mans.length; i++)
@@ -139,7 +139,7 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 		ChoobPluginManager[] mans = new ChoobPluginManager[0];
 		synchronized(pluginManagers)
 		{
-			mans = (ChoobPluginManager[])pluginManagers.toArray(mans);
+			mans = pluginManagers.toArray(mans);
 		}
 		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
 		for(int i=0; i<mans.length; i++)

@@ -1549,14 +1549,12 @@ protected SimpleCharStream input_stream;
 private final int[] jjrounds = new int[123];
 private final int[] jjstateSet = new int[246];
 protected char curChar;
-public ObjectDBClauseParserTokenManager(SimpleCharStream stream)
-{
+public ObjectDBClauseParserTokenManager(SimpleCharStream stream){
    if (SimpleCharStream.staticFlag)
       throw new Error("ERROR: Cannot use a static CharStream class with a non-static lexical analyzer.");
    input_stream = stream;
 }
-public ObjectDBClauseParserTokenManager(SimpleCharStream stream, int lexState)
-{
+public ObjectDBClauseParserTokenManager(SimpleCharStream stream, int lexState){
    this(stream);
    SwitchTo(lexState);
 }
