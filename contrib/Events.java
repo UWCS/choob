@@ -12,11 +12,21 @@ import org.jibble.pircbot.Colors;
 public class Events
 {
 
-	// As per: http://bermuda.warwickcompsoc.co.uk/UWCSWebsite/Members/silver/document.2005-10-15.5186402265/. Don't fear the slashes, they're cuddly.
+	// As per: (deadlink) http://bermuda.warwickcompsoc.co.uk/UWCSWebsite/Members/silver/document.2005-10-15.5186402265/. Don't fear the slashes, they're cuddly.
 
 	final Pattern events_pattern=Pattern.compile("(\\d+) \"([^\"]*)\" ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) \"([^\"]*)\" \"((?:\\\\\"|\\\\\\\\|[^\"])*)\" \"((?:\\\\\"|\\\\\\\\|[^\"])*)\"");
 	//  Id:                                         1        2          3       4       5       6       7         8                     9                                 10
 	//  Name:                                       id       name     start   end <signup>code max   current    names</signup>        desc.                             location
+
+	enum SignupCodes
+	{
+		EXPIRED    , // X : expired.
+		HASSIGNUPS , // S : has signups
+		SIGNUPSOPEN, // SO: signups are open
+		CANCELLED  , // C : cancelled
+		NOSIGNUPS  , // - : there are no signups
+		UNKNOWN    , //   : Anything else, ie. an error code.
+	}
 
 	/** A class for holding information about a single event */
 	private class EventItem
@@ -39,9 +49,17 @@ public class Events
 			name          = sname;
 			start         = convertTimestamp(sstart);
 			end           = convertTimestamp(send);
-			signupCode    = ssignupCode;
 			signupMax     = Integer.parseInt(ssignupMax);
 			signupCurrent = Integer.parseInt(ssignupCurrent);
+
+			// ssignupCode comes as a short code (suprisingly enough) that is explained next to the enum above. Decode it:
+			//signupCode    = ssignupCode;
+			if      (ssignupCode.equals("X"))  signupCode = SignupCodes.EXPIRED    ;
+			else if (ssignupCode.equals("S"))  signupCode = SignupCodes.HASSIGNUPS ;
+			else if (ssignupCode.equals("SO")) signupCode = SignupCodes.SIGNUPSOPEN;
+			else if (ssignupCode.equals("C"))  signupCode = SignupCodes.CANCELLED  ;
+			else if (ssignupCode.equals("-"))  signupCode = SignupCodes.NOSIGNUPS  ;
+			else /*  ssignupCode is unkown */  signupCode = SignupCodes.UNKNOWN    ;
 
 			// The description comes in as one string, pipe-seperated.
 			// What happens if it contains strictly> 1 pipe?
@@ -63,7 +81,7 @@ public class Events
 		public String name;
 		public Date start;
 		public Date end;
-		public String signupCode;
+		public SignupCodes signupCode;
 		public int signupMax;
 		public int signupCurrent;
 		public ArrayList<String> signupNames;
@@ -79,6 +97,11 @@ public class Events
 		public boolean finished()
 		{
 			return (new Date()).compareTo(end) > 0;
+		}
+
+		public boolean cancelled()
+		{
+			return signupCode == SignupCodes.CANCELLED;
 		}
 
 		public boolean inprogress()
@@ -353,7 +376,7 @@ public class Events
 			if (!ev.finished())
 				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
-					if (!ev.signupCode.equals("X") && !ev.signupCode.equals("-"))
+					if (ev.signupCode == SignupCodes.SIGNUPSOPEN)
 						irc.sendContextReply(mes,
 							"Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev.id + "&action=signup to sign-up for " +
 							Colors.BOLD + ev.name + Colors.NORMAL +
@@ -362,7 +385,10 @@ public class Events
 						);
 					else
 					{
-						rep.append("Event ").append(ev.name).append(" matched, but does not accept sign-ups... ");
+						rep.append(
+							Colors.BOLD + ev.name + Colors.NORMAL +
+							(!ev.finished() ? " [" + microStampFromNow(ev.start) + "]" : "")
+						).append(" matched, but is not currently accepting sign-ups... ");
 						continue;
 					}
 					return;
