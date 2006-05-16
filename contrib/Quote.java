@@ -199,8 +199,8 @@ public class Quote
 			{
 				Message line = history.get(i);
 				String text = line.getMessage();
-//				if (text.length() < MINLENGTH || text.split(" +").length < MINWORDS)
-//					continue;
+				if (text.length() < MINLENGTH || text.split(" +").length < MINWORDS)
+					continue;
 				String guessNick = mods.nick.getBestPrimaryNick( line.getNick() );
 				if ( guessNick.toLowerCase().equals(findNick) )
 				{
