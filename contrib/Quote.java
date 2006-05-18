@@ -1493,7 +1493,10 @@ public class Quote
 			else
 			{
 				for (String nick : irc.getUsers(ev.getChannel()))
-					quote = quote.replaceAll(nick, nick.replaceAll("([a-zA-Z])([^, ]+)","$1'$2"));
+					quote = quote.replaceAll(
+						nick.replaceAll("([^a-zA-Z0-9_])", "\\\\$1"),
+						nick.replaceAll("([a-zA-Z])([^, ]+)","$1'$2")
+					);
 
 				irc.sendContextMessage( ev, greeting + ev.getNick() + ": \"" + quote + "\"");
 			}
