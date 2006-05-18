@@ -299,7 +299,7 @@ public final class PluginModule
 	{
 		return getPluginList(onlyCore);
 	}
-	
+
 	/**
 	 * Get the source URL for the plugin, or where it was last loaded from.
 	 * @param pluginName The name of the plugin to get the source URL for.
@@ -386,11 +386,11 @@ public final class PluginModule
 		try {
 			dbCon = broker.getConnection();
 			PreparedStatement pluginReplace = dbCon.prepareStatement("INSERT INTO Plugins (PluginName, URL) VALUES (?, ?) ON DUPLICATE KEY UPDATE URL = ?");
-			
+
 			pluginReplace.setString(1, pluginName);
 			pluginReplace.setString(2, URL);
 			pluginReplace.setString(3, URL);
-			
+
 			pluginReplace.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -415,6 +415,37 @@ public final class PluginModule
 		for (int i = 0; i < commands.length; i++)
 			if (commands[i].equalsIgnoreCase(commandName))
 				return true;
+		return false;
+	}
+
+
+	public boolean validCommand(String command)
+	{
+		if (validInternalCommand(command))
+			return true;
+		if (validAliasCommand(command))
+			return true;
+		return false;
+	}
+
+	public boolean validAliasCommand(String command)
+	{
+		String[] bits=command.split("\\.");
+		try
+		{
+			if (bits.length == 1 && mods.plugin.callAPI("Alias", "Get", bits[0].trim())!=null)
+				return true;
+		}
+		catch (ChoobNoSuchCallException e)
+		{}
+		return false;
+	}
+
+	public boolean validInternalCommand(String command)
+	{
+		String[] bits=command.split("\\.");
+		if (bits.length == 2 && mods.plugin.commandExists(bits[0], bits[1]))
+			return true;
 		return false;
 	}
 }

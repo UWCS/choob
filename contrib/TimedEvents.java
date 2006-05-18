@@ -65,7 +65,7 @@ public class TimedEvents
 	public void commandIn( Message mes )
 	{
 		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
-		
+
 		// Stop recursion
 		if (mesFlags.containsKey("timedevents.delayed")) {
 			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
@@ -106,7 +106,7 @@ public class TimedEvents
 			else
 				actual_command=command.substring(0, spacePos);
 
-			if (!validCommand(actual_command))
+			if (!mods.plugin.validCommand(actual_command))
 			{
 				irc.sendContextReply(mes, "'" + actual_command + "' could not be identified as a valid command or alias, please try again.");
 				return;
@@ -142,7 +142,7 @@ public class TimedEvents
 	public void commandAt( Message mes )
 	{
 		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
-		
+
 		// Stop recursion
 		if (mesFlags.containsKey("timedevents.delayed")) {
 			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
@@ -252,7 +252,7 @@ public class TimedEvents
 				if (h == 12)
 					h = 0;
 			}
-			
+
 			if (ma.group(4).equalsIgnoreCase("pm"))
 				h += 12;
 		}
@@ -288,7 +288,7 @@ public class TimedEvents
 			else
 				actual_command=command.substring(0, spacePos);
 
-			if (!validCommand(actual_command))
+			if (!mods.plugin.validCommand(actual_command))
 			{
 				irc.sendContextReply(mes, "'" + actual_command + "' could not be identified as a valid command or alias, please try again.");
 				return;
@@ -369,7 +369,7 @@ public class TimedEvents
 			// Resynth...
 			for(int i=0; i<timedEvent.synthLevel; i++)
 				newMes = (Message)newMes.cloneEvent(command);
-			
+
 			// Put back flags.
 			Map<String,String> mesFlags = ((IRCEvent)newMes).getSynthFlags();
 			decodeSynthFlags(mesFlags, timedEvent.synthFlags);
@@ -400,7 +400,7 @@ public class TimedEvents
 		else
 			irc.sendContextReply(mes, "Nobody queued nuffin', gov'ner.");
 	}
-	
+
 	String encodeSynthFlags(Map<String,String> flags)
 	{
 		String rv = "";
@@ -414,7 +414,7 @@ public class TimedEvents
 		}
 		return rv;
 	}
-	
+
 	void decodeSynthFlags(Map<String,String> flags, String data)
 	{
 		if (data == null)
@@ -425,20 +425,5 @@ public class TimedEvents
 			String[] parts = flagItems[i].split("(?<!\\\\)=", 2);
 			flags.put(parts[0].replaceAll("\\\\([\\\\\"=,])", "$1"), parts[1].replaceAll("\\\\([\\\\\"=,])", "$1"));
 		}
-	}
-
-	boolean validCommand(String command)
-	{
-		String[] bits=command.split("\\.");
-		if (bits.length == 2 && mods.plugin.commandExists(bits[0], bits[1]))
-			return true;
-		try
-		{
-			if (bits.length == 1 && mods.plugin.callAPI("Alias", "Get", bits[0].trim())!=null)
-				return true;
-		}
-		catch (ChoobNoSuchCallException e)
-		{}
-		return false;
 	}
 }

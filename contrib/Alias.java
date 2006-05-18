@@ -81,28 +81,38 @@ public class Alias
 
 		// Validate name against unprintable characters.
 		for (int i = 0; i < name.length(); i++)
-		{
 			if (name.charAt(i) < 32)
 			{
 				irc.sendContextReply(mes, "Alias name contains disallowed characters. Try again!");
 				return;
 			}
+
+
+		int spacePos = conv.indexOf(' ');
+		final String actualParams;
+		if (spacePos == -1)
+		{
+			spacePos = conv.length();
+			actualParams = "";
+		}
+		else
+			actualParams = conv.substring(spacePos + 1);
+
+		final String subAlias = conv.substring(0, spacePos);
+
+		// This is slightly inefficient as it'll recall the alias twice if it's recursive. Bah.
+		if (!mods.plugin.validCommand(subAlias))
+		{
+			irc.sendContextReply(mes, "Sorry, you tried to create an alias to '" + subAlias + "', but it doesn't exist!");
+			return;
 		}
 
+
+		// It doesn't have a dot in it, or (it has a space in it, and the dot is after the space).
 		if (conv.indexOf('.') == -1 || (conv.indexOf(' ') != -1 && conv.indexOf(' ') < conv.indexOf('.')))
 		{
 			// Alias recursion?
-			int spacePos = conv.indexOf(' ');
-			String actualParams;
-			if (spacePos == -1)
-			{
-				spacePos = conv.length();
-				actualParams = "";
-			}
-			else
-				actualParams = conv.substring(spacePos + 1);
 
-			String subAlias = conv.substring(0, spacePos);
 			AliasObject alias = getAlias(subAlias);
 
 			if (alias == null)
@@ -610,23 +620,23 @@ public class Alias
 
 		// Message extends IRCEvent, so this cast will always succeed.
 		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
-		
+
 		if (mesFlags.containsKey("alias.expanded"))
 		{
 			int recurseLevel = Integer.parseInt(mesFlags.get("alias.expanded")) + 1;
-			
+
 			// Stop recursion
 			if (recurseLevel > 2) {
 				irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
 				return;
 			}
-			
+
 			mesFlags.put("alias.expanded", new Integer(recurseLevel).toString());
 		}
 		else
 		{
 			mesFlags.put("alias.expanded", "1");
-			
+
 			try
 			{
 				int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
