@@ -134,7 +134,7 @@ public class MiscMsg
 		String[] tokens = params.split("(?:^|\\s*,\\s*|\\s+)or(?:\\s*,\\s*|\\s+|$)");
 		if (tokens.length <= 1)
 		{
-			irc.sendContextReply(mes, "Answer to \"" + params + "\" is " + (rand.nextBoolean() ? "yes" : "no" ) + ".");
+			irc.sendContextReply(mes, "My answer is " + (rand.nextBoolean() ? "yes" : "no" ) + ".");
 			return;
 		}
 
@@ -148,7 +148,6 @@ public class MiscMsg
 		String output = null;
 		for(int i=0; i<tokens2.length; i++)
 		{
-			System.out.println(tokens2[i]);
 			if (tokens2[i].equals(""))
 			{
 				irc.sendContextReply(mes, "Reply number " + (i + 1) + " is empty!");
@@ -160,7 +159,6 @@ public class MiscMsg
 
 		for(int i=1; i<tokens.length; i++)
 		{
-			System.out.println(tokens[i]);
 			if (tokens[i].equals(""))
 			{
 				irc.sendContextReply(mes, "Reply number " + (tokens2.length + i) + " is empty!");
@@ -170,7 +168,7 @@ public class MiscMsg
 				output = tokens[i];
 		}
 
-		irc.sendContextReply(mes, "Answer to \"" + params + "\" is " + output + ".");
+		irc.sendContextReply(mes, "My answer is " + output + ".");
 	}
 
 	public String[] helpCommand8Ball = {
