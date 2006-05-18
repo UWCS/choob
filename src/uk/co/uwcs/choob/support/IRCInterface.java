@@ -379,4 +379,12 @@ public final class IRCInterface
 		bot.quitServer(message);
 	}
 
+	public String[] getUsers(String channel)
+	{
+		ArrayList<String> nicks = new ArrayList<String>();
+		org.jibble.pircbot.User[] us = bot.getUsers(channel);
+		for (org.jibble.pircbot.User u : us)
+			nicks.add(u.getNick());
+		return nicks.toArray(new String[]{});
+	}
 }

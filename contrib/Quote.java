@@ -97,6 +97,35 @@ public class Quote
 		  "See CreateExamples for some examples."
 	};
 
+	// A class to track the scores of a person.
+	class ScoreTracker implements Comparable
+	{
+		public String name;
+		public int count;
+
+		// Create a new ScoreTracker, given the name of the person.
+		public ScoreTracker(String tname)
+		{
+			name=tname;
+		}
+
+		public void addQuote()
+		{
+			count++;
+		}
+
+		// Compare to another ScoreTracker.
+		public int compareTo(Object o)
+		{
+			// Ignore the "null" case.
+			if (o == null)
+				return 1;
+
+			return ((ScoreTracker)o).count - count;
+		}
+	}
+
+
 	public String[] helpCreateExamples = {
 		  "'Quote.Create action:Fred' will quote the most recent action from Fred, regardless of length.",
 		  "'Quote.Create privmsg:' will quote the most recent line that's long enough.",
@@ -742,6 +771,61 @@ public class Quote
 		else
 			irc.sendContextReply( mes, "There are " + count + " quotes!" );
 	}
+
+	/*
+	public String[] helpCommandScores = {
+		"Returns the most quoted people.",
+		"[ <Clause> [ <Clause> ... ]]",
+		"<Clause> is a clause to select quotes with (see Quote.UsingGet)"
+	};
+
+	public void commandScores( Message mes ) throws ChoobException
+	{
+		final String whereClause = getClause( mods.util.getParamString( mes ) );
+		//final List<QuoteObject> quoteIds = ;
+
+		HashMap <String, ScoreTracker> scores = new HashMap<String, ScoreTracker>();
+		final List<QuoteObject> quoteCounts = mods.odb.retrieve( QuoteObject.class, whereClause );
+		final Set<Integer> ids = new HashSet<Integer>();
+
+		for (QuoteObject q : quoteCounts)
+			ids.add(q.id);
+
+
+		ScoreTracker st;
+
+		for (Integer qid : ids)
+		{
+			Set<String> credititedThisQuote = new HashSet<String>();
+			for (QuoteLine line : (List<QuoteLine>)mods.odb.retrieve( QuoteLine.class, "WHERE quoteID = " + qid))
+			{
+				//System.out.println("Crediting " + line.nick + " for their work in " + qid);
+				if (!credititedThisQuote.contains(line.nick))
+				{
+					if ((st = scores.get(line.nick)) == null)
+						scores.put(line.nick, st = new ScoreTracker(line.nick));
+
+					st.addQuote();
+					credititedThisQuote.add(line.nick);
+				}
+			}
+		}
+
+		ArrayList<ScoreTracker> l = new ArrayList(scores.values());
+		Collections.sort(l);
+
+		StringBuilder b = new StringBuilder("Top scorers: ");
+		int i=1;
+
+		for (ListIterator<ScoreTracker> it = l.listIterator(); it.hasNext() && it.nextIndex() < 5; i++)
+		{
+			ScoreTracker p = it.next();
+			b.append(i).append(") ").append(p.name).append(" with ").append(p.count).append(", ");
+		}
+		irc.sendContextReply(mes, b.toString());
+	}
+	*/
+
 
 	// quotekarma, quotesummary
 	public String[] helpCommandSummary = {
@@ -1391,7 +1475,7 @@ public class Quote
 
 	public void onJoin( ChannelJoin ev, Modules mods, IRCInterface irc )
 	{
-		if (ev.getLogin().equals("Choob")) // XXX
+		if (ev.getLogin().equalsIgnoreCase("Choob")) // XXX
 			return;
 
 		if (shouldMessage(ev))
@@ -1407,7 +1491,12 @@ public class Quote
 			if (quote == null)
 				irc.sendContextMessage( ev, greeting + ev.getNick() + "!");
 			else
+			{
+				for (String nick : irc.getUsers(ev.getChannel()))
+					quote = quote.replaceAll(nick, nick.replaceAll("([a-zA-Z])([^, ]+)","$1'$2"));
+
 				irc.sendContextMessage( ev, greeting + ev.getNick() + ": \"" + quote + "\"");
+			}
 		}
 	}
 }
