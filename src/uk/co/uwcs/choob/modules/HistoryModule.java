@@ -35,7 +35,7 @@ public final class HistoryModule
 
 	/**
 	 * Logs a line from IRC to the database.
-	 * @param mes {@link IRCEvent} object representing the line from IRC.
+	 * @param ev {@link Event} object representing the line from IRC.
 	 * @throws Exception Thrown from the database access, potential SQL or IO exceptions.
 	 */
 

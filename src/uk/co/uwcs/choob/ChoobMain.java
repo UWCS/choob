@@ -13,6 +13,15 @@ public final class ChoobMain
 {
 	public static void main(String[] args)
 	{
-		Choob bot = new Choob();
+		try
+		{
+			new Choob();
+		}
+		catch (Throwable t)
+		{
+			System.err.println("Fatal error in Choob, exiting.");
+			System.exit(1);
+		}
+
 	}
 }

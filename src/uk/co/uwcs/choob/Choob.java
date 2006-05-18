@@ -45,7 +45,7 @@ public final class Choob extends PircBot
 	/**
 	 * Constructor for Choob, initialises vital variables.
 	 */
-	Choob()
+	Choob() throws ChoobError
 	{
 
 		try
@@ -125,7 +125,16 @@ public final class Choob extends PircBot
 		irc.grabMods();
 
 		// Set up the threading stuff, load plugins, etc.
-		init();
+		try
+		{
+			init();
+		}
+		catch (ChoobError e)
+		{
+			// Uh oh, some serious badness happened.
+			System.err.println("Fatal error, bailing out of Choob constructor.");
+			throw e;
+		}
 
 		// Disable PircBot's flood protection, reducing percieved lag.
 		this.setMessageDelay(0);
@@ -190,7 +199,7 @@ public final class Choob extends PircBot
 	/**
 	 * Initialises the Choob thread poll as well as loading the few core plugins that ought to be present at start.
 	 */
-	private void init()
+	private void init() throws ChoobError
 	{
 		// Create our list of threads
 		int c;
@@ -225,11 +234,11 @@ public final class Choob extends PircBot
 
 			broker.freeConnection(dbConnection);
 		}
-		catch( Exception e )
+		catch (Throwable t)
 		{
-			e.printStackTrace();
+			t.printStackTrace();
 			// If we failed to load the core plugins, we've got issues.
-			throw new RuntimeException("Failed to load core plugin list!", e);
+			throw new ChoobError("Failed to load core plugin list!", t);
 		}
 	}
 
