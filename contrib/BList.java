@@ -21,12 +21,21 @@ public class ListItem
 	public ListItem(String key, String content)
 	{
 		this.key = key.toLowerCase();
-		this.content = content.toLowerCase();
+		this.content = content;
 	}
 }
 
 public class BList
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Plugin to store lists of associated items.",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			"$Rev: 640 $$Date: 2006-05-20 14:00:00 +0100 (Sat, 20 May 2006) $"
+		};
+	}
 	private Modules mods;
 	private IRCInterface irc;
 
@@ -71,7 +80,11 @@ public class BList
 		if ((mes.getTarget() == null) || (mods.security.hasPluginPerm(new ChoobPermission(permStr), "BList")))
 			irc.sendContextReply(mes,item.content);
 		else
-			irc.sendMessage(mes.getNick(),"Sorry, you may not use that command here, if appropriate ask an admin to grant: " + permStr);
+		{
+// 			!security.grant plugin.blist Choob listname.#channelname
+			irc.sendMessage(mes.getNick(),"Sorry, you may not use that command in " + mes.getTarget() + ", if appropriate ask an admin to grant: " + permStr + ". Private messaging output to you instead.");
+			irc.sendMessage(mes.getNick(),item.content);
+		}
 	}
 
 	public String[] helpCommandCount = {
@@ -119,6 +132,17 @@ public class BList
 			return mods.odb.retrieve( ListItem.class , "SORT RANDOM WHERE key = \"" + key + "\" AND content REGEXP'.*" + regex + ".*'");
 		}
 	}
+
+	private HashSet<String> search(String term)
+	{
+		HashSet<String> toReturn = new HashSet<String>();
+		for (Object item : (mods.odb.retrieve( ListItem.class , "WHERE key REGEXP '.*" + term + ".*'")))
+		{
+			toReturn.add(((ListItem)item).key);
+		}
+		return toReturn;
+	}
+
 
 	private boolean dupe(String key, String content)
 	{
@@ -248,7 +272,7 @@ public class BList
 		irc.sendContextReply(mes,"Ok, deleted specified list");
 	}
 
-	public String[] helpDeleteMatching = {
+	public String[] helpCommandDeleteMatching = {
 		"Deletes all the matching lines from specified list",
 		"<ListName> <Regex>",
 		"<ListName> is the name of the list to delete items from.",
@@ -280,5 +304,44 @@ public class BList
 		{	}
 	
 		irc.sendContextReply(mes,"Ok, deleted " + deleted + " matching items");
+	}
+
+	public String[] helpCommandList = {
+		"Lists all matching lists",
+		"[<Regex>]",
+		"<Regex> is the pattern to match when searching for lists, leave blank to search for all lists."
+	};	
+	public void commandList(Message mes)
+	{
+		List<String> params = mods.util.getParams(mes,1);
+		HashSet<String> lists = new HashSet<String>();
+		if (params.size() < 2)
+		{
+			lists = search("");
+		} else
+		{
+			lists = search(params.get(1));
+		}
+		if (lists.size() == 0)
+		{
+			irc.sendContextReply(mes,"No lists found");
+			return;
+		}
+		String toMsg = "Matching lists: ";
+		int maxNo = 50;
+		for (String str : lists)
+		{
+			if (maxNo > 0)
+			{
+				toMsg = toMsg + str + " ";
+			}
+			else
+			{
+				toMsg = toMsg + "... Specify a search term to narrow results";
+				break;
+			}
+			maxNo--; 
+		}
+		irc.sendContextReply(mes,toMsg);
 	}
 }
