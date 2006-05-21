@@ -164,16 +164,32 @@ public class Karma
 		}
 		else
 		{
-			Matcher ma=karmaItemPattern.matcher(name);
+			Matcher ma = karmaItemPattern.matcher(name);
 			if (ma.find())
 			{
 				reason = apiReason(getName(ma));
-				if (reason==null)
-					return;
-				name = reason[0];
+				if (reason != null)
+					name = reason[0];
 			}
 			else
-				return;
+			{
+				if (name.startsWith("\""))
+				{
+					irc.sendContextReply(mes, "Unable to match your query to a valid karma string.");
+					return;
+				}
+				
+				// Value wasn't quoted, so try it again, but quoted.
+				ma = karmaItemPattern.matcher("\"" + name + "\"");
+				if (!ma.find())
+				{
+					irc.sendContextReply(mes, "Unable to match your query to a valid karma string.");
+					return;
+				}
+				reason = apiReason(getName(ma));
+				if (reason != null)
+					name = reason[0];
+			}
 		}
 
 		if (reason != null)
