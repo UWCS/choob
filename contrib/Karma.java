@@ -445,8 +445,9 @@ public class Karma
 			// Karma flood check.
 			try
 			{
-				String key = mes.getNick() + ":" + name + ":" + increase;
-				int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", key, 15000, 2);
+				//String key = mes.getNick() + ":" + name + ":" + increase;
+				// 15 minute block for each karma item, irespective of who or direction.
+				int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", name, 15 * 60 * 1000, 2);
 				if (ret != 0)
 				{
 					if (ret == 1)
