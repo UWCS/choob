@@ -15,7 +15,7 @@ public class Mail
 			"Plugin to send email.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			"$Rev:$$Date$"
+			"$Rev$$Date$"
 		};
 	}
 
@@ -119,7 +119,12 @@ public class Mail
 			valid(incoming.readLine(),250);
 			outgoing.writeBytes("DATA" + "\r\n");
 			valid(incoming.readLine(),354);
-			outgoing.writeBytes("Subject: Message from " + nick + " via BadgerBOT" + "\r\n" + "\r\n");
+			outgoing.writeBytes("Subject: Message from " + nick + " via BadgerBOT" + "\r\n");
+			outgoing.writeBytes("To: " + to + "\r\n");
+			outgoing.writeBytes("From: " + from + "\r\n");
+			Date now = new Date();
+			java.text.SimpleDateFormat niceDate = new java.text.SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
+			outgoing.writeBytes("Date: " + niceDate.format(now) + "\r\n" + "\r\n");
 			outgoing.writeBytes("Message from " + nick + " (" + hostmask + ") in " + channel + ":" + "\r\n" + "\r\n" + message + "\r\n");
 			outgoing.writeBytes("." + "\r\n");
 			valid(incoming.readLine(),250);
