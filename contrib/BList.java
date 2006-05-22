@@ -33,7 +33,7 @@ public class BList
 			"Plugin to store lists of associated items.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			"$Rev: 640 $$Date: 2006-05-20 14:00:00 +0100 (Sat, 20 May 2006) $"
+			"$Rev$$Date$"
 		};
 	}
 	private Modules mods;
@@ -69,7 +69,7 @@ public class BList
 		{
 			thisList = get(key,params.get(2));
 		}
-		if ((thisList == null) || (thisList.size() == 0)) 
+		if ((thisList == null) || (thisList.size() == 0))
 		{
 			irc.sendContextReply(mes,"Could not find an item matching your criteria");
 			return;
@@ -92,7 +92,7 @@ public class BList
 		"<ListName> [<Regex>]",
 		"<ListName> is the name of the list to look in.",
 		"<Regex> is a regex to restrict matching items in the list"
-	};	
+	};
 	public void commandCount(Message mes)
 	{
 		List<String> params = mods.util.getParams(mes,2);
@@ -158,7 +158,7 @@ public class BList
 		"<ListName> <String>",
 		"<ListName> is the name of the list to add this string to.",
 		"<String> is the string to add."
-	};	
+	};
 	public void commandAdd(Message mes)
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.blist.add"), mes);
@@ -191,7 +191,7 @@ public class BList
 		"<ListName> <URL>",
 		"<ListName> is the name of the list to add this string to.",
 		"<URL> is the URL to the file containing the strings to add."
-	};	
+	};
     public void commandAddFromFile(Message mes)
     {
 		mods.security.checkNickPerm(new ChoobPermission("plugins.blist.addfromfile"), mes);
@@ -238,7 +238,7 @@ public class BList
 		{
 			System.out.println("Error reading specified file " + e.toString() );
 			return;
-		} 
+		}
 
 		irc.sendContextReply(mes,"Successfully added " + added + " items to list: " + key);
     }
@@ -247,7 +247,7 @@ public class BList
 		"Deletes all the data in specified list",
 		"<ListName>",
 		"<ListName> is the name of the list to delete."
-	};	
+	};
 	public void commandDeleteList(Message mes)
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.blist.deletelist"), mes);
@@ -277,7 +277,7 @@ public class BList
 		"<ListName> <Regex>",
 		"<ListName> is the name of the list to delete items from.",
 		"<Regex> is the pattern to match strings to be deleted with."
-	};	
+	};
 	public void commandDeleteMatching(Message mes)
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.blist.deletematching"), mes);
@@ -302,7 +302,7 @@ public class BList
 		}
 		catch( IllegalStateException e )
 		{	}
-	
+
 		irc.sendContextReply(mes,"Ok, deleted " + deleted + " matching items");
 	}
 
@@ -310,7 +310,7 @@ public class BList
 		"Lists all matching lists",
 		"[<Regex>]",
 		"<Regex> is the pattern to match when searching for lists, leave blank to search for all lists."
-	};	
+	};
 	public void commandList(Message mes)
 	{
 		List<String> params = mods.util.getParams(mes,1);
@@ -340,7 +340,7 @@ public class BList
 				toMsg = toMsg + "... Specify a search term to narrow results";
 				break;
 			}
-			maxNo--; 
+			maxNo--;
 		}
 		irc.sendContextReply(mes,toMsg);
 	}

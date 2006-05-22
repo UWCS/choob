@@ -15,7 +15,7 @@ public class Mail
 			"Plugin to send email.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			"$Rev: 640 $$Date: 2006-05-20 14:00:00 +0100 (Sat, 20 May 2006) $"
+			"$Rev:$$Date$"
 		};
 	}
 
