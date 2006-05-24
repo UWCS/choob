@@ -46,7 +46,7 @@ public class Mail
 
 	private String sanitize(String message)
 	{
-		return message.replaceAll("[^ \\w\\.!\\(\\)\\?,;'\"£$%&\\*@#]","");
+		return message.replaceAll("[^ /\\w\\.!\\(\\)\\?,;'\"£$%&\\*@#]","");
 	}
 
 	public String[] helpCommandTechteam = {
@@ -59,12 +59,12 @@ public class Mail
 		List<String> params = mods.util.getParams(mes,1);
 		if (params.size() < 2)
 		{
-			irc.sendContextReply(mes,"You need to supply a message");
+			irc.sendContextReply(mes,"You need to supply a message.");
 			return;
 		}
 		if (mes.getTarget() == null)
 		{
-			irc.sendContextReply(mes,"To reduce abuse you may only use this command in public channels");
+			irc.sendContextReply(mes,"To reduce abuse you may only use this command in public channels.");
 			return;
 		}
 		if ((params.get(1)).length() < 20)
@@ -78,7 +78,7 @@ public class Mail
 			int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "techteam", 300000, 2);
 			if (ret != 0)
 			{
-				irc.sendContextReply(mes, "This command may only be used once every 5 mins");
+				irc.sendContextReply(mes, "This command may only be used once every 5 minutes.");
 				return;
 			}
 		}
@@ -87,15 +87,16 @@ public class Mail
 		try
 		{
 			send("techteam@warwickcompsoc.co.uk",sanitize(params.get(1)),mes.getNick(),mes.getTarget(),mes.getLogin() +"@"+mes.getHostname());
-		} catch (MailException e)
+		}
+		catch (MailException e)
 		{
 			irc.sendContextReply(mes,e.toString());
 			return;
 		}
-		irc.sendContextReply(mes,"Message sent");
+		irc.sendContextReply(mes,"Message sent.");
 	}
 
-	private void valid(String response,int code) throws MailException
+	private void valid(String response, int code) throws MailException
 	{
 		if (response.matches("^" + code + ".*")) return;
 		else throw new MailException("Error sending message: " + response);
@@ -130,7 +131,8 @@ public class Mail
 			valid(incoming.readLine(),250);
 			outgoing.writeBytes("QUIT" + "\r\n");
 			socket.close();
-		} catch (IOException e)
+		}
+		catch (IOException e)
 		{
 			throw new MailException("Input Output Error: " + e.toString());
 		}
