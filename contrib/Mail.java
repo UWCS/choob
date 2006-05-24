@@ -71,11 +71,11 @@ public class Mail
 		{
 			irc.sendContextReply(mes,"Message is too short - try putting more detail in!");
 			return;
-		}
+		}	
 
 		try
 		{
-			int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "techteam", 300000, 2);
+			int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "techteam" + mes.getNick(), 300000, 2);
 			if (ret != 0)
 			{
 				irc.sendContextReply(mes, "This command may only be used once every 5 minutes.");
@@ -122,10 +122,12 @@ public class Mail
 			valid(incoming.readLine(),354);
 			outgoing.writeBytes("Subject: Message from " + nick + " via BadgerBOT" + "\r\n");
 			outgoing.writeBytes("To: " + to + "\r\n");
-			outgoing.writeBytes("From: " + from + "\r\n");
+			outgoing.writeBytes("From: BadgerBOT <" + from + ">\r\n");
 			Date now = new Date();
 			java.text.SimpleDateFormat niceDate = new java.text.SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
-			outgoing.writeBytes("Date: " + niceDate.format(now) + "\r\n" + "\r\n");
+			outgoing.writeBytes("Date: " + niceDate.format(now) + "\r\n");
+			niceDate = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
+			outgoing.writeBytes("Message-ID: <" + niceDate.format(now) + ".choob@uwcs.co.uk>" + "\r\n" + "\r\n");
 			outgoing.writeBytes("Message from " + nick + " (" + hostmask + ") in " + channel + ":" + "\r\n" + "\r\n" + message + "\r\n");
 			outgoing.writeBytes("." + "\r\n");
 			valid(incoming.readLine(),250);
