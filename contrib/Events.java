@@ -20,11 +20,13 @@ public class Events
 
 	enum SignupCodes
 	{
-		EXPIRED    , // X : expired.
-		HASSIGNUPS , // S : has signups
-		SIGNUPSOPEN, // SO: signups are open
+		FINISHED   , // X : finished
+		HASSIGNUPS , // S : has signups (that aren't open yet)
+		SIGNUPSMEM , // SN: non-guest signups open
+		SIGNUPSOPEN, // SO: signups are open (for all)
 		CANCELLED  , // C : cancelled
-		NOSIGNUPS  , // - : there are no signups
+		NOSIGNUPS  , // - : no signups are required
+		RUNNING    , // R : running
 		UNKNOWN    , //   : Anything else, ie. an error code.
 	}
 
@@ -45,7 +47,7 @@ public class Events
 			String slocation
 		)
 		{
-			id            = Integer.parseInt(sid);
+			id            = parseId(sid);
 			name          = sname;
 			start         = convertTimestamp(sstart);
 			end           = convertTimestamp(send);
@@ -54,11 +56,13 @@ public class Events
 
 			// ssignupCode comes as a short code (suprisingly enough) that is explained next to the enum above. Decode it:
 			//signupCode    = ssignupCode;
-			if      (ssignupCode.equals("X"))  signupCode = SignupCodes.EXPIRED    ;
+			if      (ssignupCode.equals("X"))  signupCode = SignupCodes.FINISHED   ;
 			else if (ssignupCode.equals("S"))  signupCode = SignupCodes.HASSIGNUPS ;
+			else if (ssignupCode.equals("SN")) signupCode = SignupCodes.SIGNUPSMEM ;
 			else if (ssignupCode.equals("SO")) signupCode = SignupCodes.SIGNUPSOPEN;
 			else if (ssignupCode.equals("C"))  signupCode = SignupCodes.CANCELLED  ;
 			else if (ssignupCode.equals("-"))  signupCode = SignupCodes.NOSIGNUPS  ;
+			else if (ssignupCode.equals("R"))  signupCode = SignupCodes.RUNNING    ;
 			else /*  ssignupCode is unkown */  signupCode = SignupCodes.UNKNOWN    ;
 
 			// The description comes in as one string, pipe-seperated.
@@ -78,11 +82,11 @@ public class Events
 		}
 
 		private String name;
+		private SignupCodes signupCode;
 
 		public int id;
 		public Date start;
 		public Date end;
-		public SignupCodes signupCode;
 		public int signupMax;
 		public int signupCurrent;
 		public ArrayList<String> signupNames;
@@ -97,7 +101,7 @@ public class Events
 
 		public boolean finished()
 		{
-			return (new Date()).compareTo(end) > 0;
+			return signupCode == SignupCodes.FINISHED || (new Date()).compareTo(end) > 0;
 		}
 
 		public boolean cancelled()
@@ -107,7 +111,7 @@ public class Events
 
 		public boolean inprogress()
 		{
-			return !finished() && (new Date()).compareTo(start) > 0;
+			return signupCode == SignupCodes.RUNNING || !finished() && (new Date()).compareTo(start) > 0;
 		}
 
 		public String boldName()
@@ -122,6 +126,12 @@ public class Events
 			return boldName() +
 				" (" + id +") " +
 				(!finished() && !cancelled() && !inprogress() ? " [" + microStampFromNow(start) + "]" : "");
+		}
+
+		/** Note: This means that the event accepts /some/ signups, not necessary all */
+		public boolean acceptsSignups()
+		{
+			return signupCode == SignupCodes.SIGNUPSOPEN || signupCode == SignupCodes.SIGNUPSMEM;
 		}
 
 	}
@@ -215,7 +225,6 @@ public class Events
 						mods.date.timeMicroStamp(n.start.getTime() - (new Date()).getTime()) + "."
 					);
 				else
-				{
 					// The event existed, do the signups differ?
 					if (!corr.signupNames.equals(n.signupNames))
 					{
@@ -268,7 +277,6 @@ public class Events
 							);
 						}
 					}
-				}
 			}
 		}
 
@@ -292,16 +300,16 @@ public class Events
 
 		while (ma.find())
 			events.add(new EventItem(
-				Groups.ID.getFromMatcher(ma),
-				Groups.NAME.getFromMatcher(ma),
-				Groups.START.getFromMatcher(ma),
-				Groups.END.getFromMatcher(ma),
-				Groups.SIGNUPCODE.getFromMatcher(ma),
-				Groups.SIGNUPMAX.getFromMatcher(ma),
+				Groups.ID           .getFromMatcher(ma),
+				Groups.NAME         .getFromMatcher(ma),
+				Groups.START        .getFromMatcher(ma),
+				Groups.END          .getFromMatcher(ma),
+				Groups.SIGNUPCODE   .getFromMatcher(ma),
+				Groups.SIGNUPMAX    .getFromMatcher(ma),
 				Groups.SIGNUPCURRENT.getFromMatcher(ma),
-				Groups.SIGNUPNAMES.getFromMatcher(ma),
-				Groups.DESC.getFromMatcher(ma),
-				Groups.LOCATION.getFromMatcher(ma)
+				Groups.SIGNUPNAMES  .getFromMatcher(ma),
+				Groups.DESC         .getFromMatcher(ma),
+				Groups.LOCATION     .getFromMatcher(ma)
 			));
 
 		return events;
@@ -321,13 +329,7 @@ public class Events
 			return;
 		}
 
-		int eid=0;
-		try
-		{
-			eid=Integer.parseInt(comp);
-		}
-		catch (NumberFormatException e) {}
-
+		final int eid=parseId(comp);
 
 		ArrayList<EventItem> events = readEventsData();
 
@@ -342,7 +344,11 @@ public class Events
 						if (ev.signupCurrent != 0)
 							signup = " Currently " + ev.signupCurrent + " signup" + (ev.signupCurrent == 1 ? "" : "s") + " out of " + ev.signupMax + ".";
 						else
-							signup = " Nobody has signed up yet.";
+							signup = " Nobody has signed up yet" +
+								(ev.acceptsSignups() ?
+									" even though signups are open." :
+									", probably because signups aren't open yet!"
+								);
 					}
 					else
 						signup="";
@@ -375,12 +381,7 @@ public class Events
 			return;
 		}
 
-		int eid=0;
-		try
-		{
-			eid=Integer.parseInt(comp);
-		}
-		catch (NumberFormatException e) { }
+		final int eid=parseId(comp);
 
 		ArrayList<EventItem> events = readEventsData();
 
@@ -390,7 +391,7 @@ public class Events
 			if (!ev.finished())
 				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
-					if (ev.signupCode == SignupCodes.SIGNUPSOPEN)
+					if (ev.acceptsSignups())
 						irc.sendContextReply(mes,
 							"Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev.id + "&action=signup to sign-up for " +
 							ev.boldNameShortDetails() +
@@ -421,14 +422,9 @@ public class Events
 			return;
 		}
 
-		ArrayList<EventItem> events=readEventsData();
+		final int eid=parseId(comp);
 
-		int eid=0;
-		try
-		{
-			eid=Integer.parseInt(comp);
-		}
-		catch (NumberFormatException e) { }
+		ArrayList<EventItem> events=readEventsData();
 
 		for (EventItem ev : events)
 			if (!ev.finished())
@@ -455,14 +451,8 @@ public class Events
 			return;
 		}
 
+		final int eid=parseId(comp);
 		ArrayList<EventItem> events = readEventsData();
-
-		int eid=0;
-		try
-		{
-			eid=Integer.parseInt(comp);
-		}
-		catch (NumberFormatException e) { }
 
 		for (EventItem ev : events)
 			if (!ev.finished())
@@ -595,4 +585,14 @@ public class Events
 		return "evening";
 	}
 
+	private static int parseId(String s)
+	{
+		try
+		{
+			return Integer.parseInt(s);
+		}
+		catch (NumberFormatException e) {}
+
+		return 0;
+	}
 }
