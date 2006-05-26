@@ -125,7 +125,7 @@ public class Events
 		{
 			return boldName() +
 				" (" + id +") " +
-				(!finished() && !cancelled() && !inprogress() ? " [" + microStampFromNow(start) + "]" : "");
+				(!finished() && !cancelled() && !inprogress() ? "[" + microStampFromNow(start) + "]" : "");
 		}
 
 		/** Note: This means that the event accepts /some/ signups, not necessary all */
@@ -461,7 +461,11 @@ public class Events
 					if (ev.signupCurrent == 0)
 						irc.sendContextReply(mes,
 							"No signups for " + ev.boldNameShortDetails() +
-							" at " + ev.location + "!"
+							" at " + ev.location +
+							(ev.acceptsSignups() ?
+								" even though signups are open." :
+								", probably because signups aren't open yet!"
+							)
 						);
 					else
 						irc.sendContextReply(mes,
