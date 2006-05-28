@@ -396,6 +396,25 @@ public class Karma
 					irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
 					return;
 				}
+				
+				// Karma flood check.
+				try
+				{
+					// 15 minute block for each karma item, irespective of who or direction.
+					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", name, 15 * 60 * 1000, 2);
+					if (ret != 0)
+					{
+						if (ret == 1)
+							irc.sendContextReply(mes, "Denied! Karma changes limited to one change per item per 15 minutes.");
+						return;
+					}
+				}
+				catch (ChoobNoSuchCallException e)
+				{ } // ignore
+				catch (Throwable e)
+				{
+					System.err.println("Couldn't do antiflood call: " + e);
+				}
 
 				boolean increase = reasonMatch.group(3).equals("++");
 
@@ -461,13 +480,12 @@ public class Karma
 			// Karma flood check.
 			try
 			{
-				//String key = mes.getNick() + ":" + name + ":" + increase;
 				// 15 minute block for each karma item, irespective of who or direction.
 				int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", name, 15 * 60 * 1000, 2);
 				if (ret != 0)
 				{
 					if (ret == 1)
-						irc.sendContextReply(mes, "Karma flood! Don't do that.");
+						irc.sendContextReply(mes, "Denied! Karma changes limited to one change per item per 15 minutes.");
 					return;
 				}
 			}
