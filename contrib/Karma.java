@@ -67,6 +67,8 @@ public class Karma
 		exceptions.add("visualj");
 		exceptions.add("vc");
 	}
+	static final int    FLOOD_RATE     = 15 * 60 * 1000;
+	static final String FLOOD_RATE_STR = "15 minutes";
 
 	public String[] info()
 	{
@@ -370,6 +372,7 @@ public class Karma
 		Matcher reasonMatch = reasonPattern.matcher(mes.getMessage());
 
 		boolean hasReason = false;
+		String karmaReasonFloodCheck = "";
 		if (reasonMatch.matches())
 		{
 			// Find out which holds our name.
@@ -398,14 +401,15 @@ public class Karma
 				}
 				
 				// Karma flood check.
+				karmaReasonFloodCheck = name;
 				try
 				{
 					// 15 minute block for each karma item, irespective of who or direction.
-					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", name, 15 * 60 * 1000, 2);
+					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + name, FLOOD_RATE, 2);
 					if (ret != 0)
 					{
 						if (ret == 1)
-							irc.sendContextReply(mes, "Denied! Karma changes limited to one change per item per 15 minutes.");
+							irc.sendContextReply(mes, "Denied change to '" + name + "'! Karma changes limited to one change per item per " + FLOOD_RATE_STR + ".");
 						return;
 					}
 				}
@@ -477,23 +481,26 @@ public class Karma
 			if (name.equalsIgnoreCase(nick))
 				increase = false;
 
-			// Karma flood check.
-			try
+			// Karma flood check (skip if we checked this item with the reason earlier).
+			if (!name.equalsIgnoreCase(karmaReasonFloodCheck))
 			{
-				// 15 minute block for each karma item, irespective of who or direction.
-				int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", name, 15 * 60 * 1000, 2);
-				if (ret != 0)
+				try
 				{
-					if (ret == 1)
-						irc.sendContextReply(mes, "Denied! Karma changes limited to one change per item per 15 minutes.");
-					return;
+					// 15 minute block for each karma item, irespective of who or direction.
+					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + name, FLOOD_RATE, 2);
+					if (ret != 0)
+					{
+						if (ret == 1)
+							irc.sendContextReply(mes, "Denied change to '" + name + "'! Karma changes limited to one change per item per " + FLOOD_RATE_STR + ".");
+						return;
+					}
 				}
-			}
-			catch (ChoobNoSuchCallException e)
-			{ } // ignore
-			catch (Throwable e)
-			{
-				System.err.println("Couldn't do antiflood call: " + e);
+				catch (ChoobNoSuchCallException e)
+				{ } // ignore
+				catch (Throwable e)
+				{
+					System.err.println("Couldn't do antiflood call: " + e);
+				}
 			}
 
 			KarmaObject karmaObj = retrieveKarmaObject(name);
