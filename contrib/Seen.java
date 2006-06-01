@@ -73,17 +73,16 @@ public class Seen
 		}
 		String nick = mods.nick.getBestPrimaryNick(mods.util.getParamString( mes ));
 
-		if (nick.toLowerCase().equals(mods.nick.getBestPrimaryNick(mes.getNick()).toLowerCase()))
-		{
-			// Seen on themselves.
-			irc.sendContextReply( mes, "Ever looked in a mirror?" );
-			return;
-		}
-
 		SeenObj seen = getSeen( nick, false );
 		if (seen == null)
 		{
-			irc.sendContextReply( mes, "Sorry, no such luck! I don't remember seeing " + nick + "!" );
+			if (nick.toLowerCase().equals(mods.nick.getBestPrimaryNick(mes.getNick()).toLowerCase()))
+			{
+				// Seen on themselves when they've not been seen yet.
+				irc.sendContextReply( mes, "You haven't done anything yet!" );
+			} else {
+				irc.sendContextReply( mes, "Sorry, no such luck! I don't remember seeing " + nick + "!" );
+			}
 			return;
 		}
 
@@ -220,6 +219,11 @@ public class Seen
 		if (mes.getSynthLevel() > 0)
 			return;
 		
+		// Oh! Oh! Ooooh! Can't you *feel* the hacks?
+		try {
+			Thread.sleep(1000);
+		} catch(InterruptedException e) {}
+		
 		SeenObj seen = getSeen( mes.getNick(), true );
 		seen.nick = mes.getNick();
 		seen.primaryTime = System.currentTimeMillis();
@@ -232,6 +236,11 @@ public class Seen
 
 	public void onAction( ChannelAction mes ) throws ChoobException
 	{
+		// Oh! Oh! Ooooh! Can't you *feel* the hacks?
+		try {
+			Thread.sleep(1000);
+		} catch(InterruptedException e) {}
+		
 		SeenObj seen = getSeen( mes.getNick(), true );
 		seen.nick = mes.getNick();
 		seen.primaryTime = System.currentTimeMillis();
