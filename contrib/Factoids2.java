@@ -50,7 +50,7 @@ public class Factoids2
 	}
 	
 	// Collect and store rumours for things.
-	public String filterFactoidsRegex = "(\\w{4,})\\s+(?:is|was)\\s+(.{4,})";
+	public String filterFactoidsRegex = "(\\w{4,})\\s+((?:is|was)\\s+.{4,})";
 	
 	public void filterFactoids(Message mes) throws ChoobException
 	{
@@ -73,6 +73,7 @@ public class Factoids2
 		}
 	}
 	
+	// Manually add facts to the system.
 	public String[] helpCommandAdd = {
 			"Add a new factual definition for a term.",
 			"<term> <defn>",
@@ -94,6 +95,100 @@ public class Factoids2
 		Factoid fact = new Factoid(subject, true, defn, mes.getMillis());
 		mods.odb.save(fact);
 		System.out.println("FACTOIDS2: Added new fact for '" + subject + "' of '" + defn + "'");
+		irc.sendContextReply(mes, "Added definition for '" + subject + "'.");
+	}
+	
+	// Remove facts from the system.
+	public String[] helpCommandRemove = {
+			"Remove a definition (both facts and rumours).",
+			"<term> [<search>]",
+			"<term> is the term to remove",
+			"<search> limits the removal to only matching defintions, if multiple ones exist (substring or regexp allowed)"
+		};
+	
+	public void commandRemove(Message mes)
+	{
+		String[] params = mods.util.getParamArray(mes, 2);
 		
+		if (params.length <= 1) {
+			irc.sendContextReply(mes, "Syntax: 'Factoids2.Remove " + helpCommandRemove[1] + "'");
+			return;
+		}
+		
+		String subject = params[1].toLowerCase();
+		String odbQuery = "WHERE subject = '" + mods.odb.escapeString(subject) + "'";
+		
+		if (params.length > 2) {
+			// We have 2 params. Check if 2nd is regexp.
+			if (params[2].startsWith("/") && params[2].endsWith("/")) {
+				// Regexp
+				odbQuery += " AND info RLIKE \"" + mods.odb.escapeString(params[2].substring(1, params[2].length() - 1)) + "\"";
+			} else {
+				// Substring
+				odbQuery += " AND info LIKE \"%" + mods.odb.escapeString(params[2]) + "%\"";
+			}
+		}
+		List<Factoid> removals = mods.odb.retrieve(Factoid.class, odbQuery);
+		
+		if (removals != null) {
+		for (int i = 0; i < removals.size(); i++) {
+			Factoid defn = (Factoid)removals.get(i);
+			mods.odb.delete(defn);
+			if (defn.fact) {
+				System.out.println("FACTOIDS2: Removed old fact for '" + defn.subject + "' of '" + defn.info + "'.");
+			} else {
+				System.out.println("FACTOIDS2: Removed old rumour for '" + defn.subject + "' of '" + defn.info + "'.");
+			}
+		}
+		if (removals.size() > 1) {
+			irc.sendContextReply(mes, removals.size() + " definitions for '" + subject + "' removed.");
+		} else if (removals.size() == 1) {
+			irc.sendContextReply(mes, "1 definition for '" + subject + "' removed.");
+		} else {
+			irc.sendContextReply(mes, "No definitions for '" + subject + "' found.");
+		}
+		}
+	}
+	
+	// Retrieve definitions from the system.
+	public String[] helpCommandGet = {
+			"Returns a/the definition for a term.",
+			"<term> [<search>]",
+			"<term> is the term to define",
+			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
+		};
+	
+	public void commandGet(Message mes)
+	{
+		String[] params = mods.util.getParamArray(mes, 2);
+		
+		if (params.length <= 1) {
+			irc.sendContextReply(mes, "Syntax: 'Factoids2.Get " + helpCommandGet[1] + "'");
+			return;
+		}
+		
+		String subject = params[1].toLowerCase();
+		String odbQuery = "WHERE subject = '" + mods.odb.escapeString(subject) + "'";
+		
+		if (params.length > 2) {
+			// We have 2 params. Check if 2nd is regexp.
+			if (params[2].startsWith("/") && params[2].endsWith("/")) {
+				// Regexp
+				odbQuery += " AND info RLIKE \"" + mods.odb.escapeString(params[2].substring(1, params[2].length() - 1)) + "\"";
+			} else {
+				// Substring
+				odbQuery += " AND info LIKE \"%" + mods.odb.escapeString(params[2]) + "%\"";
+			}
+		}
+		List<Factoid> definitions = mods.odb.retrieve(Factoid.class, odbQuery);
+		
+		if (definitions.size() == 0) {
+			irc.sendContextReply(mes, "Sorry, I don't know anything about '" + subject + "'!");
+		} else {
+			
+			
+			
+			irc.sendContextReply(mes, "Definitions for '" + subject + "' found: " + definitions.size());
+		}
 	}
 }
