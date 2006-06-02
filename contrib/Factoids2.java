@@ -26,6 +26,37 @@ public class Factoid
 	public long date;
 }
 
+public class FactoidEnumerator
+{
+	public FactoidEnumerator()
+	{
+	}
+	
+	public FactoidEnumerator(String enumSource, int index, int count)
+	{
+		this.enumSource = enumSource;
+		this.index = index;
+		this.count = count;
+		this.lastUsed = System.currentTimeMillis();
+	}
+	
+	public int getNext()
+	{
+		index++;
+		if (index >= count) {
+			index = 0;
+		}
+		lastUsed = System.currentTimeMillis();
+		return index;
+	}
+	
+	public int id;
+	public String enumSource;
+	public int index;
+	public int count;
+	public long lastUsed;
+}
+
 public class Factoids2
 {
 	public String[] info()
@@ -38,6 +69,8 @@ public class Factoids2
 		};
 	}
 	
+	private static long ENUM_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+	
 	private Modules mods;
 	private IRCInterface irc;
 	private Pattern filterFactoidsPattern;
@@ -47,6 +80,8 @@ public class Factoids2
 		this.mods = mods;
 		this.irc = irc;
 		filterFactoidsPattern = Pattern.compile(filterFactoidsRegex);
+		
+		mods.interval.callBack(null, 60000, 1);
 	}
 	
 	private int countFacts(List<Factoid> definitions)
@@ -92,9 +127,30 @@ public class Factoids2
 	
 	private Factoid pickDefinition(List<Factoid> definitions, boolean fact, int count, String enumSource)
 	{
-		Factoid rvDefn = null;
-		int index = (int)Math.floor(Math.random() * count);
+		int index = -1;
+		enumSource = enumSource.toLowerCase();
+		List<FactoidEnumerator> enums = mods.odb.retrieve(FactoidEnumerator.class, "WHERE enumSource = '" + mods.odb.escapeString(enumSource) + "'");
+		FactoidEnumerator fEnum = null;
+		if (enums.size() >= 1) {
+			fEnum = enums.get(0);
+			if (fEnum.count != count) {
+				// Count has changed: invalidated!
+				mods.odb.delete(fEnum);
+				fEnum = null;
+			} else {
+				// Alright, step to the next one.
+				index = fEnum.getNext();
+				mods.odb.update(fEnum);
+			}
+		}
+		if (fEnum == null) {
+			// No enumerator, pick random start and create one.
+			index = (int)Math.floor(Math.random() * count);
+			fEnum = new FactoidEnumerator(enumSource, index, count);
+			mods.odb.save(fEnum);
+		}
 		
+		Factoid rvDefn = null;
 		for (int i = 0; i < definitions.size(); i++) {
 			Factoid defn = definitions.get(i);
 			if (defn.fact == fact) {
@@ -125,6 +181,19 @@ public class Factoids2
 		return mods.odb.retrieve(Factoid.class, odbQuery);
 	}
 	
+	// Interval
+	public void interval(Object param)
+	{
+		// Clean up dead enumerators.
+		long lastUsedCutoff = System.currentTimeMillis() - ENUM_TIMEOUT;
+		List<FactoidEnumerator> deadEnums = mods.odb.retrieve(FactoidEnumerator.class, "WHERE lastUsed < " + lastUsedCutoff);
+		for (int i = 0; i < deadEnums.size(); i++) {
+			mods.odb.delete(deadEnums.get(i));
+		}
+		
+		mods.interval.callBack(null, 60000, 1);
+	}
+	
 	// Collect and store rumours for things.
 	public String filterFactoidsRegex = "(\\w{4,})\\s+((?:is|was)\\s+.{4,})";
 	
@@ -136,7 +205,6 @@ public class Factoids2
 			String defn = rMatcher.group(2);
 			Factoid rumour = new Factoid(subject, false, defn, mes.getMillis());
 			mods.odb.save(rumour);
-			System.out.println("FACTOIDS2: Added new rumour for '" + subject + "' of '" + defn + "'");
 			
 			// Remove oldest so we only have the 5 most recent.
 			List<Factoid> results = mods.odb.retrieve(Factoid.class, "WHERE fact = 0 AND subject = '" + mods.odb.escapeString(subject) + "' SORT DESC date");
@@ -144,7 +212,6 @@ public class Factoids2
 			for (int i = 5; i < results.size(); i++) {
 				Factoid oldRumour = (Factoid)results.get(i);
 				mods.odb.delete(oldRumour);
-				System.out.println("FACTOIDS2: Removed old rumour for '" + subject + "' of '" + oldRumour.info + "'.");
 			}
 		}
 	}
@@ -170,7 +237,6 @@ public class Factoids2
 		String defn = params[2];
 		Factoid fact = new Factoid(subject, true, defn, mes.getMillis());
 		mods.odb.save(fact);
-		System.out.println("FACTOIDS2: Added new fact for '" + subject + "' of '" + defn + "'");
 		irc.sendContextReply(mes, "Added definition for '" + subject + "'.");
 	}
 	
@@ -197,11 +263,6 @@ public class Factoids2
 		for (int i = 0; i < removals.size(); i++) {
 			Factoid defn = (Factoid)removals.get(i);
 			mods.odb.delete(defn);
-			if (defn.fact) {
-				System.out.println("FACTOIDS2: Removed old fact for '" + defn.subject + "' of '" + defn.info + "'.");
-			} else {
-				System.out.println("FACTOIDS2: Removed old rumour for '" + defn.subject + "' of '" + defn.info + "'.");
-			}
 		}
 		if (removals.size() > 1) {
 			irc.sendContextReply(mes, removals.size() + " definitions for '" + params[1] + "' removed.");
@@ -240,7 +301,7 @@ public class Factoids2
 			int rumourCount = countRumours(definitions);
 			
 			if (factCount > 0) {
-				Factoid fact = pickFact(definitions, "FIXME");
+				Factoid fact = pickFact(definitions, mes.getContext() + ":" + params[1]);
 				
 				if (factCount > 2) {
 					irc.sendContextReply(mes, fact.subject + " " + fact.info + " (" + (factCount - 1) + " other defns)");
@@ -251,7 +312,7 @@ public class Factoids2
 				}
 				
 			} else {
-				Factoid rumour = pickRumour(definitions, "FIXME");
+				Factoid rumour = pickRumour(definitions, mes.getContext() + ":" + params[1]);
 				
 				if (rumourCount > 2) {
 					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info + " (" + (rumourCount - 1) + " other rumours)");
@@ -289,7 +350,7 @@ public class Factoids2
 			int factCount = countFacts(definitions);
 			
 			if (factCount > 0) {
-				Factoid fact = pickFact(definitions, "FIXME");
+				Factoid fact = pickFact(definitions, mes.getContext() + ":" + params[1]);
 				
 				if (factCount > 2) {
 					irc.sendContextReply(mes, fact.subject + " " + fact.info + " (" + (factCount - 1) + " other defns)");
@@ -330,7 +391,7 @@ public class Factoids2
 			int rumourCount = countRumours(definitions);
 			
 			if (rumourCount > 0) {
-				Factoid rumour = pickRumour(definitions, "FIXME");
+				Factoid rumour = pickRumour(definitions, mes.getContext() + ":" + params[1]);
 				
 				if (rumourCount > 2) {
 					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info + " (" + (rumourCount - 1) + " other rumours)");
