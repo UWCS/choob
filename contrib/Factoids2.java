@@ -49,6 +49,82 @@ public class Factoids2
 		filterFactoidsPattern = Pattern.compile(filterFactoidsRegex);
 	}
 	
+	private int countFacts(List<Factoid> definitions)
+	{
+		int factCount = 0;
+		for (int i = 0; i < definitions.size(); i++) {
+			Factoid defn = definitions.get(i);
+			if (defn.fact) {
+				factCount++;
+			}
+		}
+		return factCount;
+	}
+	
+	private int countRumours(List<Factoid> definitions)
+	{
+		int rumourCount = 0;
+		for (int i = 0; i < definitions.size(); i++) {
+			Factoid defn = definitions.get(i);
+			if (!defn.fact) {
+				rumourCount++;
+			}
+		}
+		return rumourCount;
+	}
+	
+	private Factoid pickDefinition(List<Factoid> definitions, String enumSource)
+	{
+		if (countFacts(definitions) > 0)
+			return pickFact(definitions, enumSource);
+		return pickRumour(definitions, enumSource);
+	}
+	
+	private Factoid pickFact(List<Factoid> definitions, String enumSource)
+	{
+		return pickDefinition(definitions, true, countFacts(definitions), enumSource);
+	}
+	
+	private Factoid pickRumour(List<Factoid> definitions, String enumSource)
+	{
+		return pickDefinition(definitions, false, countRumours(definitions), enumSource);
+	}
+	
+	private Factoid pickDefinition(List<Factoid> definitions, boolean fact, int count, String enumSource)
+	{
+		Factoid rvDefn = null;
+		int index = (int)Math.floor(Math.random() * count);
+		
+		for (int i = 0; i < definitions.size(); i++) {
+			Factoid defn = definitions.get(i);
+			if (defn.fact == fact) {
+				if (index == 0) {
+					rvDefn = defn;
+					break;
+				}
+				index--;
+			}
+		}
+		return rvDefn;
+	}
+	
+	private List<Factoid> getDefinitions(String subject, String search)
+	{
+		subject = subject.toLowerCase();
+		String odbQuery = "WHERE subject = '" + mods.odb.escapeString(subject) + "'";
+		
+		if (search.length() > 0) {
+			if (search.startsWith("/") && search.endsWith("/")) {
+				// Regexp
+				odbQuery += " AND info RLIKE \"" + mods.odb.escapeString(search.substring(1, search.length() - 1)) + "\"";
+			} else {
+				// Substring
+				odbQuery += " AND info LIKE \"%" + mods.odb.escapeString(search) + "%\"";
+			}
+		}
+		return mods.odb.retrieve(Factoid.class, odbQuery);
+	}
+	
 	// Collect and store rumours for things.
 	public String filterFactoidsRegex = "(\\w{4,})\\s+((?:is|was)\\s+.{4,})";
 	
@@ -115,20 +191,7 @@ public class Factoids2
 			return;
 		}
 		
-		String subject = params[1].toLowerCase();
-		String odbQuery = "WHERE subject = '" + mods.odb.escapeString(subject) + "'";
-		
-		if (params.length > 2) {
-			// We have 2 params. Check if 2nd is regexp.
-			if (params[2].startsWith("/") && params[2].endsWith("/")) {
-				// Regexp
-				odbQuery += " AND info RLIKE \"" + mods.odb.escapeString(params[2].substring(1, params[2].length() - 1)) + "\"";
-			} else {
-				// Substring
-				odbQuery += " AND info LIKE \"%" + mods.odb.escapeString(params[2]) + "%\"";
-			}
-		}
-		List<Factoid> removals = mods.odb.retrieve(Factoid.class, odbQuery);
+		List<Factoid> removals = getDefinitions(params[1], (params.length > 2 ? params[2] : ""));
 		
 		if (removals != null) {
 		for (int i = 0; i < removals.size(); i++) {
@@ -141,11 +204,11 @@ public class Factoids2
 			}
 		}
 		if (removals.size() > 1) {
-			irc.sendContextReply(mes, removals.size() + " definitions for '" + subject + "' removed.");
+			irc.sendContextReply(mes, removals.size() + " definitions for '" + params[1] + "' removed.");
 		} else if (removals.size() == 1) {
-			irc.sendContextReply(mes, "1 definition for '" + subject + "' removed.");
+			irc.sendContextReply(mes, "1 definition for '" + params[1] + "' removed.");
 		} else {
-			irc.sendContextReply(mes, "No definitions for '" + subject + "' found.");
+			irc.sendContextReply(mes, "No definitions for '" + params[1] + "' found.");
 		}
 		}
 	}
@@ -158,7 +221,7 @@ public class Factoids2
 			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
 		};
 	
-	public void commandGet(Message mes)
+	public void commandGet(Message mes) throws ChoobException
 	{
 		String[] params = mods.util.getParamArray(mes, 2);
 		
@@ -167,28 +230,119 @@ public class Factoids2
 			return;
 		}
 		
-		String subject = params[1].toLowerCase();
-		String odbQuery = "WHERE subject = '" + mods.odb.escapeString(subject) + "'";
-		
-		if (params.length > 2) {
-			// We have 2 params. Check if 2nd is regexp.
-			if (params[2].startsWith("/") && params[2].endsWith("/")) {
-				// Regexp
-				odbQuery += " AND info RLIKE \"" + mods.odb.escapeString(params[2].substring(1, params[2].length() - 1)) + "\"";
-			} else {
-				// Substring
-				odbQuery += " AND info LIKE \"%" + mods.odb.escapeString(params[2]) + "%\"";
-			}
-		}
-		List<Factoid> definitions = mods.odb.retrieve(Factoid.class, odbQuery);
+		List<Factoid> definitions = getDefinitions(params[1], (params.length > 2 ? params[2] : ""));
 		
 		if (definitions.size() == 0) {
-			irc.sendContextReply(mes, "Sorry, I don't know anything about '" + subject + "'!");
+			irc.sendContextReply(mes, "Sorry, I don't know anything about '" + params[1] + "'!");
+			
 		} else {
+			int factCount = countFacts(definitions);
+			int rumourCount = countRumours(definitions);
 			
+			if (factCount > 0) {
+				Factoid fact = pickFact(definitions, "FIXME");
+				
+				if (factCount > 2) {
+					irc.sendContextReply(mes, fact.subject + " " + fact.info + " (" + (factCount - 1) + " other defns)");
+				} else if (factCount == 2) {
+					irc.sendContextReply(mes, fact.subject + " " + fact.info + " (1 other defn)");
+				} else {
+					irc.sendContextReply(mes, fact.subject + " " + fact.info);
+				}
+				
+			} else {
+				Factoid rumour = pickRumour(definitions, "FIXME");
+				
+				if (rumourCount > 2) {
+					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info + " (" + (rumourCount - 1) + " other rumours)");
+				} else if (rumourCount == 2) {
+					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info + " (1 other rumour)");
+				} else {
+					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info);
+				}
+			}
+		}
+	}
+	
+	public String[] helpCommandGetFact = {
+			"Returns a/the factual definition for a term.",
+			"<term> [<search>]",
+			"<term> is the term to define",
+			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
+		};
+	
+	public void commandGetFact(Message mes) throws ChoobException
+	{
+		String[] params = mods.util.getParamArray(mes, 2);
+		
+		if (params.length <= 1) {
+			irc.sendContextReply(mes, "Syntax: 'Factoids2.GetFact " + helpCommandGetFact[1] + "'");
+			return;
+		}
+		
+		List<Factoid> definitions = getDefinitions(params[1], (params.length > 2 ? params[2] : ""));
+		
+		if (definitions.size() == 0) {
+			irc.sendContextReply(mes, "Sorry, I don't know anything about '" + params[1] + "'!");
 			
+		} else {
+			int factCount = countFacts(definitions);
 			
-			irc.sendContextReply(mes, "Definitions for '" + subject + "' found: " + definitions.size());
+			if (factCount > 0) {
+				Factoid fact = pickFact(definitions, "FIXME");
+				
+				if (factCount > 2) {
+					irc.sendContextReply(mes, fact.subject + " " + fact.info + " (" + (factCount - 1) + " other defns)");
+				} else if (factCount == 2) {
+					irc.sendContextReply(mes, fact.subject + " " + fact.info + " (1 other defn)");
+				} else {
+					irc.sendContextReply(mes, fact.subject + " " + fact.info);
+				}
+				
+			} else {
+				irc.sendContextReply(mes, "Sorry, I don't have any facts about '" + params[1] + "'.");
+			}
+		}
+	}
+	
+	public String[] helpCommandGetRumour = {
+			"Returns a/the definition for a term.",
+			"<term> [<search>]",
+			"<term> is the term to define",
+			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
+		};
+	
+	public void commandGetRumour(Message mes) throws ChoobException
+	{
+		String[] params = mods.util.getParamArray(mes, 2);
+		
+		if (params.length <= 1) {
+			irc.sendContextReply(mes, "Syntax: 'Factoids2.GetRumour " + helpCommandGetRumour[1] + "'");
+			return;
+		}
+		
+		List<Factoid> definitions = getDefinitions(params[1], (params.length > 2 ? params[2] : ""));
+		
+		if (definitions.size() == 0) {
+			irc.sendContextReply(mes, "Sorry, I don't know anything about '" + params[1] + "'!");
+			
+		} else {
+			int rumourCount = countRumours(definitions);
+			
+			if (rumourCount > 0) {
+				Factoid rumour = pickRumour(definitions, "FIXME");
+				
+				if (rumourCount > 2) {
+					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info + " (" + (rumourCount - 1) + " other rumours)");
+				} else if (rumourCount == 2) {
+					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info + " (1 other rumour)");
+				} else {
+					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info);
+				}
+				
+			} else {
+				irc.sendContextReply(mes, "Sorry, I don't have any rumours about '" + params[1] + "'.");
+			}
 		}
 	}
 }
