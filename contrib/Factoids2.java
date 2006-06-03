@@ -11,12 +11,12 @@ public class Factoid
 	{
 	}
 	
-	public Factoid(String subject, boolean fact, String info, long date)
+	public Factoid(String subject, boolean fact, String info)
 	{
 		this.subject = subject;
 		this.fact = fact;
 		this.info = info;
-		this.date = date;
+		this.date = System.currentTimeMillis();
 	}
 	
 	public int id;
@@ -70,6 +70,14 @@ public class Factoids2
 	}
 	
 	private static long ENUM_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+	private final static Set<String> subjectExclusions = new HashSet<String>();
+	static
+	{
+		exceptions.add("that");
+		exceptions.add("this");
+		exceptions.add("what");
+		exceptions.add("which");
+	}
 	
 	private Modules mods;
 	private IRCInterface irc;
@@ -203,7 +211,12 @@ public class Factoids2
 		if (rMatcher.matches()) {
 			String subject = rMatcher.group(1).toLowerCase();
 			String defn = rMatcher.group(2);
-			Factoid rumour = new Factoid(subject, false, defn, mes.getMillis());
+			
+			// We don't auto-learn about some things.
+			if (subjectExclusions.contains(subject))
+				return;
+			
+			Factoid rumour = new Factoid(subject, false, defn);
 			mods.odb.save(rumour);
 			
 			// Remove oldest so we only have the 5 most recent.
