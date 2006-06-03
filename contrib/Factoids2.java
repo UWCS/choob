@@ -73,10 +73,10 @@ public class Factoids2
 	private final static Set<String> subjectExclusions = new HashSet<String>();
 	static
 	{
-		exceptions.add("that");
-		exceptions.add("this");
-		exceptions.add("what");
-		exceptions.add("which");
+		subjectExclusions.add("that");
+		subjectExclusions.add("this");
+		subjectExclusions.add("what");
+		subjectExclusions.add("which");
 	}
 	
 	private Modules mods;
@@ -248,7 +248,7 @@ public class Factoids2
 		
 		String subject = params[1].toLowerCase();
 		String defn = params[2];
-		Factoid fact = new Factoid(subject, true, defn, mes.getMillis());
+		Factoid fact = new Factoid(subject, true, defn);
 		mods.odb.save(fact);
 		irc.sendContextReply(mes, "Added definition for '" + subject + "'.");
 	}
