@@ -72,7 +72,7 @@ public abstract class ChoobPluginManager
 	 */
 	public final boolean loadPlugin(String pluginName, URL fromLocation) throws ChoobException
 	{
-		AccessController.checkPermission(new ChoobPermission("plugin.load."+pluginName));
+		AccessController.checkPermission(new ChoobPermission("plugin.load." + pluginName.toLowerCase()));
 
 		// Make sure we're ready to add commands.
 		if (commands.get(pluginName.toLowerCase()) == null)
@@ -108,7 +108,7 @@ public abstract class ChoobPluginManager
 
 	public final void unloadPlugin(String pluginName) throws ChoobNoSuchPluginException
 	{
-		AccessController.checkPermission(new ChoobPermission("plugin.unload." + pluginName));
+		AccessController.checkPermission(new ChoobPermission("plugin.unload." + pluginName.toLowerCase()));
 
 		ChoobPluginManager man;
 		synchronized(pluginMap)

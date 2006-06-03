@@ -101,6 +101,7 @@ public final class PluginModule
 	 */
 	public void reloadPlugin(String pluginName) throws ChoobException {
 		String URL = getPluginURL(pluginName);
+		pluginName = getPluginName(pluginName); // Fix the case of the param
 		if (URL == null)
 			throw new ChoobNoSuchPluginException(pluginName);
 		addPlugin(pluginName, URL);
@@ -108,10 +109,11 @@ public final class PluginModule
 
 	/**
 	 * Calmly stops a loaded plugin from queuing any further tasks. Existing tasks will run until they finish.
-	 * @param pluginName Name of the plugin to reload.
+	 * @param pluginName Name of the plugin to detach.
 	 * @throws ChoobNoSuchPluginException Thrown if the plugin doesn't exist.
 	 */
 	public void detachPlugin(String pluginName) throws ChoobNoSuchPluginException {
+		pluginName = getPluginName(pluginName); // Fix the case of the param
 		dPlugMan.unloadPlugin(pluginName);
 		bot.onPluginUnLoaded(pluginName);
 	}
@@ -372,6 +374,27 @@ public final class PluginModule
 				throw new ChoobNoSuchPluginException(pluginName);
 
 			return url.getString("URL");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new ChoobInternalError("SQL Exception while finding the plugin in the database.");
+		} finally {
+			if (dbCon != null)
+				broker.freeConnection(dbCon);
+		}
+	}
+
+	private String getPluginName(String pluginName) throws ChoobNoSuchPluginException {
+		Connection dbCon = null;
+		try {
+			dbCon = broker.getConnection();
+			PreparedStatement sqlGetName = dbCon.prepareStatement("SELECT PluginName FROM Plugins WHERE PluginName = ?");
+			sqlGetName.setString(1, pluginName);
+			ResultSet name = sqlGetName.executeQuery();
+
+			if (!name.first())
+				throw new ChoobNoSuchPluginException(pluginName);
+
+			return name.getString("PluginName");
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw new ChoobInternalError("SQL Exception while finding the plugin in the database.");
