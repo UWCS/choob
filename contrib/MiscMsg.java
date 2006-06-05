@@ -414,11 +414,11 @@ public class MiscMsg
 
 
 	public String[] helpCommandExchange = {
-		"Ask the magical 8 ball to sort out your life.",
-		"<from> <to> [ammount]",
+		"Converts a monetary amount from one currency to another.",
+		"<from> <to> [amount]",
 		"<from> is the three-letter code of the currency to convert from.",
 		"<to> is the three-letter code of the currency to convert to.",
-		"[ammount] is a number..",
+		"[amount] is the amount to convert (defaults to 1).",
 	};
 
 	public void commandExchange(Message mes)
