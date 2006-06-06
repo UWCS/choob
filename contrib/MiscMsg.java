@@ -182,7 +182,17 @@ public class MiscMsg
 		randomReply(mes, new String[] {"Signs point to yes.", "Yes.", "Reply hazy, try again.", "Without a doubt.", "My sources say no.", "As I see it, yes.", "You may rely on it.", "Concentrate and ask again.", "Outlook not so good.", "It is decidedly so.", "Better not tell you now.", "Very doubtful.", "Yes - definitely.", "It is certain.", "Cannot predict now.", "Most likely.", "Ask again later.", "My reply is no.", "Outlook good.", "Don't count on it." });
 	}
 
+	public void commandDiscordianDate(Message mes)
+	{
+		shellExec(mes, "ddate");
+	}
+	
 	public void commandServerUptime(Message mes)
+	{
+		shellExec(mes, "uptime");
+	}
+
+	private void shellExec(Message mes, String command)
 	{
 		StringBuilder rep=new StringBuilder();
 
@@ -190,7 +200,7 @@ public class MiscMsg
 		{
 			String str;
 
-			Process proc = Runtime.getRuntime().exec("uptime");
+			Process proc = Runtime.getRuntime().exec(command);
 
 			// get its output (your input) stream
 
