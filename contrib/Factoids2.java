@@ -11,11 +11,13 @@ public class Factoid
 	{
 	}
 	
-	public Factoid(String subject, boolean fact, String info)
+	public Factoid(String subject, boolean fact, String info, String nick)
 	{
 		this.subject = subject;
 		this.fact = fact;
 		this.info = info;
+		this.nick = nick;
+		this.reads = 0;
 		this.date = System.currentTimeMillis();
 	}
 	
@@ -23,6 +25,8 @@ public class Factoid
 	public String subject;
 	public boolean fact;
 	public String info;
+	public String nick;
+	public int reads;
 	public long date;
 }
 
@@ -360,7 +364,7 @@ public class Factoids2
 			if (subjectExclusions.contains(subject))
 				return;
 			
-			Factoid rumour = new Factoid(subject, false, defn);
+			Factoid rumour = new Factoid(subject, false, defn, mes.getNick());
 			mods.odb.save(rumour);
 			
 			// Remove oldest so we only have the 5 most recent.
@@ -376,17 +380,40 @@ public class Factoids2
 	// Get some simple stats.
 	public String[] helpCommandStats = {
 			"Returns some (maybe) interesting statistics from the factoids system.",
-			""
+			"[<term> [" + splitWords + "] [<search>]]",
+			"<term> is the term to get stats for",
+			"<search> limits the removal to only matching defintions, if multiple ones exist (substring or regexp allowed)"
 		};
 	
 	public void commandStats(Message mes)
 	{
-		List<Factoid> definitions = mods.odb.retrieve(Factoid.class, "");
+		FactoidSearchData data = getFactoidSearchDefinitions(mes);
 		
-		int factCount   = countFacts(definitions);
-		int rumourCount = countRumours(definitions);
+		if (data == null) {
+			data = new FactoidSearchData();
+			data.definitions = mods.odb.retrieve(Factoid.class, "");
+		}
 		
-		irc.sendContextReply(mes, "Factoids database contains " + factCount + " fact" + (factCount != 1 ? "s":"") + " and " + rumourCount + " rumour" + (rumourCount != 1 ? "s":"") + ".");
+		if ((data.search != null) && (data.definitions.size() == 1)) {
+			Factoid defn = data.definitions.get(0);
+			irc.sendContextReply(mes, "Factoid for '" + data.search.subject +
+					"' is a " + (defn.fact ? "fact" : "rumour") +
+					(defn.fact ? " added by " : " collected from ") + defn.nick +
+					" and displayed " + defn.reads + " time" + (defn.reads != 1 ? "s":"") + ".");
+			
+		} else {
+			int factCount   = countFacts(data.definitions);
+			int rumourCount = countRumours(data.definitions);
+			
+			if (data.search != null) {
+				irc.sendContextReply(mes, data.definitions.size() +
+						" factoid" + (data.definitions.size() != 1 ? "s":"") +
+						" matched, containing " + factCount + " fact" + (factCount != 1 ? "s":"") +
+						" and " + rumourCount + " rumour" + (rumourCount != 1 ? "s":"") + ".");
+			} else {
+				irc.sendContextReply(mes, "Factoids database contains " + factCount + " fact" + (factCount != 1 ? "s":"") + " and " + rumourCount + " rumour" + (rumourCount != 1 ? "s":"") + ".");
+			}
+		}
 	}
 	
 	// Manually add facts to the system.
@@ -406,7 +433,7 @@ public class Factoids2
 			return;
 		}
 		
-		Factoid fact = new Factoid(factoid.subject, true, factoid.definition);
+		Factoid fact = new Factoid(factoid.subject, true, factoid.definition, mes.getNick());
 		mods.odb.save(fact);
 		irc.sendContextReply(mes, "Added definition for '" + factoid.subject + "'.");
 	}
@@ -467,6 +494,8 @@ public class Factoids2
 			
 			if (factCount > 0) {
 				Factoid fact = pickFact(data.definitions, mes.getContext() + ":" + data.search.subject);
+				fact.reads++;
+				mods.odb.update(fact);
 				
 				if (factCount > 2) {
 					irc.sendContextReply(mes, fact.subject + " " + fact.info + " (" + (factCount - 1) + " other defns)");
@@ -478,6 +507,8 @@ public class Factoids2
 				
 			} else {
 				Factoid rumour = pickRumour(data.definitions, mes.getContext() + ":" + data.search.subject);
+				rumour.reads++;
+				mods.odb.update(rumour);
 				
 				if (rumourCount > 2) {
 					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info + " (" + (rumourCount - 1) + " other rumours)");
@@ -514,6 +545,8 @@ public class Factoids2
 			
 			if (factCount > 0) {
 				Factoid fact = pickFact(data.definitions, mes.getContext() + ":" + data.search.subject);
+				fact.reads++;
+				mods.odb.update(fact);
 				
 				if (factCount > 2) {
 					irc.sendContextReply(mes, fact.subject + " " + fact.info + " (" + (factCount - 1) + " other defns)");
@@ -553,6 +586,8 @@ public class Factoids2
 			
 			if (rumourCount > 0) {
 				Factoid rumour = pickRumour(data.definitions, mes.getContext() + ":" + data.search.subject);
+				rumour.reads++;
+				mods.odb.update(rumour);
 				
 				if (rumourCount > 2) {
 					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info + " (" + (rumourCount - 1) + " other rumours)");
