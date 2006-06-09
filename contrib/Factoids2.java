@@ -113,11 +113,20 @@ public class Factoids2
 	private final static Set<String> subjectExclusions = new HashSet<String>();
 	static
 	{
+		subjectExclusions.add("could");
+		subjectExclusions.add("just");
+		subjectExclusions.add("might");
+		subjectExclusions.add("must");
+		subjectExclusions.add("should");
+		subjectExclusions.add("someone");
 		subjectExclusions.add("that");
 		subjectExclusions.add("there");
 		subjectExclusions.add("this");
 		subjectExclusions.add("what");
+		subjectExclusions.add("where");
 		subjectExclusions.add("which");
+		subjectExclusions.add("will");
+		subjectExclusions.add("would");
 	}
 	
 	private final static String splitWords = "is|was|am|be|can|can't|cant|cannot";
@@ -362,6 +371,22 @@ public class Factoids2
 				mods.odb.delete(oldRumour);
 			}
 		}
+	}
+	
+	// Get some simple stats.
+	public String[] helpCommandStats = {
+			"Returns some (maybe) interesting statistics from the factoids system.",
+			""
+		};
+	
+	public void commandStats(Message mes)
+	{
+		List<Factoid> definitions = mods.odb.retrieve(Factoid.class, "");
+		
+		int factCount   = countFacts(definitions);
+		int rumourCount = countRumours(definitions);
+		
+		irc.sendContextReply(mes, "Factoids database contains " + factCount + " fact" + (factCount != 1 ? "s":"") + " and " + rumourCount + " rumour" + (rumourCount != 1 ? "s":"") + ".");
 	}
 	
 	// Manually add facts to the system.
