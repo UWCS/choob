@@ -117,15 +117,19 @@ public class Factoids2
 	private final static Set<String> subjectExclusions = new HashSet<String>();
 	static
 	{
+		subjectExclusions.add("also");
 		subjectExclusions.add("could");
 		subjectExclusions.add("just");
 		subjectExclusions.add("might");
 		subjectExclusions.add("must");
 		subjectExclusions.add("should");
+		subjectExclusions.add("something");
 		subjectExclusions.add("someone");
 		subjectExclusions.add("that");
 		subjectExclusions.add("there");
+		subjectExclusions.add("they");
 		subjectExclusions.add("this");
+		subjectExclusions.add("thing");
 		subjectExclusions.add("what");
 		subjectExclusions.add("where");
 		subjectExclusions.add("which");
