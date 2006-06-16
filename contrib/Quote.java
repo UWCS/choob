@@ -466,7 +466,10 @@ public class Quote
 		// Remember this quote for later...
 		addLastQuote(mes.getContext(), quote, 1);
 
-		irc.sendContextReply( mes, "OK, added " + quote.lines + " line quote #" + quote.id + ": " + formatPreview(quoteLines) );
+		irc.sendContextReply( mes, "OK, added " + quote.lines + " line quote #" + quote.id + ": (" +
+			new SimpleDateFormat("h:mma").format(new Date(lines.get(0).getMillis())).toLowerCase() +
+			") " + formatPreview(quoteLines)
+		);
 	}
 
 	public String[] helpCommandAdd = {
