@@ -55,7 +55,6 @@ public class Events
 			signupCurrent = Integer.parseInt(ssignupCurrent);
 
 			// ssignupCode comes as a short code (suprisingly enough) that is explained next to the enum above. Decode it:
-			//signupCode    = ssignupCode;
 			if      (ssignupCode.equals("X"))  signupCode = SignupCodes.FINISHED   ;
 			else if (ssignupCode.equals("S"))  signupCode = SignupCodes.HASSIGNUPS ;
 			else if (ssignupCode.equals("SN")) signupCode = SignupCodes.SIGNUPSMEM ;
@@ -77,7 +76,7 @@ public class Events
 
 			// The names come in in csv, break them up.
 			signupNames   = new ArrayList<String>();
-			for (String name : ssignupNames.split(","))
+			for (String name : ssignupNames.split(", "))
 				signupNames.add(name);
 		}
 
@@ -564,15 +563,14 @@ public class Events
 	/** Convert a Calendar to "8pm", "7am", "7:30am" etc. */
 	private final static String shortTime(Calendar cda)
 	{
-		String rep = new Integer(cda.get(Calendar.HOUR)).toString();
+		final SimpleDateFormat nomins = new SimpleDateFormat("ha");
+		final SimpleDateFormat wimins = new SimpleDateFormat("h:mma");
 
 		// Don't show the minutes if they're 0.
 		if (cda.get(Calendar.MINUTE) != 0)
-			rep += ":" + cda.get(Calendar.MINUTE);
+			return wimins.format(cda.getTime()).toLowerCase();
 
-		rep += (cda.get(Calendar.AM_PM) == Calendar.AM ? "am" : "pm");
-
-		return rep;
+		return nomins.format(cda.getTime()).toLowerCase();
 	}
 
 	/** Work out if a calendar is in the morning, afternoon or evening. */
