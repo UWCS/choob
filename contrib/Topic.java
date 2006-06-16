@@ -51,7 +51,7 @@ public class Topic
 			return results.get(0);
 	}
 
-	public String getContextString(String into, int pos, int length)
+	public static String getContextString(String into, int pos, int length)
 	{
 		String context;
 		if (pos == 0)
@@ -69,20 +69,30 @@ public class Topic
 	}
 
 	public String[] helpCommandDiff = {
-		"Explains the most recent change in topic in the current channel."
+		"Explains the most recent change in topic in the current channel.",
+		"[Channel]",
+		"[Channel] is the channel to get the diff of. Only valid outside channels."
 	};
 	public synchronized void commandDiff( Message mes )
 	{
+		String which;
+
 		if (!(mes instanceof ChannelEvent))
 		{
-			irc.sendContextReply(mes, "Sorry, can only do that in a channel!");
-			return;
+			which = mods.util.getParamString(mes);
+			if (which.length() < 2)
+			{
+				irc.sendContextReply(mes, "Which channel?");
+				return;
+			}
 		}
+		else
+			which = mes.getContext();
 
 		List<String> changes = new ArrayList<String>();
 
 		// First, let's see if we can do this.
-		TopicStr topic = getTopic(mes.getContext());
+		TopicStr topic = getTopic(which);
 		if (topic.newTopic == null)
 		{
 			irc.sendContextReply(mes, "Sorry, don't know the topic!");
