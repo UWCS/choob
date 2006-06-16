@@ -60,12 +60,15 @@ public class Karma
 {
 	// Non-null == ignore.
 	private final static Set<String> exceptions = new HashSet<String>();
+	private final static Set<String> reasonExceptions = new HashSet<String>();
 	static
 	{
 		exceptions.add("c");
 		exceptions.add("dc");
 		exceptions.add("visualj");
 		exceptions.add("vc");
+		reasonExceptions.add("for that");
+		reasonExceptions.add("because of that");
 	}
 	static final int    FLOOD_RATE     = 15 * 60 * 1000;
 	static final String FLOOD_RATE_STR = "15 minutes";
@@ -180,7 +183,7 @@ public class Karma
 					irc.sendContextReply(mes, "Unable to match your query to a valid karma string.");
 					return;
 				}
-				
+
 				// Value wasn't quoted, so try it again, but quoted.
 				ma = karmaItemPattern.matcher("\"" + name + "\"");
 				if (!ma.find())
@@ -350,7 +353,7 @@ public class Karma
 		+ "("
 			// A "natural English" reason
 			+ "(?i: because | for)\\s" // Must start sensibly
-			+ ".+?"                   // Rest of reason
+			+ ".+?"                    // Rest of reason
 		+ "|"
 			// A bracketted reason
 			+ "\\("
@@ -399,7 +402,7 @@ public class Karma
 					irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
 					return;
 				}
-				
+
 				// Karma flood check.
 				karmaReasonFloodCheck = name;
 				try
@@ -422,14 +425,19 @@ public class Karma
 
 				boolean increase = reasonMatch.group(3).equals("++");
 
-				// Store the reason too.
-				KarmaReasonObject reason = new KarmaReasonObject();
-				reason.string = name;
-				reason.reason = reasonMatch.group(4);
-				reason.direction = increase ? 1 : -1;
-				mods.odb.save(reason);
+				final String sreason = reasonMatch.group(4);
 
-				hasReason = true;
+				if (!reasonExceptions.contains(sreason))
+				{
+					// Store the reason too.
+					KarmaReasonObject reason = new KarmaReasonObject();
+					reason.string = name;
+					reason.reason = sreason;
+					reason.direction = increase ? 1 : -1;
+					mods.odb.save(reason);
+
+					hasReason = true;
+				}
 			}
 		}
 
