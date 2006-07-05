@@ -477,7 +477,7 @@ public class Factoids2
 	
 	// Retrieve definitions from the system.
 	public String[] helpCommandGet = {
-			"Returns a/the definition for a term.",
+			"Returns a definition for a term.",
 			"<term> [" + splitWords + "] [<search>]",
 			"<term> is the term to define",
 			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
@@ -529,7 +529,7 @@ public class Factoids2
 	}
 	
 	public String[] helpCommandGetFact = {
-			"Returns a/the factual definition for a term.",
+			"Returns a factual definition for a term.",
 			"<term> [" + splitWords + "] [<search>]",
 			"<term> is the term to define",
 			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
@@ -570,7 +570,7 @@ public class Factoids2
 	}
 	
 	public String[] helpCommandGetRumour = {
-			"Returns a/the definition for a term.",
+			"Returns a rumour for a term.",
 			"<term> [" + splitWords + "] [<search>]",
 			"<term> is the term to define",
 			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
