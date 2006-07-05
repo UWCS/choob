@@ -145,6 +145,7 @@ public class Factoids2
 	private Modules mods;
 	private IRCInterface irc;
 	private Pattern filterFactoidsPattern;
+	private Pattern filterQuestionPatter;
 	private Pattern addDefinitionPattern;
 	private Pattern quotedSearchPattern;
 	private Pattern regexpSearchPattern;
@@ -154,6 +155,7 @@ public class Factoids2
 		this.mods = mods;
 		this.irc = irc;
 		filterFactoidsPattern = Pattern.compile(filterFactoidsRegex);
+		filterQuestionPatter = Pattern.compile(".*\\?\\s*");
 		addDefinitionPattern = Pattern.compile("\\s*(?i:that\\s+)?(.+?)\\s+((?i:" + splitWords + ")\\s+.+)\\s*");
 		quotedSearchPattern = Pattern.compile("\\s*\"([^\"]+)\"(?:\\s+(.*))?\\s*");
 		regexpSearchPattern = Pattern.compile("\\s*(.+?)\\s+(/([^/]+|\\/)+/)\\s*");
@@ -367,6 +369,12 @@ public class Factoids2
 			String subject = rMatcher.group(1).toLowerCase();
 			String defn = rMatcher.group(2);
 			
+			// Exclude questions from the data.
+			Matcher questionMatcher = filterQuestionPatter.matcher(defn);
+			if (questionMatcher.matches()) {
+				return;
+			}
+			
 			// We don't auto-learn about some things.
 			if (subjectExclusions.contains(subject))
 				return;
@@ -447,7 +455,7 @@ public class Factoids2
 	
 	// Remove facts from the system.
 	public String[] helpCommandRemove = {
-			"Remove a definition (both facts and rumours).",
+			"Remove factual definitions for a term.",
 			"<term> [" + splitWords + "] [<search>]",
 			"<term> is the term to remove",
 			"<search> limits the removal to only matching defintions, if multiple ones exist (substring or regexp allowed)"
@@ -464,7 +472,9 @@ public class Factoids2
 		
 		for (int i = 0; i < data.definitions.size(); i++) {
 			Factoid defn = data.definitions.get(i);
-			mods.odb.delete(defn);
+			if (defn.fact) {
+				mods.odb.delete(defn);
+			}
 		}
 		if (data.definitions.size() > 1) {
 			irc.sendContextReply(mes, data.definitions.size() + " definitions for '" + data.search.subject + "' removed.");
