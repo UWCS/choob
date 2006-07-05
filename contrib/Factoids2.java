@@ -118,7 +118,9 @@ public class Factoids2
 	static
 	{
 		subjectExclusions.add("also");
+		subjectExclusions.add("cant");
 		subjectExclusions.add("could");
+		subjectExclusions.add("dont");
 		subjectExclusions.add("just");
 		subjectExclusions.add("might");
 		subjectExclusions.add("must");
@@ -132,6 +134,7 @@ public class Factoids2
 		subjectExclusions.add("thing");
 		subjectExclusions.add("what");
 		subjectExclusions.add("where");
+		subjectExclusions.add("when");
 		subjectExclusions.add("which");
 		subjectExclusions.add("will");
 		subjectExclusions.add("would");
