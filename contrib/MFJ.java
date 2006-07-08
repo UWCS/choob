@@ -218,8 +218,15 @@ public class MFJ
 
 	private void /*inline*/ invalidArgument(Message mes)
 	{
-		irc.sendContextMessage(mes, "Invalid argument, expecting: [#]rrggbb.");
+		irc.sendContextMessage(mes, "Invalid argument, expecting: [#]rrggbb or a named colour.");
 	}
+
+	// http://mindprod.com/jgloss/hex.html
+	public static String /*inline*/ byteToHex(int b)
+	{
+		return Integer.toString( ( b & 0xff ) + 0x100, 16 /* radix */ ).substring( 1 );
+	}
+
 
 	/**
 	 * Implements JB's !colour command
@@ -233,6 +240,13 @@ public class MFJ
 			irc.sendContextMessage( con, "Today's colour is " + colourForToday() + ".");
 			return;
 		}
+
+		for (Color c : colours.keySet())
+			if (colours.get(c).equalsIgnoreCase(parm))
+			{
+				irc.sendContextReply(con, "'" + parm + "' is #" + byteToHex(c.getRed()) + byteToHex(c.getGreen()) + byteToHex(c.getBlue()) + ".");
+				return;
+			}
 
 		if (parm.length() == 7 || parm.length() == 4)
 			parm = parm.substring(1);
