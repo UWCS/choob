@@ -286,17 +286,15 @@ public class MFJ
 		}
 
 
-		float[] hsbtarget = Color.RGBtoHSB(toFind.getRed(), toFind.getGreen(), toFind.getBlue(), null);
+		float[] rgbtarget = new float[] { toFind.getRed()/255.0f, toFind.getGreen()/255.0f, toFind.getBlue()/255.0f };
 
 		double bestMatch = 500;
 		Color closest = null;
 		for (Color c : colours.keySet())
 		{
-			float[] hsbthis = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
-
-			double match = Math.pow(hsbtarget[0] - hsbthis[0], 2) +
-						  Math.pow(hsbtarget[1] - hsbthis[1], 2) +
-						  Math.pow(hsbtarget[2] - hsbthis[2], 2);
+			double match = Math.pow(c.getRed()/255.0f - rgbtarget[0], 2) +
+						  Math.pow(c.getGreen()/255.0f - rgbtarget[1], 2) +
+						  Math.pow(c.getBlue()/255.0f - rgbtarget[2], 2);
 
 			if (match < bestMatch)
 			{
