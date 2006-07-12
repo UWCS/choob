@@ -11,14 +11,14 @@ import java.util.regex.*;
 import org.jibble.pircbot.Colors;
 
 // I'm going to assume that java caches regex stuff.
-
-public final class ScraperModule
-{
+/**
+ * Module providing functionality allowing the BOT to extract information from a website.
+ */
+public final class ScraperModule {
 	private Map <java.net.URL, GetContentsCached>sites=Collections.synchronizedMap(new HashMap<URL, GetContentsCached>()); // URL -> GetContentsCached.
 	private final static HashMap <String, Character>EntityMap=new HashMap<String, Character>();
 
-	static
-	{
+	static {
 		// Paste from entitygen.sh.
 
 		EntityMap.put("nbsp", new Character((char)160));
@@ -529,82 +529,123 @@ public final class ScraperModule
 
 	ScraperModule() {}
 
-	public String getContentsCached(URL url) throws IOException
-	{
+	/**
+	 * Get the contents, with caching, of the given URL, using the default timeout.
+	 * @param url The URL to get the contents of.
+	 * @throws java.io.IOException
+	 * @return The contents of the URL provided.
+	 */
+	public String getContentsCached(URL url) throws IOException {
 		return getContentsCached(url, GetContentsCached.DEFAULT_TIMEOUT);
 	}
 
-	public String getContentsCached(URL url, long timeout) throws IOException
-	{
+	/**
+	 * Get the contents, with caching, of the given URL.
+	 * @param url The URL to get the contents of.
+	 * @param timeout The timeout to use when performing the operation.
+	 * @throws java.io.IOException 
+	 * @return The contents of the URL provided.
+	 */
+	public String getContentsCached(URL url, long timeout) throws IOException {
 		GetContentsCached gcc=sites.get(url);
-		if (gcc==null)
-		{
+		if (gcc==null) {
 			gcc=new GetContentsCached(url, timeout);
 			sites.put(url, gcc);
-		}
-		else
-		{
+		} else {
 			if (gcc.getTimeout()>timeout)
 				gcc.setTimeout(timeout);
 		}
 
-		synchronized (sites)
-		{
+		synchronized (sites) {
 			Iterator i=(sites.entrySet()).iterator();
-			while (i.hasNext())
-				if (((GetContentsCached)((Map.Entry)i.next()).getValue()).expired())
+			while (i.hasNext()) {
+				if (((GetContentsCached)((Map.Entry)i.next()).getValue()).expired()) {
 					i.remove();
+				}
+			}
 		}
 
 		return gcc.getContents();
 	}
 
-	public Matcher getMatcher(URL url, long timeout, String regex) throws IOException
-	{
+	/**
+	 * Get the regular expression Matcher object for a specific URL and regular expression.
+	 * @param url The URL to perform the regular expression on.
+	 * @param timeout The timeout to use when performing this operation.
+	 * @param regex The regular expression to use.
+	 * @throws java.io.IOException 
+	 * @return The Matcher object requested.
+	 */
+	public Matcher getMatcher(URL url, long timeout, String regex) throws IOException {
 		return getMatcher(url, timeout, Pattern.compile(regex));
 	}
 
-	public Matcher getMatcher(URL url, String regex) throws IOException
-	{
+	/**
+	 * Get the regular expression Matcher object for a specific URL and regular expression.
+	 * @param url The URL to perform the regular expression on.
+	 * @param regex The regular expression to use.
+	 * @throws java.io.IOException 
+	 * @return The Matcher object requested.
+	 */
+	public Matcher getMatcher(URL url, String regex) throws IOException {
 		return getMatcher(url, Pattern.compile(regex));
 	}
 
-	public Matcher getMatcher(URL url, Pattern regex) throws IOException
-	{
+	/**
+	 * Get the regular expression Matcher object for a specific URL and regular expression.
+	 * @param url The URL to perform the regular expression on.
+	 * @param regex The Pattern object containing the regular expression to use.
+	 * @throws java.io.IOException 
+	 * @return The Matcher object requested.
+	 */
+	public Matcher getMatcher(URL url, Pattern regex) throws IOException {
 		return regex.matcher(getContentsCached(url));
 	}
 
-	public Matcher getMatcher(URL url, long timeout, Pattern regex) throws IOException
-	{
+	/**
+	 * Get the regular expression Matcher object for a specific URL and regular expression.
+	 * @param url The URL to perform the regular expression on.
+	 * @param timeout The timeout to use when performing this operation.
+	 * @param regex The Pattern object containing the regular expression to use.
+	 * @throws java.io.IOException 
+	 * @return The Matcher object requested.
+	 */
+	public Matcher getMatcher(URL url, long timeout, Pattern regex) throws IOException {
 		return regex.matcher(getContentsCached(url, timeout));
 	}
 
-	public String convertEntities(final String html)
-	{
+	/**
+	 * Replace HTML special character codes with the actual character.
+	 * @param html The String to perform the replacement upon.
+	 * @return The String after replacement has been performed.
+	 */
+	public String convertEntities(final String html) {
 		// Sorry, I just couldn't bring myself to do foreach (hashmap => key, val) html=html.replaceall(key, val);
 
 		StringBuilder buf = new StringBuilder();
 		int l=html.length();
 		int p=0;
 		int lastp=0;
-		while (p<l)
-		{
+		while (p<l)	{
 			p=html.indexOf("&", p);
 
-			if (p==-1)
+			if (p==-1) {
 				break;
+			}
 
 			int semi=html.indexOf(";",p);
 
-			if (semi==-1)
+			if (semi==-1) {
 				break;
+			}
 
 			Character c=EntityMap.get(html.substring(p+1,semi));
 
-			if (c==null)
+			if (c==null) {
 				buf.append(html.substring(lastp, semi+1));
-			else
+			} else {
 				buf.append(html.substring(lastp,p)).append(c);
+			}
 
 			p=semi+1;
 			lastp=p;
@@ -614,30 +655,45 @@ public final class ScraperModule
 		return buf.toString();
 	}
 
-	public String boldTags(String html)
-	{
+	/**
+	 * Replace bold HTML tags with the IRC equivalent.
+	 * @param html The HTML String to perform the replacement on.
+	 * @return The String suitably formatted to perform bold on IRC.
+	 */
+	public String boldTags(String html) {
 		return html.replaceAll("(?i)<b>", Colors.BOLD).replaceAll("(?i)</b>", Colors.NORMAL);
 	}
-
-	public String quoteURLs(String html)
-	{
+	
+	public String quoteURLs(String html) {
 		//return html.replaceAll("<a +?href *= *\"(.*?)\" *?>","[$1] ").replaceAll("</a>","");
 		return html;
 		//This is going to require more than: return html.replaceAll("<a +?href *= *\"(.*?)\" *?>",Colors.REVERSE + "<$1> " + Colors.NORMAL).replaceAll("</a>","");
 	}
 
-	public String stripTags(String html)
-	{
+	/**
+	 * Remove all tags from a String of HTML.
+	 * @param html The String to filter.
+	 * @return The String, minus any HTML tags.
+	 */
+	public String stripTags(String html) {
 		return html.replaceAll("<.*?>","");
 	}
 
-	public String cleanup(String html)
-	{
+	/**
+	 * Tidy up a string of HTML, removing newlines and HTML special characters.
+	 * @param html The HTML to tidy.
+	 * @return The tidy HTML.
+	 */
+	public String cleanup(String html) {
 		return convertEntities(html.trim().replaceAll("\n",""));
 	}
 
-	public String readyForIrc(String html)
-	{
+	/**
+	 * Cleans a Sting of HTML of all tags in order to make it suitable for output in IRC.
+	 * @param html The String containing HTML tags that is to be prepared for IRC output.
+	 * @return A string ready for output into IRC.
+	 */
+	public String readyForIrc(String html) {
 		return stripTags(quoteURLs(boldTags(cleanup(html))));
 	}
 }
