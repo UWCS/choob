@@ -80,6 +80,9 @@ public class Security
 		{
 			irc.sendContextReply( mes, "Urgh. We got a security exception." );
 			return;
+		} catch (IllegalArgumentException e) {
+			irc.sendContextReply(mes, e.getMessage());
+			return;
 		}
 		irc.sendContextReply( mes, "OK, user added!" );
 	}
@@ -237,6 +240,9 @@ public class Security
 		{
 			irc.sendContextReply( mes, "The user could not be linked: " + e );
 			return;
+		} catch (IllegalArgumentException e) {
+			irc.sendContextReply(mes, e.getMessage());
+			return;
 		}
 		irc.sendContextReply( mes, "OK, user " + leafName + " linked to root " + rootName + "!");
 	}
@@ -316,6 +322,9 @@ public class Security
 		{
 			irc.sendContextReply( mes, "The group could not be added: " + e );
 			return;
+		} catch (IllegalArgumentException e) {
+			irc.sendContextReply(mes, e.getMessage());
+			return;
 		}
 		irc.sendContextReply( mes, "OK, group added!" );
 	}
@@ -389,6 +398,9 @@ public class Security
 		catch ( ChoobException e )
 		{
 			irc.sendContextReply( mes, "The membership could not be altered: " + e );
+			return;
+		} catch (IllegalArgumentException e) {
+			irc.sendContextReply( mes, e.getMessage());
 			return;
 		}
 		irc.sendContextReply( mes, "OK, membership of " + childName + " in " + parentName + " altered!" );
@@ -540,6 +552,9 @@ public class Security
 		{
 			irc.sendContextReply( mes, "The permission could not be changed: " + e );
 			return;
+		} catch (IllegalArgumentException e) {
+			irc.sendContextReply(mes, e.getMessage());
+			return;
 		}
 		irc.sendContextReply( mes, "OK, permission changed!" );
 	}
@@ -597,6 +612,9 @@ public class Security
 		catch ( ChoobException e )
 		{
 			irc.sendContextReply( mes, "The permission could not be found: " + e );
+			return;
+		} catch (IllegalArgumentException e) {
+			irc.sendContextReply(mes, e.getMessage());
 			return;
 		}
 	}
