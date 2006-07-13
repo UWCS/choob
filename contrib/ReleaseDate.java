@@ -24,9 +24,9 @@ public class ReleaseDate {
 
 	//ReleaseDate help
 	public String[] helpCommandReleaseDate = {
-		"Attempts to look up a game's release date on Gameplay.co.uk. Results include date, title, platform and Gameplay price.",
+		"Attempts to look up a item's release date on Play.com or, if no results are found, Gameplay.co.uk. Results include date or stock information, title, platform and price.",
 		"<TITLE>",
-		"<TITLE> the title of a game that you wish to get information for."
+		"<TITLE> the title of an item that you wish to get information for. This may only contain A-Z0-9.,;:_- and spaces."
 	};	
 	
 	/** 
@@ -45,7 +45,7 @@ public class ReleaseDate {
 	 */
 	public String[] info() {
 		return new String[] {
-			"Plugin to retrieve the release date of a particular game from Gameplay.co.uk",
+			"Plugin to retrieve the release date of a particular item from Play.com Gameplay.co.uk",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
 			"$Rev$$Date$"
@@ -66,38 +66,85 @@ public class ReleaseDate {
 			Pattern dodgyCharPattern = Pattern.compile("^[\\s\\w\\-\\:\\;\\.\\,]*[a-zA-Z0-9]+[\\s\\w\\-\\:\\;\\.\\,]*$");
 			Matcher dodgyCharMatcher = dodgyCharPattern.matcher(param);
 			if (dodgyCharMatcher.matches()) {
-				URL url = generateURL("http://shop.gameplay.co.uk/webstore/advanced_search.asp?keyword=", param);
-				//TODO: Restructure code to be less "wow.. this was coded at 2am" (admittedly it was.. but it still sucks)
-				//Matcher for detecting when gameplay says there are no results
-				Matcher noResultMatcher = getMatcher(url, "(?s)" + "Sorry, your search for" + "(.*?)" + "returned no results.");
-				if (noResultMatcher.find()) {
-					irc.sendContextReply(mes, "Sorry, no information was found for \"" + param + "\".");
+			String playResults = playSearch(param);
+				//Check if we got a viable result from play.com, if so return this - otherwise return whatever gameplay gives us.
+				if ((!playResults.equals("Error looking up results.")) && (!playResults.equals("Sorry, no information was found for \"" + param + "\"."))) {
+					irc.sendContextReply(mes, playResults);
 				} else {
-					//Matcher for detecting a search page full of results
-					Matcher gotResultMatcher = getMatcher(url, "(?s)" + "<h2 class=\"vlgWhite\">" + "(.*?)" + "<a href=\"productpage.asp?" + "(.*?)" +  "class=\"vlgWhite\">" + "(.*?)" + "</a></td></h2>" + "(.*?)" + "<div class=\"vsmorange10\">" + "(.*?)" + "</div>" + "(.*?)" + "<td valign=\"bottom\">" + "(.*?)" + "RRP");
-					if (gotResultMatcher.find()) {
-						irc.sendContextReply(mes, mods.scrape.readyForIrc(prettyReply(gotResultMatcher.group(3) + " (" + gotResultMatcher.group(5) + ")" + gotResultMatcher.group(7), url.toString(), 1)));
-					} else {
-						//Matcher for detecting content when we've been redirected to a product page
-						Matcher singlePageResultMatcher = getMatcher(url, "(?s)" + "<h1 class=\"bbHeader\">" + "(.*?)" + "</h1>" + "(.*?)" + "<td style=\"padding: 6px;\">" + "(.*?)" + "<img src=\"http://shop" + "(.*?)" + "<td valign=\"bottom\" colspan=\"2\">" + "(.*?)" + "<b>Category:</b><a href=");
-						if (singlePageResultMatcher.find()) {
-							irc.sendContextReply(mes, mods.scrape.readyForIrc(prettyReply(singlePageResultMatcher.group(1) + singlePageResultMatcher.group(5) + singlePageResultMatcher.group(3), url.toString(), 1)));
-						} else {
-							//It's clearly some unknown page type that isn't yet handled... Let the user deal with it!
-							irc.sendContextReply(mes, "There was an error parsing the results. See " + url.toString());
-						}
-					}
+					String gameplayResults = gameplaySearch(param);
+					irc.sendContextReply(mes, gameplayResults);
 				}
 			} else {
 				irc.sendContextReply(mes, "Sorry, I'm limited to A-Z0-9,._;: hyphen and space characters. At least one alpha-numeric character must be provided.");
 			}
-
-		} catch (LookupException e) {
-			irc.sendContextReply(mes, "Error looking up results.");
 		} catch (NullPointerException e) {
 			irc.sendContextReply(mes, "Error looking up results.");
 		} catch (IllegalStateException e) {
 			irc.sendContextReply(mes, "Error looking up results.");
+		}
+	}
+	
+	/**
+	 * Search Gameplay.co.uk
+	 * @param param The parameter to search for on the website.
+	 * @returns A message string to display.
+	 */
+	private String gameplaySearch(String param) {
+		try {
+			URL url = generateURL("http://shop.gameplay.co.uk/webstore/advanced_search.asp?keyword=", param);
+			Matcher gameplayNoResultMatcher = getMatcher(url, "(?s)" + "Sorry, your search for" + "(.*?)" + "returned no results.");
+			Matcher gameplayGotResultMatcher = getMatcher(url, "(?s)" + "<h2 class=\"vlgWhite\">" + "(.*?)" + "<a href=\"productpage.asp?" + "(.*?)" +  "class=\"vlgWhite\">" + "(.*?)" + "</a></td></h2>" + "(.*?)" + "<div class=\"vsmorange10\">" + "(.*?)" + "</div>" + "(.*?)" + "<td valign=\"bottom\">" + "(.*?)" + "((RRP)|(<a href=\"add_to_basket))");
+			Matcher gameplaySingleResultMatcher = getMatcher(url, "(?s)" + "<h1 class=\"bbHeader\">" + "(.*?)" + "</h1>" + "(.*?)" + "<td style=\"padding: 6px;\">" + "(.*?)" + "<img src=\"http://shop" + "(.*?)" + "<td valign=\"bottom\" colspan=\"2\">" + "(.*?)" + "<b>Category:</b><a href=");
+			if (gameplayNoResultMatcher.find()) {
+				return "Sorry, no information was found for \"" + param + "\".";
+			} else if (gameplayGotResultMatcher.find()) {
+				return mods.scrape.readyForIrc(prettyReply(gameplayGotResultMatcher.group(3) + " (" + gameplayGotResultMatcher.group(5) + ")" + gameplayGotResultMatcher.group(7), url.toString(), 1));
+			} else if (gameplaySingleResultMatcher.find()) {
+				return mods.scrape.readyForIrc(prettyReply(gameplaySingleResultMatcher.group(1) + gameplaySingleResultMatcher.group(5) + gameplaySingleResultMatcher.group(3), url.toString(), 1));
+			} else {
+				return "There was an error parsing the results. See " + url.toString();
+			}
+		} catch (LookupException e) {
+			return "Error looking up results.";
+		} catch (NullPointerException e) {
+			return "Error looking up results.";
+		} catch (IllegalStateException e) {
+			return "Error looking up results.";
+		}
+	}
+	
+	/**
+	 * Search Play.com
+	 * @param param The parameter to search for on the website.
+	 * @returns A message string to display.
+	 */
+	private String playSearch(String param) {
+		try {
+			URL url = generateURL("http://www.play.com/Search.aspx?searchtype=allproducts&searchstring=", param);
+			Matcher playNoResultMatcher = getMatcher(url, "(?s)" + "<td class=\"textblack\" align=\"center\">There were no results for your search");
+			Matcher playNoExactResultMatcher = getMatcher(url, "(?s)" + "<p class=\"searchterms\"><span>We could not find an exact match");
+			Matcher playGotResultMatcher = getMatcher(url, "(?s)" + "View  results in " + "(.*?)" + " »" + "(.*?)" + "<div class=\"info\"><h5><a href=\"" + "(.*?)" + "Product.html\">" + "(.*?)" + "</a></h5><p class=\"stock\"><span></span>" + "(.*?)" + "</p><h6><span>our price:  </span>" + "(.*?)" + " ((Delivered</h6><p class=\"saving\">RRP)|(Delivered</h6><div class=\"buy\">))"); 
+			Matcher playAlternativeResultMatcher = getMatcher(url, "(?s)" + "<div class=\"info\"><h5><a href=\"" + "(.*?)" + "Product.html\">" + "(.*?)" + "</a></h5><p class=\"stock\"><span></span>" + "(.*?)" + "</p><h6><span>our price:  </span>" + "(.*?)" + " Delivered</h6><p class=\"saving\">RRP"); 
+			Matcher playProductPageMatcher = getMatcher(url, "(?s)" + "<div class=\"texthead\"><div><div><h2>" + "(.*?)" + "</h2></div></div></div><div class=\"box\">" + "(.*?)" + "<div class=\"info\"><h6><span><span>our price:</span> </span>" + "(.*?)" + " Delivered</h6><p class=\"stock\"><span>availability:  </span>" + "(.*?)" + "</p><p class=\"note\">");
+			if (playNoResultMatcher.find()) {
+				return "Sorry, no information was found for \"" + param + "\".";
+			} else if (playNoExactResultMatcher.find()) {
+				return "Sorry, no information was found for \"" + param + "\".";
+			} else if (playGotResultMatcher.find()) {
+				return mods.scrape.readyForIrc(prettyReply("<b>" + playGotResultMatcher.group(4) + "</b> (" + playGotResultMatcher.group(1) + ") " + playGotResultMatcher.group(5).replaceAll("<br/>", "<b> ") + "</b> Play.com price:" + playGotResultMatcher.group(6), url.toString(), 1));
+			} else if (playAlternativeResultMatcher.find()) {
+				return mods.scrape.readyForIrc(prettyReply("<b>" + playAlternativeResultMatcher.group(2) + "</b> " + playAlternativeResultMatcher.group(3).replaceAll("<br/>", "<b> ") + "</b> Play.com price:" + playAlternativeResultMatcher.group(4), url.toString(), 1));
+			} else if (playProductPageMatcher.find()) {
+				return mods.scrape.readyForIrc(prettyReply("<b>" + playProductPageMatcher.group(1) + "</b> " + playProductPageMatcher.group(4).replaceAll("<br/>", "<b> ") + "</b> Play.com price: " + playProductPageMatcher.group(3), url.toString(), 1));
+			} else {
+				return "There was an error parsing the results. See " + url.toString();
+			}
+		} catch (LookupException e) {
+			return "Error looking up results.";
+		} catch (NullPointerException e) {
+			return "Error looking up results.";
+		} catch (IllegalStateException e) {
+			return "Error looking up results.";
 		}
 	}
 	
@@ -108,7 +155,7 @@ public class ReleaseDate {
 		if (text.length()>maxlen) {
 			return text.substring(0, maxlen) + "..., see " + url;
 		} else {
-			return text + " See " + url + ".";
+			return text + " See " + url;
 		}
 	}
 
