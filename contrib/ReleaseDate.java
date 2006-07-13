@@ -22,7 +22,12 @@ public class ReleaseDate {
 	Modules mods;
 	private IRCInterface irc;
 
-	
+	//ReleaseDate help
+	public String[] helpCommandReleaseDate = {
+		"Attempts to look up a game's release date on Gameplay.co.uk. Results include date, title, platform and Gameplay price.",
+		"<TITLE>",
+		"<TITLE> the title of a game that you wish to get information for."
+	};	
 	
 	/** 
 	 * Creates a new instance of ReleaseDate 
@@ -47,6 +52,7 @@ public class ReleaseDate {
 		};
 	}
 	
+	//TODO: Return multiple results, and filter out "guide" results - as per the JB version this is re-implementing
 	/**
 	 * The command provided by this plugin.
 	 * @param mes The command input from which parameters will be extracted.
@@ -59,10 +65,8 @@ public class ReleaseDate {
 			if (noResultMatcher.find()) {
 				irc.sendContextReply(mes, "Sorry, no information was found for \"" + param + "\".");
 			} else {
-//				Matcher gotResultMatcher = getMatcher(url, "(?s)" +  "<td valign=\"bottom\">" + "(.*?)" + "RRP" + "(?s)");
 				Matcher gotResultMatcher = getMatcher(url, "(?s)" + "<h2 class=\"vlgWhite\">" + "(.*?)" + "<a href=\"productpage.asp?" + "(.*?)" +  "class=\"vlgWhite\">" + "(.*?)" + "</a></td></h2>" + "(.*?)" + "<div class=\"vsmorange10\">" + "(.*?)" + "</div>" + "(.*?)" + "<td valign=\"bottom\">" + "(.*?)" + "RRP");
 				if (gotResultMatcher.find()) {
-//					irc.sendContextReply(mes, mods.scrape.readyForIrc(prettyReply(gotResultMatcher.group(1), url.toString(),1)));
 					irc.sendContextReply(mes, mods.scrape.readyForIrc(gotResultMatcher.group(3)).replaceAll("\\s+"," ") +  " (" +  mods.scrape.readyForIrc(gotResultMatcher.group(5)) + ")" + mods.scrape.readyForIrc(prettyReply(gotResultMatcher.group(7), url.toString(), 1)));
 				} else {
 					irc.sendContextReply(mes, "There was an error parsing the results. See " + url.toString());
