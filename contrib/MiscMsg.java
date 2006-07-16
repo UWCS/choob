@@ -244,7 +244,21 @@ public class MiscMsg
 		"<date> is the date, in \"yyyy-mm-dd\", \"d/m/yyyy\" or \"d mmm yyyy\" format."
 	};
 
-	final int termStart = 1127692800; // 2005-09-26
+	final int[] termStarts = {
+			1064793600, // 2003-09-29
+			1096243200, // 2004-09-27
+			1127692800, // 2005-09-26
+			1159747200, // 2006-10-02
+			1191196800, // 2007-10-01
+			1222646400, // 2008-09-29
+			1254096000, // 2009-09-28
+			1286150400, // 2010-10-04
+			1317600000, // 2011-10-03
+			1349049600, // 2012-10-01
+			1380499200, // 2013-09-30
+			1411948800, // 2014-09-29
+			1444089600 // 2015-10-06
+		};
 
 	public void commandWeek(Message mes)
 	{
@@ -262,7 +276,7 @@ public class MiscMsg
 			Date now = new Date();
 			DateFormat dayFmt = new SimpleDateFormat("EEE");
 
-			int diff = (int)Math.floor(((int)(now.getTime() / 1000) - termStart) / 86400);
+			int diff = (int)Math.floor(getTimeRelativeToTerm((int)(now.getTime() / 1000)) / 86400);
 			String day = dayFmt.format(now);
 			String week = diffToTermWeek(diff);
 
@@ -292,7 +306,7 @@ public class MiscMsg
 				return;
 			}
 
-			int diff = (int)Math.floor(((int)(now.getTime() / 1000) - termStart) / 86400);
+			int diff = (int)Math.floor(getTimeRelativeToTerm((int)(now.getTime() / 1000)) / 86400);
 			String day = dayFmt.format(now);
 			String week = diffToTermWeek(diff);
 
@@ -340,7 +354,7 @@ public class MiscMsg
 
 			DateFormat weekFmt = new SimpleDateFormat("EEE, d MMM yyyy");
 
-			int dateSt = termStart + ((weekNum - 1) * 86400 * 7);
+			int dateSt = getCurrentTermStart() + ((weekNum - 1) * 86400 * 7);
 			int dateEn = dateSt + (86400 * 6);
 
 			if ((weekNum == 24) || (weekNum == 39)) {
@@ -382,13 +396,35 @@ public class MiscMsg
 		return -1;
 	}
 
+	int getCurrentTermStart() {
+		int time = (int)((new Date()).getTime() / 1000);
+		
+		for (int i = 0; i < termStarts.length; i++) {
+			if (termStarts[i] + (39 * 7 * 86400) > time) {
+				return termStarts[i];
+			}
+		}
+		
+		return time;
+	}
+
+	int getTimeRelativeToTerm(int time) {
+		for (int i = 1; i < termStarts.length; i++) {
+			if (termStarts[i] > time) {
+				return time - termStarts[i - 1];
+			}
+		}
+		
+		return time - termStarts[termStarts.length - 1];
+	}
+
 	String diffToTermWeek(int diff) {
 		//           Christmas             Easter
 		//  <term1>  <4 weeks>  <term2>  <5 weeks>  <term3>
 		// 0   -   10    -    14   -   24    -    29   -   39
 
 		if (diff < -7 * 13) {
-			return "before the current academic year";
+			return "beyond the academic year data";
 		} else if (diff < 0) {
 			return "the summer holidays";
 		} else if (diff < 7 * 10 - 2) {
@@ -414,11 +450,11 @@ public class MiscMsg
 			int tw = week - 20;
 			int rbw = week + 9;
 			return "week " + week + " (week " + tw + " of term 3, room booking week " + rbw + ")";
-		} else if(diff < 7 * 52) {
+		} else if(diff < 7 * 53) {
 			int week = (int)Math.floor(diff / 7) - 38;
 			return "week " + week + " of the summer holidays";
 		} else {
-			return "after the current academic year";
+			return "beyond the academic year data";
 		}
 	}
 
