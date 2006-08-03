@@ -621,4 +621,21 @@ public class Factoids2
 			}
 		}
 	}
+	
+	public String[] helpCommandRandomRumour = {
+			"Returns a completely random rumour.",
+			""
+		};
+	
+	public void commandRandomRumour(Message mes) throws ChoobException
+	{
+		List<Factoid> list = mods.odb.retrieve(Factoid.class, "WHERE fact = 0 ORDER BY RAND() LIMIT 1");
+		
+		if (list.size() == 0) {
+			irc.sendContextReply(mes, "Oh dear, I don't have any rumours!");
+		} else {
+			Factoid rumour = list.get(0);
+			irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info);
+		}
+	}
 }
