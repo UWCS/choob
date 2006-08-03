@@ -470,18 +470,20 @@ public class Factoids2
 			return;
 		}
 		
+		int count = 0;
 		for (int i = 0; i < data.definitions.size(); i++) {
 			Factoid defn = data.definitions.get(i);
 			if (defn.fact) {
 				mods.odb.delete(defn);
+				count++;
 			}
 		}
-		if (data.definitions.size() > 1) {
-			irc.sendContextReply(mes, data.definitions.size() + " definitions for '" + data.search.subject + "' removed.");
-		} else if (data.definitions.size() == 1) {
-			irc.sendContextReply(mes, "1 definition for '" + data.search.subject + "' removed.");
+		if (count > 1) {
+			irc.sendContextReply(mes, count + " factual definitions for '" + data.search.subject + "' removed.");
+		} else if (count == 1) {
+			irc.sendContextReply(mes, "1 factual definition for '" + data.search.subject + "' removed.");
 		} else {
-			irc.sendContextReply(mes, "No definitions for '" + data.search.subject + "' found.");
+			irc.sendContextReply(mes, "No factual definitions for '" + data.search.subject + "' found.");
 		}
 	}
 	
