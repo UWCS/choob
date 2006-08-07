@@ -292,7 +292,13 @@ public class MiscMsg
 			if (dateMatcher.group(1) != null) {
 				now = (new GregorianCalendar(Integer.parseInt(dateMatcher.group(1)), Integer.parseInt(dateMatcher.group(2)) - 1, Integer.parseInt(dateMatcher.group(3)), 12, 0, 0)).getTime();
 			} else if (dateMatcher.group(4) != null) {
-				now = (new GregorianCalendar(Integer.parseInt(dateMatcher.group(6)), Integer.parseInt(dateMatcher.group(5)) - 1, Integer.parseInt(dateMatcher.group(4)), 12, 0, 0)).getTime();
+				int year = Integer.parseInt(dateMatcher.group(6));
+				if (year < 80)
+					year += 2000;
+				if (year < 100)
+					year += 1900;
+
+				now = (new GregorianCalendar(year, Integer.parseInt(dateMatcher.group(5)) - 1, Integer.parseInt(dateMatcher.group(4)), 12, 0, 0)).getTime();
 			} else if (dateMatcher.group(7) != null) {
 				int month = nameToMonth(dateMatcher.group(8));
 				if (month == -1) {
@@ -300,7 +306,13 @@ public class MiscMsg
 					return;
 				}
 
-				now = (new GregorianCalendar(Integer.parseInt(dateMatcher.group(9)), month, Integer.parseInt(dateMatcher.group(7)), 12, 0, 0)).getTime();
+				int year = Integer.parseInt(dateMatcher.group(9));
+				if (year < 80)
+					year += 2000;
+				if (year < 100)
+					year += 1900;
+
+				now = (new GregorianCalendar(year, month, Integer.parseInt(dateMatcher.group(7)), 12, 0, 0)).getTime();
 			} else {
 				irc.sendContextReply(mes, "Sorry, I can't parse that date. Please use yyyy-mm-dd, dd/mm/yyyy or dd mmm yyyy.");
 				return;
