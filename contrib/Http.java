@@ -16,6 +16,13 @@ public class HashedStringObject
 
 public class Http
 {
+	final int portNumber = 8023;
+
+	// If this is null, the local machine's ip will be used.
+	final String externalName =
+		null
+	;
+
 	public String[] info()
 	{
 		return new String[] {
@@ -62,7 +69,7 @@ public class Http
 			// OK, that failed. Try to make one ourselves?
 			try
 			{
-				listener = new ServerSocket(12345);
+				listener = new ServerSocket(portNumber);
 				listener.setSoTimeout(1); // Minimal timeout
 			}
 			catch (IOException f)
@@ -235,7 +242,7 @@ public class Http
 	{
 		try
 		{
-			out.println(args + " (" + mods.plugin.callAPI("NickServ", "NickServCheck", irc, args) + ")");
+			out.println(args + " (" + mods.plugin.callAPI("NickServ", "Check", args) + ")");
 		}
 		catch (Exception e)
 		{
@@ -300,14 +307,19 @@ public class Http
 
 		mods.odb.save(hso);
 
-		try
-		{
-			return "http://" + InetAddress.getLocalHost().getHostAddress() + ":12345/store/" + hso.hash;
-		}
-		catch (UnknownHostException e)
-		{
-			throw new ChoobException("Your network appears to be really, really broken.");
-		}
+		String address = externalName;
+
+		if (address == null)
+			try
+			{
+				address = InetAddress.getLocalHost().getHostAddress();
+			}
+			catch (UnknownHostException e)
+			{
+				throw new ChoobException("Your network appears to be really, really broken.");
+			}
+
+		return "http://" + address + ":" + portNumber + "/store/" + hso.hash;
 
 	}
 }

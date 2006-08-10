@@ -14,6 +14,6 @@ public final class ChoobNoSuchPluginException extends ChoobNoSuchCallException
 
 	public ChoobNoSuchPluginException(String plugin, String call)
 	{
-		super(call, plugin);
+		super(plugin, call);
 	}
 }
