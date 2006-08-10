@@ -787,6 +787,26 @@ public class Karma
 
 	}
 
+	final private static String slashed_regex_string = "(?:"
+			+ "/"
+			+ "("
+				+ "(?:\\\\.|[^/\\\\])+" // C-style quoting
+			+ ")"
+			+ "/"
+			+ ")";
+
+	class KarmaSearchItem
+	{
+		KarmaSearchItem(String name, boolean regex)
+		{
+			this.name = name;
+			this.regex = regex;
+		}
+
+		String name;
+		boolean regex;
+	}
+
 	public String[] helpCommandSearch = {
 		"Finds existing karma items.",
 		"<Query> [<Query> ...]",
@@ -794,41 +814,49 @@ public class Karma
 	};
 	public void commandSearch(Message mes, Modules mods, IRCInterface irc)
 	{
-		List<String> params = mods.util.getParams(mes);
+		final List<KarmaSearchItem> params = new ArrayList<KarmaSearchItem>();
 
-		if (params.size() <= 1) {
-			irc.sendContextReply(mes, "I need something to find!");
+		final Matcher ma = Pattern.compile(karma_item + "|" + slashed_regex_string).matcher(mods.util.getParamString(mes));
+
+		while (ma.find())
+		{
+			final String name = getName(ma);
+			params.add(
+				name == null ?
+				new KarmaSearchItem(ma.group(3).replaceAll(" ", "_"), true) :
+				new KarmaSearchItem(name.replaceAll(" ", "_"), false)
+			);
 		}
 
-		// Remove the command token.
-		params.remove(0);
+		if (params.size() == 0)
+			irc.sendContextReply(mes, "Please specify at least one valid karma item, or a regex.");
 
 		// Only 3 items please!
 		while (params.size() > 3)
 			params.remove(params.size() - 1);
 
-		for (int i = 0; i < params.size(); i++) {
-			String item = params.get(i);
-			String odbQuery = "";
+		for (KarmaSearchItem item : params)
+		{
+			String odbQuery;
 
 			final String andNotZero =  " AND NOT (up = 0 AND down = 0 AND value = 0)";
 
-			if ((item.length() > 2) && item.startsWith("/") && item.endsWith("/")) {
+			if (item.regex) {
 				// Regexp
-				odbQuery = "WHERE string RLIKE \"" + mods.odb.escapeString(item.substring(1, item.length() - 1)) + "\"" + andNotZero;
+				odbQuery = "WHERE string RLIKE \"" + mods.odb.escapeString(item.name) + "\"" + andNotZero;
 			} else {
 				// Substring
-				odbQuery = "WHERE string LIKE \"%" + mods.odb.escapeString(item) + "%\"" + andNotZero;
+				odbQuery = "WHERE string LIKE \"%" + mods.odb.escapeString(item.name) + "%\"" + andNotZero;
 			}
 
-			List<KarmaObject> odbItems = (List<KarmaObject>)mods.odb.retrieve(KarmaObject.class, odbQuery);
+			final List<KarmaObject> odbItems = (List<KarmaObject>)mods.odb.retrieve(KarmaObject.class, odbQuery);
 
 			if (odbItems.size() == 0) {
-				irc.sendContextReply(mes, "No karma items matched '" + item + "'.");
+				irc.sendContextReply(mes, "No karma items matched " + (item.regex ? "/" : "'") + item.name + (item.regex ? "/" : "'") + ".");
 			} else {
 				Collections.sort(odbItems, new KarmaSortByAbsValue());
 
-				String rpl = "Karma items matching '" + item + "': ";
+				String rpl = "Karma items matching " + (item.regex ? "/" : "'") + item.name + (item.regex ? "/" : "'") + ": ";
 				boolean cutOff = false;
 				for (int j = 0; j < odbItems.size(); j++) {
 					KarmaObject ko = odbItems.get(j);
