@@ -254,7 +254,7 @@ public class Http
 	};
 	public void commandClose(Message mes)
 	{
-		if (!mods.security.hasPerm(new ChoobPermission("plugins.http.close"), mes.getNick()))
+		if (!mods.security.hasPerm(new ChoobPermission("plugins.http.close"), mes))
 		{
 			irc.sendContextReply(mes, "You lack authority!");
 			return;
@@ -294,9 +294,9 @@ public class Http
 		hso.hash=((Integer)((hso.string.hashCode()%128)+256)).toString();
 
 		List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = '" + mods.odb.escapeString(hso.hash) + "'");
-		Iterator li=res.iterator();
-		while (li.hasNext())									// Slight overkill.
-			mods.odb.delete(li.next());
+
+		for (HashedStringObject li : res)
+			mods.odb.delete(li);
 
 		mods.odb.save(hso);
 
