@@ -335,7 +335,7 @@ public class Karma
 	// If you change this, change reasonPattern too.
 	final private static Pattern karmaPattern = Pattern.compile(
 		  "(?x:"
-		+ "(?: ^ | (?<=\\s) )" // Anchor at start of string or a whitespace.
+		+ "(?: ^ | (?<=[\\s\\(]) )" // Anchor at start of string, whitespace or open bracket.
 		+ karma_item
 		+ plusplus_or_minusminus
 		+ "[\\)\\.,]?" // Allowed to terminate with full stop/close bracket etc.
@@ -797,7 +797,7 @@ public class Karma
 		List<String> params = mods.util.getParams(mes);
 
 		if (params.size() <= 1) {
-			irc.sendContextReply(mes, "I nead something to find!");
+			irc.sendContextReply(mes, "I need something to find!");
 		}
 
 		// Remove the command token.
