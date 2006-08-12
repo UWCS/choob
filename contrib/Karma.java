@@ -909,7 +909,7 @@ public class Karma
 		List<KarmaObject> res = retrieveKarmaObjects("WHERE 1 SORT INTEGER value");
 
 
-		out.println(res.size());
+		out.println("Item count: " + res.size() + "<br/>");
 		for(KarmaObject karmaObject: res)
 		{
 			if (karmaObject == null)
