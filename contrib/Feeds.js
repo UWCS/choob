@@ -247,13 +247,19 @@ Feeds.prototype.commandList = function(mes, mods, irc) {
 		}
 	}
 	
+	var outputList = new Array();
 	for (var o in outputs) {
-		var str = "For " + o + ": ";
-		for (var i = 0; i < outputs[o].length; i++) {
+		outputList.push(o);
+	}
+	outputList.sort();
+	
+	for (o = 0; o < outputList.length; o++) {
+		var str = "For " + outputList[o] + ": ";
+		for (var i = 0; i < outputs[outputList[o]].length; i++) {
 			if (i > 0) {
 				str += ", ";
 			}
-			str += getFeedString(outputs[o][i]);
+			str += getFeedString(outputs[outputList[o]][i]);
 		}
 		str += ".";
 		irc.sendContextReply(mes, str);
