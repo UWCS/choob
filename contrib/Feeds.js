@@ -57,7 +57,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.5.22"
+		"1.5.23"
 	];
 
 
@@ -700,6 +700,7 @@ Feed.prototype.init = function(parent, loadContext) {
 	this._outputTo = new Array();
 	if (this.outputTo) {
 		this._outputTo = this.outputTo.split(" ");
+		this._outputTo.sort();
 	}
 	
 	this._cachedContents = null;
@@ -718,6 +719,7 @@ Feed.prototype.addOutputTo = function(destination) {
 		}
 	}
 	this._outputTo.push(destination);
+	this._outputTo.sort();
 	this.outputTo = this._outputTo.join(" ");
 	this.save();
 	return true;
