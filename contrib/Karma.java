@@ -408,7 +408,7 @@ public class Karma
 				try
 				{
 					// 15 minute block for each karma item, irespective of who or direction.
-					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + name, FLOOD_RATE, 2);
+					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + name.replaceAll(" ", "_"), FLOOD_RATE, 2);
 					if (ret != 0)
 					{
 						if (ret == 1)
@@ -495,7 +495,7 @@ public class Karma
 				try
 				{
 					// 15 minute block for each karma item, irespective of who or direction.
-					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + name, FLOOD_RATE, 2);
+					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + name.replaceAll(" ", "_"), FLOOD_RATE, 2);
 					if (ret != 0)
 					{
 						if (ret == 1)
