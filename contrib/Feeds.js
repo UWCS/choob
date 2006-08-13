@@ -845,7 +845,8 @@ Feed.prototype.checkForNewItems = function() {
 	// length, don't display the items. This allows feeds with more items (e.g.
 	// news feeds) to flood a little bit more, but still prevents a feed from
 	// showing all it's items if it just added them all.
-	if ((newItems.length > 3) && (newItems.length > 0.20 * this._lastItemCount)) {
+	// Never bother with more than 10 items, whatever.
+	if ((newItems.length > 10) || ((newItems.length > 3) && (newItems.length > 0.20 * this._lastItemCount))) {
 		this._sendToAll("'" + this.displayName + "' has too many (" + newItems.length + ") new items to display.");
 	} else {
 		for (var i = newItems.length - 1; i >= 0; i--) {
