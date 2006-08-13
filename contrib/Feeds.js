@@ -57,7 +57,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.5.23"
+		"1.5.24"
 	];
 
 
@@ -840,7 +840,12 @@ Feed.prototype.checkForNewItems = function() {
 	if (firstRun && this._loadContext) {
 		this._parent._irc.sendMessage(this._loadContext, "'" + this.displayName + "' loaded with " + this._lastItemCount + " items.");
 	}
-	if (newItems.length > 3) {
+	
+	// If there are more than 3 items, and it's more than 20% of the feed's
+	// length, don't display the items. This allows feeds with more items (e.g.
+	// news feeds) to flood a little bit more, but still prevents a feed from
+	// showing all it's items if it just added them all.
+	if ((newItems.length > 3) && (newItems.length > 0.20 * this._lastItemCount)) {
 		this._sendToAll("'" + this.displayName + "' has too many (" + newItems.length + ") new items to display.");
 	} else {
 		for (var i = newItems.length - 1; i >= 0; i--) {
