@@ -1,9 +1,6 @@
 package uk.co.uwcs.choob.modules;
 
 import java.util.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import uk.co.uwcs.choob.*;
 
 /**
  * Module that currently only exists for shutup, but should be expandable for any other controls that are needed over channels.

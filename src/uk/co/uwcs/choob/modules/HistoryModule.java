@@ -6,7 +6,6 @@
 
 package uk.co.uwcs.choob.modules;
 
-import uk.co.uwcs.choob.*;
 import java.sql.*;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;

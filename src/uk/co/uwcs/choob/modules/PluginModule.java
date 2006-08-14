@@ -10,11 +10,8 @@ import uk.co.uwcs.choob.plugins.*;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
 import uk.co.uwcs.choob.*;
-import java.lang.*;
 import java.util.*;
-import java.io.*;
 import java.net.*;
-import java.lang.reflect.*;
 import java.sql.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -26,7 +23,6 @@ import java.security.AccessControlException;
  */
 public final class PluginModule
 {
-	private Map pluginMap;
 	private DbConnectionBroker broker;
 	private Modules mods;
 	private ChoobPluginManager hsPlugMan;
@@ -40,7 +36,6 @@ public final class PluginModule
 	 * @param pluginMap Map containing currently loaded plugins.
 	 */
 	PluginModule(Map pluginMap, DbConnectionBroker broker, Modules mods, IRCInterface irc, Choob bot) throws ChoobException {
-		this.pluginMap = pluginMap;
 		this.broker = broker;
 		this.mods = mods;
 		this.hsPlugMan = new HaxSunPluginManager(mods, irc);

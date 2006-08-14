@@ -6,12 +6,6 @@
 
 package uk.co.uwcs.choob.modules;
 
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.plugins.*;
-import uk.co.uwcs.choob.modules.*;
-import java.sql.*;
-import uk.co.uwcs.choob.support.*;
-import java.util.*;
 import java.util.regex.*;
 
 /**
@@ -20,8 +14,6 @@ import java.util.regex.*;
 
 public final class NickModule
 {
-	private DbConnectionBroker dbBroker;
-
 	static final Pattern jbNickPattern = Pattern.compile("^([a-zA-Z0-9_-]+?)(?:\\||\\`).*$");
 	static final Pattern irssiNickPattern = Pattern.compile("^_*([a-zA-Z0-9_-]+?)_*$");
 

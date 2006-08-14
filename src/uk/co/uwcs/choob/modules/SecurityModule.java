@@ -7,7 +7,6 @@
 package uk.co.uwcs.choob.modules;
 
 import bsh.classpath.*;
-import java.lang.*;
 import uk.co.uwcs.choob.support.*;
 import java.sql.*;
 import java.security.*;
@@ -276,14 +275,6 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 
 		return false;
-	}
-
-	/**
-	 * Get all nodes linked to the passed node.
-	 */
-	private Iterator<Integer> getAllNodes(int nodeID)
-	{
-		return getAllNodes(nodeID, false);
 	}
 
 	/**

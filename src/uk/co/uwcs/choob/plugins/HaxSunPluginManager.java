@@ -201,7 +201,6 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			if (sourceConn.getLastModified() > localConn.getLastModified() || sourceConn.getLastModified() == 0)
 			{
 				// needs updating
-				OutputStream out = null;
 				InputStream in = null;
 				boolean success = false;
 				try

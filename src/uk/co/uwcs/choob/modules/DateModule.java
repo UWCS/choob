@@ -1,13 +1,6 @@
 package uk.co.uwcs.choob.modules;
 
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.plugins.*;
-import uk.co.uwcs.choob.modules.*;
-import java.sql.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
-import java.util.regex.*;
 
 /** Some functions to help with time and date manipulation */
 public final class DateModule

@@ -6,19 +6,16 @@ import java.security.*;
 
 public final class HaxSunPluginClassLoader extends ClassLoader
 {
-	private String pluginName;
 	private String path;
 	private ProtectionDomain domain;
-	private Package pack;
 
 	public HaxSunPluginClassLoader( String pluginName, String path, ProtectionDomain domain )
 	{
 		super();
-		this.pluginName = pluginName;
 		this.path = path;
 		this.domain = domain;
 //		super.definePackage("plugins", "", "", "", "", "", "", null);
-		pack = definePackage("plugins." + pluginName, "", "", "", "", "", "", null);
+		definePackage("plugins." + pluginName, "", "", "", "", "", "", null);
 	}
 
 	public Class findClass(final String name) throws ClassNotFoundException

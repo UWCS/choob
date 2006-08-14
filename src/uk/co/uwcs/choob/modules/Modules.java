@@ -7,7 +7,6 @@
 package uk.co.uwcs.choob.modules;
 
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.plugins.*;
 import uk.co.uwcs.choob.*;
 import java.util.*;
 
@@ -74,11 +73,6 @@ public final class Modules
 	 */
 	public DateModule date;
 
-	private DbConnectionBroker dbBroker;
-	private Map pluginMap;
-	private List intervalList;
-	private Choob bot;
-
 	/**
 	 * Creates a new instance of the Modules.
 	 */
@@ -102,10 +96,5 @@ public final class Modules
 		{
 			throw new RuntimeException("Could not instantiate modules: " + e);
 		}
-
-		this.dbBroker = dbBroker;
-		this.pluginMap = pluginMap;
-		this.intervalList = intervalList;
-		this.bot = bot;
 	}
 }

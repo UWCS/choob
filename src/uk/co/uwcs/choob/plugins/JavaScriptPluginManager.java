@@ -29,7 +29,6 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 	private final Modules mods;
 	private final IRCInterface irc;
 
-	private final int CALL_UNKNOWN     = 0;
 	private final int CALL_WANT_TASK   = 1;
 	private final int CALL_WANT_RESULT = 2;
 
@@ -265,7 +264,6 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 		};
 
 		if (result == CALL_WANT_TASK) {
-			final Object[] params2 = params;
 			return new ChoobTask(pluginName) {
 				public void run() {
 					try {
@@ -414,7 +412,6 @@ final class JavaScriptPluginMap {
 
 						JavaScriptPluginMethod method = new JavaScriptPluginMethod(pluginObj, propString, func);
 
-						String filterName = lname + "." + propString.substring(6).toLowerCase();
 						NativeRegExp filterPattern = (NativeRegExp)regexpVal;
 						filters.put(filterPattern, method);
 						count++;
@@ -635,8 +632,6 @@ final class JavaScriptPluginMethod extends JavaScriptPluginExport {
 }
 
 final class JavaScriptPluginProperty extends JavaScriptPluginExport {
-	private Function function;
-
 	public JavaScriptPluginProperty(JavaScriptPlugin plugin, String name) {
 		super(plugin, name);
 	}

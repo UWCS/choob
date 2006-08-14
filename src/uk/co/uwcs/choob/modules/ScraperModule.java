@@ -2,11 +2,8 @@ package uk.co.uwcs.choob.modules;
 
 import java.util.*;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import uk.co.uwcs.choob.*;
 import java.net.URL;
 import java.io.IOException;
-import java.util.*;
 import java.util.regex.*;
 import org.jibble.pircbot.Colors;
 
