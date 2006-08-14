@@ -1476,7 +1476,7 @@ public class Quote
 		}
 	}
 
-	public void onJoin( ChannelJoin ev, Modules mods, IRCInterface irc )
+	public synchronized  void onJoin( ChannelJoin ev, Modules mods, IRCInterface irc )
 	{
 		if (ev.getLogin().equalsIgnoreCase("Choob")) // XXX
 			return;
@@ -1489,7 +1489,15 @@ public class Quote
 			else
 				quote = null;
 
-			final String greeting="Hello, ";
+			String greeting;
+			try
+			{
+				greeting = (String)mods.plugin.callAPI("Greetings", "GreetingFor", ev);
+			}
+			catch (ChoobNoSuchCallException e)
+			{
+				greeting = "Hello, ";
+			}
 
 			if (quote == null)
 				irc.sendContextMessage( ev, greeting + ev.getNick() + "!");
