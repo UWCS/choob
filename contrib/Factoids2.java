@@ -2,6 +2,7 @@ import uk.co.uwcs.choob.*;
 import uk.co.uwcs.choob.modules.*;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
+import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
@@ -641,6 +642,63 @@ public class Factoids2
 		} else {
 			Factoid rumour = list.get(0);
 			irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info);
+		}
+	}
+	
+	public void webStats(PrintWriter out, String args, String[] from)
+	{
+		try
+		{
+			out.println("HTTP/1.0 200 OK");
+			out.println("Content-Type: text/html");
+			out.println();
+			
+			if (args.length() > 0) {
+				out.println("<H1>Factoid &quot;" + args + "&quot;</H1>");
+			} else {
+				out.println("<H1>Factoid Summary</H1>");
+			}
+			
+			FactoidSearchData data = new FactoidSearchData();
+			
+			if (args.length() > 0) {
+				data.search = new FactoidSearch(args);
+				data.definitions = getDefinitions(data.search);
+			} else {
+				data.definitions = mods.odb.retrieve(Factoid.class, "");
+			}
+			
+			int factCount   = countFacts(data.definitions);
+			int rumourCount = countRumours(data.definitions);
+			
+			if (data.search != null) {
+				out.println(data.definitions.size() +
+						" factoid" + (data.definitions.size() != 1 ? "s":"") +
+						" matched, containing " + factCount + " fact" + (factCount != 1 ? "s":"") +
+						" and " + rumourCount + " rumour" + (rumourCount != 1 ? "s":"") + ".");
+			} else {
+				out.println("Factoids database contains " + factCount + " fact" + (factCount != 1 ? "s":"") + " and " + rumourCount + " rumour" + (rumourCount != 1 ? "s":"") + ".");
+			}
+			
+			if (data.search != null) {
+				out.println("	<STYLE>");
+				out.println("		dd { font-size: smaller; font-style: italic; }");
+				out.println("	</STYLE>");
+				out.println("	<DL>");
+				for (int i = 0; i < data.definitions.size(); i++) {
+					Factoid defn = data.definitions.get(i);
+					out.println("		<DT>&quot;" + defn.subject + " " + defn.info + "&quot;</DT>");
+					out.println("		<DD>" + (defn.fact ? "Fact" : "Rumour") +
+							(defn.fact ? " added by " : " collected from ") + defn.nick +
+							" and displayed " + defn.reads + " time" + (defn.reads != 1 ? "s":"") + ".</DD>");
+				}
+				out.println("	</DL>");
+			}
+		}
+		catch (Exception e)
+		{
+			out.println("ERROR!");
+			e.printStackTrace();
 		}
 	}
 }
