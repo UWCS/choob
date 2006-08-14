@@ -4,7 +4,6 @@
  */
 
 package uk.co.uwcs.choob.support.events;
-import uk.co.uwcs.choob.support.events.*;
 
 public class PluginUnLoaded extends InternalEvent implements PluginEvent
 {

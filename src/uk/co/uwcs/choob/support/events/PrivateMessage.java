@@ -4,7 +4,6 @@
  */
 
 package uk.co.uwcs.choob.support.events;
-import uk.co.uwcs.choob.support.events.*;
 
 public class PrivateMessage extends Message implements PrivateEvent, CommandEvent, FilterEvent
 {

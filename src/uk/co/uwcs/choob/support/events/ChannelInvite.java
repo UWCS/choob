@@ -4,7 +4,6 @@
  */
 
 package uk.co.uwcs.choob.support.events;
-import uk.co.uwcs.choob.support.events.*;
 
 public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, AimedEvent
 {
