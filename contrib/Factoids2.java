@@ -693,6 +693,39 @@ public class Factoids2
 							" and displayed " + defn.reads + " time" + (defn.reads != 1 ? "s":"") + ".</DD>");
 				}
 				out.println("	</DL>");
+				
+			} else {
+				Set<String>         termsUsed   = new HashSet<String>();
+				Map<String,Integer> termFacts   = new HashMap<String,Integer>();
+				Map<String,Integer> termRumours = new HashMap<String,Integer>();
+				
+				out.println("	<TABLE BORDER='1'>");
+				out.println("		<TR><TH>Term</TH><TH>Facts</TH><TH>Rumours</TH></TR>");
+				
+				for (int i = 0; i < data.definitions.size(); i++) {
+					Factoid defn = data.definitions.get(i);
+					String subj = defn.subject.toLowerCase();
+					
+					if (!termsUsed.contains(subj)) {
+						termsUsed.add(subj);
+						termFacts.put(subj, new Integer(0));
+						termRumours.put(subj, new Integer(0));
+					}
+					if (defn.fact) {
+						termFacts.put(subj, new Integer(termFacts.get(subj) + 1));
+					} else {
+						termRumours.put(subj, new Integer(termRumours.get(subj) + 1));
+					}
+				}
+				
+				ArrayList<String> sortTerms = new ArrayList(termsUsed);
+				Collections.sort(sortTerms);
+				for (int i = 0; i < sortTerms.size(); i++) {
+					String subj = sortTerms.get(i);
+					out.println("		<TR><TD><A HREF='?" + subj + "'>" + subj + "</A></TD><TD>" + termFacts.get(subj) + "</TD><TD>" + termRumours.get(subj) + "</TD></TR>");
+				}
+				
+				out.println("	</TABLE>");
 			}
 		}
 		catch (Exception e)
