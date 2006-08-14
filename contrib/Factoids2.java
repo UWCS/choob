@@ -364,6 +364,11 @@ public class Factoids2
 	
 	public void filterFactoids(Message mes) throws ChoobException
 	{
+		// Only capture channel messages.
+		if (!(mes instanceof ChannelMessage)) {
+			return;
+		}
+		
 		Matcher rMatcher = filterFactoidsPattern.matcher(mes.getMessage());
 		if (rMatcher.matches()) {
 			String subject = rMatcher.group(1).toLowerCase();
