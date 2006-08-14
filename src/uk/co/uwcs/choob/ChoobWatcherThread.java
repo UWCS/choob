@@ -17,17 +17,13 @@ import uk.co.uwcs.choob.modules.*;
 public final class ChoobWatcherThread extends Thread
 {
 	private List<Interval> intervalList;
-	private IRCInterface irc;
 	private boolean running;
-	private Map pluginMap;
 	private Modules mods;
 
 	/** Creates a new instance of ChoobWatcherThread */
 	ChoobWatcherThread( List<Interval> intervalList, IRCInterface irc, Map pluginMap, Modules mods )
 	{
 		this.intervalList = intervalList;
-		this.irc = irc;
-		this.pluginMap = pluginMap;
 		this.mods = mods;
 	}
 

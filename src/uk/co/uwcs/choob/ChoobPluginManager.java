@@ -5,16 +5,12 @@
  */
 package uk.co.uwcs.choob;
 
-import uk.co.uwcs.choob.*;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
 import uk.co.uwcs.choob.modules.*;
 import java.util.*;
-import bsh.*;
 import java.io.*;
 import java.net.*;
-import java.util.*;
-import java.lang.reflect.*;
 import java.util.regex.*;
 import java.security.*;
 
@@ -78,7 +74,7 @@ public abstract class ChoobPluginManager
 		if (commands.get(pluginName.toLowerCase()) == null)
 			commands.put(pluginName.toLowerCase(), new ArrayList<String>());
 
-		Object pluginObj = createPlugin(pluginName, fromLocation);
+		createPlugin(pluginName, fromLocation);
 
 		// Now plugin is loaded with no problems. Install it.
 

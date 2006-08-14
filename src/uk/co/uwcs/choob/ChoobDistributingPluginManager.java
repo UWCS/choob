@@ -5,18 +5,10 @@
  */
 package uk.co.uwcs.choob;
 
-import uk.co.uwcs.choob.*;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
-import uk.co.uwcs.choob.modules.*;
 import java.util.*;
-import bsh.*;
-import java.io.*;
 import java.net.*;
-import java.util.*;
-import java.lang.reflect.*;
-import java.util.regex.*;
-import java.security.*;
 
 /**
  * Root class of a plugin manager

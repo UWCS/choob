@@ -1,6 +1,5 @@
 package uk.co.uwcs.choob;
 
-import uk.co.uwcs.choob.plugins.*;
 import uk.co.uwcs.choob.modules.*;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
@@ -13,7 +12,6 @@ public class ChoobDecoderTask extends ChoobTask
 	private static Modules modules;
 	private static IRCInterface irc;
 	private static Pattern triggerPattern;
-	private static Pattern aliasPattern;
 	private static Pattern commandPattern;
 	private Event event;
 

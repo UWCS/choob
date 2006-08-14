@@ -439,7 +439,7 @@ public final class HorriblePerlScript
 			boolean first; // Used for commas in loops.
 
 			// Preamble.
-			StringBuffer classContent = new StringBuffer("/**\n *\n * @author Horrible Perl Script. Ewwww.\n */\n\npackage uk.co.uwcs.choob.support.events;\nimport uk.co.uwcs.choob.support.events.*;\n\n");
+			StringBuffer classContent = new StringBuffer("/**\n *\n * @author Horrible Perl Script. Ewwww.\n */\n\npackage uk.co.uwcs.choob.support.events;\n\n");
 
 			if (className.equals("IRCEvent"))
 			{
@@ -681,7 +681,7 @@ public final class HorriblePerlScript
 			Map<String,String> paramTypes = getParamTypes(interfaceName);
 
 			// Preamble
-			StringBuffer classContent = new StringBuffer("/**\n *\n * @author Horrible Perl Script. Ewwww.\n */\n\npackage uk.co.uwcs.choob.support.events;\nimport uk.co.uwcs.choob.support.events.*;\n\npublic interface ");
+			StringBuffer classContent = new StringBuffer("/**\n *\n * @author Horrible Perl Script. Ewwww.\n */\n\npackage uk.co.uwcs.choob.support.events;\n\npublic interface ");
 
 			// Interface name.
 			classContent.append(interfaceName);

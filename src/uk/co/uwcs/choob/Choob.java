@@ -12,13 +12,9 @@
 package uk.co.uwcs.choob;
 
 import org.jibble.pircbot.*;
-import bsh.*;
 import java.io.*;
-import java.net.*;
 import java.util.*;
-import java.lang.reflect.*;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.plugins.*;
 import uk.co.uwcs.choob.support.events.*;
 import uk.co.uwcs.choob.modules.*;
 import java.sql.*;
@@ -35,9 +31,6 @@ public final class Choob extends PircBot
 	private String trigger;
 	private List <Interval> intervalList;
 	private ChoobWatcherThread watcher;
-
-	private static final int INITTHREADS = 5;
-	private static final int MAXTHREADS = 20;
 
 	private ConfigReader conf;
 	private int exitCode;
@@ -202,8 +195,6 @@ public final class Choob extends PircBot
 	private void init() throws ChoobError
 	{
 		// Create our list of threads
-		int c;
-
 		watcher = new ChoobWatcherThread(intervalList, irc, pluginMap, modules);
 
 		watcher.start();
@@ -554,7 +545,7 @@ public final class Choob extends PircBot
 			modules.history.addLog((Message)ev);
 
 		if (ev instanceof ChannelKick)
-			modules.history.addLog((ChannelKick)ev);
+			modules.history.addLog(ev);
 
 		ChoobTask task = new ChoobDecoderTask(ev);
 
