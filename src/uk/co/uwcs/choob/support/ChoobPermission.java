@@ -14,6 +14,8 @@ import java.security.*;
  */
 public class ChoobPermission extends BasicPermission
 {
+	private static final long serialVersionUID = 8086104141611581652L;
+
 	/**
 	 *
 	 * @param name

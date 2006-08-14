@@ -1,7 +1,5 @@
 package uk.co.uwcs.choob.support;
 
-import java.lang.reflect.*;
-
 public interface ObjectDBClass {
 	/**
 	 * Gets the name of the class, in an ObjectDB compatible format.

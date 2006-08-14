@@ -10,6 +10,7 @@ import java.util.List;
 
 public final class ChoobSpecialStackPermission extends BasicPermission
 {
+	private static final long serialVersionUID = -559099153149660237L;
 	private List<String> haxList;
 	private List<String> startList;
 	public ChoobSpecialStackPermission(List<String> haxList)

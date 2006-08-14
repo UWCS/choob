@@ -7,7 +7,6 @@
 package uk.co.uwcs.choob.support;
 
 import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.modules.*;
 import uk.co.uwcs.choob.support.events.*;
 import java.security.AccessController;
@@ -64,7 +63,6 @@ public final class IRCInterface
 		if (message.length() > MAX_MESSAGE_LENGTH)
 			message = message.substring(0, MAX_MESSAGE_LENGTH - 3) + "...";
 
-		String target, thePrefix;
 		if( context instanceof PrivateEvent || mods.pc.isProtected(context.getContext()))
 			bot.sendAction(((UserEvent)context).getNick(), message);
 		else

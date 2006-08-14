@@ -7,6 +7,7 @@ package uk.co.uwcs.choob.support;
 
 public class ChoobException extends Exception
 {
+	private static final long serialVersionUID = 5447830036241630751L;
 	public ChoobException(String text)
 	{
 		super(text);

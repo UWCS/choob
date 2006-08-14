@@ -12,9 +12,6 @@ public final class DbConnectionBroker
 {
 	ComboPooledDataSource cpds;
 
-	private final static int DEFAULTMAXCHECKOUTSECONDS=60;
-	private final static int DEFAULTDEBUGLEVEL=0;
-
 	/**
 	 * Create a new DbConnectionBroker.
 	 *

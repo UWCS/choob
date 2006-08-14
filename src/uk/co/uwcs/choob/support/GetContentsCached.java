@@ -1,13 +1,8 @@
 package uk.co.uwcs.choob.support;
 
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
 import java.net.*;
 import java.io.*;
-import java.util.regex.*;
 
 public final class GetContentsCached
 {

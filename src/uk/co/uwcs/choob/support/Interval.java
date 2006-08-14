@@ -6,8 +6,6 @@
 
 package uk.co.uwcs.choob.support;
 
-import java.util.*;
-
 /**
  *
  * @author	sadiq

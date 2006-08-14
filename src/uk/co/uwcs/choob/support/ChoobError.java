@@ -7,6 +7,7 @@ package uk.co.uwcs.choob.support;
 
 public class ChoobError extends RuntimeException
 {
+	private static final long serialVersionUID = 1795297479611957869L;
 	public ChoobError(String text)
 	{
 		super(text);

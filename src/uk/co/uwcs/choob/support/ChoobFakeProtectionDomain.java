@@ -2,7 +2,6 @@ package uk.co.uwcs.choob.support;
 
 import java.security.ProtectionDomain;
 import java.security.Permission;
-import uk.co.uwcs.choob.modules.SecurityModule;
 import java.util.List;
 
 /**
@@ -13,7 +12,6 @@ import java.util.List;
  */
 public final class ChoobFakeProtectionDomain extends ProtectionDomain
 {
-	private SecurityModule mod;
 	private List<String> pluginNames;
 
 	public ChoobFakeProtectionDomain( List<String> pluginNames )

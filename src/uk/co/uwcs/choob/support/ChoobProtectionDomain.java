@@ -3,7 +3,6 @@ package uk.co.uwcs.choob.support;
 import java.security.ProtectionDomain;
 import java.security.Permission;
 import uk.co.uwcs.choob.modules.SecurityModule;
-import java.util.List;
 
 /**
  * Choob protection domain implementation.

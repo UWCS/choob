@@ -7,6 +7,7 @@ package uk.co.uwcs.choob.support;
 
 public class ChoobInvocationError extends ChoobError
 {
+	private static final long serialVersionUID = -8918372305516669806L;
 	private String call;
 	private String plugin;
 	public ChoobInvocationError(String pluginName, String call, Throwable e)

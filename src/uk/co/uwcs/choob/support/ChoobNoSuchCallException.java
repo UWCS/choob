@@ -7,6 +7,7 @@ package uk.co.uwcs.choob.support;
 
 public class ChoobNoSuchCallException extends ChoobException
 {
+	private static final long serialVersionUID = 845675151915780032L;
 	private String call;
 	private String plugin;
 	public ChoobNoSuchCallException(String pluginName)

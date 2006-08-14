@@ -1,22 +1,12 @@
 package uk.co.uwcs.choob.support;
 
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.ParseException;
 import uk.co.uwcs.choob.modules.*;
 import java.util.*;
-import bsh.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.regex.*;
 import java.sql.*;
 import java.lang.String;
 import java.lang.reflect.*;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import org.mozilla.javascript.*;
 
 public class ObjectDBTransaction // Needs to be non-final
@@ -225,7 +215,6 @@ public class ObjectDBTransaction // Needs to be non-final
 				{
 					// get the type name.
 					String info = results.getString(2).toLowerCase();
-					int flags = 0;
 					String name;
 					if (info.indexOf('(') != -1)
 					{
@@ -350,7 +339,6 @@ public class ObjectDBTransaction // Needs to be non-final
 			List<String> statements = new ArrayList<String>();
 
 			// Obtain class types
-			Map<String,Integer> clsTypes = new HashMap<String,Integer>();
 			String[] fields = obj.getFields();
 			for(String field: fields)
 			{
@@ -480,8 +468,6 @@ public class ObjectDBTransaction // Needs to be non-final
 
 				if( allObjects.first() )
 				{
-					boolean allObjsNext = false;
-					int blockOffset = 0;
 					do // Loop over all objects
 					{
 						Object newObject = storedClass.newInstance(); // This will be set immediately, because 0 is not a valid ID.
@@ -923,12 +909,10 @@ public class ObjectDBTransaction // Needs to be non-final
 		if (USEMANYTABLES)
 		{
 			checkTable(strObj);
-			PreparedStatement stat = null, field;
+			PreparedStatement stat = null;
 			try
 			{
 				int id = strObj.getId();
-
-				boolean setId = false;
 
 				String idVal = id == 0 ? "DEFAULT" : String.valueOf(id);
 
@@ -961,8 +945,6 @@ public class ObjectDBTransaction // Needs to be non-final
 					}
 					else
 					{
-						boolean foundType = true;
-
 						try
 						{
 							Type theType = strObj.getFieldType(fieldName);

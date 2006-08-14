@@ -2,7 +2,6 @@ package uk.co.uwcs.choob.support;
 
 import java.lang.reflect.*;
 import java.util.*;
-import uk.co.uwcs.choob.support.*;
 import org.mozilla.javascript.*;
 
 public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
