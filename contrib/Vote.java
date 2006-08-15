@@ -669,7 +669,10 @@ public class Vote
 					if (i == winners.size() - 2)
 						output.append("and ");
 				}
-				irc.sendMessage(vote.channel, "Result is a draw: " + output + " all got " + max + " votes!");
+				if (max == 0)
+					irc.sendMessage(vote.channel, "Result is a draw, no options got any votes! What a waste of time!");
+				else
+					irc.sendMessage(vote.channel, "Result is a draw: " + output + " all got " + max + " votes!");
 			}
 			// Should these be enabled?
 			//irc.sendMessage(vote.caller, "Vote on \"" + vote.text + "\" has ended! Results: " + results);
