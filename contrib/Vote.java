@@ -540,7 +540,7 @@ public class Vote
 		}
 
 		// Have they already voted?
-		List<Voter> voted = mods.odb.retrieve(Voter.class, "WHERE voteID = " + voteID + " AND nick = \"" + mods.odb.escapeString(mes.getNick()) + "\"");
+		List<Voter> voted = mods.odb.retrieve(Voter.class, "WHERE voteID = " + voteID + " AND nick = \"" + mods.odb.escapeString(mods.nick.getBestPrimaryNick(mes.getNick())) + "\"");
 
 		if (voted.size() == 1)
 		{
@@ -552,7 +552,7 @@ public class Vote
 		else
 		{
 			Voter voter = new Voter();
-			voter.nick = mes.getNick();
+			voter.nick = mods.nick.getBestPrimaryNick(mes.getNick());
 			voter.response = responseID;
 			voter.voteID = voteID;
 			mods.odb.save(voter);
@@ -674,9 +674,87 @@ public class Vote
 				else
 					irc.sendMessage(vote.channel, "Result is a draw: " + output + " all got " + max + " votes!");
 			}
-			// Should these be enabled?
-			//irc.sendMessage(vote.caller, "Vote on \"" + vote.text + "\" has ended! Results: " + results);
-			//irc.sendMessage(vote.caller, "The powers that be have picked " + responses[win] + " as the winner!");
+			irc.sendMessage(vote.caller, "Vote on \"" + vote.text + "\" has ended! Results: " + results);
+			if (winners.size() == 1)
+				irc.sendMessage(vote.caller, "The powers that be have picked " + winners.get(0) + " as the winner!");
+			else
+			{
+				StringBuilder output = new StringBuilder();
+				for(int i=0; i<winners.size(); i++)
+				{
+					output.append(winners.get(i));
+					if (i != winners.size() - 1)
+						output.append(", ");
+					if (i == winners.size() - 2)
+						output.append("and ");
+				}
+				if (max == 0)
+					irc.sendMessage(vote.caller, "There were no votes, what a waste of time!");
+				else
+					irc.sendMessage(vote.caller, "Result is a draw: " + output + " all got " + max + " votes!");
+			}
+		}
+	}
+	
+	/**
+	 * Method in order to inform a user of new votes that they may wish to vote on that they have yet to do so.
+	 */
+	public synchronized void onJoin(ChannelJoin ev, Modules mods, IRCInterface irc)
+	{
+		if (ev.getLogin().equalsIgnoreCase("Choob")) // XXX : Ignore bots, the quick and hacky way
+		{
+			return;
+		}
+		
+		//Get the active votes
+		List<ActiveVote> votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0");
+		
+		Map<String,List<ActiveVote>> map = new HashMap<String,List<ActiveVote>>();
+		List<String> channels = new ArrayList<String>();
+		//For each of the active votes, get it's channel and stick it in the arraylist
+		for(ActiveVote vote: votes)
+		{
+			List<ActiveVote> chanVotes = map.get(vote.channel);
+			if (chanVotes == null)
+			{
+				chanVotes = new ArrayList<ActiveVote>();
+				map.put(vote.channel, chanVotes);
+				channels.add(vote.channel);
+			}
+			chanVotes.add(vote);
+		}
+		
+		StringBuilder buf = new StringBuilder();
+		//Loop through the channels
+		for(int i=0; i<channels.size(); i++)
+		{
+			//If the channel is the one the user just joined... let them know what votes there are
+			if (channels.get(i).equals(ev.getChannel()))
+			{
+				buf.append("There are votes you have yet to vote in on " + channels.get(i) + ": ");
+				List<ActiveVote> chanVotes = map.get(channels.get(i));
+				int voteSpam = 0; //Keep track of how many votes there are that we let the user know about
+				for(int j=0; j<chanVotes.size(); j++)
+				{
+					ActiveVote vote = chanVotes.get(j);
+					int voteID = vote.id;
+					//But only if they've not voted
+					List<Voter> voted = mods.odb.retrieve(Voter.class, "WHERE voteID = " + voteID + " AND nick = \"" + mods.odb.escapeString(mods.nick.getBestPrimaryNick(ev.getNick())) + "\"");
+					if (voted.size() != 1)
+					{
+						buf.append("\"" + vote.text + "\" (ID " + vote.id + ")");
+						if (j != chanVotes.size() - 1)
+							buf.append(", ");
+						voteSpam++;
+					}
+				}
+				//Only send the message if there are votes to inform the user of
+				if (voteSpam != 0)
+				{
+					buf.append(".");
+					irc.sendMessage(ev.getNick(), buf.toString());
+				}
+			}
 		}
 	}
 }
