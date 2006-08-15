@@ -751,7 +751,7 @@ public class Vote
 				//Only send the message if there are votes to inform the user of
 				if (voteSpam != 0)
 				{
-					buf.append(".");
+					buf.append(". To stop this message appearing, please either vote or abstain on these matters using the !vote.vote command.");
 					irc.sendMessage(ev.getNick(), buf.toString());
 				}
 			}
