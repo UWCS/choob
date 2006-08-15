@@ -92,15 +92,18 @@ public class ReleaseDate {
 	private String gameplaySearch(String param) {
 		try {
 			URL url = generateURL("http://shop.gameplay.co.uk/webstore/advanced_search.asp?keyword=", param);
+			//Info from the following regepx: Title - group 1
 			Matcher gameplayNoResultMatcher = getMatcher(url, "(?s)" + "Sorry, your search for" + "(.*?)" + "returned no results.");
+			//Info from the following regepx: Title - group 3, Category - group 5, Release date + price - Group 7
 			Matcher gameplayGotResultMatcher = getMatcher(url, "(?s)" + "<h2 class=\"vlgWhite\">" + "(.*?)" + "<a href=\"productpage.asp?" + "(.*?)" +  "class=\"vlgWhite\">" + "(.*?)" + "</a></td></h2>" + "(.*?)" + "<div class=\"vsmorange10\">" + "(.*?)" + "</div>" + "(.*?)" + "<td valign=\"bottom\">" + "(.*?)" + "((RRP)|(<a href=\"add_to_basket))");
+			//Info from the following regepx: Title - group 1, releasedate - group 5, price - group 3
 			Matcher gameplaySingleResultMatcher = getMatcher(url, "(?s)" + "<h1 class=\"bbHeader\">" + "(.*?)" + "</h1>" + "(.*?)" + "<td style=\"padding: 6px;\">" + "(.*?)" + "<img src=\"http://shop" + "(.*?)" + "<td valign=\"bottom\" colspan=\"2\">" + "(.*?)" + "<b>Category:</b><a href=");
 			if (gameplayNoResultMatcher.find()) {
 				return "Sorry, no information was found for \"" + param + "\".";
 			} else if (gameplayGotResultMatcher.find()) {
-				return mods.scrape.readyForIrc(prettyReply(gameplayGotResultMatcher.group(3) + " (" + gameplayGotResultMatcher.group(5) + ")" + gameplayGotResultMatcher.group(7), url.toString(), 1));
+				return prettyReply(mods.scrape.readyForIrc(gameplayGotResultMatcher.group(3) + " (" + gameplayGotResultMatcher.group(5) + ")" + gameplayGotResultMatcher.group(7)), url.toString(), 1);
 			} else if (gameplaySingleResultMatcher.find()) {
-				return mods.scrape.readyForIrc(prettyReply(gameplaySingleResultMatcher.group(1) + gameplaySingleResultMatcher.group(5) + gameplaySingleResultMatcher.group(3), url.toString(), 1));
+				return prettyReply(mods.scrape.readyForIrc(gameplaySingleResultMatcher.group(1) + gameplaySingleResultMatcher.group(5) + gameplaySingleResultMatcher.group(3)), url.toString(), 1);
 			} else {
 				return "There was an error parsing the results. See " + url.toString();
 			}
@@ -123,19 +126,26 @@ public class ReleaseDate {
 			URL url = generateURL("http://www.play.com/Search.aspx?searchtype=allproducts&searchstring=", param);
 			Matcher playNoResultMatcher = getMatcher(url, "(?s)" + "<td class=\"textblack\" align=\"center\">There were no results for your search");
 			Matcher playNoExactResultMatcher = getMatcher(url, "(?s)" + "<p class=\"searchterms\"><span>We could not find an exact match");
+			//Info from the following regepx: Title - group 4, category - group 1, releasedate - group 5, price - group 6
 			Matcher playGotResultMatcher = getMatcher(url, "(?s)" + "View  results in " + "(.*?)" + " »" + "(.*?)" + "<div class=\"info\"><h5><a href=\"" + "(.*?)" + "Product.html\">" + "(.*?)" + "</a></h5><p class=\"stock\"><span></span>" + "(.*?)" + "</p><h6><span>our price:  </span>" + "(.*?)" + " ((Delivered</h6><p class=\"saving\">RRP)|(Delivered</h6><div class=\"buy\">))"); 
+			//Info from the following regepx: title - group 2, releasedate - group 3, price - group 4
 			Matcher playAlternativeResultMatcher = getMatcher(url, "(?s)" + "<div class=\"info\"><h5><a href=\"" + "(.*?)" + "Product.html\">" + "(.*?)" + "</a></h5><p class=\"stock\"><span></span>" + "(.*?)" + "</p><h6><span>our price:  </span>" + "(.*?)" + " Delivered</h6><p class=\"saving\">RRP"); 
+			//Info from the following regexp: title - group 6, category - group 1, releasedate - group 7, price - group 8
+			Matcher playResultMatcherThree = getMatcher(url, "(?s)<span>Searching for (.*?) titles containing(.*?)</span></p><p class=\"results\"><span>Results </span><STRONG>(.*?)</STRONG></p></div><div class=\"slice\"><table cellspacing=\"0\"><tr><td><div class=\"image\">(.*?)</div></td><td class=\"wide\"><div class=\"info\"><h5><a href=\"(.*?)\">(.*?)</a></h5><p class=\"stock\"><span></span>(.*?)</p><h6><span>our price:  </span>(.*?) Delivered</h6><div class=\"buy\">");
+			//Info from the following regexp: title - group 1, releasedate - group 4, price - group 3
 			Matcher playProductPageMatcher = getMatcher(url, "(?s)" + "<div class=\"texthead\"><div><div><h2>" + "(.*?)" + "</h2></div></div></div><div class=\"box\">" + "(.*?)" + "<div class=\"info\"><h6><span><span>our price:</span> </span>" + "(.*?)" + " Delivered</h6><p class=\"stock\"><span>availability:  </span>" + "(.*?)" + "</p><p class=\"note\">");
 			if (playNoResultMatcher.find()) {
 				return "Sorry, no information was found for \"" + param + "\".";
 			} else if (playNoExactResultMatcher.find()) {
 				return "Sorry, no information was found for \"" + param + "\".";
 			} else if (playGotResultMatcher.find()) {
-				return mods.scrape.readyForIrc(prettyReply("<b>" + playGotResultMatcher.group(4) + "</b> (" + playGotResultMatcher.group(1) + ") " + playGotResultMatcher.group(5).replaceAll("<br/>", "<b> ") + "</b> Play.com price:" + playGotResultMatcher.group(6), url.toString(), 1));
+				return prettyReply(mods.scrape.readyForIrc("<b>" + playGotResultMatcher.group(4) + "</b> (" + playGotResultMatcher.group(1) + ") " + playGotResultMatcher.group(5).replaceAll("<br/>", "<b> ") + "</b> Play.com price:" + playGotResultMatcher.group(6)), url.toString(), 1);
 			} else if (playAlternativeResultMatcher.find()) {
-				return mods.scrape.readyForIrc(prettyReply("<b>" + playAlternativeResultMatcher.group(2) + "</b> " + playAlternativeResultMatcher.group(3).replaceAll("<br/>", "<b> ") + "</b> Play.com price:" + playAlternativeResultMatcher.group(4), url.toString(), 1));
+				return prettyReply(mods.scrape.readyForIrc("<b>" + playAlternativeResultMatcher.group(2) + "</b> " + playAlternativeResultMatcher.group(3).replaceAll("<br/>", "<b> ") + "</b> Play.com price:" + playAlternativeResultMatcher.group(4)), url.toString(), 1);
+			} else if (playResultMatcherThree.find()) {
+				return prettyReply(mods.scrape.readyForIrc("<b>" + playResultMatcherThree.group(6) + "</b> (" + playResultMatcherThree.group(1) + ") " + playResultMatcherThree.group(7).replaceAll("<br/>", "<b> ") + "</b> Play.com price:" + playResultMatcherThree.group(8)), url.toString(), 1);
 			} else if (playProductPageMatcher.find()) {
-				return mods.scrape.readyForIrc(prettyReply("<b>" + playProductPageMatcher.group(1) + "</b> " + playProductPageMatcher.group(4).replaceAll("<br/>", "<b> ") + "</b> Play.com price: " + playProductPageMatcher.group(3), url.toString(), 1));
+				return prettyReply(mods.scrape.readyForIrc("<b>" + playProductPageMatcher.group(1) + "</b> " + playProductPageMatcher.group(4).replaceAll("<br/>", "<b> ") + "</b> Play.com price: " + playProductPageMatcher.group(3)), url.toString(), 1);
 			} else {
 				return "There was an error parsing the results. See " + url.toString();
 			}
