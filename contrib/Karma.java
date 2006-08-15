@@ -6,6 +6,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.regex.*;
 import java.io.*;
+import org.jibble.pircbot.Colors;
 
 
 public class KarmaObject
@@ -17,6 +18,11 @@ public class KarmaObject
 	public int value;
 	boolean increase;
 	String instName;
+	
+	public boolean equals(KarmaObject obj) 
+	{
+		return this.string.equalsIgnoreCase(obj.string);
+	}
 }
 
 public class KarmaReasonObject
@@ -46,6 +52,23 @@ class KarmaSortByAbsValue implements Comparator<KarmaObject>
 			return -1;
 		}
 		if (o1.down < o2.down) {
+			return 1;
+		}
+		return 0;
+	}
+
+	public boolean equals(Object obj) {
+		return false;
+	}
+}
+
+class KarmaSortByValue implements Comparator<KarmaObject>
+{
+	public int compare(KarmaObject o1, KarmaObject o2) {
+		if (o1.value > o2.value) {
+			return -1;
+		}
+		if (o1.value < o2.value) {
 			return 1;
 		}
 		return 0;
@@ -657,11 +680,79 @@ public class Karma
 		return mods.odb.retrieve(KarmaObject.class, clause);
 	}
 
+	public String[] helpCommandFight = {
+		"Pit the karma of two objects against each other to find the leetest (or least lame).",
+		"<Object 1> <Object 2>",
+	};
+	
+	public void commandFight (Message mes, Modules mods, IRCInterface irc)
+	{
+		List<String> params = new ArrayList<String>();
+		
+		Matcher ma=karmaItemPattern.matcher(mods.util.getParamString(mes));
+		while (ma.find())
+			params.add(getName(ma));
+		
+		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
+		List<String> names = new ArrayList<String>();
+		
+		//Nab the params
+		if (params.size() == 2) 
+		{
+			for (int i=0; i<2; i++)
+			{
+				String name = params.get(i);
+				if (name!=null)
+				{
+					KarmaObject karmaObj = retrieveKarmaObject(name);
+					karmaObj.instName = name;
+					karmaObjs.add(karmaObj);
+				}
+			}
+		}
+		if (karmaObjs.size() == 2) 
+		{
+			//Check that they aint the same thing!
+			if (karmaObjs.get(0).equals(karmaObjs.get(1)))
+			{
+				irc.sendContextReply(mes, "Fighters must be unique!");
+			} 
+			else
+			{
+				int result = new KarmaSortByValue().compare(karmaObjs.get(0),karmaObjs.get(1));
+				if (result == -1)
+				{
+					//Winner is Object 0
+					irc.sendContextReply(mes, Colors.BOLD + karmaObjs.get(0).instName + Colors.NORMAL + " was victorious over " + Colors.BOLD + karmaObjs.get(1).instName + Colors.NORMAL + "! (" + karmaObjs.get(0).value + " vs " + karmaObjs.get(1).value + ")");
+				}
+				else if (result == 1)
+				{
+					//Winner is Object 1
+					irc.sendContextReply(mes, Colors.BOLD + karmaObjs.get(1).instName + Colors.NORMAL + " was victorious over " + Colors.BOLD + karmaObjs.get(0).instName + Colors.NORMAL + "! (" + karmaObjs.get(1).value + " vs " + karmaObjs.get(0).value + ")");
+				}
+				else
+				{
+					//Should only be a draw
+					irc.sendContextReply(mes, "The battle between " + Colors.BOLD + karmaObjs.get(0).instName  + Colors.NORMAL + " and "  + Colors.BOLD + karmaObjs.get(1).instName  + Colors.NORMAL + " was a draw! (" + karmaObjs.get(0).value + " vs " + karmaObjs.get(1).value + ")");
+				}
+				
+			}
+			
+		}
+		else
+		{
+			//Too many, or perhaps too few, things
+			irc.sendContextReply(mes, "You must supply exactly two objects to fight!");
+		}
+			
+	}
+	
 	public String[] helpCommandGet = {
 		"Find out the karma of some object or other.",
 		"<Object> [<Object> ...]",
 		"<Object> is the name of something to get the karma of"
 	};
+	
 	public void commandGet (Message mes, Modules mods, IRCInterface irc)
 	{
 		List<String> params = new ArrayList<String>();
