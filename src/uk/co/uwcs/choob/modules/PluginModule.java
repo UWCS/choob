@@ -155,6 +155,39 @@ public final class PluginModule
 	}
 
 	/**
+	 * Call an API subroutine of a specific name on all plugins that support it.
+	 * @param APIString The name of the routine to call.
+	 * @param params Parameters to pass to the routine.
+	 */
+	
+	public List<CallAPIResult> broadcastCallAPI(String APIString, Object... params) throws ChoobNoSuchCallException
+	{
+		List<CallAPIResult> rvList = new ArrayList<CallAPIResult>();
+		
+		String[] plugins = dPlugMan.plugins();
+		for (int i = 0; i < plugins.length; i++)
+		{
+			CallAPIResult rv;
+			try
+			{
+				rv = new CallAPIResult(plugins[i], callAPI(plugins[i], APIString, params), null);
+			}
+			catch (ChoobNoSuchCallException e)
+			{
+				// Plugin doesn't support this API call, so ignore error.
+				continue;
+			}
+			catch (Exception e)
+			{
+				rv = new CallAPIResult(plugins[i], null, e);
+			}
+			rvList.add(rv);
+		}
+		
+		return rvList;
+	}
+
+	/**
 	 * Call the generic subroutine of type type and name name on plugin pluginName and return the result.
 	 * @param pluginName The name of the plugin to call.
 	 * @param type The type of the routine to call.

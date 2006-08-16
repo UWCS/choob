@@ -208,6 +208,21 @@ JSExample.prototype.commandTimeline.help = [
 	];
 
 
+// API success
+JSExample.prototype.apiSuccess = function() {
+	return "JSExample API Success call";
+}
+
+// API failure
+JSExample.prototype.apiFailure = function() {
+	throw new Error("JSExample API Failure call");
+}
+
+// API status (test to match NickServ)
+JSExample.prototype.apiStatus = function() {
+	return "JSExample API Status call";
+}
+
 // Interval: init
 JSExample.prototype._initInterval = function(param, mods, irc) {
 	irc.sendMessage(this._debugChannel, "Interval! Woo!");
