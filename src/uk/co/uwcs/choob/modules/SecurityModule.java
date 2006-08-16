@@ -585,6 +585,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	public boolean hasNickPerm(Permission permission, UserEvent userEvent)
 	{
+		// XXX: Check for synthetic userEvent here.
+		
 		if (!hasNS(userEvent))
 			return false;
 
@@ -612,6 +614,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	public boolean hasPerm(Permission permission, UserEvent userEvent)
 	{
+		// XXX: Check for synthetic userEvent here.
+		
 		int userNode = getNodeIDFromUserName(userEvent);
 
 		System.out.println("Checking permission on user " + userEvent.getNick() + "(" + userNode + ")" + ": " + permission);
@@ -691,6 +695,18 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	{
 		if (plugin == null)
 			return true; // XXX should this be true?
+
+		// All plugins should be allowed to read the following properties:
+		//   line.separator
+		if (permission instanceof PropertyPermission)
+		{
+			PropertyPermission propPerm = (PropertyPermission)permission;
+			if (propPerm.getActions().equals("read"))
+			{
+				if (propPerm.getName().equals("line.separator"))
+					return true;
+			}
+		}
 
 		// Should prevent circular checks...
 		boolean rv = (AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
