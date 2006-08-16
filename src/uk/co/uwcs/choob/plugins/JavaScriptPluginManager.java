@@ -218,11 +218,12 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 	private Object callMethod(final JavaScriptPluginExport export, final Object[] params, final int result) {
 		final JavaScriptPlugin plugin = export.getPlugin();
 		final String pluginName = plugin.getName();
+		final String fullName = pluginName + "." + export.getName();
 
 		ProtectionDomain accessDomain = mods.security.getProtectionDomain(pluginName);
 		final AccessControlContext accessContext = new AccessControlContext(new ProtectionDomain[] { accessDomain });
 		final PrivilegedExceptionAction<Object> action = new PrivilegedExceptionAction<Object>() {
-			public Object run() {
+			public Object run() throws Exception {
 				Context cx = Context.enter();
 				try {
 					Scriptable scope = plugin.getScope();
@@ -241,25 +242,26 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 					throw new ChoobError("Unknown export type for " + export.getName() + ".");
 
 				} catch (RhinoException e) {
-					if (params[0] instanceof Message) {
+					if ((params.length > 0) && (params[0] instanceof Message)) {
 						irc.sendContextReply((Message)params[0], e.details() + " Line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
 					} else {
 						System.err.println("Exception calling export " + export.getName() + ":");
-						e.printStackTrace();
 					}
+					e.printStackTrace();
+					throw e;
 
 				} catch (Exception e) {
-					if (params[0] instanceof Message) {
+					if ((params.length > 0) && (params[0] instanceof Message)) {
 						mods.plugin.exceptionReply((Message)params[0], e, pluginName);
 					} else {
 						System.err.println("Exception calling export " + export.getName() + ":");
-						e.printStackTrace();
 					}
+					e.printStackTrace();
+					throw e;
 
 				} finally {
 					cx.exit();
 				}
-				return null;
 			}
 		};
 
@@ -268,8 +270,8 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 				public void run() {
 					try {
 						AccessController.doPrivileged(action, accessContext);
-					} catch (PrivilegedActionException e) {
-						// XXX
+					} catch (Exception e) {
+						throw new ChoobInvocationError(pluginName, fullName, e);
 					}
 				}
 			};
@@ -277,8 +279,8 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 		if (result == CALL_WANT_RESULT) {
 			try {
 				return AccessController.doPrivileged(action, accessContext);
-			} catch (PrivilegedActionException e) {
-				// XXX
+			} catch (Exception e) {
+				throw new ChoobInvocationError(pluginName, fullName, e);
 			}
 		}
 		return null;
