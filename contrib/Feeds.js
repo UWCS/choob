@@ -57,7 +57,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.5.24"
+		"1.5.25"
 	];
 
 
@@ -1008,7 +1008,7 @@ Feed.prototype.getNewItems = function() {
 		this._lastSeen[unique] = true;
 		this._lastSeenPub[date] = true;
 		newItems.push(item);
-		dumpln("New item: [" + unique + "]:[" + date + "]:" + (item.updated ? "updated" : "new"));
+		dumpln("New item : [" + date + "]:" + (item.updated ? "updated" : "new"));
 	}
 	
 	for (var d in this._lastSeen) {
