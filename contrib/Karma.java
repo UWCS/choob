@@ -747,6 +747,63 @@ public class Karma
 			
 	}
 	
+	public String[] helpCommandReal = {
+		"Find out the \"real\" karma of some object or another.",
+		"<Object> [<Object> ...]",
+		"<Object> is the name of something to get the karma of."
+	};
+	public void commandReal (Message mes, Modules mods, IRCInterface irc)
+	{
+		List<String> params = new ArrayList<String>();
+		Matcher ma=karmaItemPattern.matcher(mods.util.getParamString(mes));
+		
+		while (ma.find())
+			params.add(getName(ma));
+		
+		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
+		List<String> names = new ArrayList<String>();
+		
+		if (params.size() > 0)
+			for (int i=0;i<params.size();i++)
+			{
+				String name = params.get(i);
+				if (name != null) {
+					KarmaObject karmaObj = retrieveKarmaObject(name);
+					karmaObj.instName = name;
+					karmaObjs.add(karmaObj);
+				}
+			}
+		
+		if (karmaObjs.size() == 1)
+		{
+			int realkarma = karmaObjs.get(0).up - karmaObjs.get(0).down;
+			irc.sendContextReply(mes, karmaObjs.get(0).instName + " has a \"real\" karma of " + realkarma + " (" + karmaObjs.get(0).up + " up, " + karmaObjs.get(0).down + " down).");
+			return;
+		}
+		
+		StringBuffer output = new StringBuffer("\"Real\" Karmas: ");
+		
+		if (karmaObjs.size()!=0)
+		{
+			for (int i=0;i<karmaObjs.size();i++)
+			{
+				int realkarma = karmaObjs.get(i).up - karmaObjs.get(i).down;
+				output.append(karmaObjs.get(i).instName + ": " + realkarma);
+				if (i != karmaObjs.size() -1)
+				{
+					if (i == karmaObjs.size() -2)
+						output.append(" and ");
+					else
+						output.append(", ");
+				}
+			}
+			output.append(".");
+			irc.sendContextReply(mes, output.toString());
+		} else {
+			irc.sendContextReply(mes, "Check the \"real\" karma of what?");
+		}
+	}
+	
 	public String[] helpCommandGet = {
 		"Find out the karma of some object or other.",
 		"<Object> [<Object> ...]",
