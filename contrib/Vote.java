@@ -254,8 +254,12 @@ public class Vote {
 		}
 		
 		if (channels.size() == 0) {
-			irc.sendContextReply(mes, "Sorry, there are no active votes! Note that some votes are only available for nickserv authed users.");
-		} else if (mes instanceof PrivateEvent) {
+			if (mods.security.hasNS(mes)) {
+				irc.sendContextReply(mes, "Sorry, there are no active votes!");
+			} else {
+				irc.sendContextReply(mes, "Sorry, there are no active votes! Note that some votes are only available for nickserv authed users.");
+			}
+		} else if ((votes.size() == 1) || (mes instanceof PrivateEvent)) {
 			//Extended version for private messages
 			StringBuilder buf = new StringBuilder();
 			buf.append("Active votes: ");
@@ -646,7 +650,6 @@ public class Vote {
 			vote.results = newResults.toString();
 			
 			// Delete all the buggers!
-			/*
 			mods.odb.runTransaction( new ObjectDBTransaction() {
 				public void run() {
 					update(vote);
@@ -654,7 +657,6 @@ public class Vote {
 						delete(voter);
 				}
 			});
-			*/
 			
 			//Check the option for verbose (i.e. spammy) output.
 			if (checkOption("","VoteVerbose",true)) {
