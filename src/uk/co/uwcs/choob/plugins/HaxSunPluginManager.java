@@ -188,17 +188,15 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			String javaFileName = classPath + pluginName + ".java";
 			File javaFile = new File(javaFileName);
 			URLConnection sourceConn;
-			URLConnection localConn;
 			try
 			{
 				sourceConn = source.openConnection();
-				localConn = javaFile.toURI().toURL().openConnection();
 			}
 			catch (IOException e)
 			{
 				throw new ChoobException("Problem opening connection: " + e);
 			}
-			if (sourceConn.getLastModified() > localConn.getLastModified() || sourceConn.getLastModified() == 0)
+			if (sourceConn.getLastModified() > javaFile.lastModified() || sourceConn.getLastModified() == 0)
 			{
 				// needs updating
 				InputStream in = null;
@@ -225,9 +223,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 					} catch (IOException e) {}
 					
 					if (!success)
-					{
 						javaFile.delete();
-					}
 				}
 			}
 		}
