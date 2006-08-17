@@ -219,9 +219,13 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				}
 				finally
 				{
+					try {
+						if (in != null)
+							in.close();
+					} catch (IOException e) {}
+					
 					if (!success)
 					{
-						try { if (in != null) in.close(); } catch (IOException e) {}
 						javaFile.delete();
 					}
 				}
