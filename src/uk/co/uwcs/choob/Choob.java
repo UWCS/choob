@@ -238,16 +238,9 @@ public final class Choob extends PircBot
 		// TODO - make this a proper class
 		java.security.Policy.setPolicy( new java.security.Policy()
 		{
-			boolean f = false;
 			// I think this is all that's ever really needed...
 			public synchronized boolean implies(java.security.ProtectionDomain d, java.security.Permission p)
 			{
-				if (!f)
-				{
-					f = true;
-//					System.err.println("Checking pd " + d + " and perm " + p);
-					f = false;
-				}
 				if ( !(d instanceof ChoobProtectionDomain) )
 					return true;
 				else
@@ -255,12 +248,6 @@ public final class Choob extends PircBot
 			}
 			public synchronized java.security.PermissionCollection getPermissions(java.security.ProtectionDomain d)
 			{
-				if (!f)
-				{
-					f = true;
-//					System.err.println("Checking pd " + d);
-					f = false;
-				}
 				java.security.PermissionCollection p = new java.security.Permissions();
 				if ( !(d instanceof ChoobProtectionDomain) )
 					p.add( new java.security.AllPermission() );
@@ -268,12 +255,6 @@ public final class Choob extends PircBot
 			}
 			public synchronized java.security.PermissionCollection getPermissions(java.security.CodeSource s)
 			{
-				if (!f)
-				{
-					f = true;
-//					System.err.println("Checking cs " + s);
-					f = false;
-				}
 				java.security.PermissionCollection p = new java.security.Permissions();
 				//if ( !(d instanceof ChoobCodeSource) )
 				//	p.add( new java.security.AllPermission() );
