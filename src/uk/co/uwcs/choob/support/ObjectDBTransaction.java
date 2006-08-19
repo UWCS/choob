@@ -12,7 +12,7 @@ import org.mozilla.javascript.*;
 public class ObjectDBTransaction // Needs to be non-final
 {
 	private static final int MAXOR = 50; // Max OR statements in a lumped together objectDB query.
-	private static final boolean USEMANYTABLES = false; // true for one table per object type; false otherwise.
+	private static final boolean USEMANYTABLES = true; // true for one table per object type; false otherwise.
 
 	private Connection dbConn;
 	private Modules mods;
