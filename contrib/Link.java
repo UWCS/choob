@@ -80,6 +80,7 @@ public class Link
 				output.append(links.get(0).poster);
 				output.append(")");
 				irc.sendContextReply(mes, output.toString());
+				return;
 			} else {
 				OldLink linkObj = new OldLink();
 				linkObj.URL = link;
