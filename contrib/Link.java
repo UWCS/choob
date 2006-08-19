@@ -56,6 +56,9 @@ public class Link
 
 	public synchronized void filterLink( Message mes, Modules mods, IRCInterface irc )
 	{
+		
+		if (!(mes instanceof ChannelMessage)) return;
+		
 		Matcher linkMatch = linkPattern.matcher(mes.getMessage());
 		
 		// Iterate over links in line.
