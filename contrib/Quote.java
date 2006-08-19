@@ -57,7 +57,7 @@ public class Quote
 
 	private Modules mods;
 	private IRCInterface irc;
-	final private Pattern ignorePattern;
+	private Pattern ignorePattern;
 
 	public Quote( Modules mods, IRCInterface irc )
 	{
@@ -79,7 +79,6 @@ public class Quote
 	
 	void updatePatterns()
 	{
-		System.our.println("Quote:updatePatterns");
 		this.ignorePattern = Pattern.compile(
 				"^(?:" + irc.getTriggerRegex() + ")" +
 				"(?:" + IGNORE + ")", Pattern.CASE_INSENSITIVE);
@@ -1526,7 +1525,7 @@ public class Quote
 	
 	public void onNickChange(NickChange ev, Modules mods, IRCInterface irc)
 	{
-		if (ev.getNewNick.equals(irc.getNickname()))
+		if (ev.getNewNick().equals(irc.getNickname()))
 			updatePatterns();
 	}
 }
