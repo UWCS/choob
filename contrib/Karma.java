@@ -431,7 +431,7 @@ public class Karma
 				try
 				{
 					// 15 minute block for each karma item, irespective of who or direction.
-					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + name.replaceAll(" ", "_"), FLOOD_RATE, 2);
+					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + normalise(name), FLOOD_RATE, 2);
 					if (ret != 0)
 					{
 						if (ret == 1)
@@ -518,7 +518,7 @@ public class Karma
 				try
 				{
 					// 15 minute block for each karma item, irespective of who or direction.
-					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + name.replaceAll(" ", "_"), FLOOD_RATE, 2);
+					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + normalise(name), FLOOD_RATE, 2);
 					if (ret != 0)
 					{
 						if (ret == 1)
@@ -662,7 +662,7 @@ public class Karma
 
 	private KarmaObject retrieveKarmaObject(String name)
 	{
-		name = name.replaceAll(" ", "_");
+		name = normalise(name);
 		List<KarmaObject> results = mods.odb.retrieve(KarmaObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\"");
 		if (results.size() == 0)
 		{
@@ -974,8 +974,8 @@ public class Karma
 			System.out.println("    (3)  : '" + ma.group(3) + "'");
 			params.add(
 				name == null ?
-				new KarmaSearchItem(ma.group(3).replaceAll(" ", "_"), true) :
-				new KarmaSearchItem(name.replaceAll(" ", "_"), false)
+				new KarmaSearchItem(normalise(ma.group(3)), true) :
+				new KarmaSearchItem(normalise(name), false)
 			);
 		}
 
@@ -1071,6 +1071,10 @@ public class Karma
 		}
 	}
 
+	private String normalise(String name)
+	{
+		return name.replaceAll(" ", "_");
+	}
 
 	private String getName (Matcher ma)
 	{
