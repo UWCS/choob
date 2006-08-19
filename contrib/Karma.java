@@ -969,9 +969,6 @@ public class Karma
 		while (ma.find())
 		{
 			final String name = getName(ma);
-			System.out.println("commandSearch:");
-			System.out.println("    name : '" + name + "'");
-			System.out.println("    (3)  : '" + ma.group(3) + "'");
 			params.add(
 				name == null ?
 				new KarmaSearchItem(normalise(ma.group(3)), true) :
