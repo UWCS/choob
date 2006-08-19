@@ -42,12 +42,6 @@ public class Link
 	{
 		this.irc = irc;
 		this.mods = mods;
-		
-		List<OldLink> links = mods.odb.retrieve(OldLink.class, "");
-		//Purge!
-		for(OldLink link : links) {
-			mods.odb.delete(link);
-		}
 	}
 
 	public static String filterLinkRegex = "http://\\S*";
