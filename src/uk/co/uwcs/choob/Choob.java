@@ -410,6 +410,7 @@ public final class Choob extends PircBot
 	}
 
 	protected void onNickChange(String nick, String login, String hostname, String newNick) {
+		this.setName(newNick);
 		spinThread(new NickChange("onNickChange", System.currentTimeMillis(), ((int)(Math.random()*127)), nick, login, hostname, newNick));
 	}
 

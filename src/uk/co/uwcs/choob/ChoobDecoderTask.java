@@ -22,10 +22,15 @@ public class ChoobDecoderTask extends ChoobTask
 		ChoobDecoderTask.dbBroker = dbBroker;
 		ChoobDecoderTask.modules = modules;
 		ChoobDecoderTask.irc = irc;
-		triggerPattern = Pattern.compile("^(?:" + irc.getTriggerRegex() + ")", Pattern.CASE_INSENSITIVE);
 		commandPattern = Pattern.compile("^([a-zA-Z0-9_]+)\\.([a-zA-Z0-9_]+)$");
+		updatePatterns();
 	}
 
+	static void updatePatterns()
+	{
+		triggerPattern = Pattern.compile("^(?:" + irc.getTriggerRegex() + ")", Pattern.CASE_INSENSITIVE);
+	}
+	
 	/** Creates a new instance of ChoobThread */
 	ChoobDecoderTask(Event event)
 	{
@@ -39,15 +44,14 @@ public class ChoobDecoderTask extends ChoobTask
 
 		if (event instanceof NickChange)
 		{
-			// FIXME: There is no way I can see to make this work here.
-			// It needs to pick up when the BOT changes name, even through
-			// external forces, and poke UtilModule about it.
-
-			//NickChange nc = (NickChange)event;
-			//if (nc.getNick().equals()) {
-			//	// Make sure the trigger checking code is up-to-date with the current nickname.
-			//	modules.util.updateTrigger();
-			//}
+			NickChange nc = (NickChange)event;
+			// Note: the IRC library has already handled this message, so we
+			// match the *new* nickname with the bot's.
+			if (nc.getNewNick().equals(irc.getNickname())) {
+				updatePatterns();
+				// Make sure the trigger checking code is up-to-date with the current nickname.
+				modules.util.updateTrigger();
+			}
 		}
 
 		// Process event calls first

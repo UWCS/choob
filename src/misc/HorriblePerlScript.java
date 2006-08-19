@@ -379,6 +379,12 @@ public final class HorriblePerlScript
 				eventHandler.append("\t\t\tspinThread(new Channel" + className + "(" + constructorParamsPublic + "));\n");
 				eventHandler.append("\t\telse\n");
 				eventHandler.append("\t\t\tspinThread(new Private" + className + "(" + constructorParamsPrivate + "));\n\t}\n\n");
+				
+			} else if (className.equals("NickChange")) {
+				String constructorParams = getConstructorOrder(className, paramValueMap);
+				
+				eventHandler.append("\t\tthis.setName(newNick);\n");
+				eventHandler.append("\t\tspinThread(new " + className + "(" + constructorParams + "));\n\t}\n\n");
 			} else {
 				String constructorParams = getConstructorOrder(className, paramValueMap);
 				//my @constOrder = map { my @a=(); if ($params{$_}) { @a = @{$params{$_}} } (@a) } @inherit;
