@@ -969,6 +969,9 @@ public class Karma
 		while (ma.find())
 		{
 			final String name = getName(ma);
+			System.out.println("commandSearch:");
+			System.out.println("    name : '" + name + "'");
+			System.out.println("    (3)  : '" + ma.group(3) + "'");
 			params.add(
 				name == null ?
 				new KarmaSearchItem(ma.group(3).replaceAll(" ", "_"), true) :
@@ -991,11 +994,12 @@ public class Karma
 
 			if (item.regex) {
 				// Regexp
-				odbQuery = "WHERE string RLIKE \"" + mods.odb.escapeString(item.name) + "\"" + andNotZero;
+				odbQuery = "WHERE string RLIKE \"" + mods.odb.escapeForRLike(item.name) + "\"" + andNotZero;
 			} else {
 				// Substring
-				odbQuery = "WHERE string LIKE \"%" + mods.odb.escapeString(item.name) + "%\"" + andNotZero;
+				odbQuery = "WHERE string LIKE \"%" + mods.odb.escapeForLike(item.name) + "%\"" + andNotZero;
 			}
+			System.out.println("    Query: " + odbQuery);
 
 			final List<KarmaObject> odbItems = (List<KarmaObject>)mods.odb.retrieve(KarmaObject.class, odbQuery);
 

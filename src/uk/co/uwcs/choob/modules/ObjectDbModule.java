@@ -32,6 +32,16 @@ public final class ObjectDbModule
 		return text.replaceAll("(\\W)", "\\\\$1");
 	}
 
+	public String escapeForLike(String text)
+	{
+		return escapeString(text).replaceAll("([_%])", "\\\\$1");
+	}
+
+	public String escapeForRLike(String text)
+	{
+		return escapeString(text);
+	}
+
 	/**
 	 * Retrieve a list of classes matching the specified classtype and clause.
 	 * @param storedClass The .class of the object you want to retrieve.

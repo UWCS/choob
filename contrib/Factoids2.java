@@ -253,10 +253,10 @@ public class Factoids2
 		if (search.length() > 0) {
 			if (search.startsWith("/") && search.endsWith("/")) {
 				// Regexp
-				odbQuery += " AND info RLIKE \"" + mods.odb.escapeString(search.substring(1, search.length() - 1)) + "\"";
+				odbQuery += " AND info RLIKE \"" + mods.odb.escapeForRLike(search.substring(1, search.length() - 1)) + "\"";
 			} else {
 				// Substring
-				odbQuery += " AND info LIKE \"%" + mods.odb.escapeString(search) + "%\"";
+				odbQuery += " AND info LIKE \"%" + mods.odb.escapeForLike(search) + "%\"";
 			}
 		}
 		return mods.odb.retrieve(Factoid.class, odbQuery);

@@ -1304,7 +1304,7 @@ public class Quote
 					throw new ChoobError("Regular expression has no end!");
 				int end = ma.end();
 				String regex = text.substring(pos + 1, end - 1);
-				clauses.add("join"+joins+".message RLIKE \"" + mods.odb.escapeString(regex) + "\"");
+				clauses.add("join"+joins+".message RLIKE \"" + mods.odb.escapeForRLike(regex) + "\"");
 				if (user != null)
 					clauses.add("join"+joins+".nick = \"" + mods.odb.escapeString(user) + "\"");
 				clauses.add("join"+joins+".quoteID = id");
