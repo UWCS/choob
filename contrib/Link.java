@@ -54,10 +54,10 @@ public class Link
 	
 	final private static Pattern linkPattern = Pattern.compile(filterLinkRegex);
 
-	public synchronized void filterLink( Message mes, Modules mods, IRCInterface irc )
+	public void filterLink( Message mes, Modules mods, IRCInterface irc )
 	{
 		
-		if (!(mes instanceof ChannelMessage)) return;
+		if (!((mes instanceof ChannelMessage) || (mes instanceof ChannelAction))) return;
 		
 		Matcher linkMatch = linkPattern.matcher(mes.getMessage());
 		
