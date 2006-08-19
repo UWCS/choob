@@ -35,7 +35,7 @@ public class TimedEvents
 		};
 	}
 
-	private TimedEvent lastDelivery = null;
+	private Map<String,TimedEvent> lastDelivery;
 	private Modules mods;
 	private IRCInterface irc;
 
@@ -43,6 +43,8 @@ public class TimedEvents
 	{
 		this.mods = mods;
 		this.irc = irc;
+
+		lastDelivery = new HashMap<String,TimedEvent>();
 
 		// If we were reloaded, don't want old intervals hanging around.
 		mods.interval.reset();
@@ -374,7 +376,7 @@ public class TimedEvents
 			Map<String,String> mesFlags = ((IRCEvent)newMes).getSynthFlags();
 			decodeSynthFlags(mesFlags, timedEvent.synthFlags);
 
-			lastDelivery = timedEvent;
+			lastDelivery.put(mes.getContext(), timedEvent);
 
 			// Get the plugin/command.
 
@@ -389,13 +391,14 @@ public class TimedEvents
 	};
 	public void commandLast( Message mes, Modules mods, IRCInterface irc )
 	{
-		if (lastDelivery != null)
+		TimedEvent last = lastDelivery.get(mes.getContext());
+		if (last != null)
 		{
-			Message lMes = mods.history.getMessage(lastDelivery.mesID);
+			Message lMes = mods.history.getMessage(last.mesID);
 			if (lMes != null)
-				irc.sendContextReply(mes, lMes.getNick() + " queued the following command on " + new Date(lMes.getMillis()).toString() + ": " + lastDelivery.command);
+				irc.sendContextReply(mes, lMes.getNick() + " queued the following command on " + new Date(lMes.getMillis()).toString() + ": " + last.command);
 			else
-				irc.sendContextReply(mes, "The following command was queued: " + lastDelivery.command);
+				irc.sendContextReply(mes, "The following command was queued: " + last.command);
 		}
 		else
 			irc.sendContextReply(mes, "Nobody queued nuffin', gov'ner.");
