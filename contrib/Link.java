@@ -71,8 +71,7 @@ public class Link
 			List<OldLink> links = mods.odb.retrieve(OldLink.class, "WHERE URL = \"" + mods.odb.escapeString(link) + "\" AND channel = \"" + mods.odb.escapeString(mes.getContext()) + "\"");
 			if (links.size() > 0) {
 				StringBuilder output = new StringBuilder();
-				output.append("oooolllldddd! (link originally posted in ");
-				output.append(links.get(0).channel + " ");
+				output.append("oooolllldddd! (link originally posted ");
 				output.append(mods.date.timeLongStamp(System.currentTimeMillis() - links.get(0).postedTime));
 				output.append(" ago by ");
 				output.append(links.get(0).poster);
