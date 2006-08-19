@@ -18,13 +18,12 @@ public class OldLink {
 	public String URL;
 	public String poster;
 	public String channel;
-	public long postedTime;
+	public long firstPostedTime;
+	public long lastPostedTime;
 }
 
-public class Link
-{
-	public String[] info()
-	{
+public class Link {
+	public String[] info() {
 		return new String[] {
 			"Plugin which matches on links.",
 			"Tim Retout /  Chris Hawley",
@@ -36,10 +35,20 @@ public class Link
 	Modules mods;
 	IRCInterface irc;
 
-	public Link(Modules mods, IRCInterface irc)
-	{
+	//This specifies the minimum time between when the bot last saw the link, 
+	//it starts complaining about it being ooooold
+	private static final long FLOOD_INTERVAL = 15 * 60 * 1000; //15 minute
+	
+	public Link(Modules mods, IRCInterface irc) {
 		this.irc = irc;
 		this.mods = mods;
+		
+		//Purge
+		/*
+		List<OldLink> links = mods.odb.retrieve(OldLink.class, "");
+		for (OldLink link : links) {
+			mods.odb.delete(link);
+		} */
 	}
 
 	public static String filterLinkRegex = "http://\\S*";
@@ -54,8 +63,7 @@ public class Link
 	
 	final private static Pattern linkPattern = Pattern.compile(filterLinkRegex);
 
-	public void filterLink( Message mes, Modules mods, IRCInterface irc )
-	{
+	public void filterLink(Message mes, Modules mods, IRCInterface irc) {
 		
 		if (!((mes instanceof ChannelMessage) || (mes instanceof ChannelAction))) return;
 		
@@ -73,20 +81,32 @@ public class Link
 			//Check objectDB for an existing link with this URL
 			List<OldLink> links = mods.odb.retrieve(OldLink.class, "WHERE URL = \"" + mods.odb.escapeString(link) + "\" AND channel = \"" + mods.odb.escapeString(mes.getContext()) + "\"");
 			if (links.size() > 0) {
-				StringBuilder output = new StringBuilder();
-				output.append("oooolllldddd! (link originally posted ");
-				output.append(mods.date.timeLongStamp(System.currentTimeMillis() - links.get(0).postedTime));
-				output.append(" ago by ");
-				output.append(links.get(0).poster);
-				output.append(")");
-				irc.sendContextReply(mes, output.toString());
-				return;
+				OldLink linkObj = links.get(0);
+				if (System.currentTimeMillis() - linkObj.lastPostedTime > FLOOD_INTERVAL) {
+					String timeBasedOld = "oooolllldddd";
+					long timeSinceOriginal = System.currentTimeMillis() - linkObj.firstPostedTime;
+					//Check how many hours old it is, for each one over 4, add a o.
+					int oldHours = (int)timeSinceOriginal/(60*60*1000);
+					while (oldHours > 4) {
+						timeBasedOld = "o" + timeBasedOld;
+						oldHours--;
+					}
+					String output = timeBasedOld + "! (link originally posted " +
+						mods.date.timeLongStamp(timeSinceOriginal)
+						+ " ago by " + linkObj.poster + ")";
+					irc.sendContextReply(mes, output);
+					//Update the last posted time.
+					linkObj.lastPostedTime = mes.getMillis();
+					mods.odb.update(linkObj);
+					return;
+				}
 			} else {
 				OldLink linkObj = new OldLink();
 				linkObj.URL = link;
 				linkObj.poster = mods.nick.getBestPrimaryNick(mes.getNick());
 				linkObj.channel = mes.getContext();
-				linkObj.postedTime = mes.getMillis();
+				linkObj.firstPostedTime = mes.getMillis();
+				linkObj.lastPostedTime = mes.getMillis();
 				mods.odb.save(linkObj);
 			}
 		}
