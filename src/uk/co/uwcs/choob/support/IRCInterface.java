@@ -225,6 +225,15 @@ public final class IRCInterface
 	}
 
 	/**
+	 * Returns the bot's current nickname.
+	 * @return current nickname of the bot.
+	 */
+	public String getNickname()
+	{
+		return bot.getNick();
+	}
+
+	/**
 	 * See getTriggerRegex in Choob.
 	 */
 	public String getTriggerRegex()

@@ -33,6 +33,12 @@ public final class UtilModule
 		this.triggerPattern = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE);
 	}
 
+	/** Returns the pre-compiled and pre-cached Pattern for command matching. */
+	public Pattern getTriggerPattern()
+	{
+		return this.triggerPattern;
+	}
+
 	/** Get the offset of the trigger in the list of arguments */
 	private int getTriggerOffset( String text )
 	{
