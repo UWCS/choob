@@ -29,14 +29,12 @@ public class Link
 			"Plugin which matches on links.",
 			"Tim Retout /  Chris Hawley",
 			"tim@retout.co.uk /  choob@blood-god.co.uk",
-			"Version 0.2"
+			"$Rev$$Date$"
 		};
 	}
 
 	Modules mods;
 	IRCInterface irc;
-
-	Set links = Collections.synchronizedSet(new HashSet());
 
 	public Link(Modules mods, IRCInterface irc)
 	{
@@ -63,6 +61,7 @@ public class Link
 		// Iterate over links in line.
 		while (linkMatch.find()) {
 			String link = linkMatch.group(0);
+			//Ensure that it isn't in our exceptions list
 			for (int i=0;i<exceptions.length;i++) {
 				if (link.equalsIgnoreCase(exceptions[i])) {
 					return;
