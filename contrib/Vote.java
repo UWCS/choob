@@ -346,7 +346,7 @@ public class Vote {
 			output.append("Vote " + vote.id + " (\"" + vote.text + "\") finished. It was called by " + vote.caller);
 			output.append(" " + apiEncodePeriod(vote.startTime) + " and finished " + apiEncodePeriod(vote.finishTime));
 			output.append(". Responses: ");
-			String[] responses = vote.responses.split("\\s*,\\s*");
+			String[] responses = vote.responses.split(",");
 			String[] results = vote.results.split(",");
 			for(int i=0; i<responses.length; i++) {
 				output.append(responses[i] + " with " + results[i]);
@@ -363,7 +363,7 @@ public class Vote {
 				//Determine the conext of the command, and if a PM be more verbose
 				irc.sendContextReply(mes, "Vote #" + vote.id + " on \"" + vote.text + "\"! Finishes " + apiEncodePeriod(vote.finishTime) + ".");
 				String trigger = irc.getTrigger();
-				String[] options = vote.responses.split("\\s*,\\s*");
+				String[] options = vote.responses.split(",");
 				for (int i=0;i<options.length;i++) {
 					irc.sendContextReply(mes, trigger + "Vote.Vote " + i + "  ==>  " + options[i]);
 				}
@@ -373,7 +373,7 @@ public class Vote {
 				output.append("Vote " + vote.id + " (\"" + vote.text + "\") is still running. It was called by " + vote.caller);
 				output.append(" " + apiEncodePeriod(vote.startTime) + " and finishes " + apiEncodePeriod(vote.finishTime));
 				output.append(". Responses: ");
-				String[] responses = vote.responses.split("\\s*,\\s*");
+				String[] responses = vote.responses.split(",");
 				for(int i=0; i<responses.length; i++) {
 					output.append(i).append(") \"").append(responses[i]).append("\"");
 					if (i == responses.length - 2)
@@ -525,7 +525,7 @@ public class Vote {
 			return;
 		}
 		
-		String[] responses = vote.responses.split("\\s*,\\s*");
+		String[] responses = vote.responses.split(",");
 		
 		int responseID = -1;
 		try {
@@ -609,7 +609,7 @@ public class Vote {
 			
 			final List<Voter> votes = mods.odb.retrieve(Voter.class, "WHERE voteID = " + vote.id);
 			
-			String[] responses = vote.responses.split("\\s*,\\s*");
+			String[] responses = vote.responses.split(",");
 			int[] counts = new int[responses.length];
 			
 			for(Voter voter: votes)
