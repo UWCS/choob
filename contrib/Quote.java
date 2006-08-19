@@ -63,10 +63,8 @@ public class Quote
 	{
 		this.mods = mods;
 		this.irc = irc;
-		this.ignorePattern = Pattern.compile(
-				"^(?:" + irc.getTriggerRegex() + ")" +
-				"(?:" + IGNORE + ")", Pattern.CASE_INSENSITIVE);
 		recentQuotes = new HashMap<String,List<RecentQuote>>();
+		updatePatterns();
 	}
 
 	public String[] info()
@@ -77,6 +75,14 @@ public class Quote
 			"choob@uwcs.co.uk",
 			"$Rev$$Date$"
 		};
+	}
+	
+	void updatePatterns()
+	{
+		System.our.println("Quote:updatePatterns");
+		this.ignorePattern = Pattern.compile(
+				"^(?:" + irc.getTriggerRegex() + ")" +
+				"(?:" + IGNORE + ")", Pattern.CASE_INSENSITIVE);
 	}
 
 	public String[] helpTopics = { "UsingCreate", "CreateExamples", "UsingGet" };
@@ -1516,6 +1522,12 @@ public class Quote
 				irc.sendContextMessage( ev, greeting + ev.getNick() + ": \"" + quote + "\"");
 			}
 		}
+	}
+	
+	public void onNickChange(NickChange ev, Modules mods, IRCInterface irc)
+	{
+		if (ev.getNewNick.equals(irc.getNickname()))
+			updatePatterns();
 	}
 }
 
