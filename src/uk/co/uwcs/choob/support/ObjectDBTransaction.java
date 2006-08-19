@@ -9,6 +9,25 @@ import java.lang.reflect.*;
 import java.security.AccessController;
 import org.mozilla.javascript.*;
 
+/**
+ * Wraps up the database in an ObjectDB-friendly way, which can be used to
+ * perform various operations, such as adding, replacing and deleting items
+ * in a single transaction (so either all, or none, of the operations occur).
+ *
+ * Plugins (with the necessary permissions) and core code can use it thus:
+ *
+ * <pre>
+ *   mods.odb.runTransaction(
+ *       new ObjectDBTransaction() {
+ *           public void run() {
+ *               // ObjectDB operations here, e.g.
+ *               //   delete(o);
+ *               //   save(o);
+ *           }
+ *       });
+ * </pre>
+ *
+ */
 public class ObjectDBTransaction // Needs to be non-final
 {
 	private static final int MAXOR = 50; // Max OR statements in a lumped together objectDB query.
@@ -27,6 +46,20 @@ public class ObjectDBTransaction // Needs to be non-final
 		this.dbConn = dbConn;
 	}
 
+	/**
+	 * Starts the transaction, during which <i>all</i> operations will either
+	 * succeed or fail.
+	 *
+	 * The transaction is completed when {@link #commit} is called, or canceled
+	 * if {@link #rollback} is called. {@link #finish} should always be called
+	 * after {@link #commit} or {@link #rollback} is called, and is the mirror
+	 * function to this one.
+	 * 
+	 * @throws ObjectDBDeadlockError If the database has detected a deadlock,
+	 *                               this exception is thrown.
+	 * @throws ObjectDBError All other SQL-related exceptions are wrapped as
+	 *                       ObjectDBError.
+	 */
 	public final void begin()
 	{
 		try
@@ -39,6 +72,18 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
+	/**
+	 * Commits the transaction started by {@link #begin}, attempting to
+	 * apply all operations to the database. It is possible that this will
+	 * fail if, for example, the data being modified by this transaction has
+	 * already been modified by another successful transaction.
+	 * {@link #finish} must still be called afterwards.
+	 * 
+	 * @throws ObjectDBDeadlockError If the database has detected a deadlock,
+	 *                               this exception is thrown.
+	 * @throws ObjectDBError All other SQL-related exceptions are wrapped as
+	 *                       ObjectDBError.
+	 */
 	public final void commit()
 	{
 		try
@@ -51,6 +96,16 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
+	/**
+	 * Cancels the transaction started by {@link #begin}, causing all
+	 * modifications made since then to be discarded.
+	 * {@link #finish} must still be called afterwards.
+	 * 
+	 * @throws ObjectDBDeadlockError If the database has detected a deadlock,
+	 *                               this exception is thrown.
+	 * @throws ObjectDBError All other SQL-related exceptions are wrapped as
+	 *                       ObjectDBError.
+	 */
 	public final void rollback()
 	{
 		try
@@ -63,6 +118,16 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
+	/**
+	 * Finishes off the transaction started by {@link #begin}. If
+	 * {@link #commit} has not been called, an implicit {@link #rollback}
+	 * call is made first.
+	 * 
+	 * @throws ObjectDBDeadlockError If the database has detected a deadlock,
+	 *                               this exception is thrown.
+	 * @throws ObjectDBError All other SQL-related exceptions are wrapped as
+	 *                       ObjectDBError.
+	 */
 	public final void finish()
 	{
 		try
@@ -384,11 +449,30 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
+	/**
+	 * Loads any number of stored ObjectDB objects.
+	 * 
+	 * @param storedClass The class object (decendant of {@link Class} for Java,
+	 *                    {@link Function} for JavaScript) representing the
+	 *                    type of object desired to be retrieved.
+	 * @param clause The testricting part of the query, specifying which objects
+	 *               are desired. FIXME: link to docs on format.
+	 * @return {@link List} of objects, typed according to the caller.
+	 */
 	public final List<?> retrieve(Object storedClass, String clause)
 	{
 		return retrieve(NewClassWrapper(storedClass), clause);
 	}
 	
+	/**
+	 * Loads any number of stored ObjectDB objects.
+	 * 
+	 * @param storedClass The {@link ObjectDBClass} indicating the type of
+	 *                    object desired to be retrieved.
+	 * @param clause The testricting part of the query, specifying which objects
+	 *               are desired. FIXME: link to docs on format.
+	 * @return {@link List} of objects, typed according to the caller.
+	 */
 	public final List<?> retrieve(final ObjectDBClass storedClass, String clause)
 	{
 		String sqlQuery;
@@ -798,11 +882,22 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
+	/**
+	 * Deletes an object from the ObjectDB.
+	 * 
+	 * @param strObj The object to be deleted.
+	 */
 	public final void delete(Object strObj)
 	{
 		delete(NewObjectWrapper(strObj));
 	}
 
+	/**
+	 * Deletes an object from the ObjectDB.
+	 * 
+	 * @param strObj The {@link ObjectDBObject} wrapping the real object to be
+	 *               deleted.
+	 */
 	public final void delete(ObjectDBObject strObj)
 	{
 		checkPermission(strObj.getClassName());
@@ -879,25 +974,55 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
+	/**
+	 * Updates the saved data for an ObjectDB object.
+	 * 
+	 * @param strObj The object who's saved data is to be updated.
+	 */
 	public final void update(Object strObj)
 	{
 		update(NewObjectWrapper(strObj));
 	}
 
+	/**
+	 * Updates the saved data for an ObjectDB object.
+	 * 
+	 * @param strObj The {@link ObjectDBObject} wrapping the real object who's
+	 *               saved data is to be updated.
+	 */
 	public final void update(ObjectDBObject strObj)
 	{
 		_store(strObj, true);
 	}
 
+	/**
+	 * Method to be override in code that wishes to use the transaction support.
+	 * 
+	 * This method is run when passed to {@link ObjectDbModule#runTransaction},
+	 * inside calls to {@link #begin} and {@link #commit}. If this method throws
+	 * an exception, {@link #rollback} is called instead.
+	 */
 	public void run()
 	{
 		throw new ObjectDBError("This transaction has no run() method...");
 	}
 
+	/**
+	 * Saves a new ObjectDB object.
+	 * 
+	 * @param strObj The object to be saved.
+	 */
 	public final void save(Object strObj)
 	{
 		save(NewObjectWrapper(strObj));
 	}
+	
+	/**
+	 * Saves a new ObjectDB object.
+	 * 
+	 * @param strObj The {@link ObjectDBObject} wrapping the real object
+	 *               to be saved.
+	 */
 	public final void save(ObjectDBObject strObj)
 	{
 		_store(strObj, false);

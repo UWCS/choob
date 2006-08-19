@@ -13,7 +13,37 @@ import java.lang.String;
 import java.security.AccessController;
 
 /**
- * An interface with the ObjectDB.
+ * An interface with the ObjectDB, for use by plugins and core code alike.
+ * 
+ * The ObjectDB provides a simple and clean interface for storing, updating,
+ * deleting and - most importantly - retrieving generic objects. Objects need
+ * not support any particular interface, nor inherit from any particular class;
+ * instead, the only requirement is that they have an "id" property of type
+ * "int".<p>
+ * 
+ * All public read/write properties of the following types are loaded and
+ * saved by ObjectDB for Java objects:
+ *
+ * <ul>
+ *     <li>Boolean</li>
+ *     <li>Byte</li>
+ *     <li>Short</li>
+ *     <li>Integer</li>
+ *     <li>Long</li>
+ *     <li>Float</li>
+ *     <li>Double</li>
+ *     <li>String</li>
+ * </ul>
+ * 
+ * For JavaScript objects, properties are always public, so the ObjectDB only
+ * saves ones that do not start with an underscore (<tt>_</tt>). The following
+ * JavaScript types are saved:
+ * 
+ * <ul>
+ *     <li>Boolean</li>
+ *     <li>Number</li>
+ *     <li>String</li>
+ * </ul>
  */
 public final class ObjectDbModule
 {
@@ -27,16 +57,28 @@ public final class ObjectDbModule
 		this.mods = mods;
 	}
 
+	/**
+	 * Escapes a string safely for use inside single- or double-quoted strings
+	 * in an ObjectDB query.
+	 */
 	public String escapeString(String text)
 	{
 		return text.replaceAll("(\\W)", "\\\\$1");
 	}
 
+	/**
+	 * Escapes a string safely for use inside single- or double-quoted strings
+	 * in a <tt>LIKE</tt> comparison in an ObjectDB query.
+	 */
 	public String escapeForLike(String text)
 	{
 		return escapeString(text).replaceAll("([_%])", "\\\\$1");
 	}
 
+	/**
+	 * Escapes a string safely for use inside single- or double-quoted strings
+	 * in a <tt>RLIKE</tt> comparison in an ObjectDB query.
+	 */
 	public String escapeForRLike(String text)
 	{
 		return escapeString(text);
