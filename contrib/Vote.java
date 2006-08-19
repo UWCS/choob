@@ -128,14 +128,22 @@ public class Vote {
 		String question = "Which is best?";
 		String[] options = new String[] { "Yes", "No" };
 		
+		
 		//Parse in the parameters to get the title, options and time
 		int pos = -1;
 		if (paramString.charAt(0) == '"') {
-			// Has question.
+			// Has question in "s.
 			int endPos = paramString.indexOf('"', 1);
-			question = paramString.substring(1, endPos);
-			pos = endPos + 1;
+			if (endPos != -1) {
+				question = paramString.substring(1, endPos);
+				pos = endPos + 1;
+			} else {
+				question = paramString.trim();
+				pos = paramString.length();
+				System.out.println(pos);
+			}
 		} else if (paramString.charAt(0) != '(') {
+			// Has a question
 			int endPos = paramString.indexOf('(');
 			if (endPos == -1) {
 				question = paramString.trim();
@@ -144,16 +152,21 @@ public class Vote {
 				pos = endPos;
 			}
 		} else if (paramString.indexOf('(') == -1) {
+			// Has neither
 			irc.sendContextReply(mes, "Sorry, you need either a question or some options. Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
 			return;
 		} else {
+			// Has some options
 			pos = paramString.indexOf('(');
 		}
 		
-		//If some text in "s was found
+		// Parse the options.
 		if (pos != -1) {
 			int startPos = paramString.indexOf('(', pos);
-			int endPos = paramString.indexOf(')', startPos);
+			int endPos = -1;
+			if (startPos != -1) {
+				endPos = paramString.indexOf(')', startPos);
+			}
 			if (endPos != -1) {
 				options = paramString.substring(startPos + 1, endPos).split("\\s*,\\s*");
 			}
@@ -333,7 +346,7 @@ public class Vote {
 			output.append("Vote " + vote.id + " (\"" + vote.text + "\") finished. It was called by " + vote.caller);
 			output.append(" " + apiEncodePeriod(vote.startTime) + " and finished " + apiEncodePeriod(vote.finishTime));
 			output.append(". Responses: ");
-			String[] responses = vote.responses.split(",");
+			String[] responses = vote.responses.split("\\s*,\\s*");
 			String[] results = vote.results.split(",");
 			for(int i=0; i<responses.length; i++) {
 				output.append(responses[i] + " with " + results[i]);
@@ -350,7 +363,7 @@ public class Vote {
 				//Determine the conext of the command, and if a PM be more verbose
 				irc.sendContextReply(mes, "Vote #" + vote.id + " on \"" + vote.text + "\"! Finishes " + apiEncodePeriod(vote.finishTime) + ".");
 				String trigger = irc.getTrigger();
-				String[] options = vote.responses.split(",");
+				String[] options = vote.responses.split("\\s*,\\s*");
 				for (int i=0;i<options.length;i++) {
 					irc.sendContextReply(mes, trigger + "Vote.Vote " + i + "  ==>  " + options[i]);
 				}
@@ -360,7 +373,7 @@ public class Vote {
 				output.append("Vote " + vote.id + " (\"" + vote.text + "\") is still running. It was called by " + vote.caller);
 				output.append(" " + apiEncodePeriod(vote.startTime) + " and finishes " + apiEncodePeriod(vote.finishTime));
 				output.append(". Responses: ");
-				String[] responses = vote.responses.split(",");
+				String[] responses = vote.responses.split("\\s*,\\s*");
 				for(int i=0; i<responses.length; i++) {
 					output.append(i).append(") \"").append(responses[i]).append("\"");
 					if (i == responses.length - 2)
@@ -512,7 +525,7 @@ public class Vote {
 			return;
 		}
 		
-		String[] responses = vote.responses.split(",");
+		String[] responses = vote.responses.split("\\s*,\\s*");
 		
 		int responseID = -1;
 		try {
@@ -596,7 +609,7 @@ public class Vote {
 			
 			final List<Voter> votes = mods.odb.retrieve(Voter.class, "WHERE voteID = " + vote.id);
 			
-			String[] responses = vote.responses.split(",");
+			String[] responses = vote.responses.split("\\s*,\\s*");
 			int[] counts = new int[responses.length];
 			
 			for(Voter voter: votes)
@@ -690,7 +703,7 @@ public class Vote {
 				if (max == 0) {
 					irc.sendMessage(vote.channel, "Result is a draw, no options got any votes! What a waste of time!");
 				} else if (max == 1) {
-					irc.sendMessage(vote.channel, "Result is a draw: " + output + "all got 1 vote each!");
+					irc.sendMessage(vote.channel, "Result is a draw: " + output + " all got 1 vote each!");
 				} else {
 					irc.sendMessage(vote.channel, "Result is a draw: " + output + " all got " + max + " votes!");
 				}
@@ -773,7 +786,9 @@ public class Vote {
 					}
 					//Only send the message if there are votes to inform the user of
 					if (voteSpamCount != 0) {
-						buf.append(". To stop this message appearing, please either vote or abstain on these matters using the !vote.vote command, or disable this feature using the option available.");
+						buf.append(". To stop this message appearing, please either vote or abstain on " +
+							"these matters using the vote.vote command, or disable this feature using " +
+							"'options.set vote VoteJoinNotify=0'.");
 						irc.sendMessage(ev.getNick(), buf.toString());
 					}
 				}
