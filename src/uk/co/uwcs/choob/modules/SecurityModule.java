@@ -1318,6 +1318,26 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			try
 			{
 				dbConn = dbBroker.getConnection();
+				
+				if (permission instanceof AllPermission)
+				{
+					stat = dbConn.prepareStatement("DELETE FROM UserNodePermissions WHERE NodeID = ? AND Type = ?");
+					stat.setInt(1, groupID);
+					stat.setString(2, permission.getClass().getName());
+				}
+				else
+				{
+					stat = dbConn.prepareStatement("DELETE FROM UserNodePermissions WHERE NodeID = ? AND Type = ? AND Permission = ? AND Action = ?");
+					stat.setInt(1, groupID);
+					stat.setString(2, permission.getClass().getName());
+					stat.setString(3, permission.getName());
+					stat.setString(4, permission.getActions());
+				}
+				if ( stat.executeUpdate() == 0 )
+				{
+					// Don't care if this failed.
+				}
+				
 				stat = dbConn.prepareStatement("INSERT INTO UserNodePermissions (NodeID, Type, Permission, Action) VALUES (?, ?, ?, ?)");
 				stat.setInt(1, groupID);
 				stat.setString(2, permission.getClass().getName());
