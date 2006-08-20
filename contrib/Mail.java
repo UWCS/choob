@@ -182,12 +182,12 @@ public class Mail
 			if (fromDisplay.length() == 0)
 				fromDisplay = irc.getNickname();
 			
-			System.out.println("Mail:send:");
-			System.out.println("    SMTP   : " + smtpHost + ":" + smtpPort);
-			System.out.println("    From   : " + fromDisplay + " <" + fromUser + "@" + fromHost + ">");
-			System.out.println("    To     : " + to);
-			System.out.println("    Subject: " + subject);
-			System.out.println("    Message: " + message.replaceAll("\n", "\n           : "));
+			//System.out.println("Mail:send:");
+			//System.out.println("    SMTP   : " + smtpHost + ":" + smtpPort);
+			//System.out.println("    From   : " + fromDisplay + " <" + fromUser + "@" + fromHost + ">");
+			//System.out.println("    To     : " + to);
+			//System.out.println("    Subject: " + subject);
+			//System.out.println("    Message: " + message.replaceAll("\n", "\n           : "));
 			
 			Date now = new Date();
 			java.text.SimpleDateFormat RFC822date = new java.text.SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
