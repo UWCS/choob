@@ -169,6 +169,26 @@ public class Tell
 				}
 			}
 		);
+		
+		// Send e-mails to people who've asked for them.
+		try
+		{
+			for(int i = 0; i < targets.length; i++)
+			{
+				String email = (String)mods.plugin.callAPI("Options", "GetUserOption", targets[i], "Email", "");
+				if (email.length() > 0)
+				{
+					mods.plugin.callAPI("Mail", "SendMail", email,
+					                    "Tell from " + tellObj.from + " via " + irc.getNickname(),
+					                    "At " + new Date(tellObj.date) + ", " + tellObj.from + " told me to " + tellObj.type + " you: " + tellObj.message);
+				}
+			}
+			
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			// Oh dear, no Options. :(
+		}
 
 		return targets.length;
 
@@ -248,8 +268,8 @@ public class Tell
 		}
 	}
 
-	public String[] optionsUser = { "Secure", "NickChange" };
-	public String[] optionsUserDefaults = { "1", "1" };
+	public String[] optionsUser = { "Secure", "NickChange", "Email" };
+	public String[] optionsUserDefaults = { "1", "1", "0" };
 
 	public boolean optionCheckUserSecure( String value, String userName ) { return value.equals("0") || value.equals("1") || value.equals("2"); }
 	public String[] helpOptionSecure = {
@@ -261,6 +281,12 @@ public class Tell
 	public String[] helpOptionNickChange = {
 		"Choose to have tells delivered on nick change.",
 		"Set this to \"0\" to not have tells delivered on nick change, default, \"1\", will deliver on nick change."
+	};
+
+	public boolean optionCheckUserEmail( String value, String userName ) { return true; }
+	public String[] helpOptionEmail = {
+		"Choose to have a copy of all tells e-mailed to you.",
+		"Set this to an e-mail address to have copies of all tells sent to you mailed. Set to '' to stop."
 	};
 
 	private synchronized void spew (String nick)
