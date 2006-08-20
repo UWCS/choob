@@ -410,7 +410,8 @@ public final class Choob extends PircBot
 	}
 
 	protected void onNickChange(String nick, String login, String hostname, String newNick) {
-		this.setName(newNick);
+		// Force update of name to match nick, as PircBot confuses the two.
+		this.setName(this.getNick());
 		spinThread(new NickChange("onNickChange", System.currentTimeMillis(), ((int)(Math.random()*127)), nick, login, hostname, newNick));
 	}
 

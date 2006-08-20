@@ -383,7 +383,8 @@ public final class HorriblePerlScript
 			} else if (className.equals("NickChange")) {
 				String constructorParams = getConstructorOrder(className, paramValueMap);
 				
-				eventHandler.append("\t\tthis.setName(newNick);\n");
+				eventHandler.append("\t\t// Force update of name to match nick, as PircBot confuses the two.\n");
+				eventHandler.append("\t\tthis.setName(this.getNick());\n");
 				eventHandler.append("\t\tspinThread(new " + className + "(" + constructorParams + "));\n\t}\n\n");
 			} else {
 				String constructorParams = getConstructorOrder(className, paramValueMap);
