@@ -748,7 +748,7 @@ public class Options
 			}
 			catch (ChoobNoSuchCallException f)
 			{
-				return "Unknown option!";
+				return null;
 			}
 		}
 		catch (ClassCastException e)
@@ -777,7 +777,7 @@ public class Options
 			}
 			catch (ChoobNoSuchCallException f)
 			{
-				return "Unknown option!";
+				return null;
 			}
 		}
 		catch (ClassCastException e)
