@@ -66,20 +66,37 @@ public class Link {
 	public void filterLink(Message mes, Modules mods, IRCInterface irc) {
 		
 		if (!((mes instanceof ChannelMessage) || (mes instanceof ChannelAction))) return;
-		
+		commandIsOld(mes);
+	}
+
+	public void commandIsOld(Message mes)
+	{
+		String reply = getOldReply(mes);
+		if (reply == null) return;
+		else {
+			irc.sendContextReply(mes,reply);
+		}
+	}
+
+	private String getOldReply(Message mes)
+	{
 		Matcher linkMatch = linkPattern.matcher(mes.getMessage());
-		
 		// Iterate over links in line.
 		while (linkMatch.find()) {
 			String link = linkMatch.group(0);
 			//Ensure that it isn't in our exceptions list
 			for (int i=0;i<exceptions.length;i++) {
 				if (link.equalsIgnoreCase(exceptions[i])) {
-					return;
+					return null;
 				}
 			}
 			//Check objectDB for an existing link with this URL
-			List<OldLink> links = mods.odb.retrieve(OldLink.class, "WHERE URL = \"" + mods.odb.escapeString(link) + "\" AND channel = \"" + mods.odb.escapeString(mes.getContext()) + "\"");
+			String queryString = "WHERE URL = \"" + mods.odb.escapeString(link) + "\"";
+			boolean channelMessage = mes.getContext().matches("^#.*");
+			if (channelMessage) {
+				queryString = queryString + " AND channel = \"" + mods.odb.escapeString(mes.getContext()) + "\"";
+			}
+			List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
 			if (links.size() > 0) {
 				OldLink linkObj = links.get(0);
 				if (System.currentTimeMillis() - linkObj.lastPostedTime > FLOOD_INTERVAL) {
@@ -91,14 +108,14 @@ public class Link {
 						timeBasedOld = "o" + timeBasedOld;
 						oldHours--;
 					}
-					String output = timeBasedOld + "! (link originally posted " +
-						mods.date.timeLongStamp(timeSinceOriginal)
-						+ " ago by " + linkObj.poster + ")";
-					irc.sendContextReply(mes, output);
+					String output = timeBasedOld + "! (link originally posted " + mods.date.timeLongStamp(timeSinceOriginal) + " ago by " + linkObj.poster;
+					if (!channelMessage) output = output + " in " + linkObj.channel;
+					output = output + ")";
+					
 					//Update the last posted time.
-					linkObj.lastPostedTime = mes.getMillis();
+				 	linkObj.lastPostedTime = mes.getMillis();
 					mods.odb.update(linkObj);
-					return;
+					return output;
 				}
 			} else {
 				OldLink linkObj = new OldLink();
@@ -110,5 +127,6 @@ public class Link {
 				mods.odb.save(linkObj);
 			}
 		}
+		return null;
 	}
 }
