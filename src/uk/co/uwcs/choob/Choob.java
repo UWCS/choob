@@ -200,11 +200,11 @@ public final class Choob extends PircBot
 		watcher.start();
 
 		// This is needed to properly initialise a ChoobProtectionDomain.
-		ChoobPluginManager.initialise( modules, irc );
+		ChoobPluginManager.initialise(modules, irc);
 
 		// Initialise the thread manager, too
-		ChoobThreadManager.initialise( );
-		ChoobDecoderTask.initialise( broker, modules, irc );
+		ChoobThreadManager.initialise(modules);
+		ChoobDecoderTask.initialise(broker, modules, irc);
 
 		try
 		{

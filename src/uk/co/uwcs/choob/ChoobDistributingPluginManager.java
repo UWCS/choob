@@ -50,7 +50,7 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 		{
 			// Suggest a task instead?
 
-			task = new ChoobTask(null)
+			task = new ChoobTask(null, "commandTask:suggestions")
 			{
 				public void run()
 				{

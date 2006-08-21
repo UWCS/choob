@@ -11,6 +11,7 @@ import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
 import uk.co.uwcs.choob.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.net.*;
 import java.sql.*;
 import java.security.AccessController;
@@ -338,6 +339,37 @@ public final class PluginModule
 	public String getPluginSource(String pluginName) throws ChoobNoSuchPluginException
 	{
 		return getPluginURL(pluginName);
+	}
+
+	/**
+	 * Gets the maximum number of threads a plugin is allowed to have.
+	 * @param pluginName the name of the plugin to get the limit of.
+	 * @return Integer thread limit for the plugin.
+	 */
+	public int getConcurrencyLimit(final String pluginName)
+	{
+		// Small hack to allow the ChoobTask to return a value. Default here is
+		// 1 thread/plugin.
+		final int[] limit = new int[] { 1 };
+		
+		ChoobTask task = new ChoobTask(null, "getConcurrencyLimit") {
+			public void run() {
+				try {
+					limit[0] = (Integer)mods.plugin.callAPI("Concurrency", "GetThreadLimit", pluginName);
+				} catch (Exception e) {
+					// Don't care about anything. Lalala.
+				}
+			}
+		};
+		ChoobThread thread = new ChoobThread(task, "choob-getConcurrencyLimit");
+		thread.pushPlugin(pluginName);
+		
+		thread.run();
+		try {
+			thread.join();
+		} catch (InterruptedException e) {}
+		
+		return limit[0];
 	}
 
 	private void setCoreStatus(String pluginName, boolean isCore) throws ChoobNoSuchPluginException {

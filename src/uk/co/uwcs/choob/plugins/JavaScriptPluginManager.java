@@ -266,7 +266,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 		};
 
 		if (result == CALL_WANT_TASK) {
-			return new ChoobTask(pluginName) {
+			return new ChoobTask(pluginName, fullName) {
 				public void run() {
 					try {
 						AccessController.doPrivileged(action, accessContext);

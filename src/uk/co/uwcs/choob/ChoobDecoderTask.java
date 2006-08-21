@@ -34,7 +34,7 @@ public class ChoobDecoderTask extends ChoobTask
 	/** Creates a new instance of ChoobThread */
 	ChoobDecoderTask(Event event)
 	{
-		super(null);
+		super(null, "ChoobDecoderTask:" + event.getMethodName());
 		this.event = event;
 	}
 
