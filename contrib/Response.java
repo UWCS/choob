@@ -33,7 +33,11 @@ public class Response
 		this.mods = mods;
 	}
 
-	public static String filterBotRegex = "(good|bad) bot";
+	/*
+	 *	Good/Bad bot replies.
+	 */
+
+	public static String filterBotRegex = "\\b(good|bad) bot\\b";
 	final private static Pattern botPattern = Pattern.compile(filterBotRegex);
 
 	public void filterBot( Message mes, Modules mods, IRCInterface irc )
