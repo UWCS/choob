@@ -37,6 +37,11 @@ public class Response
 	 *	Good/Bad bot replies.
 	 */
 
+	String[] badBot = {
+		"Bastard.",
+		"Muppet."
+	};
+
 	public static String filterBotRegex = "\\b(good|bad) bot\\b";
 	final private static Pattern botPattern = Pattern.compile(filterBotRegex);
 
@@ -64,8 +69,20 @@ public class Response
 		} else if (counter == 0) {
 			irc.sendContextReply(mes, "Make your mind up.");
 		} else {
-			irc.sendContextReply(mes, "Bastard.");
+			irc.sendContextReply(mes, chooseRand.from(badBot));
 		}
 	}
 
+}
+
+/*
+ *	Helper class to choose a random string from an array.
+ */
+class chooseRand {
+	static Random generator = new Random();
+
+    public static String from (String[] array) {
+        int rand = generator.nextInt(array.length);
+        return array[rand];
+    }
 }
