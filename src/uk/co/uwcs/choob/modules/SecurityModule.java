@@ -852,7 +852,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				dbConn = dbBroker.getConnection();
 				dbConn.setAutoCommit(false);
 				// First, make sure no user exists...
-				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND (NodeClass = 0 OR NodeClass = 1)");
+				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
 				stat.setString(1, userName);
 				ResultSet results = stat.executeQuery();
 				if ( results.first() )
@@ -870,13 +870,27 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				int userID = getLastInsertID(dbConn);
 				stat.close();
 
-				stat = dbConn.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
+				// Note: group may already exist.
+				int groupID = 0;
+				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 1");
 				stat.setString(1, userName);
-				stat.setInt(2, 1);
-				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user group insert!");
-				int groupID = getLastInsertID(dbConn);
-				stat.close();
+				results = stat.executeQuery();
+				if (results.first())
+				{
+					groupID = results.getInt(1);
+					stat.close();
+				}
+				else
+				{
+					stat.close();
+					stat = dbConn.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
+					stat.setString(1, userName);
+					stat.setInt(2, 1);
+					if (stat.executeUpdate() == 0)
+						System.err.println("Ack! No rows updated in user group insert!");
+					groupID = getLastInsertID(dbConn);
+					stat.close();
+				}
 
 				// Now bind them.
 				stat = dbConn.prepareStatement("INSERT INTO GroupMembers (GroupID, MemberID) VALUES (?, ?)");
