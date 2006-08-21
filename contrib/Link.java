@@ -66,19 +66,24 @@ public class Link {
 	public void filterLink(Message mes, Modules mods, IRCInterface irc) {
 		
 		if (!((mes instanceof ChannelMessage) || (mes instanceof ChannelAction))) return;
-		commandIsOld(mes);
-	}
-
-	public void commandIsOld(Message mes)
-	{
-		String reply = getOldReply(mes);
+		String reply = getOldReply(mes,true);
 		if (reply == null) return;
 		else {
 			irc.sendContextReply(mes,reply);
 		}
 	}
 
-	private String getOldReply(Message mes)
+	public void commandIsOld(Message mes)
+	{
+		if (mes.getContext().matches("^#.*")) return;
+		String reply = getOldReply(mes,false);
+ 		if (reply == null) irc.sendContextReply(mes,"Link is not old.");
+		else {
+			irc.sendContextReply(mes,reply);
+		}
+	}
+
+	private String getOldReply(Message mes, boolean channelMessage)
 	{
 		Matcher linkMatch = linkPattern.matcher(mes.getMessage());
 		// Iterate over links in line.
@@ -92,7 +97,6 @@ public class Link {
 			}
 			//Check objectDB for an existing link with this URL
 			String queryString = "WHERE URL = \"" + mods.odb.escapeString(link) + "\"";
-			boolean channelMessage = mes.getContext().matches("^#.*");
 			if (channelMessage) {
 				queryString = queryString + " AND channel = \"" + mods.odb.escapeString(mes.getContext()) + "\"";
 			}
@@ -117,7 +121,7 @@ public class Link {
 					mods.odb.update(linkObj);
 					return output;
 				}
-			} else {
+			} else if (channelMessage) {
 				OldLink linkObj = new OldLink();
 				linkObj.URL = link;
 				linkObj.poster = mods.nick.getBestPrimaryNick(mes.getNick());
