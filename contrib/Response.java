@@ -33,18 +33,35 @@ public class Response
 		this.mods = mods;
 	}
 
-	public static String filterGoodBotRegex = "good bot";
+	public static String filterBotRegex = "(good|bad) bot";
+	final private static Pattern botPattern = Pattern.compile(filterBotRegex);
 
-	public void filterGoodBot( Message mes, Modules mods, IRCInterface irc )
+	public void filterBot( Message mes, Modules mods, IRCInterface irc )
 	{
-		irc.sendContextMessage(mes, "Thanks, " + mes.getNick() + " :-)");
-	}
+		// Ignore synthetic messages
+		if (mes.getSynthLevel() > 0)
+			return;
 
-	public static String filterBadBotRegex = "bad bot";
+		Matcher botMatch = botPattern.matcher(mes.getMessage());
+		int counter = 0;
 
-	public void filterBadBot( Message mes, Modules mods, IRCInterface irc )
-	{
-		irc.sendContextReply(mes, "Bastard.");
+		// Iterate over matches
+		while (botMatch.find()) {
+			if (botMatch.group(1).equals("good")) {
+				counter++;
+			} else if (botMatch.group(1).equals("bad")) {
+				counter--;
+			}
+		}
+		
+		// Work out the balance of the statements, and reply
+		if (counter > 0) {
+			irc.sendContextMessage(mes, "Thanks, " + mes.getNick() + " :-)");
+		} else if (counter == 0) {
+			irc.sendContextReply(mes, "Make your mind up.");
+		} else {
+			irc.sendContextReply(mes, "Bastard.");
+		}
 	}
 
 }
