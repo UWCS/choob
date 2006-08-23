@@ -35,14 +35,14 @@ public class Link {
 	Modules mods;
 	IRCInterface irc;
 
-	//This specifies the minimum time between when the bot last saw the link, 
+	//This specifies the minimum time between when the bot last saw the link,
 	//it starts complaining about it being ooooold
 	private static final long FLOOD_INTERVAL = 15 * 60 * 1000; //15 minute
-	
+
 	public Link(Modules mods, IRCInterface irc) {
 		this.irc = irc;
 		this.mods = mods;
-		
+
 		//Purge
 		/*
 		List<OldLink> links = mods.odb.retrieve(OldLink.class, "");
@@ -60,11 +60,11 @@ public class Link {
 		"http://google.com",
 		"http://google.co.uk"
 	};
-	
+
 	final private static Pattern linkPattern = Pattern.compile(filterLinkRegex);
 
 	public void filterLink(Message mes, Modules mods, IRCInterface irc) {
-		
+
 		if (!((mes instanceof ChannelMessage) || (mes instanceof ChannelAction))) return;
 		String reply = getOldReply(mes,true);
 		if (reply == null) return;
@@ -104,18 +104,14 @@ public class Link {
 			if (links.size() > 0) {
 				OldLink linkObj = links.get(0);
 				if (System.currentTimeMillis() - linkObj.lastPostedTime > FLOOD_INTERVAL) {
-					String timeBasedOld = "oooolllldddd";
+					String timeBasedOld = "ld";
 					long timeSinceOriginal = System.currentTimeMillis() - linkObj.firstPostedTime;
 					//Check how many hours old it is, for each one over 4, add a o.
 					int oldHours = (int)timeSinceOriginal/(60*60*1000);
-					while (oldHours > 4) {
-						timeBasedOld = "o" + timeBasedOld;
-						oldHours--;
-					}
-					String output = timeBasedOld + "! (link originally posted " + mods.date.timeLongStamp(timeSinceOriginal) + " ago by " + linkObj.poster;
+					String output = "O" + Integer.toBinaryString(oldHours).replaceAll("0", "o").replaceAll("1", "O") + "ld! (link originally posted " + mods.date.timeLongStamp(timeSinceOriginal) + " ago by " + linkObj.poster;
 					if (!channelMessage) output = output + " in " + linkObj.channel;
 					output = output + ")";
-					
+
 					//Update the last posted time.
 				 	linkObj.lastPostedTime = mes.getMillis();
 					mods.odb.update(linkObj);
