@@ -245,21 +245,17 @@ public class GenericDict2
 				toReturn = toReturn + Character.toString(chr);
 			}
 		}
-		System.out.println("Stripped: " + toReturn);
 		return toReturn;
 	}
 
 	private String formatConditionals(String unformatted) throws GenericDictException
 	{
 		String toReturn = unformatted.replaceAll("\n","");
-
- 		System.out.println("Checking " + toReturn);
 		final String conditional = "(\\s|^)if\\s*?\\((.*?)\\)\\s*?\\{(.*?)\\}";
 		Matcher conditionalPattern = Pattern.compile(".*?" +  conditional + ".*",Pattern.CASE_INSENSITIVE).matcher(toReturn);
 
 		while (conditionalPattern.matches())
 		{
-			System.out.println("gotmatch");
 			if (doComparison(conditionalPattern.group(2)))
 				toReturn = toReturn.replaceFirst(conditional," " + conditionalPattern.group(3));
 			else
@@ -291,19 +287,19 @@ public class GenericDict2
 			return ((split[0] + "'").equals("'" + split[1]));
 		} else if (stripped.indexOf("!=") != -1)
 		{
-			String[] split = stripped.split("!=");
+			String[] split = ("'" + stripped + "'").split("!=");
 			if (split.length != 2)
 				throw new GenericDictException(syntax);
 			return !((split[0] + "'").equals("'" + split[1]));
 		} else if (stripped.indexOf(">") != -1)
 		{
-			String[] split = stripped.split("");
+			String[] split = ("'" + stripped + "'").split("");
 			if (split.length != 2)
 				throw new GenericDictException(syntax);
 			return (((split[0] + "'").compareTo("'" + split[1])) > 0);
 		} else if (stripped.indexOf("<") != -1)
 		{
-			String[] split = stripped.split("<");
+			String[] split = ("'" + stripped + "'").split("<");
 			if (split.length != 2)
 				throw new GenericDictException(syntax);
 			return (((split[0] + "'").compareTo("'" + split[1])) < 0);
@@ -331,5 +327,4 @@ class GenericDictException extends Exception
 	{
 		super(message);
 	}
-
 }
