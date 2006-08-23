@@ -89,7 +89,20 @@ public class Plugin
 		try
 		{
 			mods.plugin.addPlugin(classname, url);
-			irc.sendContextReply(mes, "Plugin loaded OK!");
+			String[] info;
+			info = getInfo(classname);
+			if (info.length >= 3)
+				irc.sendContextReply(mes, "Plugin loaded OK, new version is " + info[3] + ".");
+			else
+				irc.sendContextReply(mes, "Plugin loaded OK, but has missing info.");
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			irc.sendContextReply(mes, "Plugin loaded, but.. not there?");
+		}
+		catch (ClassCastException e)
+		{
+			irc.sendContextReply(mes, "Plugin loaded, but has invalid info.");
 		}
 		catch (Exception e)
 		{
@@ -119,7 +132,20 @@ public class Plugin
 
 		try {
 			mods.plugin.reloadPlugin(pluginName);
-			irc.sendContextReply(mes, "Plugin reloaded OK!");
+			String[] info;
+			info = getInfo(pluginName);
+			if (info.length >= 3)
+				irc.sendContextReply(mes, "Plugin reloaded OK, new version is " + info[3] + ".");
+			else
+				irc.sendContextReply(mes, "Plugin reloaded OK, but has missing info.");
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			irc.sendContextReply(mes, "Plugin reloaded, but.. not there?");
+		}
+		catch (ClassCastException e)
+		{
+			irc.sendContextReply(mes, "Plugin reloaded, but has invalid info.");
 		} catch (Exception e) {
 			irc.sendContextReply(mes, "Error reloading plugin, see log for more details. " + e);
 			e.printStackTrace();
@@ -232,6 +258,11 @@ public class Plugin
 		irc.sendContextReply(mes, buf.toString());
 	}
 
+	private String[] getInfo(String pluginName) throws ChoobNoSuchCallException, ClassCastException
+	{
+		return (String[])mods.plugin.callGeneric(pluginName, "Info", "");
+	}
+
 	public String[] helpCommandInfo = {
 		"Get info about a plugin.",
 		"<Plugin>",
@@ -250,7 +281,7 @@ public class Plugin
 		String[] info;
 		try
 		{
-			info = (String[])mods.plugin.callGeneric(pluginName, "Info", "");
+			info = getInfo(pluginName);
 		}
 		catch (ChoobNoSuchCallException e)
 		{
@@ -265,7 +296,7 @@ public class Plugin
 
 		irc.sendContextReply(mes, pluginName + ": " + info[0] + " By " + info[1] + " <" + info[2] + ">; version is " + info[3] + ".");
 	}
-	
+
 	public String[] helpCommandSource = {
 		"Get the source URL for a plugin.",
 		"<Plugin>",
@@ -279,9 +310,9 @@ public class Plugin
 			irc.sendContextReply(mes, "Syntax: 'Plugin.Source " + helpCommandInfo[1] + "'.");
 			return;
 		}
-		
+
 		String[] plugins = mods.plugin.getLoadedPlugins();
-		
+
 		String pluginName = params.get(1);
 		String pluginNameL = pluginName.toLowerCase();
 		String source;
@@ -294,7 +325,7 @@ public class Plugin
 			irc.sendContextReply(mes, "Plugin " + pluginName + " has never been loaded.");
 			return;
 		}
-		
+
 		boolean loaded = false;
 		for (int i = 0; i < plugins.length; i++) {
 			if (plugins[i].toLowerCase().equals(pluginNameL)) {
