@@ -100,6 +100,11 @@ public class Link {
 			List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
 			if (links.size() > 0) {
 				OldLink linkObj = links.get(0);
+				//Don't old reposts from the same user
+				if (linkObj.poster.equals(mes.getNick())) {
+					return null;
+				}
+
 				if (System.currentTimeMillis() - linkObj.lastPostedTime > FLOOD_INTERVAL) {
 					String timeBasedOld = "ld";
 					long timeSinceOriginal = System.currentTimeMillis() - linkObj.firstPostedTime;
