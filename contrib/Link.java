@@ -66,6 +66,8 @@ public class Link {
 	public void filterLink(Message mes, Modules mods, IRCInterface irc) {
 
 		if (!((mes instanceof ChannelMessage) || (mes instanceof ChannelAction))) return;
+		if (mes.getMessage().matches(irc.getTriggerRegex() + ".*")) return; //ignore commands
+		if (mes.getSynthLevel() > 0) return; //ignore synthetic messages
 		String reply = getOldReply(mes,true);
 		if (reply == null) return;
 		else {
