@@ -24,7 +24,8 @@ public class ReleaseDate {
 
 	//ReleaseDate help
 	public String[] helpCommandReleaseDate = {
-		"Attempts to look up a item's release date on Play.com or, if no results are found, Gameplay.co.uk. Results include date or stock information, title, platform and price.",
+//		"Attempts to look up an item's release date on Play.com or, if no results are found, Gameplay.co.uk. Results include date or stock information, title, platform and price.",
+		"Attempts to look up an item's release date on Play.com. Results include date or stock information, title, platform and price.",
 		"<TITLE>",
 		"<TITLE> the title of an item that you wish to get information for. This may only contain A-Z0-9.,;:_- and spaces."
 	};	
@@ -67,13 +68,18 @@ public class ReleaseDate {
 			Matcher dodgyCharMatcher = dodgyCharPattern.matcher(param);
 			if (dodgyCharMatcher.matches()) {
 			String playResults = playSearch(param);
+			/*
+			 * - Gameplay's results are slow and sucky, let's not use it at present.
 				//Check if we got a viable result from play.com, if so return this - otherwise return whatever gameplay gives us.
 				if ((!playResults.equals("Error looking up results.")) && (!playResults.equals("Sorry, no information was found for \"" + param + "\"."))) {
+				*/
 					irc.sendContextReply(mes, playResults);
+					/*
 				} else {
 					String gameplayResults = gameplaySearch(param);
 					irc.sendContextReply(mes, gameplayResults);
 				}
+				*/
 			} else {
 				irc.sendContextReply(mes, "Sorry, I'm limited to A-Z0-9,._;: hyphen and space characters. At least one alpha-numeric character must be provided.");
 			}
