@@ -62,8 +62,8 @@ public final class PluginModule
 	 * @param pluginName Name for the class of the new plugin.
 	 * @throws ChoobException Thrown if there's a syntactical error in the plugin's source.
 	 */
-	public void addPlugin(String pluginName, String URL) throws ChoobException {
-		URL srcURL;
+	public void addPlugin(final String pluginName, String URL) throws ChoobException {
+		final URL srcURL;
 		try
 		{
 			srcURL = new URL(URL);
@@ -73,19 +73,39 @@ public final class PluginModule
 			throw new ChoobException("URL " + URL + " is malformed: " + e);
 		}
 
-		boolean existed;
-		if (srcURL.getFile().endsWith(".js"))
-			existed = jsPlugMan.loadPlugin(pluginName, srcURL);
-		else
-			existed = hsPlugMan.loadPlugin(pluginName, srcURL);
+		// Small hack to allow the ChoobTask to return a value.
+		final boolean[] ok = new boolean[] { true };
+		
+		ChoobTask task = new ChoobTask(null, "getConcurrencyLimit") {
+			public void run() {
+				try {
+					boolean existed;
+					if (srcURL.getFile().endsWith(".js"))
+						existed = jsPlugMan.loadPlugin(pluginName, srcURL);
+					else
+						existed = hsPlugMan.loadPlugin(pluginName, srcURL);
 
-		// Inform plugins, if they want to know.
-		if (existed)
-			bot.onPluginReLoaded(pluginName);
-		else
-			bot.onPluginLoaded(pluginName);
-
-		addPluginToDb(pluginName, URL);
+					// Inform plugins, if they want to know.
+					if (existed)
+						bot.onPluginReLoaded(pluginName);
+					else
+						bot.onPluginLoaded(pluginName);
+				} catch (Exception e) {
+					// Don't care about anything. Lalala.
+					ok[0] = false;
+				}
+			}
+		};
+		ChoobThread thread = new ChoobThread(task, "choob-loadPlugin-" + pluginName);
+		thread.pushPlugin(pluginName);
+		
+		thread.run();
+		try {
+			thread.join();
+		} catch (InterruptedException e) {}
+		
+		if (ok[0])
+			addPluginToDb(pluginName, URL);
 	}
 
 	/**
