@@ -181,7 +181,7 @@ public final class PluginModule
 	 * @param params Parameters to pass to the routine.
 	 */
 	
-	public List<CallAPIResult> broadcastCallAPI(String APIString, Object... params) throws ChoobNoSuchCallException
+	public List<CallAPIResult> broadcastCallAPI(String APIString, Object... params)
 	{
 		List<CallAPIResult> rvList = new ArrayList<CallAPIResult>();
 		

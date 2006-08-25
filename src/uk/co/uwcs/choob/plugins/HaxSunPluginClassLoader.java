@@ -18,7 +18,7 @@ public final class HaxSunPluginClassLoader extends ClassLoader
 		definePackage("plugins." + pluginName, "", "", "", "", "", "", null);
 	}
 
-	public Class findClass(final String name) throws ClassNotFoundException
+	public Class<?> findClass(final String name) throws ClassNotFoundException
 	{
 		try
 		{

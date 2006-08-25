@@ -35,7 +35,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		try
 		{
 			URLClassLoader toolsCL = new URLClassLoader(new URL[] { toolsPath });
-			Class javac = toolsCL.loadClass("com.sun.tools.javac.Main");
+			Class<?> javac = toolsCL.loadClass("com.sun.tools.javac.Main");
 			this.compileMethod = javac.getMethod("compile", String[].class, PrintWriter.class);
 		}
 		catch (ClassNotFoundException e)
@@ -238,7 +238,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		}
 	}
 
-	protected Object instantiatePlugin(Class newClass, String pluginName) throws ChoobException
+	protected Object instantiatePlugin(Class<?> newClass, String pluginName) throws ChoobException
 	{
 		Object pluginObj=null;
 
@@ -993,7 +993,7 @@ final class ChoobPluginMap
 	{
 		List<Method> handlers = events.get(eventName);
 		if (handlers != null)
-			return (List<Method>)((LinkedList<Method>)handlers).clone();
+			return new ArrayList<Method>(handlers);
 		return null;
 	}
 

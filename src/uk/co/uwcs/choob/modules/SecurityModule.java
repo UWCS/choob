@@ -162,10 +162,10 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					String permissionName = permissionsResults.getString(2);
 					String actions = permissionsResults.getString(3);
 
-					Class clas;
+					Class <?> clas;
 					try
 					{
-						clas = this.getClass().forName( className );
+						clas = Class.forName( className );
 					}
 					catch (ClassNotFoundException e)
 					{
