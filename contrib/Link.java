@@ -58,32 +58,43 @@ public class Link {
 		+ "(?:"
 		+ "(?:www\\.)?google\\.co(?:\\.uk|m)"				// google
 		+ "|"
-		+ "(?:.*\\.)?(?:uwcs|warwickcompsoc)\\.co\\.uk"		// compsoc
+		+ "(?:[^/]*\\.)?(?:uwcs|warwickcompsoc)\\.co\\.uk"		// compsoc
 		+ ")"
 	);
 	
 	public static String filterLinkRegex = "http://\\S*";
 	final private static Pattern linkPattern = Pattern.compile(filterLinkRegex);
 	
+	/*
+	 * Called for every line that contains a link.
+	 */
 	public void filterLink(Message mes, Modules mods, IRCInterface irc) {
-		
-		if (!((mes instanceof ChannelMessage) || (mes instanceof ChannelAction))) return;
-		if (mes.getMessage().matches(irc.getTriggerRegex() + ".*")) return; //ignore commands
-		if (mes.getSynthLevel() > 0) return; //ignore synthetic messages
-		String reply = getOldReply(mes,true);
-		if (reply == null) return;
-		else {
-			irc.sendContextReply(mes,reply);
-		}
+		// Ignore stuff that isn't a channel message or action
+		// Ignore synthetic messages
+		// Ignore commands
+		if ((!(mes instanceof ChannelMessage||mes instanceof ChannelAction))
+				|| (mes.getSynthLevel() > 0)
+				|| (mes.getFlags().containsKey("command")) )
+			return;
+
+		String reply = getOldReply( mes, true );
+		if (reply != null)
+			irc.sendContextReply( mes, reply );
 	}
 	
+	/*
+	 *	Command to check whether a link is old.
+	 */
 	public void commandIsOld(Message mes) {
-		if (mes.getContext().matches("^#.*")) return;
-		String reply = getOldReply(mes,false);
-		if (reply == null) irc.sendContextReply(mes,"Link is not old.");
-		else {
-			irc.sendContextReply(mes,reply);
-		}
+		// Ignore if in a channel.
+		if (mes.getContext().matches("^#"))
+			return;
+
+		String reply = getOldReply( mes, false );
+		if (reply == null)
+			irc.sendContextReply( mes, "Link is not old." );
+		else
+			irc.sendContextReply( mes, reply );
 	}
 	
 	private String getOldReply(Message mes, boolean channelMessage) {
@@ -100,9 +111,8 @@ public class Link {
 			if (links.size() > 0) {
 				OldLink linkObj = links.get(0);
 				//Don't old reposts from the same user
-				if (linkObj.poster.equals(mes.getNick())) {
+				if (linkObj.poster.equals(mes.getNick()))
 					return null;
-				}
 
 				if (System.currentTimeMillis() - linkObj.lastPostedTime > FLOOD_INTERVAL) {
 					String timeBasedOld = "ld";
