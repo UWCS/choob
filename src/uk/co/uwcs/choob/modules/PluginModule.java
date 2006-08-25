@@ -76,7 +76,7 @@ public final class PluginModule
 		// Small hack to allow the ChoobTask to return a value.
 		final boolean[] ok = new boolean[] { true };
 		
-		ChoobTask task = new ChoobTask(null, "getConcurrencyLimit") {
+		ChoobTask task = new ChoobTask(null, "addPlugin-" + pluginName) {
 			public void run() {
 				try {
 					boolean existed;
@@ -96,7 +96,7 @@ public final class PluginModule
 				}
 			}
 		};
-		ChoobThread thread = new ChoobThread(task, "choob-loadPlugin-" + pluginName);
+		ChoobThread thread = new ChoobThread(task, "choob-addPlugin-" + pluginName);
 		thread.pushPlugin(pluginName);
 		
 		thread.run();
