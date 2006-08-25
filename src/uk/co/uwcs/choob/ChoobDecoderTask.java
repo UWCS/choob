@@ -86,8 +86,6 @@ public class ChoobDecoderTask extends ChoobTask
 			}
 		}
 		
-		System.out.println(event);
-		
 		// Process event calls first
 		tasks.addAll(modules.plugin.getPlugMan().eventTasks(event));
 		
