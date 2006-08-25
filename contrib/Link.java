@@ -35,9 +35,11 @@ public class Link {
 	Modules mods;
 	IRCInterface irc;
 	
-	//This specifies the minimum time between when the bot last saw the link,
-	//it starts complaining about it being ooooold
-	private static final long FLOOD_INTERVAL = 15 * 60 * 1000; //15 minute
+	/**
+	 * Specifies the minimum time between when the bot last saw the link,
+	 * and when it starts complaining about it being ooooold.
+	 */
+	private static final long FLOOD_INTERVAL = 15 * 60 * 1000; // 15 minutes
 	
 	public Link(Modules mods, IRCInterface irc) {
 		this.irc = irc;
@@ -50,10 +52,10 @@ public class Link {
 			mods.odb.delete(link);
 		} */
 	}
-	
-	// Exceptions to what can be "olded".
-	// Regexes are fun! Learn to love regexes.
+
+	/** Exceptions to what can be "olded". */
 	final private static Pattern exceptionPattern = Pattern.compile(
+		// Regexes are fun! Learn to love regexes.
 		"^http://"
 		+ "(?:"
 		+ "(?:www\\.)?google\\.co(?:\\.uk|m)"				// google
@@ -62,11 +64,15 @@ public class Link {
 		+ ")"
 	);
 	
+	/** Regex to match links. */
 	public static String filterLinkRegex = "http://\\S*";
 	final private static Pattern linkPattern = Pattern.compile(filterLinkRegex);
 	
-	/*
+	/**
 	 * Called for every line that contains a link.
+	 * @param mes The message containing the link.
+	 * @param mods The bot modules.
+	 * @param irc The irc interface.
 	 */
 	public void filterLink(Message mes, Modules mods, IRCInterface irc) {
 		// Ignore stuff that isn't a channel message or action
@@ -77,59 +83,31 @@ public class Link {
 				|| (mes.getFlags().containsKey("command")) )
 			return;
 
-		String reply = getOldReply( mes, true );
-		if (reply != null)
-			irc.sendContextReply( mes, reply );
-	}
-	
-	/*
-	 *	Command to check whether a link is old.
-	 */
-	public void commandIsOld(Message mes) {
-		// Ignore if in a channel.
-		if (mes.getContext().matches("^#"))
-			return;
-
-		String reply = getOldReply( mes, false );
-		if (reply == null)
-			irc.sendContextReply( mes, "Link is not old." );
-		else
-			irc.sendContextReply( mes, reply );
-	}
-	
-	private String getOldReply(Message mes, boolean channelMessage) {
 		Matcher linkMatch = linkPattern.matcher(mes.getMessage());
+		ArrayList<OldLink> oldLinks = new ArrayList<OldLink>();
+
 		// Iterate over links in line.
 		while (linkMatch.find()) {
 			String link = linkMatch.group(0);
-			// Ensure that the link isn't in our exceptions list
-			if (exceptionPattern.matcher(link).find())
-				return null;
-			//Check objectDB for an existing link with this URL
-			String queryString = "WHERE URL = \"" + mods.odb.escapeString(link) + "\"";
-			List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
-			if (links.size() > 0) {
-				OldLink linkObj = links.get(0);
-				//Don't old reposts from the same user
-				if (linkObj.poster.equals(mes.getNick()))
-					return null;
+			OldLink linkObj = getOldLink(link);
+			if ( linkObj != null ) {
+				// Flood protection
+				if ( System.currentTimeMillis() - linkObj.lastPostedTime
+								< FLOOD_INTERVAL )
+					continue;
 
-				if (System.currentTimeMillis() - linkObj.lastPostedTime > FLOOD_INTERVAL) {
-					String timeBasedOld = "ld";
-					long timeSinceOriginal = System.currentTimeMillis() - linkObj.firstPostedTime;
-					//Check how many hours old it is, for each one over 4, add a o.
-					int oldHours = (int)timeSinceOriginal/(60*60*1000);
-					String output = "O" + Integer.toBinaryString(oldHours).replaceAll("0", "o").replaceAll("1", "O") + "ld! (link originally posted on " + linkObj.channel + ", " + mods.date.timeLongStamp(timeSinceOriginal) + " ago by " + linkObj.poster;
-					if (!channelMessage) output = output + " in " + linkObj.channel;
-					output = output + ")";
-					
-					//Update the last posted time.
-					linkObj.lastPostedTime = mes.getMillis();
-					mods.odb.update(linkObj);
-					return output;
-				}
-			} else if (channelMessage) {
-				OldLink linkObj = new OldLink();
+				// Old link: Update the last-posted time.
+				linkObj.lastPostedTime = mes.getMillis();
+				mods.odb.update(linkObj);
+
+				// Don't "old" reposts from the same user
+				if ( linkObj.poster.equals(mes.getNick()) )
+					continue;
+
+				oldLinks.add( linkObj );
+			} else {
+				// New link: Add to database.
+				linkObj = new OldLink();
 				linkObj.URL = link;
 				linkObj.poster = mods.nick.getBestPrimaryNick(mes.getNick());
 				linkObj.channel = mes.getContext();
@@ -138,6 +116,84 @@ public class Link {
 				mods.odb.save(linkObj);
 			}
 		}
-		return null;
+
+		if ( oldLinks.size() == 0 ) {
+			return;
+		} else if ( oldLinks.size() == 1 ) {
+			irc.sendContextReply( mes, getOldResponse(oldLinks.get(0)) );
+		} else {
+			irc.sendContextAction( mes, "slaps " + mes.getNick()
+				+ " for spamming " + oldLinks.size()
+				+ " ooooolllllddddd links." );
+		}
+	}
+	
+	/**
+	 * Command to manually check whether a link is old.
+	 * @param mes The message delivering the command.
+	 */
+	public void commandIsOld(Message mes) {
+		// Ignore messages in channels.
+		if ( mes instanceof ChannelMessage )
+			return;
+
+		Matcher linkMatch = linkPattern.matcher(mes.getMessage());
+
+		if ( linkMatch.find() ) {
+			String link = linkMatch.group(0);
+			OldLink linkObj = getOldLink(link);
+			if (linkObj == null) {
+				irc.sendContextReply( mes, "Link is not old." );
+			} else if ( System.currentTimeMillis() - linkObj.lastPostedTime
+								< FLOOD_INTERVAL ) {
+				irc.sendContextReply( mes, "Link is old, but posted recently.");
+			} else if ( linkObj.poster.equals(mes.getNick()) ) {
+				irc.sendContextReply( mes, "Link is old, but you posted it." );
+			} else {
+				irc.sendContextReply( mes, getOldResponse(linkObj) );
+			}
+		} else {
+			irc.sendContextReply( mes, "Usage: !isold <link>" );
+		}
+	}
+	
+	/**
+	 * Check the database to see if a particular link is old.
+	 * @param link The URI to check the database for.
+	 * @return The link object if present in the database, else null.
+	 */
+	private OldLink getOldLink(String link) {
+		// Ensure that the link isn't in our exceptions list
+		if (exceptionPattern.matcher(link).find())
+			return null;
+
+		// Check objectdb
+		String queryString = "WHERE URL = \""
+								+ mods.odb.escapeString(link) + "\"";
+		List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
+
+		// Return the first result, if any.
+		return links.size() > 0 ? links.get(0) : null;
+	}
+
+	/**
+	 * Get the "ooold" response for an OldLink.
+	 * @param linkObj The olde linke to fetche a response for.
+	 * @return A suitably harsh response.
+	 */
+	private String getOldResponse(OldLink linkObj) {
+		long timeSinceOriginal = 
+			System.currentTimeMillis() - linkObj.firstPostedTime;
+		int oldHours = (int) timeSinceOriginal / ( 60 * 60 * 1000 );
+
+		// Represent the number of hours since the original posting,
+		// in base 2, using upper and lower case 'o's.
+		return "O"
+			+ Integer.toBinaryString(oldHours)
+				.replaceAll("0", "o")
+				.replaceAll("1", "O")
+			+ "ld! (link originally posted in " + linkObj.channel
+			+ ", " + mods.date.timeLongStamp(timeSinceOriginal)
+			+ " ago by " + linkObj.poster + ")";
 	}
 }
