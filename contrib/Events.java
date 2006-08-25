@@ -50,7 +50,7 @@ public class Events
 			id            = parseId(sid);
 			name          = sname;
 			start         = convertTimestamp(sstart);
-			end           = convertTimestamp(send);
+			end           = (send.equals("-") ? start : convertTimestamp(send));
 			signupMax     = Integer.parseInt(ssignupMax);
 			signupCurrent = Integer.parseInt(ssignupCurrent);
 
@@ -357,7 +357,10 @@ public class Events
 						" at " + ev.location +
 						( !"".equals(ev.shortdesc) ? " (" + ev.shortdesc + ")" : "") +
 						" (" + ev.id +
-						") from " + absoluteDateFormat(ev.start) + " to " + absoluteDateFormat(ev.end) + "." +
+						") " + (ev.start == ev.end ?
+						        "at " + absoluteDateFormat(ev.start) :
+						        "from " + absoluteDateFormat(ev.start) + " to " + absoluteDateFormat(ev.end)) +
+						"." +
 						signup
 					);
 					return;
