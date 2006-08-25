@@ -51,16 +51,18 @@ public class Link {
 		} */
 	}
 	
+	// Exceptions to what can be "olded".
+	// Regexes are fun! Learn to love regexes.
+	final private static Pattern exceptionPattern = Pattern.compile(
+		"^http://"
+		+ "(?:"
+		+ "(?:www\\.)?google\\.co(?:\\.uk|m)"				// google
+		+ "|"
+		+ "(?:.*\\.)?(?:uwcs|warwickcompsoc)\\.co\\.uk"		// compsoc
+		+ ")"
+	);
+	
 	public static String filterLinkRegex = "http://\\S*";
-	
-	//Some exceptions to what can be "olded" - like google
-	private String[] exceptions = {
-		"http://www.google.co.uk",
-		"http://www.google.com",
-		"http://google.com",
-		"http://google.co.uk"
-	};
-	
 	final private static Pattern linkPattern = Pattern.compile(filterLinkRegex);
 	
 	public void filterLink(Message mes, Modules mods, IRCInterface irc) {
@@ -89,12 +91,9 @@ public class Link {
 		// Iterate over links in line.
 		while (linkMatch.find()) {
 			String link = linkMatch.group(0);
-			//Ensure that it isn't in our exceptions list
-			for (int i=0;i<exceptions.length;i++) {
-				if (link.equalsIgnoreCase(exceptions[i])) {
-					return null;
-				}
-			}
+			// Ensure that the link isn't in our exceptions list
+			if (exceptionPattern.matcher(link).find())
+				return null;
 			//Check objectDB for an existing link with this URL
 			String queryString = "WHERE URL = \"" + mods.odb.escapeString(link) + "\"";
 			List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
