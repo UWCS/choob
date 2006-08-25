@@ -74,7 +74,7 @@ public final class PluginModule
 		}
 
 		// Small hack to allow the ChoobTask to return a value.
-		final boolean[] ok = new boolean[] { true };
+		final ChoobException[] err = new ChoobException[] { null };
 		
 		ChoobTask task = new ChoobTask(null, "addPlugin-" + pluginName) {
 			public void run() {
@@ -90,9 +90,9 @@ public final class PluginModule
 						bot.onPluginReLoaded(pluginName);
 					else
 						bot.onPluginLoaded(pluginName);
-				} catch (Exception e) {
+				} catch (ChoobException e) {
 					// Don't care about anything. Lalala.
-					ok[0] = false;
+					err[0] = e;
 				}
 			}
 		};
@@ -104,8 +104,10 @@ public final class PluginModule
 			thread.join();
 		} catch (InterruptedException e) {}
 		
-		if (ok[0])
+		if (err[0] == null)
 			addPluginToDb(pluginName, URL);
+		else
+			throw err[0];
 	}
 
 	/**
