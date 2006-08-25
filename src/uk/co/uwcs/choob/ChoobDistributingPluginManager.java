@@ -54,35 +54,34 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 			{
 				public void run()
 				{
-					List <String>suggestions;
-					synchronized(phoneticCommands)
+					String[] commands;
+					final String notFoundPrefix = "Command " + plugin + "." + command + " not found";
+					try
 					{
-						suggestions = (List<String>)phoneticCommands.getSuggestions(plugin + "." + command, 200);
-					}
-					if (suggestions != null && suggestions.size() > 0)
-					{
-						if (suggestions.size() == 1)
-							irc.sendContextReply(ev, "Command " + plugin + "." + command + " not found. Perhaps you meant " + suggestions.get(0) + "?");
+						commands = mods.plugin.getPluginCommands(plugin);
+						if (commands.length == 0)
+							irc.sendContextReply(ev, notFoundPrefix + ", the plugin doesn't have any commands in it!");
+						else if (commands.length == 1)
+							irc.sendContextReply(ev, notFoundPrefix + ", you must have meant " + plugin + "." + commands[0] + "?");
 						else
 						{
-							StringBuilder buf = new StringBuilder("Command " + plugin + "." + command + " not found. Perhaps you meant one of: ");
-							Iterator<String> it = suggestions.iterator();
-							buf.append(it.next());
-							while(it.hasNext())
-							{
-								String sug = it.next();
-								if (it.hasNext())
-									buf.append(", ");
+							StringBuilder sb = new StringBuilder(notFoundPrefix).append(", did you mean one of ")
+									// Plugin's/pluginnames'
+									.append(plugin).append("'").append(plugin.substring(plugin.length()-1, plugin.length()).equalsIgnoreCase("s") ? "" : "s")
+									.append(" other commands; ");
+							for (int i=0; i<commands.length - 1; i++)
+								if (i == commands.length - 2)
+									sb.append(commands[i]).append(" or ");
 								else
-									buf.append(" or ");
-								buf.append(sug);
-							}
-							buf.append("?");
-							irc.sendContextReply(ev, buf.toString());
+									sb.append(commands[i]).append(", ");
+							
+							irc.sendContextReply(ev, sb.append(commands[commands.length - 1]).append("?").toString());
 						}
 					}
-					else
-						irc.sendContextReply(ev, "Command " + plugin + "." + command + " not found. Can't find any suggestions either.");
+					catch (ChoobNoSuchPluginException e)
+					{
+						irc.sendContextReply(ev, notFoundPrefix + ", the plugin doesn't exist or isn't loaded.");
+					}
 				}
 			};
 		}

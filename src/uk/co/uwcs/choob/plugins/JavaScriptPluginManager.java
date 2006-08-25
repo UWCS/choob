@@ -680,7 +680,7 @@ final class JavaScriptPlugin {
 			}
 
 			// Pull in script.
-			Object result = cx.evaluateString(scope, code, pluginName, 1, null);
+			cx.evaluateString(scope, code, pluginName, 1, null);
 			Object ctor = scope.get(pluginName, scope);
 			if (ctor == Scriptable.NOT_FOUND) {
 				throw new ChoobException("Constructor property '" + pluginName + "' for JavaScript plugin not found.");
@@ -699,7 +699,7 @@ final class JavaScriptPlugin {
 			AccessControlContext accessContext = new AccessControlContext(new ProtectionDomain[] { accessDomain });
 			try {
 				inst = AccessController.doPrivileged(new PrivilegedExceptionAction<Scriptable>() {
-						public Scriptable run() throws ChoobException {
+						public Scriptable run() {
 							return cxF.newObject(scopeF, pluginNameF, args);
 						}
 					}, accessContext);
