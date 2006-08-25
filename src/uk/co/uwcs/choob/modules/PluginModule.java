@@ -74,24 +74,17 @@ public final class PluginModule
 		}
 
 		// Small hack to allow the ChoobTask to return a value.
+		final boolean[] existed = new boolean[] { false };
 		final ChoobException[] err = new ChoobException[] { null };
 		
 		ChoobTask task = new ChoobTask(null, "addPlugin-" + pluginName) {
 			public void run() {
 				try {
-					boolean existed;
 					if (srcURL.getFile().endsWith(".js"))
-						existed = jsPlugMan.loadPlugin(pluginName, srcURL);
+						existed[0] = jsPlugMan.loadPlugin(pluginName, srcURL);
 					else
-						existed = hsPlugMan.loadPlugin(pluginName, srcURL);
-
-					// Inform plugins, if they want to know.
-					if (existed)
-						bot.onPluginReLoaded(pluginName);
-					else
-						bot.onPluginLoaded(pluginName);
+						existed[0] = hsPlugMan.loadPlugin(pluginName, srcURL);
 				} catch (ChoobException e) {
-					// Don't care about anything. Lalala.
 					err[0] = e;
 				}
 			}
@@ -99,15 +92,21 @@ public final class PluginModule
 		ChoobThread thread = new ChoobThread(task, "choob-addPlugin-" + pluginName);
 		thread.pushPlugin(pluginName);
 		
-		thread.run();
+		thread.start();
 		try {
 			thread.join();
 		} catch (InterruptedException e) {}
 		
-		if (err[0] == null)
-			addPluginToDb(pluginName, URL);
-		else
+		if (err[0] != null)
 			throw err[0];
+		
+		// Inform plugins, if they want to know.
+		if (existed[0])
+			bot.onPluginReLoaded(pluginName);
+		else
+			bot.onPluginLoaded(pluginName);
+		
+		addPluginToDb(pluginName, URL);
 	}
 
 	/**
@@ -386,7 +385,7 @@ public final class PluginModule
 		ChoobThread thread = new ChoobThread(task, "choob-getConcurrencyLimit");
 		thread.pushPlugin(pluginName);
 		
-		thread.run();
+		thread.start();
 		try {
 			thread.join();
 		} catch (InterruptedException e) {}

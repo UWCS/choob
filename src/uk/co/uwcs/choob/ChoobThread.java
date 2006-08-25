@@ -29,7 +29,7 @@ public class ChoobThread extends Thread
 	{
 		Thread executing = Thread.currentThread();
 		if (!(executing instanceof ChoobThread))
-			throw new RuntimeException("ChoobThread static calls accessed from outside a ChoobThread (" + executing.getName() + "!");
+			throw new RuntimeException("ChoobThread static calls accessed from outside a ChoobThread (" + executing.getName() + ")!");
 		return (ChoobThread)executing;
 	}
 
