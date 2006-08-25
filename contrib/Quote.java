@@ -2,6 +2,7 @@ import uk.co.uwcs.choob.*;
 import uk.co.uwcs.choob.modules.*;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
+import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 import java.text.*;
@@ -1527,6 +1528,55 @@ public class Quote
 	{
 		if (ev.getNewNick().equals(irc.getNickname()))
 			updatePatterns();
+	}
+	
+	private String htmlSafe(String text)
+	{
+		return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+	}
+	
+	public void webGetQuote(PrintWriter out, String args, String[] from)
+	{
+		try
+		{
+			out.println("HTTP/1.0 200 OK");
+			out.println("Content-Type: text/html");
+			out.println();
+			
+			String whereClause = getClause(args);
+			List quotes;
+			try
+			{
+				quotes = mods.odb.retrieve(QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause);
+			}
+			catch (ObjectDBError e)
+			{
+				return;
+			}
+			
+			if (quotes.size() == 0)
+				return;
+			
+			QuoteObject quote = (QuoteObject)quotes.get(0);
+			List lines = mods.odb.retrieve(QuoteLine.class, "WHERE quoteID = " + quote.id + " ORDER BY lineNumber");
+			Iterator l = lines.iterator();
+			if (!l.hasNext())
+				return;
+			
+			while(l.hasNext())
+			{
+				QuoteLine line = (QuoteLine)l.next();
+				if (line.isAction)
+					out.println(  "* " + htmlSafe(line.nick) + " "     + htmlSafe(line.message) + "<BR>");
+				else
+					out.println("&lt;" + htmlSafe(line.nick) + "&gt; " + htmlSafe(line.message) + "<BR>");
+			}
+		}
+		catch (Exception e)
+		{
+			out.println("ERROR!");
+			e.printStackTrace();
+		}
 	}
 }
 
