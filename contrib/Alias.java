@@ -619,7 +619,7 @@ public class Alias
 		}
 
 		// Message extends IRCEvent, so this cast will always succeed.
-		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
+		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
 
 		if (mesFlags.containsKey("alias.expanded"))
 		{

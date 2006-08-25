@@ -5,7 +5,7 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class ChannelAction extends Message implements ChannelEvent, FilterEvent
+public class ChannelAction extends Message implements ChannelEvent, ActionEvent, FilterEvent
 {
 	/**
 	 * channel

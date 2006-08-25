@@ -13,7 +13,7 @@ public class TimedEvent
 	public int id;
 	public int mesID; // For duplication
 	public int synthLevel; // Remember this.
-	public String synthFlags;
+	public String flags;
 	public String command;
 	public long executeAt;
 }
@@ -66,7 +66,7 @@ public class TimedEvents
 	};
 	public void commandIn( Message mes )
 	{
-		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
+		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
 
 		// Stop recursion
 		if (mesFlags.containsKey("timedevents.delayed")) {
@@ -118,7 +118,7 @@ public class TimedEvents
 		TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
 		timedEvent.synthLevel = mes.getSynthLevel();
-		timedEvent.synthFlags = encodeSynthFlags(mesFlags);
+		timedEvent.flags = encodeFlags(mesFlags);
 		timedEvent.command = command;
 		timedEvent.executeAt = System.currentTimeMillis() + period * 1000;
 
@@ -143,7 +143,7 @@ public class TimedEvents
 	};
 	public void commandAt( Message mes )
 	{
-		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
+		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
 
 		// Stop recursion
 		if (mesFlags.containsKey("timedevents.delayed")) {
@@ -301,7 +301,7 @@ public class TimedEvents
 		TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
 		timedEvent.synthLevel = mes.getSynthLevel();
-		timedEvent.synthFlags = encodeSynthFlags(mesFlags);
+		timedEvent.flags = encodeFlags(mesFlags);
 		timedEvent.command = command;
 		timedEvent.executeAt = cal.getTimeInMillis();
 
@@ -373,8 +373,8 @@ public class TimedEvents
 				newMes = (Message)newMes.cloneEvent(command);
 
 			// Put back flags.
-			Map<String,String> mesFlags = ((IRCEvent)newMes).getSynthFlags();
-			decodeSynthFlags(mesFlags, timedEvent.synthFlags);
+			Map<String,String> mesFlags = ((IRCEvent)newMes).getFlags();
+			decodeFlags(mesFlags, timedEvent.flags);
 
 			lastDelivery.put(mes.getContext(), timedEvent);
 
@@ -404,7 +404,7 @@ public class TimedEvents
 			irc.sendContextReply(mes, "Nobody queued nuffin', gov'ner.");
 	}
 
-	String encodeSynthFlags(Map<String,String> flags)
+	String encodeFlags(Map<String,String> flags)
 	{
 		String rv = "";
 		for (String prop : flags.keySet())
@@ -418,7 +418,7 @@ public class TimedEvents
 		return rv;
 	}
 
-	void decodeSynthFlags(Map<String,String> flags, String data)
+	void decodeFlags(Map<String,String> flags, String data)
 	{
 		if (data == null)
 			return;

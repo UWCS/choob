@@ -5,7 +5,7 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class PrivateAction extends Message implements PrivateEvent, FilterEvent
+public class PrivateAction extends Message implements PrivateEvent, ActionEvent, FilterEvent
 {
 	/**
 	 * Get the reply context in which this event resides

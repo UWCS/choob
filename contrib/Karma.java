@@ -392,7 +392,7 @@ public class Karma
 	public synchronized void filterKarma( Message mes, Modules mods, IRCInterface irc )
 	{
 		// Ignore lines that look like commands.
-		if (Pattern.compile(irc.getTriggerRegex()).matcher(mes.getMessage()).find())
+		if (mes.getFlags().containsKey("command"))
 			return;
 
 		Matcher reasonMatch = reasonPattern.matcher(mes.getMessage());

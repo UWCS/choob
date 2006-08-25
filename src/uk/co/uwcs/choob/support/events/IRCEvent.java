@@ -49,16 +49,16 @@ public class IRCEvent extends Event implements IRCRootEvent
 	}
 
 	/**
-	 * synthFlags
+	 * flags
 	 */
-	private final Map<String,String> synthFlags;
+	private final Map<String,String> flags;
 
 	/**
-	 * Get the value of synthFlags
-	 * @return The value of synthFlags
+	 * Get the value of flags
+	 * @return The value of flags
 	 */
-	public Map<String,String> getSynthFlags() {
-		 return synthFlags;
+	public Map<String,String> getFlags() {
+		 return flags;
 	}
 
 
@@ -72,7 +72,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 		this.random = random;
 		java.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission("event.create"));
 		this.synthLevel = 0;
-		this.synthFlags = new HashMap<String,String>();
+		this.flags = new HashMap<String,String>();
 	}
 
 	/**
@@ -85,9 +85,9 @@ public class IRCEvent extends Event implements IRCRootEvent
 		this.random = old.random;
 		java.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission("event.create"));
 		this.synthLevel = old.synthLevel + 1;
-		this.synthFlags = new HashMap<String,String>();
-		for (String prop : old.synthFlags.keySet()) {
-			this.synthFlags.put(prop, new String((old.synthFlags.get(prop))));
+		this.flags = new HashMap<String,String>();
+		for (String prop : old.flags.keySet()) {
+			this.flags.put(prop, new String((old.flags.get(prop))));
 		}
 	}
 
@@ -107,7 +107,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 		if ( !super.equals(obj) )
 			return false;
 		IRCEvent thing = (IRCEvent)obj;
-		if ( true && (millis == thing.millis) && (random == thing.random) && (synthLevel == thing.synthLevel) && (synthFlags == thing.synthFlags) )
+		if ( true && (millis == thing.millis) && (random == thing.random) && (synthLevel == thing.synthLevel) && (flags == thing.flags) )
 			return true;
 		return false;
 	}
@@ -119,7 +119,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 		out.append(", millis = " + millis);
 		out.append(", random = " + random);
 		out.append(", synthLevel = " + synthLevel);
-		out.append(", synthFlags = " + synthFlags);
+		out.append(", flags = " + flags);
 		out.append(")");
 		return out.toString();
 	}

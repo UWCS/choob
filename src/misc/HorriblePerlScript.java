@@ -38,8 +38,8 @@ public final class HorriblePerlScript
 		inheritance.put("PrivateMessage", new String[] { "Message", "PrivateEvent", "CommandEvent", "FilterEvent", });
 		inheritance.put("ChannelMessage", new String[] { "Message", "ChannelEvent", "CommandEvent", "FilterEvent", });
 		inheritance.put("Action", new String[] { "__HORRORMUNGER__" } );
-		inheritance.put("PrivateAction", new String[] { "Message", "PrivateEvent", "FilterEvent", });
-		inheritance.put("ChannelAction", new String[] { "Message", "ChannelEvent", "FilterEvent", });
+		inheritance.put("PrivateAction", new String[] { "Message", "PrivateEvent", "ActionEvent", "FilterEvent", });
+		inheritance.put("ChannelAction", new String[] { "Message", "ChannelEvent", "ActionEvent", "FilterEvent", });
 		inheritance.put("Notice", new String[] { "__HORRORMUNGER__" } );
 		inheritance.put("PrivateNotice", new String[] { "Message", "PrivateEvent", });
 		inheritance.put("ChannelNotice", new String[] { "Message", "ChannelEvent", });
@@ -75,6 +75,7 @@ public final class HorriblePerlScript
 		interfaces.put("ChannelEvent", new String[] { "channel" });
 		interfaces.put("PrivateEvent", new String[0] );
 		interfaces.put("CommandEvent", new String[0] );
+		interfaces.put("ActionEvent", new String[0] );
 		interfaces.put("FilterEvent", new String[0] );
 		interfaces.put("UserEvent", new String[] { "nick", "login", "hostname" });
 		interfaces.put("MessageEvent", new String[] { "message" });
@@ -483,8 +484,8 @@ public final class HorriblePerlScript
 			{
 				memberVariables.add("synthLevel");
 				paramTypes.put("synthLevel", "int");
-				memberVariables.add("synthFlags");
-				paramTypes.put("synthFlags", "Map<String,String>");
+				memberVariables.add("flags");
+				paramTypes.put("flags", "Map<String,String>");
 			}
 
 			// Member variables now.
@@ -554,7 +555,7 @@ public final class HorriblePerlScript
 			for(String fieldName: memberVariables)
 			{
 				// Hack: Skip this.
-				if (fieldName.equals("synthLevel") || fieldName.equals("synthFlags"))
+				if (fieldName.equals("synthLevel") || fieldName.equals("flags"))
 					continue;
 				classContent.append("\t\tthis.");
 				classContent.append(fieldName + " = " + fieldName + ";\n");
@@ -564,7 +565,7 @@ public final class HorriblePerlScript
 			{
 				classContent.append("\t\tjava.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission(\"event.create\"));\n");
 				classContent.append("\t\tthis.synthLevel = 0;\n");
-				classContent.append("\t\tthis.synthFlags = new HashMap<String,String>();\n");
+				classContent.append("\t\tthis.flags = new HashMap<String,String>();\n");
 			}
 			classContent.append("\t}\n\n");
 
@@ -593,7 +594,7 @@ public final class HorriblePerlScript
 			for(String fieldName: memberVariables)
 			{
 				// Hack: Skip this.
-				if (fieldName.equals("synthLevel") || fieldName.equals("synthFlags"))
+				if (fieldName.equals("synthLevel") || fieldName.equals("flags"))
 					continue;
 				if (myOverrides.contains(fieldName))
 					classContent.append("\t\tthis." + fieldName + " = " + fieldName + ";\n");
@@ -605,9 +606,9 @@ public final class HorriblePerlScript
 			{
 				classContent.append("\t\tjava.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission(\"event.create\"));\n");
 				classContent.append("\t\tthis.synthLevel = old.synthLevel + 1;\n");
-				classContent.append("\t\tthis.synthFlags = new HashMap<String,String>();\n");
-				classContent.append("\t\tfor (String prop : old.synthFlags.keySet()) {\n");
-				classContent.append("\t\t\tthis.synthFlags.put(prop, new String((old.synthFlags.get(prop))));\n");
+				classContent.append("\t\tthis.flags = new HashMap<String,String>();\n");
+				classContent.append("\t\tfor (String prop : old.flags.keySet()) {\n");
+				classContent.append("\t\t\tthis.flags.put(prop, new String((old.flags.get(prop))));\n");
 				classContent.append("\t\t}\n");
 			}
 			classContent.append("\t}\n\n");

@@ -129,8 +129,8 @@ public class Shutup
 		if (channel == null)
 			return;
 		
-		Matcher matcher = Pattern.compile(irc.getTriggerRegex()).matcher(mes.getMessage());
-		if (!matcher.find())
+		// Skip non-command lines.
+		if (!mes.getFlags().containsKey("command"))
 			return;
 		
 		LastMessage la = lastMessage.get(channel);

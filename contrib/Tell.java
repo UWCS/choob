@@ -225,7 +225,7 @@ public class Tell
 		}
 
 		int count = tell.targets.length;
-		Map<String,String> mesFlags = ((IRCEvent)mes).getSynthFlags();
+		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
 		if (!mesFlags.containsKey("timedevents.delayed"))
 		{
 			irc.sendContextReply(mes, "Okay, will " + type + " upon next speaking. (Sent to " + count + " " + (count == 1 ? "person" : "people") + ".)");

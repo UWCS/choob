@@ -41,7 +41,11 @@ public class ChoobDecoderTask extends ChoobTask
 	public synchronized void run()
 	{
 		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
-
+		
+		Message mes = null;
+		if (event instanceof Message)
+			mes = (Message)event;
+			
 		if (event instanceof NickChange)
 		{
 			NickChange nc = (NickChange)event;
@@ -53,14 +57,45 @@ public class ChoobDecoderTask extends ChoobTask
 				modules.util.updateTrigger();
 			}
 		}
-
+		
+		// Check if the message looks like a command in any way.
+		Matcher ma = null;
+		boolean mafind = false;
+		if (event instanceof CommandEvent)
+		{
+			// First, is does it have a trigger?
+			String matchAgainst = mes.getMessage();
+			ma = triggerPattern.matcher(matchAgainst);
+			
+			mafind = ma.find();
+			if (mafind || mes instanceof PrivateMessage)
+			{
+				// Decode into a string we can match as a command.
+				int commandStart = (mafind ? ma.end() : 0);
+				int commandEnd = matchAgainst.indexOf(' ', commandStart);
+				if (commandEnd != -1)
+					matchAgainst = matchAgainst.substring(commandStart, commandEnd);
+				else
+					matchAgainst = matchAgainst.substring(commandStart);
+				
+				if (matchAgainst.indexOf(' ') >= 0)
+					matchAgainst = matchAgainst.substring(0, matchAgainst.indexOf(' '));
+				
+				// Store the command name for convenience.
+				mes.getFlags().put("command", matchAgainst);
+			}
+		}
+		
+		System.out.println(event);
+		
 		// Process event calls first
 		tasks.addAll(modules.plugin.getPlugMan().eventTasks(event));
-
+		
 		boolean ignoreTriggers = false;
-		if (event instanceof UserEvent)
+		if ((event instanceof UserEvent) &&
+		    ((event instanceof FilterEvent) ||
+		     ((mes != null) && mes.getFlags().containsKey("command"))))
 		{
-			// TODO - This should happen only when a trigger might actually be activated...
 			try
 			{
 				if (1 == (Integer)ChoobDecoderTask.modules.plugin.callAPI("UserTypeCheck", "Status", ((UserEvent)event).getNick(), "bot"))
@@ -78,44 +113,18 @@ public class ChoobDecoderTask extends ChoobTask
 		}
 
 		// Then filters
-		if (!ignoreTriggers && event instanceof FilterEvent)
+		if (!ignoreTriggers)
 		{
-			// FilterEvents are messages
-			Message mes = (Message) event;
-			tasks.addAll(modules.plugin.getPlugMan().filterTasks(mes));
-		}
-
-		// Now if it's a message, deal with that too
-		if (!ignoreTriggers && event instanceof CommandEvent)
-		{
-			// CommandEvents are messages
-			Message mes = (Message) event;
-
-			Matcher ma;
-
-			// First, is does it have a trigger?
-			String matchAgainst = mes.getMessage();
-			ma = triggerPattern.matcher(matchAgainst);
-
-			boolean mafind = ma.find();
-
-			if ( mafind || mes instanceof PrivateMessage )
+			if (event instanceof FilterEvent)
 			{
-				// OK, it's a command!
+				tasks.addAll(modules.plugin.getPlugMan().filterTasks(mes));
+			}
 
-				// Decode into a string we can match as a command.
-				int commandStart = (mafind ? ma.end() : 0);
-				int commandEnd = matchAgainst.indexOf(' ', commandStart);
-				if (commandEnd != -1)
-					matchAgainst = matchAgainst.substring(commandStart, commandEnd);
-				else
-					matchAgainst = matchAgainst.substring(commandStart);
-
-				if (matchAgainst.indexOf(' ') >= 0)
-					matchAgainst = matchAgainst.substring(0, matchAgainst.indexOf(' '));
-
-				ma = commandPattern.matcher(matchAgainst);
-				if( ma.matches() )
+			// Now if it's a message, deal with that too
+			if ((mes != null) && mes.getFlags().containsKey("command"))
+			{
+				ma = commandPattern.matcher(mes.getFlags().get("command"));
+				if (ma.matches())
 				{
 					try
 					{
