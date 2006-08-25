@@ -1530,17 +1530,12 @@ public class Quote
 			updatePatterns();
 	}
 	
-	private String htmlSafe(String text)
-	{
-		return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-	}
-	
 	public void webGetQuote(PrintWriter out, String args, String[] from)
 	{
 		try
 		{
 			out.println("HTTP/1.0 200 OK");
-			out.println("Content-Type: text/html");
+			out.println("Content-Type: text/plain");
 			out.println();
 			
 			String whereClause = getClause(args);
@@ -1567,9 +1562,9 @@ public class Quote
 			{
 				QuoteLine line = (QuoteLine)l.next();
 				if (line.isAction)
-					out.println(  "* " + htmlSafe(line.nick) + " "     + htmlSafe(line.message) + "<BR>");
+					out.println("* " + line.nick +  " " + line.message + "\n");
 				else
-					out.println("&lt;" + htmlSafe(line.nick) + "&gt; " + htmlSafe(line.message) + "<BR>");
+					out.println( "<" + line.nick + "> " + line.message + "\n");
 			}
 		}
 		catch (Exception e)
