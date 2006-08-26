@@ -12,10 +12,8 @@ import java.util.regex.*;
  *
  */
 
-public class Response
-{
-	public String[] info()
-	{
+public class Response {
+	public String[] info() {
 		return new String[] {
 			"Response plugin.",
 			"Tim Retout",
@@ -27,8 +25,7 @@ public class Response
 	Modules mods;
 	IRCInterface irc;
 
-	public Response(Modules mods, IRCInterface irc)
-	{
+	public Response(Modules mods, IRCInterface irc) {
 		this.irc = irc;
 		this.mods = mods;
 	}
@@ -42,34 +39,39 @@ public class Response
 		"Muppet."
 	};
 
-	public static String filterBotRegex = "\\b(good|bad) bot\\b";
+	final public static String filterBotRegex = "\\b(\\w+) bot\\b";
 	final private static Pattern botPattern = Pattern.compile(filterBotRegex);
+	final private static Pattern badPattern = Pattern.compile("bad|la+me|st(u+|oo+)pid|gooo+d");
+	final private static Pattern goodPattern = Pattern.compile("good|nice");
 
-	public void filterBot( Message mes, Modules mods, IRCInterface irc )
-	{
+	public void filterBot( Message mes, Modules mods, IRCInterface irc ) {
 		// Ignore synthetic messages
 		if (mes.getSynthLevel() > 0)
 			return;
 
 		Matcher botMatch = botPattern.matcher(mes.getMessage());
 		int counter = 0;
+		boolean triggered = false;
 
 		// Iterate over matches
 		while (botMatch.find()) {
-			if (botMatch.group(1).equals("good")) {
+			if ( goodPattern.matcher(botMatch.group(1)).matches() ) {
 				counter++;
-			} else if (botMatch.group(1).equals("bad")) {
+				triggered = true;
+			} else if ( badPattern.matcher(botMatch.group(1)).matches() ) {
 				counter--;
+				triggered = true;
 			}
 		}
 		
 		// Work out the balance of the statements, and reply
 		if (counter > 0) {
 			irc.sendContextMessage(mes, "Thanks, " + mes.getNick() + " :-)");
-		} else if (counter == 0) {
-			irc.sendContextReply(mes, "Make your mind up.");
-		} else {
+		} else if (counter < 0) {
 			irc.sendContextReply(mes, chooseRand.from(badBot));
+		} else if (counter == 0 && triggered) {
+			irc.sendContextMessage(mes, "Make your mind up, "
+				+ mes.getNick() + ".");
 		}
 	}
 
