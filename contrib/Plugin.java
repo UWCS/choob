@@ -141,7 +141,7 @@ public class Plugin
 		}
 		catch (ChoobNoSuchCallException e)
 		{
-			irc.sendContextReply(mes, "Plugin loaded, but doesn't have any info.");
+			irc.sendContextReply(mes, "Plugin reloaded, but doesn't have any info.");
 		}
 		catch (ClassCastException e)
 		{
