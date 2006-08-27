@@ -25,12 +25,12 @@ public class Plugin
 		this.irc = irc;
 	}
 
-	void loadOrReloadPlugin(Message mes, String className, String url, String pluginName, boolean reloading)
+	void loadOrReloadPlugin(Message mes, String pluginName, String url, boolean reloading)
 	{
 		if (!reloading)
-			irc.sendContextReply(mes, "Loading plugin '" + className + "'...");
+			irc.sendContextReply(mes, "Loading plugin '" + pluginName + "'...");
 		else
-			irc.sendContextReply(mes, "Reloading plugin '" + className + "'...");
+			irc.sendContextReply(mes, "Reloading plugin '" + pluginName + "'...");
 		
 		String actioning = (reloading ? "re" : "") + "loading";
 		String actioned  = (reloading ? "re" : "") + "loaded";
@@ -38,11 +38,11 @@ public class Plugin
 		try
 		{
 			if (!reloading)
-				mods.plugin.addPlugin(className, url);
+				mods.plugin.addPlugin(pluginName, url);
 			else
 				mods.plugin.reloadPlugin(pluginName);
 			String[] info;
-			info = getInfo(className);
+			info = getInfo(pluginName);
 			if (info.length >= 3)
 				irc.sendContextReply(mes, "Plugin " + actioned + " OK, new version is " + info[3] + ".");
 			else
@@ -122,7 +122,7 @@ public class Plugin
 			// TODO: Make a groupExists() or something so we don't need to squelch this
 		}
 
-		loadOrReloadPlugin(mes, classname, url, classname, false);
+		loadOrReloadPlugin(mes, classname, url, false);
 	}
 
 	public String[] helpCommandReload = {
@@ -142,7 +142,7 @@ public class Plugin
 
 		mods.security.checkNickPerm(new ChoobPermission("plugin.load." + pluginName.toLowerCase()), mes);
 
-		loadOrReloadPlugin(mes, pluginName, null, pluginName, true);
+		loadOrReloadPlugin(mes, pluginName, null, true);
 	}
 
 	public String[] helpCommandDetach = {
