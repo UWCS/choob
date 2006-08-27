@@ -25,6 +25,44 @@ public class Plugin
 		this.irc = irc;
 	}
 
+	void loadOrReloadPlugin(Message mes, String className, String url, String pluginName, boolean reloading)
+	{
+		if (!reloading)
+			irc.sendContextReply(mes, "Loading plugin '" + className + "'...");
+		else
+			irc.sendContextReply(mes, "Reloading plugin '" + className + "'...");
+		
+		String actioning = (reloading ? "re" : "") + "loading";
+		String actioned  = (reloading ? "re" : "") + "loaded";
+		
+		try
+		{
+			if (!reloading)
+				mods.plugin.addPlugin(className, url);
+			else
+				mods.plugin.reloadPlugin(pluginName);
+			String[] info;
+			info = getInfo(className);
+			if (info.length >= 3)
+				irc.sendContextReply(mes, "Plugin " + actioned + " OK, new version is " + info[3] + ".");
+			else
+				irc.sendContextReply(mes, "Plugin " + actioned + " OK, but has missing info.");
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			irc.sendContextReply(mes, "Plugin " + actioned + ", but doesn't have any info.");
+		}
+		catch (ClassCastException e)
+		{
+			irc.sendContextReply(mes, "Plugin " + actioned + ", but has invalid info.");
+		}
+		catch (Exception e)
+		{
+			irc.sendContextReply(mes, "Error " + actioning + " plugin, see log for more details. " + e);
+			e.printStackTrace();
+		}
+	}
+
 	public String[] helpCommandLoad = {
 		"Load a plugin.",
 		"[<Name>] <URL>",
@@ -84,31 +122,7 @@ public class Plugin
 			// TODO: Make a groupExists() or something so we don't need to squelch this
 		}
 
-		irc.sendContextReply(mes, "Loading plugin '" + classname + "'...");
-
-		try
-		{
-			mods.plugin.addPlugin(classname, url);
-			String[] info;
-			info = getInfo(classname);
-			if (info.length >= 3)
-				irc.sendContextReply(mes, "Plugin loaded OK, new version is " + info[3] + ".");
-			else
-				irc.sendContextReply(mes, "Plugin loaded OK, but has missing info.");
-		}
-		catch (ChoobNoSuchCallException e)
-		{
-			irc.sendContextReply(mes, "Plugin loaded, but doesn't have any info.");
-		}
-		catch (ClassCastException e)
-		{
-			irc.sendContextReply(mes, "Plugin loaded, but has invalid info.");
-		}
-		catch (Exception e)
-		{
-			irc.sendContextReply(mes, "Error loading plugin, see log for more details. " + e);
-			e.printStackTrace();
-		}
+		loadOrReloadPlugin(mes, classname, url, classname, false);
 	}
 
 	public String[] helpCommandReload = {
@@ -128,28 +142,7 @@ public class Plugin
 
 		mods.security.checkNickPerm(new ChoobPermission("plugin.load." + pluginName.toLowerCase()), mes);
 
-		irc.sendContextReply(mes, "Reloading plugin '" + pluginName + "'...");
-
-		try {
-			mods.plugin.reloadPlugin(pluginName);
-			String[] info;
-			info = getInfo(pluginName);
-			if (info.length >= 3)
-				irc.sendContextReply(mes, "Plugin reloaded OK, new version is " + info[3] + ".");
-			else
-				irc.sendContextReply(mes, "Plugin reloaded OK, but has missing info.");
-		}
-		catch (ChoobNoSuchCallException e)
-		{
-			irc.sendContextReply(mes, "Plugin reloaded, but doesn't have any info.");
-		}
-		catch (ClassCastException e)
-		{
-			irc.sendContextReply(mes, "Plugin reloaded, but has invalid info.");
-		} catch (Exception e) {
-			irc.sendContextReply(mes, "Error reloading plugin, see log for more details. " + e);
-			e.printStackTrace();
-		}
+		loadOrReloadPlugin(mes, pluginName, null, pluginName, true);
 	}
 
 	public String[] helpCommandDetach = {
