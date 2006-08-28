@@ -46,7 +46,7 @@ public final class ChoobWatcherThread extends Thread
 				{
 					Interval tempInterval = tempIt.next();
 
-					if( tempInterval.getTrigger() <= timeNow )
+					if (tempInterval.getTrigger() <= timeNow)
 					{
 						tempIt.remove();
 						ChoobTask t = mods.plugin.doInterval(tempInterval.getPlugin(), tempInterval.getParameter());

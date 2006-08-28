@@ -220,19 +220,22 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 		final String pluginName = plugin.getName();
 		final String fullName = pluginName + "." + export.getName();
 
-		ProtectionDomain accessDomain = mods.security.getProtectionDomain(pluginName);
-		final AccessControlContext accessContext = new AccessControlContext(new ProtectionDomain[] { accessDomain });
+		ProtectionDomain[] domain = new ProtectionDomain[] {
+				mods.security.getContextProtectionDomain(),
+				mods.security.getProtectionDomain(pluginName)
+			};
+		final AccessControlContext accessContext = new AccessControlContext(domain);
 		final PrivilegedExceptionAction<Object> action = new PrivilegedExceptionAction<Object>() {
 			public Object run() throws Exception {
 				Context cx = Context.enter();
 				try {
 					Scriptable scope = plugin.getScope();
 					Scriptable inst = plugin.getInstance();
-
+					
 					if (export instanceof JavaScriptPluginMethod) {
 						JavaScriptPluginMethod method = (JavaScriptPluginMethod)export;
 						Function function = method.getFunction();
-
+						
 						return JSUtils.mapJSToJava(function.call(cx, scope, inst, params));
 					}
 					if (export instanceof JavaScriptPluginProperty) {
@@ -240,7 +243,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 						return JSUtils.mapJSToJava(prop.getValue());
 					}
 					throw new ChoobError("Unknown export type for " + export.getName() + ".");
-
+					
 				} catch (RhinoException e) {
 					if ((params.length > 0) && (params[0] instanceof Message)) {
 						irc.sendContextReply((Message)params[0], e.details() + " Line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
@@ -249,7 +252,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 					}
 					e.printStackTrace();
 					throw e;
-
+					
 				} catch (Exception e) {
 					if ((params.length > 0) && (params[0] instanceof Message)) {
 						mods.plugin.exceptionReply((Message)params[0], e, pluginName);
@@ -258,13 +261,13 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 					}
 					e.printStackTrace();
 					throw e;
-
+					
 				} finally {
 					cx.exit();
 				}
 			}
 		};
-
+		
 		if (result == CALL_WANT_TASK) {
 			return new ChoobTask(pluginName, fullName) {
 				public void run() {

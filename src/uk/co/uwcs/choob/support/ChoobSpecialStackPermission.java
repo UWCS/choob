@@ -22,7 +22,8 @@ public final class ChoobSpecialStackPermission extends BasicPermission
 
 	public void add(String pluginName)
 	{
-		haxList.add(pluginName);
+		// Insert item at start to ensure stack is correctly ordered.
+		haxList.add(0, pluginName);
 	}
 
 	public void root(List<String> list)

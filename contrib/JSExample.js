@@ -24,6 +24,7 @@ function JSExample(mods, irc) {
 	//            once the callback has been made.
 	mods.interval.callBack("init", 1000, 1);
 	mods.interval.callBack("trac-svn", 15000, 2);
+	this.mods = mods;
 	
 	this._debugChannel = "#testing42";
 	this._announceChannel = "#bots";
@@ -221,6 +222,23 @@ JSExample.prototype.apiFailure = function() {
 // API status (test to match NickServ)
 JSExample.prototype.apiStatus = function() {
 	return "JSExample API Status call";
+}
+
+// API callBack test
+JSExample.prototype.apiCallback = function(text) {
+	this._apiCBTest = text;
+	this.mods.interval.callBack("api-test", 1000, 1);
+}
+
+// API to call another API
+JSExample.prototype.apiCallAPI = function(plugin, api, param1, param2) {
+	this.mods.security.getPluginNames("JSExample:apiCallAPI");
+	this.mods.plugin.callAPI(plugin, api, [param1, param2]);
+}
+
+// Interval: api-test
+JSExample.prototype._apiTestInterval = function(params, mods, irc) {
+	irc.sendMessage(this._debugChannel, "API-test interval result: " + this._apiCBTest);
 }
 
 // Interval: init

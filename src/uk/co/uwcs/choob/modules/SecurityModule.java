@@ -68,16 +68,25 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	public AccessControlContext getPluginContext( )
 	{
-		ProtectionDomain domain = new ChoobFakeProtectionDomain( getPluginNames() );
-		return new AccessControlContext(new ProtectionDomain[] { domain });
+		return new AccessControlContext(new ProtectionDomain[] { getContextProtectionDomain() });
 	}
 
-	public ProtectionDomain getProtectionDomain( String pluginName )
+	public ProtectionDomain getContextProtectionDomain()
+	{
+		return new ChoobFakeProtectionDomain(getPluginNames());
+	}
+
+	public ProtectionDomain getProtectionDomain(String pluginName)
 	{
 		return new ChoobProtectionDomain(this, pluginName);
 	}
 
 	public List<String> getPluginNames()
+	{
+		return getPluginNames(null);
+	}
+	
+	public List<String> getPluginNames(String debugKey)
 	{
 		List<String> pluginStack = new ArrayList<String>();
 		// XXX HAX XXX HAX XXX HAX XXX HAX XXX
