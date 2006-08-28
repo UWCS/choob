@@ -218,7 +218,7 @@ public class Link {
     
     long cutOff = System.currentTimeMillis() - (timePeriod * 60 * 60 * 1000);
     
-    String queryString = "WHERE firstPostedTime > " + cutOff;
+    String queryString = "SORT DESC INTEGER lastPostedTime WHERE firstPostedTime > " + cutOff;
     
     List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
     
@@ -236,7 +236,7 @@ public class Link {
     out.println("Content-Type: text/html");
     out.println();
       
-    String queryString = "SORT ASC INTEGER lastPostedTime LIMIT (1)";
+    String queryString = "SORT DESC INTEGER lastPostedTime LIMIT (1)";
     
     List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
     
