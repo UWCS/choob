@@ -27,6 +27,8 @@ public class OldLink
 public class Link
 {
 	public String[] info()
+	{
+		return new String[] {
 			"Plugin which matches on links.",
 			"Tim Retout /  Chris Hawley",
 			"tim@retout.co.uk /  choob@blood-god.co.uk",
