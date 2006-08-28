@@ -199,9 +199,7 @@ public class Link {
 	}
 
   public void webListLinks(PrintWriter out, String params, String[] user)
-  {
-    // Time period here is in hours.
-    
+  { 
     out.println("HTTP/1.0 200 OK");
     out.println("Content-Type: text/html");
     out.println();
@@ -231,4 +229,23 @@ public class Link {
     
     out.flush();
   }
+  
+  public void webLastLink(PrintWriter out, String params, String[] user)
+  { 
+    out.println("HTTP/1.0 200 OK");
+    out.println("Content-Type: text/html");
+    out.println();
+      
+    String queryString = "SORT ASC INTEGER lastPostedTime LIMIT (1)";
+    
+    List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
+    
+    for( OldLink link : links )
+    {
+      out.println("<HTML><HEAD><SCRIPT>window.location = \"" + link.URL + "\";</SCRIPT></HEAD><BODY></BODY></HTML>");    
+    }
+    
+    out.println();
+    out.flush();
+  }  
 }
