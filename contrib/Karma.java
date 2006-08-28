@@ -33,6 +33,62 @@ public class KarmaReasonObject
 	public String reason;
 }
 
+public class KarmaReasonEnumerator
+{
+	public KarmaReasonEnumerator()
+	{
+	}
+	
+	public KarmaReasonEnumerator(String enumSource, int[] idList)
+	{
+		this.enumSource = enumSource;
+		this.idList = "";
+		for (int i = 0; i < idList.length; i++) {
+			if (i > 0)
+				this.idList += ",";
+			this.idList += idList[i];
+		}
+		this.index = (int)Math.floor(Math.random() * idList.length);
+		this.lastUsed = System.currentTimeMillis();
+	}
+	
+	public int getNext()
+	{
+		if (intIdList == null)
+			setupIDListInt();
+		
+		index++;
+		if (index >= intIdList.length) {
+			index = 0;
+		}
+		lastUsed = System.currentTimeMillis();
+		return intIdList[index];
+	}
+	
+	private void setupIDListInt()
+	{
+		String[] list = this.idList.split("\\s*,\\s*");
+		this.intIdList = new int[list.length];
+		for (int i = 0; i < list.length; i++) {
+			this.intIdList[i] = Integer.parseInt(list[i]);
+		}
+	}
+	
+	public int getSize()
+	{
+		if (intIdList == null)
+			setupIDListInt();
+		return intIdList.length;
+	}
+	
+	public int id;
+	public String enumSource;
+	public String idList;
+	private int[] intIdList = null;
+	public int index;
+	public long lastUsed;
+}
+
 class KarmaSortByAbsValue implements Comparator<KarmaObject>
 {
 	public int compare(KarmaObject o1, KarmaObject o2) {
@@ -95,6 +151,7 @@ public class Karma
 	}
 	static final int    FLOOD_RATE     = 15 * 60 * 1000;
 	static final String FLOOD_RATE_STR = "15 minutes";
+	private static long ENUM_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 	public String[] info()
 	{
@@ -112,66 +169,126 @@ public class Karma
 	{
 		this.mods = mods;
 		this.irc = irc;
+		mods.interval.callBack(null, 60000, 1);
+	}
+
+	// Interval
+	public void interval(Object param)
+	{
+		// Clean up dead enumerators.
+		long lastUsedCutoff = System.currentTimeMillis() - ENUM_TIMEOUT;
+		List<KarmaReasonEnumerator> deadEnums = mods.odb.retrieve(KarmaReasonEnumerator.class, "WHERE lastUsed < " + lastUsedCutoff);
+		for (int i = 0; i < deadEnums.size(); i++) {
+			mods.odb.delete(deadEnums.get(i));
+		}
+		
+		mods.interval.callBack(null, 60000, 1);
+	}
+
+	private KarmaReasonObject pickRandomKarmaReason(List<KarmaReasonObject> reasons, String enumSource)
+	{
+		if (enumSource == null) {
+			int index = (int)Math.floor(Math.random() * reasons.size());
+			return reasons.get(index);
+		}
+		
+		int reasonId = -1;
+		enumSource = enumSource.toLowerCase();
+		List<KarmaReasonEnumerator> enums = mods.odb.retrieve(KarmaReasonEnumerator.class, "WHERE enumSource = '" + mods.odb.escapeString(enumSource) + "'");
+		KarmaReasonEnumerator krEnum = null;
+		if (enums.size() >= 1) {
+			krEnum = enums.get(0);
+			if (krEnum.getSize() != reasons.size()) {
+				// Count has changed: invalidated!
+				mods.odb.delete(krEnum);
+				krEnum = null;
+			} else {
+				// Alright, step to the next one.
+				reasonId = krEnum.getNext();
+				mods.odb.update(krEnum);
+			}
+		}
+		if (krEnum == null) {
+			// No enumerator, create one.
+			int[] idList = new int[reasons.size()];
+			for (int i = 0; i < reasons.size(); i++)
+				idList[i] = reasons.get(i).id;
+			
+			krEnum = new KarmaReasonEnumerator(enumSource, idList);
+			reasonId = krEnum.getNext();
+			mods.odb.save(krEnum);
+		}
+		
+		KarmaReasonObject rvReason = null;
+		for (int i = 0; i < reasons.size(); i++) {
+			KarmaReasonObject reason = reasons.get(i);
+			if (reason.id == reasonId) {
+				rvReason = reason;
+				break;
+			}
+		}
+		return rvReason;
+	}
+
+	private String[] getReasonResult(List<KarmaReasonObject> reasons, String enumSource)
+	{
+		if (reasons.size() == 0) {
+			return null;
+		}
+		KarmaReasonObject reason = pickRandomKarmaReason(reasons, enumSource);
+		return new String[] {
+			reason.string,
+			reason.reason,
+			reason.direction == 1 ? "gained" : "lost"
+		};
 	}
 
 	public String[] apiReason()
 	{
-		List<KarmaReasonObject> results;
-		results = mods.odb.retrieve(KarmaReasonObject.class, "ORDER BY RAND() LIMIT 1");
-
-		if (results.size() == 0)
-			return null;
-		else
-			return new String[] {
-				results.get(0).string,
-				results.get(0).reason,
-				results.get(0).direction == 1 ? "gained" : "lost"
-			};
+		System.err.println("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
+		return apiReasonEnum(null);
 	}
 
 	public String[] apiReason(boolean up)
 	{
-		List<KarmaReasonObject> results;
-		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE direction = '" + (up ? 1 : -1) + "' ORDER BY RAND() LIMIT 1");
-
-		if (results.size() == 0)
-			return null;
-		else
-			return new String[] {
-				results.get(0).string,
-				results.get(0).reason,
-				up ? "gained" : "lost"
-			};
+		System.err.println("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
+		return apiReasonEnum(null, up);
 	}
 
 	public String[] apiReason(String name)
 	{
-		List<KarmaReasonObject> results;
-		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\" ORDER BY RAND() LIMIT 1");
-
-		if (results.size() == 0)
-			return null;
-		else
-			return new String[] {
-				name,
-				results.get(0).reason,
-				results.get(0).direction == 1 ? "gained" : "lost"
-			};
+		System.err.println("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
+		return apiReasonEnum(null, name);
 	}
 
 	public String[] apiReason(String name, boolean up)
 	{
-		List<KarmaReasonObject> results;
-		results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\" AND direction = '" + (up ? 1 : -1) + "' ORDER BY RAND() LIMIT 1");
+		System.err.println("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
+		return apiReasonEnum(null, name, up);
+	}
 
-		if (results.size() == 0)
-			return null;
-		else
-			return new String[] {
-				name,
-				results.get(0).reason,
-				up ? "gained" : "lost"
-			};
+	public String[] apiReasonEnum(String enumSource)
+	{
+		List<KarmaReasonObject> results = mods.odb.retrieve(KarmaReasonObject.class, "");
+		return getReasonResult(results, enumSource);
+	}
+
+	public String[] apiReasonEnum(String enumSource, boolean up)
+	{
+		List<KarmaReasonObject> results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE direction = '" + (up ? 1 : -1) + "'");
+		return getReasonResult(results, enumSource + ":" + (up ? "up" : "down"));
+	}
+
+	public String[] apiReasonEnum(String enumSource, String name)
+	{
+		List<KarmaReasonObject> results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\"");
+		return getReasonResult(results, enumSource + "::" + name);
+	}
+
+	public String[] apiReasonEnum(String enumSource, String name, boolean up)
+	{
+		List<KarmaReasonObject> results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\" AND direction = '" + (up ? 1 : -1) + "'");
+		return getReasonResult(results, enumSource + ":" + (up ? "up" : "down") + ":" + name);
 	}
 
 	public String[] helpCommandReason = {
@@ -186,7 +303,7 @@ public class Karma
 		String[] reason;
 		if (name.equals(""))
 		{
-			reason = apiReason();
+			reason = apiReasonEnum(mes.getContext());
 			if (reason != null)
 				name = reason[0];
 		}
@@ -195,7 +312,7 @@ public class Karma
 			Matcher ma = karmaItemPattern.matcher(name);
 			if (ma.find())
 			{
-				reason = apiReason(getName(ma));
+				reason = apiReasonEnum(mes.getContext(), getName(ma));
 				if (reason != null)
 					name = reason[0];
 			}
@@ -214,7 +331,7 @@ public class Karma
 					irc.sendContextReply(mes, "Unable to match your query to a valid karma string.");
 					return;
 				}
-				reason = apiReason(getName(ma));
+				reason = apiReasonEnum(mes.getContext(), getName(ma));
 				if (reason != null)
 					name = reason[0];
 			}
@@ -262,7 +379,7 @@ public class Karma
 			Matcher ma=karmaItemPattern.matcher(name);
 			if (ma.find())
 			{
-				reason = apiReason(getName(ma), true);
+				reason = apiReasonEnum(mes.getContext(), getName(ma), true);
 				if (reason !=null)
 					name = reason[0];
 			}
@@ -291,7 +408,7 @@ public class Karma
 		String[] reason;
 		if (name.equals(""))
 		{
-			reason = apiReason(false);
+			reason = apiReasonEnum(mes.getContext(), false);
 			if (reason != null)
 				name = reason[0];
 		}
@@ -300,7 +417,7 @@ public class Karma
 			Matcher ma=karmaItemPattern.matcher(name);
 			if (ma.find())
 			{
-				reason = apiReason(getName(ma), false);
+				reason = apiReasonEnum(mes.getContext(), getName(ma), false);
 				if (reason != null)
 					name = reason[0];
 			}
