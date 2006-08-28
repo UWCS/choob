@@ -745,7 +745,6 @@ public class Quote
 			mods.odb.save(qEnum);
 		}
 		
-		System.out.println("Quote:pickRandomQuote: quoteId = " + quoteId);
 		QuoteObject rvQuote = null;
 		for (int i = 0; i < quotes.size(); i++) {
 			QuoteObject quote = quotes.get(i);
