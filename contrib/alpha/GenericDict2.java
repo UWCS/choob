@@ -37,7 +37,6 @@ public class GenericDict2
 		irc.sendContextMessage(mes,genericDictLongHelp);
 	}
 
-
 	public String[] helpCommandGenericDict = {
 		"A Stupidly complex command to scrape text from a website, use genericdict2.gethelp for detailed usage."
 	};
@@ -73,13 +72,15 @@ public class GenericDict2
 				Matcher ma;
 				try
 				{
-					ma = mods.scrape.getMatcher(url,0, matchers.get(key));
+					ma = mods.scrape.getMatcher(url,0, matchers.get(key));	
 				} catch (IOException e)
 				{
 					throw new GenericDictException("Error reading from specified site");
 				}
 				if (ma.find())
+				{
 					values.put(key,ma.group(1));
+				}
 			}
 			
 			String toReturn = formatOutputString(getParams(message,"output",true),values);
@@ -89,6 +90,21 @@ public class GenericDict2
 			for (String opt : getParams(message,"options",false))
 				if (opt.equals("appendurl"))
 					appendURL = true;
+
+			int maxLength = -1;
+			for (String opt : getParams(message,"limit",false))
+			{
+				try
+				{
+					maxLength = Integer.parseInt(opt);
+				} catch (NumberFormatException e) {}
+			}
+
+			if ((maxLength > 0) && (toReturn.length() > maxLength))
+			{
+				toReturn = toReturn.substring(0,maxLength) + "...";
+			}
+
 			if ((toReturn.length() == 0) || toReturn.matches("^(\\s|\\t|\\r)*$"))
 				throw new GenericDictException("No results found");
 			if (!appendURL)
@@ -187,8 +203,8 @@ public class GenericDict2
 
 	private String formatOutputString(ArrayList<String> unformatted, HashMap<String,String> varValues) throws GenericDictException
 	{
-		final String varReplacePattern = "%.*?%\\.replaceAll\\(\".*?\",\".*?\"\\)";
-		final String varPattern = "%.*?%";
+		final String varReplacePattern = "%\\w*?%\\.replaceAll\\(\".*?\",\".*?\"\\)";
+		final String varPattern = "%\\w*?%";
 		String toReturn = "";
 		for (String str : unformatted)
 		{
@@ -204,7 +220,7 @@ public class GenericDict2
 				} catch (NullPointerException e)
 				{
 					//throw new GenericDictException("Error reading value for %" + getVarName(tmp) + "%");
-					tmp = "";
+					tmp = tmp.replaceFirst(varReplacePattern,"");
 				}
 			}
 			while (tmp.matches(".*?" + varPattern + ".*"))
@@ -214,7 +230,7 @@ public class GenericDict2
 					tmp = tmp.replaceFirst(varPattern,varValues.get(getVarName(tmp)));
 				} catch (NullPointerException e)
 				{
-					tmp = "";
+					tmp = tmp.replaceFirst(varPattern,"");
 					//throw new GenericDictException("Error reading value for %" + getVarName(tmp) + "%");
 				}
 			}
