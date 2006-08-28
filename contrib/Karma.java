@@ -169,7 +169,7 @@ public class Karma
 	{
 		this.mods = mods;
 		this.irc = irc;
-		mods.interval.callBack("clena-enums", 60000, 1);
+		mods.interval.callBack("clean-enums", 60000, 1);
 	}
 
 	// Interval
