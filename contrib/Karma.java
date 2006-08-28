@@ -347,7 +347,7 @@ public class Karma
 	{
 		String[] reason;
 		String name;
-		reason = apiReason(direction);
+		reason = apiReasonEnum(mes.getContext(), direction);
 		if (reason != null)
 			name = reason[0];
 		else
