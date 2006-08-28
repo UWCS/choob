@@ -5,6 +5,7 @@ import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
 import java.util.regex.*;
 import java.text.*;
+import java.io.*;
 
 /**
  * Choob link plugin
@@ -196,4 +197,38 @@ public class Link {
 			+ ", " + mods.date.timeLongStamp(timeSinceOriginal)
 			+ " ago by " + linkObj.poster + ")";
 	}
+
+  public void webListLinks(PrintWriter out, String params, String[] user)
+  {
+    // Time period here is in hours.
+    
+    out.println("HTTP/1.0 200 OK");
+    out.println("Content-Type: text/html");
+    out.println();
+      
+    int timePeriod;
+    
+    try
+    {
+      timePeriod = Integer.parseInt(params);
+    }
+    catch( NumberFormatException e )
+    {
+      out.println("<center><blink><h1>ERROR IN PARAMETER</h1></blink></center>");
+      return;
+    }
+    
+    long cutOff = System.currentTimeMillis() - (timePeriod * 60 * 60 * 1000);
+    
+    String queryString = "WHERE firstPostedTime > " + cutOff;
+    
+    List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
+    
+    for( OldLink link : links )
+    {
+      out.println("<a href=\"" + link.URL + "\">" + link.URL + "</a>&nbsp;-&nbsp;" + link.poster + " in " + link.channel + "<br />");
+    }
+    
+    out.flush();
+  }
 }
