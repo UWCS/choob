@@ -325,6 +325,7 @@ GOTO :EOF
 
 REM ==== RUN ====
 :do-run
+TITLE %BotName%
 
 :do-run-top
 ECHO ==== Compiling... ====
