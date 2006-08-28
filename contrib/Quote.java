@@ -41,6 +41,62 @@ public class RecentQuote
 	public int type;
 }
 
+public class QuoteEnumerator
+{
+	public QuoteEnumerator()
+	{
+	}
+	
+	public QuoteEnumerator(String enumSource, int[] idList)
+	{
+		this.enumSource = enumSource;
+		this.idList = "";
+		for (int i = 0; i < idList.length; i++) {
+			if (i > 0)
+				this.idList += ",";
+			this.idList += idList[i];
+		}
+		this.index = (int)Math.floor(Math.random() * idList.length);
+		this.lastUsed = System.currentTimeMillis();
+	}
+	
+	public int getNext()
+	{
+		if (intIdList == null)
+			setupIDListInt();
+		
+		index++;
+		if (index >= intIdList.length) {
+			index = 0;
+		}
+		lastUsed = System.currentTimeMillis();
+		return intIdList[index];
+	}
+	
+	private void setupIDListInt()
+	{
+		String[] list = this.idList.split("\\s*,\\s*");
+		this.intIdList = new int[list.length];
+		for (int i = 0; i < list.length; i++) {
+			this.intIdList[i] = Integer.parseInt(list[i]);
+		}
+	}
+	
+	public int getSize()
+	{
+		if (intIdList == null)
+			setupIDListInt();
+		return intIdList.length;
+	}
+	
+	public int id;
+	public String enumSource;
+	public String idList;
+	private int[] intIdList = null;
+	public int index;
+	public long lastUsed;
+}
+
 public class Quote
 {
 	private static int MINLENGTH = 7; // Minimum length of a line to be quotable using simple syntax.
@@ -53,6 +109,7 @@ public class Quote
 	private static int RECENTLENGTH = 20; // Maximum length of "recent quotes" list for a context.
 	private static String IGNORE = "quoteme|quote|quoten|quote.create"; // Ignore these when searching for regex quotes.
 	private static int THRESHOLD = -3; // Lowest karma of displayed quote.
+	private static long ENUM_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 	private HashMap<String,List<RecentQuote>> recentQuotes;
 
@@ -66,6 +123,7 @@ public class Quote
 		this.irc = irc;
 		recentQuotes = new HashMap<String,List<RecentQuote>>();
 		updatePatterns();
+		mods.interval.callBack(null, 60000, 1);
 	}
 
 	public String[] info()
@@ -645,24 +703,78 @@ public class Quote
 		}
 	}
 
+	// Interval
+	public void interval(Object param)
+	{
+		// Clean up dead enumerators.
+		long lastUsedCutoff = System.currentTimeMillis() - ENUM_TIMEOUT;
+		List<QuoteEnumerator> deadEnums = mods.odb.retrieve(QuoteEnumerator.class, "WHERE lastUsed < " + lastUsedCutoff);
+		for (int i = 0; i < deadEnums.size(); i++) {
+			mods.odb.delete(deadEnums.get(i));
+		}
+		
+		mods.interval.callBack(null, 60000, 1);
+	}
+
+	private QuoteObject pickRandomQuote(List<QuoteObject> quotes, String enumSource)
+	{
+		int quoteId = -1;
+		enumSource = enumSource.toLowerCase();
+		List<QuoteEnumerator> enums = mods.odb.retrieve(QuoteEnumerator.class, "WHERE enumSource = '" + mods.odb.escapeString(enumSource) + "'");
+		QuoteEnumerator qEnum = null;
+		if (enums.size() >= 1) {
+			qEnum = enums.get(0);
+			if (qEnum.getSize() != quotes.size()) {
+				// Count has changed: invalidated!
+				mods.odb.delete(qEnum);
+				qEnum = null;
+			} else {
+				// Alright, step to the next one.
+				quoteId = qEnum.getNext();
+				mods.odb.update(qEnum);
+			}
+		}
+		if (qEnum == null) {
+			// No enumerator, create one.
+			int[] idList = new int[quotes.size()];
+			for (int i = 0; i < quotes.size(); i++)
+				idList[i] = quotes.get(i).id;
+			
+			qEnum = new QuoteEnumerator(enumSource, idList);
+			quoteId = qEnum.getNext();
+			mods.odb.save(qEnum);
+		}
+		
+		System.out.println("Quote:pickRandomQuote: quoteId = " + quoteId);
+		QuoteObject rvQuote = null;
+		for (int i = 0; i < quotes.size(); i++) {
+			QuoteObject quote = quotes.get(i);
+			if (quote.id == quoteId) {
+				rvQuote = quote;
+				break;
+			}
+		}
+		return rvQuote;
+	}
+
 	public String[] helpCommandGet = {
 		"Get a random quote from the database.",
 		"[ <Clause> [ <Clause> ... ]]",
 		"<Clause> is a clause to select quotes with (see Quote.UsingGet)"
 	};
-	public void commandGet( Message mes ) throws ChoobException
+	public void commandGet(Message mes) throws ChoobException
 	{
-		String whereClause = getClause( mods.util.getParamString( mes ) );
-		List quotes;
+		String whereClause = getClause(mods.util.getParamString(mes));
+		List<QuoteObject> quotes;
 		try
 		{
-			quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause );
+			quotes = mods.odb.retrieve(QuoteObject.class, whereClause);
 		}
 		catch (ObjectDBError e)
 		{
 			if (e.getCause() instanceof java.sql.SQLException)
 			{
-				irc.sendContextReply( mes, "Could not retrieve: " + e.getCause() );
+				irc.sendContextReply(mes, "Could not retrieve: " + e.getCause());
 				return;
 			}
 			else
@@ -671,16 +783,17 @@ public class Quote
 
 		if (quotes.size() == 0)
 		{
-			irc.sendContextReply( mes, "No quotes found!" );
+			irc.sendContextReply(mes, "No quotes found!");
 			return;
 		}
 
-		QuoteObject quote = (QuoteObject)quotes.get(0);
-		List lines = mods.odb.retrieve( QuoteLine.class, "WHERE quoteID = " + quote.id + " ORDER BY lineNumber");
+		QuoteObject quote = pickRandomQuote(quotes, mes.getContext() + ":" + whereClause);
+
+		List lines = mods.odb.retrieve(QuoteLine.class, "WHERE quoteID = " + quote.id + " ORDER BY lineNumber");
 		Iterator l = lines.iterator();
 		if (!l.hasNext())
 		{
-			irc.sendContextReply( mes, "Found quote " + quote.id + " but it was empty!" );
+			irc.sendContextReply(mes, "Found quote " + quote.id + " but it was empty!");
 			return;
 		}
 		while(l.hasNext())
