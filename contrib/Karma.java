@@ -169,20 +169,21 @@ public class Karma
 	{
 		this.mods = mods;
 		this.irc = irc;
-		mods.interval.callBack(null, 60000, 1);
+		mods.interval.callBack("clena-enums", 60000, 1);
 	}
 
 	// Interval
 	public void interval(Object param)
 	{
-		// Clean up dead enumerators.
-		long lastUsedCutoff = System.currentTimeMillis() - ENUM_TIMEOUT;
-		List<KarmaReasonEnumerator> deadEnums = mods.odb.retrieve(KarmaReasonEnumerator.class, "WHERE lastUsed < " + lastUsedCutoff);
-		for (int i = 0; i < deadEnums.size(); i++) {
-			mods.odb.delete(deadEnums.get(i));
+		if ("clean-enums".equals(param)) {
+			// Clean up dead enumerators.
+			long lastUsedCutoff = System.currentTimeMillis() - ENUM_TIMEOUT;
+			List<KarmaReasonEnumerator> deadEnums = mods.odb.retrieve(KarmaReasonEnumerator.class, "WHERE lastUsed < " + lastUsedCutoff);
+			for (int i = 0; i < deadEnums.size(); i++) {
+				mods.odb.delete(deadEnums.get(i));
+			}
+			mods.interval.callBack(param, 60000, 1);
 		}
-		
-		mods.interval.callBack(null, 60000, 1);
 	}
 
 	private KarmaReasonObject pickRandomKarmaReason(List<KarmaReasonObject> reasons, String enumSource)

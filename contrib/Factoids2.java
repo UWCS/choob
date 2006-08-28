@@ -161,7 +161,7 @@ public class Factoids2
 		quotedSearchPattern = Pattern.compile("\\s*\"([^\"]+)\"(?:\\s+(.*))?\\s*");
 		regexpSearchPattern = Pattern.compile("\\s*(.+?)\\s+(/([^/]+|\\/)+/)\\s*");
 		
-		mods.interval.callBack(null, 60000, 1);
+		mods.interval.callBack("clean-enums", 60000, 1);
 	}
 	
 	private int countFacts(List<Factoid> definitions)
@@ -350,14 +350,15 @@ public class Factoids2
 	// Interval
 	public void interval(Object param)
 	{
-		// Clean up dead enumerators.
-		long lastUsedCutoff = System.currentTimeMillis() - ENUM_TIMEOUT;
-		List<FactoidEnumerator> deadEnums = mods.odb.retrieve(FactoidEnumerator.class, "WHERE lastUsed < " + lastUsedCutoff);
-		for (int i = 0; i < deadEnums.size(); i++) {
-			mods.odb.delete(deadEnums.get(i));
+		if ("clean-enums".equals(param)) {
+			// Clean up dead enumerators.
+			long lastUsedCutoff = System.currentTimeMillis() - ENUM_TIMEOUT;
+			List<FactoidEnumerator> deadEnums = mods.odb.retrieve(FactoidEnumerator.class, "WHERE lastUsed < " + lastUsedCutoff);
+			for (int i = 0; i < deadEnums.size(); i++) {
+				mods.odb.delete(deadEnums.get(i));
+			}
+			mods.interval.callBack(param, 60000, 1);
 		}
-		
-		mods.interval.callBack(null, 60000, 1);
 	}
 	
 	// Collect and store rumours for things.

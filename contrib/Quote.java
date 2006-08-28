@@ -123,7 +123,7 @@ public class Quote
 		this.irc = irc;
 		recentQuotes = new HashMap<String,List<RecentQuote>>();
 		updatePatterns();
-		mods.interval.callBack(null, 60000, 1);
+		mods.interval.callBack("clean-enums", 60000, 1);
 	}
 
 	public String[] info()
@@ -706,14 +706,15 @@ public class Quote
 	// Interval
 	public void interval(Object param)
 	{
-		// Clean up dead enumerators.
-		long lastUsedCutoff = System.currentTimeMillis() - ENUM_TIMEOUT;
-		List<QuoteEnumerator> deadEnums = mods.odb.retrieve(QuoteEnumerator.class, "WHERE lastUsed < " + lastUsedCutoff);
-		for (int i = 0; i < deadEnums.size(); i++) {
-			mods.odb.delete(deadEnums.get(i));
+		if ("clean-enums".equals(param)) {
+			// Clean up dead enumerators.
+			long lastUsedCutoff = System.currentTimeMillis() - ENUM_TIMEOUT;
+			List<QuoteEnumerator> deadEnums = mods.odb.retrieve(QuoteEnumerator.class, "WHERE lastUsed < " + lastUsedCutoff);
+			for (int i = 0; i < deadEnums.size(); i++) {
+				mods.odb.delete(deadEnums.get(i));
+			}
+			mods.interval.callBack(param, 60000, 1);
 		}
-		
-		mods.interval.callBack(null, 60000, 1);
 	}
 
 	private QuoteObject pickRandomQuote(List<QuoteObject> quotes, String enumSource)
