@@ -44,21 +44,28 @@ public class Plugin
 			String[] info;
 			info = getInfo(pluginName);
 			if (info.length >= 3)
-				irc.sendContextReply(mes, "Plugin " + actioned + " OK, new version is " + info[3] + ".");
+				irc.sendContextReply(mes, "Plugin '" + pluginName + "' " + actioned + " OK, new version is " + info[3] + ".");
 			else
-				irc.sendContextReply(mes, "Plugin " + actioned + " OK, but has missing info.");
+				irc.sendContextReply(mes, "Plugin '" + pluginName + "' " + actioned + " OK, but has missing info.");
+		}
+		catch (ChoobNoSuchPluginException e)
+		{
+			if (!reloading)
+				irc.sendContextReply(mes, "Error " + actioning + " plugin '" + pluginName + "'; plugin not found.");
+			else
+				irc.sendContextReply(mes, "Never seen plugin '" + pluginName + "' before, cannot reload it.");
 		}
 		catch (ChoobNoSuchCallException e)
 		{
-			irc.sendContextReply(mes, "Plugin " + actioned + ", but doesn't have any info.");
+			irc.sendContextReply(mes, "Plugin '" + pluginName + "' " + actioned + ", but doesn't have any info.");
 		}
 		catch (ClassCastException e)
 		{
-			irc.sendContextReply(mes, "Plugin " + actioned + ", but has invalid info.");
+			irc.sendContextReply(mes, "Plugin '" + pluginName + "' " + actioned + ", but has invalid info.");
 		}
 		catch (Exception e)
 		{
-			irc.sendContextReply(mes, "Error " + actioning + " plugin, see log for more details. " + e);
+			irc.sendContextReply(mes, "Error " + actioning + " plugin '" + pluginName + "', see log for more details. " + e);
 			e.printStackTrace();
 		}
 	}
