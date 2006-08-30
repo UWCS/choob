@@ -1008,19 +1008,19 @@ Feed.prototype.getNewItems = function() {
 		this._lastSeen[unique] = true;
 		this._lastSeenPub[date] = true;
 		newItems.push(item);
-		dumpln("New item : [" + date + "]:" + (item.updated ? "updated" : "new"));
+		//log("New item : [" + date + "]:" + (item.updated ? "updated" : "new"));
 	}
 	
 	for (var d in this._lastSeen) {
 		if (!this._lastSeen[d]) {
 			delete this._lastSeen[d];
-			dumpln("Lost item: [" + d + "]:_lastSeen");
+			//log("Lost item: [" + d + "]:_lastSeen");
 		}
 	}
 	for (var d in this._lastSeenPub) {
 		if (!this._lastSeenPub[d]) {
 			delete this._lastSeenPub[d];
-			dumpln("Lost item: [" + d + "]:_lastSeenPub");
+			//log("Lost item: [" + d + "]:_lastSeenPub");
 		}
 	}
 	
