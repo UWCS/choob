@@ -107,7 +107,7 @@ public class Link
 				mods.odb.update(linkObj);
 
 				// Don't "old" reposts from the same user
-				if (linkObj.poster.equals(mes.getNick()))
+				if (linkObj.poster.equals(mods.nick.getBestPrimaryNick(mes.getNick())))
 					continue;
 
 				oldLinks.add(linkObj);
