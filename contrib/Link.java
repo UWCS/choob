@@ -107,7 +107,7 @@ public class Link
 				mods.odb.update(linkObj);
 
 				// Don't "old" reposts from the same user
-				if (linkObj.poster.equals(mods.nick.getBestPrimaryNick(mes.getNick())))
+				if (linkObj.poster.equalsIgnoreCase(mods.nick.getBestPrimaryNick(mes.getNick())))
 					continue;
 
 				oldLinks.add(linkObj);
@@ -156,7 +156,7 @@ public class Link
 				irc.sendContextReply(mes, "Link is not old.");
 			else if (System.currentTimeMillis() - linkObj.lastPostedTime < FLOOD_INTERVAL)
 				irc.sendContextReply(mes, "Link is old, but posted recently.");
-			else if (linkObj.poster.equals(mods.nick.getBestPrimaryNick(mes.getNick())))
+			else if (linkObj.poster.equalsIgnoreCase(mods.nick.getBestPrimaryNick(mes.getNick())))
 				irc.sendContextReply(mes, "Link is old, but you posted it.");
 			else
 				irc.sendContextReply(mes, getOldResponse(linkObj));
