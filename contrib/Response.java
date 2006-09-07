@@ -40,9 +40,9 @@ public class Response {
 	};
 
 	final public static String filterBotRegex = "\\b(\\w+) bot\\b";
-	final private static Pattern botPattern = Pattern.compile(filterBotRegex);
-	final private static Pattern badPattern = Pattern.compile("bad|la+me|st(u+|oo+)pid|gooo+d");
-	final private static Pattern goodPattern = Pattern.compile("good|nice");
+	final private static Pattern botPattern = Pattern.compile(filterBotRegex, Pattern.CASE_INSENSITIVE);
+	final private static Pattern badPattern = Pattern.compile("bad|la+me|st(u+|oo+)pid|gooo+d", Pattern.CASE_INSENSITIVE);
+	final private static Pattern goodPattern = Pattern.compile("good|nice", Pattern.CASE_INSENSITIVE);
 
 	public void filterBot( Message mes, Modules mods, IRCInterface irc ) {
 		// Ignore synthetic messages
