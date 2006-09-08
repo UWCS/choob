@@ -270,6 +270,8 @@ if ($params{help}) {
 					$colType = "string";
 				} elsif ($col->[1] =~ /^(?:tiny|big)?int\(\d+\)$/) {
 					$colType = "int";
+				} elsif ($col->[1] =~ /^double$/) {
+					$colType = "double";
 				} else {
 					warn qq[Unknown property type: $col->[1].];
 				}
