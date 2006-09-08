@@ -68,6 +68,10 @@ public class Mail
 	public String[] optionsUser = { "Email" };
 	public String[] optionsUserDefaults = { "" };
 	
+	public String[] helpOptionEmail = {
+		"The public e-mail address to show to users requesting it."
+	};
+	
 	public String[] helpCommandMail = {
 		"Displays the public e-mail address of the given person",
 		"<Nickname>",
