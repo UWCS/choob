@@ -68,6 +68,11 @@ public class Mail
 	public String[] optionsUser = { "Email" };
 	public String[] optionsUserDefaults = { "" };
 	
+	public String[] helpCommandMail = {
+		"Displays the public e-mail address of the given person",
+		"<Nickname>",
+		"<Nickname> is the person you want the public e-mail address of"
+	};
 	public void commandMail(Message mes)
 	{
 		List<String> params = mods.util.getParams(mes, 1);
@@ -105,7 +110,7 @@ public class Mail
 	public String[] helpCommandTechteam = {
 		"Sends a short message to the techteam mailing list",
 		"<Message>",
-		"<Message> is the content of the message to post to the mailing list."
+		"<Message> is the content of the message to post to the mailing list"
 	};
 	public void commandTechteam(Message mes)
 	{
