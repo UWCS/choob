@@ -238,6 +238,30 @@ public class Http
 		}
 	}
 
+	public String apiGetRPCURL() throws ChoobException
+	{
+		return apiGetRPCURL("");
+	}
+
+	public String apiGetRPCURL(String rpcName) throws ChoobException
+	{
+		String pluginName = ChoobThread.getPluginName(1);
+		if (pluginName == null)
+			throw new ChoobException("Not called from a plugin, can't get RPC URL");
+		
+		String address = externalName;
+		
+		if (address == null) {
+			try {
+				address = InetAddress.getLocalHost().getHostAddress();
+			} catch (UnknownHostException e) {
+				throw new ChoobException("Your network appears to be really, really broken.");
+			}
+		}
+		
+		return "http://" + address + ":" + portNumber + "/rpc/" + pluginName + "." + rpcName;
+	}
+
 	public void webNickServ(PrintWriter out, String args, String[] from)
 	{
 		try
