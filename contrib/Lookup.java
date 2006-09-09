@@ -23,8 +23,21 @@ public class Lookup
 		};
 	}
 											// 0->199
-	private final static String token="(?:(?:1?[0-9]?[0-9])|(?:2[0-4][0-9])|(?:25[0-5]))";
-	private final static Pattern ipv4=Pattern.compile(token + "\\." + token + "\\." + token + "\\." + token);
+	private final static String token4 = "(?:(?:1?[0-9]?[0-9])|(?:2[0-4][0-9])|(?:25[0-5]))";
+	private final static String pattern4 = token4 + "\\." + token4 + "\\." + token4 + "\\." + token4;
+	private final static Pattern ipv4=Pattern.compile(pattern4);
+
+	//http://blogs.msdn.com/mpoulson/archive/2005/01/10/350037.aspx
+	private final static String token6 = "[0-9a-fA-F]{1,4}";
+	private final static String IPv6Pattern =			"(?:" + token6 + ":){7}" + token6;
+	private final static String IPv6Pattern_6Hex4Dec =	"(?:" + token6 + ":){6}" + pattern4;
+
+	private final static String compressedStart = 				"((?:" + token6 + "(?::" + token6 + ")*)?)::(?:" + token6;
+	private final static String IPv6Pattern_HEXCompressed =		compressedStart + "(?::" + token6 + ")*)?";
+	private final static String IPv6Pattern_Hex4DecCompressed =	compressedStart + ":)*" + pattern4;
+
+	private final static String regor = ")|(?:";
+	private final static Pattern ipv6 = Pattern.compile("(?:" + IPv6Pattern + regor + IPv6Pattern_6Hex4Dec + regor + IPv6Pattern_HEXCompressed + regor + IPv6Pattern_Hex4DecCompressed + ")");
 
 	private IRCInterface irc;
 	private Modules mods;
@@ -133,6 +146,11 @@ public class Lookup
 		}
 	}
 
+	private Attribute getAttributes(String what, String where) throws NameNotFoundException, NamingException
+	{
+		return (new InitialDirContext( env )).getAttributes( what, new String[] { where }).get( where );
+	}
+
 	private String apiLookup(String what, String where)
 	{
 		if (where.equals("REV"))
@@ -142,7 +160,7 @@ public class Lookup
 
 		try
 		{
-			attr = (new InitialDirContext( env )).getAttributes( what, new String[] { where }).get( where );
+			attr = getAttributes(what, where);
 
 			if( attr == null )
 				return "None found...";
@@ -188,10 +206,47 @@ public class Lookup
 		else if (params.size() == 2)
 		{
 			domain = params.get(1);
-			if (ipv4.matcher(domain).matches())
+			if (ipv4.matcher(domain).matches() || ipv6.matcher(domain).matches())
 				record = "REV";
 			else
+			{
+				URL p;
+				try
+				{
+					String reply;
+					p = new URL(domain);
+					try
+					{
+						Attribute attr = getAttributes(p.getHost(), "A");
+						if (attr == null)
+							reply = "None found...";
+						else
+						{
+							assert attr.size() > 0;
+							p = new URL(p.getProtocol(), attr.get(0).toString(), p.getPort(), p.getFile());
+
+							reply = p.toString();
+						}
+					}
+					catch ( NameNotFoundException e )
+					{
+						reply = "Not found: " + p.getHost();
+					}
+					catch ( NamingException e )
+					{
+						reply = "Unexpected error: " + e;
+					}
+
+					irc.sendContextReply(mes, reply);
+					return;
+				}
+				catch ( MalformedURLException e )
+				{
+					// Squish.
+				}
+
 				record = "A";
+			}
 		}
 		else
 		{
