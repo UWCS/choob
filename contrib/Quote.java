@@ -46,7 +46,7 @@ public class QuoteEnumerator
 	public QuoteEnumerator()
 	{
 	}
-	
+
 	public QuoteEnumerator(String enumSource, int[] idList)
 	{
 		this.enumSource = enumSource;
@@ -59,12 +59,12 @@ public class QuoteEnumerator
 		this.index = (int)Math.floor(Math.random() * idList.length);
 		this.lastUsed = System.currentTimeMillis();
 	}
-	
+
 	public int getNext()
 	{
 		if (intIdList == null)
 			setupIDListInt();
-		
+
 		index++;
 		if (index >= intIdList.length) {
 			index = 0;
@@ -72,7 +72,7 @@ public class QuoteEnumerator
 		lastUsed = System.currentTimeMillis();
 		return intIdList[index];
 	}
-	
+
 	private void setupIDListInt()
 	{
 		String[] list = this.idList.split("\\s*,\\s*");
@@ -81,14 +81,14 @@ public class QuoteEnumerator
 			this.intIdList[i] = Integer.parseInt(list[i]);
 		}
 	}
-	
+
 	public int getSize()
 	{
 		if (intIdList == null)
 			setupIDListInt();
 		return intIdList.length;
 	}
-	
+
 	public int id;
 	public String enumSource;
 	public String idList;
@@ -135,7 +135,7 @@ public class Quote
 			"$Rev$$Date$"
 		};
 	}
-	
+
 	void updatePatterns()
 	{
 		this.ignorePattern = Pattern.compile(
@@ -740,12 +740,12 @@ public class Quote
 			int[] idList = new int[quotes.size()];
 			for (int i = 0; i < quotes.size(); i++)
 				idList[i] = quotes.get(i).id;
-			
+
 			qEnum = new QuoteEnumerator(enumSource, idList);
 			quoteId = qEnum.getNext();
 			mods.odb.save(qEnum);
 		}
-		
+
 		QuoteObject rvQuote = null;
 		for (int i = 0; i < quotes.size(); i++) {
 			QuoteObject quote = quotes.get(i);
@@ -820,10 +820,16 @@ public class Quote
 	{
 		return apiSingleLineQuote(nick, null);
 	}
+
 	public String apiSingleLineQuote(String nick, String context)
 	{
+		return apiSingleLineQuote(nick, context, "");
+	}
+
+	public String apiSingleLineQuote(String nick, String context, String querysuffix)
+	{
 		String whereClause = getClause(nick + " length:=1");
-		List quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause );
+		List quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause + " " + querysuffix);
 		if (quotes.size() == 0)
 			return null;
 
@@ -1597,14 +1603,18 @@ public class Quote
 
 	public synchronized  void onJoin( ChannelJoin ev, Modules mods, IRCInterface irc )
 	{
-		if (ev.getLogin().equalsIgnoreCase("Choob")) // XXX
+		if (ev.getLogin().endsWith("Choob") || ev.getLogin().endsWith("choob")) // XXX
 			return;
 
 		if (shouldMessage(ev))
 		{
 			String quote;
 			if ( shouldQuote(ev) )
-				quote = apiSingleLineQuote( ev.getNick(), ev.getContext() );
+			{
+				quote = apiSingleLineQuote( ev.getNick(), ev.getContext(), "score:>-1" );
+				if (quote == null)
+					quote = apiSingleLineQuote( ev.getNick(), ev.getContext());
+			}
 			else
 				quote = null;
 
@@ -1636,13 +1646,13 @@ public class Quote
 			}
 		}
 	}
-	
+
 	public void onNickChange(NickChange ev, Modules mods, IRCInterface irc)
 	{
 		if (ev.getNewNick().equals(irc.getNickname()))
 			updatePatterns();
 	}
-	
+
 	public void webGetQuote(PrintWriter out, String args, String[] from)
 	{
 		try
@@ -1650,7 +1660,7 @@ public class Quote
 			out.println("HTTP/1.0 200 OK");
 			out.println("Content-Type: text/plain");
 			out.println();
-			
+
 			String whereClause = getClause(args);
 			List quotes;
 			try
@@ -1661,16 +1671,16 @@ public class Quote
 			{
 				return;
 			}
-			
+
 			if (quotes.size() == 0)
 				return;
-			
+
 			QuoteObject quote = (QuoteObject)quotes.get(0);
 			List lines = mods.odb.retrieve(QuoteLine.class, "WHERE quoteID = " + quote.id + " ORDER BY lineNumber");
 			Iterator l = lines.iterator();
 			if (!l.hasNext())
 				return;
-			
+
 			while(l.hasNext())
 			{
 				QuoteLine line = (QuoteLine)l.next();
