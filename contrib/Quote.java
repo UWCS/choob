@@ -1718,7 +1718,7 @@ public class Quote
 				List quotes;
 				try
 				{
-					quotes = mods.odb.retrieve(QuoteObject.class, "WHERE score = 0 SORT BY RANDOM LIMIT (1)");
+					quotes = mods.odb.retrieve(QuoteObject.class, "WHERE score = 0 SORT BY RANDOM");
 				}
 				catch (ObjectDBError e)
 				{
@@ -1745,6 +1745,7 @@ public class Quote
 						out.println(safeHTML( "<" + line.nick + "> " + line.message) + "<BR>");
 				}
 				out.println("<P><A HREF='?" + quote.id + "/" + "leet'>Leetquote</A> <B>OR</B> <A HREF='?" + quote.id + "/" + "lame'>Lamequote</A></P>");
+				out.println("<P>(" + quotes.size() + " quotes with score=0 remaining.)</P>");
 			}
 			else
 			{
