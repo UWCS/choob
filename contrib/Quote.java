@@ -1653,6 +1653,11 @@ public class Quote
 			updatePatterns();
 	}
 
+	private String safeHTML(String text)
+	{
+		return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+	}
+	
 	public void webGetQuote(PrintWriter out, String args, String[] from)
 	{
 		try
@@ -1688,6 +1693,103 @@ public class Quote
 					out.println("* " + line.nick +  " " + line.message + "\n");
 				else
 					out.println( "<" + line.nick + "> " + line.message + "\n");
+			}
+		}
+		catch (Exception e)
+		{
+			out.println("ERROR!");
+			e.printStackTrace();
+		}
+	}
+	
+	private static Pattern qotdAction = Pattern.compile("^(\\d+)/(\\w+)$", Pattern.CASE_INSENSITIVE);
+	
+	public void webQOTD(PrintWriter out, String args, String[] from)
+	{
+		try
+		{
+			out.println("HTTP/1.0 200 OK");
+			out.println("Content-Type: text/html");
+			out.println();
+			
+			if (args.length() == 0)
+			{
+				// Show a single, random score=0 quote.
+				List quotes;
+				try
+				{
+					quotes = mods.odb.retrieve(QuoteObject.class, "WHERE score = 0 SORT BY RANDOM LIMIT (1)");
+				}
+				catch (ObjectDBError e)
+				{
+					return;
+				}
+				if (quotes.size() == 0)
+				{
+					out.println("<P>Shock! There are no score=0 quotes.</P>");
+					return;
+				}
+				
+				QuoteObject quote = (QuoteObject)quotes.get(0);
+				List lines = mods.odb.retrieve(QuoteLine.class, "WHERE quoteID = " + quote.id + " ORDER BY lineNumber");
+				Iterator l = lines.iterator();
+				if (!l.hasNext())
+					return;
+				
+				while(l.hasNext())
+				{
+					QuoteLine line = (QuoteLine)l.next();
+					if (line.isAction)
+						out.println(safeHTML("* " + line.nick +  " " + line.message) + "<BR>");
+					else
+						out.println(safeHTML( "<" + line.nick + "> " + line.message) + "<BR>");
+				}
+				out.println("<P><A HREF='?" + quote.id + "/" + "leet'>Leetquote</A> <B>OR</B> <A HREF='?" + quote.id + "/" + "lame'>Lamequote</A></P>");
+			}
+			else
+			{
+				Matcher qotdMatch = qotdAction.matcher(args);
+				
+				if (qotdMatch.find())
+				{
+					List quotes = mods.odb.retrieve(QuoteObject.class, "WHERE id = " + qotdMatch.group(1));
+					if (quotes.size() == 0)
+					{
+						out.println("<P>Quote ID " + qotdMatch.group(1) + " does not exist!</P>");
+						return;
+					}
+					
+					QuoteObject quote = (QuoteObject)quotes.get(0);
+					if (quote.score != 0)
+					{
+						out.println("<P>Sorry, this quote has already been leeted/lamed from 0.</P>");
+						return;
+					}
+					
+					if (qotdMatch.group(2).equals("leet"))
+					{
+						quote.score++;
+						quote.up++;
+						out.println("<P>Quote ID " + qotdMatch.group(1) + " leeted.</P>");
+					}
+					else if (qotdMatch.group(2).equals("lame"))
+					{
+						quote.score--;
+						quote.down++;
+						out.println("<P>Quote ID " + qotdMatch.group(1) + " lamed.</P>");
+					}
+					else
+					{
+						out.println("<P>I can't let you do that.</P>");
+						return;
+					}
+					mods.odb.update(quote);
+					out.println("<P><A HREF='?'>Give me another</A></P>");
+				}
+				else
+				{
+					out.println("<P>Sorry, that's just stupid!</P>");
+				}
 			}
 		}
 		catch (Exception e)
