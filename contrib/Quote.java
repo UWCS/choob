@@ -1744,7 +1744,7 @@ public class Quote
 					else
 						out.println(safeHTML( "<" + line.nick + "> " + line.message) + "<BR>");
 				}
-				out.println("<P><A HREF='?" + quote.id + "/" + "leet'>Leetquote</A> <B>OR</B> <A HREF='?" + quote.id + "/" + "lame'>Lamequote</A></P>");
+				out.println("<P><A HREF='?" + quote.id + "/" + "leet'>Leetquote</A> <B>OR</B> <A HREF='?" + quote.id + "/" + "lame'>Lamequote</A> [this is quote ID " + quote.id + "]</P>");
 				out.println("<P>(" + quotes.size() + " quotes with score=0 remaining.)</P>");
 			}
 			else
