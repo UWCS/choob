@@ -21,6 +21,8 @@ public class GenericDict2
 		this.irc = irc;
 	}
 
+	private final String c_style_quoted_string = "\"((?:\\\\.|[^\"\\\\])+)\"";
+	private final String replace_all_statement = "\\.replaceAll\\(" + c_style_quoted_string + "\\s*,\\s*" + c_style_quoted_string + "\\)";
 
 	private final String[] genericDictLongHelp = {
 		"parameters may be specified in any order ",
@@ -45,12 +47,12 @@ public class GenericDict2
 		try
 		{
 			String message = " " + mods.util.getParamString(mes);
-	
+
 			URL url = getURL(getParams(message,"url",true));
-	
+
 			HashMap<String,String> matchers = new HashMap<String,String>();
 			HashMap<String,String> values = new HashMap<String,String>();
-			
+
 			final String patternsError = "Your patterns must contain a variable to assign result to";
 			try
 			{
@@ -59,30 +61,34 @@ public class GenericDict2
 					String[] split = regex.split("%.*?%");
 					matchers.put(getVarName(regex),"(?s)" + split[0] + "(.*?)" + split[1]);
 				}
-			} catch (ArrayIndexOutOfBoundsException e)
-			{
-				throw new GenericDictException(patternsError);
-			} catch (StringIndexOutOfBoundsException e)
+			}
+			catch (ArrayIndexOutOfBoundsException e)
 			{
 				throw new GenericDictException(patternsError);
 			}
-	
+			catch (StringIndexOutOfBoundsException e)
+			{
+				throw new GenericDictException(patternsError);
+			}
+
 			for (String key : matchers.keySet())
 			{
 				Matcher ma;
 				try
 				{
-					ma = mods.scrape.getMatcher(url,0, matchers.get(key));	
-				} catch (IOException e)
+					ma = mods.scrape.getMatcher(url, GetContentsCached.DEFAULT_TIMEOUT, matchers.get(key));
+				}
+				catch (IOException e)
 				{
 					throw new GenericDictException("Error reading from specified site");
 				}
+
 				if (ma.find())
 				{
 					values.put(key,ma.group(1));
 				}
 			}
-			
+
 			String toReturn = formatOutputString(getParams(message,"output",true),values);
 
 			toReturn = mods.scrape.readyForIrc(toReturn) + " ";
@@ -107,11 +113,14 @@ public class GenericDict2
 
 			if ((toReturn.length() == 0) || toReturn.matches("^(\\s|\\t|\\r)*$"))
 				throw new GenericDictException("No results found");
+
 			if (!appendURL)
 				irc.sendContextReply(mes,toReturn);
 			else
 				irc.sendContextReply(mes,toReturn + url.toString());
-		} catch (GenericDictException e)
+
+		}
+		catch (GenericDictException e)
 		{
 			irc.sendContextReply(mes,e.getMessage());
 		}
@@ -125,25 +134,27 @@ public class GenericDict2
 		try
 		{
 			for (String urlPart : urlParts)
-			{
 				if (urlPart.equals("`"))
 				{
 					skipwhitespace = !skipwhitespace;
 					if (skipwhitespace)
 						urlString = urlString.replaceFirst("\\+$","");
-				}else
+				}
+				else
 				{
 					if (skipwhitespace)
 						urlString = urlString + urlPart;
 					else
 						urlString = urlString + URLEncoder.encode(urlPart + " ","UTF-8");
 				}
-			}
+
 			url = new URL(urlString);
-		} catch (MalformedURLException e)
+		}
+		catch (MalformedURLException e)
 		{
 			throw new GenericDictException("Malformed URL");
-		} catch (UnsupportedEncodingException e)
+		}
+		catch (UnsupportedEncodingException e)
 		{
 			throw new GenericDictException("Unsupported Encoding");
 		}
@@ -183,63 +194,81 @@ public class GenericDict2
 		}
 	}
 
-	private String[] getToReplace(String str) throws GenericDictException
+	/** Delegate to formatOutputString without a list as the first param */
+	private String formatOutputString(List<String> unformatted, Map<String, String> varValues) throws GenericDictException
 	{
-		String tmp = str.replaceFirst(".*?\\.replaceAll\\(","");
-		final String syntax = "syntax of replaceAll is %variable%.replaceAll(\"regex\",\"replacement\")";
-		try
-		{
-			tmp = tmp.substring(0,tmp.indexOf(')'));
-		} catch (StringIndexOutOfBoundsException e)
-		{
-			throw new GenericDictException(syntax);
-		}
-		String[] split = tmp.split(",");
-		if (split.length != 2) throw new GenericDictException(syntax);
-		split[0] = split[0].replaceAll("\"","");
-		split[1] = split[1].replaceAll("\"","");
-		return split;
+		StringBuilder sb = new StringBuilder();
+		for (String s : unformatted)
+			sb.append(s).append(" ");
+		return formatOutputString(sb.toString(), varValues);
 	}
 
-	private String formatOutputString(ArrayList<String> unformatted, HashMap<String,String> varValues) throws GenericDictException
+	/** Format an --output string.
+	 * @param unformatted List of words (split(" ")) in the output string.
+	 * @param varVaules Values of the %THINGS%.
+	 * @return The block of text to be processed before sending to irc.
+	 */
+	private String formatOutputString(String unformatted, Map<String, String> varValues) throws GenericDictException
 	{
-		final String varReplacePattern = "%\\w*?%\\.replaceAll\\(\".*?\",\".*?\"\\)";
 		final String varPattern = "%\\w*?%";
+		final String varReplacePattern = varPattern + "(" + replace_all_statement + ")";
+
 		String toReturn = "";
-		for (String str : unformatted)
+
+		String tmp = unformatted;
+		Matcher p;
+		final Pattern vrp = Pattern.compile(varReplacePattern);
+
+		// While we can find a varReplacePattern in the string.
+		while ((p = vrp.matcher(tmp)).find())
 		{
-			String tmp = str;
-			boolean test = tmp.matches(".*?" + varReplacePattern + ".*");
-			while (tmp.matches(".*?" + varReplacePattern + ".*"))
+			// Run the sane matcher to get the arguments.
+			Matcher moo = Pattern.compile(replace_all_statement).matcher(p.group(1));
+			if (!moo.find())
+				throw new GenericDictException("syntax of replaceAll is %variable%.replaceAll(\"regex\",\"replacement\")");
+
+			// Grab and check the args.
+			final String toReplace = moo.group(1);
+			final String theReplacement = moo.group(2);
+
+			assert toReplace != null;
+			assert theReplacement != null;
+
+			System.out.println("toReplace" + toReplace);
+			System.out.println("theReplacement" + theReplacement);
+
+			// Do the replacement.
+			try
 			{
-				String toReplace = getToReplace(tmp)[0];
-				String theReplacement = getToReplace(tmp)[1];
-				try
-				{
-					tmp = tmp.replaceFirst(varReplacePattern,varValues.get(getVarName(tmp)).replaceAll(toReplace,theReplacement));
-				} catch (NullPointerException e)
-				{
-					//throw new GenericDictException("Error reading value for %" + getVarName(tmp) + "%");
-					tmp = tmp.replaceFirst(varReplacePattern,"");
-				}
+				tmp = tmp.replaceFirst(varReplacePattern, varValues.get(getVarName(tmp)).replaceAll(toReplace,theReplacement));
 			}
-			while (tmp.matches(".*?" + varPattern + ".*"))
+			// (eew) The item didn't exist, so remove it and the statement.
+			catch (NullPointerException e)
 			{
-				try
-				{
-					tmp = tmp.replaceFirst(varPattern,varValues.get(getVarName(tmp)));
-				} catch (NullPointerException e)
-				{
-					tmp = tmp.replaceFirst(varPattern,"");
-					//throw new GenericDictException("Error reading value for %" + getVarName(tmp) + "%");
-				}
+				tmp = tmp.replaceFirst(varReplacePattern, "");
 			}
-			toReturn = toReturn + tmp + " ";
 		}
+
+		// Remove anything that wasn't replaceAll'd to it's value.
+		while (tmp.matches(".*?" + varPattern + ".*"))
+		{
+			try
+			{
+				tmp = tmp.replaceFirst(varPattern,varValues.get(getVarName(tmp)));
+			}
+			catch (NullPointerException e)
+			{
+				tmp = tmp.replaceFirst(varPattern,"");
+			}
+		}
+
+		toReturn = toReturn + tmp + " ";
 
 		toReturn = stripUndesirables(formatConditionals(toReturn));
 
-		if (toReturn.length() == 0) throw new GenericDictException("You must specify something to output");
+		if (toReturn.length() == 0)
+			throw new GenericDictException("You must specify something to output");
+
 		return toReturn;
 	}
 
