@@ -6,6 +6,8 @@ import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
 import java.sql.*;
 import java.text.*;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.io.*;
 import java.text.DateFormatSymbols;
 
@@ -30,12 +32,16 @@ public class See
 
 	private final synchronized ResultSet getDataFor(final String nick, final Connection conn) throws SQLException
 	{
+		return getDataFor(nick, conn, 5);
+	}
+	private final synchronized ResultSet getDataFor(final String nick, final Connection conn, int days) throws SQLException
+	{
 		final Statement stat=conn.createStatement();
 
 		stat.execute("DROP TEMPORARY TABLE IF EXISTS `tempt1`, `tempt2`; ");
 
 		{
-			final PreparedStatement s=conn.prepareStatement("CREATE TEMPORARY TABLE `tempt1` AS SELECT `Time` FROM `History` WHERE `Time` > " +  (System.currentTimeMillis()-(1000*60*60*24*5)) + " AND (CASE INSTR(`Nick`,'|') WHEN 0 THEN `Nick` ELSE LEFT(`Nick`, INSTR(`Nick`,'|')-1) END)=? AND `Channel`IS NOT NULL ORDER BY `Time`; ");
+			final PreparedStatement s=conn.prepareStatement("CREATE TEMPORARY TABLE `tempt1` AS SELECT `Time` FROM `History` WHERE `Time` > " +  (System.currentTimeMillis()-(1000*60*60*24*days)) + " AND (CASE INSTR(`Nick`,'|') WHEN 0 THEN `Nick` ELSE LEFT(`Nick`, INSTR(`Nick`,'|')-1) END)=? AND `Channel`IS NOT NULL ORDER BY `Time`; ");
 			s.setString(1, nick);
 			s.executeUpdate();
 		}
@@ -124,7 +130,6 @@ public class See
 				final Date start = new Date(rs.getTimestamp("start").getTime());
 				final Date end = new Date(rs.getTimestamp("end").getTime());
 				ret += datelet(start) + " -> " + datelet(end) + ", ";
-				System.out.println(start.getTime() + " " + end.getTime());
 			}
 
 			if (ret.length()>2)
@@ -136,5 +141,104 @@ public class See
 		mods.odb.freeConnection(conn);
 	}
 
+	public synchronized void webDump(PrintWriter out, String args, String[] from)
+	{
+		try
+		{
+			out.println("HTTP/1.0 200 OK");
+			out.println("Content-Type: text/plain");
+			out.println();
 
+			{
+				String nick = args;
+
+				final Connection conn=mods.odb.getConnection();
+
+				final ResultSet rs = getDataFor(nick, conn, 9);
+
+				if (!rs.first())
+					return;
+				else
+				{
+					rs.beforeFirst();
+
+					while (rs.next())
+					{
+						final Date start = new Date(rs.getTimestamp("start").getTime());
+						final Date end = new Date(rs.getTimestamp("end").getTime());
+						out.println(start.getTime() + " " + end.getTime());
+					}
+				}
+
+				mods.odb.freeConnection(conn);
+			}
+		}
+		catch (Throwable t)
+		{
+			out.println("ERROR!");
+			t.printStackTrace();
+		}
+	}
+
+/* LA LA LA REMMED OUT AND INVISIBLE
+	public void commandMidday( Message mes ) throws SQLException
+	{
+		String[] nicks = new String[] { "Blood_God", "Faux", "sadiq", "Skumby", "ajmiles", "Jonatan", "icStatic", "Tim", "Draconas", "benji", "fred" };
+		float rt = 0;
+		final Connection conn=mods.odb.getConnection();
+
+		for (String nick : nicks)
+			rt+=midday(nick, conn);
+
+		mods.odb.freeConnection(conn);
+
+		float t = rt/(float)nicks.length;
+		irc.sendContextReply(mes, "Official Compsoc midday is " + (int)t + ":" + (int)((t-(int)t)*60) + ".");
+
+	}
+
+	private float midday( String nick, final Connection conn) throws SQLException
+	{
+		// if they wern't awake this long, it doesn't count.
+		final int minday = 7*60*60*1000;
+
+		ResultSet rs = getDataFor(nick, conn);
+
+		int c = 0;
+		float midday = 0;
+
+		if (!rs.first())
+			throw new RuntimeException("ProgrammerTooLazyToCodeException() encountered.");
+		else
+		{
+			rs.beforeFirst();
+			Date lastEnd = null;
+
+			while (rs.next())
+			{
+				final Timestamp gotup=rs.getTimestamp("end");
+				final Date start = new Date(rs.getTimestamp("start").getTime());
+				final Date end = new Date(rs.getTimestamp("end").getTime());
+
+				if (lastEnd != null)
+				{
+					long foo = -(lastEnd.getTime() - start.getTime());
+					if (foo > minday)
+					{
+						Calendar cal = new GregorianCalendar();
+						cal.setTime(new Date(end.getTime() +  foo * (12-8)/(24-8)));
+						midday += cal.get(Calendar.HOUR_OF_DAY) + cal.get(Calendar.MINUTE)/60.0;
+						c++;
+					}
+				}
+				lastEnd = start;
+			}
+
+		}
+
+		if (c==0)
+			throw new RuntimeException(nick + midday);
+		return midday/(float)c;
+	}
+*/
 }
