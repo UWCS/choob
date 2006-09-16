@@ -177,10 +177,11 @@ JSExample.prototype.commandTimeline.help = [
 
 // Command: Eval
 JSExample.prototype.commandEval = function(mes, mods, irc) {
-	if (mes.getNick() != "Silver") {
-		irc.sendContextReply(mes, "Error: Bad user!");
+	if (!mods.security.hasPerm(new ChoobPermission("admin.eval"), mes)) {
+		irc.sendContextReply(mes, "You don't have permission to do that!");
 		return;
 	}
+	
 	var params = mods.util.getParams(mes, 1);
 	if (params.size() <= 1) {
 		irc.sendContextReply(mes, "Syntax: JSExample.Eval <JS>");
