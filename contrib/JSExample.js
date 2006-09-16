@@ -193,8 +193,9 @@ JSExample.prototype.commandEval = function(mes, mods, irc) {
 	} catch(ex) {
 		if (("name" in ex) && ("message" in ex) && ("fileName" in ex)) {
 			irc.sendContextReply(mes, "Exception: [" + ex.name + "] <" + ex.message + "> at <" + ex.fileName + ">.");
-			var javaEx = ex.javaException;
-			javaEx.printStackTrace();
+			if (ex.javaException) {
+				ex.javaException.printStackTrace();
+			}
 		} else {
 			irc.sendContextReply(mes, "Exception: " + ex);
 		}
