@@ -21,7 +21,7 @@ public class GenericDict2
 		this.irc = irc;
 	}
 
-	private final String c_style_quoted_string = "\"((?:\\\\.|[^\"\\\\])+)\"";
+	private final String c_style_quoted_string = "\"((?:\\\\.|[^\"\\\\])*)\"";
 	private final String replace_all_statement = "\\.replaceAll\\(" + c_style_quoted_string + "\\s*,\\s*" + c_style_quoted_string + "\\)";
 
 	private final String[] genericDictLongHelp = {
