@@ -203,9 +203,20 @@ public class Tell
 			return;
 		}
 
-		final boolean question=params[2].indexOf('?', params[2].length()-5)!=-1; // It's a question if it has a "?" within 5 characters of it's end. (ie. "? :)").
+		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
 
-		final String type=question ? "ask" : "tell";
+		String typeLocal = "tell";
+		// Allow any alias to this command to be used as the verb.
+		// (Except for when using tell.* directly.)
+		if (mesFlags.containsKey("command") && !mesFlags.get("command").toLowerCase().startsWith("tell."))
+			typeLocal = mesFlags.get("command");
+
+		// It's a question if it has a "?" within 5 characters of it's end. (ie. "? :)").
+		if (typeLocal.equals("tell") && (params[2].indexOf('?', params[2].length() - 5) != -1))
+			typeLocal = "ask";
+
+
+		final String type = typeLocal;
 		final String[] targets = params[1].split(", *");
 		final long time = mes.getMillis();
 
@@ -225,7 +236,6 @@ public class Tell
 		}
 
 		int count = tell.targets.length;
-		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
 		if (!mesFlags.containsKey("timedevents.delayed"))
 		{
 			irc.sendContextReply(mes, "Okay, will " + type + " upon next speaking. (Sent to " + count + " " + (count == 1 ? "person" : "people") + ".)");
