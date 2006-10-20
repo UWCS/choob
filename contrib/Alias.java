@@ -61,15 +61,29 @@ public class Alias
 		+ " 'Bar.Baz $3 $[1-2]', 'Foo 1 2 3' will become 'Bar.Baz 3 1 2'."
 	};
 
-	public String[] helpCommandAdd = {
-		"Add an alias to the bot.",
-		"<Name> <Alias>",
-		"<Name> is the name of the alias to add",
+	public String[] helpCommandAlias = {
+		"Shows an existing alias, or adds a new alias to the bot.",
+		"<Name> [<Alias>]",
+		"<Name> is the name of the alias to show/add",
 		"<Alias> is the alias content. See Alias.Syntax"
 	};
-	public void commandAdd( Message mes )
+	public void commandAlias( Message mes )
 	{
 		String[] params = mods.util.getParamArray(mes, 2);
+
+		if (params.length == 2)
+		{
+			String name = params[1];
+
+			AliasObject alias = getAlias(name);
+
+			if (alias == null)
+				irc.sendContextReply(mes, "Alias not found.");
+			else
+				irc.sendContextReply(mes, "'" + alias.name + "'" + (alias.locked ? " (LOCKED)" : "") + " was aliased to '" + alias.converted + "' by '" + alias.owner + "'.");
+
+			return;
+		}
 
 		if (params.length <= 2)
 		{
@@ -406,30 +420,6 @@ public class Alias
 		}
 	}
 
-	public String[] helpCommandShow = {
-		"Give information about an alias.",
-		"<Name>",
-		"<Name> is the name of the alias to show"
-	};
-	public void commandShow( Message mes )
-	{
-		String[] params = mods.util.getParamArray(mes);
-
-		if (params.length != 2)
-		{
-			throw new ChoobBadSyntaxError();
-		}
-
-		String name = params[1];
-
-		AliasObject alias = getAlias(name);
-
-		if (alias == null)
-			irc.sendContextReply(mes, "Alias not found.");
-		else
-			irc.sendContextReply(mes, "'" + alias.name + "'" + (alias.locked ? " (LOCKED)" : "") + " was aliased to '" + alias.converted + "' by '" + alias.owner + "'.");
-	}
-
 	public String apiGet( String name )
 	{
 		if (name == null)
@@ -552,7 +542,7 @@ public class Alias
 
 	private AliasObject getAlias( String name )
 	{
-		String alias = name.replaceAll("([\\\\\"])","\\\\$1").toLowerCase();
+		String alias = mods.odb.escapeString(name).toLowerCase();
 
 		List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE name = \"" + alias + "\"" );
 
