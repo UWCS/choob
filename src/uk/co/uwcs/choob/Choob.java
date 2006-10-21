@@ -216,8 +216,9 @@ public final class Choob extends PircBot
 			if ( coreplugResults.first() )
 				do
 				{
-					System.out.println("Plugin loading: " + coreplugResults.getString("PluginName"));
+					System.out.print("Loading core plugin " + coreplugResults.getString("PluginName") + " from <" + coreplugResults.getString("URL") + ">... ");
 					modules.plugin.addPlugin(coreplugResults.getString("PluginName"), coreplugResults.getString("URL"));
+					System.out.println("done.");
 				}
 				while ( coreplugResults.next() );
 
