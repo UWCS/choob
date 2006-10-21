@@ -474,7 +474,7 @@ public class Events
 							"Signups for " + ev.boldNameShortDetails() +
 							" at " + ev.location +
 							(ev.signupMax != 0 ? " [" + ev.signupCurrent + "/" + ev.signupMax + "]" : "") + ": " +
-							nameList(ev.signupNames, mes) +
+							nameList(ev.signupNames, mes, ev.signupMax, Colors.BOLD + "Reserves: " + Colors.NORMAL) +
 							"."
 						);
 					return;
@@ -511,9 +511,20 @@ public class Events
 	/** Convert an arraylist of names into a string, b'reaking them up to prevent pings if not in pm. */
 	private static String nameList(ArrayList<String> names, Message mes)
 	{
-		String namelist = "";
+		return nameList(names, mes, -1, "");
+	}
+	private static String nameList(ArrayList<String> names, Message mes, int after, String message)
+	{
+		StringBuilder namelistb = new StringBuilder();
+		int i=0;
 		for (String name : names)
-			namelist += name + ", ";
+		{
+			if (i++ == after)
+				namelistb.append(message);
+			namelistb.append(name).append(", ");
+		}
+
+		String namelist = namelistb.toString();
 
 		// Remove the trailing commaspace.
 		if (namelist.length() > 2)
@@ -521,7 +532,7 @@ public class Events
 
 		// If it's not in pm, break them up.
 		if (!(mes instanceof PrivateEvent))
-			namelist = namelist.replaceAll("([a-zA-Z])([^, ]+)","$1'$2");
+			namelist = namelist.replaceAll("(?<![a-zA-Z])([a-zA-Z])(?!eserves)([^, ]+)","$1'$2");
 
 		return namelist;
 	}
