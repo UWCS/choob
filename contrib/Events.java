@@ -447,6 +447,20 @@ public class Events
 	public void commandSignups(Message mes) throws ChoobException
 	{
 		String comp=mods.util.getParamString(mes).toLowerCase();
+		final int index = comp.indexOf('/');
+		boolean searching = index != -1;
+		String target = ""; //You suck, Java.
+		if (searching)
+		{
+			target = comp.substring(index+1);
+			if (target.length() != 0)
+				target = target.substring(0, target.length()-1).trim();
+			else
+				searching = false;
+
+			comp = comp.substring(0, index).trim();
+		}
+
 		if (comp.equals(""))
 		{
 			irc.sendContextReply(mes, "Please name the event you want info on.");
@@ -470,13 +484,26 @@ public class Events
 							)
 						);
 					else
+					{
+						List<String> names = ev.signupNames;
+						if (searching)
+						{
+							List<String> newnames = new ArrayList<String>();
+							Pattern p = Pattern.compile(target, Pattern.CASE_INSENSITIVE);
+							for (String n : names)
+								if (p.matcher(n).find())
+									newnames.add(n);
+							names = newnames;
+						}
+
 						irc.sendContextReply(mes,
-							"Signups for " + ev.boldNameShortDetails() +
+							(searching ? "Matching s" : "S") + "ignups for " + ev.boldNameShortDetails() +
 							" at " + ev.location +
 							(ev.signupMax != 0 ? " [" + ev.signupCurrent + "/" + ev.signupMax + "]" : "") + ": " +
-							nameList(ev.signupNames, mes, ev.signupMax, Colors.BOLD + "Reserves: " + Colors.NORMAL) +
+							nameList(names, mes, ev.signupMax, Colors.BOLD + "Reserves: " + Colors.NORMAL) +
 							"."
 						);
+					}
 					return;
 				}
 		irc.sendContextReply(mes, "Event not found.");
@@ -509,11 +536,11 @@ public class Events
 	}
 
 	/** Convert an arraylist of names into a string, b'reaking them up to prevent pings if not in pm. */
-	private static String nameList(ArrayList<String> names, Message mes)
+	private static String nameList(List<String> names, Message mes)
 	{
 		return nameList(names, mes, -1, "");
 	}
-	private static String nameList(ArrayList<String> names, Message mes, int after, String message)
+	private static String nameList(List<String> names, Message mes, int after, String message)
 	{
 		StringBuilder namelistb = new StringBuilder();
 		int i=0;
