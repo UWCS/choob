@@ -103,7 +103,8 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 		return;
 	}
 	for (var i = 0; i < bugs.length; i++) {
-		var msg = "Bug " + bugs[i].bugNumber + " [" + bugs[i].product + ": " + bugs[i].component + "]";
+		var msg = "Bug " + bugs[i].bugNumber;
+		//msg += " [" + bugs[i].product + ": " + bugs[i].component + "]";
 		log(msg);
 		msg += ": " + bugs[i].from + " ";
 		
@@ -142,8 +143,9 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 		}
 		msg += things.join("; ") + ".";
 		
+		var comp = bugs[i].product + ":" + bugs[i].component;
 		for (var t in this._targetList) {
-			if (this._targetList[t].hasComponent(bugs[i].product + ":" + bugs[i].component)) {
+			if (this._targetList[t].hasComponent(comp)) {
 				irc.sendMessage(this._targetList[t].target, msg);
 			}
 		}
@@ -242,7 +244,7 @@ BugmailTarget.prototype._ctor = function(parent, target) {
 BugmailTarget.prototype.init = function(parent) {
 	this._parent = parent;
 	if (this.componentList) {
-		this._components = this.componentList.split(" ");
+		this._components = this.componentList.split("|");
 	} else {
 		this._components = [];
 	}
@@ -256,7 +258,7 @@ BugmailTarget.prototype.addComponent = function(component) {
 	}
 	this._components.push(component);
 	this._components.sort();
-	this.componentList = this._components.join(" ");
+	this.componentList = this._components.join("|");
 	this.save();
 	return true;
 }
@@ -265,7 +267,7 @@ BugmailTarget.prototype.removeComponent = function(component) {
 	for (var i = 0; i < this._components.length; i++) {
 		if (this._components[i].toLowerCase() == component.toLowerCase()) {
 			this._components.splice(i, 1);
-			this.componentList = this._components.join(" ");
+			this.componentList = this._components.join("|");
 			this.save();
 			return true;
 		}
