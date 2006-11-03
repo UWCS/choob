@@ -27,6 +27,7 @@ function Bugzilla(mods, irc) {
 	
 	this._targetList = new Object();
 	this._seenMsgs = new Object();
+	this._firstTime = true;
 	
 	var targets = this._mods.odb.retrieve(BugmailTarget, "");
 	for (var i = 0; i < targets.size(); i++) {
@@ -99,7 +100,8 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 	
 	this._mods.interval.callBack("bugmail-check", 30000 /* 30s */, 1);
 	
-	if (bugs.length == 0) {
+	if ((bugs.length == 0) || this._firstTime) {
+		this._firstTime = false;
 		return;
 	}
 	for (var i = 0; i < bugs.length; i++) {
