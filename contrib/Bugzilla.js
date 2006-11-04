@@ -87,16 +87,22 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 	
 	var bugs = new Array();
 	
-	var pop3 = new POP3Server(pop3host, pop3port, pop3account, pop3password);
-	var mailList = pop3.getMessageList();
-	for (var i = 0; i < mailList.length; i++) {
-		if (!(mailList[i] in this._seenMsgs)) {
-			var bug = new BugmailParser(pop3.getMessage(mailList[i]));
-			this._seenMsgs[mailList[i]] = true;
-			bugs.push(bug);
+	try {
+		var pop3 = new POP3Server(pop3host, pop3port, pop3account, pop3password);
+		var mailList = pop3.getMessageList();
+		for (var i = 0; i < mailList.length; i++) {
+			if (!(mailList[i] in this._seenMsgs)) {
+				var bug = new BugmailParser(pop3.getMessage(mailList[i]));
+				this._seenMsgs[mailList[i]] = true;
+				bugs.push(bug);
+			}
 		}
+		pop3.close();
+	} catch(ex) {
+		log("Error checking bugmail: " + ex);
+		this._mods.interval.callBack("bugmail-check", 30000 /* 30s */, 1);
+		return;
 	}
-	pop3.close();
 	
 	this._mods.interval.callBack("bugmail-check", 30000 /* 30s */, 1);
 	
