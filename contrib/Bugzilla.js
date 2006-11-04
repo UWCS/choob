@@ -488,13 +488,18 @@ function BugmailParser(msg) {
 	this._parse(msg);
 }
 
-BugmailParser.listFields = {
-	"CC": true,
-	"Group": true,
-	"Keywords": true,
-	"BugsThisDependsOn": true,
-	"OtherBugsDependingOnThis": true
-};
+BugmailParser.fields = [
+	{ name: "AssignedTo",               rename: "Assigned To" },
+	{ name: "QAContact",                rename: "QA Contact" },
+	{ name: "CC",                       list: true, ignore: true },
+	{ name: "Group",                    list: true },
+	{ name: "Keywords",                 list: true },
+	{ name: "BugsThisDependsOn",        list: true, rename: "dependent bug" },
+	{ name: "OtherBugsDependingOnThis", list: true, rename: "blocked bug" },
+	{ name: "Flag",                     flag: true },
+	{ name: /Attachment #\d+ Flag/,     flag: true },
+	{ name: "Ever Confirmed",           ignore: true }
+];
 
 BugmailParser.prototype._parse = function(lines) {
 	var debug = 0;
@@ -567,7 +572,30 @@ BugmailParser.prototype._parse = function(lines) {
 	}
 	
 	for (var i = 0; i < changes.length; i++) {
-		if (changes[i].name.match(/(?:Attachment #\d+ )?Flag$/)) {
+		var skip = false;
+		var flag = false;
+		var list = false;
+		
+		for (var j = 0; j < BugmailParser.fields.length; j++) {
+			var f = BugmailParser.fields[j];
+			if (((typeof f.name == "string") && (changes[i].name == f.name))
+					|| ((typeof f.name == "string") && (f.name instanceof RegExp) && f.name.test(changes[i].name))) {
+				if (f.ignore)
+					skip = true;
+				if (f.list)
+					list = true;
+				if (f.flag)
+					flag = true;
+				if (f.rename)
+					changes[i].name = f.rename;
+				break;
+			}
+		}
+		if (skip) {
+			continue;
+		}
+		
+		if (flag) {
 			var oldFlags = (changes[i].oldValue ? changes[i].oldValue.split(",") : []);
 			var newFlags = (changes[i].newValue ? changes[i].newValue.split(",") : []);
 			
@@ -622,7 +650,7 @@ BugmailParser.prototype._parse = function(lines) {
 				}
 			}
 			
-		} else if (changes[i].name in BugmailParser.listFields) {
+		} else if (list) {
 			if (changes[i].oldValue) {
 				if (debug > 0) log("REMOVED: " + changes[i].name + " --- " + changes[i].oldValue);
 				this.removed.push({ name: changes[i].name, value: changes[i].oldValue });
