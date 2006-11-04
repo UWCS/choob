@@ -579,7 +579,7 @@ BugmailParser.prototype._parse = function(lines) {
 		for (var j = 0; j < BugmailParser.fields.length; j++) {
 			var f = BugmailParser.fields[j];
 			if (((typeof f.name == "string") && (changes[i].name == f.name))
-					|| ((typeof f.name == "string") && (f.name instanceof RegExp) && f.name.test(changes[i].name))) {
+					|| ((typeof f.name == "function") && (f.name instanceof RegExp) && f.name.test(changes[i].name))) {
 				if (f.ignore)
 					skip = true;
 				if (f.list)
