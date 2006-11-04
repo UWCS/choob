@@ -19,6 +19,7 @@ function _trim() {
 	return this.replace(/^\s+/, "").replace(/\s+$/, "");
 }
 
+
 // Constructor: Bugzilla
 function Bugzilla(mods, irc) {
 	this._mods = mods;
@@ -44,6 +45,7 @@ function Bugzilla(mods, irc) {
 	this._mods.interval.callBack("bugmail-check", 10000 /* 10s */, 1);
 }
 
+
 Bugzilla.prototype.info = [
 		"Bugzilla bug notification plugin.",
 		"James Ross",
@@ -51,7 +53,9 @@ Bugzilla.prototype.info = [
 		"$Rev$$Date$"
 	];
 
+
 Bugzilla.prototype.optionsGeneral = ["POP3Server", "POP3Port", "POP3Account", "POP3Password"];
+
 
 // Callback for all intervals from this plugin.
 Bugzilla.prototype.interval = function(param, mods, irc) {
@@ -78,26 +82,20 @@ Bugzilla.prototype.interval = function(param, mods, irc) {
 	}
 }
 
-// Callback: bugmail-check
+
+// Interval: bugmail-check
 Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
-	var pop3host     = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Server",   ""]);
-	var pop3port     = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Port",     "110"]);
-	var pop3account  = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Account",  ""]);
-	var pop3password = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Password", ""]);
-	
 	var bugs = new Array();
 	
 	try {
-		var pop3 = new POP3Server(pop3host, pop3port, pop3account, pop3password);
-		var mailList = pop3.getMessageList();
-		for (var i = 0; i < mailList.length; i++) {
-			if (!(mailList[i] in this._seenMsgs)) {
-				var bug = new BugmailParser(pop3.getMessage(mailList[i]));
-				this._seenMsgs[mailList[i]] = true;
+		var self = this;
+		this._checkMail(function(pop3, messageID) {
+			if (!(messageID in self._seenMsgs)) {
+				var bug = new BugmailParser(pop3.getMessage(messageID));
+				self._seenMsgs[messageID] = true;
 				bugs.push(bug);
 			}
-		}
-		pop3.close();
+		});
 	} catch(ex) {
 		log("Error checking bugmail: " + ex);
 		this._mods.interval.callBack("bugmail-check", 30000 /* 30s */, 1);
@@ -110,54 +108,7 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 		this._firstTime = false;
 		return;
 	}
-	for (var i = 0; i < bugs.length; i++) {
-		var msg = "Bug " + bugs[i].bugNumber;
-		//msg += " [" + bugs[i].product + ": " + bugs[i].component + "]";
-		log(msg);
-		msg += ": " + bugs[i].from + " ";
-		
-		var things = new Array();
-		if (bugs[i].changes.length > 0) {
-			var msgp = "changed ";
-			for (var j = 0; j < bugs[i].changes.length; j++) {
-				if (j > 0) {
-					msgp += ", ";
-				}
-				msgp += bugs[i].changes[j].name + " from '" + bugs[i].changes[j].oldValue + "' to '" + bugs[i].changes[j].newValue + "'";
-			}
-			things.push(msgp);
-		}
-		
-		if (bugs[i].removed.length > 0) {
-			var msgp = "removed ";
-			for (var j = 0; j < bugs[i].removed.length; j++) {
-				if (j > 0) {
-					msgp += ", ";
-				}
-				msgp += bugs[i].removed[j].name + " '" + bugs[i].removed[j].value + "'";
-			}
-			things.push(msgp);
-		}
-		
-		if (bugs[i].added.length > 0) {
-			var msgp = "added ";
-			for (var j = 0; j < bugs[i].added.length; j++) {
-				if (j > 0) {
-					msgp += ", ";
-				}
-				msgp += bugs[i].added[j].name + " '" + bugs[i].added[j].value + "'";
-			}
-			things.push(msgp);
-		}
-		msg += things.join("; ") + ".";
-		
-		var comp = bugs[i].product + ":" + bugs[i].component;
-		for (var t in this._targetList) {
-			if (this._targetList[t].hasComponent(comp)) {
-				irc.sendMessage(this._targetList[t].target, msg);
-			}
-		}
-	}
+	this._spam(irc, bugs);
 }
 
 
@@ -226,6 +177,159 @@ Bugzilla.prototype.commandRemoveComponent.help = [
 		"<component> is the component to stop sending bugmail for"
 	];
 
+
+// Command: Log
+Bugzilla.prototype.commandLog = function(mes, mods, irc) {
+	var params = mods.util.getParams(mes, 2);
+	if (params.size() <= 1) {
+		irc.sendContextReply(mes, "Syntax: Bugzilla.Log <bug number>");
+		return;
+	}
+	var bugNum = Number(params.get(1));
+	
+	var bugs = new Array();
+	try {
+		var self = this;
+		this._checkMail(function(pop3, messageID) {
+			var bug = new BugmailParser(pop3.getMessage(messageID));
+			if ((bug.bugNumber == bugNum) || (bugNum == 0)) {
+				bugs.push(bug);
+			}
+		});
+	} catch(ex) {
+		irc.sendContextReply(mes, "Error checking bugmail: " + ex);
+		return;
+	}
+	
+	if (bugs.length == 0) {
+		irc.sendContextReply(mes, "Nothing found in log for bug " + bugNum);
+	} else {
+		this._spam(irc, bugs, mes);
+	}
+}
+Bugzilla.prototype.commandRemoveComponent.help = [
+		"Shows all changes capture for a single bug.",
+		"<bug number>",
+		"<bug number> is the bug number to show the log of"
+	];
+
+
+// Internal: calls back for each message.
+Bugzilla.prototype._checkMail = function(callbackFn) {
+	var pop3host     = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Server",   ""]);
+	var pop3port     = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Port",     "110"]);
+	var pop3account  = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Account",  ""]);
+	var pop3password = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Password", ""]);
+	
+	var pop3 = new POP3Server(pop3host, pop3port, pop3account, pop3password);
+	var messageIDList = pop3.getMessageList();
+	for (var i = 0; i < messageIDList.length; i++) {
+		callbackFn(pop3, messageIDList[i]);
+	}
+	pop3.close();
+}
+
+
+// Internal: spam list of bugs at their appropriate channels.
+Bugzilla.prototype._spam = function(irc, bugs, mes) {
+	for (var i = 0; i < bugs.length; i++) {
+		var msg = "Bug " + bugs[i].bugNumber;
+		//msg += " [" + bugs[i].product + ": " + bugs[i].component + "]";
+		msg += ": " + bugs[i].from + " ";
+		
+		var things = new Array();
+		
+		if (bugs[i].newAttachment) {
+			var msgp = "added attachment " + bugs[i].newAttachment.number;
+			if (bugs[i].newAttachment.label) {
+				msgp += " (" + bugs[i].newAttachment.label + ")";
+			}
+			things.push(msgp);
+		}
+		
+		if (bugs[i].changes.length > 0) {
+			var list = new Array();
+			for (var j = 0; j < bugs[i].changes.length; j++) {
+				list.push(bugs[i].changes[j].name + " from '" + bugs[i].changes[j].oldValue + "' to '" + bugs[i].changes[j].newValue + "'");
+			}
+			things.push("changed " + list.join(", "));
+		}
+		
+		if (bugs[i].removed.length > 0) {
+			var list = new Array();
+			for (var j = 0; j < bugs[i].removed.length; j++) {
+				list.push(bugs[i].removed[j].name + " '" + bugs[i].removed[j].value + "'");
+			}
+			things.push("removed " + list.join(", "));
+		}
+		
+		if (bugs[i].added.length > 0) {
+			var list = new Array();
+			for (var j = 0; j < bugs[i].added.length; j++) {
+				list.push(bugs[i].added[j].name + " '" + bugs[i].added[j].value + "'");
+			}
+			things.push("added " + list.join(", "));
+		}
+		
+		function makeAttSuffix(flag) {
+			if (typeof flag.attachment == "undefined") {
+				return "";
+			}
+			return " for attachment " + flag.attachment;
+		};
+		
+		if (bugs[i].flagsCleared.length > 0) {
+			var list = new Array();
+			for (var j = 0; j < bugs[i].flagsCleared.length; j++) {
+				list.push(bugs[i].flagsCleared[j].name + makeAttSuffix(bugs[i].flagsCleared[j]));
+			}
+			things.push("cleared " + list.join(", "));
+		}
+		
+		if (bugs[i].flagsRequested.length > 0) {
+			var list = new Array();
+			for (var j = 0; j < bugs[i].flagsRequested.length; j++) {
+				list.push(bugs[i].flagsRequested[j].name
+						+ (bugs[i].flagsRequested[j].user ? " from " + bugs[i].flagsRequested[j].user : "")
+						+ makeAttSuffix(bugs[i].flagsRequested[j]));
+			}
+			things.push("requested " + list.join(", "));
+		}
+		
+		if (bugs[i].flagsGranted.length > 0) {
+			var list = new Array();
+			for (var j = 0; j < bugs[i].flagsGranted.length; j++) {
+				list.push(bugs[i].flagsGranted[j].name + makeAttSuffix(bugs[i].flagsGranted[j]));
+			}
+			things.push("granted " + list.join(", "));
+		}
+		
+		if (bugs[i].flagsDenied.length > 0) {
+			var list = new Array();
+			for (var j = 0; j < bugs[i].flagsDenied.length; j++) {
+				list.push(bugs[i].flagsDenied[j].name + makeAttSuffix(bugs[i].flagsDenied[j]));
+			}
+			things.push("denied " + list.join(", "));
+		}
+		
+		if (things.length == 0) {
+			continue;
+		}
+		msg += things.join("; ") + ".";
+		log(msg);
+		
+		if (mes) {
+			irc.sendContextReply(mes, msg);
+		} else {
+			var comp = bugs[i].product + ":" + bugs[i].component;
+			for (var t in this._targetList) {
+				if (this._targetList[t].hasComponent(comp)) {
+					irc.sendMessage(this._targetList[t].target, msg);
+				}
+			}
+		}
+	}
+}
 
 
 
@@ -375,6 +479,11 @@ function BugmailParser(msg) {
 	this.changes   = new Array();
 	this.removed   = new Array();
 	this.added     = new Array();
+	this.flagsCleared   = new Array();
+	this.flagsRequested = new Array();
+	this.flagsGranted   = new Array();
+	this.flagsDenied    = new Array();
+	this.newAttachment = null;
 	
 	this._parse(msg);
 }
@@ -388,64 +497,143 @@ BugmailParser.listFields = {
 };
 
 BugmailParser.prototype._parse = function(lines) {
+	var debug = 0;
 	var ary;
-	var changeParts = ["", "", ""];
+	
+	var changes = new Array();
+	var lineContParts = ["", "", ""];
+	var linePartLengths = [19, 28, 28];
 	
 	for (var i = 0; i < lines.length; i++) {
-		//log("PARSE LINE: " + lines[i]);
-		if ((ary = lines[i].match(/^Subject:\s*(new\s+)?\[Bug (\d+)\]\s+(.*?)\s*$/i))) {
-			//log("BUG ID : " + ary[2] + " --- " + ary[3]);
-			this.isNew = Boolean(ary[1]);
-			this.bugNumber = Number(ary[2]);
+		if (debug > 1) log("PARSE LINE: " + lines[i]);
+		if ((ary = lines[i].match(/^Subject:\s*\[Bug (\d+)\]\s+(new:\s+)?(.*?)\s*$/i))) {
+			if (debug > 0) log("BUG ID : " + ary[1] + " --- " + ary[3]);
+			this.isNew = Boolean(ary[2]);
+			this.bugNumber = Number(ary[1]);
 			this.summary = ary[3];
-			//if (this.isNew) {
-			//	log("NEW BUG!");
-			//}
+			if (this.isNew) {
+				if (debug > 0) log("NEW BUG!");
+			}
 			
 		} else if ((ary = lines[i].match(/^X-Bugzilla-(Product|Component):\s*(.*?)\s*$/i))) {
-			//log(ary[1].toUpperCase() + ": " + ary[2]);
+			if (debug > 0) log(ary[1].toUpperCase() + ": " + ary[2]);
 			this[ary[1].toLowerCase()] = ary[2];
 			
 		} else if ((ary = lines[i].match(/^(\S+) changed:$/))) {
-			//log("USER   : " + ary[1]);
+			if (debug > 0) log("USER   : " + ary[1]);
 			this.from = ary[1];
 			
-		} else if ((ary = lines[i].match(/^([^|]+)\|([^|]+)\|([^|]+)$/))) {
-			var parts = ["", "", ""];
+		} else if ((ary = lines[i].match(/^([^|]+)\|([^|]+)\|([^|]*)$/))) {
+			var lineParts = ["", "", ""];
 			for (var j = 0; j <= 2; j++) {
-				parts[j] = ary[j + 1].trim();
+				lineParts[j] = ary[j + 1].trim();
 			}
-			if (parts[0] == "What")
+			if (lineParts[0] == "What")
 				continue;
 			
-			if ((parts[1].length == 28) || (parts[2].length == 28)) {
-				// Forced wrap occured, so continue to next line.
+			
+			var forcedWrap = [false, false, false];
+			for (var j = 0; j <= 2; j++) {
+				forcedWrap[j] = (lineParts[j].length == linePartLengths[j]) || (lineParts[j].substr(-1) == "-") || (lineParts[j].substr(-1) == ",");
+			}
+			if (forcedWrap[0] || forcedWrap[1] || forcedWrap[2] || (lineParts[0].match(/^Attachment #\d+$/))) {
+				// Wrapped. Keep contents, and continue.
 				for (var j = 0; j <= 2; j++) {
-					changeParts[j] += parts[j];
+					lineContParts[j] += lineParts[j] + (forcedWrap[j] ? "" : " ");
 				}
 				continue;
 			}
 			for (var j = 0; j <= 2; j++) {
-				changeParts[j] += parts[j];
+				lineContParts[j] += lineParts[j];
 			}
-			
-			if (changeParts[0] in BugmailParser.listFields) {
-				if (changeParts[1]) {
-					//log("REMOVED: " + changeParts[0] + " --- " + changeParts[1]);
-					this.removed.push({ name: changeParts[0], value: changeParts[1] });
-				}
-				if (changeParts[2]) {
-					//log("ADDED  : " + changeParts[0] + " --- " + changeParts[2]);
-					this.added.push({ name: changeParts[0], value: changeParts[2] });
-				}
-			} else {
-				//log("CHANGED: " + changeParts[0] + " --- " + changeParts[1] + " --- " + changeParts[2]);
-				this.changes.push({ name: changeParts[0], oldValue: changeParts[1], newValue: changeParts[2] });
-			}
-			
 			for (var j = 0; j <= 2; j++) {
-				changeParts[j] = "";
+				lineContParts[j] = lineContParts[j].trim();
 			}
+			changes.push({ name: lineContParts[0], oldValue: lineContParts[1], newValue: lineContParts[2] });
+			lineContParts = ["", "", ""];
+			
+		} else if ((ary = lines[i].match(/^-+\s+Comment #\d+ from (\S+)\s+/))) {
+			this.from = ary[1];
+			
+		} else if ((ary = lines[i].match(/^Created an attachment \(id=(\d+)\)$/))) {
+			if (debug > 0) log("ATTACHMENT: " + ary[1]);
+			this.newAttachment = { number: Number(ary[1]), label: "" };
+			
+			if ((i < lines.length - 2) && lines[i + 1].match(/^ --> \(/)) {
+				this.newAttachment.label = lines[i + 2];
+			}
+			
+		}
+	}
+	
+	for (var i = 0; i < changes.length; i++) {
+		if (changes[i].name.match(/(?:Attachment #\d+ )?Flag$/)) {
+			var oldFlags = (changes[i].oldValue ? changes[i].oldValue.split(",") : []);
+			var newFlags = (changes[i].newValue ? changes[i].newValue.split(",") : []);
+			
+			for (var j = 0; j < oldFlags.length; j++) {
+				var val = oldFlags[j];
+				if ((ary = val.match(/^([^(]+)\((.*)\)$/))) {
+					oldFlags[j] = { name: ary[1].substr(0, ary[1].length - 1), state: ary[1].substr(-1), user: ary[2] };
+				} else {
+					oldFlags[j] = { name:    val.substr(0,    val.length - 1), state:    val.substr(-1), user: ""     };
+				}
+			}
+			
+			for (var j = 0; j < newFlags.length; j++) {
+				var val = newFlags[j];
+				if ((ary = val.match(/^([^(]+)\((.*)\)$/))) {
+					newFlags[j] = { name: ary[1].substr(0, ary[1].length - 1), state: ary[1].substr(-1), user: ary[2] };
+				} else {
+					newFlags[j] = { name:    val.substr(0,    val.length - 1), state:    val.substr(-1), user: ""     };
+				}
+			}
+			
+			// Make sure flags are linked to the attachment ID.
+			if ((ary = changes[i].name.match(/Attachment #(\d+)/))) {
+				for (var j = 0; j < oldFlags.length; j++) {
+					oldFlags[j].attachment = Number(ary[1]);
+				}
+				for (var j = 0; j < newFlags.length; j++) {
+					newFlags[j].attachment = Number(ary[1]);
+				}
+			}
+			
+			// Remove old flags that are also in new flags.
+			for (var j = 0; j < newFlags.length; j++) {
+				for (var k = 0; k < oldFlags.length; k++) {
+					if (newFlags[j].name == oldFlags[k].name) {
+						oldFlags.splice(k, 1);
+						break;
+					}
+				}
+			}
+			
+			for (var j = 0; j < oldFlags.length; j++) {
+				this.flagsCleared.push(oldFlags[j]);
+			}
+			for (var j = 0; j < newFlags.length; j++) {
+				if (newFlags[j].state == "?") {
+					this.flagsRequested.push(newFlags[j]);
+				} else if (newFlags[j].state == "+") {
+					this.flagsGranted.push(newFlags[j]);
+				} else if (newFlags[j].state == "-") {
+					this.flagsDenied.push(newFlags[j]);
+				}
+			}
+			
+		} else if (changes[i].name in BugmailParser.listFields) {
+			if (changes[i].oldValue) {
+				if (debug > 0) log("REMOVED: " + changes[i].name + " --- " + changes[i].oldValue);
+				this.removed.push({ name: changes[i].name, value: changes[i].oldValue });
+			}
+			if (changes[i].newValue) {
+				if (debug > 0) log("ADDED  : " + changes[i].name + " --- " + changes[i].newValue);
+				this.added.push({ name: changes[i].name, value: changes[i].newValue });
+			}
+		} else {
+			if (debug > 0) log("CHANGED: " + changes[i].name + " --- " + changes[i].oldValue + " --- " + changes[i].newValue);
+			this.changes.push({ name: changes[i].name, oldValue: changes[i].oldValue, newValue: changes[i].newValue });
 		}
 	}
 }
