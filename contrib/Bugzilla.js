@@ -324,13 +324,34 @@ Bugzilla.prototype._spam = function(bugs, mes) {
 		}
 		
 		if (bugs[i].changes.length > 0) {
+			var resolved = -1;
+			var fixed    = -1;
+			var resolution = "";
+			for (var j = 0; j < bugs[i].changes.length; j++) {
+				if ((bugs[i].changes[j].name == "Status") && (bugs[i].changes[j].newValue == "RESOLVED"))
+					resolved = j;
+				if ((bugs[i].changes[j].name == "Resolution") && bugs[i].changes[j].newValue) {
+					fixed = j;
+					resolution = bugs[i].changes[j].newValue;
+				}
+			}
+			
+			if ((resolved >= 0) && (fixed >= 0)) {
+				things.push("resolved " + resolution);
+			}
+			
 			var list = new Array();
 			for (var j = 0; j < bugs[i].changes.length; j++) {
+				if ((resolved >= 0) && (fixed >= 0) && ((resolved == j) || (fixed == j))) {
+					continue;
+				}
 				list.push(bugs[i].changes[j].name
 						+ (bugs[i].changes[j].oldValue ? " from '" + bugs[i].changes[j].oldValue + "'" : "")
 						+ " to '" + bugs[i].changes[j].newValue + "'");
 			}
-			things.push("changed " + list.join(", "));
+			if (list.length > 0) {
+				things.push("changed " + list.join(", "));
+			}
 		}
 		
 		if (bugs[i].removed.length > 0) {
