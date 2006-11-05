@@ -303,10 +303,17 @@ Bugzilla.prototype._spam = function(bugs, mes) {
 	for (var i = 0; i < bugs.length; i++) {
 		var msg = "Bug " + bugs[i].bugNumber;
 		//msg += " [" + bugs[i].product + ": " + bugs[i].component + "]";
-		msg += " [" + bugs[i].summary.substr(0, 20) + "]";
-		msg += ": " + bugs[i].from + " ";
+		if (bugs[i].isNew) {
+			msg += " [" + bugs[i].summary.substr(0, 300) + "] ";
+		} else {
+			msg += " [" + bugs[i].summary.substr(0, 20) + "]: " + bugs[i].from + " ";
+		}
 		
 		var things = new Array();
+		
+		if (bugs[i].isNew) {
+			things.push("filed by " + bugs[i].from);
+		}
 		
 		if (bugs[i].newAttachment) {
 			var msgp = "added attachment " + bugs[i].newAttachment.number;
@@ -692,6 +699,10 @@ BugmailParser.prototype._parse = function(lines) {
 		} else if ((ary = lines[i].match(/^X-Bugzilla-(Product|Component):\s*(.*?)\s*$/i))) {
 			if (debug > 0) log(ary[1].toUpperCase() + ": " + ary[2]);
 			this[ary[1].toLowerCase()] = ary[2];
+			
+		} else if ((ary = lines[i].match(/^\s*ReportedBy:\s+(\S+)$/))) {
+			if (debug > 0) log("USER   : " + ary[1]);
+			this.from = ary[1];
 			
 		} else if ((ary = lines[i].match(/^(\S+) changed:$/))) {
 			if (debug > 0) log("USER   : " + ary[1]);
