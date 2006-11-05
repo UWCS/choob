@@ -326,7 +326,9 @@ Bugzilla.prototype._spam = function(bugs, mes) {
 		if (bugs[i].changes.length > 0) {
 			var list = new Array();
 			for (var j = 0; j < bugs[i].changes.length; j++) {
-				list.push(bugs[i].changes[j].name + " from '" + bugs[i].changes[j].oldValue + "' to '" + bugs[i].changes[j].newValue + "'");
+				list.push(bugs[i].changes[j].name
+						+ (bugs[i].changes[j].oldValue ? " from '" + bugs[i].changes[j].oldValue + "'" : "")
+						+ " to '" + bugs[i].changes[j].newValue + "'");
 			}
 			things.push("changed " + list.join(", "));
 		}
