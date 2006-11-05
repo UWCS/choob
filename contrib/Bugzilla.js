@@ -91,9 +91,11 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 		var self = this;
 		this._checkMail(function(pop3, messageID) {
 			if (!(messageID in self._seenMsgs)) {
-				var bug = new BugmailParser(pop3.getMessage(messageID));
+				if (!this._firstTime) {
+					var bug = new BugmailParser(pop3.getMessage(messageID));
+					bugs.push(bug);
+				}
 				self._seenMsgs[messageID] = true;
-				bugs.push(bug);
 			}
 			return true;
 		});
@@ -108,7 +110,7 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 	if ((bugs.length == 0) || this._firstTime) {
 		this._firstTime = false;
 	} else {
-		this._spam(irc, bugs);
+		this._spam(bugs);
 	}
 	
 	this._updateFlagDB(bugs);
@@ -208,7 +210,7 @@ Bugzilla.prototype.commandLog = function(mes, mods, irc) {
 	if (bugs.length == 0) {
 		irc.sendContextReply(mes, "Nothing found in log for bug " + bugNum);
 	} else {
-		this._spam(irc, bugs, mes);
+		this._spam(bugs, mes);
 	}
 }
 Bugzilla.prototype.commandLog.help = [
@@ -297,10 +299,11 @@ Bugzilla.prototype._checkMail = function(callbackFn) {
 
 
 // Internal: spam list of bugs at their appropriate channels.
-Bugzilla.prototype._spam = function(irc, bugs, mes) {
+Bugzilla.prototype._spam = function(bugs, mes) {
 	for (var i = 0; i < bugs.length; i++) {
 		var msg = "Bug " + bugs[i].bugNumber;
 		//msg += " [" + bugs[i].product + ": " + bugs[i].component + "]";
+		msg += " [" + bugs[i].summary.substr(0, 20) + "]";
 		msg += ": " + bugs[i].from + " ";
 		
 		var things = new Array();
@@ -337,7 +340,27 @@ Bugzilla.prototype._spam = function(irc, bugs, mes) {
 			things.push("added " + list.join(", "));
 		}
 		
-		function makeAttSuffix(flag) {
+		var odb = this._mods.odb;
+		
+		// Shows just the name and (possibly) what attribute it was for.
+		function makeFlag(bug, flag) {
+			return flag.name + makeFlagAttributeSuffix(bug, flag);
+		};
+		
+		// Shows the same as makeFlag, but additionally includes who requested the flag - if possible.
+		function makeFlagDone(bug, flag) {
+			var q = "WHERE `bug` = " + Number(bug.bugNumber) + " AND `name` = \"" + odb.escapeString(flag.name) + "\"";
+			//log("MAKEFLAGDONE: " + q);
+			var flags = odb.retrieve(BugzillaSavedFlagRequest, q);
+			//log("MAKEFLAGDONE: = " + flags.size());
+			if (flags.size() == 1) {
+				return flag.name + " from " + flags.get(0).by + makeFlagAttributeSuffix(bug, flag);
+			}
+			return makeFlag(bug, flag);
+		};
+		
+		// Gives the suffix for a flag to identify which attachment it is for.
+		function makeFlagAttributeSuffix(bug, flag) {
 			if (typeof flag.attachment == "undefined") {
 				return "";
 			}
@@ -347,7 +370,7 @@ Bugzilla.prototype._spam = function(irc, bugs, mes) {
 		if (bugs[i].flagsCleared.length > 0) {
 			var list = new Array();
 			for (var j = 0; j < bugs[i].flagsCleared.length; j++) {
-				list.push(bugs[i].flagsCleared[j].name + makeAttSuffix(bugs[i].flagsCleared[j]));
+				list.push(makeFlag(bugs[i], bugs[i].flagsCleared[j]));
 			}
 			things.push("cleared " + list.join(", "));
 		}
@@ -357,7 +380,7 @@ Bugzilla.prototype._spam = function(irc, bugs, mes) {
 			for (var j = 0; j < bugs[i].flagsRequested.length; j++) {
 				list.push(bugs[i].flagsRequested[j].name
 						+ (bugs[i].flagsRequested[j].user ? " from " + bugs[i].flagsRequested[j].user : "")
-						+ makeAttSuffix(bugs[i].flagsRequested[j]));
+						+ makeFlagAttributeSuffix(bugs[i], bugs[i].flagsRequested[j]));
 			}
 			things.push("requested " + list.join(", "));
 		}
@@ -365,7 +388,7 @@ Bugzilla.prototype._spam = function(irc, bugs, mes) {
 		if (bugs[i].flagsGranted.length > 0) {
 			var list = new Array();
 			for (var j = 0; j < bugs[i].flagsGranted.length; j++) {
-				list.push(bugs[i].flagsGranted[j].name + makeAttSuffix(bugs[i].flagsGranted[j]));
+				list.push(makeFlagDone(bugs[i], bugs[i].flagsGranted[j]));
 			}
 			things.push("granted " + list.join(", "));
 		}
@@ -373,7 +396,7 @@ Bugzilla.prototype._spam = function(irc, bugs, mes) {
 		if (bugs[i].flagsDenied.length > 0) {
 			var list = new Array();
 			for (var j = 0; j < bugs[i].flagsDenied.length; j++) {
-				list.push(bugs[i].flagsDenied[j].name + makeAttSuffix(bugs[i].flagsDenied[j]));
+				list.push(makeFlagDone(bugs[i], bugs[i].flagsDenied[j]));
 			}
 			things.push("denied " + list.join(", "));
 		}
@@ -385,12 +408,12 @@ Bugzilla.prototype._spam = function(irc, bugs, mes) {
 		log(msg);
 		
 		if (mes) {
-			irc.sendContextReply(mes, msg);
+			this._irc.sendContextReply(mes, msg);
 		} else {
 			var comp = bugs[i].product + ":" + bugs[i].component;
 			for (var t in this._targetList) {
 				if (this._targetList[t].hasComponent(comp)) {
-					irc.sendMessage(this._targetList[t].target, msg);
+					this._irc.sendMessage(this._targetList[t].target, msg);
 				}
 			}
 		}
@@ -542,7 +565,7 @@ BugzillaSavedFlagRequest.prototype.init = function() {
 
 
 function POP3Server(host, port, account, password) {
-	log("POP3 " + host + ":" + port + " BEGIN");
+	//log("POP3 " + host + ":" + port + " BEGIN");
 	this._host = host;
 	this._port = port;
 	this._socket = new Socket(host, port);
@@ -610,7 +633,7 @@ POP3Server.prototype.close = function() {
 	this._socket   = null;
 	this._outgoing = null;
 	this._incoming = null;
-	log("POP3 " + this._host + ":" + this._port + " END");
+	//log("POP3 " + this._host + ":" + this._port + " END");
 }
 
 
@@ -810,4 +833,6 @@ BugmailParser.prototype._parse = function(lines) {
 			this.changes.push({ name: changes[i].name, oldValue: changes[i].oldValue, newValue: changes[i].newValue });
 		}
 	}
+	
+	log("PARSED bugmail for bug " + this.bugNumber + " [" + this.product + ": " + this.component + "]");
 }
