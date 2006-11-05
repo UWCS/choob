@@ -95,6 +95,7 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 				self._seenMsgs[messageID] = true;
 				bugs.push(bug);
 			}
+			return true;
 		});
 	} catch(ex) {
 		log("Error checking bugmail: " + ex);
@@ -106,9 +107,11 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 	
 	if ((bugs.length == 0) || this._firstTime) {
 		this._firstTime = false;
-		return;
+	} else {
+		this._spam(irc, bugs);
 	}
-	this._spam(irc, bugs);
+	
+	this._updateFlagDB(bugs);
 }
 
 
@@ -180,7 +183,7 @@ Bugzilla.prototype.commandRemoveComponent.help = [
 
 // Command: Log
 Bugzilla.prototype.commandLog = function(mes, mods, irc) {
-	var params = mods.util.getParams(mes, 2);
+	var params = mods.util.getParams(mes, 1);
 	if (params.size() <= 1) {
 		irc.sendContextReply(mes, "Syntax: Bugzilla.Log <bug number>");
 		return;
@@ -195,6 +198,7 @@ Bugzilla.prototype.commandLog = function(mes, mods, irc) {
 			if ((bug.bugNumber == bugNum) || (bugNum == 0)) {
 				bugs.push(bug);
 			}
+			return true;
 		});
 	} catch(ex) {
 		irc.sendContextReply(mes, "Error checking bugmail: " + ex);
@@ -207,10 +211,70 @@ Bugzilla.prototype.commandLog = function(mes, mods, irc) {
 		this._spam(irc, bugs, mes);
 	}
 }
-Bugzilla.prototype.commandRemoveComponent.help = [
+Bugzilla.prototype.commandLog.help = [
 		"Shows all changes capture for a single bug.",
 		"<bug number>",
 		"<bug number> is the bug number to show the log of"
+	];
+
+
+// Command: Queue
+Bugzilla.prototype.commandQueue = function(mes, mods, irc) {
+	var params = mods.util.getParams(mes, 1);
+	if (params.size() <= 1) {
+		irc.sendContextReply(mes, "Syntax: Bugzilla.Queue <email>");
+		return;
+	}
+	var email = String(params.get(1)).trim();
+	
+	var flags = this._mods.odb.retrieve(BugzillaSavedFlagRequest, "WHERE `from` = \"" + this._mods.odb.escapeString(email) + "\"");
+	var list = new Array();
+	
+	for (var i = 0; i < flags.size(); i++) {
+		var f = flags.get(i);
+		list.push("bug " + f.bug + " (" + f.name + ")");
+	}
+	
+	if (list.length == 0) {
+		irc.sendContextReply(mes, "Queue is empty.");
+	} else {
+		irc.sendContextReply(mes, "Queue: " + list.join(", ") + ".");
+	}
+}
+Bugzilla.prototype.commandQueue.help = [
+		"Shows the review queue for a user, as seen by the bot.",
+		"<email>",
+		"<email> is the user to show the queue of"
+	];
+
+
+// Command: RebuildDB
+Bugzilla.prototype.commandRebuildDB = function(mes, mods, irc) {
+	var params = mods.util.getParams(mes, 0);
+	if (params.size() <= 0) {
+		irc.sendContextReply(mes, "Syntax: Bugzilla.RebuildDB");
+		return;
+	}
+	
+	var bugs = new Array();
+	try {
+		var self = this;
+		this._checkMail(function(pop3, messageID) {
+			var bug = new BugmailParser(pop3.getMessage(messageID));
+			bugs.push(bug);
+			return true;
+		});
+	} catch(ex) {
+		irc.sendContextReply(mes, "Error checking bugmail: " + ex);
+		return;
+	}
+	
+	this._updateFlagDB(bugs);
+	irc.sendContextReply(mes, "Database rebuilt from bugmail.");
+}
+Bugzilla.prototype.commandRebuildDB.help = [
+		"Rebuilds the list of requested flags.",
+		""
 	];
 
 
@@ -224,7 +288,9 @@ Bugzilla.prototype._checkMail = function(callbackFn) {
 	var pop3 = new POP3Server(pop3host, pop3port, pop3account, pop3password);
 	var messageIDList = pop3.getMessageList();
 	for (var i = 0; i < messageIDList.length; i++) {
-		callbackFn(pop3, messageIDList[i]);
+		if (!callbackFn(pop3, messageIDList[i])) {
+			break;
+		}
 	}
 	pop3.close();
 }
@@ -331,6 +397,57 @@ Bugzilla.prototype._spam = function(irc, bugs, mes) {
 	}
 }
 
+// Internal: updates the database of currently requested flags.
+Bugzilla.prototype._updateFlagDB = function(bugs) {
+	// Update internal data.
+	var flags = this._mods.odb.retrieve(BugzillaSavedFlagRequest, "");
+	function getFlag(bug, flag) {
+		for (var i = 0; i < flags.size(); i++) {
+			var f = flags.get(i);
+			if ((f.bug == bug.bugNumber) && (f.name == flag.name)) {
+				return f;
+			}
+		}
+		return null;
+	};
+	
+	for (var i = 0; i < bugs.length; i++) {
+		for (var j = 0; j < bugs[i].flagsRequested.length; j++) {
+			var f = getFlag(bugs[i], bugs[i].flagsRequested[j]);
+			if (f) {
+				f.from = bugs[i].flagsRequested[j].user;
+				f.by   = bugs[i].from;
+				this._mods.odb.update(f);
+				log("FLAG: Bug " + f.bug + ": " + f.name + "?" + (f.from ? "(" + f.from + ")":"") + " set by " + f.by);
+			} else {
+				f = new BugzillaSavedFlagRequest(bugs[i].bugNumber, bugs[i].flagsRequested[j].name, bugs[i].flagsRequested[j].user, bugs[i].from);
+				this._mods.odb.save(f);
+				log("FLAG: Bug " + f.bug + ": " + f.name + "?" + (f.from ? "(" + f.from + ")":"") + " set by " + f.by);
+			}
+		}
+		for (var j = 0; j < bugs[i].flagsCleared.length; j++) {
+			var f = getFlag(bugs[i], bugs[i].flagsCleared[j]);
+			if (f) {
+				this._mods.odb["delete"](f);
+				log("FLAG: Bug " + f.bug + ": " + f.name + " cleared by " + bugs[i].from);
+			}
+		}
+		for (var j = 0; j < bugs[i].flagsGranted.length; j++) {
+			var f = getFlag(bugs[i], bugs[i].flagsGranted[j]);
+			if (f) {
+				this._mods.odb["delete"](f);
+				log("FLAG: Bug " + f.bug + ": " + f.name + " granted by " + bugs[i].from);
+			}
+		}
+		for (var j = 0; j < bugs[i].flagsDenied.length; j++) {
+			var f = getFlag(bugs[i], bugs[i].flagsDenied[j]);
+			if (f) {
+				this._mods.odb["delete"](f);
+				log("FLAG: Bug " + f.bug + ": " + f.name + " denied by " + bugs[i].from);
+			}
+		}
+	}
+}
 
 
 
@@ -398,8 +515,36 @@ BugmailTarget.prototype.hasComponent = function(component) {
 
 
 
+function BugzillaSavedFlagRequest() {
+	this.id   = 0;
+	this.bug  = 0;
+	this.name = "";
+	this.from = "";
+	this.by   = "";
+	
+	if (arguments.length > 0) {
+		this._ctor(arguments[0], arguments[1], arguments[2], arguments[3]);
+	}
+}
+
+BugzillaSavedFlagRequest.prototype._ctor = function(bug, name, from, by) {
+	this.bug  = bug;
+	this.name = name;
+	this.from = from;
+	this.by   = by;
+	this.init();
+}
+
+BugzillaSavedFlagRequest.prototype.init = function() {
+}
+
+
+
 
 function POP3Server(host, port, account, password) {
+	log("POP3 " + host + ":" + port + " BEGIN");
+	this._host = host;
+	this._port = port;
 	this._socket = new Socket(host, port);
 	this._outgoing = new DataOutputStream(this._socket.getOutputStream());
 	this._incoming = new BufferedReader(new InputStreamReader(this._socket.getInputStream()));
@@ -465,6 +610,7 @@ POP3Server.prototype.close = function() {
 	this._socket   = null;
 	this._outgoing = null;
 	this._incoming = null;
+	log("POP3 " + this._host + ":" + this._port + " END");
 }
 
 
