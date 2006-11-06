@@ -731,6 +731,10 @@ BugmailParser.prototype._parse = function(lines) {
 			if (debug > 0) log("USER   : " + ary[1]);
 			this.from = ary[1];
 			
+		} else if ((ary = lines[i].match(/Bug \d+ depends on bug \d+, which changed state./))) {
+			// Crap, this bug is about changes in a dependant bug!
+			break;
+			
 		} else if ((ary = lines[i].match(/^([^|]+)\|([^|]+)\|([^|]*)$/))) {
 			var lineParts = ["", "", ""];
 			for (var j = 0; j <= 2; j++) {
