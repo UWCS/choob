@@ -308,14 +308,6 @@ Bugzilla.prototype._checkMail = function(callbackFn) {
 // Internal: spam list of bugs at their appropriate channels.
 Bugzilla.prototype._spam = function(bugs, mes) {
 	for (var i = 0; i < bugs.length; i++) {
-		var msg = "Bug " + bugs[i].bugNumber;
-		//msg += " [" + bugs[i].product + ": " + bugs[i].component + "]";
-		if (bugs[i].isNew) {
-			msg += " [" + bugs[i].summary.substr(0, 300) + "] ";
-		} else {
-			msg += " [" + bugs[i].summary.substr(0, 20) + "]: " + bugs[i].from + " ";
-		}
-		
 		var things = new Array();
 		
 		if (bugs[i].isNew) {
@@ -441,7 +433,24 @@ Bugzilla.prototype._spam = function(bugs, mes) {
 		if (things.length == 0) {
 			continue;
 		}
-		msg += things.join("; ") + ".";
+		
+		var msg = things.join("; ") + ".";
+		
+		var prefix = "Bug " + bugs[i].bugNumber;
+		//prefix += " [" + bugs[i].product + ": " + bugs[i].component + "]";
+		var spaceLeft = 400 - msg.length;
+		
+		if (bugs[i].isNew) {
+			spaceLeft -= 4;
+			if (spaceLeft < 20) spaceLeft = 20;
+			prefix += " [" + bugs[i].summary.substr(0, spaceLeft) + "] ";
+		} else {
+			spaceLeft -= 6 + bugs[i].from.length;
+			if (spaceLeft < 20) spaceLeft = 20;
+			prefix += " [" + bugs[i].summary.substr(0, spaceLeft) + "]: " + bugs[i].from + " ";
+		}
+		
+		msg = prefix + msg;
 		log(msg);
 		
 		if (mes) {
