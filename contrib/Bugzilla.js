@@ -113,6 +113,7 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 		this._spam(bugs);
 	}
 	
+	this._updateActivityDB(bugs);
 	this._updateFlagDB(bugs);
 }
 
@@ -258,6 +259,11 @@ Bugzilla.prototype.commandRebuildDB = function(mes, mods, irc) {
 		return;
 	}
 	
+	// Delete all saved flags.
+	var flags = this._mods.odb.retrieve(BugzillaSavedFlagRequest, "");
+	for (var i = 0; i < flags.size(); i++)
+		this._mods.odb["delete"](flags.get(i));
+	
 	var bugs = new Array();
 	try {
 		var self = this;
@@ -271,6 +277,7 @@ Bugzilla.prototype.commandRebuildDB = function(mes, mods, irc) {
 		return;
 	}
 	
+	this._updateActivityDB(bugs);
 	this._updateFlagDB(bugs);
 	irc.sendContextReply(mes, "Database rebuilt from bugmail.");
 }
@@ -384,7 +391,7 @@ Bugzilla.prototype._spam = function(bugs, mes) {
 			var flags = odb.retrieve(BugzillaSavedFlagRequest, q);
 			//log("MAKEFLAGDONE: = " + flags.size());
 			if (flags.size() == 1) {
-				return flag.name + " from " + flags.get(0).by + makeFlagAttributeSuffix(bug, flag);
+				return flag.name + " to " + flags.get(0).by + makeFlagAttributeSuffix(bug, flag);
 			}
 			return makeFlag(bug, flag);
 		};
@@ -450,17 +457,74 @@ Bugzilla.prototype._spam = function(bugs, mes) {
 	}
 }
 
+// Internal: updates the database of changes to bugs.
+Bugzilla.prototype._updateActivityDB = function(bugs) {
+	return;
+	var odb = this._mods.odb;
+	
+	function change(time, user, bug, attachment, field, oldValue, newValue) {
+		var ary;
+		if (!attachment && (ary = field.match(/^Attachment #(\d+) (.*)$/))) {
+			attachment = ary[1];
+			field = ary[2];
+		}
+		log("ACTIVITY LOG: " + [time, user, bug, attachment, field, oldValue, newValue].join(", "));
+		
+		var q = "WHERE `time` = " + Number(time)
+				+ " AND `user` = \"" + odb.escapeString(user) + "\""
+				+ " AND `bug` = " + Number(bug)
+				+ " AND `attachment` = " + Number(attachment)
+				+ " AND `field` = \"" + odb.escapeString(field) + "\""
+			;
+		
+		var activityList = odb.retrieve(BugzillaActivity, q);
+		if (activityList.size() > 0) {
+			var activity = activityList.get(0);
+			activity.oldValue = oldValue;
+			activity.newValue = newValue;
+			odb.update(activity);
+		} else {
+			var activity = new BugzillaActivity(time, user, bug, attachment, field, oldValue, newValue);
+			odb.save(activity);
+		}
+	};
+	
+	for (var i = 0; i < bugs.length; i++) {
+		for (var j = 0; j < bugs[i].changes.length; j++) {
+			change(bugs[i].time, bugs[i].from, bugs[i].bugNumber, 0, bugs[i].changes[j].field, bugs[i].changes[j].oldValue, bugs[i].changes[j].newValue);
+		}
+		for (var j = 0; j < bugs[i].removed.length; j++) {
+			change(bugs[i].time, bugs[i].from, bugs[i].bugNumber, 0, bugs[i].removed[j].field, bugs[i].removed[j].value, "");
+		}
+		for (var j = 0; j < bugs[i].added.length; j++) {
+			change(bugs[i].time, bugs[i].from, bugs[i].bugNumber, 0, bugs[i].added[j].field,   "", bugs[i].added[j].value  );
+		}
+		for (var j = 0; j < bugs[i].flagsCleared.length; j++) {
+			change(bugs[i].time, bugs[i].from, bugs[i].bugNumber, bugs[i].flagsCleared[j].attachment || 0,   "Flag",  bugs[i].flagsCleared[j].name,   bugs[i].flagsCleared[j].user   || "");
+		}
+		for (var j = 0; j < bugs[i].flagsRequested.length; j++) {
+			change(bugs[i].time, bugs[i].from, bugs[i].bugNumber, bugs[i].flagsRequested[j].attachment || 0, "Flag?", bugs[i].flagsRequested[j].name, bugs[i].flagsRequested[j].user || "");
+		}
+		for (var j = 0; j < bugs[i].flagsGranted.length; j++) {
+			change(bugs[i].time, bugs[i].from, bugs[i].bugNumber, bugs[i].flagsGranted[j].attachment || 0,   "Flag+", bugs[i].flagsGranted[j].name,   bugs[i].flagsGranted[j].user   || "");
+		}
+		for (var j = 0; j < bugs[i].flagsDenied.length; j++) {
+			change(bugs[i].time, bugs[i].from, bugs[i].bugNumber, bugs[i].flagsDenied[j].attachment || 0,    "Flag-", bugs[i].flagsDenied[j].name,    bugs[i].flagsDenied[j].user    || "");
+		}
+	}
+}
+
 // Internal: updates the database of currently requested flags.
 Bugzilla.prototype._updateFlagDB = function(bugs) {
 	// Update internal data.
-	var flags = this._mods.odb.retrieve(BugzillaSavedFlagRequest, "");
+	var odb = this._mods.odb;
 	function getFlag(bug, flag) {
-		for (var i = 0; i < flags.size(); i++) {
-			var f = flags.get(i);
-			if ((f.bug == bug.bugNumber) && (f.name == flag.name)) {
-				return f;
-			}
-		}
+		var q = "WHERE `bug` = " + Number(bug.bugNumber) + " AND `name` = \""
+				+ odb.escapeString(flag.name) + "\"";
+		
+		var flags = odb.retrieve(BugzillaSavedFlagRequest, q);
+		if (flags.size() > 0)
+			return flags.get(0);
 		return null;
 	};
 	
@@ -593,6 +657,36 @@ BugzillaSavedFlagRequest.prototype.init = function() {
 
 
 
+function BugzillaActivity() {
+	this.id         = 0;
+	this.time       = 0;
+	this.user       = "";
+	this.bug        = 0;
+	this.attachment = 0;
+	this.field      = "";
+	this.oldValue   = "";
+	this.newValue   = "";
+	
+	if (arguments.length > 0) {
+		this._ctor(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6]);
+	}
+}
+
+BugzillaActivity.prototype._ctor = function(time, user, bug, attachment, field, oldValue, newValue) {
+	this.time       = time;
+	this.user       = user;
+	this.bug        = bug;
+	this.attachment = attachment;
+	this.field      = field;
+	this.oldValue   = oldValue;
+	this.newValue   = newValue;
+	this.init();
+}
+
+BugzillaActivity.prototype.init = function() {
+}
+
+
 
 function POP3Server(host, port, account, password) {
 	//log("POP3 " + host + ":" + port + " BEGIN");
@@ -670,6 +764,7 @@ POP3Server.prototype.close = function() {
 
 function BugmailParser(msg) {
 	this.isNew = false;
+	this.time      = 0;
 	this.bugNumber = 0;
 	this.summary   = "";
 	this.from      = "unknown";
@@ -719,6 +814,10 @@ BugmailParser.prototype._parse = function(lines) {
 				if (debug > 0) log("NEW BUG!");
 			}
 			
+		} else if ((ary = lines[i].match(/^Date:\s*(.*?)\s*$/i))) {
+			if (debug > 0) log("DATE   : " + ary[1]);
+			this.time = Number(new Date(ary[1]));
+			
 		} else if ((ary = lines[i].match(/^X-Bugzilla-(Product|Component):\s*(.*?)\s*$/i))) {
 			if (debug > 0) log(ary[1].toUpperCase() + ": " + ary[2]);
 			this[ary[1].toLowerCase()] = ary[2];
@@ -737,12 +836,16 @@ BugmailParser.prototype._parse = function(lines) {
 			
 		} else if ((ary = lines[i].match(/^([^|]+)\|([^|]+)\|([^|]*)$/))) {
 			var lineParts = ["", "", ""];
+			if ((ary[1].length != linePartLengths[0]) || (ary[2].length != linePartLengths[1])) {
+				continue;
+			}
 			for (var j = 0; j <= 2; j++) {
 				lineParts[j] = ary[j + 1].trim();
 			}
 			if (lineParts[0] == "What")
 				continue;
 			
+			if (debug > 0) log("CHANGE : " + lineParts[0] + "|" + lineParts[1] + "|" + lineParts[2]);
 			
 			var forcedWrap = [false, false, false];
 			for (var j = 0; j <= 2; j++) {
@@ -782,6 +885,8 @@ BugmailParser.prototype._parse = function(lines) {
 		var skip = false;
 		var flag = false;
 		var list = false;
+		
+		changes[i].field = changes[i].name;
 		
 		for (var j = 0; j < BugmailParser.fields.length; j++) {
 			var f = BugmailParser.fields[j];
@@ -845,14 +950,18 @@ BugmailParser.prototype._parse = function(lines) {
 			}
 			
 			for (var j = 0; j < oldFlags.length; j++) {
+				if (debug > 0) log("FLAG CLEARED  : " + oldFlags[j].name);
 				this.flagsCleared.push(oldFlags[j]);
 			}
 			for (var j = 0; j < newFlags.length; j++) {
 				if (newFlags[j].state == "?") {
+					if (debug > 0) log("FLAG REQUESTED: " + newFlags[j].name + " --- " + newFlags[j].user);
 					this.flagsRequested.push(newFlags[j]);
 				} else if (newFlags[j].state == "+") {
+					if (debug > 0) log("FLAG GRANTED  : " + newFlags[j].name);
 					this.flagsGranted.push(newFlags[j]);
 				} else if (newFlags[j].state == "-") {
+					if (debug > 0) log("FLAG DENIED   : " + newFlags[j].name);
 					this.flagsDenied.push(newFlags[j]);
 				}
 			}
@@ -860,15 +969,15 @@ BugmailParser.prototype._parse = function(lines) {
 		} else if (list) {
 			if (changes[i].oldValue) {
 				if (debug > 0) log("REMOVED: " + changes[i].name + " --- " + changes[i].oldValue);
-				this.removed.push({ name: changes[i].name, value: changes[i].oldValue });
+				this.removed.push({ field: changes[i].field, name: changes[i].name, value: changes[i].oldValue });
 			}
 			if (changes[i].newValue) {
 				if (debug > 0) log("ADDED  : " + changes[i].name + " --- " + changes[i].newValue);
-				this.added.push({ name: changes[i].name, value: changes[i].newValue });
+				this.added.push({ field: changes[i].field, name: changes[i].name, value: changes[i].newValue });
 			}
 		} else {
 			if (debug > 0) log("CHANGED: " + changes[i].name + " --- " + changes[i].oldValue + " --- " + changes[i].newValue);
-			this.changes.push({ name: changes[i].name, oldValue: changes[i].oldValue, newValue: changes[i].newValue });
+			this.changes.push({ field: changes[i].field, name: changes[i].name, oldValue: changes[i].oldValue, newValue: changes[i].newValue });
 		}
 	}
 	
