@@ -288,6 +288,20 @@ public class Events
 		mods.interval.callBack(null, checkInterval);
 	}
 
+	private class DateComparator implements Comparator<EventItem>
+	{
+		public int compare(EventItem a, EventItem b)
+		{
+			int stt = a.start.compareTo(b.start);
+
+			if (stt == 0)
+				return a.end.compareTo(b.end);
+
+			return stt;
+		}
+
+	}
+
 	private ArrayList<EventItem> readEventsData() throws ChoobException
 	{
 		ArrayList<EventItem> events=new ArrayList<EventItem>();
@@ -315,6 +329,8 @@ public class Events
 				Groups.DESC         .getFromMatcher(ma),
 				Groups.LOCATION     .getFromMatcher(ma)
 			));
+
+		Collections.sort(events, new DateComparator());
 
 		return events;
 	}
