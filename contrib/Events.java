@@ -123,7 +123,12 @@ public class Events
 		public String boldNameShortDetails()
 		{
 			return boldName() +
-				" (" + id +") " +
+				shortDetails();
+		}
+
+		public String shortDetails()
+		{
+			return " (" + id +") " +
 				(!finished() && !cancelled() && !inprogress() ? "[" + microStampFromNow(start) + "]" : "");
 		}
 
@@ -527,7 +532,7 @@ public class Events
 		for (EventItem ev : events)
 		{
 			rep.append(ev.boldName())
-				.append(" at " + ev.location + " (" + ev.id + ")")
+				.append(" at ").append(ev.location).append(ev.shortDetails())
 				.append(ev.inprogress() ? " (started " + mods.date.timeMicroStamp((new Date()).getTime() - ev.start.getTime()) + " ago)" : "")
 				.append(ev.signupMax != 0 ? " [" + ev.signupCurrent + "/" + ev.signupMax + "]" : "")
 				.append(--c != 0 ? ", " : ".");
