@@ -124,15 +124,6 @@ public class Link
 				mods.odb.save(linkObj);
 			}
 		}
-
-		if (oldLinks.size() == 0)
-			return;
-		else if (oldLinks.size() == 1)
-			irc.sendContextReply(mes, getOldResponse(oldLinks.get(0)));
-		else
-			irc.sendContextAction( mes, "slaps " + mes.getNick()
-				+ " for spamming " + oldLinks.size()
-				+ " ooooolllllddddd links." );
 	}
 
 	/**
