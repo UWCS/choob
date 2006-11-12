@@ -323,25 +323,47 @@ Bugzilla.prototype._spam = function(bugs, mes) {
 		}
 		
 		if (bugs[i].changes.length > 0) {
-			var resolved = -1;
-			var fixed    = -1;
-			var resolution = "";
+			var nameMapping = new Object();
+			var ignoredChanges = new Object();
+			var resolved = "";
+			var reopened = "";
+			
 			for (var j = 0; j < bugs[i].changes.length; j++) {
-				if ((bugs[i].changes[j].name == "Status") && (bugs[i].changes[j].newValue == "RESOLVED"))
-					resolved = j;
-				if ((bugs[i].changes[j].name == "Resolution") && bugs[i].changes[j].newValue) {
-					fixed = j;
-					resolution = bugs[i].changes[j].newValue;
+				if (bugs[i].changes[j].name == "Status") {
+					nameMapping["status"] = j;
+				}
+				if (bugs[i].changes[j].name == "Resolution") {
+					nameMapping["resolution"] = j;
 				}
 			}
 			
-			if ((resolved >= 0) && (fixed >= 0)) {
-				things.push("resolved " + resolution);
+			if (("status" in nameMapping) && ("resolution" in nameMapping)) {
+				var s = bugs[i].changes[nameMapping["status"]];
+				var r = bugs[i].changes[nameMapping["resolution"]];
+				
+				if ((s.newValue == "RESOLVED") && r.newValue) {
+					// RESOLVED the bug, so ignore status/resolution changes.
+					resolved = r.newValue;
+					ignoredChanges[nameMapping["status"]] = true;
+					ignoredChanges[nameMapping["resolution"]] = true;
+					
+				} else if ((s.oldValue == "RESOLVED") && (s.newValue == "REOPENED") && r.oldValue) {
+					// REOPENED the bug, so ignore status/resolution changes.
+					reopened = true;
+					ignoredChanges[nameMapping["status"]] = true;
+					ignoredChanges[nameMapping["resolution"]] = true;
+				}
+			}
+			
+			if (resolved) {
+				things.push("resolved " + resolved);
+			} else if (reopened) {
+				things.push("reopened");
 			}
 			
 			var list = new Array();
 			for (var j = 0; j < bugs[i].changes.length; j++) {
-				if ((resolved >= 0) && (fixed >= 0) && ((resolved == j) || (fixed == j))) {
+				if ((j in ignoredChanges) && ignoredChanges[j]) {
 					continue;
 				}
 				list.push(bugs[i].changes[j].name
