@@ -310,33 +310,10 @@ public final class Choob extends PircBot
 			System.exit(exitCode);
 		}
 
-		System.out.println ("Connection lost!");
-		for (;;)
-		{
-			System.out.println ("Waiting...");
-			try
-			{
-				Thread.sleep(30000);
-			} catch (InterruptedException e) { }
-
-			System.out.println ("Reconnecting...");
-
-			try
-			{
-				doConnect();
-				return;
-			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-				System.out.println("Connection Error, exiting: " + e);
-			}
-			catch (IrcException e)
-			{
-				e.printStackTrace();
-				System.out.println("Unhandled IRC Error on connect, exitin: ." + e);
-			}
-		}
+		// Exit code 1 (technically, any non-zero code) will cause the wrapper
+		// to restart us.
+		System.out.println("Connection lost!");
+		System.exit(1);
 	}
 
 	/*
