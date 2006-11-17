@@ -327,8 +327,8 @@ final class JavaScriptPluginMap {
 	synchronized void loadPluginMap(String pluginName, JavaScriptPlugin pluginObj) {
 		String lname = pluginName.toLowerCase();
 
-		System.out.println("Loading " + pluginName + ":");
-		System.out.println("  TYPE      NAME");
+		//System.out.println("Loading " + pluginName + ":");
+		//System.out.println("  TYPE      NAME");
 
 		plugins.put(lname, pluginObj);
 
@@ -354,7 +354,7 @@ final class JavaScriptPluginMap {
 						String commandName = lname + "." + propString.substring(7).toLowerCase();
 						commands.put(commandName, method);
 						count++;
-						System.out.println("  Command   " + commandName);
+						//System.out.println("  Command   " + commandName);
 
 						// Check for command help.
 						Object helpVal = func.get("help", func);
@@ -374,7 +374,7 @@ final class JavaScriptPluginMap {
 						String fullName = lname + ".help:" + propString.toLowerCase();
 						generics.put(fullName, helpExport);
 						count++;
-						System.out.println("  Generic   " + fullName);
+						//System.out.println("  Generic   " + fullName);
 
 					} else if (propString.startsWith("on")) {
 						// Looks like an event handler definition.
@@ -393,7 +393,7 @@ final class JavaScriptPluginMap {
 						}
 						events.get(eventName).add(method);
 						count++;
-						System.out.println("  Event     " + eventName + " (" + pluginName + ")");
+						//System.out.println("  Event     " + eventName + " (" + pluginName + ")");
 
 					} else if (propString.startsWith("filter")) {
 						// Looks like a filter definition.
@@ -420,7 +420,7 @@ final class JavaScriptPluginMap {
 						NativeRegExp filterPattern = (NativeRegExp)regexpVal;
 						filters.put(filterPattern, method);
 						count++;
-						System.out.println("  Filter    " + filterPattern + " (" + pluginName + ")");
+						//System.out.println("  Filter    " + filterPattern + " (" + pluginName + ")");
 
 					} else if (propString.equals("interval")) {
 						// Looks like an interval callback.
@@ -435,7 +435,7 @@ final class JavaScriptPluginMap {
 						JavaScriptPluginMethod method = new JavaScriptPluginMethod(pluginObj, propString, func);
 						intervals.put(lname, method);
 						count++;
-						System.out.println("  Interval  " + lname);
+						//System.out.println("  Interval  " + lname);
 
 					} else {
 						Matcher matcher = Pattern.compile("([a-z]+)([A-Z].+)?").matcher(propString);
@@ -457,14 +457,14 @@ final class JavaScriptPluginMap {
 							String fullName = lname + "." + prefix + ":" + gName;
 							generics.put(fullName, export);
 							count++;
-							System.out.println("  Generic   " + fullName);
+							//System.out.println("  Generic   " + fullName);
 						}
 					}
 				}
 			}
 			inst = inst.getPrototype();
 		}
-		System.out.println("Done (" + count + " items added).");
+		//System.out.println("Done (" + count + " items added).");
 	}
 
 	synchronized void unloadPluginMap(String pluginName) {
@@ -475,8 +475,8 @@ final class JavaScriptPluginMap {
 		}
 		JavaScriptPlugin pluginObj = plugins.get(lname);
 
-		System.out.println("Unloading " + pluginName + ":");
-		System.out.println("  TYPE      NAME");
+		//System.out.println("Unloading " + pluginName + ":");
+		//System.out.println("  TYPE      NAME");
 
 		int count = 0;
 		// Commands
@@ -487,7 +487,7 @@ final class JavaScriptPluginMap {
 			}
 		}
 		for (String command: commandsToRemove) {
-			System.out.println("  Command   " + command);
+			//System.out.println("  Command   " + command);
 			count++;
 			commands.remove(command);
 		}
@@ -500,7 +500,7 @@ final class JavaScriptPluginMap {
 				}
 			}
 			for (JavaScriptPluginMethod method: eventHooksToRemove) {
-				System.out.println("  Event     " + event + " (" + method.getPlugin().getName() + ")");
+				//System.out.println("  Event     " + event + " (" + method.getPlugin().getName() + ")");
 				count++;
 				events.get(event).remove(method);
 			}
@@ -513,7 +513,7 @@ final class JavaScriptPluginMap {
 			}
 		}
 		for (NativeRegExp filter: filtersToRemove) {
-			System.out.println("  Filter    " + filter + " (" + filters.get(filter).getPlugin().getName() + ")");
+			//System.out.println("  Filter    " + filter + " (" + filters.get(filter).getPlugin().getName() + ")");
 			count++;
 			filters.remove(filter);
 		}
@@ -525,19 +525,19 @@ final class JavaScriptPluginMap {
 			}
 		}
 		for (String generic: genericsToRemove) {
-			System.out.println("  Generic   " + generic);
+			//System.out.println("  Generic   " + generic);
 			count++;
 			generics.remove(generic);
 		}
 		// Intervals
 		if (intervals.get(lname) != null) {
-			System.out.println("  Interval  " + lname);
+			//System.out.println("  Interval  " + lname);
 			count++;
 			intervals.remove(lname);
 		}
 		plugins.remove(lname);
 
-		System.out.println("Done (" + count + " items removed).");
+		//System.out.println("Done (" + count + " items removed).");
 	}
 
 	synchronized List<String> getCommands(String pluginName) {
