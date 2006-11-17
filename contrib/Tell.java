@@ -169,7 +169,7 @@ public class Tell
 				}
 			}
 		);
-		
+
 		// Send e-mails to people who've asked for them.
 		try
 		{
@@ -183,7 +183,7 @@ public class Tell
 					                    "At " + new Date(tellObj.date) + ", " + tellObj.from + " told me to " + tellObj.type + " you: " + tellObj.message);
 				}
 			}
-			
+
 		}
 		catch (ChoobNoSuchCallException e)
 		{
@@ -345,10 +345,17 @@ public class Tell
 
 		if (results.size() != 0)
 		{
+			Collections.sort(results, new Comparator<TellObject>()
+				{
+					public int compare(TellObject l, TellObject r)
+					{
+						return new Date(l.date).compareTo(new Date(r.date));
+					}
+				}
+			);
 			int nsStatus = -1;
-			for (int i=0; i < results.size(); i++ )
+			for (TellObject tellObj : results)
 			{
-				TellObject tellObj = (TellObject)results.get(i);
 				if (tellObj.nickServ)
 				{
 					if (nsStatus == -1)
@@ -420,7 +427,7 @@ public class Tell
 						continue;
 				}
 				irc.sendMessage(nick, "At " + new Date(tellObj.date) + ", " + tellObj.from + " told me to " + tellObj.type + " you: " + tellObj.message);
-				mods.odb.delete(results.get(i));
+				mods.odb.delete(tellObj);
 			}
 			if (nsStatus == -2)
 				irc.sendMessage(nick, "Hi! I think you have tells, and you have set Secure=2, but your nickname isn't linked to " + rootNick + ". See Help.Help Security.UsingLink to do this, then do Tell.Get.");
