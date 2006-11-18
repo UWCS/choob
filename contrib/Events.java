@@ -128,14 +128,30 @@ public class Events
 
 		public String shortDetails()
 		{
-			return " (" + id +") " +
-				(!finished() && !cancelled() && !inprogress() ? "[" + microStampFromNow(start) + "]" : "");
+			return " (" + id +")" +
+				(!finished() && !cancelled() && !inprogress() ? " [" + microStampFromNow(start) + "]" : "");
 		}
 
 		/** Note: This means that the event accepts /some/ signups, not necessary all */
 		public boolean acceptsSignups()
 		{
 			return signupCode == SignupCodes.SIGNUPSOPEN || signupCode == SignupCodes.SIGNUPSMEM;
+		}
+
+		public boolean hasSignups()
+		{
+			return signupCode == SignupCodes.HASSIGNUPS || acceptsSignups();
+		}
+
+		public String shortSignups()
+		{
+			if (!hasSignups()) // No signups, nothing to say.
+				return "";
+
+			if (acceptsSignups())
+				return  " [" + signupCurrent + "/" + signupMax + "]";
+
+			return "";
 		}
 
 	}
@@ -224,9 +240,7 @@ public class Events
 				if (corr==null)
 					// It doesn't exist, notify people:
 					irc.sendMessage(announceChannel,
-						"New event! " + n.name +
-						" at " + n.location + " in " +
-						mods.date.timeMicroStamp(n.start.getTime() - (new Date()).getTime()) + "."
+						"New event! " + n.boldNameShortDetails()
 					);
 				else
 					// The event existed, do the signups differ?
@@ -550,7 +564,7 @@ public class Events
 			rep.append(ev.boldName())
 				.append(" at ").append(ev.location).append(ev.shortDetails())
 				.append(ev.inprogress() ? " (started " + mods.date.timeMicroStamp((new Date()).getTime() - ev.start.getTime()) + " ago)" : "")
-				.append(ev.signupMax != 0 ? " [" + ev.signupCurrent + "/" + ev.signupMax + "]" : "")
+				.append(ev.shortSignups())
 				.append(--c != 0 ? ", " : ".");
 		}
 		irc.sendContextReply(mes, "Events: " + rep.toString());
