@@ -240,7 +240,7 @@ public class Events
 				if (corr==null)
 					// It doesn't exist, notify people:
 					irc.sendMessage(announceChannel,
-						"New event! " + n.boldNameShortDetails()
+						"New event! " + n.boldNameShortDetails() + "."
 					);
 				else
 					// The event existed, do the signups differ?
@@ -561,8 +561,11 @@ public class Events
 		StringBuilder rep = new StringBuilder();
 		for (EventItem ev : events)
 		{
-			rep.append(ev.boldName())
-				.append(" at ").append(ev.location).append(ev.shortDetails())
+			rep.append(ev.boldName());
+			if (events.size() < 8)
+				rep.append(" at ").append(ev.location);
+
+			rep.append(ev.shortDetails())
 				.append(ev.inprogress() ? " (started " + mods.date.timeMicroStamp((new Date()).getTime() - ev.start.getTime()) + " ago)" : "")
 				.append(ev.shortSignups())
 				.append(--c != 0 ? ", " : ".");
