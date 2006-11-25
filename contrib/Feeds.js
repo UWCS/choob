@@ -1067,6 +1067,7 @@ function _decodeEntities(data) {
 	data = data.replace(/&#0*8221;/g, '"');
 	data = data.replace(  /&#0*39;/g, "'");
 	data = data.replace(/&#0*8217;/g, "'");
+	data = data.replace(  /&rsquo;/g, "'");
 	data = data.replace( /&#0*160;/g, " ");
 	data = data.replace(  /&mdash;/g, "-");
 	data = data.replace(/&#0*8212;/g, "-");
