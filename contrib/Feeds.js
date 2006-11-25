@@ -57,7 +57,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.5.25"
+		"1.5.26"
 	];
 
 
@@ -793,7 +793,7 @@ Feed.prototype.showRecent = function(target, offset, count) {
 	var items = this.getItems();
 	
 	if (this.getError()) {
-		this._sendToAll("'" + this.displayName + "': \x02ERROR\x02: " + this.getError());
+		this._sendTo(target, "'" + this.displayName + "': \x02ERROR\x02: " + this.getError());
 		return;
 	}
 	
@@ -1070,6 +1070,7 @@ function _decodeEntities(data) {
 	data = data.replace(  /&rsquo;/g, "'");
 	data = data.replace( /&#0*160;/g, " ");
 	data = data.replace(  /&mdash;/g, "-");
+	data = data.replace(  /&ndash;/g, "-");
 	data = data.replace(/&#0*8212;/g, "-");
 	data = data.replace(/&#0*8230;/g, "...");
 	data = data.replace(    /&amp;/g, "&");
