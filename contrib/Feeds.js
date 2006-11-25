@@ -57,7 +57,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.5.26"
+		"1.5.27"
 	];
 
 
@@ -101,7 +101,7 @@ Feeds.prototype.commandAdd = function(mes, mods, irc) {
 	var feed = this._getFeed(feedName);
 	if (feed) {
 		if (!this._canAdminFeed(feed, mes)) {
-			irc.sendContextReply(mes, "You don't have permission to do that!");
+			irc.sendContextReply(mes, "You don't have permission to replace feed '" + feedName + "'!");
 		}
 		this._removeFeed(feed);
 	}
@@ -145,7 +145,7 @@ Feeds.prototype.commandRemove = function(mes, mods, irc) {
 		return;
 	}
 	if (!this._canAdminFeed(feed, mes)) {
-		irc.sendContextReply(mes, "You don't have permission to do that!");
+		irc.sendContextReply(mes, "You don't have permission to remove feed '" + feedName + "'!");
 		return;
 	}
 	
@@ -290,7 +290,7 @@ Feeds.prototype.commandAddOutput = function(mes, mods, irc) {
 		return;
 	}
 	if (!this._canAdminFeed(feed, mes)) {
-		irc.sendContextReply(mes, "You don't have permission to do that!");
+		irc.sendContextReply(mes, "You don't have permission to edit feed '" + feedName + "'!");
 		return;
 	}
 	var feedDest = String(params.get(2)).trim();
@@ -324,7 +324,7 @@ Feeds.prototype.commandRemoveOutput = function(mes, mods, irc) {
 		return;
 	}
 	if (!this._canAdminFeed(feed, mes)) {
-		irc.sendContextReply(mes, "You don't have permission to do that!");
+		irc.sendContextReply(mes, "You don't have permission to edit feed '" + feedName + "'!");
 		return;
 	}
 	var feedDest = String(params.get(2)).trim();
@@ -360,9 +360,10 @@ Feeds.prototype.commandRecent = function(mes, mods, irc) {
 	// Allow anyone to get recent items for public feeds, and only someone
 	// who can admin a feed to do it for private feeds.
 	if (feed.isPrivate && !this._canAdminFeed(feed, mes)) {
-		irc.sendContextReply(mes, "You don't have permission to do that!");
+		irc.sendContextReply(mes, "You don't have permission to view feed '" + feedName + "'!");
 		return;
 	}
+	
 	var offset = 0;
 	var count  = 5;
 	if (params.size() > 3) {
@@ -412,7 +413,7 @@ Feeds.prototype.commandSetOwner = function(mes, mods, irc) {
 		return;
 	}
 	if (!this._canAdminFeed(feed, mes)) {
-		irc.sendContextReply(mes, "You don't have permission to do that!");
+		irc.sendContextReply(mes, "You don't have permission to edit feed '" + feedName + "'!");
 		return;
 	}
 	var owner = this._getOwnerFrom(String(params.get(2)).trim());
@@ -444,7 +445,7 @@ Feeds.prototype.commandSetPrivate = function(mes, mods, irc) {
 		return;
 	}
 	if (!this._canAdminFeed(feed, mes)) {
-		irc.sendContextReply(mes, "You don't have permission to do that!");
+		irc.sendContextReply(mes, "You don't have permission to edit feed '" + feedName + "'!");
 		return;
 	}
 	var isPrivate = String(params.get(2)).trim();
@@ -481,7 +482,7 @@ Feeds.prototype.commandSetTTL = function(mes, mods, irc) {
 		return;
 	}
 	if (!this._canAdminFeed(feed, mes)) {
-		irc.sendContextReply(mes, "You don't have permission to do that!");
+		irc.sendContextReply(mes, "You don't have permission to edit feed '" + feedName + "'!");
 		return;
 	}
 	var feedTTL = 1 * params.get(2);
@@ -506,7 +507,7 @@ Feeds.prototype.commandSetTTL.help = [
 // Command: SetDebug
 Feeds.prototype.commandSetDebug = function(mes, mods, irc) {
 	if (!mods.security.hasPerm(new ChoobPermission("feeds.debug"), mes)) {
-		irc.sendContextReply(mes, "You don't have permission to do that!");
+		irc.sendContextReply(mes, "You don't have permission to debug Feeds!");
 		return;
 	}
 	
