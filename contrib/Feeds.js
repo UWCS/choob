@@ -1060,21 +1060,21 @@ function _decodeEntities(data) {
 	profile.enterFn("", "_decodeEntities");
 	
 	// Decode XML into HTML...
-	data = data.replace(     /&lt;/g, "<");
-	data = data.replace(     /&gt;/g, ">");
-	data = data.replace(   /&quot;/g, '"');
-	data = data.replace(  /&#0*34;/g, '"');
-	data = data.replace(/&#0*8220;/g, '"');
-	data = data.replace(/&#0*8221;/g, '"');
-	data = data.replace(  /&#0*39;/g, "'");
-	data = data.replace(/&#0*8217;/g, "'");
-	data = data.replace(  /&rsquo;/g, "'");
-	data = data.replace( /&#0*160;/g, " ");
-	data = data.replace(  /&mdash;/g, "-");
-	data = data.replace(  /&ndash;/g, "-");
-	data = data.replace(/&#0*8212;/g, "-");
-	data = data.replace(/&#0*8230;/g, "...");
-	data = data.replace(    /&amp;/g, "&");
+	data = data.replace(        /&lt;/g, "<");
+	data = data.replace(        /&gt;/g, ">");
+	data = data.replace(      /&quot;/g, '"');
+	data = data.replace(     /&#0*34;/g, '"');
+	data = data.replace(   /&#0*8220;/g, '"');
+	data = data.replace(   /&#0*8221;/g, '"');
+	data = data.replace(     /&#0*39;/g, "'");
+	data = data.replace(   /&#0*8217;/g, "'");
+	data = data.replace(  /&[lr]squo;/g, "'");
+	data = data.replace(    /&#0*160;/g, " ");
+	data = data.replace(  /&[mn]dash;/g, "-");
+	data = data.replace(   /&#0*8212;/g, "-");
+	data = data.replace(   /&#0*8230;/g, "...");
+	data = data.replace(     /&times;/g, "x");
+	data = data.replace(       /&amp;/g, "&");
 	
 	profile.leaveFn("_decodeEntities");
 	return data;
