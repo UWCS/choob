@@ -57,7 +57,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.5.27"
+		"1.5.28"
 	];
 
 
@@ -1056,25 +1056,43 @@ Feed.prototype._sendTo = function(target, message, suffix) {
 	this._parent._irc.sendMessage(target, message + suffix);
 }
 
+var entityMap = {
+	"lt":      "<",
+	"gt":      ">",
+	"quot":    '"',
+	"#34":     '"',
+	"#8220":   '"',
+	"#8221":   '"',
+	"#39":     "'",
+	"#8217":   "'",
+	"lsquo":   "'",
+	"rsquo":   "'",
+	"#160":    " ",
+	"mdash":   "-",
+	"ndash":   "-",
+	"#8212":   "-",
+	"times":   "x",
+	"#8230":   "...",
+	"dummy":   ""
+};
+
 function _decodeEntities(data) {
 	profile.enterFn("", "_decodeEntities");
 	
 	// Decode XML into HTML...
-	data = data.replace(        /&lt;/g, "<");
-	data = data.replace(        /&gt;/g, ">");
-	data = data.replace(      /&quot;/g, '"');
-	data = data.replace(     /&#0*34;/g, '"');
-	data = data.replace(   /&#0*8220;/g, '"');
-	data = data.replace(   /&#0*8221;/g, '"');
-	data = data.replace(     /&#0*39;/g, "'");
-	data = data.replace(   /&#0*8217;/g, "'");
-	data = data.replace(  /&[lr]squo;/g, "'");
-	data = data.replace(    /&#0*160;/g, " ");
-	data = data.replace(  /&[mn]dash;/g, "-");
-	data = data.replace(   /&#0*8212;/g, "-");
-	data = data.replace(   /&#0*8230;/g, "...");
-	data = data.replace(     /&times;/g, "x");
-	data = data.replace(       /&amp;/g, "&");
+	data = data.replace(/&(?:(\w+)|#(\d+));/g, function _decodeEntity(match, name, number) {
+		if (name && (name in entityMap)) {
+			return entityMap[name];
+		}
+		if (number && (String("#" + Number(number)) in entityMap)) {
+			return entityMap[String("#" + Number(number))];
+		}
+		return match; //"[unknown entity '" + (name || number) + "']";
+	});
+	
+	// Done as a special-case, last, so that it doesn't bugger up
+	// doubly-escaped things.
+	data = data.replace(/&amp;/g, "&");
 	
 	profile.leaveFn("_decodeEntities");
 	return data;
