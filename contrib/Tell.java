@@ -250,11 +250,14 @@ public class Tell
 				if ( !rootNick.equalsIgnoreCase(secureRootNick) )
 					return -2;
 			}
-			// rootNick is NOT set. Since Secure
-			// operates on bot users, and the user
-			// hasn't registered his, we tell him to
-			// bugger off.
-			return -3;
+			else
+			{
+				// rootNick is NOT set. Since Secure
+				// operates on bot users, and the user
+				// hasn't registered his, we tell him to
+				// bugger off.
+				return -3;
+			}
 		}
 		// If not, just the primary will do.
 
