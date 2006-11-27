@@ -104,8 +104,8 @@ public class Quote
 	private static int HISTORY = 100; // Lines of history to search.
 	private static int EXCERPT = 40; // Maximum length of excerpt text in replies to create.
 	private static int MAXLINES = 10; // Maximum allowed lines in a quote.
-	private static int MAXCLAUSES = 20; // Maximum allowed lines in a quote.
-	private static int MAXJOINS = 6; // Maximum allowed lines in a quote.
+	private static int MAXCLAUSES = 20; // Maximum allowed "clauses" - components of the query, e.g score.
+	private static int MAXJOINS = 6; // Maximum allowed "joins" - one needed per regexp or nick clause.
 	private static int RECENTLENGTH = 20; // Maximum length of "recent quotes" list for a context.
 	private static String IGNORE = "quoteme|quote|quoten|quote.create"; // Ignore these when searching for regex quotes.
 	private static int THRESHOLD = -3; // Lowest karma of displayed quote.
