@@ -13,6 +13,17 @@ public class TellObject
 	public String from;
 	public String message;
 	public String target;
+	public boolean requestDSN;
+	public boolean nickServ;
+}
+
+public class TellDSNObject
+{
+	public int id;
+	public String type; // Type of original tell.
+	public long date; // Date of original tell.
+	public String from; // Who GOT the tell, i.e. who sent this DSN.
+	public String target; // Who asked for the DSN, i.e. the target of this DSN.
 	public boolean nickServ;
 }
 
@@ -20,11 +31,12 @@ class TellData
 {
 	boolean valid;
 	int error;
-	String from;
-	String[] targets;
-	String message;
 	long date;
 	String type;
+	String from;
+	String message;
+	String[] targets;
+	boolean requestDSN;
 }
 
 public class Tell
@@ -109,6 +121,17 @@ public class Tell
 		rv.message = message;
 		rv.date = date;
 		rv.type = type;
+		rv.requestDSN = false;
+
+		try
+		{
+			boolean requestDSN = ((String)mods.plugin.callAPI("Options", "GetUserOption", from, "RequestDSN", "0")).equals("1");
+			rv.requestDSN = requestDSN;
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			// Oh dear, no Options. :(
+		}
 
 		// Only include unique targets.
 		final List<String> validTargets = new ArrayList<String>(MAXTARGETS);
@@ -149,6 +172,7 @@ public class Tell
 		tellObj.message = tell.message;
 		tellObj.date = tell.date;
 		tellObj.type = tell.type;
+		tellObj.requestDSN = tell.requestDSN;
 
 		final String[] targets = tell.targets;
 
@@ -192,6 +216,61 @@ public class Tell
 
 		return targets.length;
 
+	}
+	
+	int checkTargetNSStatus(int nsStatus, String nick, String rootNick)
+	{
+		// First pick up the setting of Secure.
+		int secureOption;
+		try
+		{
+			String val = (String)mods.plugin.callAPI("Options", "GetUserOption", nick, "Secure", "1" );
+			secureOption = Integer.parseInt(val);
+		}
+		catch (Throwable e)
+		{
+			// No such call(default) or number format issue(!)
+			secureOption = 1;
+		}
+		if (secureOption > 2 || secureOption < 0)
+			secureOption = 1;
+
+		// This is a secure tell. One of several things can happen.
+		if ( secureOption == 2 )
+		{
+			// If secure tell is set, we require the
+			// actual nickname to be explicitly linked
+			// to the root.
+			String secureRootNick = mods.security.getRootUser( nick );
+			if (rootNick != null)
+			{
+				// rootNick is set and we're directed at it.
+				// Hence must check root of real nick is
+				// equal to rootNick.
+				if ( !rootNick.equalsIgnoreCase(secureRootNick) )
+					return -2;
+			}
+			// rootNick is NOT set. Since Secure
+			// operates on bot users, and the user
+			// hasn't registered his, we tell him to
+			// bugger off.
+			return -3;
+		}
+		// If not, just the primary will do.
+
+		if (nsStatus == -1)
+		{
+			// No errors from the above...
+			if (secureOption != 0)
+			{
+				// We require NS auth.
+				return nsStatus( nick );
+			}
+			// We don't require NS auth.
+			return 3;
+		}
+		
+		return nsStatus; // No change.
 	}
 
 	public synchronized void commandSend( Message mes )
@@ -284,8 +363,8 @@ public class Tell
 		}
 	}
 
-	public String[] optionsUser = { "Secure", "NickChange", "Email" };
-	public String[] optionsUserDefaults = { "1", "1", "0" };
+	public String[] optionsUser = { "Secure", "NickChange", "Email", "RequestDSN" };
+	public String[] optionsUserDefaults = { "1", "1", "", "0" };
 
 	public boolean optionCheckUserSecure( String value, String userName ) { return value.equals("0") || value.equals("1") || value.equals("2"); }
 	public String[] helpOptionSecure = {
@@ -337,107 +416,91 @@ public class Tell
 		// rootNick won't, necessarily
 		String rootNick = mods.security.getRootUser( testNick );
 
-		List<TellObject> results;
+		List<TellObject> tellResults;
+		List<TellDSNObject> dsnResults;
+
 		if (rootNick != null && !rootNick.equals(testNick))
-			results = mods.odb.retrieve (TellObject.class, "WHERE target = '" + mods.odb.escapeString(testNick) + "' OR target = '" + mods.odb.escapeString(rootNick) + "'");
-		else
-			results = mods.odb.retrieve (TellObject.class, "WHERE target = '" + mods.odb.escapeString(testNick) + "'");
-
-		if (results.size() != 0)
 		{
-			Collections.sort(results, new Comparator<TellObject>()
-				{
-					public int compare(TellObject l, TellObject r)
-					{
-						return new Date(l.date).compareTo(new Date(r.date));
-					}
-				}
-			);
-			int nsStatus = -1;
-			for (TellObject tellObj : results)
-			{
-				if (tellObj.nickServ)
-				{
-					if (nsStatus == -1)
-					{
-						// NickServ not yet checked...
-
-						// First pick up the setting of Secure.
-						int secureOption;
-						try
-						{
-							String val = (String)mods.plugin.callAPI("Options", "GetUserOption", nick, "Secure", "1" );
-							secureOption = Integer.parseInt(val);
-						}
-						catch (Throwable e)
-						{
-							// No such call(default) or number format issue(!)
-							secureOption = 1;
-						}
-						if (secureOption > 2 || secureOption < 0)
-							secureOption = 1;
-
-						// This is a secure tell. One of several things can happen.
-						if ( secureOption == 2 )
-						{
-							// If secure tell is set, we require the
-							// actual nickname to be explicitly linked
-							// to the root.
-							String secureRootNick = mods.security.getRootUser( nick );
-							if (rootNick != null)
-							{
-								// rootNick is set and we're directed at it.
-								// Hence must check root of real nick is
-								// equal to rootNick.
-								if ( !rootNick.equalsIgnoreCase(secureRootNick) )
-									nsStatus = -2;
-							}
-							else
-							{
-								// rootNick is NOT set. Since Secure
-								// operates on bot users, and the user
-								// hasn't registered his, we tell him to
-								// bugger off.
-								nsStatus = -3;
-							}
-						}
-						else
-						{
-							// If not, just the primary will do.
-						}
-
-						if (nsStatus == -1)
-						{
-							// No errors from the above...
-							if (secureOption != 0)
-							{
-								// We require NS auth.
-								nsStatus = nsStatus( nick );
-							}
-							else
-							{
-								// We don't require NS auth.
-								nsStatus = 3;
-							}
-						}
-					}
-					// If all the above ran and we're allowed to send, nsStatus
-					// is 3. Otherwise it's >= -1, <= 2.
-					if (nsStatus != 3)
-						continue;
-				}
-				irc.sendMessage(nick, "At " + new Date(tellObj.date) + ", " + tellObj.from + " told me to " + tellObj.type + " you: " + tellObj.message);
-				mods.odb.delete(tellObj);
-			}
-			if (nsStatus == -2)
-				irc.sendMessage(nick, "Hi! I think you have tells, and you have set Secure=2, but your nickname isn't linked to " + rootNick + ". See Help.Help Security.UsingLink to do this, then do Tell.Get.");
-			else if (nsStatus == -3)
-				irc.sendMessage(nick, "Hi! I think you have tells, and you have set Secure=2, but you haven't actually registered " + testNick + " with the bot. Since this defeats the point of secure tells, I suggest you register it (Security.AddUser), then link this nickname to it (See Help.Help Security.UsingLink).");
-			else if (nsStatus == 0)
-				irc.sendMessage(nick, "Hi! I think you (" + testNick + ") have tells, but you haven't actually registered your nickname with NickServ. Since " + testNick + " was registered and you haven't set Secure=0, you need to register with this nickname or change to " + testNick + " to pick up your tells.");
-			else if (nsStatus > 0 && nsStatus < 3)
-				irc.sendMessage(nick, "Hi! You have tells, but you're not identified with NickServ! Once you've done so, use the Tell.Get command.");
+			tellResults = mods.odb.retrieve(TellObject.class,    "WHERE target = '" + mods.odb.escapeString(testNick) + "' OR target = '" + mods.odb.escapeString(rootNick) + "'");
+			dsnResults  = mods.odb.retrieve(TellDSNObject.class, "WHERE target = '" + mods.odb.escapeString(testNick) + "' OR target = '" + mods.odb.escapeString(rootNick) + "'");
 		}
+		else
+		{
+			tellResults = mods.odb.retrieve(TellObject.class,    "WHERE target = '" + mods.odb.escapeString(testNick) + "'");
+			dsnResults  = mods.odb.retrieve(TellDSNObject.class, "WHERE target = '" + mods.odb.escapeString(testNick) + "'");
+		}
+
+		if ((tellResults.size() == 0) && (dsnResults.size() == 0))
+			return;
+
+		Comparator tellSorter = new Comparator<TellObject>()
+		{
+			public int compare(TellObject l, TellObject r)
+			{
+				return new Date(l.date).compareTo(new Date(r.date));
+			}
+		};
+
+		Collections.sort(tellResults, tellSorter);
+		Collections.sort(dsnResults, tellSorter);
+
+		// We do DSNs first because they are less important. Or something.
+		int nsStatus = -1;
+		for (TellDSNObject dsnObj : dsnResults)
+		{
+			if (dsnObj.nickServ)
+			{
+				if (nsStatus == -1)
+					// NickServ not yet checked...
+					nsStatus = checkTargetNSStatus(nsStatus, nick, rootNick);
+				
+				// If all the above ran and we're allowed to send, nsStatus
+				// is 3. Otherwise it's >= -1, <= 2.
+				if (nsStatus != 3)
+					continue;
+			}
+			irc.sendMessage(nick, "Your " + dsnObj.type + " sent to " + dsnObj.from + " at " + new Date(dsnObj.date) + " has been delivered.");
+			mods.odb.delete(dsnObj);
+		}
+
+		for (TellObject tellObj : tellResults)
+		{
+			if (tellObj.nickServ)
+			{
+				if (nsStatus == -1)
+					// NickServ not yet checked...
+					nsStatus = checkTargetNSStatus(nsStatus, nick, rootNick);
+				
+				// If all the above ran and we're allowed to send, nsStatus
+				// is 3. Otherwise it's >= -1, <= 2.
+				if (nsStatus != 3)
+					continue;
+			}
+			irc.sendMessage(nick, "At " + new Date(tellObj.date) + ", " + tellObj.from + " told me to " + tellObj.type + " you: " + tellObj.message);
+			
+			if (tellObj.requestDSN)
+			{
+				TellDSNObject dsn = new TellDSNObject();
+				dsn.type = tellObj.type;
+				dsn.date = tellObj.date;
+				// These go backwards - we're sending this back.
+				dsn.from = tellObj.target;
+				dsn.target = tellObj.from;
+				dsn.nickServ = nsStatus(dsn.target) > 0;
+				clearCache(dsn.target);
+				mods.odb.save(dsn);
+			}
+			
+			mods.odb.delete(tellObj);
+		}
+		if (nsStatus == -2)
+			irc.sendMessage(nick, "Hi! I think you have tells, and you have set Secure=2, but your nickname isn't linked to " + rootNick + ". See Help.Help Security.UsingLink to do this, then do Tell.Get.");
+		else if (nsStatus == -3)
+			irc.sendMessage(nick, "Hi! I think you have tells, and you have set Secure=2, but you haven't actually registered " + testNick + " with the bot. Since this defeats the point of secure tells, I suggest you register it (Security.AddUser), then link this nickname to it (See Help.Help Security.UsingLink).");
+		else if (nsStatus == 0)
+			irc.sendMessage(nick, "Hi! I think you (" + testNick + ") have tells, but you haven't actually registered your nickname with NickServ. Since " + testNick + " was registered and you haven't set Secure=0, you need to register with this nickname or change to " + testNick + " to pick up your tells.");
+		else if (nsStatus > 0 && nsStatus < 3)
+			irc.sendMessage(nick, "Hi! You have tells, but you're not identified with NickServ! Once you've done so, use the Tell.Get command.");
 	}
 
 	public void onAction( ChannelAction ev )
