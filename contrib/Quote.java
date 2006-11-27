@@ -828,8 +828,8 @@ public class Quote
 
 	public String apiSingleLineQuote(String nick, String context, String querysuffix)
 	{
-		String whereClause = getClause(nick + " length:=1");
-		List quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause + " " + querysuffix);
+		String whereClause = getClause(nick + " length:=1" + " " + querysuffix);
+		List quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause);
 		if (quotes.size() == 0)
 			return null;
 
