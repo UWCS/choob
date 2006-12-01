@@ -217,7 +217,7 @@ public class Tell
 		return targets.length;
 
 	}
-	
+
 	int checkTargetNSStatus(int nsStatus, String nick, String rootNick)
 	{
 		// First pick up the setting of Secure.
@@ -272,7 +272,7 @@ public class Tell
 			// We don't require NS auth.
 			return 3;
 		}
-		
+
 		return nsStatus; // No change.
 	}
 
@@ -436,7 +436,7 @@ public class Tell
 		if ((tellResults.size() == 0) && (dsnResults.size() == 0))
 			return;
 
-		Comparator tellSorter = new Comparator<TellObject>()
+		Comparator<TellObject> tellSorter = new Comparator<TellObject>()
 		{
 			public int compare(TellObject l, TellObject r)
 			{
@@ -444,8 +444,17 @@ public class Tell
 			}
 		};
 
+		// Grr, Java you suck, wtb real templates.
+		Comparator<TellDSNObject> tellDSNSorter = new Comparator<TellDSNObject>()
+		{
+			public int compare(TellDSNObject l, TellDSNObject r)
+			{
+				return new Date(l.date).compareTo(new Date(r.date));
+			}
+		};
+
 		Collections.sort(tellResults, tellSorter);
-		Collections.sort(dsnResults, tellSorter);
+		Collections.sort(dsnResults, tellDSNSorter);
 
 		// We do DSNs first because they are less important. Or something.
 		int nsStatus = -1;
@@ -456,7 +465,7 @@ public class Tell
 				if (nsStatus == -1)
 					// NickServ not yet checked...
 					nsStatus = checkTargetNSStatus(nsStatus, nick, rootNick);
-				
+
 				// If all the above ran and we're allowed to send, nsStatus
 				// is 3. Otherwise it's >= -1, <= 2.
 				if (nsStatus != 3)
@@ -473,14 +482,14 @@ public class Tell
 				if (nsStatus == -1)
 					// NickServ not yet checked...
 					nsStatus = checkTargetNSStatus(nsStatus, nick, rootNick);
-				
+
 				// If all the above ran and we're allowed to send, nsStatus
 				// is 3. Otherwise it's >= -1, <= 2.
 				if (nsStatus != 3)
 					continue;
 			}
 			irc.sendMessage(nick, "At " + new Date(tellObj.date) + ", " + tellObj.from + " told me to " + tellObj.type + " you: " + tellObj.message);
-			
+
 			if (tellObj.requestDSN)
 			{
 				TellDSNObject dsn = new TellDSNObject();
@@ -493,7 +502,7 @@ public class Tell
 				clearCache(dsn.target);
 				mods.odb.save(dsn);
 			}
-			
+
 			mods.odb.delete(tellObj);
 		}
 		if (nsStatus == -2)
