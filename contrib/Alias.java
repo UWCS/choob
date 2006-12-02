@@ -37,6 +37,8 @@ public class Alias
 		};
 	}
 
+	private static int MAX_ALIAS_EXPANSIONS = 2; // Maximum number of alias expansions before we stop.
+
 	private Modules mods;
 	private IRCInterface irc;
 	public Alias(Modules mods, IRCInterface irc)
@@ -616,8 +618,8 @@ public class Alias
 			int recurseLevel = Integer.parseInt(mesFlags.get("alias.expanded")) + 1;
 
 			// Stop recursion
-			if (recurseLevel > 2) {
-				irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
+			if (recurseLevel > MAX_ALIAS_EXPANSIONS) {
+				irc.sendContextReply(mes, "Synthetic event recursion detected (alias.expanded). Stopping.");
 				return;
 			}
 

@@ -35,6 +35,8 @@ public class TimedEvents
 		};
 	}
 
+	private static int MAX_DELAYED_COUNT = 2; // Maximum number of times we'll allow an event to be delayed.
+	
 	private Map<String,TimedEvent> lastDelivery;
 	private Modules mods;
 	private IRCInterface irc;
@@ -66,14 +68,10 @@ public class TimedEvents
 	};
 	public void commandIn( Message mes )
 	{
-		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
-
-		// Stop recursion
-		if (mesFlags.containsKey("timedevents.delayed")) {
-			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
+		if (!checkForAndUpdateRecursion(mes)) {
+			irc.sendContextReply(mes, "Synthetic event recursion detected (timedevents.delayed). Stopping.");
 			return;
 		}
-		mesFlags.put("timedevents.delayed", "1");
 
 		List<String> params = mods.util.getParams(mes, 2);
 
@@ -118,7 +116,7 @@ public class TimedEvents
 		TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
 		timedEvent.synthLevel = mes.getSynthLevel();
-		timedEvent.flags = encodeFlags(mesFlags);
+		timedEvent.flags = encodeFlags(((IRCEvent)mes).getFlags());
 		timedEvent.command = command;
 		timedEvent.executeAt = System.currentTimeMillis() + period * 1000;
 
@@ -143,14 +141,10 @@ public class TimedEvents
 	};
 	public void commandAt( Message mes )
 	{
-		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
-
-		// Stop recursion
-		if (mesFlags.containsKey("timedevents.delayed")) {
-			irc.sendContextReply(mes, "Synthetic event recursion detected. Stopping.");
+		if (!checkForAndUpdateRecursion(mes)) {
+			irc.sendContextReply(mes, "Synthetic event recursion detected (timedevents.delayed). Stopping.");
 			return;
 		}
-		mesFlags.put("timedevents.delayed", "1");
 
 		List<String> params = mods.util.getParams(mes, 2);
 
@@ -301,7 +295,7 @@ public class TimedEvents
 		TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
 		timedEvent.synthLevel = mes.getSynthLevel();
-		timedEvent.flags = encodeFlags(mesFlags);
+		timedEvent.flags = encodeFlags(((IRCEvent)mes).getFlags());
 		timedEvent.command = command;
 		timedEvent.executeAt = cal.getTimeInMillis();
 
@@ -428,5 +422,28 @@ public class TimedEvents
 			String[] parts = flagItems[i].split("(?<!\\\\)=", 2);
 			flags.put(parts[0].replaceAll("\\\\([\\\\\"=,])", "$1"), parts[1].replaceAll("\\\\([\\\\\"=,])", "$1"));
 		}
+	}
+
+	boolean checkForAndUpdateRecursion(Message mes)
+	{
+		// Message extends IRCEvent, so this cast will always succeed.
+		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
+		
+		if (mesFlags.containsKey("timedevents.delayed"))
+		{
+			int recurseLevel = Integer.parseInt(mesFlags.get("timedevents.delayed")) + 1;
+
+			// Stop recursion.
+			if (recurseLevel > MAX_DELAYED_COUNT) {
+				return false;
+			}
+
+			mesFlags.put("timedevents.delayed", new Integer(recurseLevel).toString());
+		}
+		else
+		{
+			mesFlags.put("timedevents.delayed", "1");
+		}
+		return true;
 	}
 }
