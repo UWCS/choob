@@ -6,7 +6,7 @@ import uk.co.uwcs.choob.support.events.*;
 //Calendar support
 import java.util.*;
 import java.text.DateFormatSymbols;
-
+import java.util.regex.*;
 import java.awt.Color;
 
 /**
@@ -218,7 +218,7 @@ public class MFJ
 
 	private void /*inline*/ invalidArgument(Message mes)
 	{
-		irc.sendContextMessage(mes, "Invalid argument, expecting: [#]rrggbb or a named colour.");
+		irc.sendContextMessage(mes, "Invalid argument, expecting: [#]rrggbb, rgb(255,255,255) or a named colour.");
 	}
 
 	// http://mindprod.com/jgloss/hex.html
@@ -231,7 +231,7 @@ public class MFJ
 	/**
 	 * Implements JB's !colour command
 	 */
-	public String[] helpCommandColour = { "Lets you know what today's colour is. Optionally, given a hex (#rrggbb) colour, it will attempt to guess what it looks like." };
+	public String[] helpCommandColour = { "Lets you know what today's colour is. Optionally, given a css colour, it will attempt to guess what it looks like." };
 	public void commandColour(Message con)
 	{
 		String parm = mods.util.getParamString(con);
@@ -248,30 +248,42 @@ public class MFJ
 				return;
 			}
 
-		if (parm.length() == 7 || parm.length() == 4)
-			parm = parm.substring(1);
-
-		// rst -> rrsstt
-		if (parm.length() == 3)
-			parm = parm.substring(0,1) + parm.substring(0,1) +
-				   parm.substring(1,2) + parm.substring(1,2) +
-				   parm.substring(2,3) + parm.substring(2,3);
-
-		if (parm.length() != 6)
-		{
-			invalidArgument(con);
-			return;
-		}
-
-
 		Color toFind;
+		final String number = "((?:2[0-5][0-9])|(?:1?[0-9]?[0-9]))";
+		//final String number = "([0-9]+)";
+		Matcher ma = Pattern.compile("\\s*rgb\\s*\\(\\s*" + number + ",\\s*" + number + ",\\s*" + number + "\\s*\\)\\s*").matcher(parm);
+		//Matcher ma = Pattern.compile("rgb\\(([0-9]+),([0-9]+),([0-9]+)\\)").matcher(parm);
 
 		try
 		{
-			toFind = new Color(	Integer.parseInt(parm.substring(0, 1), 16) * 16 + Integer.parseInt(parm.substring(1, 2), 16),
-								Integer.parseInt(parm.substring(2, 3), 16) * 16 + Integer.parseInt(parm.substring(3, 4), 16),
-								Integer.parseInt(parm.substring(4, 5), 16) * 16 + Integer.parseInt(parm.substring(5, 6), 16)
-							);
+			if (ma.find())
+			{
+				System.out.println("Matches!");
+				toFind = new Color(Integer.parseInt(ma.group(1)), Integer.parseInt(ma.group(2)), Integer.parseInt(ma.group(3)));
+			}
+			else
+			{
+				if (parm.length() == 7 || parm.length() == 4)
+					parm = parm.substring(1);
+
+				// rst -> rrsstt
+				if (parm.length() == 3)
+					parm = parm.substring(0,1) + parm.substring(0,1) +
+						   parm.substring(1,2) + parm.substring(1,2) +
+						   parm.substring(2,3) + parm.substring(2,3);
+
+				if (parm.length() != 6)
+				{
+					invalidArgument(con);
+					return;
+				}
+
+
+				toFind = new Color(	Integer.parseInt(parm.substring(0, 1), 16) * 16 + Integer.parseInt(parm.substring(1, 2), 16),
+									Integer.parseInt(parm.substring(2, 3), 16) * 16 + Integer.parseInt(parm.substring(3, 4), 16),
+									Integer.parseInt(parm.substring(4, 5), 16) * 16 + Integer.parseInt(parm.substring(5, 6), 16)
+								);
+			}
 		}
 		catch (NumberFormatException e)
 		{
@@ -304,7 +316,7 @@ public class MFJ
 		}
 
 		if (closest != null)
-			irc.sendContextReply(con, "That looks " + (bestMatch != 0 ? "roughly (" + Math.round((1-bestMatch)*1000.0)/10.0 + "%)" : "exactly") + " like " + colours.get(closest) + " to me.");
+			irc.sendContextReply(con, "That looks " + (bestMatch != 0 ? "roughly (" + Math.round((1-bestMatch)*100000.0)/1000.0 + "%)" : "exactly") + " like " + colours.get(closest) + " to me.");
 		else
 			irc.sendContextReply(con, "No match.");
 	}
