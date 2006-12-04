@@ -47,7 +47,7 @@ public class Concurrency {
 		if (limits.size() > 0)
 			limit = limits.get(0).threadLimit;
 		
-		System.out.println("Concurrency.apiGetThreadLimit   : plugin = " + pluginName + ", limit = " + limit + (limits.size() > 0 ? " [from ODB]" : ""));
+		//System.out.println("Concurrency.apiGetThreadLimit   : plugin = " + pluginName + ", limit = " + limit + (limits.size() > 0 ? " [from ODB]" : ""));
 		return limit;
 	}
 	
