@@ -45,7 +45,7 @@ public class ChoobDecoderTask extends ChoobTask
 		Message mes = null;
 		if (event instanceof Message)
 			mes = (Message)event;
-			
+		
 		if (event instanceof NickChange)
 		{
 			NickChange nc = (NickChange)event;

@@ -300,7 +300,7 @@ public final class Choob extends PircBot
 	}
 
 	public void onSyntheticMessage(Event mes) {
-		spinThread( mes );
+		spinThreadSynthetic( mes );
 	}
 
 	protected void onDisconnect()
@@ -499,7 +499,17 @@ public final class Choob extends PircBot
 
 	// END PASTE!
 
-	private synchronized void spinThread(Event ev)
+	private void spinThread(Event ev)
+	{
+		spinThreadInternal(ev, true);
+	}
+
+	private void spinThreadSynthetic(Event ev)
+	{
+		spinThreadInternal(ev, false);
+	}
+
+	private synchronized void spinThreadInternal(Event ev, boolean securityOK)
 	{
 		// synthLevel is also checked in addLog();
 		if (ev instanceof Message && ((Message)ev).getSynthLevel() == 0)
@@ -507,6 +517,9 @@ public final class Choob extends PircBot
 
 		if (ev instanceof ChannelKick)
 			modules.history.addLog(ev);
+
+		if (securityOK && (ev instanceof Message))
+			((Message)ev).getFlags().put("_securityOK", "true");
 
 		ChoobTask task = new ChoobDecoderTask(ev);
 

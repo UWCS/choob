@@ -607,8 +607,10 @@ public final class HorriblePerlScript
 				classContent.append("\t\tjava.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission(\"event.create\"));\n");
 				classContent.append("\t\tthis.synthLevel = old.synthLevel + 1;\n");
 				classContent.append("\t\tthis.flags = new HashMap<String,String>();\n");
+				classContent.append("\t\t// Properties starting \"_\" should not be cloned implicitly.\n");
 				classContent.append("\t\tfor (String prop : old.flags.keySet()) {\n");
-				classContent.append("\t\t\tthis.flags.put(prop, new String((old.flags.get(prop))));\n");
+				classContent.append("\t\t\tif (!prop.startsWith(\"_\"))\n");
+				classContent.append("\t\t\t\tthis.flags.put(prop, new String((old.flags.get(prop))));\n");
 				classContent.append("\t\t}\n");
 			}
 			classContent.append("\t}\n\n");

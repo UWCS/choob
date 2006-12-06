@@ -610,25 +610,24 @@ public class Alias
 			return;
 		}
 
+		int recurseLevel = 1;
+		boolean securityOK = false;
+
 		// Message extends IRCEvent, so this cast will always succeed.
 		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
 
 		if (mesFlags.containsKey("alias.expanded"))
 		{
-			int recurseLevel = Integer.parseInt(mesFlags.get("alias.expanded")) + 1;
+			recurseLevel = Integer.parseInt(mesFlags.get("alias.expanded")) + 1;
 
 			// Stop recursion
 			if (recurseLevel > MAX_ALIAS_EXPANSIONS) {
 				irc.sendContextReply(mes, "Synthetic event recursion detected (alias.expanded). Stopping.");
 				return;
 			}
-
-			mesFlags.put("alias.expanded", new Integer(recurseLevel).toString());
 		}
 		else
 		{
-			mesFlags.put("alias.expanded", "1");
-
 			try
 			{
 				int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
@@ -646,6 +645,9 @@ public class Alias
 				System.err.println("Couldn't do antiflood call: " + e);
 			}
 		}
+
+		if (mesFlags.containsKey("_securityOK"))
+			securityOK = (mesFlags.get("_securityOK").equals("true"));
 
 		String aliasText = alias.converted;
 
@@ -674,6 +676,17 @@ public class Alias
 		newText = pluginName + "." + commandName + newText.substring(spacePos);
 
 		mes = (Message)mes.cloneEvent( irc.getTrigger() + newText );
+
+		mesFlags = ((IRCEvent)mes).getFlags();
+
+		// Set expanded value for new message.
+		mesFlags.put("alias.expanded", new Integer(recurseLevel).toString());
+
+		if (securityOK)
+		{
+			// Tell the bot that security checks on this new message are safe.
+			mesFlags.put("_securityOK", "true");
+		}
 
 		// XXX This is a hack. We should change the event to simply have a setMessage(). Or something.
 		mods.history.addLog( mes ); // Needed in case a plugin needs to retrieve authoritative message.

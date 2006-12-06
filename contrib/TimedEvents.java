@@ -403,6 +403,10 @@ public class TimedEvents
 		String rv = "";
 		for (String prop : flags.keySet())
 		{
+			// Properties starting "_" should not be cloned implicitly.
+			if (prop.startsWith("_"))
+				continue;
+			
 			if (rv.length() > 0)
 				rv += ",";
 			rv += prop.replaceAll("(\\\\|\"|=|,)", "\\\\$1");

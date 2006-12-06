@@ -86,8 +86,10 @@ public class IRCEvent extends Event implements IRCRootEvent
 		java.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission("event.create"));
 		this.synthLevel = old.synthLevel + 1;
 		this.flags = new HashMap<String,String>();
+		// Properties starting "_" should not be cloned implicitly.
 		for (String prop : old.flags.keySet()) {
-			this.flags.put(prop, new String((old.flags.get(prop))));
+			if (!prop.startsWith("_"))
+				this.flags.put(prop, new String((old.flags.get(prop))));
 		}
 	}
 

@@ -397,8 +397,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	private int getNodeIDFromUserName(UserEvent userEvent)
 	{
-		if (userEvent instanceof IRCRootEvent)
-			checkEvent((IRCRootEvent)userEvent);
+		if (userEvent instanceof IRCEvent)
+			checkEvent((IRCEvent)userEvent);
 		return getNodeIDFromNodeName(userEvent.getNick(), 0);
 	}
 
@@ -550,8 +550,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	{
 		try
 		{
-			if (userEvent instanceof IRCRootEvent)
-				checkEvent((IRCRootEvent)userEvent);
+			if (userEvent instanceof IRCEvent)
+				checkEvent((IRCEvent)userEvent);
 
 			//return (Boolean)mods.plugin.callAPI("NickServ", "Check", nickName, false);
 			return (Boolean)mods.plugin.callAPI("NickServ", "Check", userEvent.getNick());
@@ -1524,16 +1524,21 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 	}
 
-	private void checkEvent(IRCRootEvent e) throws ChoobEventExpired
+	private void checkEvent(IRCEvent e) throws ChoobEventExpired
 	// This should probably accept a generic form of all events.
 	{
-		if ((new java.util.Date()).getTime()-e.getMillis()>5000)
+		Map<String,String> mesFlags = e.getFlags();
+		if (mesFlags.containsKey("_securityOK"))
 		{
-			if (e instanceof MessageEvent)
-				throw new ChoobEventExpired("Security exception: " + e.getClass().getName() + " from " + new java.util.Date(e.getMillis()).toString() + " ('" + ((MessageEvent)e).getMessage() + "') has expired." );
-			else
-				throw new ChoobEventExpired("Security exception: " + e.getClass().getName() + " from " + new java.util.Date(e.getMillis()).toString() + " has expired." );
+			String sok = mesFlags.get("_securityOK");
+			if (sok.equals("true"))
+				return;
 		}
+		
+		if (e instanceof MessageEvent)
+			throw new ChoobEventExpired("Security exception: " + e.getClass().getName() + " from " + new java.util.Date(e.getMillis()).toString() + " ('" + ((MessageEvent)e).getMessage() + "') failed security." );
+		else
+			throw new ChoobEventExpired("Security exception: " + e.getClass().getName() + " from " + new java.util.Date(e.getMillis()).toString() + " failed security." );
 	}
 
 }
