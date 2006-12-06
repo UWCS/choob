@@ -467,7 +467,7 @@ public class Events
 			if (!ev.finished())
 				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
-					irc.sendContextReply(mes, "http://www.warwickcompsoc.co.uk/events/details/?id=" + ev.id + ".");
+					irc.sendContextReply(mes, "http://uwcs.co.uk/society/events/details/" + ev.id + ".");
 					return;
 				}
 
@@ -594,10 +594,6 @@ public class Events
 		// Remove the trailing commaspace.
 		if (namelist.length() > 2)
 			namelist = namelist.substring(0, namelist.length()-2);
-
-		// If it's not in pm, break them up.
-		if (!(mes instanceof PrivateEvent))
-			namelist = namelist.replaceAll("(?<![a-zA-Z])([a-zA-Z])(?!eserves)([^, ]+)","$1'$2");
 
 		return namelist;
 	}
