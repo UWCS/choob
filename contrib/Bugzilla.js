@@ -228,19 +228,48 @@ Bugzilla.prototype.commandQueue = function(mes, mods, irc) {
 		return;
 	}
 	var email = String(params.get(1)).trim();
+	var queue = new Array();
 	
-	var flags = this._mods.odb.retrieve(BugzillaSavedFlagRequest, "WHERE `from` = \"" + this._mods.odb.escapeString(email) + "\"");
-	var list = new Array();
+	var q = "WITH plugins.Bugzilla.BugzillaActivityGroup AS Group"
+			+ " WHERE Group.id = group"
+			+ " AND attachment > 0"
+			+ " AND field = \"Flag\?\""
+			+ " AND newValue = \"" + this._mods.odb.escapeString(email) + "\""
+	;
+	var flags = this._mods.odb.retrieve(BugzillaActivity, q);
 	
 	for (var i = 0; i < flags.size(); i++) {
-		var f = flags.get(i);
-		list.push("bug " + f.bug + " (" + f.name + ")");
+		var flag = flags.get(i);
+		
+		q = "WITH plugins.Bugzilla.BugzillaActivityGroup AS Group"
+			+ " WHERE Group.id = group"
+			+ " AND attachment = " + Number(flag.attachment)
+			+ " AND oldValue = \"" + this._mods.odb.escapeString(flag.oldValue) + "\""
+			+ " AND ("
+				+ "field = \"Flag\+\""
+				+ " OR field = \"Flag\-\""
+				+ " OR field = \"Flag\""
+			+ ")"
+		;
+		var flagRVs = this._mods.odb.retrieve(BugzillaActivity, q);
+		
+		if (flagRVs.size() == 0) {
+			queue.push(flag);
+		}
 	}
 	
-	if (list.length == 0) {
-		irc.sendContextReply(mes, "Queue is empty.");
+	for (i = 0; i < queue.length; i++) {
+		var event = queue[i];
+		var group = this._mods.odb.retrieve(BugzillaActivityGroup, "WHERE id = " + event.group);
+		group = group.get(0);
+		
+		queue[i] = "bug " + group.bug + " (" + event.oldValue + " attachment " + event.attachment + " for " + this._fmtUser(group.user) + ")";
+	}
+	
+	if (queue.length == 0) {
+		irc.sendContextReply(mes, "Queue for " + this._fmtUser(email) + " is empty.");
 	} else {
-		irc.sendContextReply(mes, "Queue: " + list.join(", ") + ".");
+		irc.sendContextReply(mes, "Queue for " + this._fmtUser(email) + ": " + queue.join(", ") + ".");
 	}
 }
 Bugzilla.prototype.commandQueue.help = [
