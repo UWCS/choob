@@ -20,6 +20,7 @@ public final class ChoobMain
 		catch (Throwable t)
 		{
 			System.err.println("Fatal error in Choob, exiting.");
+			t.printStackTrace();
 			System.exit(1);
 		}
 

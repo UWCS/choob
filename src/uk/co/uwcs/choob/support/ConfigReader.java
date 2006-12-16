@@ -18,7 +18,10 @@ public final class ConfigReader
 	public ConfigReader(String configFile) throws IOException
 	{
 		botProps = new Properties();
-		botProps.load(this.getClass().getClassLoader().getResourceAsStream (configFile));
+		InputStream r = this.getClass().getClassLoader().getResourceAsStream (configFile);
+		if (r==null)
+			throw new IOException("Cannot find config file: " + configFile + ". Have you created it from the example correctly?");
+		botProps.load(r);
 	}
 
 	/**
