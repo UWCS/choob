@@ -29,6 +29,7 @@ function Bugzilla(mods, irc) {
 	this._targetList = new Object();
 	this._seenMsgs = new Object();
 	this._firstTime = true;
+	this._rebuilding = false;
 	
 	var targets = this._mods.odb.retrieve(BugmailTarget, "");
 	for (var i = 0; i < targets.size(); i++) {
@@ -88,6 +89,9 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 	var changesList = new Array();
 	
 	try {
+		if (this._rebuilding) {
+			throw new Error("Rebuilding, can't check mail.");
+		}
 		var self = this;
 		this._checkMail(function(pop3, messageID) {
 			if (!(messageID in self._seenMsgs)) {
@@ -224,11 +228,20 @@ Bugzilla.prototype.commandLog.help = [
 Bugzilla.prototype.commandQueue = function(mes, mods, irc) {
 	var params = mods.util.getParams(mes, 1);
 	if (params.size() <= 1) {
-		irc.sendContextReply(mes, "Syntax: Bugzilla.Queue <email>");
+		irc.sendContextReply(mes, "Syntax: Bugzilla.Queue <email or name>");
 		return;
 	}
 	var email = String(params.get(1)).trim();
 	var queue = new Array();
+	
+	if (/\s/.test(email) || (email.indexOf("@") == -1)) {
+		// Real name, not e-mail.
+		var uq = "WHERE name = \"" + this._mods.odb.escapeString(email) + "\"";
+		var users = this._mods.odb.retrieve(BugzillaUser, uq);
+		if (users.size() > 0) {
+			email = users.get(0).email;
+		}
+	}
 	
 	var q = "WITH plugins.Bugzilla.BugzillaActivityGroup AS Group"
 			+ " WHERE Group.id = group"
@@ -274,8 +287,8 @@ Bugzilla.prototype.commandQueue = function(mes, mods, irc) {
 }
 Bugzilla.prototype.commandQueue.help = [
 		"Shows the review queue for a user, as seen by the bot.",
-		"<email>",
-		"<email> is the user to show the queue of"
+		"<email or name>",
+		"<email or name> is the e-mail address or name of the user to show the queue of"
 	];
 
 
@@ -286,6 +299,14 @@ Bugzilla.prototype.commandRebuildDB = function(mes, mods, irc) {
 		irc.sendContextReply(mes, "Syntax: Bugzilla.RebuildDB");
 		return;
 	}
+	
+	if (this._rebuilding) {
+		irc.sendContextReply(mes, "Rebuilding in progress; cannot start another.");
+		return;
+	}
+	
+	this._rebuilding = true;
+	irc.sendContextReply(mes, "Removing existing data...");
 	
 	// Delete all BugzillaActivityGroup.
 	var flags = this._mods.odb.retrieve(BugzillaActivityGroup, "");
@@ -300,18 +321,25 @@ Bugzilla.prototype.commandRebuildDB = function(mes, mods, irc) {
 	var changesList = new Array();
 	try {
 		var self = this;
+		var shown = false;
 		this._checkMail(function(pop3, messageID) {
+			if (!shown) {
+				irc.sendContextReply(mes, "Rebuilding database from bugmail, this may take a few minutes...");
+				shown = true;
+			}
 			var changes = new BugmailParser(pop3.getMessage(messageID));
 			changesList.push(changes);
 			return true;
 		});
 	} catch(ex) {
 		irc.sendContextReply(mes, "Error checking bugmail: " + ex);
+		this._rebuilding = false;
 		return;
 	}
 	
 	this._updateActivityDB(changesList);
 	irc.sendContextReply(mes, "Database rebuilt from bugmail.");
+	this._rebuilding = false;
 }
 Bugzilla.prototype.commandRebuildDB.help = [
 		"Rebuilds the activity log from currently-stored bugmails.",
