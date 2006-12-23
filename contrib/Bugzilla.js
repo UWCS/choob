@@ -109,7 +109,7 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 		return;
 	}
 	
-	this._mods.interval.callBack("bugmail-check", 3000 /* 3s */, 1);
+	this._mods.interval.callBack("bugmail-check", 30000 /* 30s */, 1);
 	
 	if ((changesList.length == 0) || this._firstTime) {
 		this._firstTime = false;
