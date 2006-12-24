@@ -57,7 +57,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.5.28"
+		"1.5.29"
 	];
 
 
@@ -166,29 +166,27 @@ Feeds.prototype.commandList = function(mes, mods, irc) {
 		return;
 	}
 	
-	function dispFeed(i, feed) {
+	function displayFeedItemLine(i, feed) {
 		var dests = feed._outputTo.join(", ");
-		if (feed.getError()) {
-			irc.sendContextReply(mes, "Feed " + feed.name + ": '\x02" + feed.displayName +
-					"\x02', ERROR: " + feed.getError() +
-					", source <" + feed.url + ">." +
-					(dests ? " Notifications to: " + dests + "." : ""));
-		} else {
-			irc.sendContextReply(mes, "Feed " + feed.name + ": '\x02" + feed.displayName +
-					"\x02', owned by " + (feed.owner ? feed.owner : "<unknown>") +
-					(feed.isPrivate ? " (\x02private\x02)" : "") +
-					", " + feed._lastItemCount +
-					" items (" + feed.getLastLoaded() + "), TTL of " + feed.ttl + "s, source <" + feed.url + ">." +
-					(dests ? " Notifications to: " + dests + "." : ""));
-		}
+		var error = feed.getError();
+		irc.sendContextReply(mes, "Feed " + feed.name + ": "
+				+ "'\x02" + feed.displayName + "\x02', "
+				+ "owned by " + (feed.owner ? feed.owner : "<unknown>")
+				+ (feed.isPrivate ? " (\x02private\x02)" : "") + ", "
+				+ (error ?
+					(error) :
+					(feed._lastItemCount + " items (" + feed.getLastLoaded() + ")")
+				) + ", "
+				+ "TTL of " + feed.ttl + "s, source <" + feed.url + ">."
+				+ (dests ? " Notifications to: " + dests + "." : ""));
 	};
 	
-	function getFeedString(feed) {
+	function getFeedItemString(feed) {
 		return feed.name + " (" + feed._lastItemCount + (feed.isPrivate ? ", \x02private\x02" : "") + ")";
 	};
 	
-	function getFeedErrorString(feed) {
-		return feed.name + " (" + feed.getError() + ")";
+	function getFeedErrorLine(feed) {
+		return "Feed " + feed.name + ": " + feed.getError() + ".";
 	};
 	
 	var params = mods.util.getParams(mes, 1);
@@ -203,13 +201,13 @@ Feeds.prototype.commandList = function(mes, mods, irc) {
 				continue;
 			}
 			if (this._feedList[i].name.toLowerCase() == findName.toLowerCase()) {
-				dispFeed(i, this._feedList[i]);
+				displayFeedItemLine(i, this._feedList[i]);
 				return;
 			} else if (("," + this._feedList[i]._outputTo.join(",") + ",").toLowerCase().indexOf(findIO) != -1) {
-				dispFeed(i, this._feedList[i]);
+				displayFeedItemLine(i, this._feedList[i]);
 				foundIO = true;
 			} else if (findName == "*") {
-				dispFeed(i, this._feedList[i]);
+				displayFeedItemLine(i, this._feedList[i]);
 			}
 		}
 		if ((findName != "*") && !foundIO) {
@@ -259,13 +257,13 @@ Feeds.prototype.commandList = function(mes, mods, irc) {
 			if (i > 0) {
 				str += ", ";
 			}
-			str += getFeedString(outputs[outputList[o]][i]);
+			str += getFeedItemString(outputs[outputList[o]][i]);
 		}
 		str += ".";
 		irc.sendContextReply(mes, str);
 	}
 	for (var i = 0; i < errs.length; i++) {
-		irc.sendContextReply(mes, "Error: " + getFeedErrorString(errs[i]));
+		irc.sendContextReply(mes, getFeedErrorLine(errs[i]));
 	}
 }
 Feeds.prototype.commandList.help = [
