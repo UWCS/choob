@@ -109,7 +109,6 @@ public class UserTypeCheck
 				nick = user.next();
 				UserTypeCheckResult entry = userChecks.get(nick);
 				if (System.currentTimeMillis() > entry.timestamp + USER_DATA_TIMEOUT) {
-					System.out.println("UTC: Data for user <" + nick + "> has expired.");
 					userChecks.remove(nick);
 					// Restart iterator, otherwise it gets all touchy.
 					user = userChecks.keySet().iterator();
@@ -246,13 +245,6 @@ public class UserTypeCheck
 			if (code == 318) {
 				userData.timestamp = System.currentTimeMillis();
 				userData.hasChecked = true;
-				System.out.println("UTC: Data for user <" + nickl +
-						 ">: bot("   + (new Boolean(userData.isBot)).toString() + 
-						"); away(" + (new Boolean(userData.isAway)).toString() + 
-						"); ircop(" + (new Boolean(userData.isOperator)).toString() + 
-						"); reg("   + (new Boolean(userData.isRegistered)).toString() + 
-						"); ssl("   + (new Boolean(userData.isSecure)).toString() + 
-						").");
 				userData.notifyAll();
 			}
 		}
@@ -293,13 +285,11 @@ public class UserTypeCheck
 			if (data != null) {
 				if (!USER_DATA_CACHE_BLOCK && !data.hasChecked) {
 					statsFailed[statsIndex]++;
-					System.out.println("UTC: Check (cached) for user <" + nick + "> has no data!");
 					return null;
 				}
 				synchronized(data) {
 					if (!data.hasChecked) {
 						statsFailed[statsIndex]++;
-						System.out.println("UTC: Check (cached) for user <" + nick + "> FAILED!");
 						return null;
 					}
 					return data;
@@ -323,7 +313,6 @@ public class UserTypeCheck
 			}
 			if (!data.hasChecked) {
 				statsFailed[statsIndex]++;
-				System.out.println("UTC: Check (live) for user <" + nick + "> FAILED!");
 				return null;
 			}
 			return data;
