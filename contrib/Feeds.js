@@ -1065,6 +1065,7 @@ var entityMap = {
 	"#8217":   "'",
 	"lsquo":   "'",
 	"rsquo":   "'",
+	"nbsp":    " ",
 	"#160":    " ",
 	"mdash":   "-",
 	"ndash":   "-",
