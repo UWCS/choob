@@ -10,7 +10,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.text.ParseException;
 import java.lang.StringBuilder;
-
 public class Timezone
 {
 
@@ -84,7 +83,6 @@ public class Timezone
 			GregorianCalendar cal = new GregorianCalendar();
 			cal.setTimeZone(TimeZone.getTimeZone(params.get(2)));
 			String[] splitTime = params.get(1).split(":");
-
 				
 			int hour = 0;
 			int min = 0;
@@ -133,6 +131,26 @@ public class Timezone
 		}
 	}
 
+	public String[] optionsUser = { "Zone" };
+	public String[] optionsUserDefaults = { "Europe/London" };
+
+	public String[] helpOptionTimezoneZone = {
+		"Set your timezone for the timein command with no parameters."
+	};
+
+	public boolean optionCheckUserTimezone(String value, String nick) {
+		return true; //hmm
+	}
+	
+	private String checkOption(String userNick) {
+		try {
+ 			return (String)mods.plugin.callAPI("Options", "GetUserOption", userNick,"Zone", optionsUserDefaults[0]);
+		} catch (ChoobNoSuchCallException e) {
+			return optionsUserDefaults[0];
+		}
+	}
+
+
 	public String[] helpCommandTimeIn = {
 		"Returns the current time in specified time zone.",
 		"<TimeZone (eg GMT or Europe/London or +00:00)>",
@@ -142,13 +160,17 @@ public class Timezone
 	{
 		List<String> params = mods.util.getParams(mes,3);
 		HashSet<String> lists = new HashSet<String>();
-		if (params.size() != 2)
+		String input = checkOption(mes.getNick());
+
+		if ((params.size() != 2) && (input == null))
 		{
 			irc.sendContextReply(mes,"Usage timein <timezone>");
 			return;
 		}
 
-		String input = fixZone(params.get(1));
+		if ((params.size() == 2) || (input == null))
+			input = fixZone(params.get(1));
+		
 
 		SimpleDateFormat df = new SimpleDateFormat(PATTERN);
 		GregorianCalendar now = new GregorianCalendar();
