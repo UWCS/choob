@@ -1168,19 +1168,33 @@ BugmailParser.fields = [
 ];
 
 BugmailParser.prototype._parse = function(lines) {
-	var debug = 0;
+	var debug = 2;
+	var bodyLine = 0;
 	var ary;
 	
 	var changes = new Array();
-	var lineContParts = ["", "", ""];
 	var linePartLengths = [19, 28, 28];
+	var changeTable = new Array();
+	var haveUser = false;
 	
+	// Process headers.
 	for (var i = 0; i < lines.length; i++) {
-		if (debug > 1) log("PARSE LINE: " + lines[i]);
+		if (debug > 1) log("PARSE HEAD: " + lines[i]);
 		var line = lines[i].trim();
 		
+		if (line == "") {
+			bodyLine = i + 1;
+			break;
+		}
+		
+		while ((i < lines.length - 1) && (lines[i + 1].substr(0, 1) == " ")) {
+			i++;
+			if (debug > 1) log("PARSE HEAD: " + lines[i]);
+			line += " " + lines[i].trim();
+		}
+		
 		if ((line.substr(0, 8) == "Subject:") && (ary = line.match(/^Subject:\s*\[Bug (\d+)\]\s+(new:\s+)?(.*?)\s*$/i))) {
-			if (debug > 0) log("BUG ID : " + ary[1] + " --- " + ary[3]);
+			if (debug > 0) log("BUG ID    : " + ary[1] + " --- " + ary[3]);
 			this.changeGroup.bug = Number(ary[1]);
 			this.changeGroup.summary = ary[3];
 			if (Boolean(ary[2])) {
@@ -1189,20 +1203,35 @@ BugmailParser.prototype._parse = function(lines) {
 			}
 			
 		} else if ((line.substr(0, 5) == "Date:") && (ary = line.match(/^Date:\s*(.*?)\s*$/i))) {
-			if (debug > 0) log("DATE   : " + ary[1]);
+			if (debug > 0) log("DATE      : " + ary[1]);
 			this.changeGroup.time = Number(new Date(ary[1]));
 			
 		} else if ((line.substr(0, 11) == "X-Bugzilla-") && (ary = line.match(/^X-Bugzilla-(Product|Component):\s*(.*?)\s*$/i))) {
 			if (debug > 0) log(ary[1].toUpperCase() + ": " + ary[2]);
 			this.changeGroup[ary[1].toLowerCase()] = ary[2];
 			
-		} else if ((line.substr(0, 11) == "ReportedBy:") && (ary = line.match(/^ReportedBy:\s+(\S+)$/))) {
-			if (debug > 0) log("USER   : " + ary[1]);
+		} else if (!haveUser && (line.substr(0, 15) == "X-Bugzilla-Who:") && (ary = line.match(/^X-Bugzilla-Who:\s*(.*?)\s*$/i))) {
+			if (debug > 0) log("USER      : " + ary[1]);
 			this.changeGroup.user = ary[1];
+			haveUser = true;
 			
-		} else if ((ary = line.match(/^(\S+) changed:$/))) {
-			if (debug > 0) log("USER   : " + ary[1]);
+		}
+	}
+	
+	// Process body.
+	for (var i = bodyLine; i < lines.length; i++) {
+		if (debug > 1) log("PARSE BODY: " + lines[i]);
+		var line = lines[i].trim();
+		
+		if (!haveUser && (line.substr(0, 11) == "ReportedBy:") && (ary = line.match(/^ReportedBy:\s+(\S+)$/))) {
+			if (debug > 0) log("USER      : " + ary[1]);
 			this.changeGroup.user = ary[1];
+			haveUser = true;
+			
+		} else if (!haveUser && (ary = line.match(/^(\S+) changed:$/))) {
+			if (debug > 0) log("USER      : " + ary[1]);
+			this.changeGroup.user = ary[1];
+			haveUser = true;
 			
 		} else if ((ary = line.match(/Bug \d+ depends on bug \d+, which changed state./))) {
 			// Crap, this bug is about changes in a dependant bug!
@@ -1219,30 +1248,15 @@ BugmailParser.prototype._parse = function(lines) {
 			if (lineParts[0] == "What")
 				continue;
 			
-			if (debug > 0) log("CHANGE : " + lineParts[0] + "|" + lineParts[1] + "|" + lineParts[2]);
+			changeTable.push([lineParts[0], lineParts[1], lineParts[2]]);
 			
-			var forcedWrap = [false, false, false];
-			for (var j = 0; j <= 2; j++) {
-				forcedWrap[j] = (lineParts[j].length == linePartLengths[j]) || (lineParts[j].substr(-1) == "-") || (lineParts[j].substr(-1) == ",");
-			}
-			if (forcedWrap[0] || forcedWrap[1] || forcedWrap[2] || (lineParts[0].match(/^Attachment #\d+$/))) {
-				// Wrapped. Keep contents, and continue.
-				for (var j = 0; j <= 2; j++) {
-					lineContParts[j] += lineParts[j] + (forcedWrap[j] ? "" : " ");
-				}
-				continue;
-			}
-			for (var j = 0; j <= 2; j++) {
-				lineContParts[j] += lineParts[j];
-			}
-			for (var j = 0; j <= 2; j++) {
-				lineContParts[j] = lineContParts[j].trim();
-			}
-			changes.push({ name: lineContParts[0], oldValue: lineContParts[1], newValue: lineContParts[2] });
-			lineContParts = ["", "", ""];
-			
-		} else if ((ary = lines[i].match(/^-+\s+Comment #\d+ from (\S+)\s+/))) {
+		} else if (!haveUser && (ary = lines[i].match(/^-+\s+Comment #\d+ from (\S+)\s+/))) {
 			this.changeGroup.user = ary[1];
+			haveUser = true;
+			
+			// Once we're into the comment, that's it - don't risk matching
+			// anything in the comment itself.
+			break;
 			
 		} else if ((ary = lines[i].match(/^Created an attachment \(id=(\d+)\)$/))) {
 			if (debug > 0) log("ATTACHMENT: " + ary[1]);
@@ -1254,6 +1268,49 @@ BugmailParser.prototype._parse = function(lines) {
 			}
 			
 		}
+	}
+	
+	var lineContParts = ["", "", ""];
+	for (var i = 0; i < changeTable.length; i++) {
+		var lineParts = changeTable[i];
+		var forcedWrap = [false, false, false];
+		var nonForcedWrap = false;
+		
+		// If any item is the entire width of that column, it is continued.
+		for (var j = 0; j <= 2; j++) {
+			forcedWrap[j] = (lineParts[j].length == linePartLengths[j]) || (lineParts[j].substr(-1) == "-") || (lineParts[j].substr(-1) == ",");
+		}
+		
+		// First part of next line is empty ==> continuation.
+		if ((i < changeTable.length - 1) && (changeTable[i + 1][0].length == 0)) {
+			forcedWrap[0] = true;
+		}
+		
+		// Fields with this as the first line are always 2+ lines.
+		if (lineParts[0].match(/^Attachment #\d+$/)) {
+			nonForcedWrap = true;
+		}
+		
+		// If any items looks wrapped, and we're not at the end of the table, do a continuation.
+		if ((nonForcedWrap || forcedWrap[0] || forcedWrap[1] || forcedWrap[2]) && (i < changeTable.length - 1)) {
+			// Wrapped. Keep contents, and continue.
+			for (var j = 0; j <= 2; j++) {
+				lineContParts[j] += lineParts[j] + (forcedWrap[j] ? "" : " ");
+			}
+			continue;
+		}
+		
+		// We're the only, or last, line of this change.
+		for (var j = 0; j <= 2; j++) {
+			lineContParts[j] += lineParts[j];
+		}
+		for (var j = 0; j <= 2; j++) {
+			lineContParts[j] = lineContParts[j].trim();
+		}
+		
+		if (debug > 0) log("CHANGE    : " + lineContParts[0] + "|" + lineContParts[1] + "|" + lineContParts[2]);
+		changes.push({ name: lineContParts[0], oldValue: lineContParts[1], newValue: lineContParts[2] });
+		lineContParts = ["", "", ""];
 	}
 	
 	for (var i = 0; i < changes.length; i++) {
@@ -1290,8 +1347,8 @@ BugmailParser.prototype._parse = function(lines) {
 		}
 		
 		if (flag) {
-			var oldFlags = (changes[i].oldValue ? changes[i].oldValue.split(",") : []);
-			var newFlags = (changes[i].newValue ? changes[i].newValue.split(",") : []);
+			var oldFlags = (changes[i].oldValue ? changes[i].oldValue.split(/\s*,\s*/) : []);
+			var newFlags = (changes[i].newValue ? changes[i].newValue.split(/\s*,\s*/) : []);
 			
 			for (var j = 0; j < oldFlags.length; j++) {
 				var val = oldFlags[j];
@@ -1348,15 +1405,15 @@ BugmailParser.prototype._parse = function(lines) {
 			
 		} else if (list) {
 			if (changes[i].oldValue) {
-				if (debug > 0) log("REMOVED: " + changes[i].name + " --- " + changes[i].oldValue);
+				if (debug > 0) log("REMOVED   : " + changes[i].name + " --- " + changes[i].oldValue);
 				this.changeSet.push({ field: changes[i].name, attachment: changes[i].attachment, oldValue: changes[i].oldValue, newValue: "" });
 			}
 			if (changes[i].newValue) {
-				if (debug > 0) log("ADDED  : " + changes[i].name + " --- " + changes[i].newValue);
+				if (debug > 0) log("ADDED     : " + changes[i].name + " --- " + changes[i].newValue);
 				this.changeSet.push({ field: changes[i].name, attachment: changes[i].attachment, oldValue: "", newValue: changes[i].newValue });
 			}
 		} else {
-			if (debug > 0) log("CHANGED: " + changes[i].name + " --- " + changes[i].oldValue + " --- " + changes[i].newValue);
+			if (debug > 0) log("CHANGED   : " + changes[i].name + " --- " + changes[i].oldValue + " --- " + changes[i].newValue);
 			this.changeSet.push({ field: changes[i].name, attachment: changes[i].attachment, oldValue: changes[i].oldValue, newValue: changes[i].newValue });
 		}
 	}
