@@ -1168,7 +1168,7 @@ BugmailParser.fields = [
 ];
 
 BugmailParser.prototype._parse = function(lines) {
-	var debug = 2;
+	var debug = 0;
 	var bodyLine = 0;
 	var ary;
 	
