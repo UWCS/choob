@@ -57,7 +57,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.5.29"
+		"1.5.30"
 	];
 
 
@@ -1061,6 +1061,7 @@ var entityMap = {
 	"#34":     '"',
 	"#8220":   '"',
 	"#8221":   '"',
+	"apos":    "'",
 	"#39":     "'",
 	"#8217":   "'",
 	"lsquo":   "'",
