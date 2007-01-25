@@ -155,7 +155,7 @@ public class Dict
 		if (ma.find())
 			return prettyReply(mods.scrape.readyForIrc("Suggestions for '" + item + "': " + ma.group(1).replaceAll("<br>",", ")), url.toString(), 1);
 		else
-			throw new DictionaryException("Error parsing dictionary.com's suggesions reply.");
+			throw new DictionaryException("Error parsing dictionary.com's suggestions reply.");
 
 	}
 
