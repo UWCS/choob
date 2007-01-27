@@ -57,7 +57,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.5.30"
+		"1.5.31"
 	];
 
 
@@ -1521,6 +1521,10 @@ XMLParser.prototype._parse = function() {
 	}
 	
 	this._eatWhitespace();
+	if (this._state.length > 0) {
+		profile.leaveFn("_parse");
+		throw new Error("Expected </" + this._state[0].name + ">, found EOF.");
+	}
 	if (this.data.length > 0) {
 		profile.leaveFn("_parse");
 		throw new Error("Expected EOF, found " + this.data.substr(0, 10) + "...");
@@ -1561,6 +1565,10 @@ XMLParser.prototype._countWhitespace = function() {
 	profile.enterFn("XMLParser", "_countWhitespace");
 	
 	// Optimise by checking only first character first.
+	if (this.data.length <= 0) {
+		profile.leaveFn("_countWhitespace");
+		return 0;
+	}
 	var ws = this.data[0].match(/^\s+/);
 	if (ws) {
 		// Now check first 256 characters.
