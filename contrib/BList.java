@@ -344,4 +344,25 @@ public class BList
 		}
 		irc.sendContextReply(mes,toMsg);
 	}
+
+	public void webList(PrintWriter out, String params, String[] user)
+	{
+		out.println("HTTP/1.0 200 OK");
+		out.println("Content-Type: text/html");
+		out.println();
+
+		List<ListItem> res = mods.odb.retrieve(ListItem.class, "WHERE key = '" + mods.odb.escapeString(params) + "'");
+
+
+		out.println("<p>Item count: " + res.size() + "</p><ul>");
+		for(ListItem li: res)
+		{
+			if (li == null)
+				out.println("<li>NULL.</li>");
+			else
+				out.println("<li>" + mods.scrape.convertEntities(li.content) + "</li>");
+		}
+		out.print("</ul>");
+	}
+
 }
