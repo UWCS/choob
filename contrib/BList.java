@@ -365,4 +365,67 @@ public class BList
 		out.print("</ul>");
 	}
 
+	class Pair<T> { public T first; public T second; public Pair(T f, T s) { first=f; second=s; } }
+	private Pair<String> stuffFromItem(String item)
+	{
+		int i = item.indexOf("http");
+		if (i == -1)
+			return new Pair<String>("", "");
+		return new Pair<String>(item.substring(0, i-1), item.substring(i));
+	}
+
+	public void webRedirHttp(PrintWriter out, String params, String[] user)
+	{
+		if (params.trim().length() == 0)
+		{
+			out.println("HTTP/1.0 300 Multiple Pineapples");
+			out.println("Content-Type: text/html");
+			out.println();
+			out.println("<html><head /><body><p><span>Lists:</span><ul>");
+			for (String s : search(""))
+				out.println("<li><a href=\"?" + s + "\">" + s + "</a></li>");
+			out.println("</ul></body></html>");
+			return;
+		}
+
+		String[] args = params.split("&", 2);
+
+		if (args.length == 0)
+			throw new IllegalArgumentException(params);
+
+		if (args.length == 1)
+		{
+			out.println("HTTP/1.0 300 Multiple Pineapples");
+			out.println("Content-Type: text/html");
+			out.println();
+			out.println("<html><head /><body><p><span>" + args[0] + ":</span><ul>");
+			for (ListItem s : get(args[0]))
+			{
+				Pair<String> p = stuffFromItem(s.content);
+				out.println("<li><a href=\"" + p.second + "\">" + p.first + "</a></li>");
+			}
+
+			out.println("</ul></body></html>");
+			return;
+		}
+
+		List<ListItem> l = get(args[0], args[1]);
+		if (l.size() == 0)
+		{
+			out.println("HTTP/1.0 404 Item Not Found");
+			out.println("Content-Type: text/plain");
+			out.println();
+			out.println("Didn't find " + params);
+			return;
+		}
+
+		out.println("HTTP/1.0 302 Found");
+		out.println("Content-Type: text/html");
+		Pair<String> p = stuffFromItem(l.get(0).content);
+		out.println("Location: " + p.second);
+		out.println();
+		out.println("Your browser sucks: <a href=\"" + p.second + "\">" + p.first + "</a>");
+	}
+
+
 }
