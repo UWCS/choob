@@ -224,6 +224,74 @@ Bugzilla.prototype.commandLog.help = [
 	];
 
 
+// Command: Search
+Bugzilla.prototype.commandSearch = function(mes, mods, irc) {
+	var params = mods.util.getParams(mes);
+	if (params.size() <= 1) {
+		irc.sendContextReply(mes, "Syntax: Bugzilla.Search <terms>");
+		return;
+	}
+	
+	var terms = new Array();
+	for (var i = 1; i < params.size(); i++) {
+		terms.push({ field: "summary", word: String(params.get(i)) });
+	}
+	
+	for (var i = 0; i < terms.length; i++) {
+		terms[i] = terms[i].field + " LIKE \"%" + this._mods.odb.escapeForLike(terms[i].word) + "%\"";
+	}
+	var qs = "WHERE " + terms.join(" OR ") + " SORT DESC time";
+	
+	var bugs = this._mods.odb.retrieve(BugzillaActivityGroup, qs);
+	
+	if (bugs.size() == 0) {
+		irc.sendContextReply(mes, "No bugs matched search terms.");
+		return;
+	}
+	
+	var results = new Array();
+	var resultsHash = new Object();
+	for (var i = 0; i < bugs.size(); i++) {
+		var bugId = bugs.get(i).bug;
+		if (!(bugId in resultsHash)) {
+			results.push("bug " + bugId);
+			resultsHash[bugId] = true;
+		}
+	}
+	
+	var space = 380 - 16 - results.join(", ").length;
+	space = Math.floor(space / results.length) - 3;
+	if (space < 10) {
+		space = 0;
+	}
+	
+	results = new Array();
+	resultsHash = new Object();
+	for (var i = 0; i < bugs.size(); i++) {
+		var bug = bugs.get(i);
+		var bugId = bug.bug;
+		if (!(bugId in resultsHash)) {
+			var summ = "";
+			if (space > 0) {
+				if (bug.summary.length > space) {
+					summ = " [" + bug.summary.substr(0, space - 3) + "...]";
+				} else {
+					summ = " [" + bug.summary + "]";
+				}
+			}
+			results.push("bug " + bugId + summ);
+			resultsHash[bugId] = true;
+		}
+	}
+	irc.sendContextReply(mes, "Bugs matching: " + results.join(", ") + ".");
+}
+Bugzilla.prototype.commandSearch.help = [
+		"Searches known bugs by summary.",
+		"<terms>",
+		"<terms> is one or more words to look for in the summary"
+	];
+
+
 // Command: Queue
 Bugzilla.prototype.commandQueue = function(mes, mods, irc) {
 	var params = mods.util.getParams(mes, 1);
