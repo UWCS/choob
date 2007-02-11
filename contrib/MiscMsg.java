@@ -268,8 +268,8 @@ public class MiscMsg
 		Matcher dateMatcher = null;
 		if (params.size() >= 2) {
 			dateMatcher = Pattern.compile("^(?:(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)" +
-					"|(\\d\\d?)/(\\d\\d?)/(\\d\\d\\d?\\d?)" +
-					"|(\\d\\d?) (\\w\\w\\w) (\\d\\d\\d?\\d?))$", Pattern.CASE_INSENSITIVE).matcher(message);
+					"|(\\d\\d?)/(\\d\\d?)/(\\d\\d?\\d?\\d?)" +
+					"|(\\d\\d?) (\\w\\w\\w) (\\d\\d?\\d?\\d?))$", Pattern.CASE_INSENSITIVE).matcher(message);
 		}
 
 		if (params.size() <= 1) {
