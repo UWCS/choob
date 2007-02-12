@@ -1275,7 +1275,7 @@ BugmailParser.prototype._parse = function(lines) {
 			this.changeGroup.time = Number(new Date(ary[1]));
 			
 		} else if ((line.substr(0, 11) == "X-Bugzilla-") && (ary = line.match(/^X-Bugzilla-(Product|Component):\s*(.*?)\s*$/i))) {
-			if (debug > 0) log(ary[1].toUpperCase() + ": " + ary[2]);
+			if (debug > 0) log((ary[1].toUpperCase() + "          ").substr(0, 10) + ": " + ary[2]);
 			this.changeGroup[ary[1].toLowerCase()] = ary[2];
 			
 		} else if (!haveUser && (line.substr(0, 15) == "X-Bugzilla-Who:") && (ary = line.match(/^X-Bugzilla-Who:\s*(.*?)\s*$/i))) {
