@@ -67,8 +67,8 @@ public final class DbConnectionBroker
 	public Connection getConnection() throws SQLException
 	{
 		// Switch to the 2nd line to get per-SQL-statement logging.
-		//return cpds.getConnection();
-		return new ChoobConnectionWrapper(cpds.getConnection());
+		return cpds.getConnection();
+		//return new ChoobConnectionWrapper(cpds.getConnection());
 	}
 
 	/** Free (check-back-in) a checked-out Connection. */
