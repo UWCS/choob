@@ -1056,7 +1056,9 @@ Feed.prototype._sendTo = function(target, message, suffix) {
 
 var entityMap = {
 	"lt":      "<",
+	"#60":     "<",
 	"gt":      ">",
+	"#62":     ">",
 	"quot":    '"',
 	"#34":     '"',
 	"#8220":   '"',
@@ -1081,14 +1083,18 @@ function _decodeEntities(data) {
 	profile.enterFn("", "_decodeEntities");
 	
 	// Decode XML into HTML...
-	data = data.replace(/&(?:(\w+)|#(\d+));/g, function _decodeEntity(match, name, number) {
+	data = data.replace(/&(?:(\w+)|#(\d+)|#x([0-9a-f]{2}));/gi,
+	function _decodeEntity(match, name, decnum, hexnum) {
 		if (name && (name in entityMap)) {
 			return entityMap[name];
 		}
-		if (number && (String("#" + Number(number)) in entityMap)) {
-			return entityMap[String("#" + Number(number))];
+		if (decnum && (String("#" + parseInt(decnum, 10)) in entityMap)) {
+			return entityMap[String("#" + parseInt(decnum, 10))];
 		}
-		return match; //"[unknown entity '" + (name || number) + "']";
+		if (hexnum && (String("#" + parseInt(hexnum, 16)) in entityMap)) {
+			return entityMap[String("#" + parseInt(hexnum, 16))];
+		}
+		return match; //"[unknown entity '" + (name || decnum || hexnum) + "']";
 	});
 	
 	// Done as a special-case, last, so that it doesn't bugger up
