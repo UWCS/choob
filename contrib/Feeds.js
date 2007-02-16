@@ -984,7 +984,7 @@ Feed.prototype.getNewItems = function() {
 		if (item.updated) {
 			for (var i = 0; i < this._items.length; i++) {
 				if (this._items[i].uniqueKey == item.uniqueKey) {
-					this._items[i].splice(i, 1);
+					this._items.splice(i, 1);
 					break;
 				}
 			}
@@ -998,7 +998,7 @@ Feed.prototype.getNewItems = function() {
 			delete this._lastSeen[d];
 			for (var i = 0; i < this._items.length; i++) {
 				if (this._items[i].uniqueKey == d) {
-					this._items[i].splice(i, 1);
+					this._items.splice(i, 1);
 					break;
 				}
 			}
