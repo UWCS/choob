@@ -56,5 +56,22 @@ public class Admin
 		else
 			irc.sendContextReply(mes, "Don't do that.");
 	}
+
+	private String bytesString(long l)
+	{
+		return new Float(((double)l)/1024.0/1024.0).toString() + "mb";
+	}
+
+	public void commandMemory( Message mes )
+	{
+		long total = Runtime.getRuntime().totalMemory();
+		irc.sendContextReply(mes, "I'm using " +
+			bytesString(total - Runtime.getRuntime().freeMemory()) +
+			" out of " +
+			bytesString(total) +
+			" of memory (which can scale up to " +
+			bytesString(Runtime.getRuntime().maxMemory()) +
+		").");
+	}
 }
 
