@@ -984,10 +984,16 @@ Feed.prototype.getNewItems = function() {
 		if (item.updated) {
 			for (var i = 0; i < this._items.length; i++) {
 				if (this._items[i].uniqueKey == item.uniqueKey) {
+					if (this._parent._debug_store) {
+						log("Feed Store: " + this.name + ": DEL " + item.uniqueKey);
+					}
 					this._items.splice(i, 1);
 					break;
 				}
 			}
+		}
+		if (this._parent._debug_store) {
+			log("Feed Store: " + this.name + ": ADD " + item.uniqueKey);
 		}
 		this._items.push(item);
 		//log("New item : [" + date + "]:" + (item.updated ? "updated" : "new"));
@@ -998,6 +1004,9 @@ Feed.prototype.getNewItems = function() {
 			delete this._lastSeen[d];
 			for (var i = 0; i < this._items.length; i++) {
 				if (this._items[i].uniqueKey == d) {
+					if (this._parent._debug_store) {
+						log("Feed Store: " + this.name + ": DEL " + d);
+					}
 					this._items.splice(i, 1);
 					break;
 				}
@@ -1126,7 +1135,7 @@ function _decodeAtomText(element) {
 		return _decodeRSSHTML(content);
 	}
 	
-	return content;
+	return _decodeEntities(content);
 }
 
 function _decodeAtomDate(element) {
