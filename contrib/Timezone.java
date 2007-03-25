@@ -81,7 +81,9 @@ public class Timezone
 		{
 			SimpleDateFormat df = new SimpleDateFormat(PATTERN);
 			GregorianCalendar cal = new GregorianCalendar();
-			cal.setTimeZone(TimeZone.getTimeZone(params.get(2)));
+			String zone = fixZone(params.get(2));
+			TimeZone sourceTimeZone = TimeZone.getTimeZone(zone);
+			cal.setTimeZone(sourceTimeZone);
 			String[] splitTime = params.get(1).split(":");
 				
 			int hour = 0;
@@ -110,17 +112,17 @@ public class Timezone
 			cal.set(Calendar.MINUTE,min);
 			cal.set(Calendar.SECOND,sec);
 			df.setTimeZone(targetTimeZone);
-
-			String zone = fixZone(params.get(2));
-
+			boolean sourceInDst = sourceTimeZone.inDaylightTime(cal.getTime());
+			boolean targetInDst = targetTimeZone.inDaylightTime(cal.getTime());
+			
 			StringBuilder response = new StringBuilder();
 			response.append(params.get(1));
 			response.append(" (");
-			response.append(TimeZone.getTimeZone(zone).getDisplayName());
+			response.append(sourceTimeZone.getDisplayName(sourceInDst,TimeZone.LONG));
 			response.append(") is ");
 			response.append(df.format(cal.getTime()));
 			response.append(" (");
-			response.append(targetTimeZone.getDisplayName());
+			response.append(targetTimeZone.getDisplayName(targetInDst,TimeZone.LONG));
 			response.append(")");
 			irc.sendContextReply(mes,response.toString());
 
@@ -175,8 +177,9 @@ public class Timezone
 		SimpleDateFormat df = new SimpleDateFormat(PATTERN);
 		GregorianCalendar now = new GregorianCalendar();
 		TimeZone timeZone = TimeZone.getTimeZone(input);
+		boolean dst = timeZone.inDaylightTime(now.getTime());
 		df.setTimeZone(timeZone);
-		irc.sendContextReply(mes,"Current time in " + timeZone.getDisplayName() + " is: " + df.format(now.getTime()));
+		irc.sendContextReply(mes,"Current time in " + timeZone.getDisplayName(dst,TimeZone.LONG) + " is: " + df.format(now.getTime()));
 	
 	}
 
