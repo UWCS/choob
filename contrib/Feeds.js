@@ -59,7 +59,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.6.0"
+		"1.6.1"
 	];
 
 
@@ -1057,24 +1057,19 @@ Feed.prototype._sendTo = function(target, message, suffix) {
 }
 
 var entityMap = {
-	"lt":      "<",
-	"#60":     "<",
-	"gt":      ">",
-	"#62":     ">",
-	"quot":    '"',
-	"#34":     '"',
-	"#8220":   '"',
-	"#8221":   '"',
-	"apos":    "'",
-	"#39":     "'",
-	"#8217":   "'",
-	"lsquo":   "'",
-	"rsquo":   "'",
-	"nbsp":    " ",
-	"#160":    " ",
-	"mdash":   "-",
-	"ndash":   "-",
-	"#8212":   "-",
+	"lt":      "<", "#60":     "<",
+	"gt":      ">", "#62":     ">",
+	"quot":    '"', "#34":     '"',
+	"ldquo":   '"', "#8220":   '"',
+	"rdquo":   '"', "#8221":   '"',
+	"apos":    "'", "#39":     "'",
+	"lsquo":   "'", "#8216":   "'",
+	"rsquo":   "'", "#8217":   "'",
+	"nbsp":    " ", "#160":    " ",
+	"ndash":   "-", "#8211":   "-",
+	"mdash":   "-", "#8212":   "-",
+	"lsaquo"  "<<", "#8249":  "<<",
+	"rsaquo"  ">>", "#8250":  ">>",
 	"times":   "x",
 	"#163":    "£",
 	"#8230":   "...",
@@ -1101,7 +1096,7 @@ function _decodeEntities(data) {
 	
 	// Done as a special-case, last, so that it doesn't bugger up
 	// doubly-escaped things.
-	data = data.replace(/&amp;/g, "&");
+	data = data.replace(/&(amp|#0*38|#x0*26);/g, "&");
 	
 	profile.leaveFn("_decodeEntities");
 	return data;
