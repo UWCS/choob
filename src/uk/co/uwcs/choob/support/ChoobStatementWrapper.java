@@ -148,6 +148,18 @@ public final class ChoobStatementWrapper implements Statement
 		return stat.getWarnings();
 	}
 	
+	public boolean isClosed() throws SQLException {
+		return stat.isClosed();
+	}
+	
+	public boolean isPoolable() throws SQLException {
+		return stat.isPoolable();
+	}
+	
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+		return stat.isWrapperFor(iface);
+	}
+	
 	public void setCursorName(String name) throws SQLException {
 		stat.setCursorName(name);
 	}
@@ -172,7 +184,15 @@ public final class ChoobStatementWrapper implements Statement
 		stat.setMaxRows(max);
 	}
 	
+	public void setPoolable(boolean poolable) throws SQLException {
+		stat.setPoolable(poolable);
+	}
+	
 	public void setQueryTimeout(int seconds) throws SQLException {
 		stat.setQueryTimeout(seconds);
+	}
+	
+	public <T> T unwrap(Class<T> iface) throws SQLException {
+		return stat.unwrap(iface);
 	}
 }

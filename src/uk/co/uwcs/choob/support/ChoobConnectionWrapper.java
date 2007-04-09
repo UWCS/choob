@@ -30,6 +30,26 @@ public final class ChoobConnectionWrapper implements Connection
 		conn.commit();
 	}
 	
+	public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+		return conn.createArrayOf(typeName, elements);
+	}
+	
+	public Blob createBlob() throws SQLException {
+		return conn.createBlob();
+	}
+	
+	public Clob createClob() throws SQLException {
+		return conn.createClob();
+	}
+	
+	public NClob createNClob() throws SQLException {
+		return conn.createNClob();
+	}
+	
+	public SQLXML createSQLXML() throws SQLException {
+		return conn.createSQLXML();
+	}
+	
 	public Statement createStatement() throws SQLException {
 		return new ChoobStatementWrapper(conn.createStatement());
 	}
@@ -42,12 +62,24 @@ public final class ChoobConnectionWrapper implements Connection
 		return new ChoobStatementWrapper(conn.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability));
 	}
 	
+	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+		return conn.createStruct(typeName, attributes);
+	}
+	
 	public boolean getAutoCommit() throws SQLException {
 		return conn.getAutoCommit();
 	}
 	
 	public String getCatalog() throws SQLException {
 		return conn.getCatalog();
+	}
+	
+	public Properties getClientInfo() throws SQLException {
+		return conn.getClientInfo();
+	}
+	
+	public String getClientInfo(String name) throws SQLException {
+		return conn.getClientInfo(name);
 	}
 	
 	public int getHoldability() throws SQLException {
@@ -76,6 +108,14 @@ public final class ChoobConnectionWrapper implements Connection
 	
 	public boolean isReadOnly() throws SQLException {
 		return conn.isReadOnly();
+	}
+	
+	public boolean isValid(int timeout) throws SQLException {
+		return conn.isValid(timeout);
+	}
+	
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+		return conn.isWrapperFor(iface);
 	}
 	
 	public String nativeSQL(String sql) throws SQLException {
@@ -147,6 +187,14 @@ public final class ChoobConnectionWrapper implements Connection
 		conn.setCatalog(catalog);
 	}
 	
+	public void setClientInfo(Properties properties) throws SQLClientInfoException {
+		conn.setClientInfo(properties);
+	}
+	
+	public void setClientInfo(String name, String value) throws SQLClientInfoException {
+		conn.setClientInfo(name, value);
+	}
+	
 	public void setHoldability(int holdability) throws SQLException {
 		conn.setHoldability(holdability);
 	}
@@ -169,5 +217,9 @@ public final class ChoobConnectionWrapper implements Connection
 	
 	public void setTypeMap(Map<String,Class<?>> map) throws SQLException {
 		conn.setTypeMap(map);
+	}
+	
+	public <T> T unwrap(Class<T> iface) throws SQLException {
+		return conn.unwrap(iface);
 	}
 }
