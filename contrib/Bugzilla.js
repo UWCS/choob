@@ -11,7 +11,9 @@ var Socket            = Packages.java.net.Socket;
 
 
 function log(msg) {
-	dumpln("BUGZILLA [" + (new Date()) + "] " + msg);
+	var date = String(new Date());
+	date = date.substr(4, 20);
+	dumpln("BUGZILLA [" + date + "] " + msg);
 }
 
 String.prototype.trim =
@@ -25,11 +27,14 @@ function Bugzilla(mods, irc) {
 	this._mods = mods;
 	this._irc = irc;
 	this._debugChannel = "#testing42";
+	this._debugSpew = "";
 	
 	this._targetList = new Object();
 	this._seenMsgs = new Object();
 	this._firstTime = true;
 	this._rebuilding = false;
+	this._updateSpeed      = 30000; // 30s
+	this._updateSpeedError = 30000; // 30s
 	
 	var targets = this._mods.odb.retrieve(BugmailTarget, "");
 	for (var i = 0; i < targets.size(); i++) {
@@ -105,11 +110,11 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 		});
 	} catch(ex) {
 		log("Error checking bugmail: " + ex);
-		this._mods.interval.callBack("bugmail-check", 30000 /* 30s */, 1);
+		this._mods.interval.callBack("bugmail-check", this._updateSpeedError, 1);
 		return;
 	}
 	
-	this._mods.interval.callBack("bugmail-check", 30000 /* 30s */, 1);
+	this._mods.interval.callBack("bugmail-check", this._updateSpeed, 1);
 	
 	if ((changesList.length == 0) || this._firstTime) {
 		this._firstTime = false;
@@ -501,6 +506,7 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 		var s = changesList[i].changeSet;
 		var things = new Array();
 		var isNew = false;
+		var comment = "";
 		
 		for (var j = 0; j < s.length; j++) {
 			if (s[j].field == "NEW") {
@@ -515,6 +521,11 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 					things.push(msgp);
 				}
 				s[j].done = true;
+				
+			} else if (s[j].field == "COMMENT") {
+				comment = s[j].newValue;
+				s[j].done = true;
+				
 			}
 		}
 		
@@ -673,6 +684,10 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 			things.push("denied " + list.join(", "));
 		}
 		
+		if (comment) {
+			things.push("commented: \"" + comment + "\"");
+		}
+		
 		if (things.length == 0) {
 			continue;
 		}
@@ -681,14 +696,14 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 		
 		var prefix = "Bug " + g.bug;
 		//prefix += " [" + g.product + ": " + g.component + "]";
-		var spaceLeft = 400 - msg.length;
+		var spaceLeft = 400 - prefix.length - msg.length;
 		
 		if (isNew) {
 			spaceLeft -= 4;
 			if (spaceLeft < 20) spaceLeft = 20;
 			prefix += " [" + g.summary.substr(0, spaceLeft) + "] ";
 		} else {
-			spaceLeft -= 6 + g.user.length;
+			spaceLeft -= 6 + this._fmtUser(g.user).length;
 			if (spaceLeft < 20) spaceLeft = 20;
 			prefix += " [" + g.summary.substr(0, spaceLeft) + "]: " + this._fmtUser(g.user) + " ";
 		}
@@ -696,8 +711,14 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 		msg = prefix + msg;
 		log(msg);
 		
+		if (msg.length > 400) {
+			msg = msg.substr(0, 395) + (comment ? "...\"." : "...");
+		}
+		
 		if (mes) {
 			this._irc.sendContextReply(mes, msg);
+		} else if (this._debugSpew) {
+			this._irc.sendMessage(this._debugSpew, msg);
 		} else {
 			var comp = g.product + ":" + g.component;
 			for (var t in this._targetList) {
@@ -1236,9 +1257,17 @@ BugmailParser.fields = [
 ];
 
 BugmailParser.prototype._parse = function(lines) {
+	// Debug: 0 => nothing, 1 => parsed info, 2 => source + parsed info.
 	var debug = 0;
-	var bodyLine = 0;
 	var ary;
+	
+	function _quote_printable_escape(match, code) {
+		//log("CODE: " + code + " ==> " + (eval("0x" + code)) + " ==> " + String.fromCharCode(eval("0x" + code)));
+		return String.fromCharCode(eval("0x" + code));
+	}
+	
+	var useQuotePrintable = false;
+	var bodyLine = 0;
 	
 	var changes = new Array();
 	var linePartLengths = [19, 28, 28];
@@ -1283,7 +1312,39 @@ BugmailParser.prototype._parse = function(lines) {
 			this.changeGroup.user = ary[1];
 			haveUser = true;
 			
+		} else if ((line.substr(0, 26) == "Content-Transfer-Encoding:") && (ary = line.match(/^Content-Transfer-Encoding:\s+quoted-printable\s*$/i))) {
+			useQuotePrintable = true;
+			
 		}
+	}
+	
+	if (useQuotePrintable) {
+		// Process Quote Printable encoding.
+		if (debug > 0) log("QUOTE PRINTABLE");
+		
+		var bufferLines = lines;
+		lines = new Array();
+		for (var i = 0; i < bodyLine; i++) {
+			lines.push(bufferLines[i]);
+		}
+		
+		var lineBuffer = "";
+		for (var i = bodyLine; i < bufferLines.length; i++) {
+			var softWrap = (bufferLines[i][bufferLines[i].length - 1] == "=");
+			
+			lineBuffer += bufferLines[i].replace(/=([0-9A-F][0-9A-F])/g, _quote_printable_escape);
+			if (softWrap) {
+				lineBuffer = lineBuffer.substr(0, lineBuffer.length - 1);
+			} else {
+				lines.push(lineBuffer);
+				lineBuffer = "";
+			}
+		}
+		if (lineBuffer) {
+			lines.push(lineBuffer);
+			lineBuffer = "";
+		}
+		bufferLines = null;
 	}
 	
 	// Process body.
@@ -1318,13 +1379,29 @@ BugmailParser.prototype._parse = function(lines) {
 			
 			changeTable.push([lineParts[0], lineParts[1], lineParts[2]]);
 			
-		} else if (!haveUser && (ary = lines[i].match(/^-+\s+Comment #\d+ from (\S+)\s+/))) {
-			this.changeGroup.user = ary[1];
-			haveUser = true;
+		} else if (ary = lines[i].match(/^-+\s+Comment #\d+ from (\S+)\s+/)) {
+			if (!haveUser) {
+				this.changeGroup.user = ary[1];
+				haveUser = true;
+			}
 			
-			// Once we're into the comment, that's it - don't risk matching
-			// anything in the comment itself.
-			break;
+			var comment = "";
+			for (var j = i + 1; j < lines.length; j++) {
+				if (lines[j] == "-- ") break;
+				if (lines[j].match(/^Created an attachment \(id=(\d+)\)$/)) {
+					j += 2;
+					continue;
+				}
+				
+				if (lines[j][0] == ">") continue;
+				comment += " " + lines[j].trim();
+			}
+			comment = comment.replace(/ +/g, " ").trim();
+			comment = comment.replace(/^\(From update of attachment \d+\)\s*/, "");
+			//comment = comment.replace(/\(In reply to comment #\d+\)\s*/, "");
+			
+			this.changeSet.push({ field: "COMMENT", attachment: 0, oldValue: "", newValue: comment });
+			if (debug > 0) log("COMMENT   : " + comment);
 			
 		} else if ((ary = lines[i].match(/^Created an attachment \(id=(\d+)\)$/))) {
 			if (debug > 0) log("ATTACHMENT: " + ary[1]);
