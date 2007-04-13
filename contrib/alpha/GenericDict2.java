@@ -76,7 +76,7 @@ public class GenericDict2
 				Matcher ma;
 				try
 				{
-					ma = mods.scrape.getMatcher(url, GetContentsCached.DEFAULT_TIMEOUT, matchers.get(key));
+					ma = mods.scrape.getMatcher(url,0, matchers.get(key));
 				}
 				catch (IOException e)
 				{
