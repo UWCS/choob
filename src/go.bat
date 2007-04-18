@@ -227,12 +227,18 @@ SET DBUser=
 SET DBPass=
 SET DBHost=
 FOR /F "delims== tokens=1,2" %%a IN (bot.conf) DO (
-	IF "%%a"=="botName"    SET BotName=%%b
-	IF "%%a"=="botTrigger" SET BotTrigger=%%b
-	IF "%%a"=="database"   SET DBName=%%b
-	IF "%%a"=="dbUser"     SET DBUser=%%b
-	IF "%%a"=="dbPass"     SET DBPass=%%b
-	IF "%%a"=="dbServer"   SET DBHost=%%b
+	IF "%%a"=="botName"    SET "BotName=%%b"
+	IF "%%a"=="botTrigger" (
+		IF "^%%b"=="^!" (
+			SET "BotTrigger=^^^%%b"
+		) ELSE (
+			SET "BotTrigger=%%b"
+		)
+	)
+	IF "%%a"=="database"   SET "DBName=%%b"
+	IF "%%a"=="dbUser"     SET "DBUser=%%b"
+	IF "%%a"=="dbPass"     SET "DBPass=%%b"
+	IF "%%a"=="dbServer"   SET "DBHost=%%b"
 )
 IF "%BotName%"=="" (
 	ECHO FATAL ERROR: No bot name set in "bot.conf".
@@ -254,12 +260,12 @@ IF "%DBPass%"=="" (
 	ECHO FATAL ERROR: No database password set in "bot.conf".
 	GOTO :EOF
 )
-ECHO Bot name         : %BotName%
-ECHO Bot trigger char : %BotTrigger%
-ECHO Database         : %DBName%
-ECHO Database server  : %DBHost%
-ECHO Database user    : %DBUser%
-ECHO Database password: %DBPass%
+ECHO Bot name         : "%BotName%"
+ECHO Bot trigger char : "%BotTrigger%"
+ECHO Database         : "%DBName%"
+ECHO Database server  : "%DBHost%"
+ECHO Database user    : "%DBUser%"
+ECHO Database password: "%DBPass%"
 ECHO OK: 'bot.conf' seems valid.
 
 GOTO :EOF
@@ -271,7 +277,7 @@ REM ==== INIT ====
 ECHO ==== Setting up database... ====
 REM Import database.
 PUSHD ..\db
-TYPE choob.db | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% %DBName% || SET OK=0
+TYPE choob.db | "%MysqlHome%\mysql.exe" --user="%DBUser%" --password="%DBPass%" "%DBName%" || SET OK=0
 IF "%OK%"=="0" (
 	ECHO FATAL ERROR: Unable to import "choob.db" into the mysql database.
 	ECHO              Check "bot.conf" username and password.
@@ -280,7 +286,7 @@ IF "%OK%"=="0" (
 )
 ECHO OK: Database "choob.db" imported.
 IF EXIST custom.db (
-	TYPE custom.db | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% %DBName% || SET OK=0
+	TYPE custom.db | "%MysqlHome%\mysql.exe" --user="%DBUser%" --password="%DBPass%" "%DBName%" || SET OK=0
 	IF "!OK!"=="0" (
 		ECHO FATAL ERROR: Unable to import "custom.db" into the mysql database.
 		ECHO              Check "bot.conf" username and password.
@@ -293,22 +299,22 @@ POPD
 
 IF NOT DEFINED BotAdminUser GOTO :do-init-no-admin-set
 
-ECHO INSERT INTO UserNodes (NodeID, NodeName, NodeClass) VALUES (1001, "%BotAdminUser%", 1) | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% %DBName% || SET OK=0
+ECHO INSERT INTO UserNodes (NodeID, NodeName, NodeClass) VALUES (1001, "%BotAdminUser%", 1) | "%MysqlHome%\mysql.exe" --user="%DBUser%" --password="%DBPass%" "%DBName%" || SET OK=0
 IF "%OK%"=="0" (
 	ECHO FATAL ERROR: Failed to update admin user information in the database.
 	GOTO :EOF
 )
-ECHO INSERT INTO UserNodes (NodeID, NodeName, NodeClass) VALUES (1002, "%BotAdminUser%", 0) | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% %DBName% || SET OK=0
+ECHO INSERT INTO UserNodes (NodeID, NodeName, NodeClass) VALUES (1002, "%BotAdminUser%", 0) | "%MysqlHome%\mysql.exe" --user="%DBUser%" --password="%DBPass%" "%DBName%" || SET OK=0
 IF "%OK%"=="0" (
 	ECHO FATAL ERROR: Failed to update admin user information in the database.
 	GOTO :EOF
 )
-ECHO INSERT INTO GroupMembers (GroupID, MemberID) VALUES (1, 1001) | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% %DBName% || SET OK=0
+ECHO INSERT INTO GroupMembers (GroupID, MemberID) VALUES (1, 1001) | "%MysqlHome%\mysql.exe" --user="%DBUser%" --password="%DBPass%" "%DBName%" || SET OK=0
 IF "%OK%"=="0" (
 	ECHO FATAL ERROR: Failed to update admin user information in the database.
 	GOTO :EOF
 )
-ECHO INSERT INTO GroupMembers (GroupID, MemberID) VALUES (1001, 1002) | "%MysqlHome%\mysql.exe" --user=%DBUser% --password=%DBPass% %DBName% || SET OK=0
+ECHO INSERT INTO GroupMembers (GroupID, MemberID) VALUES (1001, 1002) | "%MysqlHome%\mysql.exe" --user="%DBUser%" --password="%DBPass%" "%DBName%" || SET OK=0
 IF "%OK%"=="0" (
 	ECHO FATAL ERROR: Failed to update admin user information in the database.
 	GOTO :EOF
