@@ -588,7 +588,7 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 				s[fieldMap["status"]].done = true;
 				s[fieldMap["resolution"]].done = true;
 				
-			} else if ((fs.oldValue == "RESOLVED") && (fs.newValue == "REOPENED") && fr.oldValue) {
+			} else if ((fs.oldValue == "RESOLVED") && ((fs.newValue == "UNCONFIRMED") || (fs.newValue == "REOPENED")) && fr.oldValue) {
 				// REOPENED the bug, so ignore status/resolution changes.
 				reopened = true;
 				s[fieldMap["status"]].done = true;
