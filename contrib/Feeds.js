@@ -27,6 +27,7 @@ function Feeds(mods, irc) {
 	profile.start();
 	this._mods = mods;
 	this._irc = irc;
+	this._debugStatus = "";
 	this._debugChannel    = "#testing42";
 	this._announceChannel = "#testing42";
 	this._debug_profile    = false;
@@ -50,8 +51,9 @@ function Feeds(mods, irc) {
 		this._feedList.push(feed);
 	}
 	
-	mods.interval.callBack("feed-check", 30000, 1);
+	mods.interval.callBack("feed-check", 10000, 1);
 	profile.stop("init");
+	this._setStatus("Waiting for first feed check.");
 }
 
 
@@ -59,7 +61,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.6.1"
+		"1.6.2"
 	];
 
 
@@ -566,6 +568,16 @@ Feeds.prototype.commandSetDebug.help = [
 	];
 
 
+// Command: Status
+Feeds.prototype.commandStatus = function(mes, mods, irc) {
+	irc.sendContextReply(mes, "Feeds Status: " + this._debugStatus);
+}
+Feeds.prototype.commandStatus.help = [
+		"Shows the current debugging status of the Feeds plugin.",
+		""
+	];
+
+
 // Command: Info
 //Feeds.prototype.commandInfo = function(mes, mods, irc) {
 //	
@@ -615,6 +627,10 @@ Feeds.prototype._removeFeed = function(feed) {
 	}
 }
 
+Feeds.prototype._setStatus = function(msg) {
+	this._debugStatus = "[" + (new Date()) + "] " + msg;
+}
+
 Feeds.prototype._ = function() {
 }
 
@@ -626,6 +642,7 @@ Feeds.prototype._feedCheckInterval = function(param, mods, irc) {
 	if (this._debug_interval) {
 		log("Interval: start");
 	}
+	this._setStatus("Checking feeds...");
 	
 	for (var i = 0; i < this._feedList.length; i++) {
 		var feed = this._feedList[i];
@@ -636,6 +653,7 @@ Feeds.prototype._feedCheckInterval = function(param, mods, irc) {
 		if (this._debug_interval) {
 			log("Interval:   checking " + feed.name + " (" + -this._feedList[i].getNextCheck() + "ms late)");
 		}
+		this._setStatus("Checking feed " + feed.name + "...");
 		if (this._debug_profile) {
 			profile.start();
 		}
@@ -643,6 +661,7 @@ Feeds.prototype._feedCheckInterval = function(param, mods, irc) {
 		if (this._debug_profile) {
 			profile.stop(feed.name);
 		}
+		this._setStatus("Last checked feed " + feed.name + ".");
 	}
 	
 	var nextCheck = 60 * 60 * 1000; // 1 hour
