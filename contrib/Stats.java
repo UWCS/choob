@@ -14,9 +14,23 @@ import org.jibble.pircbot.Colors;
  * @author Faux
  */
 
+public class EntityStat
+{
+	public int id;
+	public String statName;
+	public String entityName;
+	//String chan; // ???
+	public double value; // WMA; over 100 lines for people, 1000 lines for channels
+}
+
 public class Stats
 {
 	final int HISTORY = 1000;
+	final double NICK_LENGTH = 100; // "Significant" lines in WMA calculations.
+	final double CHAN_LENGTH = 1000;
+	final double THRESHOLD = 0.005; // val * THRESHOLD is considered too small to be a part of WMA.
+	final double NICK_ALPHA = Math.exp(Math.log(THRESHOLD) / (double)NICK_LENGTH);
+	final double CHAN_ALPHA = Math.exp(Math.log(THRESHOLD) / (double)CHAN_LENGTH);
 
 	public String[] info()
 	{
@@ -36,24 +50,7 @@ public class Stats
 		this.irc = irc;
 	}
 
-	// http://schmidt.devlib.org/java/word-count.html#source
-	private static int countWords(String line)
-	{
-		int numWords = 0;
-		int index = 0;
-		boolean prevWhitespace = true;
-		while (index < line.length())
-		{
-			char c = line.charAt(index++);
-			boolean currWhitespace = Character.isWhitespace(c);
-			if (prevWhitespace && !currWhitespace)
-				numWords++;
-			prevWhitespace = currWhitespace;
-		}
-		return numWords;
-	}
-
-	private String getText(Message mes) throws ChoobException
+/*	private String getText(Message mes) throws ChoobException
 	{
 		List<Message> history = mods.history.getLastMessages( mes, HISTORY );
 		final String target = mods.nick.getBestPrimaryNick(mods.util.getParamString(mes));
@@ -107,7 +104,7 @@ public class Stats
 
 		final float div = 10;
 		irc.sendContextReply(mes, "Based on " + mods.nick.getBestPrimaryNick(mods.util.getParamString(mes)) + "'s last few lines in here, their writing age is about (((" + words + "/" + sentences + ") + " + B + ") * 0.4 = " + (Math.round(((A+B) * 0.4) * div) / div) + ".");
-	}
+	} */
 
 /*
 	public void commandSpammers( Message mes )
@@ -126,71 +123,171 @@ public class Stats
 		}
 	}
 */
-
-	public void commandCaptuation( Message mes )
+	private void update( String thing, Message mes, double thisVal )
 	{
-		List<Message> history = mods.history.getLastMessages( mes, HISTORY );
-		final String args = mods.util.getParamString(mes);
-		final String target;
-		if (!args.trim().equals(""))
-			target = mods.nick.getBestPrimaryNick(args);
-		else
-			target = null;
+		if ( mes instanceof ChannelEvent )
+			updateObj( thing, mes.getContext(), thisVal, CHAN_ALPHA );
+		updateObj( thing, mods.nick.getBestPrimaryNick( mes.getNick() ), thisVal, NICK_ALPHA );
+	}
 
-		StringBuilder wb = new StringBuilder();
-		int mlines = 0;
-		int score = 0;
-		String tex;
-		for (Message m : history)
-			if ((tex = m.getMessage()).length() > 4 &&
-				(target == null || mods.nick.getBestPrimaryNick(m.getNick()).equalsIgnoreCase(target)) &&
-				!Pattern.compile(irc.getTriggerRegex()).matcher(tex).find())
-			{
-				// remove smilies and trailing whitespace.
-				tex = tex.replaceAll("\\s[:pP)/;\\\\o()^.¬ -]{2,4}$", "").replaceAll("\\s+$", "").replaceAll("^[a-zA-Z_`0-9|]+: +", "").replaceAll("\".*\"", "").replaceAll("http", "");
+	private void updateObj ( String thing, String name, double thisVal, double alpha )
+	{
+		// I assume thing is safe. ^.^
+		List<EntityStat> ret = mods.odb.retrieve( EntityStat.class, "WHERE entityName = \"" + mods.odb.escapeString(name) + "\" && statName = \"" + thing + "\"");
+		EntityStat obj;
+		if (ret.size() == 0) {
+			obj = new EntityStat();
+			obj.statName = thing;
+			obj.entityName = name;
+			obj.value = thisVal;
+			mods.odb.save(obj);
+		} else {
+			obj = ret.get(0);
+			obj.value = alpha * obj.value + (1 - alpha) * thisVal;
+			mods.odb.update(obj);
+		}
+	}
 
-				if (tex.length() < 4)
-					continue;
+	public void onMessage( Message mes )
+	{
+		if (Pattern.compile(irc.getTriggerRegex()).matcher(mes.getMessage()).find()) {
+			// Ignore commands.
+			return;
+		}
 
-				// Small letter at start of line? PENALTY.
-				if (m instanceof ChannelMessage && Pattern.compile("^\\p{Ll}").matcher(tex).find())
-					score += 1;
+		String content = mes.getMessage().replaceAll("^[a-zA-Z0-9`_|]+:\\s+", "");
+		boolean referred = !content.equals(mes.getMessage());
 
-				// Small letter at start of new sentance? PENALTY.
-				Matcher ma = Pattern.compile("\\.\\s+\\p{Ll}").matcher(tex);
-				while (ma.find())
-					score += 1;
+		if (mes instanceof ActionEvent) {
+			content = "*" + mes.getNick() + " " + content; // bizarrely, this is proper captuation grammar.
+		}
 
-				// No thingie on the end? PENALTY.
-				if (Pattern.compile("[^\\.\\?\\!]$").matcher(tex).find())
-					score += 1;
+		if (Pattern.compile("^<\\S+>").matcher(content).find()) {
+			// Ignore quotes, too.
+			return;
+		}
 
-				// Penalty non-words.
-				for (String s : new String[] { "im", "Im", "id", "Id", "i", "i'll", "i'm", "i'd", "hes", "shes", "theyve", "theyre", "hasnt" })
-				{
-					ma = Pattern.compile("\\b" + s + "\\b").matcher(tex);
-					while (ma.find())
-						score+=2;
-				}
+		try {
+			update( "captuation", mes, (double)apiCaptuation( content ) );
+			int wc = apiWordCount( content );
+			update( "wordcount", mes, (double)wc );
+			update( "characters", mes, (double)apiLength( content ) );
+			if (wc > 0)
+				update( "wordlength", mes, apiWordLength( content ) );
+			update( "referred", mes, referred ? 1.0 : 0.0 );
+		} catch (Exception e) {
+			// FAIL!
+		}
+	}
 
-				// Penalty starters, case insensitive.
-				for (String s : new String[] { "or", "that", "again", "although", "but", "and", "also", "with", "this", "h?m+", "pf+t", "gr+", "there's", "theres", "there is", "there are", "therere", "there're" })
-					if (Pattern.compile("^\\s*" + s + "\\b", Pattern.CASE_INSENSITIVE).matcher(tex).find()) score+=1;
-
-				// Ditto, case sensitive.
-				for (String s : new String[] { "Https?" })
-					if (Pattern.compile("^\\s*" + s + "\\b").matcher(tex).find()) score+=10;
-
-				// Enders.
-				for (String s : new String[] { "/\\." })
-					if (Pattern.compile(s + "$").matcher(tex).find()) score+=5;
-
-
-
-				mlines++;
+	public String[] helpCommandGet = {
+		"Get stat(s) about some person or channel.",
+		"<Entity> [ <Stat> ]",
+		"<Entity> is the name of the channel or person to get stats for",
+		"<Stat> is the optional name of a specific statistic to get (omit it to get all of them)"
+	};
+	public void commandGet( Message mes )
+	{
+		String[] params = mods.util.getParamArray(mes);
+		if (params.length == 3) {
+			String nick = mods.nick.getBestPrimaryNick( params[1] );
+			String thing = params[2].toLowerCase();
+			List<EntityStat> ret = mods.odb.retrieve( EntityStat.class, "WHERE entityName = \"" + mods.odb.escapeString(nick) + "\" && statName = \"" + mods.odb.escapeString(thing) + "\"");
+			EntityStat obj;
+			if (ret.size() == 0) {
+				irc.sendContextReply( mes, "Sorry, cannae find datta one." );
+			} else {
+				obj = ret.get(0);
+				irc.sendContextReply( mes, "They be 'avin a score of " + (double)Math.round(obj.value * 100) / 100.0 );
 			}
+		} else if (params.length == 2) {
+			String nick = mods.nick.getBestPrimaryNick( params[1] );
+			List<EntityStat> ret = mods.odb.retrieve( EntityStat.class, "WHERE entityName = \"" + mods.odb.escapeString(nick) + "\"");
+			if (ret.size() == 0) {
+				irc.sendContextReply( mes, "Sorry, cannae find datta one." );
+			} else {
+				StringBuilder results = new StringBuilder( "Stats:" );
+				for (EntityStat obj: ret) {
+					results.append( " " + obj.statName + " = " + (double)Math.round(obj.value * 100) / 100.0 + ";" );
+				}
+				irc.sendContextReply( mes, results.toString() );
+			}
+		} else {
+			throw new ChoobBadSyntaxError();
+		}
+	}
 
-		irc.sendContextReply(mes, (target == null ? "Channel average score is " : target + " scores ") + ((Math.round((((float)score)/2.0f/((float)mlines))*1000.0f))/10.0f) + "% for the" + (target == null ? "" : "ir") + " last " + mlines + " lines (zero is the perfect score).");
+	public int apiCaptuation( String str )
+	{
+		int score = 0;
+
+		// remove smilies and trailing whitespace.
+		str = str.replaceAll("(?:^|\\s+)[:pP)/;\\\\o()^.¬ -]{2,4}(\\s+|$)", "$1");
+
+		// remove URLs
+		str = str.replaceAll("[a-z0-9]+:/\\S+", "");
+
+		// Nothing left?
+		if (str.length() == 0)
+			return 0;
+
+		// No thingie on the end? PENALTY.
+		// Must end with ., !, ? with or without optional terminating ) or ".
+		if (!Pattern.compile("[\\.\\?\\!][\\)\"]?$").matcher(str).find())
+			score += 1;
+
+		// Now remove quoted stuff; it'll only give extra points where not needed.
+		str = str.replaceAll("\".*?\"", "");
+
+		// Small letter at start of new sentance/line? PENALTY.
+		Matcher ma = Pattern.compile("(?:^|(?<!\\.)\\.\\s+)\\p{Ll}").matcher(str);
+		while (ma.find())
+			score += 1;
+
+		// Penalty non-words.
+		// Exceptions: id, Id, ill, cant, wont, hand,
+		// Punish:
+		//  Lowercase "I" in special cases.
+		//  Missing apostrophes in special cases.
+		//  Certain American spellings.
+		//  Internetisms, like "zomg."
+		//  Certain known abbreviations that aren't capitalised.
+		//  Mixed case, like "tHis". "CoW" is fine, however.
+		//  Leetspeak. Unfortunately, C0FF33 is still valid, as it's also hex.
+		//   Also, words with trailing numbers are fine, since some nicknames
+		//   etc. are like this.
+		ma = Pattern.compile("\\b(?:im|Im|i'm|i'd|i|i'll|b|u2?|(?i:s?hes|they(?:ve|re|ll)|there(?:s|re|ll)|(?:has|was|sha|have)nt|(?:could|would)(?:ve|nt)|k?thz|pl[xz]|zomg|\\w+xor|sidewalk|color)|(?=[A-Z]*[a-z][A-Za-z]*\\b)(?i:bbq|lol|rofl|i?irc|afaik|hth|imh?o|fy|https?|ft[lw])|[a-z]+[A-Z][a-zA-Z]*|(?!(?:[il]1[08]n))(?:\\w*[g-zG-Z]\\w*[0-9]\\w*[a-zA-Z]|\\w*[0-9]\\w*[g-zG-Z]\\w*[a-zA-Z])|american|british|english|european)\\b").matcher(str);
+		while (ma.find())
+			score += 1;
+
+		return score;
+	}
+
+	// http://schmidt.devlib.org/java/word-count.html#source
+	public int apiWordCount(String str)
+	{
+		int numWords = 0;
+		int index = 0;
+		boolean prevWhitespace = true;
+		while (index < str.length())
+		{
+			char c = str.charAt(index++);
+			boolean currWhitespace = Character.isWhitespace(c);
+			if (prevWhitespace && !currWhitespace)
+				numWords++;
+			prevWhitespace = currWhitespace;
+		}
+		return numWords;
+	}
+
+	public int apiLength(String str)
+	{
+		return str.replaceAll("\\s+", "").length();
+	}
+
+	public double apiWordLength(String str)
+	{
+		return (double)apiLength(str) / (double)apiWordCount(str);
 	}
 
 
