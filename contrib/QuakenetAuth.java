@@ -31,6 +31,7 @@ public class QuakenetAuth {
 	private boolean hadToAuth = false;
 	
 	final Pattern validAuthReply = Pattern.compile("^(.*) is authed as (.*)\\..?$");
+	final Pattern notAuthedReply = Pattern.compile("^(.*) is NOT authed.?$");
 
 	private Modules mods;
 	private IRCInterface irc;
@@ -66,8 +67,8 @@ public class QuakenetAuth {
 			"Used in case of Q downtime."
 	};
 	
-	public void comamndEnableOverride(Message mes) {
-		ipOverride = true;
+	public void commandEnableOverride(Message mes) {
+		whoisfallback = true;
 		irc.sendContextReply(mes, "Okay.");
 	}
 
@@ -164,6 +165,39 @@ public class QuakenetAuth {
 			if (ma.find() && ma.group(1).trim().toLowerCase().equals("q")) {
 				// Q is dead.
 				// XXX Handle - perhaps using L?
+				whoisfallback = true;
+			}
+		}
+		
+		if ((resp.getCode() == 330)) {
+			// Whois authentication status line
+			// This takes the format: <BOTnick> <Usernick> <Account> :is authed as
+			Matcher ma = Pattern.compile("^(.*) (.*) (.*) \\:is authed as$").matcher(resp.getResponse().trim());
+			if (ma.find()) {
+				// Extract the data
+				String nick = ma.group(2).trim();
+				String account = ma.group(3).trim();
+				
+				// Store this data
+				QAuthResult result = getNickCheck(nick.toLowerCase());
+				if (result == null) {
+					result = new QAuthResult();
+					result.account = account;
+					result.time = System.currentTimeMillis();
+					synchronized(qChecks) {
+						qChecks.put(nick.toLowerCase(), result);
+					}
+					return;
+				}
+				synchronized(result) {
+					result.account = account;
+					result.time = System.currentTimeMillis();
+					
+					// Only notify if explicitly using the whois method
+					if (whoisfallback) {
+						result.notifyAll();
+					}
+				}
 			}
 		}
 	}
@@ -223,8 +257,26 @@ public class QuakenetAuth {
 			}
 			Matcher ma = validAuthReply.matcher(Colors.removeFormattingAndColors(mes.getMessage()));
 			if (!ma.matches()) {
-				// User is not authed
-				return;
+				// User is not authed get their username and set this
+				Matcher ma2 = notAuthedReply.matcher(Colors.removeFormattingAndColors(mes.getMessage()));
+				if (ma2.matches()) {
+					nick = ma2.group(1);
+					QAuthResult result = getNickCheck(nick.toLowerCase());
+					if (result == null) {
+						// Hmm, this shouldn't have happened. May be that the reply wasn't
+						// what we wanted or the user is not authed
+						System.err.println("Can't find nick check. :(");
+						return;
+					}
+					synchronized(result) {
+						result.account = null;
+						result.time = System.currentTimeMillis();
+						result.notifyAll();
+					}
+				} else {
+					// Fuck knows what we've got then
+					return;
+				}
 			} else {
 				nick = ma.group(1);
 				account = ma.group(2);
@@ -302,6 +354,11 @@ public class QuakenetAuth {
 						return null;
 					}
 				});
+				
+				if(whoisfallback) {
+					// Perform a whois of the account too
+					irc.sendRawLine("WHOIS " + nick);
+				}
 				qChecks.put(nick, result);
 			}
 		}
