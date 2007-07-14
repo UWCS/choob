@@ -54,32 +54,6 @@ REM ==== SETUP ====
 :do-setup
 ECHO ==== Setting up environment... ====
 
-REM Get Program Files (32bit)...
-IF DEFINED ProgFiles32 GOTO :do-setup-progs32-set
-SET ProgFiles32=%ProgramFiles%
-IF DEFINED ProgramFiles(x86) SET ProgFiles32=%ProgramFiles(x86)%
-:do-setup-progs32-set
-IF NOT EXIST "%ProgFiles32%" (
-	ECHO FATAL ERROR: Cannot find 32bit "Program Files" folder.
-	ECHO              You can specify this using the "ProgFiles32" environment
-	ECHO              variable.
-	GOTO :EOF
-)
-ECHO Program files 32bit: %ProgFiles32%
-
-REM Get Program Files (64bit)...
-IF DEFINED ProgFiles64 GOTO :do-setup-progs64-set
-SET ProgFiles64=
-IF DEFINED ProgramFiles(x86) SET ProgFiles64=%ProgramFiles%
-:do-setup-progs64-set
-IF NOT EXIST "%ProgFiles64%" (
-	ECHO FATAL ERROR: Cannot find 64bit "Program Files" folder.
-	ECHO              You can specify this using the "ProgFiles64" environment
-	ECHO              variable.
-	GOTO :EOF
-)
-ECHO Program files 64bit: %ProgFiles64%
-
 REM Get Java install...
 IF DEFINED JavaHome GOTO :do-setup-java-set
 SET JavaHome=

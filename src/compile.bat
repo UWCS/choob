@@ -29,7 +29,17 @@ IF "%CompareFileDates%"=="1" (
 	)
 )
 
-javac -classpath .;lib/c3p0-0.9.0.2.jar;lib/msnm.jar;lib/jcfd.jar;lib/jazzy-core.jar;lib/bsh-2.0b4.jar;lib/mysql-connector-java-3.1.12-bin.jar;lib/pircbot.jar;lib/js-rhino-1.6r2.jar uk/co/uwcs/choob/*.java uk/co/uwcs/choob/support/*.java uk/co/uwcs/choob/modules/*.java uk/co/uwcs/choob/plugins/*.java uk/co/uwcs/choob/support/events/*.java %1 %2 %3
+javac -classpath .;^
+lib/c3p0-0.9.1.2.jar;^
+lib/msnm.jar;^
+lib/jcfd.jar;^
+lib/jazzy-core.jar;^
+lib/bsh-2.0b4.jar;^
+lib/mysql-connector-java-5.0.6-bin.jar;^
+lib/pircbot.jar;^
+lib/js-rhino-1.6r2.jar^
+ ^
+uk/co/uwcs/choob/*.java uk/co/uwcs/choob/support/*.java uk/co/uwcs/choob/modules/*.java uk/co/uwcs/choob/plugins/*.java uk/co/uwcs/choob/support/events/*.java %1 %2 %3
 GOTO :EOF
 
 
