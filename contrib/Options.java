@@ -218,12 +218,13 @@ public class Options
 
 		String nickName = mes.getNick();
 
-		mods.security.checkNS(mes);
-		String userName = mods.security.getRootUser( nickName );
+		mods.security.checkAuth(mes);
+		String userName = mods.security.getUserAuthName(nickName);
+		userName = mods.security.getRootUser(userName);
 
 		if (userName == null)
 		{
-			String primaryNick = mods.nick.getBestPrimaryNick( nickName );
+			String primaryNick = mods.nick.getBestPrimaryNick(nickName);
 			String rootNick = mods.security.getRootUser(primaryNick);
 			if (nickName.equals( primaryNick ))
 				// They can't have registered their nick at all.
@@ -421,9 +422,14 @@ public class Options
 		{
 			pluginName = null;
 		}
-
-		String userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( mes.getNick() ) );
-
+		
+		String userName = null;
+		if (mods.security.hasAuth(mes)) {
+			userName = mods.security.getRootUser(mods.security.getUserAuthName(mes.getNick()));
+		} else {
+			userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( mes.getNick() ) );
+		}
+		
 		if (userName == null)
 			userName = mes.getNick();
 
@@ -584,9 +590,10 @@ public class Options
 
 	public String apiGetUserOption( String nickName, String optionName, String defult )
 	{
-		String userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( nickName ) );
+		String userName = mods.security.getUserAuthName(nickName);
+		userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick(userName));
 		if (userName == null)
-			userName = nickName;
+			userName = mods.security.getUserAuthName(nickName);
 
 		String pluginName = ChoobThread.getPluginName(1);
 		if (pluginName == null)
@@ -641,7 +648,7 @@ public class Options
 	// WARNING: Run getBestPrimaryNick on this, and check NickServ first in your plugin!
 	public void apiSetUserOption( String userName, String optionName, String value )
 	{
-		String rootUser = mods.security.getRootUser( userName );
+		String rootUser = mods.security.getRootUser(mods.security.getUserAuthName(userName));
 		if (rootUser != null)
 			userName = rootUser;
 

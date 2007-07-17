@@ -26,7 +26,6 @@ public class QAuthResult {
 public class QuakenetAuth {
 	
 	private static int TIMEOUT = 10000;
-	private static int CACHE_TIMEOUT = 300000;
 	
 	private boolean hadToAuth = false;
 	

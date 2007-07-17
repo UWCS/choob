@@ -214,7 +214,7 @@ public class Vote {
 		vote.startTime = System.currentTimeMillis();
 		vote.finishTime = System.currentTimeMillis() + duration;
 		//Determine if the user is nickserv authed, if so then the vote will be open to nickserv authed voters only
-		vote.nickserv = mods.security.hasNS(mes);
+		vote.nickserv = mods.security.hasAuth(mes);
 		
 		StringBuilder responseString = new StringBuilder("Abstain");
 		for(int i=0; i<options.length; i++)
@@ -248,7 +248,7 @@ public class Vote {
 	public void commandActiveVotes(Message mes) {
 		List<ActiveVote> votes;
 		//Only retrieve votes that the user can vote on.
-		if (mods.security.hasNS(mes)) {
+		if (mods.security.hasAuth(mes)) {
 			votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0");
 		} else {
 			votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0 AND nickserv = 0");
@@ -267,7 +267,7 @@ public class Vote {
 		}
 		
 		if (channels.size() == 0) {
-			if (mods.security.hasNS(mes)) {
+			if (mods.security.hasAuth(mes)) {
 				irc.sendContextReply(mes, "Sorry, there are no active votes!");
 			} else {
 				irc.sendContextReply(mes, "Sorry, there are no active votes! Note that some votes are only available for nickserv authed users.");
@@ -520,7 +520,7 @@ public class Vote {
 		
 		ActiveVote vote = matching.get(0);
 		
-		if ((vote.nickserv) && (!mods.security.hasNS(mes))) {
+		if ((vote.nickserv) && (!mods.security.hasAuth(mes))) {
 			irc.sendContextReply(mes, "You must be authenticated with nickserv in order to cast a vote on this vote!");
 			return;
 		}
@@ -568,7 +568,7 @@ public class Vote {
 		
 		//First extract all the votes that the user can abstain in.
 		List<ActiveVote> votes;
-		if (mods.security.hasNS(mes)) {
+		if (mods.security.hasAuth(mes)) {
 			votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0");
 		} else {
 			votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0 AND nickserv = 0");
@@ -745,7 +745,7 @@ public class Vote {
 		if (checkOption(ev.getNick(),"VoteJoinNotify", false)) {
 			//Get the active votes
 			List<ActiveVote> votes;
-			if (mods.security.hasNS(ev)) {
+			if (mods.security.hasAuth(ev)) {
 				votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0");
 			} else {
 				votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0 AND nickserv = 0");

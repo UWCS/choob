@@ -162,9 +162,10 @@ public class Alias
 
 		AliasObject alias = getAlias(name);
 
-		String nick = mods.security.getRootUser(mes.getNick());
+		String nick = mods.security.getUserAuthName(mes.getNick());
+		nick = mods.security.getRootUser(nick);
 		if (nick == null)
-			nick = mes.getNick();
+			nick = mods.security.getUserAuthName(mes.getNick());
 
 		String oldAlias = ""; // Set to content of old alias, if there was one.
 		if (alias != null)
@@ -172,7 +173,7 @@ public class Alias
 			if (alias.locked)
 			{
 				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
-					mods.security.checkNS(mes);
+					mods.security.checkAuth(mes);
 				else
 					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
 			}
@@ -254,16 +255,18 @@ public class Alias
 
 		AliasObject alias = getAlias(name);
 
-		String nick = mods.security.getRootUser(mes.getNick());
+		String nick = mods.security.getUserAuthName(mes.getNick());
+		nick = mods.security.getRootUser(nick);
 		if (nick == null)
-			nick = mes.getNick();
+			nick = mods.security.getUserAuthName(mes.getNick());
+
 
 		if (alias != null)
 		{
 			if (alias.locked)
 			{
 				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
-					mods.security.checkNS(mes);
+					mods.security.checkAuth(mes);
 				else
 					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
 			}
@@ -304,16 +307,17 @@ public class Alias
 
 		AliasObject alias = getAlias(name);
 
-		String nick = mods.security.getRootUser(mes.getNick());
+		String nick = mods.security.getUserAuthName(mes.getNick());
+		nick = mods.security.getRootUser(nick);
 		if (nick == null)
-			nick = mes.getNick();
+			nick = mods.security.getUserAuthName(mes.getNick());
 
 		if (alias != null)
 		{
 			if (alias.locked)
 			{
 				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
-					mods.security.checkNS(mes);
+					mods.security.checkAuth(mes);
 				else
 					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
 			}
@@ -349,16 +353,18 @@ public class Alias
 
 		AliasObject alias = getAlias(name);
 
-		String nick = mods.security.getRootUser(mes.getNick());
+		String nick = mods.security.getUserAuthName(mes.getNick());
+		nick = mods.security.getRootUser(nick);
 		if (nick == null)
-			nick = mes.getNick();
+			nick = mods.security.getUserAuthName(mes.getNick());
+		
 
 		if (alias != null)
 		{
 			if (alias.locked)
 			{
 				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
-					mods.security.checkNS(mes);
+					mods.security.checkAuth(mes);
 				else
 					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
 			}
@@ -491,7 +497,7 @@ public class Alias
 					final String originalOwner=alias.owner;
 
 					alias.locked = true;
-					alias.owner = mes.getNick();
+					alias.owner = mods.security.getUserAuthName(mes.getNick());
 
 					mods.odb.update(alias);
 					irc.sendContextReply(mes, "Locked " + (!originalOwner.equals(alias.owner) ? "and taken ownership of alias by " + originalOwner + ": " : "") + "'" + name + "': " + alias.converted);
@@ -523,12 +529,13 @@ public class Alias
 
 		if (alias != null)
 		{
-			String nick = mods.security.getRootUser(mes.getNick());
+			String nick = mods.security.getUserAuthName(mes.getNick());
+			nick = mods.security.getRootUser(nick);
 			if (nick == null)
-				nick = mes.getNick();
+				nick = mods.security.getUserAuthName(mes.getNick());
 
 			if (nick.toLowerCase().equals(alias.owner.toLowerCase()))
-				mods.security.checkNS(mes);
+				mods.security.checkAuth(mes);
 			else
 				mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
 
