@@ -88,7 +88,7 @@ public class Mail
 		
 		String nick = params.get(1);
 		String userName = null;
-		if (mods.security.hasAuth(nick) {
+		if (mods.security.hasAuth(nick)) {
 			userName = mods.security.getUserAuthName(nick);
 		} else {
 			userName = mods.security.getRootUser(mods.nick.getBestPrimaryNick(nick));
