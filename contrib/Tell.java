@@ -141,7 +141,7 @@ public class Tell
 		final List<String> validTargets = new ArrayList<String>(MAXTARGETS);
 		for (int i = 0; i < targets.length; i++)
 		{
-			String targetNick = mods.nick.getBestPrimaryNick(targets[i]);
+			String targetNick = mods.nick.getBestPrimaryNick(mods.security.getUserAuthName(targets[i]));
 			String rootTargetNick = mods.security.getRootUser(targetNick);
 
 			String target = rootTargetNick != null ? rootTargetNick : targetNick;
