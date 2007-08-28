@@ -59,7 +59,7 @@ public class Concurrency {
 	
 	public void commandGetThreadLimit(Message mes)
 	{
-		mods.security.checkNS(mes);
+		mods.security.checkAuth(mes);
 		
 		List params = mods.util.getParams(mes);
 		if (params.size() != 2)
@@ -84,7 +84,7 @@ public class Concurrency {
 	
 	public void commandSetThreadLimit(Message mes)
 	{
-		mods.security.checkNS(mes);
+		mods.security.checkAuth(mes);
 		
 		if (!mods.security.hasPerm(new ChoobPermission("plugin.threadlimit"), mes)) {
 			irc.sendContextReply(mes, "You do not have permission to change the thread limit of plugins.");

@@ -11,7 +11,9 @@ var Socket            = Packages.java.net.Socket;
 
 
 function log(msg) {
-	dumpln("BUGZILLA [" + (new Date()) + "] " + msg);
+	var date = String(new Date());
+	date = date.substr(4, 20);
+	dumpln("BUGZILLA [" + date + "] " + msg);
 }
 
 String.prototype.trim =
@@ -25,11 +27,14 @@ function Bugzilla(mods, irc) {
 	this._mods = mods;
 	this._irc = irc;
 	this._debugChannel = "#testing42";
+	this._debugSpew = "";
 	
 	this._targetList = new Object();
 	this._seenMsgs = new Object();
 	this._firstTime = true;
 	this._rebuilding = false;
+	this._updateSpeed      = 30000; // 30s
+	this._updateSpeedError = 30000; // 30s
 	
 	var targets = this._mods.odb.retrieve(BugmailTarget, "");
 	for (var i = 0; i < targets.size(); i++) {
@@ -105,11 +110,11 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 		});
 	} catch(ex) {
 		log("Error checking bugmail: " + ex);
-		this._mods.interval.callBack("bugmail-check", 30000 /* 30s */, 1);
+		this._mods.interval.callBack("bugmail-check", this._updateSpeedError, 1);
 		return;
 	}
 	
-	this._mods.interval.callBack("bugmail-check", 30000 /* 30s */, 1);
+	this._mods.interval.callBack("bugmail-check", this._updateSpeed, 1);
 	
 	if ((changesList.length == 0) || this._firstTime) {
 		this._firstTime = false;
@@ -221,6 +226,74 @@ Bugzilla.prototype.commandLog.help = [
 		"Shows all changes capture for a single bug.",
 		"<bug number>",
 		"<bug number> is the bug number to show the log of"
+	];
+
+
+// Command: Search
+Bugzilla.prototype.commandSearch = function(mes, mods, irc) {
+	var params = mods.util.getParams(mes);
+	if (params.size() <= 1) {
+		irc.sendContextReply(mes, "Syntax: Bugzilla.Search <terms>");
+		return;
+	}
+	
+	var terms = new Array();
+	for (var i = 1; i < params.size(); i++) {
+		terms.push({ field: "summary", word: String(params.get(i)) });
+	}
+	
+	for (var i = 0; i < terms.length; i++) {
+		terms[i] = terms[i].field + " LIKE \"%" + this._mods.odb.escapeForLike(terms[i].word) + "%\"";
+	}
+	var qs = "WHERE " + terms.join(" OR ") + " SORT DESC time";
+	
+	var bugs = this._mods.odb.retrieve(BugzillaActivityGroup, qs);
+	
+	if (bugs.size() == 0) {
+		irc.sendContextReply(mes, "No bugs matched search terms.");
+		return;
+	}
+	
+	var results = new Array();
+	var resultsHash = new Object();
+	for (var i = 0; i < bugs.size(); i++) {
+		var bugId = bugs.get(i).bug;
+		if (!(bugId in resultsHash)) {
+			results.push("bug " + bugId);
+			resultsHash[bugId] = true;
+		}
+	}
+	
+	var space = 380 - 16 - results.join(", ").length;
+	space = Math.floor(space / results.length) - 3;
+	if (space < 10) {
+		space = 0;
+	}
+	
+	results = new Array();
+	resultsHash = new Object();
+	for (var i = 0; i < bugs.size(); i++) {
+		var bug = bugs.get(i);
+		var bugId = bug.bug;
+		if (!(bugId in resultsHash)) {
+			var summ = "";
+			if (space > 0) {
+				if (bug.summary.length > space) {
+					summ = " [" + bug.summary.substr(0, space - 3) + "...]";
+				} else {
+					summ = " [" + bug.summary + "]";
+				}
+			}
+			results.push("bug " + bugId + summ);
+			resultsHash[bugId] = true;
+		}
+	}
+	irc.sendContextReply(mes, "Bugs matching: " + results.join(", ") + ".");
+}
+Bugzilla.prototype.commandSearch.help = [
+		"Searches known bugs by summary.",
+		"<terms>",
+		"<terms> is one or more words to look for in the summary"
 	];
 
 
@@ -433,6 +506,7 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 		var s = changesList[i].changeSet;
 		var things = new Array();
 		var isNew = false;
+		var comment = "";
 		
 		for (var j = 0; j < s.length; j++) {
 			if (s[j].field == "NEW") {
@@ -447,6 +521,11 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 					things.push(msgp);
 				}
 				s[j].done = true;
+				
+			} else if (s[j].field == "COMMENT") {
+				comment = s[j].newValue;
+				s[j].done = true;
+				
 			}
 		}
 		
@@ -509,7 +588,7 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 				s[fieldMap["status"]].done = true;
 				s[fieldMap["resolution"]].done = true;
 				
-			} else if ((fs.oldValue == "RESOLVED") && (fs.newValue == "REOPENED") && fr.oldValue) {
+			} else if ((fs.oldValue == "RESOLVED") && ((fs.newValue == "UNCONFIRMED") || (fs.newValue == "REOPENED")) && fr.oldValue) {
 				// REOPENED the bug, so ignore status/resolution changes.
 				reopened = true;
 				s[fieldMap["status"]].done = true;
@@ -605,6 +684,10 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 			things.push("denied " + list.join(", "));
 		}
 		
+		if (comment) {
+			things.push("commented: \"" + comment + "\"");
+		}
+		
 		if (things.length == 0) {
 			continue;
 		}
@@ -613,14 +696,14 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 		
 		var prefix = "Bug " + g.bug;
 		//prefix += " [" + g.product + ": " + g.component + "]";
-		var spaceLeft = 400 - msg.length;
+		var spaceLeft = 400 - prefix.length - msg.length;
 		
 		if (isNew) {
 			spaceLeft -= 4;
 			if (spaceLeft < 20) spaceLeft = 20;
 			prefix += " [" + g.summary.substr(0, spaceLeft) + "] ";
 		} else {
-			spaceLeft -= 6 + g.user.length;
+			spaceLeft -= 6 + this._fmtUser(g.user).length;
 			if (spaceLeft < 20) spaceLeft = 20;
 			prefix += " [" + g.summary.substr(0, spaceLeft) + "]: " + this._fmtUser(g.user) + " ";
 		}
@@ -628,8 +711,14 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 		msg = prefix + msg;
 		log(msg);
 		
+		if (msg.length > 400) {
+			msg = msg.substr(0, 395) + (comment ? "...\"." : "...");
+		}
+		
 		if (mes) {
 			this._irc.sendContextReply(mes, msg);
+		} else if (this._debugSpew) {
+			this._irc.sendMessage(this._debugSpew, msg);
 		} else {
 			var comp = g.product + ":" + g.component;
 			for (var t in this._targetList) {
@@ -1168,9 +1257,17 @@ BugmailParser.fields = [
 ];
 
 BugmailParser.prototype._parse = function(lines) {
+	// Debug: 0 => nothing, 1 => parsed info, 2 => source + parsed info.
 	var debug = 0;
-	var bodyLine = 0;
 	var ary;
+	
+	function _quote_printable_escape(match, code) {
+		//log("CODE: " + code + " ==> " + (eval("0x" + code)) + " ==> " + String.fromCharCode(eval("0x" + code)));
+		return String.fromCharCode(eval("0x" + code));
+	}
+	
+	var useQuotePrintable = false;
+	var bodyLine = 0;
 	
 	var changes = new Array();
 	var linePartLengths = [19, 28, 28];
@@ -1207,7 +1304,7 @@ BugmailParser.prototype._parse = function(lines) {
 			this.changeGroup.time = Number(new Date(ary[1]));
 			
 		} else if ((line.substr(0, 11) == "X-Bugzilla-") && (ary = line.match(/^X-Bugzilla-(Product|Component):\s*(.*?)\s*$/i))) {
-			if (debug > 0) log(ary[1].toUpperCase() + ": " + ary[2]);
+			if (debug > 0) log((ary[1].toUpperCase() + "          ").substr(0, 10) + ": " + ary[2]);
 			this.changeGroup[ary[1].toLowerCase()] = ary[2];
 			
 		} else if (!haveUser && (line.substr(0, 15) == "X-Bugzilla-Who:") && (ary = line.match(/^X-Bugzilla-Who:\s*(.*?)\s*$/i))) {
@@ -1215,7 +1312,39 @@ BugmailParser.prototype._parse = function(lines) {
 			this.changeGroup.user = ary[1];
 			haveUser = true;
 			
+		} else if ((line.substr(0, 26) == "Content-Transfer-Encoding:") && (ary = line.match(/^Content-Transfer-Encoding:\s+quoted-printable\s*$/i))) {
+			useQuotePrintable = true;
+			
 		}
+	}
+	
+	if (useQuotePrintable) {
+		// Process Quote Printable encoding.
+		if (debug > 0) log("QUOTE PRINTABLE");
+		
+		var bufferLines = lines;
+		lines = new Array();
+		for (var i = 0; i < bodyLine; i++) {
+			lines.push(bufferLines[i]);
+		}
+		
+		var lineBuffer = "";
+		for (var i = bodyLine; i < bufferLines.length; i++) {
+			var softWrap = (bufferLines[i][bufferLines[i].length - 1] == "=");
+			
+			lineBuffer += bufferLines[i].replace(/=([0-9A-F][0-9A-F])/g, _quote_printable_escape);
+			if (softWrap) {
+				lineBuffer = lineBuffer.substr(0, lineBuffer.length - 1);
+			} else {
+				lines.push(lineBuffer);
+				lineBuffer = "";
+			}
+		}
+		if (lineBuffer) {
+			lines.push(lineBuffer);
+			lineBuffer = "";
+		}
+		bufferLines = null;
 	}
 	
 	// Process body.
@@ -1250,13 +1379,29 @@ BugmailParser.prototype._parse = function(lines) {
 			
 			changeTable.push([lineParts[0], lineParts[1], lineParts[2]]);
 			
-		} else if (!haveUser && (ary = lines[i].match(/^-+\s+Comment #\d+ from (\S+)\s+/))) {
-			this.changeGroup.user = ary[1];
-			haveUser = true;
+		} else if (ary = lines[i].match(/^-+\s+Comment #\d+ from (\S+)\s+/)) {
+			if (!haveUser) {
+				this.changeGroup.user = ary[1];
+				haveUser = true;
+			}
 			
-			// Once we're into the comment, that's it - don't risk matching
-			// anything in the comment itself.
-			break;
+			var comment = "";
+			for (var j = i + 1; j < lines.length; j++) {
+				if (lines[j] == "-- ") break;
+				if (lines[j].match(/^Created an attachment \(id=(\d+)\)$/)) {
+					j += 2;
+					continue;
+				}
+				
+				if (lines[j][0] == ">") continue;
+				comment += " " + lines[j].trim();
+			}
+			comment = comment.replace(/ +/g, " ").trim();
+			comment = comment.replace(/^\(From update of attachment \d+\)\s*/, "");
+			//comment = comment.replace(/\(In reply to comment #\d+\)\s*/, "");
+			
+			this.changeSet.push({ field: "COMMENT", attachment: 0, oldValue: "", newValue: comment });
+			if (debug > 0) log("COMMENT   : " + comment);
 			
 		} else if ((ary = lines[i].match(/^Created an attachment \(id=(\d+)\)$/))) {
 			if (debug > 0) log("ATTACHMENT: " + ary[1]);

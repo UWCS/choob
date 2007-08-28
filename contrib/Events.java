@@ -610,7 +610,7 @@ public class Events
 			final Calendar cnow = new GregorianCalendar();
 			final Date now = cnow.getTime();
 			final Date midnight = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH), 24, 0, 0).getTime();
-			final Date midnightTommorow = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH), 48, 0, 0).getTime();
+			final Date midnightTomorrow = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH), 48, 0, 0).getTime();
 			final Date endOfThisWeek = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH) + 7, 0, 0, 0).getTime();
 		// </definitions>
 
@@ -620,12 +620,12 @@ public class Events
 				return shortTime(cda) + " " +            // 9pm
 					(cda.get(Calendar.HOUR_OF_DAY) < 18 ? "today" : "tonight");
 
-			if (da.compareTo(midnightTommorow) < 0) // It's before midnight tommorow and not before midnight today, it's tommorow.
+			if (da.compareTo(midnightTomorrow) < 0) // It's before midnight tomorrow and not before midnight today, it's tomorrow.
 				return shortTime(cda) +                  // 9pm
-					" tommorow " +                       // tommorow
+					" tomorrow " +                       // tomorrow
 					futurePeriodOfDayString(cda);        // evening
 
-			if (da.compareTo(endOfThisWeek) < 0) // It's not tommrow, but it is some time when the week-day names alone mean something.
+			if (da.compareTo(endOfThisWeek) < 0) // It's not tomorrow, but it is some time when the week-day names alone mean something.
 				return shortTime(cda) + " " +            // 9pm
 					dayNameFormatter.format(da) + " " +  // Monday
 					futurePeriodOfDayString(cda);        // evening

@@ -29,12 +29,12 @@ function JSExample(mods, irc) {
 	this._debugChannel = "#testing42";
 	this._announceChannel = "#bots";
 	
-	/*var url = new URL("http://trac.warwickcompsoc.co.uk/choob/cgi-bin/trac.cgi/timeline?daysback=30&max=5&wiki=on&ticket=on&changeset=on&milestone=on&format=rss");
+	/*var url = new URL("http://trac.warwickcompsoc.co.uk/choob/timeline?daysback=30&max=5&wiki=on&ticket=on&changeset=on&milestone=on&format=rss");
 	this._tracRSS = new GetContentsCached(url, 30000);
 	this._tracRSSLastItem = "";
 	this._tracRSSChannel = this._announceChannel;*/
 	
-	var url2 = new URL("http://trac.warwickcompsoc.co.uk/choob/cgi-bin/trac.cgi/roadmap");
+	var url2 = new URL("http://trac.warwickcompsoc.co.uk/choob/roadmap");
 	this._tracRoadmap = new GetContentsCached(url2, 30000);
 	this._tracRoadmapLastData = new Object();
 	this._tracRoadmapChannel = this._announceChannel;

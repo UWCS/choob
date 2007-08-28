@@ -68,7 +68,9 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	public AccessControlContext getPluginContext( )
 	{
-		return new AccessControlContext(new ProtectionDomain[] { getContextProtectionDomain() });
+		return new AccessControlContext(new ProtectionDomain[] {
+			getContextProtectionDomain() 
+		});
 	}
 
 	public ProtectionDomain getContextProtectionDomain()
@@ -529,16 +531,107 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 		return output;
 	}
+	
+	/**
+	 * Check if the given nickname has some form of authentication token
+	 * @param userEvent The event to validate and check the permission on.
+	 * @throws ChoobAuthError If the nick has no authentication
+	 */
+	public void checkAuth(UserEvent userEvent) throws ChoobAuthError {
+		if (!hasAuth(userEvent.getNick())) {
+			throw new ChoobGeneralAuthError();
+		}
+	}
+	
+	/**
+	 * Check if the given nickname has some form of authentication token.
+	 * @param nick The nickname to validate.
+	 * @throws ChoobAuthError If the nick has no authentication.
+	 */
+	public void checkAuth(String nick) throws ChoobAuthError {
+		if (!hasAuth(nick)) {
+			throw new ChoobGeneralAuthError();
+		}
+	}
+	
+	/**
+	 * Check if the given nickname has some form of authentication.
+	 * @param userEvent The event to validate and check the permission on
+	 * @return Whether the nick is authorised.
+	 */
+	public boolean hasAuth(UserEvent userEvent) {
+		if (userEvent instanceof IRCEvent) {
+			checkEvent((IRCEvent)userEvent);
+		}
+		return hasAuth(userEvent.getNick());
+	}
+	
+	/**
+	 * Check if the given nickname has some form of authentication.
+	 * @param nick The nickname to validate.
+	 * @return Whether the nick is authorised.
+	 */
+	public boolean hasAuth(String nick) {
+		try {
+						
+			// Attempt to confirm which authentication module we are using
+			String authPlugin = (String)mods.plugin.callAPI("AuthSelector", "GetAuthMethod");
+			if (authPlugin == null) {
+				authPlugin = "unknown";
+			}
+			authPlugin.toLowerCase();
+			if ((authPlugin.equals("nickserv")) || (authPlugin.equals("unknown"))) {
+				if (hasNS(nick)) {
+					return true;
+				}
+			}
+			
+			if ((authPlugin.equals("quakenet")) || (authPlugin.equals("unknown"))){
+				if (hasQ(nick)) {
+					return true;
+				}
+			}
+			
+			// Unsupported setting - should not occur.
+			return false;
+		} catch (ChoobNoSuchPluginException e) {
+			// No options module, attempt all forms of auth until one works
+			if (hasNS(nick)) {
+				return true;
+			}
+			if (hasQ(nick)) {
+				return true;
+			}
+			
+			// No successful auth
+			return false;
+		} catch (ChoobException e) {
+			// Oh. Bugger
+			System.err.println("Authentication broken:");
+			e.printStackTrace(System.err);
+			return false;
+		}
+	}
 
 	/**
 	 * Check if the given nickName is authed with NickServ (if NickServ is loaded).
 	 * @param userEvent The event to validate and check the permission on.
 	 * @throws ChoobNSAuthError If the nick is not authorised.
 	 */
-	public void checkNS(UserEvent userEvent) throws ChoobNSAuthError
-	{
-		if (!hasNS(userEvent))
+	private void checkNS(UserEvent userEvent) throws ChoobNSAuthError {
+		if (!hasNS(userEvent.getNick()))
 			throw new ChoobNSAuthError();
+	}
+	
+	/**
+	 * Check if the given nickname is authed with NickServ (if Nickserv is loaded).
+	 * @param nick The nick to validated.
+	 * @throws ChoobNSAuthError If the nick is not authorised.
+	 */
+	private void checkNS(String nick) throws ChoobNSAuthError {
+		if (!hasNS(nick)) {
+			throw new ChoobNSAuthError();
+		}
 	}
 
 	/**
@@ -546,15 +639,24 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param userEvent The event to validate and check the permission on.
 	 * @return Whether the nick is authorised.
 	 */
-	public boolean hasNS(UserEvent userEvent)
-	{
+	private boolean hasNS(UserEvent userEvent) {
+		if (userEvent instanceof IRCEvent) {
+			checkEvent((IRCEvent)userEvent);
+		}
+		return hasNS(userEvent.getNick());
+	}
+	
+	/**
+	 * Check if the given nickname is authed with NickServ (if it is loaded).
+	 * @param nick The nickname to validate.
+	 * @return Whethe the nick is authorised
+	 */
+	private boolean hasNS(String nick) {
 		try
 		{
-			if (userEvent instanceof IRCEvent)
-				checkEvent((IRCEvent)userEvent);
 
 			//return (Boolean)mods.plugin.callAPI("NickServ", "Check", nickName, false);
-			return (Boolean)mods.plugin.callAPI("NickServ", "Check", userEvent.getNick());
+			return (Boolean)mods.plugin.callAPI("NickServ", "Check", nick);
 		}
 		catch (ChoobNoSuchPluginException e)
 		{
@@ -573,56 +675,164 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	}
 
 	/**
-	 * Check if the given nickName has permission and is authed with NickServ (if NickServ is loaded).
+	 * Check if the given nickname is authed with Q (if QuakenetAuth is loaded)
+	 * @param userEvent Event containing nick to check.
+	 * @throws ChoobQAuthError Indication of lack of auth.
+	 */
+	private void checkQ(UserEvent userEvent) throws ChoobQAuthError {
+		if (!hasQ(userEvent.getNick())) {
+			throw new ChoobQAuthError();
+		}
+	}
+	
+	/**
+	 * Check if the given nickname is authed with Q (if QuakenetAuth is loaded)
+	 * @param nick Nick to check.
+	 * @throws ChoobQAuthError Indication of lack of auth.
+	 */
+	private void checkQ(String nick) throws ChoobQAuthError {
+		if (!hasQ(nick)) {
+			throw new ChoobQAuthError();
+		}
+	}
+	
+	/**
+	 * Check if the nickname given is authed with Q (if QuakenetAuth is loaded)
+	 * @param userEvent Event containing nick to check.
+	 * @return Auth status.
+	 */
+	private boolean hasQ(UserEvent userEvent) {
+		if (userEvent instanceof IRCEvent) {
+			checkEvent((IRCEvent)userEvent);
+		}
+		return hasQ(userEvent.getNick());
+	}
+	
+	/**
+	 * Check if the nickname given is authed with Q (if QuakenetAuth is loaded)
+	 * @param nick The nick to check.
+	 * @return Auth status.
+	 */
+	private boolean hasQ(String nick) {
+		try {
+			
+			// Get the account name being used by the current nick
+			String account = (String)mods.plugin.callAPI("QuakenetAuth", "Account", nick);
+			if (account == null) {
+				return false;
+			}
+			
+			// User has a current Q auth.
+			return true;
+		} catch (ChoobNoSuchPluginException e) {
+			// XXX Ohnoes, no quakenet stuffs!
+			return false;
+		} catch (ChoobException e) {
+			// Aieeeeee!
+			System.err.println("Error getting QuakenetAuth account! Details:");
+			e.printStackTrace(System.err);
+			return false;
+		}
+	}
+	/**
+	 * Check if the given nickName has permission and is authed
 	 * @param permission The permission to check.
 	 * @param userEvent The event to validate and check the permission on.
 	 * @throws ChoobAuthError If the nick is not authorised.
 	 */
-	public void checkNickPerm(Permission permission, UserEvent userEvent) throws ChoobAuthError
-	{
-		checkNS(userEvent);
+	public void checkNickPerm(Permission permission, UserEvent userEvent) throws ChoobAuthError	{
+		checkAuth(userEvent);
 
-		if (!hasPerm(permission, userEvent))
+		if (!hasNickPerm(permission, userEvent))
 			throw new ChoobUserAuthError(permission);
 	}
 
 	/**
-	 * Check if the given nickName has permission and is authed with NickServ (if NickServ is loaded).
+	 * Check if the given nickName has permission and is authed
 	 * @param permission The permission to check.
 	 * @param userEvent The event to validate and check the permission on.
 	 * @return Whether the nick is authorised.
 	 */
-	public boolean hasNickPerm(Permission permission, UserEvent userEvent)
-	{
+	public boolean hasNickPerm(Permission permission, UserEvent userEvent) {
 		// XXX: Check for synthetic userEvent here.
 		
-		if (!hasNS(userEvent))
+		if (!hasAuth(userEvent)) {
 			return false;
-
-		if (!hasPerm(permission, userEvent))
-			return false;
-
-		return true;
+		}
+		String authPlugin = "unknown";
+		try {
+			authPlugin = (String)mods.plugin.callAPI("AuthSelector", "GetAuthMethod");
+			if (authPlugin == null) {
+				authPlugin = "unknown";
+			}
+			authPlugin.toLowerCase();
+		} catch (ChoobNoSuchCallException e) {
+			// No idea what auth method to use... do them all
+			System.err.println("No authentication method specified. Trying everything.");
+		}
+		
+		if ((authPlugin.equals("nickserv")) || (authPlugin.equals("unknown"))) {
+			if (hasNSPerm(permission, userEvent)) {
+				return true;
+			}
+		}
+		
+		if ((authPlugin.equals("quakenet")) || (authPlugin.equals("unknown"))) {
+			try {
+				String account = (String)mods.plugin.callAPI("QuakenetAuth", "Account", userEvent.getNick());
+				if (hasQPerm(permission, account)) {
+					return true;
+				}
+			} catch (ChoobNoSuchCallException e) {
+				// Oh dear. We can't do Q auth.
+				System.err.println("Can not perform quakenet authentication. Please load QuakenetAuth plugin.");
+			}
+		}
+		
+		// No valid authentication method found.
+		return false;
 	}
 
 	/**
-	 * Check if the given userName has permission. Better to use checkNickPerm.
+	 * Check if the given userName has permission.
+	 * @deprecated Please use checkNickPerm ensure compatability with non-nickserv authentication methods.
 	 * @param permission The permission to check.
 	 * @param userEvent The event to validate and check the permission on.
 	 */
 	public void checkPerm(Permission permission, UserEvent userEvent) throws ChoobUserAuthError
 	{
-		if (!hasPerm(permission, userEvent))
-			throw new ChoobUserAuthError(permission);
+		checkNickPerm(permission, userEvent);
 	}
 
 	/**
 	 * Check if the given userName has permission. Better to use checkNickPerm.
+	 * @deprecated Please use hasNickPerm to ensure compatability with non-nickserv authentication methods.
 	 * @param permission The permission to check.
 	 * @param userEvent The event to validate and check the permission on.
 	 */
-	public boolean hasPerm(Permission permission, UserEvent userEvent)
-	{
+	public boolean hasPerm(Permission permission, UserEvent userEvent) {
+		return hasNickPerm(permission, userEvent);
+	}
+	
+	/**
+	 * 
+	 * @param permission
+	 * @param userEvent
+	 * @throws ChoobUserAuthError
+	 */
+	public void checkNSPerm(Permission permission, UserEvent userEvent) throws ChoobUserAuthError {
+		if (!hasNSPerm(permission, userEvent)) {
+			throw new ChoobUserAuthError(permission);
+		}
+	}
+	
+	/**
+	 * Confirm if a nick has permission under the NS style (i.e. a nick is only authed, but has no account name)
+	 * @param permission Permission to check.
+	 * @param userEvent Event to validate and check permission on.
+	 * @return Status of validation
+	 */
+	private boolean hasNSPerm(Permission permission, UserEvent userEvent) {
 		// XXX: Check for synthetic userEvent here.
 		
 		int userNode = getNodeIDFromUserName(userEvent);
@@ -633,6 +843,29 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			if (anonID != -1)
 				return hasPerm(permission, anonID, true);
 
+		return hasPerm(permission, userNode);
+
+	}
+	
+	public void checkQPerm(Permission permission, String account) throws ChoobUserAuthError {
+		if (!hasQPerm(permission, account)) {
+			throw new ChoobUserAuthError(permission);
+		}
+	}
+	/**
+	 * Check if a given Q account has permission. Use checkNickPerm
+	 * @param permission The permission to check
+	 * @param account The Q account to use as a username in the check.
+	 * @return Permissio check result.
+	 */
+	private boolean hasQPerm(Permission permission, String account) {
+		int userNode = getNodeIDFromNodeName(account, 0);
+		if (userNode == -1) {
+			if (anonID != -1) {
+				return hasPerm(permission, anonID, true);
+			}
+		}
+		
 		return hasPerm(permission, userNode);
 	}
 
@@ -1540,5 +1773,42 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		else
 			throw new ChoobEventExpired("Security exception: " + e.getClass().getName() + " from " + new java.util.Date(e.getMillis()).toString() + " failed security." );
 	}
-
+	
+	
+	/**
+	 * Get the auth name of a user for confirming that they are who they say they are
+	 * @param nick The nick of the user to check for the account name of.
+	 * @return The authenticated nick
+	 */
+	public String getUserAuthName(String nick) {
+		String authPlugin = "unknown";
+		try {
+			authPlugin = (String)mods.plugin.callAPI("AuthSelector", "GetAuthMethod");
+			if (authPlugin == null) {
+				authPlugin = "unknown";
+			}
+			authPlugin.toLowerCase();
+		} catch (ChoobNoSuchCallException e) {
+			// No idea what auth method to use... assume it's their nickname then
+			return nick;
+		}
+		
+		// If quakenet then perform check
+		if (authPlugin.equals("quakenet")) {
+			try {
+				String authName = (String)mods.plugin.callAPI("QuakenetAuth", "Account", nick);
+				if (authName != null) {
+					return authName;
+				} else {
+					return nick;
+				}
+			} catch (ChoobNoSuchCallException e) {
+				// Oh, bugger, just give the nickname as it will fail at the has auth stage
+				return nick;
+			}
+		}
+		
+		// Otherwise assume it is their nickname
+		return nick;
+	}
 }

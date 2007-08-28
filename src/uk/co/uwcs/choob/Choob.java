@@ -518,8 +518,8 @@ public final class Choob extends PircBot
 		if (ev instanceof ChannelKick)
 			modules.history.addLog(ev);
 
-		if (securityOK && (ev instanceof Message))
-			((Message)ev).getFlags().put("_securityOK", "true");
+		if (securityOK && (ev instanceof IRCEvent))
+			((IRCEvent)ev).getFlags().put("_securityOK", "true");
 
 		ChoobTask task = new ChoobDecoderTask(ev);
 

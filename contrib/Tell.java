@@ -17,6 +17,7 @@ public class TellObject
 	public boolean nickServ;
 }
 
+// Delivery Service Notifications
 public class TellDSNObject
 {
 	public int id;
@@ -96,9 +97,10 @@ public class Tell
 		+ " try again. Note that NickServ status is also cached."
 	};
 
-	public synchronized int apiInject(String from, String[] targets, String message, String type)
-	{
-		TellData tell = validateTell(from, targets, message, (new Date()).getTime(), type);
+	public synchronized int apiInject(String from, String[] targets,
+			String message, String type) {
+		TellData tell = validateTell(from, targets, message,
+				(new Date()).getTime(), type);
 		if (!tell.valid)
 			return tell.error;
 		return 16 + doTell(tell);
@@ -111,8 +113,9 @@ public class Tell
 		"<Message> is the content"
 	};
 
-	synchronized TellData validateTell(final String from, final String[] targets, final String message, final long date, final String type)
-	{
+	synchronized TellData validateTell(final String from,
+			final String[] targets, final String message, final long date,
+			final String type) {
 		TellData rv = new TellData();
 		rv.valid = true;
 		rv.error = 0;
@@ -125,7 +128,8 @@ public class Tell
 
 		try
 		{
-			boolean requestDSN = ((String)mods.plugin.callAPI("Options", "GetUserOption", from, "RequestDSN", "0")).equals("1");
+			boolean requestDSN = ((String)mods.plugin.callAPI("Options",
+					"GetUserOption", from, "RequestDSN", "0")).equals("1");
 			rv.requestDSN = requestDSN;
 		}
 		catch (ChoobNoSuchCallException e)
@@ -137,7 +141,7 @@ public class Tell
 		final List<String> validTargets = new ArrayList<String>(MAXTARGETS);
 		for (int i = 0; i < targets.length; i++)
 		{
-			String targetNick = mods.nick.getBestPrimaryNick(targets[i]);
+			String targetNick = mods.nick.getBestPrimaryNick(mods.security.getUserAuthName(targets[i]));
 			String rootTargetNick = mods.security.getRootUser(targetNick);
 
 			String target = rootTargetNick != null ? rootTargetNick : targetNick;
@@ -185,7 +189,7 @@ public class Tell
 					{
 						tellObj.id = 0;
 						tellObj.target = targets[i];
-						tellObj.nickServ = nsStatus(tellObj.target) > 0;
+						tellObj.nickServ = checkAuthStatus(tellObj.target) > 0;
 
 						clearCache(tellObj.target);
 						save(tellObj);
@@ -199,12 +203,14 @@ public class Tell
 		{
 			for(int i = 0; i < targets.length; i++)
 			{
-				String email = (String)mods.plugin.callAPI("Options", "GetUserOption", targets[i], "Email", "");
+				String email = (String)mods.plugin.callAPI("Options",
+						"GetUserOption", targets[i], "Email", "");
 				if (email.length() > 0)
 				{
 					mods.plugin.callAPI("Mail", "SendMail", email,
-					                    "Tell from " + tellObj.from + " via " + irc.getNickname(),
-					                    "At " + new Date(tellObj.date) + ", " + tellObj.from + " told me to " + tellObj.type + " you: " + tellObj.message);
+							"Tell from " + tellObj.from + " via " + irc.getNickname(),
+							"At " + new Date(tellObj.date) + ", " + tellObj.from + 
+							" told me to " + tellObj.type + " you: " + tellObj.message);
 				}
 			}
 
@@ -218,17 +224,15 @@ public class Tell
 
 	}
 
-	int checkTargetNSStatus(int nsStatus, String nick, String rootNick)
-	{
+	int checkTargetSecureStatus(int authStatus, String nick,
+			String rootNick) {
 		// First pick up the setting of Secure.
 		int secureOption;
-		try
-		{
-			String val = (String)mods.plugin.callAPI("Options", "GetUserOption", nick, "Secure", "1" );
+		try {
+			String val = (String)mods.plugin.callAPI("Options", "GetUserOption",
+					nick, "Secure", "1" );
 			secureOption = Integer.parseInt(val);
-		}
-		catch (Throwable e)
-		{
+		} catch (Throwable e) {
 			// No such call(default) or number format issue(!)
 			secureOption = 1;
 		}
@@ -236,22 +240,19 @@ public class Tell
 			secureOption = 1;
 
 		// This is a secure tell. One of several things can happen.
-		if ( secureOption == 2 )
-		{
+		if ( secureOption == 2 ) {
 			// If secure tell is set, we require the
 			// actual nickname to be explicitly linked
 			// to the root.
-			String secureRootNick = mods.security.getRootUser( nick );
-			if (rootNick != null)
-			{
+			String secureRootNick = mods.security.getRootUser(
+					mods.security.getUserAuthName(nick));
+			if (rootNick != null) {
 				// rootNick is set and we're directed at it.
 				// Hence must check root of real nick is
 				// equal to rootNick.
 				if ( !rootNick.equalsIgnoreCase(secureRootNick) )
 					return -2;
-			}
-			else
-			{
+			} else {
 				// rootNick is NOT set. Since Secure
 				// operates on bot users, and the user
 				// hasn't registered his, we tell him to
@@ -261,19 +262,17 @@ public class Tell
 		}
 		// If not, just the primary will do.
 
-		if (nsStatus == -1)
-		{
+		if (authStatus == -1) {
 			// No errors from the above...
-			if (secureOption != 0)
-			{
-				// We require NS auth.
-				return nsStatus( nick );
+			if (secureOption != 0) {
+				// We require auth.
+				return checkAuthStatus(nick);
 			}
 			// We don't require NS auth.
 			return 3;
 		}
 
-		return nsStatus; // No change.
+		return authStatus; // No change.
 	}
 
 	public synchronized void commandSend( Message mes )
@@ -315,10 +314,13 @@ public class Tell
 			switch (tell.error)
 			{
 				case 1:
-					irc.sendContextReply(mes, "Sorry, you're only allowed " + MAXTARGETS + " targets for a given tell.");
+					irc.sendContextReply(mes,
+							"Sorry, you're only allowed " + MAXTARGETS + 
+							" targets for a given tell.");
 					return;
 				default:
-					irc.sendContextReply(mes, "Unknown tell error code: " + tell.error);
+					irc.sendContextReply(mes,
+							"Unknown tell error code: " + tell.error);
 					return;
 			}
 		}
@@ -326,7 +328,9 @@ public class Tell
 		int count = tell.targets.length;
 		if (!mesFlags.containsKey("timedevents.delayed"))
 		{
-			irc.sendContextReply(mes, "Okay, will " + type + " upon next speaking. (Sent to " + count + " " + (count == 1 ? "person" : "people") + ".)");
+			irc.sendContextReply(mes,
+					"Okay, will " + type + " upon next speaking. (Sent to " + 
+					count + " " + (count == 1 ? "person" : "people") + ".)");
 		}
 
 		doTell(tell);
@@ -369,25 +373,35 @@ public class Tell
 	public String[] optionsUser = { "Secure", "NickChange", "Email", "RequestDSN" };
 	public String[] optionsUserDefaults = { "1", "1", "", "0" };
 
-	public boolean optionCheckUserSecure( String value, String userName ) { return value.equals("0") || value.equals("1") || value.equals("2"); }
+	public boolean optionCheckUserSecure( String value, String userName ) {
+		return value.equals("0") || value.equals("1") || value.equals("2"); 
+	}
+	
 	public String[] helpOptionSecure = {
 		"Choose the security level of your tells.",
-		"Set this to \"0\" to not have secure tells (no NickServ required), \"1\" to make them require NickServ, or \"2\" to make them require both NickServ and that your nicknames are linked in the bot."
+		"Set this to \"0\" to not have secure tells (no NickServ required), " +
+		"\"1\" to make them require NickServ, or \"2\" to make them require " +
+		"both NickServ and that your nicknames are linked in the bot."
 	};
 
-	public boolean optionCheckUserNickChange( String value, String userName ) { return value.equals("0") || value.equals("1"); }
+	public boolean optionCheckUserNickChange( String value, String userName ) {
+		return value.equals("0") || value.equals("1"); 
+	}
+	
 	public String[] helpOptionNickChange = {
 		"Choose to have tells delivered on nick change.",
-		"Set this to \"0\" to not have tells delivered on nick change, default, \"1\", will deliver on nick change."
+		"Set this to \"0\" to not have tells delivered on nick change, " +
+		"default, \"1\", will deliver on nick change."
 	};
 
 	public boolean optionCheckUserEmail( String value, String userName ) { return true; }
 	public String[] helpOptionEmail = {
 		"Choose to have a copy of all tells e-mailed to you.",
-		"Set this to an e-mail address to have copies of all tells sent to you mailed. Set to '' to stop."
+		"Set this to an e-mail address to have copies of all tells sent to " +
+		"you mailed. Set to '' to stop."
 	};
 
-	private synchronized void spew (String nick)
+	private synchronized void spew (String nick) 
 	{
 		try
 		{
@@ -415,7 +429,8 @@ public class Tell
 			return;
 
 		// getBestPrimaryNick should be safe from injection
-		String testNick = mods.nick.getBestPrimaryNick( nick );
+		String testNick = mods.nick.getBestPrimaryNick(
+				mods.security.getUserAuthName(nick));
 		// rootNick won't, necessarily
 		String rootNick = mods.security.getRootUser( testNick );
 
@@ -424,13 +439,19 @@ public class Tell
 
 		if (rootNick != null && !rootNick.equals(testNick))
 		{
-			tellResults = mods.odb.retrieve(TellObject.class,    "WHERE target = '" + mods.odb.escapeString(testNick) + "' OR target = '" + mods.odb.escapeString(rootNick) + "'");
-			dsnResults  = mods.odb.retrieve(TellDSNObject.class, "WHERE target = '" + mods.odb.escapeString(testNick) + "' OR target = '" + mods.odb.escapeString(rootNick) + "'");
+			tellResults = mods.odb.retrieve(TellObject.class,
+					"WHERE target = '" + mods.odb.escapeString(testNick) +
+					"' OR target = '" + mods.odb.escapeString(rootNick) + "'");
+			dsnResults  = mods.odb.retrieve(TellDSNObject.class,
+					"WHERE target = '" + mods.odb.escapeString(testNick) +
+					"' OR target = '" + mods.odb.escapeString(rootNick) + "'");
 		}
 		else
 		{
-			tellResults = mods.odb.retrieve(TellObject.class,    "WHERE target = '" + mods.odb.escapeString(testNick) + "'");
-			dsnResults  = mods.odb.retrieve(TellDSNObject.class, "WHERE target = '" + mods.odb.escapeString(testNick) + "'");
+			tellResults = mods.odb.retrieve(TellObject.class,
+					"WHERE target = '" + mods.odb.escapeString(testNick) + "'");
+			dsnResults  = mods.odb.retrieve(TellDSNObject.class,
+					"WHERE target = '" + mods.odb.escapeString(testNick) + "'");
 		}
 
 		if ((tellResults.size() == 0) && (dsnResults.size() == 0))
@@ -457,21 +478,23 @@ public class Tell
 		Collections.sort(dsnResults, tellDSNSorter);
 
 		// We do DSNs first because they are less important. Or something.
-		int nsStatus = -1;
+		int authStatus = -1;
 		for (TellDSNObject dsnObj : dsnResults)
 		{
 			if (dsnObj.nickServ)
 			{
-				if (nsStatus == -1)
+				if (authStatus == -1)
 					// NickServ not yet checked...
-					nsStatus = checkTargetNSStatus(nsStatus, nick, rootNick);
+					authStatus = checkTargetSecureStatus(authStatus, nick, rootNick);
 
 				// If all the above ran and we're allowed to send, nsStatus
 				// is 3. Otherwise it's >= -1, <= 2.
-				if (nsStatus != 3)
+				if (authStatus != 3)
 					continue;
 			}
-			irc.sendMessage(nick, "Your " + dsnObj.type + " sent to " + dsnObj.from + " at " + new Date(dsnObj.date) + " has been delivered.");
+			irc.sendMessage(nick,
+					"Your " + dsnObj.type + " sent to " + dsnObj.from + " at " +
+					new Date(dsnObj.date) + " has been delivered.");
 			mods.odb.delete(dsnObj);
 		}
 
@@ -479,16 +502,18 @@ public class Tell
 		{
 			if (tellObj.nickServ)
 			{
-				if (nsStatus == -1)
+				if (authStatus == -1)
 					// NickServ not yet checked...
-					nsStatus = checkTargetNSStatus(nsStatus, nick, rootNick);
+					authStatus = checkTargetSecureStatus(authStatus, nick, rootNick);
 
 				// If all the above ran and we're allowed to send, nsStatus
 				// is 3. Otherwise it's >= -1, <= 2.
-				if (nsStatus != 3)
+				if (authStatus != 3)
 					continue;
 			}
-			irc.sendMessage(nick, "At " + new Date(tellObj.date) + ", " + tellObj.from + " told me to " + tellObj.type + " you: " + tellObj.message);
+			irc.sendMessage(nick,
+					"At " + new Date(tellObj.date) + ", " + tellObj.from + 
+					" told me to " + tellObj.type + " you: " + tellObj.message);
 
 			if (tellObj.requestDSN)
 			{
@@ -498,21 +523,36 @@ public class Tell
 				// These go backwards - we're sending this back.
 				dsn.from = tellObj.target;
 				dsn.target = tellObj.from;
-				dsn.nickServ = nsStatus(dsn.target) > 0;
+				dsn.nickServ = checkAuthStatus(dsn.target) > 0;
 				clearCache(dsn.target);
 				mods.odb.save(dsn);
 			}
 
 			mods.odb.delete(tellObj);
 		}
-		if (nsStatus == -2)
-			irc.sendMessage(nick, "Hi! I think you have tells, and you have set Secure=2, but your nickname isn't linked to " + rootNick + ". See Help.Help Security.UsingLink to do this, then do Tell.Get.");
-		else if (nsStatus == -3)
-			irc.sendMessage(nick, "Hi! I think you have tells, and you have set Secure=2, but you haven't actually registered " + testNick + " with the bot. Since this defeats the point of secure tells, I suggest you register it (Security.AddUser), then link this nickname to it (See Help.Help Security.UsingLink).");
-		else if (nsStatus == 0)
-			irc.sendMessage(nick, "Hi! I think you (" + testNick + ") have tells, but you haven't actually registered your nickname with NickServ. Since " + testNick + " was registered and you haven't set Secure=0, you need to register with this nickname or change to " + testNick + " to pick up your tells.");
-		else if (nsStatus > 0 && nsStatus < 3)
-			irc.sendMessage(nick, "Hi! You have tells, but you're not identified with NickServ! Once you've done so, use the Tell.Get command.");
+		if (authStatus == -2)
+			irc.sendMessage(nick,
+					"Hi! I think you have tells, and you have set Secure=2, " +
+					"but your nickname isn't linked to " + rootNick + ". See " +
+					"Help.Help Security.UsingLink to do this, then do Tell.Get.");
+		else if (authStatus == -3)
+			irc.sendMessage(nick,
+					"Hi! I think you have tells, and you have set Secure=2, " +
+					"but you haven't actually registered " + testNick + 
+					" with the bot. Since this defeats the point of secure " +
+					"tells, I suggest you register it (Security.AddUser), " +
+					"then link this nickname to it (See Help.Help Security.UsingLink).");
+		else if (authStatus == 0)
+			irc.sendMessage(nick,
+					"Hi! I think you (" + testNick + ") have tells, but you " +
+					"haven't actually registered your nickname with NickServ. " +
+					"Since " + testNick + " was registered and you haven't set " +
+					"Secure=0, you need to register with this nickname or " +
+					"change to " + testNick + " to pick up your tells.");
+		else if (authStatus > 0 && authStatus < 3)
+			irc.sendMessage(nick,
+					"Hi! You have tells, but you're not identified with " +
+					"NickServ! Once you've done so, use the Tell.Get command.");
 	}
 
 	public void onAction( ChannelAction ev )
@@ -552,7 +592,8 @@ public class Tell
 	{
 		try
 		{
-			if (((String)mods.plugin.callAPI("Options", "GetUserOption", ev.getNewNick(), "NickChange", "1" )).equals("0"))
+			if (((String)mods.plugin.callAPI("Options", "GetUserOption",
+					ev.getNewNick(), "NickChange", "1" )).equals("0"))
 				return;
 		}
 		catch (ChoobNoSuchCallException e)
@@ -569,15 +610,11 @@ public class Tell
 		spew(ev.getNewNick());
 	}
 
-	private int nsStatus( String nick )
-	{
-		try
-		{
-			return (Integer)mods.plugin.callAPI("NickServ", "Status", nick);
-		}
-		catch (ChoobNoSuchCallException e)
-		{
-			return 0;
+	private int checkAuthStatus( String nick ) {
+		if (mods.security.hasAuth(nick)) {
+			return 3;
+		} else {
+			return -1;
 		}
 	}
 }

@@ -27,11 +27,14 @@ function Feeds(mods, irc) {
 	profile.start();
 	this._mods = mods;
 	this._irc = irc;
+	this._debugStatus = "";
 	this._debugChannel    = "#testing42";
 	this._announceChannel = "#testing42";
-	this._debugProfile    = false;
-	this._debugInterval   = false;
-	this._debugXML        = false;
+	this._debug_profile    = false;
+	this._debug_interval   = false;
+	this._debug_store      = false;
+	this._debug_xml        = false;
+	this._debug_trace      = false;
 	
 	this._feedList = new Array();
 	this._feedCheckLock = false;
@@ -48,8 +51,9 @@ function Feeds(mods, irc) {
 		this._feedList.push(feed);
 	}
 	
-	mods.interval.callBack("feed-check", 30000, 1);
+	mods.interval.callBack("feed-check", 10000, 1);
 	profile.stop("init");
+	this._setStatus("Waiting for first feed check.");
 }
 
 
@@ -57,7 +61,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.5.29"
+		"1.6.2"
 	];
 
 
@@ -520,26 +524,26 @@ Feeds.prototype.commandSetDebug = function(mes, mods, irc) {
 	
 	if (flag == "profile") {
 		if (enabled) {
-			this._debugProfile = true;
 			irc.sendContextReply(mes, "Debug profiling enabled.");
 		} else {
-			this._debugProfile = false;
 			irc.sendContextReply(mes, "Debug profiling disabled.");
 		}
 	} else if (flag == "interval") {
 		if (enabled) {
-			this._debugInterval = true;
 			irc.sendContextReply(mes, "Debug interval timing enabled.");
 		} else {
-			this._debugInterval = false;
 			irc.sendContextReply(mes, "Debug interval timing disabled.");
+		}
+	} else if (flag == "store") {
+		if (enabled) {
+			irc.sendContextReply(mes, "Debug feed store enabled.");
+		} else {
+			irc.sendContextReply(mes, "Debug feed store disabled.");
 		}
 	} else if (flag == "xml") {
 		if (enabled) {
-			this._debugXML = true;
 			irc.sendContextReply(mes, "Debug XML parser enabled.");
 		} else {
-			this._debugXML = false;
 			irc.sendContextReply(mes, "Debug XML parser disabled.");
 		}
 	} else if (flag == "trace") {
@@ -551,14 +555,26 @@ Feeds.prototype.commandSetDebug = function(mes, mods, irc) {
 			irc.sendContextReply(mes, "Debug execution trace disabled.");
 		}
 	} else {
-		irc.sendContextReply(msg, "Unknown flag specified.");
+		irc.sendContextReply(msg, "Unknown flag specified. Must be one of 'profile', 'interval', 'store', 'xml' or 'trace'.");
+		return;
 	}
+	this["_debug_" + flag] = enabled;
 }
 Feeds.prototype.commandSetDebug.help = [
 		"Sets debug mode on or off.",
 		"<flag> <enabled>",
-		"<flag> is one of 'profile', 'interval', 'xml' or 'trace', so specify what to debug",
+		"<flag> is one of 'profile', 'interval', 'store', 'xml' or 'trace', so specify what to debug",
 		"<enabled> is either 'true' or 'false' to set"
+	];
+
+
+// Command: Status
+Feeds.prototype.commandStatus = function(mes, mods, irc) {
+	irc.sendContextReply(mes, "Feeds Status: " + this._debugStatus);
+}
+Feeds.prototype.commandStatus.help = [
+		"Shows the current debugging status of the Feeds plugin.",
+		""
 	];
 
 
@@ -611,6 +627,10 @@ Feeds.prototype._removeFeed = function(feed) {
 	}
 }
 
+Feeds.prototype._setStatus = function(msg) {
+	this._debugStatus = "[" + (new Date()) + "] " + msg;
+}
+
 Feeds.prototype._ = function() {
 }
 
@@ -619,9 +639,10 @@ Feeds.prototype._feedCheckInterval = function(param, mods, irc) {
 	if (this._feedCheckLock)
 		return;
 	this._feedCheckLock = true;
-	if (this._debugInterval) {
+	if (this._debug_interval) {
 		log("Interval: start");
 	}
+	this._setStatus("Checking feeds...");
 	
 	for (var i = 0; i < this._feedList.length; i++) {
 		var feed = this._feedList[i];
@@ -629,16 +650,18 @@ Feeds.prototype._feedCheckInterval = function(param, mods, irc) {
 			continue;
 		}
 		
-		if (this._debugInterval) {
+		if (this._debug_interval) {
 			log("Interval:   checking " + feed.name + " (" + -this._feedList[i].getNextCheck() + "ms late)");
 		}
-		if (this._debugProfile) {
+		this._setStatus("Checking feed " + feed.name + "...");
+		if (this._debug_profile) {
 			profile.start();
 		}
 		feed.checkForNewItems();
-		if (this._debugProfile) {
+		if (this._debug_profile) {
 			profile.stop(feed.name);
 		}
+		this._setStatus("Last checked feed " + feed.name + ".");
 	}
 	
 	var nextCheck = 60 * 60 * 1000; // 1 hour
@@ -657,7 +680,7 @@ Feeds.prototype._feedCheckInterval = function(param, mods, irc) {
 		extra = 5000;
 	}
 	
-	if (this._debugInterval) {
+	if (this._debug_interval) {
 		log("Interval:   next check due in " + nextCheck + "ms" + (extra ? " + " + extra + "ms" : ""));
 		log("Interval: end");
 	}
@@ -678,6 +701,7 @@ function Feed() {
 	this.owner = "";
 	this.isPrivate = false;
 	this.save = function(){};
+	this._items = new Array();
 	this._error = "";
 	this._errorExpires = 0;
 	if (arguments.length > 0) {
@@ -708,6 +732,9 @@ Feed.prototype.init = function(parent, loadContext) {
 	this._lastItemCount = 0;
 	this._lastCheck = 0;
 	this._lastLoaded = 0;
+	if (this._parent._debug_store) {
+		log("Feed Store: " + this.name + ": " + this._items.length);
+	}
 	profile.leaveFn("init");
 }
 
@@ -789,15 +816,19 @@ Feed.prototype.getNextCheck = function() {
 }
 
 Feed.prototype.showRecent = function(target, offset, count) {
-	var items = this.getItems();
-	
 	if (this.getError()) {
 		this._sendTo(target, "'" + this.displayName + "': \x02ERROR\x02: " + this.getError());
 		return;
 	}
 	
+	var items = this._items;
+	
 	if (items.length == 0) {
-		this._sendTo(target, "'" + this.displayName + "' has no recent items.");
+		if (this._lastCheck == 0) {
+			this._sendTo(target, "'" + this.displayName + "' has not loaded yet.");
+		} else {
+			this._sendTo(target, "'" + this.displayName + "' has no recent items.");
+		}
 		return;
 	}
 	
@@ -878,47 +909,6 @@ Feed.prototype.ensureCachedContents = function() {
 	}
 	profile.leaveFn("ensureCachedContents");
 	return true;
-}
-
-Feed.prototype.getItems = function() {
-	profile.enterFn("Feed(" + this.name + ")", "getItems");
-	
-	if (!this.ensureCachedContents()) {
-		profile.leaveFn("getItems");
-		return [];
-	}
-	
-	var feedData = "";
-	profile.enterFn("Feed(" + this.name + ")", "getItems.getCachedContents");
-	try {
-		feedData = String(this._cachedContents.getContents());
-	} catch(ex) {
-		profile.leaveFn("getItems.getCachedContents");
-		// Error = no items.
-		this.setError("Exception getting data: " + ex + (ex.fileName ? " at <" + ex.fileName + ":" + ex.lineNumber + ">":""));
-		profile.leaveFn("getItems");
-		return [];
-	}
-	profile.leaveFn("getItems.getCachedContents");
-	
-	if (feedData == "") {
-		this.setError("Unable to fetch data");
-		profile.leaveFn("getItems");
-		return [];
-	}
-	
-	try {
-		profile.enterFn("FeedParser(" + this.name + ")", "new");
-		var feedParser = new FeedParser(this._parent, feedData);
-		profile.leaveFn("new");
-		profile.leaveFn("getItems");
-		return feedParser.items;
-	} catch(ex) {
-		this.setError("Exception in parser: " + ex + (ex.fileName ? " at <" + ex.fileName + ":" + ex.lineNumber + ">":""));
-		profile.leaveFn("getItems");
-		return [];
-	}
-	profile.leaveFn("getItems");
 }
 
 Feed.prototype.getNewItems = function() {
@@ -1004,15 +994,42 @@ Feed.prototype.getNewItems = function() {
 			item.updated = true;
 		}
 		// New item.
+		item.uniqueKey = unique;
+		newItems.push(item);
 		this._lastSeen[unique] = true;
 		this._lastSeenPub[date] = true;
-		newItems.push(item);
+		
+		// Remove and re-add from store if it's updated. Just add for new.
+		if (item.updated) {
+			for (var i = 0; i < this._items.length; i++) {
+				if (this._items[i].uniqueKey == item.uniqueKey) {
+					if (this._parent._debug_store) {
+						log("Feed Store: " + this.name + ": DEL " + item.uniqueKey);
+					}
+					this._items.splice(i, 1);
+					break;
+				}
+			}
+		}
+		if (this._parent._debug_store) {
+			log("Feed Store: " + this.name + ": ADD " + item.uniqueKey);
+		}
+		this._items.push(item);
 		//log("New item : [" + date + "]:" + (item.updated ? "updated" : "new"));
 	}
 	
 	for (var d in this._lastSeen) {
 		if (!this._lastSeen[d]) {
 			delete this._lastSeen[d];
+			for (var i = 0; i < this._items.length; i++) {
+				if (this._items[i].uniqueKey == d) {
+					if (this._parent._debug_store) {
+						log("Feed Store: " + this.name + ": DEL " + d);
+					}
+					this._items.splice(i, 1);
+					break;
+				}
+			}
 			//log("Lost item: [" + d + "]:_lastSeen");
 		}
 	}
@@ -1021,6 +1038,10 @@ Feed.prototype.getNewItems = function() {
 			delete this._lastSeenPub[d];
 			//log("Lost item: [" + d + "]:_lastSeenPub");
 		}
+	}
+	
+	if (this._parent._debug_store) {
+		log("Feed Store: " + this.name + ": " + this._items.length);
 	}
 	
 	var count = 0;
@@ -1055,22 +1076,21 @@ Feed.prototype._sendTo = function(target, message, suffix) {
 }
 
 var entityMap = {
-	"lt":      "<",
-	"gt":      ">",
-	"quot":    '"',
-	"#34":     '"',
-	"#8220":   '"',
-	"#8221":   '"',
-	"#39":     "'",
-	"#8217":   "'",
-	"lsquo":   "'",
-	"rsquo":   "'",
-	"nbsp":    " ",
-	"#160":    " ",
-	"mdash":   "-",
-	"ndash":   "-",
-	"#8212":   "-",
+	"lt":      "<", "#60":     "<",
+	"gt":      ">", "#62":     ">",
+	"quot":    '"', "#34":     '"',
+	"ldquo":   '"', "#8220":   '"',
+	"rdquo":   '"', "#8221":   '"',
+	"apos":    "'", "#39":     "'",
+	"lsquo":   "'", "#8216":   "'",
+	"rsquo":   "'", "#8217":   "'",
+	"nbsp":    " ", "#160":    " ",
+	"ndash":   "-", "#8211":   "-",
+	"mdash":   "-", "#8212":   "-",
+	"lsaquo": "<<", "#8249":  "<<",
+	"rsaquo": ">>", "#8250":  ">>",
 	"times":   "x",
+	"#163":    "£",
 	"#8230":   "...",
 	"dummy":   ""
 };
@@ -1079,19 +1099,23 @@ function _decodeEntities(data) {
 	profile.enterFn("", "_decodeEntities");
 	
 	// Decode XML into HTML...
-	data = data.replace(/&(?:(\w+)|#(\d+));/g, function _decodeEntity(match, name, number) {
+	data = data.replace(/&(?:(\w+)|#(\d+)|#x([0-9a-f]{2}));/gi,
+	function _decodeEntity(match, name, decnum, hexnum) {
 		if (name && (name in entityMap)) {
 			return entityMap[name];
 		}
-		if (number && (String("#" + Number(number)) in entityMap)) {
-			return entityMap[String("#" + Number(number))];
+		if (decnum && (String("#" + parseInt(decnum, 10)) in entityMap)) {
+			return entityMap[String("#" + parseInt(decnum, 10))];
 		}
-		return match; //"[unknown entity '" + (name || number) + "']";
+		if (hexnum && (String("#" + parseInt(hexnum, 16)) in entityMap)) {
+			return entityMap[String("#" + parseInt(hexnum, 16))];
+		}
+		return match; //"[unknown entity '" + (name || decnum || hexnum) + "']";
 	});
 	
 	// Done as a special-case, last, so that it doesn't bugger up
 	// doubly-escaped things.
-	data = data.replace(/&amp;/g, "&");
+	data = data.replace(/&(amp|#0*38|#x0*26);/g, "&");
 	
 	profile.leaveFn("_decodeEntities");
 	return data;
@@ -1125,7 +1149,7 @@ function _decodeAtomText(element) {
 		return _decodeRSSHTML(content);
 	}
 	
-	return content;
+	return _decodeEntities(content);
 }
 
 function _decodeAtomDate(element) {
@@ -1350,7 +1374,7 @@ FeedParser.prototype._parse = function(feedsOwner) {
 		profile.leaveFn("_parse");
 		throw new Error("Unsupported feed type: " + this._xmlData.rootElement);
 	}
-	if (feedsOwner && feedsOwner._debugXML) {
+	if (feedsOwner && feedsOwner._debug_xml) {
 		var limit = { value: 25 };
 		log("# URL        : " + this.link);
 		log("# TITLE      : " + this.title);
@@ -1519,6 +1543,10 @@ XMLParser.prototype._parse = function() {
 	}
 	
 	this._eatWhitespace();
+	if (this._state.length > 0) {
+		profile.leaveFn("_parse");
+		throw new Error("Expected </" + this._state[0].name + ">, found EOF.");
+	}
 	if (this.data.length > 0) {
 		profile.leaveFn("_parse");
 		throw new Error("Expected EOF, found " + this.data.substr(0, 10) + "...");
@@ -1559,6 +1587,10 @@ XMLParser.prototype._countWhitespace = function() {
 	profile.enterFn("XMLParser", "_countWhitespace");
 	
 	// Optimise by checking only first character first.
+	if (this.data.length <= 0) {
+		profile.leaveFn("_countWhitespace");
+		return 0;
+	}
 	var ws = this.data[0].match(/^\s+/);
 	if (ws) {
 		// Now check first 256 characters.

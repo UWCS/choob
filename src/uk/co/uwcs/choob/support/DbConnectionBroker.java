@@ -7,6 +7,7 @@ package uk.co.uwcs.choob.support;
 import com.mchange.v2.c3p0.*;
 import java.io.*;
 import java.sql.*;
+import java.util.*;
 
 public final class DbConnectionBroker
 {
@@ -65,21 +66,21 @@ public final class DbConnectionBroker
 	/** Checkout a Connection. */
 	public Connection getConnection() throws SQLException
 	{
+		// Switch to the 2nd line to get per-SQL-statement logging.
 		return cpds.getConnection();
+		//return new ChoobConnectionWrapper(cpds.getConnection());
 	}
 
 	/** Free (check-back-in) a checked-out Connection. */
 	public void freeConnection(Connection conn)
 	{
-		if (conn!=null)
-			try
-			{
+		if (conn != null) {
+			try {
 				conn.close();
-			}
-			catch (SQLException e)
-			{
+			} catch (SQLException e) {
 				e.printStackTrace();
 			}
+		}
 	}
 
 	/** Free all of the resources allocated by this DbConnectionBroker */

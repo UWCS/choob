@@ -41,13 +41,13 @@ public class Security
 	};
 	public void commandAddUser( Message mes )
 	{
-		mods.security.checkNS(mes);
+		mods.security.checkAuth(mes);
 
 		List params = mods.util.getParams( mes );
 
 		String userName;
 		if (params.size() == 1)
-			userName = mes.getNick();
+			userName = mods.security.getUserAuthName(mes.getNick());
 		else if (params.size() == 3)
 		{
 			// Hacky alias
@@ -94,13 +94,13 @@ public class Security
 	};
 	public void commandDelUser( Message mes )
 	{
-		mods.security.checkNS(mes);
+		mods.security.checkAuth(mes);
 
 		List params = mods.util.getParams( mes );
 
 		String userName;
 		if (params.size() == 1)
-			userName = mes.getNick();
+			userName = mods.security.getUserAuthName(mes.getNick());
 		else if (params.size() > 2)
 		{
 			irc.sendContextReply( mes, "You may only specify one user!" );
@@ -109,7 +109,7 @@ public class Security
 		else
 		{
 			// Must check permission!
-			userName = (String)params.get(1);
+			userName = mods.security.getUserAuthName((String)params.get(1));
 			// Sure, this will be checked for us. But what about the user who called us?
 			mods.security.checkPerm( new ChoobPermission("user.del") , mes );
 		}
@@ -144,9 +144,9 @@ public class Security
 	};
 	public void commandBeginLink( Message mes )
 	{
-		String userName = mes.getNick();
+		String userName = mods.security.getUserAuthName(mes.getNick());
 
-		mods.security.checkNS(mes);
+		mods.security.checkAuth(mes);
 
 		List params = mods.util.getParams( mes );
 		if (params.size() == 1)
@@ -199,13 +199,13 @@ public class Security
 	{
 		List<String> params = mods.util.getParams( mes );
 
-		mods.security.checkNS(mes);
+		mods.security.checkAuth(mes);
 
 		String rootName;
 		String leafName;
 		if (params.size() == 2)
 		{
-			leafName = mes.getNick();
+			leafName = mods.security.getUserAuthName(mes.getNick());
 			rootName = (String)params.get(1);
 			List<String> nicks = null;
 			synchronized(linkMap)
@@ -226,7 +226,7 @@ public class Security
 		{
 			// Must check permission!
 			rootName = (String)params.get(1);
-			leafName = (String)params.get(2);
+			leafName = mods.security.getUserAuthName((String)params.get(2));
 			// Sure, this will be checked for us. But what about the user who called us?
 			mods.security.checkPerm( new ChoobPermission("user.link") , mes);
 		}
@@ -249,6 +249,7 @@ public class Security
 
 	public boolean groupCheck(String groupName, String userName)
 	{
+		userName = mods.security.getUserAuthName(userName);
 		if (groupName.toLowerCase().startsWith("user."))
 		{
 			String chunk = groupName.toLowerCase().substring(5);
@@ -293,7 +294,7 @@ public class Security
 	};
 	public void commandAddGroup( Message mes )
 	{
-		mods.security.checkNS(mes);
+		mods.security.checkAuth(mes);
 
 		List params = mods.util.getParams( mes );
 
@@ -308,7 +309,7 @@ public class Security
 			// Must check permission!
 			groupName = (String)params.get(1);
 
-			boolean check = groupCheck(groupName, mes.getNick());
+			boolean check = groupCheck(groupName, mods.security.getUserAuthName(mes.getNick()));
 			// Sure, this will be checked for us. But what about the user who called us?
 			if (!check)
 				mods.security.checkPerm( new ChoobPermission("group.add." + groupName) , mes);
@@ -353,7 +354,7 @@ public class Security
 
 	private void doGroupMemberChange( Message mes, boolean isAdding )
 	{
-		mods.security.checkNS(mes);
+		mods.security.checkAuth(mes);
 
 		List params = mods.util.getParams( mes );
 
@@ -372,7 +373,7 @@ public class Security
 			childName = ((String)params.get(2));
 			if (childName.indexOf('.') != -1)
 				isGroup = true;
-			boolean check = groupCheck(parentName, mes.getNick());
+			boolean check = groupCheck(parentName, mods.security.getUserAuthName(mes.getNick()));
 			// Sure, this will be checked for us. But what about the user who called us?
 			if (!check)
 				mods.security.checkPerm( new ChoobPermission("group.members." + parentName) , mes);
@@ -385,14 +386,14 @@ public class Security
 				if (isGroup)
 					mods.security.addGroupToGroup( parentName, childName );
 				else
-					mods.security.addUserToGroup( parentName, childName );
+					mods.security.addUserToGroup( parentName, mods.security.getUserAuthName(childName));
 			}
 			else
 			{
 				if (isGroup)
 					mods.security.removeGroupFromGroup( parentName, childName );
 				else
-					mods.security.removeUserFromGroup( parentName, childName );
+					mods.security.removeUserFromGroup( parentName, mods.security.getUserAuthName(childName));
 			}
 		}
 		catch ( ChoobException e )
@@ -499,7 +500,7 @@ public class Security
 
 	private void doPermChange( Message mes, boolean isGranting )
 	{
-		mods.security.checkNS(mes);
+		mods.security.checkAuth(mes);
 
 		List params = mods.util.getParams( mes );
 
@@ -522,7 +523,7 @@ public class Security
 
 		int len = mes.getNick().length() + 6;
 		String permString = isGranting ? "grant." : "revoke.";
-		boolean check = groupCheck(groupName, mes.getNick());
+		boolean check = groupCheck(groupName, mods.security.getUserAuthName(mes.getNick()));
 		// Sure, this will be checked for us. But what about the user who called us?
 		if (!check)
 			mods.security.checkPerm( new ChoobPermission("group." + permString + groupName) , mes);
