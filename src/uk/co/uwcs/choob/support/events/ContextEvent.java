@@ -5,10 +5,10 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public interface ContextEvent
-{
+public interface ContextEvent {
 	/**
 	 * Get the value of context
+	 * 
 	 * @return The value of context
 	 */
 	public String getContext();

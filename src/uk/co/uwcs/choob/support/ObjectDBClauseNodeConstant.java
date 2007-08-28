@@ -3,12 +3,12 @@
 package uk.co.uwcs.choob.support;
 
 public class ObjectDBClauseNodeConstant extends SimpleNode {
-  public ObjectDBClauseNodeConstant(int id) {
-    super(id);
-  }
+	public ObjectDBClauseNodeConstant(int id) {
+		super(id);
+	}
 
-  public ObjectDBClauseNodeConstant(ObjectDBClauseParser p, int id) {
-    super(p, id);
-  }
+	public ObjectDBClauseNodeConstant(ObjectDBClauseParser p, int id) {
+		super(p, id);
+	}
 
 }

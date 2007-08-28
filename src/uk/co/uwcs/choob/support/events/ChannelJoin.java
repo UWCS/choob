@@ -5,8 +5,8 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent, UserEvent
-{
+public class ChannelJoin extends IRCEvent implements ChannelEvent,
+		ContextEvent, UserEvent {
 	/**
 	 * channel
 	 */
@@ -14,10 +14,11 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of channel
+	 * 
 	 * @return The value of channel
 	 */
 	public String getChannel() {
-		 return channel;
+		return channel;
 	}
 
 	/**
@@ -27,10 +28,11 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of nick
+	 * 
 	 * @return The value of nick
 	 */
 	public String getNick() {
-		 return nick;
+		return nick;
 	}
 
 	/**
@@ -40,10 +42,11 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of login
+	 * 
 	 * @return The value of login
 	 */
 	public String getLogin() {
-		 return login;
+		return login;
 	}
 
 	/**
@@ -53,26 +56,27 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Get the value of hostname
+	 * 
 	 * @return The value of hostname
 	 */
 	public String getHostname() {
-		 return hostname;
+		return hostname;
 	}
 
 	/**
 	 * Get the reply context in which this event resides
+	 * 
 	 * @return The context
 	 */
 	public String getContext() {
 		return getChannel();
 	}
 
-
 	/**
 	 * Construct a new ChannelJoin.
 	 */
-	public ChannelJoin(String methodName, long millis, int random, String channel, String nick, String login, String hostname)
-	{
+	public ChannelJoin(String methodName, long millis, int random,
+			String channel, String nick, String login, String hostname) {
 		super(methodName, millis, random);
 		this.channel = channel;
 		this.nick = nick;
@@ -83,8 +87,7 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 	/**
 	 * Synthesize a new ChannelJoin from an old one.
 	 */
-	public ChannelJoin(ChannelJoin old)
-	{
+	public ChannelJoin(ChannelJoin old) {
 		super(old);
 		this.channel = old.channel;
 		this.nick = old.nick;
@@ -94,27 +97,26 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 
 	/**
 	 * Synthesize a new ChannelJoin from this one.
+	 * 
 	 * @return The new ChannelJoin object.
 	 */
-	public Event cloneEvent()
-	{
+	public Event cloneEvent() {
 		return new ChannelJoin(this);
 	}
 
-	public boolean equals(Object obj)
-	{
+	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof ChannelJoin))
 			return false;
-		if ( !super.equals(obj) )
+		if (!super.equals(obj))
 			return false;
-		ChannelJoin thing = (ChannelJoin)obj;
-		if ( true && channel.equals(thing.channel) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) )
+		ChannelJoin thing = (ChannelJoin) obj;
+		if (true && channel.equals(thing.channel) && nick.equals(thing.nick)
+				&& login.equals(thing.login) && hostname.equals(thing.hostname))
 			return true;
 		return false;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		StringBuffer out = new StringBuffer("ChannelJoin(");
 		out.append(super.toString());
 		out.append(", channel = " + channel);

@@ -5,48 +5,43 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class UnknownEvent extends IRCEvent 
-{
+public class UnknownEvent extends IRCEvent {
 
 	/**
 	 * Construct a new UnknownEvent.
 	 */
-	public UnknownEvent(String methodName, long millis, int random)
-	{
+	public UnknownEvent(String methodName, long millis, int random) {
 		super(methodName, millis, random);
 	}
 
 	/**
 	 * Synthesize a new UnknownEvent from an old one.
 	 */
-	public UnknownEvent(UnknownEvent old)
-	{
+	public UnknownEvent(UnknownEvent old) {
 		super(old);
 	}
 
 	/**
 	 * Synthesize a new UnknownEvent from this one.
+	 * 
 	 * @return The new UnknownEvent object.
 	 */
-	public Event cloneEvent()
-	{
+	public Event cloneEvent() {
 		return new UnknownEvent(this);
 	}
 
-	public boolean equals(Object obj)
-	{
+	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof UnknownEvent))
 			return false;
-		if ( !super.equals(obj) )
+		if (!super.equals(obj))
 			return false;
-		UnknownEvent thing = (UnknownEvent)obj;
-		if ( true )
+		UnknownEvent thing = (UnknownEvent) obj;
+		if (true)
 			return true;
 		return false;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		StringBuffer out = new StringBuffer("UnknownEvent(");
 		out.append(super.toString());
 		out.append(")");

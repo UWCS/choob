@@ -5,10 +5,10 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public interface AimedEvent
-{
+public interface AimedEvent {
 	/**
 	 * Get the value of target
+	 * 
 	 * @return The value of target
 	 */
 	public String getTarget();

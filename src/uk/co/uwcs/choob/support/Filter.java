@@ -7,11 +7,10 @@
 package uk.co.uwcs.choob.support;
 
 /**
- *
- * @author	sadiq
+ * 
+ * @author sadiq
  */
-public final class Filter
-{
+public final class Filter {
 
 	private String name;
 
@@ -20,8 +19,7 @@ public final class Filter
 	private String plugin;
 
 	/** Creates a new instance of Filter */
-	public Filter( String name, String regex, String plugin )
-	{
+	public Filter(String name, String regex, String plugin) {
 		this.name = name;
 		this.regex = regex;
 		this.plugin = plugin;
@@ -29,55 +27,58 @@ public final class Filter
 
 	/**
 	 * Getter for property name.
+	 * 
 	 * @return Value of property name.
 	 */
-	public java.lang.String getName()
-	{
+	public java.lang.String getName() {
 		return name;
 	}
 
 	/**
 	 * Setter for property name.
-	 * @param name New value of property name.
+	 * 
+	 * @param name
+	 *            New value of property name.
 	 */
-	public void setName(java.lang.String name)
-	{
+	public void setName(java.lang.String name) {
 		this.name = name;
 	}
 
 	/**
 	 * Getter for property regex.
+	 * 
 	 * @return Value of property regex.
 	 */
-	public java.lang.String getRegex()
-	{
+	public java.lang.String getRegex() {
 		return regex;
 	}
 
 	/**
 	 * Setter for property regex.
-	 * @param regex New value of property regex.
+	 * 
+	 * @param regex
+	 *            New value of property regex.
 	 */
-	public void setRegex(java.lang.String regex)
-	{
+	public void setRegex(java.lang.String regex) {
 		this.regex = regex;
 	}
 
 	/**
 	 * Getter for property plugin.
+	 * 
 	 * @return Value of property plugin.
 	 */
-	public java.lang.String getPlugin()
-	{
+	public java.lang.String getPlugin() {
 		return plugin;
 	}
 
 	/**
 	 * Setter for property plugin.
-	 * @param plugin New value of property plugin.
+	 * 
+	 * @param plugin
+	 *            New value of property plugin.
 	 */
-	public void setPlugin(java.lang.String plugin)
-	{
+	public void setPlugin(java.lang.String plugin) {
 		this.plugin = plugin;
 	}
 

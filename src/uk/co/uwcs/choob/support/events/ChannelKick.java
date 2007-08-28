@@ -5,8 +5,8 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent, ContextEvent, UserEvent, AimedEvent
-{
+public class ChannelKick extends IRCEvent implements MessageEvent,
+		ChannelEvent, ContextEvent, UserEvent, AimedEvent {
 	/**
 	 * message
 	 */
@@ -14,10 +14,11 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 
 	/**
 	 * Get the value of message
+	 * 
 	 * @return The value of message
 	 */
 	public String getMessage() {
-		 return message;
+		return message;
 	}
 
 	/**
@@ -27,10 +28,11 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 
 	/**
 	 * Get the value of channel
+	 * 
 	 * @return The value of channel
 	 */
 	public String getChannel() {
-		 return channel;
+		return channel;
 	}
 
 	/**
@@ -40,10 +42,11 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 
 	/**
 	 * Get the value of nick
+	 * 
 	 * @return The value of nick
 	 */
 	public String getNick() {
-		 return nick;
+		return nick;
 	}
 
 	/**
@@ -53,10 +56,11 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 
 	/**
 	 * Get the value of login
+	 * 
 	 * @return The value of login
 	 */
 	public String getLogin() {
-		 return login;
+		return login;
 	}
 
 	/**
@@ -66,10 +70,11 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 
 	/**
 	 * Get the value of hostname
+	 * 
 	 * @return The value of hostname
 	 */
 	public String getHostname() {
-		 return hostname;
+		return hostname;
 	}
 
 	/**
@@ -79,26 +84,28 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 
 	/**
 	 * Get the value of target
+	 * 
 	 * @return The value of target
 	 */
 	public String getTarget() {
-		 return target;
+		return target;
 	}
 
 	/**
 	 * Get the reply context in which this event resides
+	 * 
 	 * @return The context
 	 */
 	public String getContext() {
 		return getChannel();
 	}
 
-
 	/**
 	 * Construct a new ChannelKick.
 	 */
-	public ChannelKick(String methodName, long millis, int random, String message, String channel, String nick, String login, String hostname, String target)
-	{
+	public ChannelKick(String methodName, long millis, int random,
+			String message, String channel, String nick, String login,
+			String hostname, String target) {
 		super(methodName, millis, random);
 		this.message = message;
 		this.channel = channel;
@@ -111,8 +118,7 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 	/**
 	 * Synthesize a new ChannelKick from an old one.
 	 */
-	public ChannelKick(ChannelKick old, String message)
-	{
+	public ChannelKick(ChannelKick old, String message) {
 		super(old);
 		this.message = message;
 		this.channel = old.channel;
@@ -124,27 +130,28 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 
 	/**
 	 * Synthesize a new ChannelKick from this one.
+	 * 
 	 * @return The new ChannelKick object.
 	 */
-	public Event cloneEvent(String message)
-	{
+	public Event cloneEvent(String message) {
 		return new ChannelKick(this, message);
 	}
 
-	public boolean equals(Object obj)
-	{
+	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof ChannelKick))
 			return false;
-		if ( !super.equals(obj) )
+		if (!super.equals(obj))
 			return false;
-		ChannelKick thing = (ChannelKick)obj;
-		if ( true && message.equals(thing.message) && channel.equals(thing.channel) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && target.equals(thing.target) )
+		ChannelKick thing = (ChannelKick) obj;
+		if (true && message.equals(thing.message)
+				&& channel.equals(thing.channel) && nick.equals(thing.nick)
+				&& login.equals(thing.login) && hostname.equals(thing.hostname)
+				&& target.equals(thing.target))
 			return true;
 		return false;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		StringBuffer out = new StringBuffer("ChannelKick(");
 		out.append(super.toString());
 		out.append(", message = " + message);

@@ -5,6 +5,5 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public interface ActionEvent
-{
+public interface ActionEvent {
 }

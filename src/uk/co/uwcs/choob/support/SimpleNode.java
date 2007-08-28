@@ -4,8 +4,11 @@ package uk.co.uwcs.choob.support;
 
 public class SimpleNode implements Node {
 	protected Node parent;
+
 	protected Node[] children;
+
 	protected int id;
+
 	protected ObjectDBClauseParser parser;
 
 	public SimpleNode(int i) {
@@ -23,8 +26,13 @@ public class SimpleNode implements Node {
 	public void jjtClose() {
 	}
 
-	public void jjtSetParent(Node n) { parent = n; }
-	public Node jjtGetParent() { return parent; }
+	public void jjtSetParent(Node n) {
+		parent = n;
+	}
+
+	public Node jjtGetParent() {
+		return parent;
+	}
 
 	public void jjtAddChild(Node n, int i) {
 		if (children == null) {
@@ -45,23 +53,31 @@ public class SimpleNode implements Node {
 		return (children == null) ? 0 : children.length;
 	}
 
-	/* You can override these two methods in subclasses of SimpleNode to
-	   customize the way the node appears when the tree is dumped.  If
-	   your output uses more than one line you should override
-	   toString(String), otherwise overriding toString() is probably all
-	   you need to do. */
+	/*
+	 * You can override these two methods in subclasses of SimpleNode to
+	 * customize the way the node appears when the tree is dumped. If your
+	 * output uses more than one line you should override toString(String),
+	 * otherwise overriding toString() is probably all you need to do.
+	 */
 
-	public String toString() { return ObjectDBClauseParserTreeConstants.jjtNodeName[id]; }
-	public String toString(String prefix) { return prefix + toString(); }
+	public String toString() {
+		return ObjectDBClauseParserTreeConstants.jjtNodeName[id];
+	}
 
-	/* Override this method if you want to customize how the node dumps
-	   out its children. */
+	public String toString(String prefix) {
+		return prefix + toString();
+	}
+
+	/*
+	 * Override this method if you want to customize how the node dumps out its
+	 * children.
+	 */
 
 	public void dump(String prefix) {
 		System.out.println(toString(prefix));
 		if (children != null) {
 			for (int i = 0; i < children.length; ++i) {
-				SimpleNode n = (SimpleNode)children[i];
+				SimpleNode n = (SimpleNode) children[i];
 				if (n != null) {
 					n.dump(prefix + " ");
 				}
@@ -70,25 +86,22 @@ public class SimpleNode implements Node {
 	}
 
 	int hint = 0;
-	public void setHint(int hint)
-	{
+
+	public void setHint(int hint) {
 		this.hint = hint;
 	}
 
-	public int getHint()
-	{
+	public int getHint() {
 		return hint;
 	}
 
 	String name = null;
-	public void setName(String name)
-	{
+
+	public void setName(String name) {
 		this.name = name;
 	}
 
-	public String getName()
-	{
+	public String getName() {
 		return name;
 	}
 }
-

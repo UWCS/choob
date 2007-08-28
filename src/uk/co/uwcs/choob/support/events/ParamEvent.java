@@ -5,10 +5,10 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public interface ParamEvent
-{
+public interface ParamEvent {
 	/**
 	 * Get the value of param
+	 * 
 	 * @return The value of param
 	 */
 	public String getParam();

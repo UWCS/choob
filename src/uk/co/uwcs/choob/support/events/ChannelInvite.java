@@ -5,8 +5,8 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, AimedEvent
-{
+public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent,
+		AimedEvent {
 	/**
 	 * channel
 	 */
@@ -14,10 +14,11 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 
 	/**
 	 * Get the value of channel
+	 * 
 	 * @return The value of channel
 	 */
 	public String getChannel() {
-		 return channel;
+		return channel;
 	}
 
 	/**
@@ -27,10 +28,11 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 
 	/**
 	 * Get the value of nick
+	 * 
 	 * @return The value of nick
 	 */
 	public String getNick() {
-		 return nick;
+		return nick;
 	}
 
 	/**
@@ -40,10 +42,11 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 
 	/**
 	 * Get the value of login
+	 * 
 	 * @return The value of login
 	 */
 	public String getLogin() {
-		 return login;
+		return login;
 	}
 
 	/**
@@ -53,10 +56,11 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 
 	/**
 	 * Get the value of hostname
+	 * 
 	 * @return The value of hostname
 	 */
 	public String getHostname() {
-		 return hostname;
+		return hostname;
 	}
 
 	/**
@@ -66,18 +70,19 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 
 	/**
 	 * Get the value of target
+	 * 
 	 * @return The value of target
 	 */
 	public String getTarget() {
-		 return target;
+		return target;
 	}
-
 
 	/**
 	 * Construct a new ChannelInvite.
 	 */
-	public ChannelInvite(String methodName, long millis, int random, String channel, String nick, String login, String hostname, String target)
-	{
+	public ChannelInvite(String methodName, long millis, int random,
+			String channel, String nick, String login, String hostname,
+			String target) {
 		super(methodName, millis, random);
 		this.channel = channel;
 		this.nick = nick;
@@ -89,8 +94,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	/**
 	 * Synthesize a new ChannelInvite from an old one.
 	 */
-	public ChannelInvite(ChannelInvite old)
-	{
+	public ChannelInvite(ChannelInvite old) {
 		super(old);
 		this.channel = old.channel;
 		this.nick = old.nick;
@@ -101,27 +105,27 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 
 	/**
 	 * Synthesize a new ChannelInvite from this one.
+	 * 
 	 * @return The new ChannelInvite object.
 	 */
-	public Event cloneEvent()
-	{
+	public Event cloneEvent() {
 		return new ChannelInvite(this);
 	}
 
-	public boolean equals(Object obj)
-	{
+	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof ChannelInvite))
 			return false;
-		if ( !super.equals(obj) )
+		if (!super.equals(obj))
 			return false;
-		ChannelInvite thing = (ChannelInvite)obj;
-		if ( true && channel.equals(thing.channel) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && target.equals(thing.target) )
+		ChannelInvite thing = (ChannelInvite) obj;
+		if (true && channel.equals(thing.channel) && nick.equals(thing.nick)
+				&& login.equals(thing.login) && hostname.equals(thing.hostname)
+				&& target.equals(thing.target))
 			return true;
 		return false;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		StringBuffer out = new StringBuffer("ChannelInvite(");
 		out.append(super.toString());
 		out.append(", channel = " + channel);

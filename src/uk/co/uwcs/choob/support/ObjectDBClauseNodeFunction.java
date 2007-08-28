@@ -3,12 +3,12 @@
 package uk.co.uwcs.choob.support;
 
 public class ObjectDBClauseNodeFunction extends SimpleNode {
-  public ObjectDBClauseNodeFunction(int id) {
-    super(id);
-  }
+	public ObjectDBClauseNodeFunction(int id) {
+		super(id);
+	}
 
-  public ObjectDBClauseNodeFunction(ObjectDBClauseParser p, int id) {
-    super(p, id);
-  }
+	public ObjectDBClauseNodeFunction(ObjectDBClauseParser p, int id) {
+		super(p, id);
+	}
 
 }

@@ -25,15 +25,18 @@ public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 	public int getId() {
 		try {
 			final Object obj2 = obj;
-			return AccessController.doPrivileged(new PrivilegedExceptionAction<Integer>() {
-					public Integer run() throws NoSuchFieldException, IllegalAccessException {
-						Field f = obj2.getClass().getField("id");
-						return f.getInt(obj2);
-					}
-				});
+			return AccessController
+					.doPrivileged(new PrivilegedExceptionAction<Integer>() {
+						public Integer run() throws NoSuchFieldException,
+								IllegalAccessException {
+							Field f = obj2.getClass().getField("id");
+							return f.getInt(obj2);
+						}
+					});
 		} catch (PrivilegedActionException e) {
 			// Must be a NoSuchFieldException...
-			throw new ObjectDBError("Class " + obj.getClass() + " does not have a unique 'id' property. Please add one.");
+			throw new ObjectDBError("Class " + obj.getClass()
+					+ " does not have a unique 'id' property. Please add one.");
 		}
 	}
 
@@ -41,16 +44,19 @@ public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 		try {
 			final Object obj2 = obj;
 			final int val2 = id;
-			AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-					public Object run() throws NoSuchFieldException, IllegalAccessException {
-						Field f = obj2.getClass().getField("id");
-						f.setInt(obj2, val2);
-						return null;
-					}
-				});
-		} catch(PrivilegedActionException e) {
+			AccessController
+					.doPrivileged(new PrivilegedExceptionAction<Object>() {
+						public Object run() throws NoSuchFieldException,
+								IllegalAccessException {
+							Field f = obj2.getClass().getField("id");
+							f.setInt(obj2, val2);
+							return null;
+						}
+					});
+		} catch (PrivilegedActionException e) {
 			// Must be a NoSuchFieldException...
-			throw new ObjectDBError("Class " + obj.getClass() + " does not have a unique 'id' property. Please add one.");
+			throw new ObjectDBError("Class " + obj.getClass()
+					+ " does not have a unique 'id' property. Please add one.");
 		}
 	}
 
@@ -70,11 +76,13 @@ public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 		return obj.getClass().getField(name).getType();
 	}
 
-	public Object getFieldValue(String name) throws NoSuchFieldException, IllegalAccessException {
+	public Object getFieldValue(String name) throws NoSuchFieldException,
+			IllegalAccessException {
 		return obj.getClass().getField(name).get(obj);
 	}
 
-	public void setFieldValue(String name, Object value) throws NoSuchFieldException, IllegalAccessException {
+	public void setFieldValue(String name, Object value)
+			throws NoSuchFieldException, IllegalAccessException {
 		obj.getClass().getField(name).set(obj, value);
 	}
 }

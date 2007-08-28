@@ -12,26 +12,24 @@ import uk.co.uwcs.choob.*;
 
 /**
  * Facilitates the synthesis of artificial message events.
- * @author	sadiq
+ * 
+ * @author sadiq
  */
-public final class SyntheticModule
-{
+public final class SyntheticModule {
 	private Choob bot;
 
 	/** Creates a new instance of IntervalModule */
-	SyntheticModule( Choob bot )
-	{
+	SyntheticModule(Choob bot) {
 		this.bot = bot;
 	}
 
 	/** Queues the message with the bot, as if it had come from IRC. */
-	public void doSyntheticMessage( Message mes )
-	{
-		if( System.getSecurityManager() != null )
-		{
-			System.getSecurityManager().checkPermission(new ChoobPermission("canCreateEvents"));
+	public void doSyntheticMessage(Message mes) {
+		if (System.getSecurityManager() != null) {
+			System.getSecurityManager().checkPermission(
+					new ChoobPermission("canCreateEvents"));
 		}
 
-		bot.onSyntheticMessage( mes );
+		bot.onSyntheticMessage(mes);
 	}
 }

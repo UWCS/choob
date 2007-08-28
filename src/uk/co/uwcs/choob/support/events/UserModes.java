@@ -5,8 +5,7 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class UserModes extends IRCEvent implements MultiModeEvent
-{
+public class UserModes extends IRCEvent implements MultiModeEvent {
 	/**
 	 * modes
 	 */
@@ -14,18 +13,17 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 
 	/**
 	 * Get the value of modes
+	 * 
 	 * @return The value of modes
 	 */
 	public String getModes() {
-		 return modes;
+		return modes;
 	}
-
 
 	/**
 	 * Construct a new UserModes.
 	 */
-	public UserModes(String methodName, long millis, int random, String modes)
-	{
+	public UserModes(String methodName, long millis, int random, String modes) {
 		super(methodName, millis, random);
 		this.modes = modes;
 	}
@@ -33,35 +31,32 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 	/**
 	 * Synthesize a new UserModes from an old one.
 	 */
-	public UserModes(UserModes old)
-	{
+	public UserModes(UserModes old) {
 		super(old);
 		this.modes = old.modes;
 	}
 
 	/**
 	 * Synthesize a new UserModes from this one.
+	 * 
 	 * @return The new UserModes object.
 	 */
-	public Event cloneEvent()
-	{
+	public Event cloneEvent() {
 		return new UserModes(this);
 	}
 
-	public boolean equals(Object obj)
-	{
+	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof UserModes))
 			return false;
-		if ( !super.equals(obj) )
+		if (!super.equals(obj))
 			return false;
-		UserModes thing = (UserModes)obj;
-		if ( true && modes.equals(thing.modes) )
+		UserModes thing = (UserModes) obj;
+		if (true && modes.equals(thing.modes))
 			return true;
 		return false;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		StringBuffer out = new StringBuffer("UserModes(");
 		out.append(super.toString());
 		out.append(", modes = " + modes);

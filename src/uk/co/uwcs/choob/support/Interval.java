@@ -7,11 +7,10 @@
 package uk.co.uwcs.choob.support;
 
 /**
- *
- * @author	sadiq
+ * 
+ * @author sadiq
  */
-public final class Interval
-{
+public final class Interval {
 	private String plugin;
 
 	private long trigger;
@@ -21,12 +20,10 @@ public final class Interval
 	private int id;
 
 	/** Creates a new instance of Interval */
-	public Interval()
-	{
+	public Interval() {
 	}
 
-	public Interval(String plugin, Object parameter, long trigger, int id)
-	{
+	public Interval(String plugin, Object parameter, long trigger, int id) {
 		this.plugin = plugin;
 		this.parameter = parameter;
 		this.trigger = trigger;
@@ -35,79 +32,83 @@ public final class Interval
 
 	/**
 	 * Getter for property trigger.
+	 * 
 	 * @return Value of property trigger.
 	 */
-	public long getTrigger()
-	{
+	public long getTrigger() {
 		return trigger;
 	}
 
 	/**
 	 * Setter for property trigger.
-	 * @param trigger New value of property trigger.
+	 * 
+	 * @param trigger
+	 *            New value of property trigger.
 	 */
-	public void setTrigger(long trigger)
-	{
+	public void setTrigger(long trigger) {
 		this.trigger = trigger;
 	}
 
 	/**
 	 * Getter for property id.
+	 * 
 	 * @return Value of property id.
 	 */
-	public int getId()
-	{
+	public int getId() {
 		return id;
 	}
 
 	/**
 	 * Setter for property id.
-	 * @param id New value of property id.
+	 * 
+	 * @param id
+	 *            New value of property id.
 	 */
-	public void setId(int id)
-	{
+	public void setId(int id) {
 		this.id = id;
 	}
 
 	/**
 	 * Getter for property plugin.
+	 * 
 	 * @return Value of property plugin.
 	 */
-	public java.lang.String getPlugin()
-	{
+	public java.lang.String getPlugin() {
 		return plugin;
 	}
 
 	/**
 	 * Setter for property plugin.
-	 * @param plugin New value of property plugin.
+	 * 
+	 * @param plugin
+	 *            New value of property plugin.
 	 */
-	public void setPlugin(java.lang.String plugin)
-	{
+	public void setPlugin(java.lang.String plugin) {
 		this.plugin = plugin;
 	}
 
 	/**
 	 * Getter for property parameter.
+	 * 
 	 * @return Value of property parameter.
 	 */
-	public java.lang.Object getParameter()
-	{
+	public java.lang.Object getParameter() {
 		return parameter;
 	}
 
 	/**
 	 * Setter for property parameter.
-	 * @param parameter New value of property parameter.
+	 * 
+	 * @param parameter
+	 *            New value of property parameter.
 	 */
-	public void setParameter(java.lang.Object parameter)
-	{
+	public void setParameter(java.lang.Object parameter) {
 		this.parameter = parameter;
 	}
 
-	public String toString()
-	{
-		return "Interval( Date: " + getTrigger() + ", Plugin: " + getPlugin() +" )";
+	public String toString() {
+		return "Interval( Date: " + getTrigger() + ", Plugin: " + getPlugin()
+				+ " )";
 	}
 
 }

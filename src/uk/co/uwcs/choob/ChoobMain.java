@@ -9,16 +9,11 @@ package uk.co.uwcs.choob;
 /**
  * Main class in the Choob project, simply creates a Choob instance.
  */
-public final class ChoobMain
-{
-	public static void main(String[] args)
-	{
-		try
-		{
+public final class ChoobMain {
+	public static void main(String[] args) {
+		try {
 			new Choob();
-		}
-		catch (Throwable t)
-		{
+		} catch (Throwable t) {
 			System.err.println("Fatal error in Choob, exiting.");
 			t.printStackTrace();
 			System.exit(1);

@@ -5,8 +5,7 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class ChannelUserMode extends ChannelMode implements AimedEvent
-{
+public class ChannelUserMode extends ChannelMode implements AimedEvent {
 	/**
 	 * target
 	 */
@@ -14,18 +13,18 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 
 	/**
 	 * Get the value of target
+	 * 
 	 * @return The value of target
 	 */
 	public String getTarget() {
-		 return target;
+		return target;
 	}
-
 
 	/**
 	 * Construct a new ChannelUserMode.
 	 */
-	public ChannelUserMode(String methodName, long millis, int random, String channel, String mode, boolean set, String target)
-	{
+	public ChannelUserMode(String methodName, long millis, int random,
+			String channel, String mode, boolean set, String target) {
 		super(methodName, millis, random, channel, mode, set);
 		this.target = target;
 	}
@@ -33,35 +32,32 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 	/**
 	 * Synthesize a new ChannelUserMode from an old one.
 	 */
-	public ChannelUserMode(ChannelUserMode old)
-	{
+	public ChannelUserMode(ChannelUserMode old) {
 		super(old);
 		this.target = old.target;
 	}
 
 	/**
 	 * Synthesize a new ChannelUserMode from this one.
+	 * 
 	 * @return The new ChannelUserMode object.
 	 */
-	public Event cloneEvent()
-	{
+	public Event cloneEvent() {
 		return new ChannelUserMode(this);
 	}
 
-	public boolean equals(Object obj)
-	{
+	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof ChannelUserMode))
 			return false;
-		if ( !super.equals(obj) )
+		if (!super.equals(obj))
 			return false;
-		ChannelUserMode thing = (ChannelUserMode)obj;
-		if ( true && target.equals(thing.target) )
+		ChannelUserMode thing = (ChannelUserMode) obj;
+		if (true && target.equals(thing.target))
 			return true;
 		return false;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		StringBuffer out = new StringBuffer("ChannelUserMode(");
 		out.append(super.toString());
 		out.append(", target = " + target);

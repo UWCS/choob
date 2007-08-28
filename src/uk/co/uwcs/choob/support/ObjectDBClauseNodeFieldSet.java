@@ -3,12 +3,12 @@
 package uk.co.uwcs.choob.support;
 
 public class ObjectDBClauseNodeFieldSet extends SimpleNode {
-  public ObjectDBClauseNodeFieldSet(int id) {
-    super(id);
-  }
+	public ObjectDBClauseNodeFieldSet(int id) {
+		super(id);
+	}
 
-  public ObjectDBClauseNodeFieldSet(ObjectDBClauseParser p, int id) {
-    super(p, id);
-  }
+	public ObjectDBClauseNodeFieldSet(ObjectDBClauseParser p, int id) {
+		super(p, id);
+	}
 
 }

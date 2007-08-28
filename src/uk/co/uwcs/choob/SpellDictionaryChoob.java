@@ -1,22 +1,22 @@
 // Taken from:
 /*
-   Jazzy - a Java library for Spell Checking
-   Copyright (C) 2001 Mindaugas Idzelis
-   Full text of license can be found in LICENSE.txt
+ Jazzy - a Java library for Spell Checking
+ Copyright (C) 2001 Mindaugas Idzelis
+ Full text of license can be found in LICENSE.txt
 
-   This library is free software; you can redistribute it and/or
-   modify it under the terms of the GNU Lesser General Public
-   License as published by the Free Software Foundation; either
-   version 2.1 of the License, or (at your option) any later version.
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2.1 of the License, or (at your option) any later version.
 
-   This library is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   Lesser General Public License for more details.
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
 
-   You should have received a copy of the GNU Lesser General Public
-   License along with this library; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ You should have received a copy of the GNU Lesser General Public
+ License along with this library; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
  * put your module comment here
@@ -37,20 +37,22 @@ import java.util.LinkedList;
  * http://www.sourceforge.net/projects/jazzy/
  */
 public final class SpellDictionaryChoob extends SpellDictionaryASpell {
-	/** A field indicating the initial hash map capacity (16KB) for the main
-	 *  dictionary hash map. Interested to see what the performance of a
-	 *  smaller initial capacity is like.
+	/**
+	 * A field indicating the initial hash map capacity (16KB) for the main
+	 * dictionary hash map. Interested to see what the performance of a smaller
+	 * initial capacity is like.
 	 */
 	private final static int INITIAL_CAPACITY = 16 * 1024;
 
 	/**
-	 * The hashmap that contains the word dictionary. The map is hashed on the doublemeta
-	 * code. The map entry contains a LinkedList of words that have the same double meta code.
+	 * The hashmap that contains the word dictionary. The map is hashed on the
+	 * doublemeta code. The map entry contains a LinkedList of words that have
+	 * the same double meta code.
 	 */
-	private Hashtable<String, List<String>> mainDictionary = new Hashtable<String, List<String>>(INITIAL_CAPACITY);
+	private Hashtable<String, List<String>> mainDictionary = new Hashtable<String, List<String>>(
+			INITIAL_CAPACITY);
 
-	public SpellDictionaryChoob(File phonetics) throws IOException
-	{
+	public SpellDictionaryChoob(File phonetics) throws IOException {
 		super(phonetics);
 	}
 
@@ -60,13 +62,11 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	public void addWord(String word) {
 		String code = getCode(word);
 		List<String> list = mainDictionary.get(code);
-		if (list == null)
-		{
+		if (list == null) {
 			list = new LinkedList<String>();
 			mainDictionary.put(code, list);
 			list.add(word.toLowerCase());
-		}
-		else if (!list.contains(word))
+		} else if (!list.contains(word))
 			list.add(word.toLowerCase());
 	}
 
@@ -78,8 +78,7 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 		List<String> list = mainDictionary.get(code);
 		if (list == null)
 			return;
-		else
-		{
+		else {
 			list.remove(word.toLowerCase());
 		}
 	}
@@ -88,7 +87,7 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	 * Returns a list of strings (words) for the code.
 	 */
 	public List getWords(String code) {
-		//Check the main dictionary.
+		// Check the main dictionary.
 		List<String> mainDictResult = mainDictionary.get(code);
 		if (mainDictResult == null)
 			return new LinkedList<String>();
@@ -97,7 +96,8 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	}
 
 	/**
-	 * Returns true if the word is correctly spelled against the current word list.
+	 * Returns true if the word is correctly spelled against the current word
+	 * list.
 	 */
 	public boolean isCorrect(String word) {
 		List possible = getWords(getCode(word));

@@ -3,12 +3,12 @@
 package uk.co.uwcs.choob.support;
 
 public class ObjectDBClauseNodeExpressionList extends SimpleNode {
-  public ObjectDBClauseNodeExpressionList(int id) {
-    super(id);
-  }
+	public ObjectDBClauseNodeExpressionList(int id) {
+		super(id);
+	}
 
-  public ObjectDBClauseNodeExpressionList(ObjectDBClauseParser p, int id) {
-    super(p, id);
-  }
+	public ObjectDBClauseNodeExpressionList(ObjectDBClauseParser p, int id) {
+		super(p, id);
+	}
 
 }

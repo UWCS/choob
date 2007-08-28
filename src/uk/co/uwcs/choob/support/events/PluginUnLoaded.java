@@ -5,8 +5,7 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class PluginUnLoaded extends InternalEvent implements PluginEvent
-{
+public class PluginUnLoaded extends InternalEvent implements PluginEvent {
 	/**
 	 * pluginName
 	 */
@@ -14,10 +13,11 @@ public class PluginUnLoaded extends InternalEvent implements PluginEvent
 
 	/**
 	 * Get the value of pluginName
+	 * 
 	 * @return The value of pluginName
 	 */
 	public String getPluginName() {
-		 return pluginName;
+		return pluginName;
 	}
 
 	/**
@@ -27,18 +27,17 @@ public class PluginUnLoaded extends InternalEvent implements PluginEvent
 
 	/**
 	 * Get the value of pluginStatus
+	 * 
 	 * @return The value of pluginStatus
 	 */
 	public int getPluginStatus() {
-		 return pluginStatus;
+		return pluginStatus;
 	}
-
 
 	/**
 	 * Construct a new PluginUnLoaded.
 	 */
-	public PluginUnLoaded(String methodName, String pluginName, int pluginStatus)
-	{
+	public PluginUnLoaded(String methodName, String pluginName, int pluginStatus) {
 		super(methodName);
 		this.pluginName = pluginName;
 		this.pluginStatus = pluginStatus;
@@ -47,8 +46,7 @@ public class PluginUnLoaded extends InternalEvent implements PluginEvent
 	/**
 	 * Synthesize a new PluginUnLoaded from an old one.
 	 */
-	public PluginUnLoaded(PluginUnLoaded old)
-	{
+	public PluginUnLoaded(PluginUnLoaded old) {
 		super(old);
 		this.pluginName = old.pluginName;
 		this.pluginStatus = old.pluginStatus;
@@ -56,27 +54,26 @@ public class PluginUnLoaded extends InternalEvent implements PluginEvent
 
 	/**
 	 * Synthesize a new PluginUnLoaded from this one.
+	 * 
 	 * @return The new PluginUnLoaded object.
 	 */
-	public Event cloneEvent()
-	{
+	public Event cloneEvent() {
 		return new PluginUnLoaded(this);
 	}
 
-	public boolean equals(Object obj)
-	{
+	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof PluginUnLoaded))
 			return false;
-		if ( !super.equals(obj) )
+		if (!super.equals(obj))
 			return false;
-		PluginUnLoaded thing = (PluginUnLoaded)obj;
-		if ( true && pluginName.equals(thing.pluginName) && (pluginStatus == thing.pluginStatus) )
+		PluginUnLoaded thing = (PluginUnLoaded) obj;
+		if (true && pluginName.equals(thing.pluginName)
+				&& (pluginStatus == thing.pluginStatus))
 			return true;
 		return false;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		StringBuffer out = new StringBuffer("PluginUnLoaded(");
 		out.append(super.toString());
 		out.append(", pluginName = " + pluginName);

@@ -5,10 +5,10 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public interface NickChangeEvent
-{
+public interface NickChangeEvent {
 	/**
 	 * Get the value of newNick
+	 * 
 	 * @return The value of newNick
 	 */
 	public String getNewNick();

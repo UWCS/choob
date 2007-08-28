@@ -2,30 +2,27 @@
 
 package uk.co.uwcs.choob.support;
 
-public interface ObjectDBClauseParserTreeConstants
-{
-  public int JJTVOID = 0;
-  public int JJTROOT = 1;
-  public int JJTADD = 2;
-  public int JJTMUL = 3;
-  public int JJTFUNCTION = 4;
-  public int JJTCONSTANT = 5;
-  public int JJTFIELD = 6;
-  public int JJTEXPRESSIONLIST = 7;
-  public int JJTFIELDSET = 8;
-  public int JJTFIELDSETLIST = 9;
+public interface ObjectDBClauseParserTreeConstants {
+	public int JJTVOID = 0;
 
+	public int JJTROOT = 1;
 
-  public String[] jjtNodeName = {
-    "void",
-    "Root",
-    "Add",
-    "Mul",
-    "Function",
-    "Constant",
-    "Field",
-    "ExpressionList",
-    "FieldSet",
-    "FieldSetList",
-  };
+	public int JJTADD = 2;
+
+	public int JJTMUL = 3;
+
+	public int JJTFUNCTION = 4;
+
+	public int JJTCONSTANT = 5;
+
+	public int JJTFIELD = 6;
+
+	public int JJTEXPRESSIONLIST = 7;
+
+	public int JJTFIELDSET = 8;
+
+	public int JJTFIELDSETLIST = 9;
+
+	public String[] jjtNodeName = { "void", "Root", "Add", "Mul", "Function",
+			"Constant", "Field", "ExpressionList", "FieldSet", "FieldSetList", };
 }

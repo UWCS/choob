@@ -5,8 +5,8 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class Message extends IRCEvent implements MessageEvent, ContextEvent, UserEvent, AimedEvent
-{
+public class Message extends IRCEvent implements MessageEvent, ContextEvent,
+		UserEvent, AimedEvent {
 	/**
 	 * message
 	 */
@@ -14,10 +14,11 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 
 	/**
 	 * Get the value of message
+	 * 
 	 * @return The value of message
 	 */
 	public String getMessage() {
-		 return message;
+		return message;
 	}
 
 	/**
@@ -27,10 +28,11 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 
 	/**
 	 * Get the value of nick
+	 * 
 	 * @return The value of nick
 	 */
 	public String getNick() {
-		 return nick;
+		return nick;
 	}
 
 	/**
@@ -40,10 +42,11 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 
 	/**
 	 * Get the value of login
+	 * 
 	 * @return The value of login
 	 */
 	public String getLogin() {
-		 return login;
+		return login;
 	}
 
 	/**
@@ -53,10 +56,11 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 
 	/**
 	 * Get the value of hostname
+	 * 
 	 * @return The value of hostname
 	 */
 	public String getHostname() {
-		 return hostname;
+		return hostname;
 	}
 
 	/**
@@ -66,26 +70,27 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 
 	/**
 	 * Get the value of target
+	 * 
 	 * @return The value of target
 	 */
 	public String getTarget() {
-		 return target;
+		return target;
 	}
 
 	/**
 	 * Get the reply context in which this event resides
+	 * 
 	 * @return The context
 	 */
 	public String getContext() {
 		return getNick();
 	}
 
-
 	/**
 	 * Construct a new Message.
 	 */
-	public Message(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
-	{
+	public Message(String methodName, long millis, int random, String message,
+			String nick, String login, String hostname, String target) {
 		super(methodName, millis, random);
 		this.message = message;
 		this.nick = nick;
@@ -97,8 +102,7 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 	/**
 	 * Synthesize a new Message from an old one.
 	 */
-	public Message(Message old, String message)
-	{
+	public Message(Message old, String message) {
 		super(old);
 		this.message = message;
 		this.nick = old.nick;
@@ -109,27 +113,27 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 
 	/**
 	 * Synthesize a new Message from this one.
+	 * 
 	 * @return The new Message object.
 	 */
-	public Event cloneEvent(String message)
-	{
+	public Event cloneEvent(String message) {
 		return new Message(this, message);
 	}
 
-	public boolean equals(Object obj)
-	{
+	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof Message))
 			return false;
-		if ( !super.equals(obj) )
+		if (!super.equals(obj))
 			return false;
-		Message thing = (Message)obj;
-		if ( true && message.equals(thing.message) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && target.equals(thing.target) )
+		Message thing = (Message) obj;
+		if (true && message.equals(thing.message) && nick.equals(thing.nick)
+				&& login.equals(thing.login) && hostname.equals(thing.hostname)
+				&& target.equals(thing.target))
 			return true;
 		return false;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		StringBuffer out = new StringBuffer("Message(");
 		out.append(super.toString());
 		out.append(", message = " + message);

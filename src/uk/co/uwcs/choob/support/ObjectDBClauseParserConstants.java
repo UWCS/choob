@@ -3,121 +3,127 @@ package uk.co.uwcs.choob.support;
 
 public interface ObjectDBClauseParserConstants {
 
-  int EOF = 0;
-  int P_FLOATVALUE = 4;
-  int P_INTVALUE = 5;
-  int P_TEXTVALUE = 6;
-  int P_BACKTICKINNER = 7;
-  int P_NAME = 8;
-  int K_WHERE = 9;
-  int K_SORT = 10;
-  int K_LIMIT = 11;
-  int K_WITH = 12;
-  int K_FROM = 13;
-  int K_SET = 14;
-  int K_TABLE = 15;
-  int K_INTO = 16;
-  int K_SELECT = 17;
-  int K_INSERT = 18;
-  int K_DELETE = 19;
-  int K_UPDATE = 20;
-  int OPENBRACKET = 21;
-  int CLOSEBRACKET = 22;
-  int K_NOT = 23;
-  int K_AND = 24;
-  int K_OR = 25;
-  int K_ASC = 26;
-  int K_DESC = 27;
-  int K_INTEGER = 28;
-  int K_RANDOM = 29;
-  int K_AS = 30;
-  int K_0FUNC = 31;
-  int K_1FUNC = 32;
-  int K_2FUNC = 33;
-  int K_3FUNC = 34;
-  int K_LESS = 35;
-  int K_GREATER = 36;
-  int K_EQUAL = 37;
-  int K_NOTEQUAL = 38;
-  int K_RLIKE = 39;
-  int K_LIKE = 40;
-  int K_ADD = 41;
-  int K_SUBTRACT = 42;
-  int K_MULTIPLY = 43;
-  int K_DIVIDE = 44;
-  int COMMA = 45;
-  int K_ISINT = 46;
-  int K_ISFLOAT = 47;
-  int K_ISSTR = 48;
-  int K_ISBOOL = 49;
-  int IDNAME = 50;
-  int QIDNAME = 51;
-  int FIELDNAME = 52;
-  int QFIELDNAME = 53;
-  int TEXTVALUE = 54;
-  int FLOATVALUE = 55;
-  int INTVALUE = 56;
+	int EOF = 0;
 
-  int DEFAULT = 0;
+	int P_FLOATVALUE = 4;
 
-  String[] tokenImage = {
-    "<EOF>",
-    "\" \"",
-    "\"\\n\"",
-    "\"\\t\"",
-    "<P_FLOATVALUE>",
-    "<P_INTVALUE>",
-    "<P_TEXTVALUE>",
-    "<P_BACKTICKINNER>",
-    "<P_NAME>",
-    "\"WHERE\"",
-    "<K_SORT>",
-    "\"LIMIT\"",
-    "\"WITH\"",
-    "\"FROM\"",
-    "\"SET\"",
-    "\"TABLE\"",
-    "\"INTO\"",
-    "\"SELECT\"",
-    "\"INSERT\"",
-    "\"DELETE\"",
-    "\"UPDATE\"",
-    "\"(\"",
-    "\")\"",
-    "<K_NOT>",
-    "<K_AND>",
-    "<K_OR>",
-    "<K_ASC>",
-    "<K_DESC>",
-    "\"INTEGER\"",
-    "<K_RANDOM>",
-    "\"AS\"",
-    "\"COUNT\"",
-    "\"SUM\"",
-    "\"SPAMANDEGGS\"",
-    "\"CONCAT\"",
-    "\"<\"",
-    "\">\"",
-    "\"=\"",
-    "\"!=\"",
-    "<K_RLIKE>",
-    "\"LIKE\"",
-    "\"+\"",
-    "\"-\"",
-    "\"*\"",
-    "\"/\"",
-    "\",\"",
-    "\"ISINT\"",
-    "\"ISFLOAT\"",
-    "<K_ISSTR>",
-    "\"ISBOOL\"",
-    "<IDNAME>",
-    "<QIDNAME>",
-    "<FIELDNAME>",
-    "<QFIELDNAME>",
-    "<TEXTVALUE>",
-    "<FLOATVALUE>",
-    "<INTVALUE>",
-  };
+	int P_INTVALUE = 5;
+
+	int P_TEXTVALUE = 6;
+
+	int P_BACKTICKINNER = 7;
+
+	int P_NAME = 8;
+
+	int K_WHERE = 9;
+
+	int K_SORT = 10;
+
+	int K_LIMIT = 11;
+
+	int K_WITH = 12;
+
+	int K_FROM = 13;
+
+	int K_SET = 14;
+
+	int K_TABLE = 15;
+
+	int K_INTO = 16;
+
+	int K_SELECT = 17;
+
+	int K_INSERT = 18;
+
+	int K_DELETE = 19;
+
+	int K_UPDATE = 20;
+
+	int OPENBRACKET = 21;
+
+	int CLOSEBRACKET = 22;
+
+	int K_NOT = 23;
+
+	int K_AND = 24;
+
+	int K_OR = 25;
+
+	int K_ASC = 26;
+
+	int K_DESC = 27;
+
+	int K_INTEGER = 28;
+
+	int K_RANDOM = 29;
+
+	int K_AS = 30;
+
+	int K_0FUNC = 31;
+
+	int K_1FUNC = 32;
+
+	int K_2FUNC = 33;
+
+	int K_3FUNC = 34;
+
+	int K_LESS = 35;
+
+	int K_GREATER = 36;
+
+	int K_EQUAL = 37;
+
+	int K_NOTEQUAL = 38;
+
+	int K_RLIKE = 39;
+
+	int K_LIKE = 40;
+
+	int K_ADD = 41;
+
+	int K_SUBTRACT = 42;
+
+	int K_MULTIPLY = 43;
+
+	int K_DIVIDE = 44;
+
+	int COMMA = 45;
+
+	int K_ISINT = 46;
+
+	int K_ISFLOAT = 47;
+
+	int K_ISSTR = 48;
+
+	int K_ISBOOL = 49;
+
+	int IDNAME = 50;
+
+	int QIDNAME = 51;
+
+	int FIELDNAME = 52;
+
+	int QFIELDNAME = 53;
+
+	int TEXTVALUE = 54;
+
+	int FLOATVALUE = 55;
+
+	int INTVALUE = 56;
+
+	int DEFAULT = 0;
+
+	String[] tokenImage = { "<EOF>", "\" \"", "\"\\n\"", "\"\\t\"",
+			"<P_FLOATVALUE>", "<P_INTVALUE>", "<P_TEXTVALUE>",
+			"<P_BACKTICKINNER>", "<P_NAME>", "\"WHERE\"", "<K_SORT>",
+			"\"LIMIT\"", "\"WITH\"", "\"FROM\"", "\"SET\"", "\"TABLE\"",
+			"\"INTO\"", "\"SELECT\"", "\"INSERT\"", "\"DELETE\"", "\"UPDATE\"",
+			"\"(\"", "\")\"", "<K_NOT>", "<K_AND>", "<K_OR>", "<K_ASC>",
+			"<K_DESC>", "\"INTEGER\"", "<K_RANDOM>", "\"AS\"", "\"COUNT\"",
+			"\"SUM\"", "\"SPAMANDEGGS\"", "\"CONCAT\"", "\"<\"", "\">\"",
+			"\"=\"", "\"!=\"", "<K_RLIKE>", "\"LIKE\"", "\"+\"", "\"-\"",
+			"\"*\"", "\"/\"", "\",\"", "\"ISINT\"", "\"ISFLOAT\"", "<K_ISSTR>",
+			"\"ISBOOL\"", "<IDNAME>", "<QIDNAME>", "<FIELDNAME>",
+			"<QFIELDNAME>", "<TEXTVALUE>", "<FLOATVALUE>", "<INTVALUE>", };
 
 }

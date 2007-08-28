@@ -14,8 +14,8 @@ public final class DateModule {
 	// FIXME
 	// Yes, this is incredibly lame. Enum -> String[] is really beyond me
 	// (without a for-loop):
-	public final static String[] longtokensstring = new String[]{"week", "day",
-			"hour", "minute", "second", "millisecond"};
+	public final static String[] longtokensstring = new String[] { "week",
+			"day", "hour", "minute", "second", "millisecond" };
 
 	/**
 	 * Helper, converts a long (ms since epoch) time to an array of weeks (index
@@ -34,7 +34,7 @@ public final class DateModule {
 		i -= s * 1000;
 		final long ms = (i);
 		i -= ms;
-		final long st[] = {w, d, h, m, s, ms};
+		final long st[] = { w, d, h, m, s, ms };
 		return st;
 	}
 
@@ -91,7 +91,7 @@ public final class DateModule {
 
 		// Decide which tokens we're going to be using.
 		if (shortTokens)
-			tokenName = new String[]{"w", "d", "h", "m", "s", "ms"};
+			tokenName = new String[] { "w", "d", "h", "m", "s", "ms" };
 		else
 			tokenName = longtokensstring;
 
@@ -109,19 +109,18 @@ public final class DateModule {
 				else
 					useWhich.add(longtokens.values()[j]);
 
-		longtokens[] use = useWhich.toArray(new longtokens[]{});
+		longtokens[] use = useWhich.toArray(new longtokens[] {});
 
 		// Special case, if we didn't decide to use anything, the period is less
 		// than the minGranuality, say so:
 		if (use.length == 0)
-			return t.append(
-					shortTokens
-							? "<1"
-							: "less than "
-									+ (minGranularity == longtokens.hour
-											? "an "
-											: "a ")).append(
-					tokenName[minGranularity.ordinal()]).toString();
+			return t
+					.append(
+							shortTokens ? "<1"
+									: "less than "
+											+ (minGranularity == longtokens.hour ? "an "
+													: "a ")).append(
+							tokenName[minGranularity.ordinal()]).toString();
 		else
 			for (int i = 0; i < use.length; i++) {
 				// Otherwise, go through each that we decided to use, and append
@@ -136,10 +135,8 @@ public final class DateModule {
 							// 'hour' + 's' +
 							.append(tokenName[j]).append(st[j] != 1 ? "s" : "")
 							.append(
-									i == use.length - 1
-											? ""
-											: (i != use.length - 2
-													? ", "
+									i == use.length - 1 ? ""
+											: (i != use.length - 2 ? ", "
 													: " and "));
 			}
 		return t.toString();

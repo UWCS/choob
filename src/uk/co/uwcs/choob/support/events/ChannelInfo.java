@@ -5,8 +5,7 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class ChannelInfo extends IRCEvent implements MessageEvent, ChannelEvent
-{
+public class ChannelInfo extends IRCEvent implements MessageEvent, ChannelEvent {
 	/**
 	 * message
 	 */
@@ -14,10 +13,11 @@ public class ChannelInfo extends IRCEvent implements MessageEvent, ChannelEvent
 
 	/**
 	 * Get the value of message
+	 * 
 	 * @return The value of message
 	 */
 	public String getMessage() {
-		 return message;
+		return message;
 	}
 
 	/**
@@ -27,18 +27,18 @@ public class ChannelInfo extends IRCEvent implements MessageEvent, ChannelEvent
 
 	/**
 	 * Get the value of channel
+	 * 
 	 * @return The value of channel
 	 */
 	public String getChannel() {
-		 return channel;
+		return channel;
 	}
-
 
 	/**
 	 * Construct a new ChannelInfo.
 	 */
-	public ChannelInfo(String methodName, long millis, int random, String message, String channel)
-	{
+	public ChannelInfo(String methodName, long millis, int random,
+			String message, String channel) {
 		super(methodName, millis, random);
 		this.message = message;
 		this.channel = channel;
@@ -47,8 +47,7 @@ public class ChannelInfo extends IRCEvent implements MessageEvent, ChannelEvent
 	/**
 	 * Synthesize a new ChannelInfo from an old one.
 	 */
-	public ChannelInfo(ChannelInfo old, String message)
-	{
+	public ChannelInfo(ChannelInfo old, String message) {
 		super(old);
 		this.message = message;
 		this.channel = old.channel;
@@ -56,27 +55,26 @@ public class ChannelInfo extends IRCEvent implements MessageEvent, ChannelEvent
 
 	/**
 	 * Synthesize a new ChannelInfo from this one.
+	 * 
 	 * @return The new ChannelInfo object.
 	 */
-	public Event cloneEvent(String message)
-	{
+	public Event cloneEvent(String message) {
 		return new ChannelInfo(this, message);
 	}
 
-	public boolean equals(Object obj)
-	{
+	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof ChannelInfo))
 			return false;
-		if ( !super.equals(obj) )
+		if (!super.equals(obj))
 			return false;
-		ChannelInfo thing = (ChannelInfo)obj;
-		if ( true && message.equals(thing.message) && channel.equals(thing.channel) )
+		ChannelInfo thing = (ChannelInfo) obj;
+		if (true && message.equals(thing.message)
+				&& channel.equals(thing.channel))
 			return true;
 		return false;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		StringBuffer out = new StringBuffer("ChannelInfo(");
 		out.append(super.toString());
 		out.append(", message = " + message);

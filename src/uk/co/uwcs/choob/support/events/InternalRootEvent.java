@@ -5,6 +5,5 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public interface InternalRootEvent
-{
+public interface InternalRootEvent {
 }
