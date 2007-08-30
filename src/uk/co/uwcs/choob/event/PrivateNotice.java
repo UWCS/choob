@@ -46,10 +46,11 @@ public class PrivateNotice extends Message implements PrivateEvent {
 			return false;
 		if (!super.equals(obj))
 			return false;
-		PrivateNotice thing = (PrivateNotice) obj;
-		if (true)
-			return true;
-		return false;
+		// FIXME
+		//PrivateNotice thing = (PrivateNotice) obj;
+		//if (true)
+		return true;
+		//return false;
 	}
 
 	public String toString() {

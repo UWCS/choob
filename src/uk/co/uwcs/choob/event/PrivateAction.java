@@ -47,10 +47,11 @@ public class PrivateAction extends Message implements PrivateEvent,
 			return false;
 		if (!super.equals(obj))
 			return false;
-		PrivateAction thing = (PrivateAction) obj;
-		if (true)
-			return true;
-		return false;
+		// FIXME
+		//PrivateAction thing = (PrivateAction) obj;
+		//if (true)
+		return true;
+		//return false;
 	}
 
 	public String toString() {

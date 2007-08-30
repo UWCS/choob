@@ -12,9 +12,7 @@ import uk.co.uwcs.choob.error.ChoobAuthError;
 import uk.co.uwcs.choob.error.ChoobError;
 import uk.co.uwcs.choob.error.ChoobEventExpired;
 import uk.co.uwcs.choob.error.ChoobGeneralAuthError;
-import uk.co.uwcs.choob.error.ChoobNSAuthError;
 import uk.co.uwcs.choob.error.ChoobPluginAuthError;
-import uk.co.uwcs.choob.error.ChoobQAuthError;
 import uk.co.uwcs.choob.error.ChoobUserAuthError;
 import uk.co.uwcs.choob.event.*;
 import uk.co.uwcs.choob.exception.ChoobException;
@@ -46,7 +44,7 @@ public final class SecurityModule extends SecurityManager {
 
 	private Map<Integer, List<Integer>> nodeTree;
 
-	private Map<String, Integer>[] nodeIDCache;
+	private ArrayList<Map<String, Integer>> nodeIDCache;
 
 	private Modules mods;
 
@@ -59,7 +57,7 @@ public final class SecurityModule extends SecurityManager {
 	 *            Database connection pool/broker.
 	 */
 	SecurityModule(ConnectionBroker dbBroker, Modules mods) {
-		// Make sure these classes is preloaded!
+		// Make sure these classes are preloaded!
 		// This avoids circular security checks. Oh, the horror!
 		// Class throwAway = bsh.BshMethod.class;
 		// throwAway = DiscreteFilesClassLoader.class;
@@ -72,9 +70,10 @@ public final class SecurityModule extends SecurityManager {
 		this.nodeMap = new HashMap<Integer, PermissionCollection>();
 		this.nodeTree = new HashMap<Integer, List<Integer>>();
 
-		this.nodeIDCache = new Map[4];
-		for (int i = 0; i < 4; i++)
-			nodeIDCache[i] = new HashMap<String, Integer>();
+		this.nodeIDCache = new ArrayList<Map<String, Integer>>();
+		for (int i = 0; i < 4; i++) {
+			nodeIDCache.set(i, new HashMap<String, Integer>());
+		}
 
 		this.anonID = getNodeIDFromNodeName("anonymous", 3);
 	}
@@ -124,8 +123,9 @@ public final class SecurityModule extends SecurityManager {
 	 */
 	public String getPluginName(int skip) {
 		List names = getPluginNames();
-		if (skip >= names.size())
+		if (skip >= names.size()) {
 			return null;
+		}
 		return (String) names.get(skip);
 	}
 
@@ -281,8 +281,9 @@ public final class SecurityModule extends SecurityManager {
 			nodeID = allNodes.next();
 			PermissionCollection perms = getNodePermissions(nodeID);
 			// Be careful to avoid invalid groups and stuff.
-			if (perms != null && perms.implies(permission))
+			if (perms != null && perms.implies(permission)) {
 				return true;
+			}
 		}
 
 		return false;
@@ -303,8 +304,9 @@ public final class SecurityModule extends SecurityManager {
 				return new ArrayList<Integer>().iterator(); // XXX
 			}
 			List<Integer> list = new ArrayList<Integer>();
-			if (addThis)
+			if (addThis) {
 				list.add(nodeID);
+			}
 			try {
 				getAllNodesRecursive(dbCon, list, nodeID, 0);
 				if (anonID != -1) {
@@ -352,8 +354,9 @@ public final class SecurityModule extends SecurityManager {
 				sqlErr("getting user nodes", e);
 			} finally {
 				try {
-					if (stat != null)
+					if (stat != null) {
 						stat.close();
+					}
 				} catch (SQLException e) {
 					sqlErr("cleaning up user node statment", e);
 				}
@@ -361,8 +364,9 @@ public final class SecurityModule extends SecurityManager {
 		}
 
 		for (int newNode : things) {
-			if (!list.contains(newNode))
+			if (!list.contains(newNode)) {
 				list.add(newNode);
+			}
 			getAllNodesRecursive(dbConn, list, newNode, recurseDepth + 1);
 		}
 	}
@@ -378,8 +382,9 @@ public final class SecurityModule extends SecurityManager {
 	 * Get the node ID that corresponds to a node name
 	 */
 	private int getNodeIDFromUserName(UserEvent userEvent) {
-		if (userEvent instanceof IRCEvent)
+		if (userEvent instanceof IRCEvent) {
 			checkEvent((IRCEvent) userEvent);
+		}
 		return getNodeIDFromNodeName(userEvent.getNick(), 0);
 	}
 
@@ -395,9 +400,10 @@ public final class SecurityModule extends SecurityManager {
 	 */
 	private int getNodeIDFromNodeName(String nodeName, int nodeType) {
 		// Check the cache.
-		Integer id = nodeIDCache[nodeType].get(nodeName.toLowerCase());
-		if (id != null)
+		Integer id = nodeIDCache.get(nodeType).get(nodeName.toLowerCase());
+		if (id != null) {
 			return id.intValue();
+		}
 
 		Connection dbConn = null;
 		PreparedStatement stat = null;
@@ -410,7 +416,7 @@ public final class SecurityModule extends SecurityManager {
 			ResultSet results = stat.executeQuery();
 			if (results.first()) {
 				int idGot = results.getInt(1);
-				nodeIDCache[nodeType].put(nodeName.toLowerCase(), idGot);
+				nodeIDCache.get(nodeType).put(nodeName.toLowerCase(), idGot);
 				return idGot;
 			}
 			System.err.println("Ack! Node name " + nodeName + "(" + nodeType
@@ -457,8 +463,9 @@ public final class SecurityModule extends SecurityManager {
 		try {
 			stat = dbConn.prepareStatement("SELECT LAST_INSERT_ID()");
 			ResultSet results = stat.executeQuery();
-			if (results.first())
+			if (results.first()) {
 				return results.getInt(1);
+			}
 			throw new SQLException("Ack! LAST_INSERT_ID() returned no results!");
 		} finally {
 			stat.close();
@@ -471,24 +478,28 @@ public final class SecurityModule extends SecurityManager {
 	 */
 
 	public String renderPermission(Permission permission) {
-		if (permission instanceof AllPermission)
+		if (permission instanceof AllPermission) {
 			return "ALL";
+		}
 
 		String output;
 		String className = permission.getClass().getSimpleName();
-		if (className.endsWith("Permission"))
+		if (className.endsWith("Permission")) {
 			output = className.substring(0, className.length() - 10);
-		else
+		} else {
 			output = className;
+		}
 
 		String name = permission.getName();
 		String actions = permission.getActions();
 		if (name != null) {
 			output += " with name \"" + name + "\"";
-			if (actions != null)
+			if (actions != null) {
 				output += " and actions \"" + actions + "\"";
-		} else if (actions != null)
+			}
+		} else if (actions != null) {
 			output += " and actions \"" + actions + "\"";
+		}
 
 		return output;
 	}
@@ -588,50 +599,6 @@ public final class SecurityModule extends SecurityManager {
 	}
 
 	/**
-	 * Check if the given nickName is authed with NickServ (if NickServ is
-	 * loaded).
-	 * 
-	 * @param userEvent
-	 *            The event to validate and check the permission on.
-	 * @throws ChoobNSAuthError
-	 *             If the nick is not authorised.
-	 */
-	private void checkNS(UserEvent userEvent) throws ChoobNSAuthError {
-		if (!hasNS(userEvent.getNick()))
-			throw new ChoobNSAuthError();
-	}
-
-	/**
-	 * Check if the given nickname is authed with NickServ (if Nickserv is
-	 * loaded).
-	 * 
-	 * @param nick
-	 *            The nick to validated.
-	 * @throws ChoobNSAuthError
-	 *             If the nick is not authorised.
-	 */
-	private void checkNS(String nick) throws ChoobNSAuthError {
-		if (!hasNS(nick)) {
-			throw new ChoobNSAuthError();
-		}
-	}
-
-	/**
-	 * Check if the given nickName is authed with NickServ (if NickServ is
-	 * loaded).
-	 * 
-	 * @param userEvent
-	 *            The event to validate and check the permission on.
-	 * @return Whether the nick is authorised.
-	 */
-	private boolean hasNS(UserEvent userEvent) {
-		if (userEvent instanceof IRCEvent) {
-			checkEvent((IRCEvent) userEvent);
-		}
-		return hasNS(userEvent.getNick());
-	}
-
-	/**
 	 * Check if the given nickname is authed with NickServ (if it is loaded).
 	 * 
 	 * @param nick
@@ -656,48 +623,6 @@ public final class SecurityModule extends SecurityManager {
 			e.printStackTrace();
 			return false;
 		}
-	}
-
-	/**
-	 * Check if the given nickname is authed with Q (if QuakenetAuth is loaded)
-	 * 
-	 * @param userEvent
-	 *            Event containing nick to check.
-	 * @throws ChoobQAuthError
-	 *             Indication of lack of auth.
-	 */
-	private void checkQ(UserEvent userEvent) throws ChoobQAuthError {
-		if (!hasQ(userEvent.getNick())) {
-			throw new ChoobQAuthError();
-		}
-	}
-
-	/**
-	 * Check if the given nickname is authed with Q (if QuakenetAuth is loaded)
-	 * 
-	 * @param nick
-	 *            Nick to check.
-	 * @throws ChoobQAuthError
-	 *             Indication of lack of auth.
-	 */
-	private void checkQ(String nick) throws ChoobQAuthError {
-		if (!hasQ(nick)) {
-			throw new ChoobQAuthError();
-		}
-	}
-
-	/**
-	 * Check if the nickname given is authed with Q (if QuakenetAuth is loaded)
-	 * 
-	 * @param userEvent
-	 *            Event containing nick to check.
-	 * @return Auth status.
-	 */
-	private boolean hasQ(UserEvent userEvent) {
-		if (userEvent instanceof IRCEvent) {
-			checkEvent((IRCEvent) userEvent);
-		}
-		return hasQ(userEvent.getNick());
 	}
 
 	/**
@@ -744,8 +669,9 @@ public final class SecurityModule extends SecurityManager {
 			throws ChoobAuthError {
 		checkAuth(userEvent);
 
-		if (!hasNickPerm(permission, userEvent))
+		if (!hasNickPerm(permission, userEvent)) {
 			throw new ChoobUserAuthError(permission);
+		}
 	}
 
 	/**
@@ -861,9 +787,11 @@ public final class SecurityModule extends SecurityManager {
 		System.out.println("Checking permission on user " + userEvent.getNick()
 				+ "(" + userNode + ")" + ": " + permission);
 
-		if (userNode == -1)
-			if (anonID != -1)
+		if (userNode == -1) {
+			if (anonID != -1) {
 				return hasPerm(permission, anonID, true);
+			}
+		}
 
 		return hasPerm(permission, userNode);
 
@@ -964,8 +892,9 @@ public final class SecurityModule extends SecurityManager {
 	 */
 	public void checkPluginPerm(Permission permission, String plugin)
 			throws ChoobPluginAuthError {
-		if (!hasPluginPerm(permission, plugin))
+		if (!hasPluginPerm(permission, plugin)) {
 			throw new ChoobPluginAuthError(plugin, permission);
+		}
 	}
 
 	/**
@@ -978,16 +907,18 @@ public final class SecurityModule extends SecurityManager {
 	 */
 	public boolean hasPluginPerm(final Permission permission,
 			final String plugin) {
-		if (plugin == null)
+		if (plugin == null) {
 			return true; // XXX should this be true?
+		}
 
 		// All plugins should be allowed to read the following properties:
 		// line.separator
 		if (permission instanceof PropertyPermission) {
 			PropertyPermission propPerm = (PropertyPermission) permission;
 			if (propPerm.getActions().equals("read")) {
-				if (propPerm.getName().equals("line.separator"))
+				if (propPerm.getName().equals("line.separator")) {
 					return true;
+				}
 			}
 		}
 
@@ -998,8 +929,9 @@ public final class SecurityModule extends SecurityManager {
 						int nodeID = getNodeIDFromPluginName(plugin);
 
 						// No such user!
-						if (nodeID == -1)
+						if (nodeID == -1) {
 							return false;
+						}
 
 						// Now just check on this node!
 						// Include the plugin.
@@ -1026,8 +958,9 @@ public final class SecurityModule extends SecurityManager {
 	 */
 	private void dbCleanupSel(Statement stat, Connection dbConn) {
 		try {
-			if (stat != null)
+			if (stat != null) {
 				stat.close();
+			}
 		} catch (SQLException e) {
 			sqlErr("closing SQL statement", e);
 		} finally {
@@ -1037,8 +970,9 @@ public final class SecurityModule extends SecurityManager {
 
 	private void dbCleanup(Statement stat, Connection dbConn) {
 		try {
-			if (stat != null)
+			if (stat != null) {
 				stat.close();
+			}
 		} catch (SQLException e) {
 			sqlErr("closing SQL statement", e);
 		} finally {
@@ -1088,8 +1022,9 @@ public final class SecurityModule extends SecurityManager {
 						.prepareStatement("REPLACE INTO UserPlugins (UserID, PluginName) VALUES (?, ?)");
 				stat.setInt(1, userID);
 				stat.setString(2, pluginName);
-				if (stat.executeUpdate() == 0)
+				if (stat.executeUpdate() == 0) {
 					System.err.println("Ack! No rows updated in plugin bind!");
+				}
 
 				// Done!
 				dbConn.commit();
@@ -1131,8 +1066,9 @@ public final class SecurityModule extends SecurityManager {
 						.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
 				stat.setString(1, userName);
 				stat.setInt(2, 0);
-				if (stat.executeUpdate() == 0)
+				if (stat.executeUpdate() == 0) {
 					System.err.println("Ack! No rows updated in user insert!");
+				}
 				int userID = getLastInsertID(dbConn);
 				stat.close();
 
@@ -1151,9 +1087,10 @@ public final class SecurityModule extends SecurityManager {
 							.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
 					stat.setString(1, userName);
 					stat.setInt(2, 1);
-					if (stat.executeUpdate() == 0)
+					if (stat.executeUpdate() == 0) {
 						System.err
 								.println("Ack! No rows updated in user group insert!");
+					}
 					groupID = getLastInsertID(dbConn);
 					stat.close();
 				}
@@ -1163,9 +1100,10 @@ public final class SecurityModule extends SecurityManager {
 						.prepareStatement("INSERT INTO GroupMembers (GroupID, MemberID) VALUES (?, ?)");
 				stat.setInt(1, groupID);
 				stat.setInt(2, userID);
-				if (stat.executeUpdate() == 0)
+				if (stat.executeUpdate() == 0) {
 					System.err
 							.println("Ack! No rows updated in user group member insert!");
+				}
 
 				// Done!
 				dbConn.commit();
@@ -1194,9 +1132,10 @@ public final class SecurityModule extends SecurityManager {
 						.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
 				stat.setString(1, leaf);
 				ResultSet results = stat.executeQuery();
-				if (results.first())
+				if (results.first()) {
 					throw new ChoobException("User " + leaf
 							+ " already exists!");
+				}
 				stat.close();
 
 				// Now make sure the root does exist...
@@ -1205,9 +1144,10 @@ public final class SecurityModule extends SecurityManager {
 						.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
 				stat.setString(1, root);
 				results = stat.executeQuery();
-				if (!results.first())
+				if (!results.first()) {
 					throw new ChoobException("User " + root
 							+ " does not exist!");
+				}
 				int rootUserID = results.getInt(1);
 				stat.close();
 
@@ -1216,9 +1156,10 @@ public final class SecurityModule extends SecurityManager {
 						.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 1");
 				stat.setString(1, root);
 				results = stat.executeQuery();
-				if (!results.first())
+				if (!results.first()) {
 					throw new ChoobException("User " + root
 							+ " is a leaf user. You can't link to it!");
+				}
 				int rootID = results.getInt(1);
 				stat.close();
 
@@ -1228,9 +1169,10 @@ public final class SecurityModule extends SecurityManager {
 				stat.setInt(1, rootID);
 				stat.setInt(2, rootUserID);
 				results = stat.executeQuery();
-				if (!results.first())
+				if (!results.first()) {
 					throw new ChoobException("User " + root
 							+ " is a leaf user. You can't link to it!");
+				}
 				stat.close();
 
 				// Add user.
@@ -1238,8 +1180,9 @@ public final class SecurityModule extends SecurityManager {
 						.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
 				stat.setString(1, leaf);
 				stat.setInt(2, 0);
-				if (stat.executeUpdate() == 0)
+				if (stat.executeUpdate() == 0) {
 					System.err.println("Ack! No rows updated in user insert!");
+				}
 				int userID = getLastInsertID(dbConn);
 				stat.close();
 
@@ -1248,9 +1191,10 @@ public final class SecurityModule extends SecurityManager {
 						.prepareStatement("INSERT INTO GroupMembers (GroupID, MemberID) VALUES (?, ?)");
 				stat.setInt(1, rootID);
 				stat.setInt(2, userID);
-				if (stat.executeUpdate() == 0)
+				if (stat.executeUpdate() == 0) {
 					System.err
 							.println("Ack! No rows updated in user group member insert!");
+				}
 
 				// Done!
 				dbConn.commit();
@@ -1277,10 +1221,11 @@ public final class SecurityModule extends SecurityManager {
 					.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
 			stat.setString(1, userName);
 			ResultSet results = stat.executeQuery();
-			if (!results.first())
+			if (!results.first()) {
 				// throw new ChoobException ("User " + userName + " does not
 				// exist!");
 				return null;
+			}
 			// return userName;
 			int userID = results.getInt(1);
 			stat.close();
@@ -1289,13 +1234,15 @@ public final class SecurityModule extends SecurityManager {
 					.prepareStatement("SELECT GroupID FROM GroupMembers WHERE MemberID = ?");
 			stat.setInt(1, userID);
 			results = stat.executeQuery();
-			if (!results.first())
+			if (!results.first()) {
 				throw new ChoobError("Consistency error: User " + userName
 						+ " is in no group!");
+			}
 			int groupID = results.getInt(1);
-			if (results.next())
+			if (results.next()) {
 				throw new ChoobError("Consistency error: User " + userName
 						+ " is in more than one group!");
+			}
 			stat.close();
 
 			// Now make sure the root does exist...
@@ -1303,9 +1250,10 @@ public final class SecurityModule extends SecurityManager {
 					.prepareStatement("SELECT NodeName FROM UserNodes WHERE NodeID = ?");
 			stat.setInt(1, groupID);
 			results = stat.executeQuery();
-			if (!results.first())
+			if (!results.first()) {
 				throw new ChoobError("Consistency error: Group " + groupID
 						+ " does not exist!");
+			}
 			String groupName = results.getString(1);
 			stat.close();
 
@@ -1335,9 +1283,10 @@ public final class SecurityModule extends SecurityManager {
 						.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
 				stat.setString(1, userName);
 				ResultSet results = stat.executeQuery();
-				if (!results.first())
+				if (!results.first()) {
 					throw new ChoobException("User " + userName
 							+ " does not exist!");
+				}
 				int userID = results.getInt(1);
 				stat.close();
 
@@ -1345,16 +1294,18 @@ public final class SecurityModule extends SecurityManager {
 				stat = dbConn
 						.prepareStatement("DELETE FROM GroupMembers WHERE MemberID = ?");
 				stat.setInt(1, userID);
-				if (stat.executeUpdate() == 0)
+				if (stat.executeUpdate() == 0) {
 					System.err
 							.println("Ack! No rows updated in user member delete!");
+				}
 
 				// Delete user.
 				stat = dbConn
 						.prepareStatement("DELETE FROM UserNodes WHERE NodeID = ?");
 				stat.setInt(1, userID);
-				if (stat.executeUpdate() == 0)
+				if (stat.executeUpdate() == 0) {
 					System.err.println("Ack! No rows updated in user delete!");
+				}
 				stat.close();
 
 				// Done!
@@ -1376,9 +1327,10 @@ public final class SecurityModule extends SecurityManager {
 		if (group.getType() == 2) // plugins can poke their own groups!
 		{
 			String pluginName = getPluginName(0);
-			if (!(group.getRootName().compareToIgnoreCase(pluginName) == 0))
+			if (!(group.getRootName().compareToIgnoreCase(pluginName) == 0)) {
 				AccessController.checkPermission(new ChoobPermission(
 						"group.add." + groupName));
+			}
 		} else {
 			AccessController.checkPermission(new ChoobPermission("group.add."
 					+ groupName));
@@ -1406,9 +1358,10 @@ public final class SecurityModule extends SecurityManager {
 						.prepareStatement("INSERT INTO UserNodes (NodeName, NodeClass) VALUES (?, ?)");
 				stat.setString(1, group.getName());
 				stat.setInt(2, group.getType());
-				if (stat.executeUpdate() == 0)
+				if (stat.executeUpdate() == 0) {
 					System.err.println("Ack! No rows updated in group "
 							+ groupName + " insert!");
+				}
 				dbConn.commit();
 			} catch (SQLException e) {
 				sqlErr("adding group " + groupName, e);
@@ -1437,9 +1390,10 @@ public final class SecurityModule extends SecurityManager {
 		if (parent.getType() == 2) // plugins can poke their own groups!
 		{
 			String pluginName = getPluginName(0);
-			if (!(parent.getRootName().compareToIgnoreCase(pluginName) == 0))
+			if (!(parent.getRootName().compareToIgnoreCase(pluginName) == 0)) {
 				AccessController.checkPermission(new ChoobPermission(
 						"group.members." + parent));
+			}
 		} else {
 			AccessController.checkPermission(new ChoobPermission(
 					"group.members." + parent));
@@ -1448,10 +1402,12 @@ public final class SecurityModule extends SecurityManager {
 		// OK, we're allowed to add.
 		int parentID = getNodeIDFromNode(parent);
 		int childID = getNodeIDFromNode(child);
-		if (parentID == -1)
+		if (parentID == -1) {
 			throw new ChoobException("Group " + parent + " does not exist!");
-		if (childID == -1)
+		}
+		if (childID == -1) {
 			throw new ChoobException("Group " + child + " does not exist!");
+		}
 
 		Connection dbConn = null;
 		PreparedStatement stat = null;
@@ -1474,9 +1430,10 @@ public final class SecurityModule extends SecurityManager {
 						.prepareStatement("INSERT INTO GroupMembers (GroupID, MemberID) VALUES (?, ?)");
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
-				if (stat.executeUpdate() == 0)
+				if (stat.executeUpdate() == 0) {
 					System.err.println("Ack! Group member add did nothing: "
 							+ parent + ", member " + child);
+				}
 
 				dbConn.commit();
 			} catch (SQLException e) {
@@ -1507,9 +1464,10 @@ public final class SecurityModule extends SecurityManager {
 		if (parent.getType() == 2) // plugins can poke their own groups!
 		{
 			String pluginName = getPluginName(0);
-			if (!(parent.getRootName().compareToIgnoreCase(pluginName) == 0))
+			if (!(parent.getRootName().compareToIgnoreCase(pluginName) == 0)) {
 				AccessController.checkPermission(new ChoobPermission(
 						"group.members." + parent));
+			}
 		} else {
 			AccessController.checkPermission(new ChoobPermission(
 					"group.members." + parent));
@@ -1518,10 +1476,12 @@ public final class SecurityModule extends SecurityManager {
 		// OK, we're allowed to add.
 		int parentID = getNodeIDFromNode(parent);
 		int childID = getNodeIDFromNode(child);
-		if (parentID == -1)
+		if (parentID == -1) {
 			throw new ChoobException("Group " + parent + " does not exist!");
-		if (childID == -1)
+		}
+		if (childID == -1) {
 			throw new ChoobException("Group " + child + " does not exist!");
+		}
 
 		Connection dbConn = null;
 		PreparedStatement stat = null;
@@ -1543,9 +1503,10 @@ public final class SecurityModule extends SecurityManager {
 						.prepareStatement("DELETE FROM GroupMembers WHERE GroupID = ? AND  MemberID = ?");
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
-				if (stat.executeUpdate() == 0)
+				if (stat.executeUpdate() == 0) {
 					System.err.println("Ack! Group member remove did nothing: "
 							+ parent + ", member " + child);
+				}
 			} catch (SQLException e) {
 				sqlErr("removing " + child + " from " + parent, e);
 			} finally {
@@ -1562,9 +1523,10 @@ public final class SecurityModule extends SecurityManager {
 		// (kinda)
 		{
 			String pluginName = getPluginName(0);
-			if (!(group.getRootName().compareToIgnoreCase(pluginName) == 0))
+			if (!(group.getRootName().compareToIgnoreCase(pluginName) == 0)) {
 				AccessController.checkPermission(new ChoobPermission(
 						"group.grant." + group));
+			}
 			// OK, that's all fine, BUT:
 			if (!hasPluginPerm(permission)) {
 				System.err.println("Plugin " + pluginName
@@ -1580,12 +1542,14 @@ public final class SecurityModule extends SecurityManager {
 
 		// OK, we're allowed to add.
 		int groupID = getNodeIDFromNode(group);
-		if (groupID == -1)
+		if (groupID == -1) {
 			throw new ChoobException("Group " + group + " does not exist!");
+		}
 
-		if (hasPerm(permission, groupID, true))
+		if (hasPerm(permission, groupID, true)) {
 			throw new ChoobException("Group " + group
 					+ " already has permission " + permission + "!");
+		}
 
 		Connection dbConn = null;
 		PreparedStatement stat = null;
@@ -1621,9 +1585,10 @@ public final class SecurityModule extends SecurityManager {
 					stat.setString(3, permission.getName());
 					stat.setString(4, permission.getActions());
 				}
-				if (stat.executeUpdate() == 0)
+				if (stat.executeUpdate() == 0) {
 					System.err.println("Ack! Permission add did nothing: "
 							+ group + " " + permission);
+				}
 
 				invalidateNodePermissions(groupID);
 			} catch (SQLException e) {
@@ -1643,8 +1608,9 @@ public final class SecurityModule extends SecurityManager {
 			throws ChoobException {
 		UserNode group = new UserNode(groupName);
 		int groupID = getNodeIDFromNode(group);
-		if (groupID == -1)
+		if (groupID == -1) {
 			throw new ChoobException("Group " + group + " does not exist!");
+		}
 
 		List<String> foundPerms = new LinkedList<String>();
 
@@ -1681,8 +1647,9 @@ public final class SecurityModule extends SecurityManager {
 	public String[] getPermissions(String groupName) throws ChoobException {
 		UserNode group = new UserNode(groupName);
 		int groupID = getNodeIDFromNode(group);
-		if (groupID == -1)
+		if (groupID == -1) {
 			throw new ChoobException("Group " + group + " does not exist!");
+		}
 
 		List<String> foundPerms = new LinkedList<String>();
 
@@ -1707,9 +1674,10 @@ public final class SecurityModule extends SecurityManager {
 		// permissions
 		{
 			String pluginName = getPluginName(0);
-			if (!(group.getRootName().compareToIgnoreCase(pluginName) == 0))
+			if (!(group.getRootName().compareToIgnoreCase(pluginName) == 0)) {
 				AccessController.checkPermission(new ChoobPermission(
 						"group.revoke." + group));
+			}
 		} else {
 			AccessController.checkPermission(new ChoobPermission(
 					"group.revoke." + group));
@@ -1717,12 +1685,14 @@ public final class SecurityModule extends SecurityManager {
 
 		// OK, we're allowed to add.
 		int groupID = getNodeIDFromNode(group);
-		if (groupID == -1)
+		if (groupID == -1) {
 			throw new ChoobException("Group " + group + " does not exist!");
+		}
 
-		if (!hasPerm(permission, groupID, true))
+		if (!hasPerm(permission, groupID, true)) {
 			throw new ChoobException("Group " + group
 					+ " does not have permission " + permission + "!");
+		}
 
 		Connection dbConn = null;
 		PreparedStatement stat = null;
@@ -1764,20 +1734,22 @@ public final class SecurityModule extends SecurityManager {
 		Map<String, String> mesFlags = e.getFlags();
 		if (mesFlags.containsKey("_securityOK")) {
 			String sok = mesFlags.get("_securityOK");
-			if (sok.equals("true"))
+			if (sok.equals("true")) {
 				return;
+			}
 		}
 
-		if (e instanceof MessageEvent)
+		if (e instanceof MessageEvent) {
 			throw new ChoobEventExpired("Security exception: "
 					+ e.getClass().getName() + " from "
 					+ new java.util.Date(e.getMillis()).toString() + " ('"
 					+ ((MessageEvent) e).getMessage() + "') failed security.");
-		else
+		} else {
 			throw new ChoobEventExpired("Security exception: "
 					+ e.getClass().getName() + " from "
 					+ new java.util.Date(e.getMillis()).toString()
 					+ " failed security.");
+		}
 	}
 
 	/**
