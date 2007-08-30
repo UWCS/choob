@@ -7,8 +7,11 @@
 package uk.co.uwcs.choob.support;
 
 import uk.co.uwcs.choob.*;
+import uk.co.uwcs.choob.event.*;
+import uk.co.uwcs.choob.exception.ChoobException;
 import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.security.ChoobPermission;
+
 import java.security.AccessController;
 import java.util.List;
 import java.util.ArrayList;

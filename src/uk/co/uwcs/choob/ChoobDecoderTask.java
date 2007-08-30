@@ -1,13 +1,15 @@
 package uk.co.uwcs.choob;
 
+import uk.co.uwcs.choob.db.ConnectionBroker;
+import uk.co.uwcs.choob.event.*;
+import uk.co.uwcs.choob.exception.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.modules.*;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
 import java.util.regex.*;
 
 public class ChoobDecoderTask extends ChoobTask {
-	private static DbConnectionBroker dbBroker;
+	private static ConnectionBroker dbBroker;
 
 	private static Modules modules;
 
@@ -19,7 +21,7 @@ public class ChoobDecoderTask extends ChoobTask {
 
 	private Event event;
 
-	static void initialise(DbConnectionBroker dbBroker, Modules modules,
+	static void initialise(ConnectionBroker dbBroker, Modules modules,
 			IRCInterface irc) {
 		if (ChoobDecoderTask.dbBroker != null)
 			return;

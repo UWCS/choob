@@ -7,8 +7,11 @@
 package uk.co.uwcs.choob.modules;
 
 import java.sql.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+
+import uk.co.uwcs.choob.db.ConnectionBroker;
+import uk.co.uwcs.choob.error.ChoobError;
+import uk.co.uwcs.choob.event.*;
+import uk.co.uwcs.choob.security.ChoobPermission;
 import java.security.*;
 import java.util.List;
 import java.util.ArrayList;
@@ -19,10 +22,10 @@ import java.util.ArrayList;
  * @author sadiq
  */
 public final class HistoryModule {
-	private DbConnectionBroker dbBroker;
+	private ConnectionBroker dbBroker;
 
 	/** Creates a new instance of LoggerModule */
-	HistoryModule(DbConnectionBroker dbBroker) {
+	HistoryModule(ConnectionBroker dbBroker) {
 		this.dbBroker = dbBroker;
 	}
 
@@ -120,29 +123,12 @@ public final class HistoryModule {
 						.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Time = ? AND Random = ? AND Channel = ?");
 				stat.setString(6, ((ChannelEvent) mes).getChannel());
 			} else
+				// Checking if the channel is null causes speshulness here. The
+				// check is irrelevant, though, because it will be, because of
+				// the Type.
 				stat = dbCon
-						.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Time = ? AND Random = ?"); // Checking
-			// if
-			// the
-			// channel
-			// is
-			// null
-			// causes
-			// speshulness
-			// here.
-			// The
-			// check
-			// is
-			// irrelevant,
-			// though,
-			// because
-			// it
-			// will
-			// be,
-			// because
-			// of
-			// the
-			// Type.
+						.prepareStatement("SELECT LineID FROM History WHERE Type = ? AND Nick = ? AND Hostmask = ? AND Time = ? AND Random = ?");
+			
 
 			stat.setString(1, mes.getClass().getName());
 			stat.setString(2, mes.getNick());

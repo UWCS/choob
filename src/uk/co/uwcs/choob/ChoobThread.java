@@ -1,6 +1,7 @@
 package uk.co.uwcs.choob;
 
-import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.security.ChoobPermission;
+
 import java.security.Permission;
 import java.security.AccessController;
 import java.util.Stack;

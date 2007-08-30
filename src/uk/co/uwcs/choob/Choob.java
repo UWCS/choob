@@ -14,8 +14,13 @@ package uk.co.uwcs.choob;
 import org.jibble.pircbot.*;
 import java.io.*;
 import java.util.*;
+
+import uk.co.uwcs.choob.plugins.ChoobPluginManager;
+import uk.co.uwcs.choob.security.ChoobProtectionDomain;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.db.ConnectionBroker;
+import uk.co.uwcs.choob.error.ChoobError;
+import uk.co.uwcs.choob.event.*;
 import uk.co.uwcs.choob.modules.*;
 import java.sql.*;
 
@@ -23,7 +28,7 @@ import java.sql.*;
  * Core class of the Choob bot, main interaction with IRC.
  */
 public final class Choob extends PircBot {
-	private DbConnectionBroker broker;
+	private ConnectionBroker broker;
 
 	private Map pluginMap;
 
@@ -71,7 +76,7 @@ public final class Choob extends PircBot {
 			return;
 		}
 		try {
-			broker = new DbConnectionBroker(
+			broker = new ConnectionBroker(
 					"com.mysql.jdbc.Driver",
 					"jdbc:mysql://"
 							+ conf.getSettingFallback("dbServer", "localhost")
@@ -119,13 +124,47 @@ public final class Choob extends PircBot {
 		irc.grabMods();
 
 		// Set up the threading stuff, load plugins, etc.
+		
+		// Create our list of threads
+		watcher = new ChoobWatcherThread(intervalList, irc, pluginMap, modules);
+
+		watcher.start();
+
+		// This is needed to properly initialise a ChoobProtectionDomain.
+		ChoobPluginManager.initialise(modules, irc);
+
+		// Initialise the thread manager, too
+		ChoobThreadManager.initialise(modules);
+		ChoobDecoderTask.initialise(broker, modules, irc);
+
 		try {
-			init();
-		} catch (ChoobError e) {
-			// Uh oh, some serious badness happened.
-			System.err
-					.println("Fatal error, bailing out of Choob constructor.");
-			throw e;
+			// We need to have an initial set of plugins that ought to be
+			// loaded as core.
+
+			Connection dbConnection = broker.getConnection();
+			PreparedStatement coreplugSmt = dbConnection
+					.prepareStatement("SELECT * FROM Plugins WHERE CorePlugin = 1;");
+			ResultSet coreplugResults = coreplugSmt.executeQuery();
+			if (coreplugResults.first()) {
+				do {
+					System.out.print("Loading core plugin "
+							+ coreplugResults.getString("PluginName")
+							+ " from <" + coreplugResults.getString("URL")
+							+ ">... ");
+					modules.plugin.addPlugin(coreplugResults
+							.getString("PluginName"), coreplugResults
+							.getString("URL"));
+					System.out.println("done.");
+				} while (coreplugResults.next());
+			}
+
+			coreplugSmt.close();
+
+			broker.freeConnection(dbConnection);
+		} catch (Throwable t) {
+			t.printStackTrace();
+			// If we failed to load the core plugins, we've got issues.
+			throw new ChoobError("Failed to load core plugin list!", t);
 		}
 
 		// Disable PircBot's flood protection, reducing percieved lag.
@@ -166,14 +205,16 @@ public final class Choob extends PircBot {
 
 		String[] commands = conf.getSettingFallback("connectstring", "").split(
 				"\\|\\|\\|");
-		for (int i = 0; i < commands.length; i++)
+		for (int i = 0; i < commands.length; i++) {
 			sendRawLineViaQueue(commands[i]);
+		}
 
 		// Join the channels.
 		String[] channels = conf.getSettingFallback("channels", "").split(
 				"[ ,]");
-		for (int i = 0; i < channels.length; i++)
+		for (int i = 0; i < channels.length; i++) {
 			joinChannel(channels[i]);
+		}
 	}
 
 	public IRCInterface getIRC() {
@@ -184,70 +225,25 @@ public final class Choob extends PircBot {
 		return modules;
 	}
 
-	/**
-	 * Initialises the Choob thread poll as well as loading the few core plugins
-	 * that ought to be present at start.
-	 */
-	private void init() throws ChoobError {
-		// Create our list of threads
-		watcher = new ChoobWatcherThread(intervalList, irc, pluginMap, modules);
-
-		watcher.start();
-
-		// This is needed to properly initialise a ChoobProtectionDomain.
-		ChoobPluginManager.initialise(modules, irc);
-
-		// Initialise the thread manager, too
-		ChoobThreadManager.initialise(modules);
-		ChoobDecoderTask.initialise(broker, modules, irc);
-
-		try {
-			// We need to have an initial set of plugins that ought to be
-			// loaded as core.
-
-			Connection dbConnection = broker.getConnection();
-			PreparedStatement coreplugSmt = dbConnection
-					.prepareStatement("SELECT * FROM Plugins WHERE CorePlugin = 1;");
-			ResultSet coreplugResults = coreplugSmt.executeQuery();
-			if (coreplugResults.first())
-				do {
-					System.out.print("Loading core plugin "
-							+ coreplugResults.getString("PluginName")
-							+ " from <" + coreplugResults.getString("URL")
-							+ ">... ");
-					modules.plugin.addPlugin(coreplugResults
-							.getString("PluginName"), coreplugResults
-							.getString("URL"));
-					System.out.println("done.");
-				} while (coreplugResults.next());
-
-			coreplugSmt.close();
-
-			broker.freeConnection(dbConnection);
-		} catch (Throwable t) {
-			t.printStackTrace();
-			// If we failed to load the core plugins, we've got issues.
-			throw new ChoobError("Failed to load core plugin list!", t);
-		}
-	}
-
 	private void setupSecurity() {
 		// TODO - make this a proper class
 		java.security.Policy.setPolicy(new java.security.Policy() {
 			// I think this is all that's ever really needed...
 			public synchronized boolean implies(
 					java.security.ProtectionDomain d, java.security.Permission p) {
-				if (!(d instanceof ChoobProtectionDomain))
+				if (!(d instanceof ChoobProtectionDomain)) {
 					return true;
-				else
+				} else {
 					return false;
+				}
 			}
 
 			public synchronized java.security.PermissionCollection getPermissions(
 					java.security.ProtectionDomain d) {
 				java.security.PermissionCollection p = new java.security.Permissions();
-				if (!(d instanceof ChoobProtectionDomain))
+				if (!(d instanceof ChoobProtectionDomain)) {
 					p.add(new java.security.AllPermission());
+				}
 				return p;
 			}
 
@@ -270,8 +266,9 @@ public final class Choob extends PircBot {
 
 		// Note to self: Install security AFTER making sure we have permissions
 		// to grant ourselves permissions. :( -- bucko
-		if (System.getSecurityManager() == null)
+		if (System.getSecurityManager() == null) {
 			System.setSecurityManager(new SecurityManager());
+		}
 	}
 
 	/**
@@ -334,14 +331,15 @@ public final class Choob extends PircBot {
 
 	protected void onNotice(String nick, String login, String hostname,
 			String target, String message) {
-		if (target.indexOf('#') == 0)
+		if (target.charAt(0) == '#') {
 			spinThread(new ChannelNotice("onNotice",
 					System.currentTimeMillis(), ((int) (Math.random() * 127)),
 					message, nick, login, hostname, target, target));
-		else
+		} else {
 			spinThread(new PrivateNotice("onPrivateNotice", System
 					.currentTimeMillis(), ((int) (Math.random() * 127)),
 					message, nick, login, hostname, target));
+		}
 	}
 
 	protected void onMessage(String target, String nick, String login,
@@ -360,14 +358,15 @@ public final class Choob extends PircBot {
 
 	protected void onAction(String nick, String login, String hostname,
 			String target, String message) {
-		if (target.indexOf('#') == 0)
+		if (target.charAt(0) == '#') {
 			spinThread(new ChannelAction("onAction",
 					System.currentTimeMillis(), ((int) (Math.random() * 127)),
 					message, nick, login, hostname, target, target));
-		else
+		} else {
 			spinThread(new PrivateAction("onPrivateAction", System
 					.currentTimeMillis(), ((int) (Math.random() * 127)),
 					message, nick, login, hostname, target));
+		}
 	}
 
 	protected void onChannelInfo(String channel, int userCount, String message) {
@@ -604,17 +603,31 @@ public final class Choob extends PircBot {
 
 	private synchronized void spinThreadInternal(Event ev, boolean securityOK) {
 		// synthLevel is also checked in addLog();
-		if (ev instanceof Message && ((Message) ev).getSynthLevel() == 0)
+		if (ev instanceof Message && ((Message) ev).getSynthLevel() == 0) {
 			modules.history.addLog((Message) ev);
+		}
 
-		if (ev instanceof ChannelKick)
+		if (ev instanceof ChannelKick) {
 			modules.history.addLog(ev);
+		}
 
-		if (securityOK && (ev instanceof IRCEvent))
+		if (securityOK && (ev instanceof IRCEvent)) {
 			((IRCEvent) ev).getFlags().put("_securityOK", "true");
+		}
 
 		ChoobTask task = new ChoobDecoderTask(ev);
 
 		ChoobThreadManager.queueTask(task);
+	}
+
+	public static void main(String[] args) {
+		try {
+			new Choob();
+		} catch (Throwable t) {
+			System.err.println("Fatal error in Choob, exiting.");
+			t.printStackTrace();
+			System.exit(1);
+		}
+	
 	}
 }

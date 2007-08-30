@@ -376,7 +376,7 @@ public final class HorriblePerlScript
 				paramValueMap.put("methodName", "\"onPrivate" + handler + "\"");
 				String constructorParamsPrivate = getConstructorOrder("Private" + className, paramValueMap);
 
-				eventHandler.append("\t\tif (target.indexOf('#') == 0)\n");
+				eventHandler.append("\t\tif (target.charAt(0) == '#')\n");
 				eventHandler.append("\t\t\tspinThread(new Channel" + className + "(" + constructorParamsPublic + "));\n");
 				eventHandler.append("\t\telse\n");
 				eventHandler.append("\t\t\tspinThread(new Private" + className + "(" + constructorParamsPrivate + "));\n\t}\n\n");

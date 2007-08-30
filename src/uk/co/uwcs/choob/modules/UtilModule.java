@@ -6,8 +6,8 @@
 
 package uk.co.uwcs.choob.modules;
 
+import uk.co.uwcs.choob.event.*;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
 import java.util.regex.*;
 

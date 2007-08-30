@@ -3,6 +3,8 @@ package uk.co.uwcs.choob.support;
 import java.util.*;
 import java.io.*;
 
+import uk.co.uwcs.choob.exception.ChoobException;
+
 /**
  * Wrapper for configuration file reading.
  */

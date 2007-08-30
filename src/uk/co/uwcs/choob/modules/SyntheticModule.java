@@ -6,8 +6,8 @@
 
 package uk.co.uwcs.choob.modules;
 
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.event.*;
+import uk.co.uwcs.choob.security.ChoobPermission;
 import uk.co.uwcs.choob.*;
 
 /**

@@ -6,6 +6,8 @@
 
 package uk.co.uwcs.choob.modules;
 
+import uk.co.uwcs.choob.db.ConnectionBroker;
+import uk.co.uwcs.choob.exception.ChoobException;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.*;
 import java.util.*;
@@ -67,12 +69,6 @@ public final class Modules {
 	public ProtectedChannels pc;
 
 	/**
-	 * An instance of the ObjectDbModule, an interface to the generic
-	 * ObjectDatabase, for the persistance of objects.
-	 */
-	public ObjectDbModule odb;
-
-	/**
 	 * An instance of the ScraperModule, a set of tools to simplify
 	 * screen-scraping.
 	 */
@@ -86,14 +82,13 @@ public final class Modules {
 	/**
 	 * Creates a new instance of the Modules.
 	 */
-	public Modules(DbConnectionBroker dbBroker, Map pluginMap,
+	public Modules(ConnectionBroker dbBroker, Map pluginMap,
 			List<Interval> intervalList, Choob bot, IRCInterface irc) {
 		try {
 			date = new DateModule();
 			history = new HistoryModule(dbBroker);
 			interval = new IntervalModule(intervalList, this);
 			nick = new NickModule();
-			odb = new ObjectDbModule(dbBroker, this);
 			pc = new ProtectedChannels();
 			plugin = new PluginModule(pluginMap, dbBroker, this, irc, bot);
 			scrape = new ScraperModule();

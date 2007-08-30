@@ -6,9 +6,19 @@
 
 package uk.co.uwcs.choob.modules;
 
+import uk.co.uwcs.choob.db.ConnectionBroker;
+import uk.co.uwcs.choob.error.ChoobAuthError;
+import uk.co.uwcs.choob.error.ChoobBadSyntaxError;
+import uk.co.uwcs.choob.error.ChoobError;
+import uk.co.uwcs.choob.error.ChoobInternalError;
+import uk.co.uwcs.choob.error.ChoobInvocationError;
+import uk.co.uwcs.choob.event.*;
+import uk.co.uwcs.choob.exception.ChoobException;
+import uk.co.uwcs.choob.exception.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.exception.ChoobNoSuchPluginException;
 import uk.co.uwcs.choob.plugins.*;
+import uk.co.uwcs.choob.security.ChoobPermission;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
 import uk.co.uwcs.choob.*;
 import java.util.*;
 import java.net.*;
@@ -24,7 +34,7 @@ import java.security.AccessControlException;
  * @author sadiq
  */
 public final class PluginModule {
-	private DbConnectionBroker broker;
+	private ConnectionBroker broker;
 
 	private Modules mods;
 
@@ -44,13 +54,12 @@ public final class PluginModule {
 	 * @param pluginMap
 	 *            Map containing currently loaded plugins.
 	 */
-	PluginModule(Map pluginMap, DbConnectionBroker broker, Modules mods,
+	PluginModule(Map pluginMap, ConnectionBroker broker, Modules mods,
 			IRCInterface irc, Choob bot) throws ChoobException {
 		this.broker = broker;
 		this.mods = mods;
 		this.hsPlugMan = new HaxSunPluginManager(mods, irc);
 		this.dPlugMan = new ChoobDistributingPluginManager();
-		this.jsPlugMan = new JavaScriptPluginManager(mods, irc);
 		this.bot = bot;
 		this.irc = irc;
 	}

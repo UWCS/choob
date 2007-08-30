@@ -7,12 +7,28 @@
 package uk.co.uwcs.choob.modules;
 
 import bsh.classpath.*;
+import uk.co.uwcs.choob.db.ConnectionBroker;
+import uk.co.uwcs.choob.error.ChoobAuthError;
+import uk.co.uwcs.choob.error.ChoobError;
+import uk.co.uwcs.choob.error.ChoobEventExpired;
+import uk.co.uwcs.choob.error.ChoobGeneralAuthError;
+import uk.co.uwcs.choob.error.ChoobNSAuthError;
+import uk.co.uwcs.choob.error.ChoobPluginAuthError;
+import uk.co.uwcs.choob.error.ChoobQAuthError;
+import uk.co.uwcs.choob.error.ChoobUserAuthError;
+import uk.co.uwcs.choob.event.*;
+import uk.co.uwcs.choob.exception.ChoobException;
+import uk.co.uwcs.choob.exception.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.exception.ChoobNoSuchPluginException;
+import uk.co.uwcs.choob.security.ChoobFakeProtectionDomain;
+import uk.co.uwcs.choob.security.ChoobPermission;
+import uk.co.uwcs.choob.security.ChoobProtectionDomain;
+import uk.co.uwcs.choob.security.ChoobSpecialStackPermission;
 import uk.co.uwcs.choob.support.*;
 import java.sql.*;
 import java.security.*;
 import java.lang.reflect.*;
 import java.util.*;
-import uk.co.uwcs.choob.support.events.*;
 
 /**
  * Security manager for plugins, access control to anything requiring/checking
@@ -24,7 +40,7 @@ import uk.co.uwcs.choob.support.events.*;
  */
 // Extends SecurityManager for getClassContext(). Heh.
 public final class SecurityModule extends SecurityManager {
-	private DbConnectionBroker dbBroker;
+	private ConnectionBroker dbBroker;
 
 	private Map<Integer, PermissionCollection> nodeMap;
 
@@ -42,7 +58,7 @@ public final class SecurityModule extends SecurityManager {
 	 * @param dbBroker
 	 *            Database connection pool/broker.
 	 */
-	SecurityModule(DbConnectionBroker dbBroker, Modules mods) {
+	SecurityModule(ConnectionBroker dbBroker, Modules mods) {
 		// Make sure these classes is preloaded!
 		// This avoids circular security checks. Oh, the horror!
 		// Class throwAway = bsh.BshMethod.class;

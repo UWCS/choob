@@ -1,7 +1,8 @@
 package uk.co.uwcs.choob;
 
 import java.util.concurrent.*;
-import uk.co.uwcs.choob.support.*;
+
+import uk.co.uwcs.choob.security.ChoobPermission;
 import uk.co.uwcs.choob.modules.*;
 import java.util.*;
 

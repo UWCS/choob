@@ -12,8 +12,13 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.regex.*;
 import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.support.events.*;
 import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.error.ChoobError;
+import uk.co.uwcs.choob.error.ChoobInvocationError;
+import uk.co.uwcs.choob.event.*;
+import uk.co.uwcs.choob.exception.ChoobException;
+import uk.co.uwcs.choob.exception.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.exception.ChoobNoSuchPluginException;
 import uk.co.uwcs.choob.modules.*;
 
 public final class HaxSunPluginManager extends ChoobPluginManager {
