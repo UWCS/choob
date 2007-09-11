@@ -4,6 +4,7 @@
 	<property name="lib.dir"     value="lib"/>
 	<property name="build.dir"   value="build"/>
 	<property name="classes.dir" value="${build.dir}/classes"/>
+	<property name="javadoc.dir" value="${build.dir}/javadoc"/>
 
 	<path id="classpath">
 		<fileset dir="${lib.dir}" includes="**/*.jar"/>
@@ -15,8 +16,16 @@
 
 	<target name="compile">
 		<mkdir dir="${classes.dir}"/>
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"/>
+                <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"/>
 	</target>
 
-	<target name="main" depends="clean,compile"/>
+	<target name="javadoc">
+		<mkdir dir="${javadoc.dir}"/>
+		<javadoc packagenames="uk.co.uwcs.choob.*"
+			 sourcepath="${src.dir}"
+			 destdir="${javadoc.dir}"
+			 classpathref="classpath"/>
+	</target>
+
+	<target name="main" depends="clean,compile,javadoc"/>
 </project>
