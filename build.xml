@@ -27,5 +27,16 @@
 			 classpathref="classpath"/>
 	</target>
 
+	<target name="run" depends="compile">
+		<java classname="uk.co.uwcs.choob.Choob"
+		      failonerror="true"
+		      fork="true">
+			<classpath>
+				<path refid="classpath"/>
+				<pathelement path="${classes.dir}"/>
+			</classpath>
+		</java>
+	</target>
+
 	<target name="main" depends="clean,compile,javadoc"/>
 </project>
