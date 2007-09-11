@@ -44,7 +44,7 @@ public final class SecurityModule extends SecurityManager {
 
 	private Map<Integer, List<Integer>> nodeTree;
 
-	private ArrayList<Map<String, Integer>> nodeIDCache;
+	private Map<String, Integer>[] nodeIDCache;
 
 	private Modules mods;
 
@@ -70,9 +70,9 @@ public final class SecurityModule extends SecurityManager {
 		this.nodeMap = new HashMap<Integer, PermissionCollection>();
 		this.nodeTree = new HashMap<Integer, List<Integer>>();
 
-		this.nodeIDCache = new ArrayList<Map<String, Integer>>();
+		this.nodeIDCache = new Map[4];
 		for (int i = 0; i < 4; i++) {
-			nodeIDCache.set(i, new HashMap<String, Integer>());
+			nodeIDCache[i] = new HashMap<String, Integer>();
 		}
 
 		this.anonID = getNodeIDFromNodeName("anonymous", 3);
@@ -400,7 +400,7 @@ public final class SecurityModule extends SecurityManager {
 	 */
 	private int getNodeIDFromNodeName(String nodeName, int nodeType) {
 		// Check the cache.
-		Integer id = nodeIDCache.get(nodeType).get(nodeName.toLowerCase());
+		Integer id = nodeIDCache[nodeType].get(nodeName.toLowerCase());
 		if (id != null) {
 			return id.intValue();
 		}
@@ -416,7 +416,7 @@ public final class SecurityModule extends SecurityManager {
 			ResultSet results = stat.executeQuery();
 			if (results.first()) {
 				int idGot = results.getInt(1);
-				nodeIDCache.get(nodeType).put(nodeName.toLowerCase(), idGot);
+				nodeIDCache[nodeType].put(nodeName.toLowerCase(), idGot);
 				return idGot;
 			}
 			System.err.println("Ack! Node name " + nodeName + "(" + nodeType
