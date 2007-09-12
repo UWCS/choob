@@ -1,7 +1,7 @@
 import uk.co.uwcs.choob.*;
 import uk.co.uwcs.choob.modules.*;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.event.*
 import java.util.*;
 import java.security.*;
 import org.jibble.pircbot.Colors;
