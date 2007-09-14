@@ -21,8 +21,8 @@ public final class HaxSunPluginClassLoader extends ClassLoader {
 	public Class<?> findClass(final String name) throws ClassNotFoundException {
 		try {
 			return AccessController
-					.doPrivileged(new PrivilegedExceptionAction<Class>() {
-						public Class run() throws ClassNotFoundException {
+					.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
+						public Class<?> run() throws ClassNotFoundException {
 							try {
 								String fileName = path
 										+ name.replace('.', File.separatorChar)
@@ -62,7 +62,7 @@ public final class HaxSunPluginClassLoader extends ClassLoader {
 													+ name
 													+ " has was not fully read; not loaded.");
 
-								Class theClass = defineClass(name, classData,
+								Class<?> theClass = defineClass(name, classData,
 										0, classData.length, domain);
 								return theClass;
 							} catch (IOException e) {

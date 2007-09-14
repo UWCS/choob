@@ -228,11 +228,11 @@ public final class HaxSunPluginManager extends ChoobPluginManager {
 
 		// Squiggly brackets are for the weak.
 
-		Constructor c[] = newClass.getConstructors();
+		Constructor<?> c[] = newClass.getConstructors();
 
 		for (int i = 0; i < c.length; i++)
 			try {
-				Class[] t = c[i].getParameterTypes();
+				Class<?>[] t = c[i].getParameterTypes();
 				Object[] arg = new Object[t.length];
 
 				for (int j = 0; j < t.length; j++)
@@ -338,7 +338,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager {
 			} else {
 				// Is a method
 				Method method = (Method) thing;
-				Class[] types = method.getParameterTypes();
+				Class<?>[] types = method.getParameterTypes();
 				int paramlength = types.length;
 				if (paramlength != args.length)
 					continue;
@@ -688,7 +688,7 @@ final class ChoobPluginMap {
 		List<Method> evs = new LinkedList<Method>();
 		pluginEvents.put(lname, evs);
 
-		Class pluginClass = pluginObj.getClass();
+		Class<?> pluginClass = pluginObj.getClass();
 		Method[] meths = pluginClass.getMethods();
 		for (Method meth : meths) {
 			// We don't want these. :)
