@@ -24,7 +24,7 @@ public final class ChoobWatcherThread extends Thread {
 
 	/** Creates a new instance of ChoobWatcherThread */
 	ChoobWatcherThread(List<Interval> intervalList, IRCInterface irc,
-			Map pluginMap, Modules mods) {
+			Modules mods) {
 		this.intervalList = intervalList;
 		this.mods = mods;
 	}

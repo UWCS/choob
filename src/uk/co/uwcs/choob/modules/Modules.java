@@ -82,15 +82,15 @@ public final class Modules {
 	/**
 	 * Creates a new instance of the Modules.
 	 */
-	public Modules(ConnectionBroker dbBroker, Map pluginMap,
-			List<Interval> intervalList, Choob bot, IRCInterface irc) {
+	public Modules(ConnectionBroker dbBroker, List<Interval> intervalList,
+			Choob bot, IRCInterface irc) {
 		try {
 			date = new DateModule();
 			history = new HistoryModule(dbBroker);
 			interval = new IntervalModule(intervalList, this);
 			nick = new NickModule();
 			pc = new ProtectedChannels();
-			plugin = new PluginModule(pluginMap, dbBroker, this, irc, bot);
+			plugin = new PluginModule(dbBroker, this, irc, bot);
 			scrape = new ScraperModule();
 			security = new SecurityModule(dbBroker, this);
 			synthetic = new SyntheticModule(bot);

@@ -30,8 +30,6 @@ import java.sql.*;
 public final class Choob extends PircBot {
 	private ConnectionBroker broker;
 
-	private Map pluginMap;
-
 	private Modules modules;
 
 	private IRCInterface irc;
@@ -109,7 +107,7 @@ public final class Choob extends PircBot {
 		irc = new IRCInterface(this);
 
 		// Initialise our modules.
-		modules = new Modules(broker, pluginMap, intervalList, this, irc);
+		modules = new Modules(broker, intervalList, this, irc);
 
 		// Set the name from the config file.
 		this.setName(conf.getSettingFallback("botName", "Choob"));
@@ -126,7 +124,7 @@ public final class Choob extends PircBot {
 		// Set up the threading stuff, load plugins, etc.
 		
 		// Create our list of threads
-		watcher = new ChoobWatcherThread(intervalList, irc, pluginMap, modules);
+		watcher = new ChoobWatcherThread(intervalList, irc, modules);
 
 		watcher.start();
 

@@ -54,7 +54,7 @@ public final class PluginModule {
 	 * @param pluginMap
 	 *            Map containing currently loaded plugins.
 	 */
-	PluginModule(Map pluginMap, ConnectionBroker broker, Modules mods,
+	PluginModule(ConnectionBroker broker, Modules mods,
 			IRCInterface irc, Choob bot) throws ChoobException {
 		this.broker = broker;
 		this.mods = mods;
