@@ -6,27 +6,17 @@
 
 package uk.co.uwcs.choob.modules;
 
-import bsh.classpath.*;
-import uk.co.uwcs.choob.db.ConnectionBroker;
-import uk.co.uwcs.choob.error.ChoobAuthError;
-import uk.co.uwcs.choob.error.ChoobError;
-import uk.co.uwcs.choob.error.ChoobEventExpired;
-import uk.co.uwcs.choob.error.ChoobGeneralAuthError;
-import uk.co.uwcs.choob.error.ChoobPluginAuthError;
-import uk.co.uwcs.choob.error.ChoobUserAuthError;
-import uk.co.uwcs.choob.event.*;
-import uk.co.uwcs.choob.exception.ChoobException;
-import uk.co.uwcs.choob.exception.ChoobNoSuchCallException;
-import uk.co.uwcs.choob.exception.ChoobNoSuchPluginException;
-import uk.co.uwcs.choob.security.ChoobFakeProtectionDomain;
-import uk.co.uwcs.choob.security.ChoobPermission;
-import uk.co.uwcs.choob.security.ChoobProtectionDomain;
-import uk.co.uwcs.choob.security.ChoobSpecialStackPermission;
-import uk.co.uwcs.choob.support.*;
 import java.sql.*;
 import java.security.*;
 import java.lang.reflect.*;
 import java.util.*;
+
+import uk.co.uwcs.choob.db.*;
+import uk.co.uwcs.choob.error.*;
+import uk.co.uwcs.choob.event.*;
+import uk.co.uwcs.choob.exception.*;
+import uk.co.uwcs.choob.security.*;
+import uk.co.uwcs.choob.support.*;
 
 /**
  * Security manager for plugins, access control to anything requiring/checking
@@ -199,13 +189,9 @@ public final class SecurityModule extends SecurityManager {
 						System.err.println("Class " + className
 								+ " is not a Permission!");
 						continue; // XXX
-					} else if (clas.getClassLoader() instanceof DiscreteFilesClassLoader) {
-						System.err.println("Class " + className
-								+ " is an insecure Permission!");
-						continue;
 					}
 
-					Constructor con;
+					Constructor<?> con;
 					try {
 						con = clas.getDeclaredConstructor(String.class,
 								String.class);
