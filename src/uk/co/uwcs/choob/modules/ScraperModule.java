@@ -567,10 +567,9 @@ public final class ScraperModule {
 		}
 
 		synchronized (sites) {
-			Iterator i = (sites.entrySet()).iterator();
+			Iterator<Map.Entry<URL, GetContentsCached>> i = sites.entrySet().iterator();
 			while (i.hasNext()) {
-				if (((GetContentsCached) ((Map.Entry) i.next()).getValue())
-						.expired()) {
+				if (i.next().getValue().expired()) {
 					i.remove();
 				}
 			}
