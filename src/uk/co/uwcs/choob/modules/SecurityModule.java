@@ -44,7 +44,7 @@ public final class SecurityModule extends SecurityManager {
 
 	private Map<Integer, List<Integer>> nodeTree;
 
-	private ArrayList<HashMap<String, Integer>> nodeIDCache;
+	private ArrayList<Map<String, Integer>> nodeIDCache;
 
 	private Modules mods;
 
@@ -70,7 +70,7 @@ public final class SecurityModule extends SecurityManager {
 		this.nodeMap = new HashMap<Integer, PermissionCollection>();
 		this.nodeTree = new HashMap<Integer, List<Integer>>();
 
-		this.nodeIDCache = new ArrayList<HashMap<String, Integer>>();
+		this.nodeIDCache = new ArrayList<Map<String, Integer>>();
 		for (int i = 0; i < 4; i++) {
 			nodeIDCache.add(new HashMap<String, Integer>());
 		}
@@ -122,11 +122,11 @@ public final class SecurityModule extends SecurityManager {
 	 *         name.
 	 */
 	public String getPluginName(int skip) {
-		List names = getPluginNames();
+		List<String> names = getPluginNames();
 		if (skip >= names.size()) {
 			return null;
 		}
-		return (String) names.get(skip);
+		return names.get(skip);
 	}
 
 	/**
@@ -160,7 +160,7 @@ public final class SecurityModule extends SecurityManager {
 	}
 
 	/**
-	 * Update permissions set for the given node ID. Code visciously hacked out
+	 * Update permissions set for the given node ID. Code viciously hacked out
 	 * of ChoobSecurityManager.
 	 */
 	private void updateNodePermissions(int nodeID) {
