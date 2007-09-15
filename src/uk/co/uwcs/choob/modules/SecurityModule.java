@@ -6,7 +6,6 @@
 
 package uk.co.uwcs.choob.modules;
 
-import bsh.classpath.*;
 import uk.co.uwcs.choob.support.*;
 import java.sql.*;
 import java.security.*;
@@ -37,11 +36,6 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	SecurityModule(DbConnectionBroker dbBroker, Modules mods)
 	{
-		// Make sure these classes is preloaded!
-		// This avoids circular security checks. Oh, the horror!
-		//Class throwAway = bsh.BshMethod.class;
-		//throwAway = DiscreteFilesClassLoader.class;
-
 		this.dbBroker = dbBroker;
 		this.mods = mods;
 
@@ -190,11 +184,6 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					{
 						System.err.println("Class " + className + " is not a Permission!");
 						continue; // XXX
-					}
-					else if (clas.getClassLoader() instanceof DiscreteFilesClassLoader)
-					{
-						System.err.println("Class " + className + " is an insecure Permission!");
-						continue;
 					}
 
 					Constructor con;
