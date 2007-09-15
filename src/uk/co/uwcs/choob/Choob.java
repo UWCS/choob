@@ -25,7 +25,6 @@ import java.sql.*;
 public final class Choob extends PircBot
 {
 	private DbConnectionBroker broker;
-	private Map pluginMap;
 	private Modules modules;
 	private IRCInterface irc;
 	private String trigger;
@@ -103,7 +102,7 @@ public final class Choob extends PircBot
 		irc = new IRCInterface( this );
 
 		// Initialise our modules.
-		modules = new Modules(broker, pluginMap, intervalList, this, irc );
+		modules = new Modules(broker, intervalList, this, irc);
 
 		// Set the name from the config file.
 		this.setName(conf.getSettingFallback("botName", "Choob"));

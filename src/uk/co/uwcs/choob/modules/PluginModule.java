@@ -35,7 +35,8 @@ public final class PluginModule
 	 * Creates a new instance of the PluginModule.
 	 * @param pluginMap Map containing currently loaded plugins.
 	 */
-	PluginModule(Map pluginMap, DbConnectionBroker broker, Modules mods, IRCInterface irc, Choob bot) throws ChoobException {
+	PluginModule(DbConnectionBroker broker, Modules mods,
+			IRCInterface irc, Choob bot) throws ChoobException {
 		this.broker = broker;
 		this.mods = mods;
 		this.hsPlugMan = new HaxSunPluginManager(mods, irc);

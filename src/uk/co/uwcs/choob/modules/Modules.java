@@ -76,17 +76,16 @@ public final class Modules
 	/**
 	 * Creates a new instance of the Modules.
 	 */
-	public Modules( DbConnectionBroker dbBroker, Map pluginMap, List<Interval> intervalList, Choob bot, IRCInterface irc )
-	{
-		try
-		{
+	public Modules(DbConnectionBroker dbBroker, List<Interval> intervalList,
+			Choob bot, IRCInterface irc) {
+		try {
 			date = new DateModule();
 			history = new HistoryModule(dbBroker);
 			interval = new IntervalModule( intervalList, this );
 			nick = new NickModule();
 			odb = new ObjectDbModule( dbBroker, this );
 			pc = new ProtectedChannels();
-			plugin = new PluginModule(pluginMap, dbBroker, this, irc, bot);
+			plugin = new PluginModule(dbBroker, this, irc, bot);
 			scrape = new ScraperModule();
 			security = new SecurityModule( dbBroker, this );
 			synthetic = new SyntheticModule( bot );
