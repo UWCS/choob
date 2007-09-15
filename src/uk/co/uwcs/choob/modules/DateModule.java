@@ -2,26 +2,63 @@ package uk.co.uwcs.choob.modules;
 
 import java.util.*;
 
-/** Some functions to help with time and date manipulation */
-public final class DateModule
-{
-	/** enum representation of the levels of output that these functions produce */
-	public static enum longtokens { week, day, hour, minute, second, millisecond }
+/** Some functions to help with time and date manipulation. */
+public final class DateModule {
+	/**
+	 * Units of time used in these functions.
+	 */
+	private static enum TimeUnit {
+		WEEK("week", "w", 7 * 24 * 60 * 60 * 1000),
+		DAY("day", "d", 24 * 60 * 60 * 1000),
+		HOUR("hour", "h", 60 * 60 * 1000),
+		MINUTE("minute", "m", 60 * 1000),
+		SECOND("second", "s", 1000),
+		MILLISECOND("millisecond", "ms", 1);
+		
+		private final String longToken;
+		private final String shortToken;
+		private final int duration;
+		
+		TimeUnit(String longToken, String shortToken, int duration) {
+			this.longToken = longToken;
+			this.shortToken = shortToken;
+			this.duration = duration;
+		}
+		
+		public String quantity(boolean useShortTokens, long quantity) {
+			if (useShortTokens) {
+				return quantity + shortToken;
+			} else {
+				return quantity + " " + longToken + (quantity > 1 ? "s" : "");
+			}
+		}
+		
+		public String lessThanOne(boolean useShortTokens) {
+			if (useShortTokens) {
+				return "<1" + shortToken;
+			} else {
+				return "less than " + ((this == HOUR) ? "an" : "a") + " "
+						+ longToken;
+			}
+		}
+		
+		public int duration() {
+			return duration;
+		}
+	}
 
-	// Yes, this is incredibly lame. Enum -> String[] is really beyond me (without a for-loop):
-	public final static String[] longtokensstring = new String[] { "week", "day", "hour", "minute", "second", "millisecond" };
-
-	/** Helper, converts a long (ms since epoch) time to an array of weeks (index 0), days (index 1), hours, etc. */
-	final static long[] getSt(long i)
-	{
-		final long w= (i / (7*24*60*60*1000)); i -= w*(7*24*60*60*1000);
-		final long d= (i / (24*60*60*1000)); i -= d*(24*60*60*1000);
-		final long h= (i / (60*60*1000)); i -= h*(60*60*1000);
-		final long m= (i / (60*1000)); i -= m*(60*1000);
-		final long s= (i / (1000)); i -= s*1000;
-		final long ms=(i); i -=ms;
-		final long st[]={w,d,h,m,s,ms};
-		return st;
+	/**
+	 * Helper, converts a long (ms) time to a Map.
+	 */	
+	final static Map<TimeUnit, Long> getTimeUnitMap(long interval) {
+		Map<TimeUnit, Long> map = new EnumMap<TimeUnit, Long>(TimeUnit.class);
+		
+		for (TimeUnit unit : EnumSet.allOf(TimeUnit.class)) {
+			long assigned = map.put(unit, (interval / unit.duration()));
+			interval -= assigned * unit.duration();
+		}
+		
+		return map;
 	}
 
 	/** Gives a minimal representation of the given time interval, ie 1w6d. */
@@ -30,10 +67,12 @@ public final class DateModule
 		return timeMicroStamp(i, 2);
 	}
 
-	/** Gives a minimal representation of the given time interval, with the specified (maximum) number of elements. */
-	public final String timeMicroStamp(long i, int granularity)
-	{
-		return timeStamp(i, true, granularity, longtokens.millisecond);
+	/**
+	 * Gives a minimal representation of the given time interval, with the
+	 * specified (maximum) number of elements.
+	 */
+	public final String timeMicroStamp(final long i, final int granularity) {
+		return timeStamp(i, true, granularity, TimeUnit.MILLISECOND);
 	}
 
 	/** Gives a long representation of the given time interval, ie. "1 week and 6 days" */
@@ -42,65 +81,92 @@ public final class DateModule
 		return timeLongStamp(i, 2);
 	}
 
-	/** Gives a long representation of the given time interval, with the specified (maximum) number of elements. */
-	public final String timeLongStamp(long i, int granularity)
-	{
-		return timeStamp(i, false, granularity, longtokens.millisecond);
+	/**
+	 * Gives a long representation of the given time interval, with the
+	 * specified (maximum) number of elements.
+	 */
+	public final String timeLongStamp(final long i, final int granularity) {
+		return timeStamp(i, false, granularity, TimeUnit.MILLISECOND);
 	}
 
-	/** General function for generating approximate string representations of time periods.
-	 * @param thing The time interval in question.
-	 * @param shortTokens Use the condensed form (1w6d) or generate full English (1 week and 6 days).
-	 * @param replyDetail Maximum number of parts to return.
-	 * @param minGranularity Minimum level of output, ie. passing 'days' here will cause 1w2d3h4m5s to only output 1w2d. Default is 'millisecond'.
+	/**
+	 * General function for generating approximate string representations of
+	 * time periods.
+	 * 
+	 * @param interval
+	 *            The time interval in question.
+	 * @param shortTokens
+	 *            Use the condensed form (1w6d) or generate full English (1 week
+	 *            and 6 days).
+	 * @param replyDetail
+	 *            Maximum number of parts to return.
+	 * @param minGranularity
+	 *            Minimum level of output, i.e. passing 'days' here will cause
+	 *            1w2d3h4m5s to only output 1w2d. Default is 'millisecond'.
 	 */
-	public final String timeStamp(final long thing, final boolean shortTokens, int replyDetail, final longtokens minGranularity)
-	{
-		final StringBuilder t = new StringBuilder();
-		final long st[]=getSt(thing);
-		final String tokenName[];
+	public final String timeStamp(final long interval,
+			final boolean shortTokens, final int replyDetail,
+			final TimeUnit minGranularity) {
 
-		// Decide which tokens we're going to be using.
-		if (shortTokens)
-			tokenName = new String[] {"w","d","h","m","s","ms"};
-		else
-			tokenName = longtokensstring;
+		final Map<TimeUnit, Long> unitQuantity = getTimeUnitMap(interval);
+		Set<TimeUnit> usedUnits = EnumSet.noneOf(TimeUnit.class);
 
-		// Work out what we're going to output.
-		ArrayList<longtokens> useWhich = new ArrayList<longtokens>();
+		int remainingDetail = replyDetail;
 
-		// Go through the "st", discard empty or invalid parts until we have enough (replyDetail).
-		for (int j = 0; j<st.length; j++)
-			if (j-1 == minGranularity.ordinal())
+		/*
+		 * Go through the map, discard empty or invalid parts until we have
+		 * enough (replyDetail).
+		 */
+		for (TimeUnit unit : TimeUnit.values()) {
+			if (remainingDetail <= 0) {
 				break;
-			else
-				if (st[j] != 0)
-					if (replyDetail-- <= 0)
-						break;
-					else
-						useWhich.add(longtokens.values()[j]);
-
-		longtokens[] use = useWhich.toArray(new longtokens[] {});
-
-		// Special case, if we didn't decide to use anything, the period is less than the minGranuality, say so:
-		if (use.length == 0)
-			return t.append(shortTokens ? "<1" : "less than " + (minGranularity == longtokens.hour ? "an " : "a "))
-				.append(tokenName[minGranularity.ordinal()]).toString();
-		else
-			for (int i = 0; i<use.length; i++)
-			{
-				// Otherwise, go through each that we decided to use, and append it (and any padding required) to the return value.
-				final int j = use[i].ordinal();
-				if (shortTokens)
-					// 4h
-					t.append(st[j]).append(tokenName[j]);
-				else
-					// '4' + ' ' +
-					t.append(st[j]).append(" ")
-					// 'hour' + 's' +
-					.append(tokenName[j]).append(st[j]!=1 ? "s" : "")
-					.append(i==use.length-1 ? "" : (i!=use.length-2 ? ", " : " and "));
 			}
-		return t.toString();
+			if (unitQuantity.get(unit) != 0) {
+				usedUnits.add(unit);
+				remainingDetail--;
+			}
+			if (unit == minGranularity) {
+				break;
+			}
+		}
+
+		/*
+		 * Take the desired parts of the map, and build a string.
+		 */
+		
+		final String time;
+
+		if (usedUnits.size() == 0) {
+			// Special case: the period is less than the minGranularity.
+			time = minGranularity.lessThanOne(shortTokens);
+		} else {
+			// Build a list of the result tokens.
+			List<String> result = new ArrayList<String>();
+			for (TimeUnit unit : usedUnits) {
+				result.add(unit.quantity(shortTokens, unitQuantity.get(unit)));
+			}
+
+			final StringBuilder b = new StringBuilder();
+			
+			// Concatenate the result as a string.
+			if (shortTokens) {
+				for (String token : result) {
+					b.append(token);
+				}
+			} else {
+				b.append(result.remove(0));
+				if (result.size() > 0) {
+					String lastToken = result.remove(result.size() - 1);
+					for (String token : result) {
+						b.append(", ");
+						b.append(token);
+					}
+					b.append(" and ");
+					b.append(lastToken);
+				}
+			}
+			time = b.toString();
+		}
+		return time;
 	}
 }
