@@ -24,9 +24,8 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 	/**
 	 * Construct a new UserModes.
 	 */
-	public UserModes(String methodName, long millis, int random, String modes)
-	{
-		super(methodName, millis, random);
+	public UserModes(String methodName, long millis, String modes) {
+		super(methodName, millis);
 		this.modes = modes;
 	}
 

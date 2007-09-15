@@ -45,9 +45,9 @@ public class ChannelTopic extends IRCEvent implements MessageEvent, ChannelEvent
 	/**
 	 * Construct a new ChannelTopic.
 	 */
-	public ChannelTopic(String methodName, long millis, int random, String message, String channel)
-	{
-		super(methodName, millis, random);
+	public ChannelTopic(String methodName, long millis,
+			String message, String channel) {
+		super(methodName, millis);
 		this.message = message;
 		this.channel = channel;
 	}

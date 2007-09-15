@@ -37,9 +37,9 @@ public class ServerResponse extends IRCEvent implements ServerEvent
 	/**
 	 * Construct a new ServerResponse.
 	 */
-	public ServerResponse(String methodName, long millis, int random, int code, String response)
-	{
-		super(methodName, millis, random);
+	public ServerResponse(String methodName, long millis, int code,
+			String response) {
+		super(methodName, millis);
 		this.code = code;
 		this.response = response;
 	}

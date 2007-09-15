@@ -19,9 +19,11 @@ public class PrivateNotice extends Message implements PrivateEvent
 	/**
 	 * Construct a new PrivateNotice.
 	 */
-	public PrivateNotice(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
-	{
-		super(methodName, millis, random, message, nick, login, hostname, target);
+	public PrivateNotice(String methodName, long millis,
+			String message, String nick, String login, String hostname,
+			String target) {
+		super(methodName, millis, message, nick, login, hostname,
+				target);
 	}
 
 	/**

@@ -63,9 +63,9 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	/**
 	 * Construct a new NickChange.
 	 */
-	public NickChange(String methodName, long millis, int random, String nick, String login, String hostname, String newNick)
-	{
-		super(methodName, millis, random);
+	public NickChange(String methodName, long millis, String nick,
+			String login, String hostname, String newNick) {
+		super(methodName, millis);
 		this.nick = nick;
 		this.login = login;
 		this.hostname = hostname;

@@ -97,9 +97,10 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 	/**
 	 * Construct a new ChannelKick.
 	 */
-	public ChannelKick(String methodName, long millis, int random, String message, String channel, String nick, String login, String hostname, String target)
-	{
-		super(methodName, millis, random);
+	public ChannelKick(String methodName, long millis,
+			String message, String channel, String nick, String login,
+			String hostname, String target) {
+		super(methodName, millis);
 		this.message = message;
 		this.channel = channel;
 		this.nick = nick;

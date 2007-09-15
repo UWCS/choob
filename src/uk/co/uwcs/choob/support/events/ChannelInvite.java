@@ -76,9 +76,10 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	/**
 	 * Construct a new ChannelInvite.
 	 */
-	public ChannelInvite(String methodName, long millis, int random, String channel, String nick, String login, String hostname, String target)
-	{
-		super(methodName, millis, random);
+	public ChannelInvite(String methodName, long millis,
+			String channel, String nick, String login, String hostname,
+			String target) {
+		super(methodName, millis);
 		this.channel = channel;
 		this.nick = nick;
 		this.login = login;

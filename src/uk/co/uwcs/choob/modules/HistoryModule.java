@@ -69,20 +69,19 @@ public final class HistoryModule
 				insertLine.setString(4, chan);
 				insertLine.setString(5, mes.getMessage());
 				insertLine.setLong(6, mes.getMillis());
-				insertLine.setInt(7, mes.getRandom());
 			}
 			else if (ev instanceof ChannelKick)
 			{
-				ChannelKick mes = (ChannelKick)ev;
+				ChannelKick mes = (ChannelKick) ev;
 				insertLine.setString(1, mes.getClass().getName());
 				insertLine.setString(2, mes.getNick());
 				insertLine.setString(3, mes.getLogin()+"@"+mes.getHostname());
 				insertLine.setString(4, mes.getChannel());
 				insertLine.setString(5, mes.getMessage());
 				insertLine.setLong(6, mes.getMillis());
-				insertLine.setInt(7, mes.getRandom());
 			}
 
+			insertLine.setInt(7, 0);
 			insertLine.executeUpdate();
 
 		}
@@ -136,7 +135,6 @@ public final class HistoryModule
 			stat.setString(2, mes.getNick());
 			stat.setString(3, mes.getLogin()+"@"+mes.getHostname());
 			stat.setLong(4, mes.getMillis());
-			stat.setInt(5, mes.getRandom());
 
 			ResultSet result = stat.executeQuery();
 
@@ -201,24 +199,45 @@ public final class HistoryModule
 				try
 				{
 					// Need privs to create events...
-					mes = AccessController.doPrivileged( new PrivilegedExceptionAction<Message>() {
-						public Message run() throws SQLException {
-							System.out.println("run");
-							if (type.equals(ChannelAction.class.getName()))
-								return new ChannelAction("onAction", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel, channel);
-							else if (type.equals(ChannelMessage.class.getName()))
-								return new ChannelMessage("onMessage", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel, channel);
-							else if (type.equals(PrivateMessage.class.getName()))
-								return new PrivateMessage("onPrivateMessage", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel);
-							else if (type.equals(PrivateAction.class.getName()))
-								return new PrivateAction("onPrivateAction", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel);
-							return null;
-						}
-					});
-				}
-				catch (PrivilegedActionException e)
-				{
-					throw (SQLException)e.getCause();
+					mes = AccessController
+							.doPrivileged(new PrivilegedExceptionAction<Message>() {
+								public Message run() throws SQLException {
+									System.out.println("run");
+									if (type.equals(ChannelAction.class
+											.getName()))
+										return new ChannelAction("onAction",
+												result.getLong(7), result
+														.getString(6), result
+														.getString(3), login,
+												host, channel, channel);
+									else if (type.equals(ChannelMessage.class
+											.getName()))
+										return new ChannelMessage("onMessage",
+												result.getLong(7), result
+														.getString(6), result
+														.getString(3), login,
+												host, channel, channel);
+									else if (type.equals(PrivateMessage.class
+											.getName()))
+										return new PrivateMessage(
+												"onPrivateMessage", result
+														.getLong(7),result
+														.getString(6), result
+														.getString(3), login,
+												host, channel);
+									else if (type.equals(PrivateAction.class
+											.getName()))
+										return new PrivateAction(
+												"onPrivateAction", result
+														.getLong(7), result
+														.getString(6), result
+														.getString(3), login,
+												host, channel);
+									return null;
+								}
+							});
+				} catch (PrivilegedActionException e) {
+					throw (SQLException) e.getCause();
 					// Is an SQL exception...
 				}
 
@@ -352,19 +371,31 @@ public final class HistoryModule
 					try
 					{
 						// Need privs to create events...
-						mes = AccessController.doPrivileged( new PrivilegedExceptionAction<Message>() {
-							public Message run() throws SQLException {
-								if (type.equals(ChannelAction.class.getName()))
-									return new ChannelAction("onAction", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel, channel);
-								else if (type.equals(ChannelMessage.class.getName()))
-									return new ChannelMessage("onMessage", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel, channel);
-								return null;
-							}
-						});
-					}
-					catch (PrivilegedActionException e)
-					{
-						throw (SQLException)e.getCause();
+						mes = AccessController
+								.doPrivileged(new PrivilegedExceptionAction<Message>() {
+									public Message run() throws SQLException {
+										if (type.equals(ChannelAction.class
+												.getName()))
+											return new ChannelAction(
+													"onAction", result
+															.getLong(7), result
+															.getString(6),
+													result.getString(3), login,
+													host, channel, channel);
+										else if (type
+												.equals(ChannelMessage.class
+														.getName()))
+											return new ChannelMessage(
+													"onMessage", result
+															.getLong(7), result
+															.getString(6),
+													result.getString(3), login,
+													host, channel, channel);
+										return null;
+									}
+								});
+					} catch (PrivilegedActionException e) {
+						throw (SQLException) e.getCause();
 						// Is an SQL exception...
 					}
 

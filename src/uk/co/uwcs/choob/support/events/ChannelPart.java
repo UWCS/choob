@@ -71,9 +71,9 @@ public class ChannelPart extends IRCEvent implements ChannelEvent, ContextEvent,
 	/**
 	 * Construct a new ChannelPart.
 	 */
-	public ChannelPart(String methodName, long millis, int random, String channel, String nick, String login, String hostname)
-	{
-		super(methodName, millis, random);
+	public ChannelPart(String methodName, long millis,
+			String channel, String nick, String login, String hostname) {
+		super(methodName, millis);
 		this.channel = channel;
 		this.nick = nick;
 		this.login = login;

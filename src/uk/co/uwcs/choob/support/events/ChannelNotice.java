@@ -32,9 +32,11 @@ public class ChannelNotice extends Message implements ChannelEvent
 	/**
 	 * Construct a new ChannelNotice.
 	 */
-	public ChannelNotice(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target, String channel)
-	{
-		super(methodName, millis, random, message, nick, login, hostname, target);
+	public ChannelNotice(String methodName, long millis,
+			String message, String nick, String login, String hostname,
+			String target, String channel) {
+		super(methodName, millis, message, nick, login, hostname,
+				target);
 		this.channel = channel;
 	}
 

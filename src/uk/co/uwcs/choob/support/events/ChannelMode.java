@@ -50,9 +50,9 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 	/**
 	 * Construct a new ChannelMode.
 	 */
-	public ChannelMode(String methodName, long millis, int random, String channel, String mode, boolean set)
-	{
-		super(methodName, millis, random);
+	public ChannelMode(String methodName, long millis,
+			String channel, String mode, boolean set) {
+		super(methodName, millis);
 		this.channel = channel;
 		this.mode = mode;
 		this.set = set;

@@ -63,9 +63,9 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 	/**
 	 * Construct a new QuitEvent.
 	 */
-	public QuitEvent(String methodName, long millis, int random, String message, String nick, String login, String hostname)
-	{
-		super(methodName, millis, random);
+	public QuitEvent(String methodName, long millis,
+			String message, String nick, String login, String hostname) {
+		super(methodName, millis);
 		this.message = message;
 		this.nick = nick;
 		this.login = login;

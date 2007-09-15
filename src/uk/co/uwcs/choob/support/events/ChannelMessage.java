@@ -32,9 +32,11 @@ public class ChannelMessage extends Message implements ChannelEvent, CommandEven
 	/**
 	 * Construct a new ChannelMessage.
 	 */
-	public ChannelMessage(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target, String channel)
-	{
-		super(methodName, millis, random, message, nick, login, hostname, target);
+	public ChannelMessage(String methodName, long millis,
+			String message, String nick, String login, String hostname,
+			String target, String channel) {
+		super(methodName, millis, message, nick, login, hostname,
+				target);
 		this.channel = channel;
 	}
 

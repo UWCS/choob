@@ -24,9 +24,9 @@ public class ChannelParamMode extends ChannelMode implements ParamEvent
 	/**
 	 * Construct a new ChannelParamMode.
 	 */
-	public ChannelParamMode(String methodName, long millis, int random, String channel, String mode, boolean set, String param)
-	{
-		super(methodName, millis, random, channel, mode, set);
+	public ChannelParamMode(String methodName, long millis,
+			String channel, String mode, boolean set, String param) {
+		super(methodName, millis, channel, mode, set);
 		this.param = param;
 	}
 
