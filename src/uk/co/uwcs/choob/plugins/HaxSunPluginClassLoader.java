@@ -18,17 +18,15 @@ public final class HaxSunPluginClassLoader extends ClassLoader
 		definePackage("plugins." + pluginName, "", "", "", "", "", "", null);
 	}
 
-	public Class<?> findClass(final String name) throws ClassNotFoundException
-	{
-		try
-		{
-			return AccessController.doPrivileged(new PrivilegedExceptionAction<Class>()
-				{
-					public Class run() throws ClassNotFoundException
-						{
-							try
-							{
-								String fileName = path + name.replace('.', File.separatorChar) + ".class";
+	public Class<?> findClass(final String name) throws ClassNotFoundException {
+		try {
+			return AccessController
+					.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
+						public Class<?> run() throws ClassNotFoundException {
+							try {
+								String fileName = path
+										+ name.replace('.', File.separatorChar)
+										+ ".class";
 								File classFile = new File(fileName);
 								if (!classFile.isFile())
 								{
@@ -56,7 +54,8 @@ public final class HaxSunPluginClassLoader extends ClassLoader
 								if (read != size)
 									throw new ClassNotFoundException("Class " + name + " has was not fully read; not loaded.");
 
-								Class theClass = defineClass(name, classData, 0, classData.length, domain);
+								Class<?> theClass = defineClass(name, classData,
+										0, classData.length, domain);
 								return theClass;
 							}
 							catch (IOException e)
