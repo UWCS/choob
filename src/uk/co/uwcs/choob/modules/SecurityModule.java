@@ -26,7 +26,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	private DbConnectionBroker dbBroker;
 	private Map<Integer,PermissionCollection> nodeMap;
 	private Map<Integer,List<Integer>> nodeTree;
-	private Map<String,Integer>[] nodeIDCache;
+	private ArrayList<Map<String, Integer>> nodeIDCache;
 	private Modules mods;
 	private int anonID;
 
@@ -44,9 +44,10 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		this.nodeMap = new HashMap<Integer,PermissionCollection>();
 		this.nodeTree = new HashMap<Integer,List<Integer>>();
 
-		this.nodeIDCache = new Map[4];
-		for(int i=0; i<4; i++)
-			nodeIDCache[i] = new HashMap<String,Integer>();
+		this.nodeIDCache = new ArrayList<Map<String, Integer>>();
+		for (int i = 0; i < 4; i++) {
+			nodeIDCache.add(new HashMap<String, Integer>());
+		}
 
 		this.anonID = getNodeIDFromNodeName("anonymous", 3);
 	}
@@ -99,12 +100,12 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @return null if there is no plugin that far back. Otherwise the plugin
 	 *         name.
 	 */
-	public String getPluginName(int skip)
-	{
-		List names = getPluginNames();
-		if (skip >= names.size())
+	public String getPluginName(int skip) {
+		List<String> names = getPluginNames();
+		if (skip >= names.size()) {
 			return null;
-		return (String)names.get(skip);
+		}
+		return names.get(skip);
 	}
 
 	/**
@@ -143,8 +144,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	}
 
 	/**
-	 * Update permissions set for the given node ID.
-	 * Code visciously hacked out of ChoobSecurityManager.
+	 * Update permissions set for the given node ID. Code viciously hacked out
+	 * of ChoobSecurityManager.
 	 */
 	private void updateNodePermissions(int nodeID) {
 		Connection dbConnection = null;
@@ -186,7 +187,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 						continue; // XXX
 					}
 
-					Constructor con;
+					Constructor<?> con;
 					try
 					{
 						con = clas.getDeclaredConstructor(String.class, String.class);
@@ -407,9 +408,10 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	private int getNodeIDFromNodeName(String nodeName, int nodeType)
 	{
 		// Check the cache.
-		Integer id = nodeIDCache[nodeType].get(nodeName.toLowerCase());
-		if (id != null)
+		Integer id = nodeIDCache.get(nodeType).get(nodeName.toLowerCase());
+		if (id != null) {
 			return id.intValue();
+		}
 
 		Connection dbConn = null;
 		PreparedStatement stat = null;
@@ -423,7 +425,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			if ( results.first() )
 			{
 				int idGot = results.getInt(1);
-				nodeIDCache[nodeType].put(nodeName.toLowerCase(), idGot);
+				nodeIDCache.get(nodeType).put(nodeName.toLowerCase(), idGot);
 				return idGot;
 			}
 			System.err.println("Ack! Node name " + nodeName + "(" + nodeType + ") not found!");
@@ -601,39 +603,6 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			return false;
 		}
 	}
-
-	/**
-	 * Check if the given nickName is authed with NickServ (if NickServ is loaded).
-	 * @param userEvent The event to validate and check the permission on.
-	 * @throws ChoobNSAuthError If the nick is not authorised.
-	 */
-	private void checkNS(UserEvent userEvent) throws ChoobNSAuthError {
-		if (!hasNS(userEvent.getNick()))
-			throw new ChoobNSAuthError();
-	}
-	
-	/**
-	 * Check if the given nickname is authed with NickServ (if Nickserv is loaded).
-	 * @param nick The nick to validated.
-	 * @throws ChoobNSAuthError If the nick is not authorised.
-	 */
-	private void checkNS(String nick) throws ChoobNSAuthError {
-		if (!hasNS(nick)) {
-			throw new ChoobNSAuthError();
-		}
-	}
-
-	/**
-	 * Check if the given nickName is authed with NickServ (if NickServ is loaded).
-	 * @param userEvent The event to validate and check the permission on.
-	 * @return Whether the nick is authorised.
-	 */
-	private boolean hasNS(UserEvent userEvent) {
-		if (userEvent instanceof IRCEvent) {
-			checkEvent((IRCEvent)userEvent);
-		}
-		return hasNS(userEvent.getNick());
-	}
 	
 	/**
 	 * Check if the given nickname is authed with NickServ (if it is loaded).
@@ -661,40 +630,6 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			e.printStackTrace();
 			return false;
 		}
-	}
-
-	/**
-	 * Check if the given nickname is authed with Q (if QuakenetAuth is loaded)
-	 * @param userEvent Event containing nick to check.
-	 * @throws ChoobQAuthError Indication of lack of auth.
-	 */
-	private void checkQ(UserEvent userEvent) throws ChoobQAuthError {
-		if (!hasQ(userEvent.getNick())) {
-			throw new ChoobQAuthError();
-		}
-	}
-	
-	/**
-	 * Check if the given nickname is authed with Q (if QuakenetAuth is loaded)
-	 * @param nick Nick to check.
-	 * @throws ChoobQAuthError Indication of lack of auth.
-	 */
-	private void checkQ(String nick) throws ChoobQAuthError {
-		if (!hasQ(nick)) {
-			throw new ChoobQAuthError();
-		}
-	}
-	
-	/**
-	 * Check if the nickname given is authed with Q (if QuakenetAuth is loaded)
-	 * @param userEvent Event containing nick to check.
-	 * @return Auth status.
-	 */
-	private boolean hasQ(UserEvent userEvent) {
-		if (userEvent instanceof IRCEvent) {
-			checkEvent((IRCEvent)userEvent);
-		}
-		return hasQ(userEvent.getNick());
 	}
 	
 	/**
