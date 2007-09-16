@@ -11,6 +11,9 @@ import java.security.*;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.regex.*;
+
+import javax.tools.*;
+
 import uk.co.uwcs.choob.*;
 import uk.co.uwcs.choob.support.events.*;
 import uk.co.uwcs.choob.support.*;
@@ -20,59 +23,20 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 {
 	private final Modules mods;
 	private final IRCInterface irc;
-	private final URL toolsPath;
-	private final Method compileMethod;
+
+	private final JavaCompiler compiler;
 
 	private final static String prefix = "pluginData";
 	private final ChoobPluginMap allPlugins;
 
-	public HaxSunPluginManager(Modules mods, IRCInterface irc) throws ChoobException
-	{
-		this.toolsPath = getToolsPath();
+	public HaxSunPluginManager(Modules mods, IRCInterface irc)
+			throws ChoobException {
 		this.mods = mods;
 		this.irc = irc;
 		this.allPlugins = new ChoobPluginMap();
-		try
-		{
-			URLClassLoader toolsCL = new URLClassLoader(new URL[] { toolsPath });
-			Class<?> javac = toolsCL.loadClass("com.sun.tools.javac.Main");
-			this.compileMethod = javac.getMethod("compile", String[].class, PrintWriter.class);
-		}
-		catch (ClassNotFoundException e)
-		{
-			throw new ChoobException("Compiler class not found: " + e);
-		}
-		catch (NoSuchMethodException e)
-		{
-			throw new ChoobException("Compiler method not found: " + e);
-		}
-	}
-
-	private URL getToolsPath()
-	{
-		String libPath = System.getProperty("java.home");
-		char fSep = File.separatorChar;
-		// If JRE
-		String toolsString = libPath + fSep + ".." + fSep + "lib" + fSep + "tools.jar";
-		File toolsFile = new File(toolsString);
-		if (!toolsFile.exists())
-		{
-			// If JDK
-			toolsString = libPath + fSep + "lib" + fSep + "tools.jar";
-			toolsFile = new File(toolsString);
-			if (!toolsFile.exists())
-			{
-				System.err.println("File does not exist: " + toolsFile);
-				throw new RuntimeException("Choob must currently be run by a working JDK (not just JRE).");
-			}
-		}
-		try
-		{
-			return toolsFile.toURI().toURL();
-		}
-		catch (MalformedURLException e)
-		{
-			throw new RuntimeException("Internal error: Cannot find URL for tools.jar: " + e);
+		this.compiler = ToolProvider.getSystemJavaCompiler();
+		if (compiler == null) {
+			throw new ChoobException("Compiler class not found.");
 		}
 	}
 
@@ -80,39 +44,44 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	{
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		final PrintWriter output = new PrintWriter(baos);
-		int ret;
-		try
-		{
-			ret = AccessController.doPrivileged(new PrivilegedExceptionAction<Integer>() {
-				public Integer run() throws ChoobException {
-					try
-					{
-						String[] newNames = new String[fileNames.length + 2];
-						newNames[0] = "-d";
-						newNames[1] = classPath;
-						for(int i=0; i<fileNames.length; i++)
-							newNames[i+2] = fileNames[i];
-						return (Integer)compileMethod.invoke(null, newNames, output);
-					}
-					catch (IllegalAccessException e)
-					{
-						throw new ChoobException("Could not invoke compiler method: " + e);
-					}
-					catch (InvocationTargetException e)
-					{
-						throw new ChoobException("Could not invoke compiler method: " + e);
-					}
-				}
-			});
+
+		final StandardJavaFileManager fileManager = compiler
+				.getStandardFileManager(null, null, null);
+		
+		final File outputLocation = new File(classPath);
+		final List<File> outputLocationList = new ArrayList<File>();
+		outputLocationList.add(outputLocation);
+		
+		try {
+			fileManager.setLocation(StandardLocation.CLASS_OUTPUT, outputLocationList);
+		} catch (IOException e) {
+			throw (ChoobException) (e.getCause());
 		}
-		catch (PrivilegedActionException e)
-		{
-			throw (ChoobException)(e.getCause());
+		final Iterable<? extends JavaFileObject> compilationUnit = fileManager
+			.getJavaFileObjectsFromStrings(Arrays.asList(fileNames));
+		final boolean success;
+
+		try {
+			success = AccessController
+					.doPrivileged(new PrivilegedExceptionAction<Boolean>() {
+						public Boolean run() {
+							return compiler.getTask(output, fileManager, null,
+									null, null, compilationUnit).call();
+						}
+					});
+		} catch (PrivilegedActionException e) {
+			throw (ChoobException) (e.getCause());
 		}
 
-		String baosts=baos.toString();
+		try {
+			fileManager.close();
+		} catch (IOException e) {
+			throw (ChoobException) (e.getCause());
+		}
 
-		if (ret == 0)
+		String baosts = baos.toString();
+
+		if (success)
 			return baosts; // success
 		else
 		{
