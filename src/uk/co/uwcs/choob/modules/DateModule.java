@@ -8,19 +8,19 @@ public final class DateModule {
 	 * Units of time used in these functions.
 	 */
 	private static enum TimeUnit {
-		WEEK("week", "w", 7 * 24 * 60 * 60 * 1000),
-		DAY("day", "d", 24 * 60 * 60 * 1000),
-		HOUR("hour", "h", 60 * 60 * 1000),
-		MINUTE("minute", "m", 60 * 1000),
-		SECOND("second", "s", 1000),
-		MILLISECOND("millisecond", "ms", 1);
+		WEEK("w", 7 * 24 * 60 * 60 * 1000),
+		DAY("d", 24 * 60 * 60 * 1000),
+		HOUR("h", 60 * 60 * 1000),
+		MINUTE("m", 60 * 1000),
+		SECOND("s", 1000),
+		MILLISECOND("ms", 1);
 		
 		private final String longToken;
 		private final String shortToken;
 		private final int duration;
 		
-		TimeUnit(String longToken, String shortToken, int duration) {
-			this.longToken = longToken;
+		TimeUnit(String shortToken, int duration) {
+			this.longToken = this.toString().toLowerCase();
 			this.shortToken = shortToken;
 			this.duration = duration;
 		}
@@ -54,16 +54,16 @@ public final class DateModule {
 		Map<TimeUnit, Long> map = new EnumMap<TimeUnit, Long>(TimeUnit.class);
 		
 		for (TimeUnit unit : EnumSet.allOf(TimeUnit.class)) {
-			long assigned = map.put(unit, (interval / unit.duration()));
-			interval -= assigned * unit.duration();
+			final long quantity = (interval / unit.duration());
+			map.put(unit, quantity);
+			interval -= quantity * unit.duration();
 		}
 		
 		return map;
 	}
 
 	/** Gives a minimal representation of the given time interval, ie 1w6d. */
-	public final String timeMicroStamp(long i)
-	{
+	public final String timeMicroStamp(final long i) {
 		return timeMicroStamp(i, 2);
 	}
 
@@ -75,9 +75,11 @@ public final class DateModule {
 		return timeStamp(i, true, granularity, TimeUnit.MILLISECOND);
 	}
 
-	/** Gives a long representation of the given time interval, ie. "1 week and 6 days" */
-	public final String timeLongStamp(long i)
-	{
+	/**
+	 * Gives a long representation of the given time interval, ie. "1 week and 6
+	 * days"
+	 */
+	public final String timeLongStamp(final long i) {
 		return timeLongStamp(i, 2);
 	}
 
