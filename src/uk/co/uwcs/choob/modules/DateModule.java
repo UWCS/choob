@@ -18,22 +18,22 @@ public final class DateModule {
 		private final String longToken;
 		private final String shortToken;
 		private final int duration;
-		
-		TimeUnit(String shortToken, int duration) {
+
+		TimeUnit(final String shortToken, final int duration) {
 			this.longToken = this.toString().toLowerCase();
 			this.shortToken = shortToken;
 			this.duration = duration;
 		}
-		
-		public String quantity(boolean useShortTokens, long quantity) {
+
+		public String quantity(final boolean useShortTokens, final long quantity) {
 			if (useShortTokens) {
 				return quantity + shortToken;
 			} else {
 				return quantity + " " + longToken + (quantity > 1 ? "s" : "");
 			}
 		}
-		
-		public String lessThanOne(boolean useShortTokens) {
+
+		public String lessThanOne(final boolean useShortTokens) {
 			if (useShortTokens) {
 				return "<1" + shortToken;
 			} else {
@@ -41,7 +41,7 @@ public final class DateModule {
 						+ longToken;
 			}
 		}
-		
+
 		public int duration() {
 			return duration;
 		}
