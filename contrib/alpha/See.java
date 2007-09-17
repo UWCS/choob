@@ -154,7 +154,7 @@ public class See
 
 				final Connection conn=mods.odb.getConnection();
 
-				final ResultSet rs = getDataFor(nick, conn, 9);
+				final ResultSet rs = getDataFor(nick, conn, 21);
 
 				if (!rs.first())
 					return;
@@ -180,20 +180,32 @@ public class See
 		}
 	}
 
-/* LA LA LA REMMED OUT AND INVISIBLE
+//* LA LA LA REMMED OUT AND INVISIBLE
 	public void commandMidday( Message mes ) throws SQLException
 	{
-		String[] nicks = new String[] { "Blood_God", "Faux", "sadiq", "Skumby", "ajmiles", "Jonatan", "icStatic", "Tim", "Draconas", "benji", "fred" };
-		float rt = 0;
 		final Connection conn=mods.odb.getConnection();
+		try
+		{
+			String nick=mods.util.getParamString(mes).trim();
+			float t;
+			if (nick.equals(""))
+			{
+				float rt=0;
+				final String[] nicks = new String[] { "Blood_God", "Faux", "sadiq", "ajmiles", "Kim", "icStatic", "whythehell", "fred" };
+				for (String n : nicks)
+					rt+=midday(n, conn);
 
-		for (String nick : nicks)
-			rt+=midday(nick, conn);
+				t = rt/(float)nicks.length;
+			}
+			else
+				t = midday(nick=mods.nick.getBestPrimaryNick(nick), conn);
 
-		mods.odb.freeConnection(conn);
-
-		float t = rt/(float)nicks.length;
-		irc.sendContextReply(mes, "Official Compsoc midday is " + (int)t + ":" + (int)((t-(int)t)*60) + ".");
+			irc.sendContextReply(mes, (nick.equals("") ? "Official Compsoc" : nick + "'s") + " midday is " + (int)t + ":" + (int)((t-(int)t)*60) + ".");
+		}
+		finally
+		{
+			mods.odb.freeConnection(conn);
+		}
 
 	}
 
@@ -208,7 +220,7 @@ public class See
 		float midday = 0;
 
 		if (!rs.first())
-			throw new RuntimeException("ProgrammerTooLazyToCodeException() encountered.");
+			throw new RuntimeException("No data for " + nick + ". Cannot continue.");
 		else
 		{
 			rs.beforeFirst();
@@ -240,5 +252,5 @@ public class See
 			throw new RuntimeException(nick + midday);
 		return midday/(float)c;
 	}
-*/
+// */
 }
