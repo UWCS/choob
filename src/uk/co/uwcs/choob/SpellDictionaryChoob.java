@@ -87,7 +87,7 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	/**
 	 * Returns a list of strings (words) for the code.
 	 */
-	public List getWords(String code) {
+	public List<String> getWords(String code) {
 		//Check the main dictionary.
 		List<String> mainDictResult = mainDictionary.get(code);
 		if (mainDictResult == null)
@@ -100,7 +100,7 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	 * Returns true if the word is correctly spelled against the current word list.
 	 */
 	public boolean isCorrect(String word) {
-		List possible = getWords(getCode(word));
+		List<String> possible = getWords(getCode(word));
 		if (possible.contains(word.toLowerCase()))
 			return true;
 		else
