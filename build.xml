@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Choob" default="main" basedir=".">
+	<property name="src.dir"     value="src"/>
+	<property name="lib.dir"     value="src/lib"/>
+	<property name="tmp.dir"     value="tmp"/>
+	<property name="build.dir"   value="build"/>
+	<property name="classes.dir" value="${build.dir}/classes"/>
+	<property name="javadoc.dir" value="${build.dir}/javadoc"/>
+
+	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar"/>
+	</path>
+
+	<target name="clean">
+		<delete dir="${build.dir}"/>
+		<delete dir="${tmp.dir}"/>
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${classes.dir}"/>
+                <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"/>
+	</target>
+
+	<target name="javadoc">
+		<mkdir dir="${javadoc.dir}"/>
+		<javadoc packagenames="uk.co.uwcs.choob.*"
+			 sourcepath="${src.dir}"
+			 destdir="${javadoc.dir}"
+			 classpathref="classpath"/>
+	</target>
+
+	<target name="run" depends="compile">
+		<mkdir dir="${tmp.dir}"/>
+		<java classname="uk.co.uwcs.choob.ChoobMain"
+		      failonerror="true"
+		      fork="true">
+			<classpath>
+				<path refid="classpath"/>
+				<pathelement path="${classes.dir}"/>
+			</classpath>
+		</java>
+	</target>
+
+	<target name="main" depends="clean,compile,javadoc"/>
+</project>
