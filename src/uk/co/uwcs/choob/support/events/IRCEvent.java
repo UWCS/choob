@@ -56,7 +56,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 		super(methodName);
 		this.millis = millis;
 		java.security.AccessController
-				.checkPermission(new uk.co.uwcs.choob.security.ChoobPermission(
+				.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission(
 						"event.create"));
 		this.synthLevel = 0;
 		this.flags = new HashMap<String,String>();
@@ -70,7 +70,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 		super(old);
 		this.millis = old.millis;
 		java.security.AccessController
-				.checkPermission(new uk.co.uwcs.choob.security.ChoobPermission(
+				.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission(
 						"event.create"));
 		this.synthLevel = old.synthLevel + 1;
 		this.flags = new HashMap<String,String>();

@@ -194,7 +194,7 @@ public final class Choob extends PircBot
 	private void init() throws ChoobError
 	{
 		// Create our list of threads
-		watcher = new ChoobWatcherThread(intervalList, irc, pluginMap, modules);
+		watcher = new ChoobWatcherThread(intervalList, irc, modules);
 
 		watcher.start();
 
