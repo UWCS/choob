@@ -42,7 +42,11 @@ public abstract class ChoobPluginManager
 		pluginManagers = new LinkedList<ChoobPluginManager>();
 		pluginMap = new HashMap<String,ChoobPluginManager>();
 		commands = new HashMap<String,List<String>>();
-		File transFile = new File("lib/en_phonet.dat");
+		File transFile = new File("share/en_phonet.dat");
+		if (!transFile.exists()) {
+			transFile = new File("../share/en_phonet.dat");
+		}
+		
 		try
 		{
 			phoneticCommands = new SpellDictionaryChoob(transFile);
