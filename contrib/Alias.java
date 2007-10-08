@@ -37,8 +37,6 @@ public class Alias
 		};
 	}
 
-	private static int MAX_ALIAS_EXPANSIONS = 2; // Maximum number of alias expansions before we stop.
-
 	private Modules mods;
 	private IRCInterface irc;
 	public Alias(Modules mods, IRCInterface irc)
@@ -623,34 +621,27 @@ public class Alias
 		// Message extends IRCEvent, so this cast will always succeed.
 		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
 
-		if (mesFlags.containsKey("alias.expanded"))
+		if (mesFlags.containsKey("alias.expanded." + alias.name))
 		{
-			recurseLevel = Integer.parseInt(mesFlags.get("alias.expanded")) + 1;
-
-			// Stop recursion
-			if (recurseLevel > MAX_ALIAS_EXPANSIONS) {
-				irc.sendContextReply(mes, "Synthetic event recursion detected (alias.expanded). Stopping.");
+			irc.sendContextReply(mes, "Alias command recursion detected (" + alias.name + "). Stopping.");
+			return;
+		}
+		
+		try
+		{
+			int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
+			if (ret != 0)
+			{
+				if (ret == 1)
+					irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
 				return;
 			}
 		}
-		else
+		catch (ChoobNoSuchCallException e)
+		{ } // ignore
+		catch (Throwable e)
 		{
-			try
-			{
-				int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
-				if (ret != 0)
-				{
-					if (ret == 1)
-						irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
-					return;
-				}
-			}
-			catch (ChoobNoSuchCallException e)
-			{ } // ignore
-			catch (Throwable e)
-			{
-				System.err.println("Couldn't do antiflood call: " + e);
-			}
+			System.err.println("Couldn't do antiflood call: " + e);
 		}
 
 		if (mesFlags.containsKey("_securityOK"))
@@ -687,7 +678,7 @@ public class Alias
 		mesFlags = ((IRCEvent)mes).getFlags();
 
 		// Set expanded value for new message.
-		mesFlags.put("alias.expanded", new Integer(recurseLevel).toString());
+		mesFlags.put("alias.expanded." + alias.name, "true");
 
 		if (securityOK)
 		{
