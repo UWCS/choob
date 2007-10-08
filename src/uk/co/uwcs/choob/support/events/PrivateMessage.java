@@ -19,11 +19,9 @@ public class PrivateMessage extends Message implements PrivateEvent, CommandEven
 	/**
 	 * Construct a new PrivateMessage.
 	 */
-	public PrivateMessage(String methodName, long millis,
-			String message, String nick, String login, String hostname,
-			String target) {
-		super(methodName, millis, message, nick, login, hostname,
-				target);
+	public PrivateMessage(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
+	{
+		super(methodName, millis, random, message, nick, login, hostname, target);
 	}
 
 	/**

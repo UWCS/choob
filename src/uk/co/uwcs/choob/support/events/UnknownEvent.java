@@ -11,8 +11,9 @@ public class UnknownEvent extends IRCEvent
 	/**
 	 * Construct a new UnknownEvent.
 	 */
-	public UnknownEvent(String methodName, long millis) {
-		super(methodName, millis);
+	public UnknownEvent(String methodName, long millis, int random)
+	{
+		super(methodName, millis, random);
 	}
 
 	/**

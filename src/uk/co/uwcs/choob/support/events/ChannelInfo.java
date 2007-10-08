@@ -37,9 +37,9 @@ public class ChannelInfo extends IRCEvent implements MessageEvent, ChannelEvent
 	/**
 	 * Construct a new ChannelInfo.
 	 */
-	public ChannelInfo(String methodName, long millis,
-			String message, String channel) {
-		super(methodName, millis);
+	public ChannelInfo(String methodName, long millis, int random, String message, String channel)
+	{
+		super(methodName, millis, random);
 		this.message = message;
 		this.channel = channel;
 	}

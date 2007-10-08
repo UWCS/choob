@@ -24,9 +24,9 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 	/**
 	 * Construct a new ChannelUserMode.
 	 */
-	public ChannelUserMode(String methodName, long millis,
-			String channel, String mode, boolean set, String target) {
-		super(methodName, millis, channel, mode, set);
+	public ChannelUserMode(String methodName, long millis, int random, String channel, String mode, boolean set, String target)
+	{
+		super(methodName, millis, random, channel, mode, set);
 		this.target = target;
 	}
 

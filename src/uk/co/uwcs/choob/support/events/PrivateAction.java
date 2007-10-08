@@ -19,11 +19,9 @@ public class PrivateAction extends Message implements PrivateEvent, ActionEvent,
 	/**
 	 * Construct a new PrivateAction.
 	 */
-	public PrivateAction(String methodName, long millis,
-			String message, String nick, String login, String hostname,
-			String target) {
-		super(methodName, millis, message, nick, login, hostname,
-				target);
+	public PrivateAction(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
+	{
+		super(methodName, millis, random, message, nick, login, hostname, target);
 	}
 
 	/**

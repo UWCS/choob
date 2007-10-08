@@ -84,9 +84,9 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 	/**
 	 * Construct a new Message.
 	 */
-	public Message(String methodName, long millis, String message,
-			String nick, String login, String hostname, String target) {
-		super(methodName, millis);
+	public Message(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
+	{
+		super(methodName, millis, random);
 		this.message = message;
 		this.nick = nick;
 		this.login = login;

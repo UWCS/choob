@@ -32,11 +32,9 @@ public class ChannelAction extends Message implements ChannelEvent, ActionEvent,
 	/**
 	 * Construct a new ChannelAction.
 	 */
-	public ChannelAction(String methodName, long millis,
-			String message, String nick, String login, String hostname,
-			String target, String channel) {
-		super(methodName, millis, message, nick, login, hostname,
-				target);
+	public ChannelAction(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target, String channel)
+	{
+		super(methodName, millis, random, message, nick, login, hostname, target);
 		this.channel = channel;
 	}
 

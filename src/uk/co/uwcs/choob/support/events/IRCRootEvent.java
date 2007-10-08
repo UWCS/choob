@@ -13,4 +13,10 @@ public interface IRCRootEvent
 	 */
 	public long getMillis();
 
+	/**
+	 * Get the value of random
+	 * @return The value of random
+	 */
+	public int getRandom();
+
 }

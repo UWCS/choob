@@ -23,6 +23,19 @@ public class IRCEvent extends Event implements IRCRootEvent
 	}
 
 	/**
+	 * random
+	 */
+	private final int random;
+
+	/**
+	 * Get the value of random
+	 * @return The value of random
+	 */
+	public int getRandom() {
+		 return random;
+	}
+
+	/**
 	 * synthLevel
 	 */
 	private final int synthLevel;
@@ -52,12 +65,12 @@ public class IRCEvent extends Event implements IRCRootEvent
 	/**
 	 * Construct a new IRCEvent.
 	 */
-	public IRCEvent(String methodName, long millis) {
+	public IRCEvent(String methodName, long millis, int random)
+	{
 		super(methodName);
 		this.millis = millis;
-		java.security.AccessController
-				.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission(
-						"event.create"));
+		this.random = random;
+		java.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission("event.create"));
 		this.synthLevel = 0;
 		this.flags = new HashMap<String,String>();
 	}
@@ -69,9 +82,8 @@ public class IRCEvent extends Event implements IRCRootEvent
 	{
 		super(old);
 		this.millis = old.millis;
-		java.security.AccessController
-				.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission(
-						"event.create"));
+		this.random = old.random;
+		java.security.AccessController.checkPermission(new uk.co.uwcs.choob.support.ChoobPermission("event.create"));
 		this.synthLevel = old.synthLevel + 1;
 		this.flags = new HashMap<String,String>();
 		// Properties starting "_" should not be cloned implicitly.
@@ -96,9 +108,8 @@ public class IRCEvent extends Event implements IRCRootEvent
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		IRCEvent thing = (IRCEvent) obj;
-		if (true && (millis == thing.millis)
-				&& (synthLevel == thing.synthLevel) && (flags == thing.flags))
+		IRCEvent thing = (IRCEvent)obj;
+		if ( true && (millis == thing.millis) && (random == thing.random) && (synthLevel == thing.synthLevel) && (flags == thing.flags) )
 			return true;
 		return false;
 	}
@@ -108,6 +119,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 		StringBuffer out = new StringBuffer("IRCEvent(");
 		out.append(super.toString());
 		out.append(", millis = " + millis);
+		out.append(", random = " + random);
 		out.append(", synthLevel = " + synthLevel);
 		out.append(", flags = " + flags);
 		out.append(")");

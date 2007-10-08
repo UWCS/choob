@@ -37,9 +37,9 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 	/**
 	 * Construct a new ChannelModes.
 	 */
-	public ChannelModes(String methodName, long millis,
-			String channel, String modes) {
-		super(methodName, millis);
+	public ChannelModes(String methodName, long millis, int random, String channel, String modes)
+	{
+		super(methodName, millis, random);
 		this.channel = channel;
 		this.modes = modes;
 	}

@@ -71,9 +71,9 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 	/**
 	 * Construct a new ChannelJoin.
 	 */
-	public ChannelJoin(String methodName, long millis,
-			String channel, String nick, String login, String hostname) {
-		super(methodName, millis);
+	public ChannelJoin(String methodName, long millis, int random, String channel, String nick, String login, String hostname)
+	{
+		super(methodName, millis, random);
 		this.channel = channel;
 		this.nick = nick;
 		this.login = login;
