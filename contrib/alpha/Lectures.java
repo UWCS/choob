@@ -51,6 +51,16 @@ public class Lectures
 		return con.prepareStatement(query);
 	}
 
+	private void free(PreparedStatement s) throws SQLException
+	{
+		if (s != null)
+		{
+			mods.odb.freeConnection(s.getConnection());
+			s.close();
+			s = null;
+		}
+	}
+
 	public String[] helpCommandNextLecture = {
 		"Tells you when the next lecture for either you or a specified module is.",
 		"<Code or Number to display>",
@@ -79,52 +89,56 @@ public class Lectures
 			modcode=true;
 		}
 
-		PreparedStatement s;
-		if (!modcode)
+		PreparedStatement s = null;
+		try
 		{
-			s=getStatement("SELECT `modules`.`name` AS modulename, `modules`.`code` AS modulecode, `rooms`.`name` AS roomname,`times`.`start` FROM `times` INNER JOIN `modules` ON (`modules`.`module`=`times`.`module`) INNER JOIN `rooms` ON (`rooms`.`room` = `times`.`room`) WHERE (`start` > NOW()) AND (`start` < (NOW() + INTERVAL 7 DAY)) AND `modules`.`module` IN (SELECT `module` FROM `usermods` INNER JOIN `users` ON ( `users`.`userid` = `usermods`.`userid`) WHERE `users`.`nick` = ?) ORDER BY `start` LIMIT ?;");
 
-			s.setString(1, mes.getNick());
-			s.setInt(2, c);
-
-			ResultSet rs = s.executeQuery();
-			String ret="";
-
-			if (!rs.first())
+			if (!modcode)
 			{
-				irc.sendContextReply(mes, "Durno.");
-				s.close();
-				return;
+				s=getStatement("SELECT `modules`.`name` AS modulename, `modules`.`code` AS modulecode, `rooms`.`name` AS roomname,`times`.`start` FROM `times` INNER JOIN `modules` ON (`modules`.`module`=`times`.`module`) INNER JOIN `rooms` ON (`rooms`.`room` = `times`.`room`) WHERE (`start` > NOW()) AND (`start` < (NOW() + INTERVAL 7 DAY)) AND `modules`.`module` IN (SELECT `module` FROM `usermods` INNER JOIN `users` ON ( `users`.`userid` = `usermods`.`userid`) WHERE `users`.`nick` = ?) ORDER BY `start` LIMIT ?;");
+
+				s.setString(1, mes.getNick());
+				s.setInt(2, c);
+
+				ResultSet rs = s.executeQuery();
+				String ret="";
+
+				if (!rs.first())
+				{
+					irc.sendContextReply(mes, "Durno.");
+					return;
+				}
+
+				rs.beforeFirst();
+
+				while (rs.next())
+					ret+=rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + df.format(rs.getTimestamp("start")) + ", ";
+
+				ret=ret.substring(0, ret.length()-2);
+
+				irc.sendContextReply(mes, "You have " + ret + ".");
+
+			}
+			else
+			{
+				int modid=codeSuggestions(param, mes);
+				if (modid==-1)
+					return;
+				s=getStatement("SELECT `modules`.`name` AS modulename, `modules`.`code` AS modulecode, `rooms`.`name` AS roomname,`times`.`start` FROM `times` INNER JOIN `modules` ON (`modules`.`module`=`times`.`module`) INNER JOIN `rooms` ON (`rooms`.`room` = `times`.`room`) WHERE (`start` > NOW()) AND `modules`.`module` = ? ORDER BY `start` LIMIT 1;");
+				s.setInt(1, modid);
+
+				ResultSet rs = s.executeQuery();
+
+				rs.first(); // It has to exist.
+
+				irc.sendContextReply(mes, "Thers is a " + rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + df.format(rs.getTimestamp("start")) + ".");
+
 			}
 
-			rs.beforeFirst();
-
-			while (rs.next())
-				ret+=rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + df.format(rs.getTimestamp("start")) + ", ";
-
-			ret=ret.substring(0, ret.length()-2);
-
-			irc.sendContextReply(mes, "You have " + ret + ".");
-
-			s.close();
 		}
-		else
+		finally
 		{
-			int modid=codeSuggestions(param, mes);
-			if (modid==-1)
-				return;
-
-			s=getStatement("SELECT `modules`.`name` AS modulename, `modules`.`code` AS modulecode, `rooms`.`name` AS roomname,`times`.`start` FROM `times` INNER JOIN `modules` ON (`modules`.`module`=`times`.`module`) INNER JOIN `rooms` ON (`rooms`.`room` = `times`.`room`) WHERE (`start` > NOW()) AND `modules`.`module` = ? ORDER BY `start` LIMIT 1;");
-			s.setInt(1, modid);
-
-			ResultSet rs = s.executeQuery();
-
-			rs.first(); // It has to exist.
-
-			irc.sendContextReply(mes, "Thers is a " + rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + df.format(rs.getTimestamp("start")) + ".");
-
-			s.close();
-
+			free(s);
 		}
 
 	}
@@ -134,88 +148,109 @@ public class Lectures
 	};
 	public void commandListModules(Message mes, Modules mods, IRCInterface irc ) throws SQLException
 	{
-		PreparedStatement s=getStatement("SELECT `modules`.`code` from `modules` INNER JOIN `usermods` on (`usermods`.`module`=`modules`.`module`) INNER JOIN `users`on (`users`.`userid`=`usermods`.`userid`) WHERE `nick`=?");
-		s.setString(1, mes.getNick());
-		ResultSet rs = s.executeQuery();
-		if (!rs.first())
+		PreparedStatement s = null;
+		try
 		{
-			irc.sendContextMessage(mes, "You appear not to have any modules listed.");
-			s.close();
-			return;
+			s = getStatement("SELECT `modules`.`code` from `modules` INNER JOIN `usermods` on (`usermods`.`module`=`modules`.`module`) INNER JOIN `users`on (`users`.`userid`=`usermods`.`userid`) WHERE `nick`=?");
+			s.setString(1, mes.getNick());
+			ResultSet rs = s.executeQuery();
+			if (!rs.first())
+			{
+				irc.sendContextMessage(mes, "You appear not to have any modules listed.");
+				return;
+			}
+
+			String res="";
+
+			do
+			{
+				res+=rs.getString("code") + ", ";
+			} while (rs.next());
+
+			res=res.substring(0, res.length()-2) + ".";
+
+			irc.sendContextReply(mes, "You are registered for " + res);
 		}
-
-		String res="";
-
-		do
+		finally
 		{
-			res+=rs.getString("code") + ", ";
-		} while (rs.next());
-
-		res=res.substring(0, res.length()-2) + ".";
-
-		irc.sendContextReply(mes, "You are registered for " + res);
-
-		s.close();
+			free(s);
+		}
 	}
 
 	private synchronized int getUserId(String nick) throws SQLException
 	{
-		PreparedStatement s=getStatement("SELECT `userid` from `users` where `nick` = ? LIMIT 1");
-		s.setString(1, nick);
-
-		ResultSet rs = s.executeQuery();
-
-		if (rs.first())
+		PreparedStatement s = null;
+		try
 		{
-			final int ret=rs.getInt("userid");
-			s.close();
-			return ret;
+			s = getStatement("SELECT `userid` from `users` where `nick` = ? LIMIT 1");
+			s.setString(1, nick);
+
+			ResultSet rs = s.executeQuery();
+
+			if (rs.first())
+			{
+				final int ret=rs.getInt("userid");
+				return ret;
+			}
+
+			PreparedStatement r = null;
+			try
+			{
+				r = getStatement("INSERT INTO `users` (`nick`) VALUES ( ? )");
+				r.setString(1, nick);
+				r.executeUpdate();
+
+				rs = s.executeQuery();
+
+				if (rs.first())
+				{
+					final int ret=rs.getInt("userid");
+					return ret;
+				}
+				else
+					throw new SQLException("Unexpected result from SQL...");
+			}
+			finally
+			{
+				free(r);
+			}
 		}
-
-		PreparedStatement r=getStatement("INSERT INTO `users` (`nick`) VALUES ( ? )");
-		r.setString(1, nick);
-		r.executeUpdate();
-		r.close();
-
-		rs = s.executeQuery();
-
-		if (rs.first())
+		finally
 		{
-			final int ret=rs.getInt("userid");
-			s.close ();
-			return ret;
+			free(s);
 		}
-		else
-			throw new SQLException("Unexpected result from SQL...");
 	}
 
 	private synchronized int codeSuggestions (String code, Message mes) throws SQLException
 	{
 		String sug;
+		PreparedStatement s = null;
+		try
 		{
-			PreparedStatement s=getStatement("SELECT `module` from `modules` where `code` = ?");
+			s = getStatement("SELECT `module` from `modules` where `code` = ?");
 			s.setString(1, code);
 			ResultSet rs = s.executeQuery();
 
 			if (rs.first())
 			{
 				final int ret=rs.getInt("module");
-				s.close();
 				return ret;
 			}
-
-			s.close();
+		}
+		finally
+		{
+			free(s);
 		}
 
+		try
 		{
-			PreparedStatement s=getStatement("SELECT `code` from `modules` where `code` LIKE ? LIMIT 6;");
+			s = getStatement("SELECT `code` from `modules` where `code` LIKE ? LIMIT 6;");
 			s.setString(1, "%" + code + "%"); // JDBC-- because this really shouldn't work.
 			ResultSet rs = s.executeQuery();
 
 			if (!rs.first())
 			{
 				irc.sendContextReply(mes, "Module code not recognised.");
-				s.close();
 				return -1;
 			}
 
@@ -227,21 +262,30 @@ public class Lectures
 
 			if (sug.length() != 0)
 				sug=sug.substring(0, sug.length()-2);
-
-			s.close();
+		}
+		finally
+		{
+			free(s);
 		}
 
 		if (sug.indexOf(",")==-1)
 		{
-			PreparedStatement s=getStatement("SELECT `module` from `modules` where `code` = ?");
-			s.setString(1, sug);
+			try
+			{
+				s = getStatement("SELECT `module` from `modules` where `code` = ?");
+				s.setString(1, sug);
 
-			ResultSet rs=s.executeQuery();
+				ResultSet rs=s.executeQuery();
 
-			rs.first();
-			final int ret = rs.getInt("module");
-			s.close();
-			return ret;
+				rs.first();
+				final int ret = rs.getInt("module");
+				return ret;
+			}
+			finally
+			{
+				free(s);
+			}
+
 		}
 		else
 		{
@@ -259,46 +303,55 @@ public class Lectures
 
 	public synchronized void commandAddLikeModules(Message mes ) throws SQLException
 	{
-		mods.security.checkNS(mes);
 
 		int uid=getUserId(mes.getNick());
 		final String code=mods.util.getParamString(mes);
 
-		PreparedStatement s=getStatement("INSERT INTO `usermods` (`userid`, `module`) VALUES (?, ?)");
-		s.setInt(1, uid);
-
-
-		PreparedStatement t=getStatement("SELECT `module` from `modules` where `code` LIKE ?;");
-		t.setString(1, code);
-		ResultSet rt = t.executeQuery();
-
-		if (!rt.first())
+		PreparedStatement s = null;
+		try
 		{
-			irc.sendContextReply(mes, "No modules matched '" + code + "'.");
-			s.close();
-			t.close();
-			return;
-		}
+			s = getStatement("INSERT INTO `usermods` (`userid`, `module`) VALUES (?, ?)");
+			s.setInt(1, uid);
 
-		int i=0;
 
-		do
-		{
-			s.setInt(2,rt.getInt("module"));
+			PreparedStatement t = null;
 			try
 			{
-				s.executeUpdate();
-				i++;
+				t = getStatement("SELECT `module` from `modules` where `code` LIKE ?;");
+				t.setString(1, code);
+				ResultSet rt = t.executeQuery();
+
+				if (!rt.first())
+				{
+					irc.sendContextReply(mes, "No modules matched '" + code + "'.");
+					return;
+				}
+
+				int i=0;
+
+				do
+				{
+					s.setInt(2,rt.getInt("module"));
+					try
+					{
+						s.executeUpdate();
+						i++;
+					}
+					catch (SQLException e)
+					{}
+				} while (rt.next());
+
+				irc.sendContextReply(mes, "Okay, added " + i + " module" + (i!=1 ? "s" : "") + "!");
 			}
-			catch (SQLException e)
-			{}
-		} while (rt.next());
-
-
-		s.close();
-		t.close();
-
-		irc.sendContextReply(mes, "Okay, added " + i + " module" + (i!=1 ? "s" : "") + "!");
+			finally
+			{
+				free(t);
+			}
+		}
+		finally
+		{
+			free(s);
+		}
 	}
 
 
@@ -310,7 +363,6 @@ public class Lectures
 
 	public synchronized void commandAddModule(Message mes ) throws SQLException
 	{
-		mods.security.checkNS(mes);
 
 		int uid=getUserId(mes.getNick());
 
@@ -319,13 +371,20 @@ public class Lectures
 		if (modcode==-1)
 			return;
 
-		PreparedStatement s=getStatement("INSERT INTO `usermods` (`userid`, `module`) VALUES (?, ?)");
-		s.setInt(1, uid);
-		s.setInt(2, modcode);
-		s.executeUpdate();
-		s.close();
+		PreparedStatement s = null;
+		try
+		{
+			s = getStatement("INSERT INTO `usermods` (`userid`, `module`) VALUES (?, ?)");
+			s.setInt(1, uid);
+			s.setInt(2, modcode);
+			s.executeUpdate();
 
-		irc.sendContextReply(mes, "Okay, added!");
+			irc.sendContextReply(mes, "Okay, added!");
+		}
+		finally
+		{
+			free(s);
+		}
 	}
 
 	public String[] helpCommandRemoveModule = {
@@ -336,7 +395,6 @@ public class Lectures
 
 	public synchronized void commandRemoveModule(Message mes ) throws SQLException
 	{
-		mods.security.checkNS(mes);
 
 		int uid=getUserId(mes.getNick());
 
@@ -345,16 +403,22 @@ public class Lectures
 		if (modcode==-1)
 			return;
 
-		PreparedStatement s = getStatement("DELETE FROM `usermods` WHERE `userid` = ? AND `module` = ? LIMIT 1");
+		PreparedStatement s = null;
+		try
+		{
+			s = getStatement("DELETE FROM `usermods` WHERE `userid` = ? AND `module` = ? LIMIT 1");
 
-		s.setInt(1, uid);
-		s.setInt(2, modcode);
-		if (s.executeUpdate()!=0)
-			irc.sendContextReply(mes, "Gone!");
-		else
-			irc.sendContextReply(mes, "Um?");
-
-		s.close();
+			s.setInt(1, uid);
+			s.setInt(2, modcode);
+			if (s.executeUpdate()!=0)
+				irc.sendContextReply(mes, "Gone!");
+			else
+				irc.sendContextReply(mes, "Um?");
+		}
+		finally
+		{
+			free(s);
+		}
 	}
 
 // Not checked or up-to-date:
