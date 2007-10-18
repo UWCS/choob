@@ -8,7 +8,7 @@ public final class DateModule {
 	/**
 	 * Units of time used in these functions.
 	 */
-	private static enum TimeUnit {
+	public static enum TimeUnit {
 		WEEK("w", 7 * 24 * 60 * 60 * 1000),
 		DAY("d", 24 * 60 * 60 * 1000),
 		HOUR("h", 60 * 60 * 1000),
