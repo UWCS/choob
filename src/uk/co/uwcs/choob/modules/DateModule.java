@@ -1,6 +1,7 @@
 package uk.co.uwcs.choob.modules;
 
 import java.util.*;
+import java.text.*;
 
 /** Some functions to help with time and date manipulation. */
 public final class DateModule {
@@ -14,7 +15,7 @@ public final class DateModule {
 		MINUTE("m", 60 * 1000),
 		SECOND("s", 1000),
 		MILLISECOND("ms", 1);
-		
+
 		private final String longToken;
 		private final String shortToken;
 		private final int duration;
@@ -49,16 +50,16 @@ public final class DateModule {
 
 	/**
 	 * Helper, converts a long (ms) time to a Map.
-	 */	
+	 */
 	final static Map<TimeUnit, Long> getTimeUnitMap(long interval) {
 		Map<TimeUnit, Long> map = new EnumMap<TimeUnit, Long>(TimeUnit.class);
-		
+
 		for (TimeUnit unit : EnumSet.allOf(TimeUnit.class)) {
 			final long quantity = (interval / unit.duration());
 			map.put(unit, quantity);
 			interval -= quantity * unit.duration();
 		}
-		
+
 		return map;
 	}
 
@@ -94,7 +95,7 @@ public final class DateModule {
 	/**
 	 * General function for generating approximate string representations of
 	 * time periods.
-	 * 
+	 *
 	 * @param interval
 	 *            The time interval in question.
 	 * @param shortTokens
@@ -135,7 +136,7 @@ public final class DateModule {
 		/*
 		 * Take the desired parts of the map, and build a string.
 		 */
-		
+
 		final String time;
 
 		if (usedUnits.size() == 0) {
@@ -149,7 +150,7 @@ public final class DateModule {
 			}
 
 			final StringBuilder b = new StringBuilder();
-			
+
 			// Concatenate the result as a string.
 			if (shortTokens) {
 				for (String token : result) {
@@ -170,5 +171,69 @@ public final class DateModule {
 			time = b.toString();
 		}
 		return time;
+	}
+
+	/** Prettyprint a date */
+	public final static String absoluteDateFormat(Date da)
+	{
+		// Some definitions.
+			final SimpleDateFormat formatter = new SimpleDateFormat("EEEE d MMM h:mma");
+			final SimpleDateFormat dayNameFormatter = new SimpleDateFormat("EEEE");
+			final Calendar cda = new GregorianCalendar();
+				cda.setTime(da);
+
+			final Calendar cnow = new GregorianCalendar();
+			final Date now = cnow.getTime();
+			final Date midnight = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH), 24, 0, 0).getTime();
+			final Date midnightTomorrow = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH), 48, 0, 0).getTime();
+			final Date endOfThisWeek = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH) + 7, 0, 0, 0).getTime();
+		// </definitions>
+
+		if (da.compareTo(now) > 0) // It's in the future, we can cope with it.
+		{
+			if (da.compareTo(midnight) < 0) // It's before midnight tonight.
+				return shortTime(cda) + " " +            // 9pm
+					(cda.get(Calendar.HOUR_OF_DAY) < 18 ? "today" : "tonight");
+
+			if (da.compareTo(midnightTomorrow) < 0) // It's before midnight tomorrow and not before midnight today, it's tomorrow.
+				return shortTime(cda) +                  // 9pm
+					" tomorrow " +                       // tomorrow
+					futurePeriodOfDayString(cda);        // evening
+
+			if (da.compareTo(endOfThisWeek) < 0) // It's not tomorrow, but it is some time when the week-day names alone mean something.
+				return shortTime(cda) + " " +            // 9pm
+					dayNameFormatter.format(da) + " " +  // Monday
+					futurePeriodOfDayString(cda);        // evening
+
+		}
+
+		return formatter.format(da);
+	}
+
+	/** Convert a Calendar to "8pm", "7am", "7:30am" etc. */
+	public final static String shortTime(Calendar cda)
+	{
+		final SimpleDateFormat nomins = new SimpleDateFormat("ha");
+		final SimpleDateFormat wimins = new SimpleDateFormat("h:mma");
+
+		// Don't show the minutes if they're 0.
+		if (cda.get(Calendar.MINUTE) != 0)
+			return wimins.format(cda.getTime()).toLowerCase();
+
+		return nomins.format(cda.getTime()).toLowerCase();
+	}
+
+	/** Work out if a calendar is in the morning, afternoon or evening. */
+	public final static String futurePeriodOfDayString(Calendar cda)
+	{
+		final int hour = cda.get(Calendar.HOUR_OF_DAY);
+
+		if (hour < 12)
+			return "morning";
+
+		if (hour < 18)
+			return "afternoon";
+
+		return "evening";
 	}
 }

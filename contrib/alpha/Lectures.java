@@ -18,7 +18,7 @@ public class Lectures
 			"University of Warwick lectures querying plugin.",
 			"Faux",
 			"ALPHA ALPHA",
-			""
+			"Oh so ALPHA"
 		};
 	}
 
@@ -40,8 +40,6 @@ public class Lectures
 		  "'Lectures.NextLecture 3' (for instance) will tell your next three lectures are."
 	};
 
-
-	final SimpleDateFormat df=new SimpleDateFormat("h:mm a 'on' EEEE");
 
 	final String days[] = (new DateFormatSymbols()).getWeekdays();
 
@@ -112,7 +110,7 @@ public class Lectures
 				rs.beforeFirst();
 
 				while (rs.next())
-					ret+=rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + df.format(rs.getTimestamp("start")) + ", ";
+					ret+=rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + mods.date.absoluteDateFormat(rs.getTimestamp("start")) + ", ";
 
 				ret=ret.substring(0, ret.length()-2);
 
@@ -131,7 +129,7 @@ public class Lectures
 
 				rs.first(); // It has to exist.
 
-				irc.sendContextReply(mes, "Thers is a " + rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + df.format(rs.getTimestamp("start")) + ".");
+				irc.sendContextReply(mes, "Thers is a " + rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + mods.date.absoluteDateFormat(rs.getTimestamp("start")) + ".");
 
 			}
 

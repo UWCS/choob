@@ -306,7 +306,8 @@ public class Events
 	{
 		public int compare(EventItem a, EventItem b)
 		{
-			int stt = a.start.compareTo(b.start);
+			// Hax. This means that if the events have the same (well, within a few milliseconds of each other) start time, pick the one with the most signups.
+			int stt = new Date(a.start.getTime() - a.signupCurrent).compareTo(new Date(b.start.getTime() - b.signupCurrent));
 
 			if (stt == 0)
 				return a.end.compareTo(b.end);
@@ -393,8 +394,8 @@ public class Events
 						( !"".equals(ev.shortdesc) ? " (" + ev.shortdesc + ")" : "") +
 						" (" + ev.id +
 						") " + (ev.start == ev.end ?
-						        "at " + absoluteDateFormat(ev.start) :
-						        "from " + absoluteDateFormat(ev.start) + " to " + absoluteDateFormat(ev.end)) +
+						        "at " + mods.date.absoluteDateFormat(ev.start) :
+						        "from " + mods.date.absoluteDateFormat(ev.start) + " to " + mods.date.absoluteDateFormat(ev.end)) +
 						"." +
 						signup
 					);
@@ -596,70 +597,6 @@ public class Events
 			namelist = namelist.substring(0, namelist.length()-2);
 
 		return namelist;
-	}
-
-	/** Prettyprint a date */
-	private final static String absoluteDateFormat(Date da)
-	{
-		// Some definitions.
-			final SimpleDateFormat formatter = new SimpleDateFormat("EEEE d MMM h:mma");
-			final SimpleDateFormat dayNameFormatter = new SimpleDateFormat("EEEE");
-			final Calendar cda = new GregorianCalendar();
-				cda.setTime(da);
-
-			final Calendar cnow = new GregorianCalendar();
-			final Date now = cnow.getTime();
-			final Date midnight = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH), 24, 0, 0).getTime();
-			final Date midnightTomorrow = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH), 48, 0, 0).getTime();
-			final Date endOfThisWeek = new GregorianCalendar(cnow.get(Calendar.YEAR), cnow.get(Calendar.MONTH), cnow.get(Calendar.DAY_OF_MONTH) + 7, 0, 0, 0).getTime();
-		// </definitions>
-
-		if (da.compareTo(now) > 0) // It's in the future, we can cope with it.
-		{
-			if (da.compareTo(midnight) < 0) // It's before midnight tonight.
-				return shortTime(cda) + " " +            // 9pm
-					(cda.get(Calendar.HOUR_OF_DAY) < 18 ? "today" : "tonight");
-
-			if (da.compareTo(midnightTomorrow) < 0) // It's before midnight tomorrow and not before midnight today, it's tomorrow.
-				return shortTime(cda) +                  // 9pm
-					" tomorrow " +                       // tomorrow
-					futurePeriodOfDayString(cda);        // evening
-
-			if (da.compareTo(endOfThisWeek) < 0) // It's not tomorrow, but it is some time when the week-day names alone mean something.
-				return shortTime(cda) + " " +            // 9pm
-					dayNameFormatter.format(da) + " " +  // Monday
-					futurePeriodOfDayString(cda);        // evening
-
-		}
-
-		return formatter.format(da);
-	}
-
-	/** Convert a Calendar to "8pm", "7am", "7:30am" etc. */
-	private final static String shortTime(Calendar cda)
-	{
-		final SimpleDateFormat nomins = new SimpleDateFormat("ha");
-		final SimpleDateFormat wimins = new SimpleDateFormat("h:mma");
-
-		// Don't show the minutes if they're 0.
-		if (cda.get(Calendar.MINUTE) != 0)
-			return wimins.format(cda.getTime()).toLowerCase();
-
-		return nomins.format(cda.getTime()).toLowerCase();
-	}
-
-	/** Work out if a calendar is in the morning, afternoon or evening. */
-	private final static String futurePeriodOfDayString(Calendar cda)
-	{
-		final int hour = cda.get(Calendar.HOUR_OF_DAY);
-
-		if (hour < 12)
-			return "morning";
-
-		if (hour < 18)
-			return "afternoon";
-
-		return "evening";
 	}
 
 	private static int parseId(String s)
