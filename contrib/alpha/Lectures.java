@@ -352,6 +352,39 @@ public class Lectures
 		}
 	}
 
+    public String[] helpCommandGetModuleName = {
+		"'Returns' the name of a module.",
+		"<Code>",
+		"<Code> is the module code to get the name for."
+	};
+
+    public synchronized void commandGetModuleName(Message mes) throws SQLException
+    {
+		final int modcode = codeSuggestions(mods.util.getParamString(mes), mes);
+
+        if(modcode == -1)
+            return;
+
+        PreparedStatement s = null;
+        try
+        {
+            s = getStatement("SELECT `name`, `code` from `modules` where `module` = ?");
+			s.setInt(1, modcode);
+
+			ResultSet rs = s.executeQuery();
+
+			rs.first();
+			final String name = rs.getString("name");
+            final String code = rs.getString("code");
+
+            irc.sendContextReply(mes, code + " is: " + name + ".");
+        }
+        finally
+        {
+            free(s);
+        }
+    }
+
 
 	public String[] helpCommandAddModule = {
 		"'Registers' you for a module.",
