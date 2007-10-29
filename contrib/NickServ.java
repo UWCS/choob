@@ -172,7 +172,10 @@ public class NickServ
 					{
 						irc.sendMessage("NickServ", (infooverride ? "INFO " : "STATUS ") + nick);
 						if (ip_overrides)
+						{
 							irc.sendRawLine("USERIP " + nick);
+							irc.sendRawLine("USERHOST " + nick);
+						}
 						return null;
 					}
 				});
@@ -238,7 +241,7 @@ public class NickServ
 				ip_overrides=true;
 		}
 
-		if (ip_overrides && resp.getCode()==340) // USERIP response, not avaliable through PircBOT, gogo magic numbers.
+		if (ip_overrides && resp.getCode()==340 || resp.getCode()==302) // USERIP (and USERHOST) response, not avaliable through PircBOT, gogo magic numbers.
 		{
 			/*
 			 * General response ([]s as quotes):
@@ -257,10 +260,12 @@ public class NickServ
 			ResultObj result = getNickCheck( ma.group(1).trim().toLowerCase() );
 			if ( result == null )
 			{
-				// Something else handled it, we shouldn't be here.
+				System.out.println("Something else handled it (" + ma.group(1).trim().toLowerCase() + "), we shouldn't be here.");
 				ip_overrides=false;
 				return;
 			}
+
+			System.out.println("Checking the file for \"" + ma.group(2) + "\".");
 
 			synchronized(result)
 			{
