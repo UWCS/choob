@@ -10,6 +10,10 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.io.*;
 import java.text.DateFormatSymbols;
+import org.jibble.pircbot.User;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 public class See
 {
@@ -27,7 +31,7 @@ public class See
 
 	String timeStamp(Timestamp d)
 	{
-		return mods.date.timeStamp((new java.util.Date()).getTime()-d.getTime(), false, 3, uk.co.uwcs.choob.modules.DateModule.longtokens.minute);
+		return mods.date.timeStamp((new java.util.Date()).getTime()-d.getTime(), false, 3, uk.co.uwcs.choob.modules.DateModule.TimeUnit.MINUTE);
 	}
 
 	private final synchronized ResultSet getDataFor(final String nick, final Connection conn) throws SQLException
@@ -88,7 +92,7 @@ public class See
 			}
 
 			ret+=nick + " probably got up " + timeStamp(gotup) + " ago after " +
-				mods.date.timeStamp(diff, false, 2, uk.co.uwcs.choob.modules.DateModule.longtokens.hour) + " of sleep, making their body-clock time about " +
+				mods.date.timeStamp(diff, false, 2, uk.co.uwcs.choob.modules.DateModule.TimeUnit.HOUR) + " of sleep, making their body-clock time about " +
 				((int)Math.floor(bodyclock) % 24) + ":" + (minutes < 10 ? "0" : "") + minutes;
 
 			irc.sendContextReply(mes, ret + ".");
@@ -187,20 +191,52 @@ public class See
 		try
 		{
 			String nick=mods.util.getParamString(mes).trim();
+			String message;
+
 			float t;
 			if (nick.equals(""))
 			{
 				float rt=0;
-				final String[] nicks = new String[] { "Blood_God", "Faux", "sadiq", "ajmiles", "Kim", "icStatic", "whythehell", "fred" };
-				for (String n : nicks)
-					rt+=midday(n, conn);
+				final Set<String> nickset = new HashSet<String>(); 
+				for (String n : irc.getUsers(mes.getContext()))
+					nickset.add(mods.nick.getBestPrimaryNick(n));
+				String[] nicks = nickset.toArray(new String[0]);
 
-				t = rt/(float)nicks.length;
+				int succ = 0, fail=0;
+				ArrayList<String> succers = new ArrayList<String>();
+				
+				for (String n : nicks)
+				{
+					try
+					{
+						final float md = midday(n, conn);
+						System.out.println(n + "\t" + md);
+						rt+=md;
+
+						++succ;
+					}
+					catch (RuntimeException e)
+					{
+						++fail;
+					}
+				}
+
+				if (succ < 2)
+				{
+					irc.sendContextReply(mes, "Not enough users in " + mes.getContext() + ".");
+					return;
+				}
+				message = "From " + succ + " users in " + mes.getContext() + ", the average";
+
+				t = rt/(float)succ;
 			}
 			else
+			{
 				t = midday(nick=mods.nick.getBestPrimaryNick(nick), conn);
-
-			irc.sendContextReply(mes, (nick.equals("") ? "Official Compsoc" : nick + "'s") + " midday is " + (int)t + ":" + (int)((t-(int)t)*60) + ".");
+				message = nick + "'s";
+			}
+			final int qnr = (int)((t-(int)t)*60);
+			irc.sendContextReply(mes, message + " midday is " + (int)t + ":" + (qnr < 10 ? "0" : "") + qnr + ".");
 		}
 		finally
 		{
@@ -213,6 +249,8 @@ public class See
 	{
 		// if they wern't awake this long, it doesn't count.
 		final int minday = 7*60*60*1000;
+
+		nick = mods.nick.getBestPrimaryNick(nick);
 
 		ResultSet rs = getDataFor(nick, conn);
 
