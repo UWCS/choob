@@ -52,6 +52,9 @@ public class NickServ
 	boolean infooverride=false;
 
 	final Pattern validInfoReply=Pattern.compile("^(?:\\s*Nickname: ([^\\s]+) ?(<< ONLINE >>)?)|(?:The nickname \\[([^\\s]+)\\] is not registered)$");
+	final Pattern athemeNotRegistered=Pattern.compile("^([^\\s]+?) is not registered.$");
+	final Pattern athemeCurrentlyOnline=Pattern.compile("^Nick ([^\\s]+?) is currently online$");
+	final Pattern athemeCurrentlyOffline=Pattern.compile("^Nick ([^\\s]+?) last seen: .*");
 
 	public NickServ(Modules mods, IRCInterface irc)
 	{
@@ -307,7 +310,7 @@ public class NickServ
 		if ( ! mes.getNick().toLowerCase().equals( "nickserv" ) )
 			return; // Not from NickServ --> also don't care
 
-		if (!infooverride && mes.getMessage().trim().toLowerCase().equals("unknown command [status]"))
+		if (!infooverride && (mes.getMessage().trim().toLowerCase().equals("unknown command [status]") || mes.getMessage().trim().equals("You are not logged in.")))
 		{
 			// Ohes nose, horribly broken network! Let's pretend that it didn't just slap us in the face with a glove.
 			System.err.println("Reverting to badly broken NickServ handling.");
@@ -329,25 +332,48 @@ public class NickServ
 		int status;
 		if (infooverride)
 		{
-			if (mes.getMessage().indexOf("Nickname: ") == -1 && mes.getMessage().indexOf("The nickname [") == -1)
-				return; // Wrong type of message!
+			// Atheme:
+			Matcher anr = athemeNotRegistered.matcher(mes.getMessage());
+			Matcher aon = athemeCurrentlyOnline.matcher(mes.getMessage());
+			Matcher aoff = athemeCurrentlyOffline.matcher(mes.getMessage());
 
-			Matcher ma = validInfoReply.matcher(Colors.removeFormattingAndColors(mes.getMessage()));
-
-			if (!ma.matches())
-				return;
-
-			nick = ma.group(1);
-
-			if (nick == null)
+			if (anr.matches())
 			{
-				// Unregistered
-				nick = ma.group(3);
+				nick = anr.group(1);
 				status = 0;
 			}
+			else if (aon.matches())
+			{
+				nick = aon.group(1);
+				status = 3;
+			}
+			else if (aoff.matches())
+			{
+				nick = aoff.group(1);
+				status = 1;
+			}
 			else
-				// Registered
-				status = (ma.group(2) == null || ma.group(2).equals("")) ? 1 : 3;
+			{
+				if (mes.getMessage().indexOf("Nickname: ") == -1 && mes.getMessage().indexOf("The nickname [") == -1)
+					return; // Wrong type of message!
+
+				Matcher ma = validInfoReply.matcher(Colors.removeFormattingAndColors(mes.getMessage()));
+
+				if (!ma.matches())
+					return;
+
+				nick = ma.group(1);
+
+				if (nick == null)
+				{
+					// Unregistered
+					nick = ma.group(3);
+					status = 0;
+				}
+				else
+					// Registered
+					status = (ma.group(2) == null || ma.group(2).equals("")) ? 1 : 3;
+			}
 		}
 		else
 		{
