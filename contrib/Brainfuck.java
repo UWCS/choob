@@ -131,7 +131,7 @@ class BrainfuckInterpreter
 					--mem[ptr];
 					break;
 				case '.':
-					output.append((char) mem[ptr]);
+					output.append((char) (mem[ptr] & 0xFF));
 
 					if (output.length() == max_output)
 					{
