@@ -686,11 +686,29 @@ public final class ScraperModule {
 	}
 
 	/**
+	 * Escapes quotes in a String.
+	 * @param html The String to clean
+	 * @return The clean String, with escaped quotes.
+	 */
+	public String escapeQuotes(String html) {
+		return html.replaceAll("'","\\'").replaceAll("\"", "\\\"");
+	}
+
+	/**
 	 * Cleans a Sting of HTML of all tags in order to make it suitable for output in IRC.
 	 * @param html The String containing HTML tags that is to be prepared for IRC output.
 	 * @return A string ready for output into IRC.
 	 */
 	public String readyForIrc(String html) {
 		return stripTags(quoteURLs(boldTags(cleanup(html))));
+	}
+
+	/**
+	 * Cleans a String of HTML in order to make it suitable for output in a HTML page.
+	 * @param html The String containing HTML tags that is to be prepared for HTML output.
+	 * @return A string ready for output into HTML.
+	 */
+	public String readyForHtml(String html) {
+		return escapeQuotes(stripTags(quoteURLs(boldTags(cleanup(html)))));
 	}
 }

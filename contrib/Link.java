@@ -223,9 +223,19 @@ public class Link
 		List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
 
 		for( OldLink link : links )
-			out.println("<a href=\"" + link.URL + "\">" + link.URL + "</a>&nbsp;-&nbsp;" + link.poster + " in " + link.channel + "<br />");
+			out.println("<a href=\"" + mods.scrape.readyForHtml(link.URL) + "\">" + mods.scrape.readyForHtml(link.URL)
+				+ "</a>&nbsp;-&nbsp;" + mods.scrape.readyForHtml(link.poster) + " in "
+				+ mods.scrape.readyForHtml(link.channel) + "<br />");
 
 		out.flush();
+	}
+
+	private String escapeHTML(String s)
+	{
+		return s.replaceAll("&", "&amp;")
+			.replaceAll("<", "&lt;")
+			.replaceAll(">", "&gt;")
+			.replaceAll("\"", "&quot;");
 	}
 
 	public void webLastLink(PrintWriter out, String params, String[] user)
@@ -239,7 +249,7 @@ public class Link
 		List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
 
 		for( OldLink link : links )
-			out.println("<html><head><script>window.location = \"" + link.URL + "\";</script></head><body></body></html>");
+			out.println("<html><head><script>window.location = \"" + mods.scrape.readyForHtml(link.URL) + "\";</script></head><body></body></html>");
 
 		out.println();
 		out.flush();
