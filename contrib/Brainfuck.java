@@ -63,15 +63,15 @@ public class Brainfuck
 		}
 		catch (InstructionCountExceededException e)
 		{
-			reply = e.getMessage() + " (halted after " + MAX_INSTRUCTIONS + " instructions at offset " + e.getOffset() + ")";
+			reply = e.getMessage() + " (halted after " + MAX_INSTRUCTIONS + " instructions at position " + e.getOffset() + ")";
 		}
 		catch (OutputLengthExceededException e)
 		{
-			reply = e.getMessage() + " (halted after " + MAX_OUTPUT + " chars of output at offset " + e.getOffset() + ")";
+			reply = e.getMessage() + " (halted after " + MAX_OUTPUT + " chars of output at position " + e.getOffset() + ")";
 		}
 		catch (BrainfuckException e)
 		{
-			reply = "Parse error at offset " + e.getOffset() + ": "	+ e.getMessage();
+			reply = "Parse error at position " + e.getOffset() + ": " + e.getMessage();
 		}
 
 		irc.sendContextReply(mes, reply);
@@ -102,21 +102,26 @@ class BrainfuckInterpreter
 		this.max_output = max_output;
 	}
 
+
 	public String eval() throws BrainfuckException
 	{
 		StringBuilder output = new StringBuilder();
-		Stack<Integer> pc_stack = new Stack();
+		List<BrainfuckToken> tokens = tokenise();
 
-		while (pc < expr.length())
+		BrainfuckToken token;
+		int pc = 0;
+
+		while (pc < tokens.size())
 		{
+			token = tokens.get(pc);
 			++count;
 
 			if (count == max_instructions)
 			{
-				throw new InstructionCountExceededException(output.toString(), pc);
+				throw new InstructionCountExceededException(output.toString(), token.pos);
 			}
 
-			switch (expr.charAt(pc))
+			switch (token.sym)
 			{
 				case '>':
 					++ptr;
@@ -135,41 +140,86 @@ class BrainfuckInterpreter
 
 					if (output.length() == max_output)
 					{
-						throw new OutputLengthExceededException(output.toString(), pc);
+						throw new OutputLengthExceededException(output.toString(), token.pos);
 					}
 					break;
 				case '[':
-					pc_stack.push(pc);
+					if (mem[ptr] == 0)
+					{
+						pc = token.jne;
+					}
 					break;
 				case ']':
-					try
-					{
-						if (mem[ptr] == 0)
-						{
-							pc_stack.pop();
-						}
-						else
-						{
-							pc = pc_stack.peek();
-						}
-					}
-					catch (EmptyStackException e)
-					{
-						throw new ParseErrorException(pc);
-					}
-					break;
-				default:
+					pc = token.jne - 1;
 					break;
 			}
 			++pc;
 		}
 
-		if (!pc_stack.isEmpty())
+		return output.toString();
+	}
+
+	private List<BrainfuckToken> tokenise() throws BrainfuckException
+	{
+	  	List<BrainfuckToken> tokens = new ArrayList<BrainfuckToken>();
+		Stack<Integer> pc_stack = new Stack();
+
+		int pos = 0;
+		int jne = 0;
+
+		while (pos < expr.length())
 		{
-			throw new ParseErrorException(pc);
+			switch (expr.charAt(pos))
+			{
+				case '>':
+				case '<':
+				case '-':
+				case '+':
+				case '.':
+					break;
+				case '[':
+					pc_stack.push(tokens.size());
+					break;
+				case ']':
+					try
+					{
+						jne = pc_stack.pop();
+						tokens.get(jne).jne = pos;
+					}
+					catch (EmptyStackException e)
+					{
+						throw new ParseErrorException(pos);
+					}
+					break;
+				default:
+					++pos;
+					continue;
+			}
+
+			tokens.add(new BrainfuckToken(expr.charAt(pos), jne, pos + 1));
+			++pos;
 		}
 
-		return output.toString();
+		if (pc_stack.size() > 0)
+		{
+			throw new ParseErrorException(pos);
+		}
+
+		return tokens;
+	}
+
+	class BrainfuckToken
+	{
+		public char sym;
+		public int jne;
+		public int pos;
+
+		public BrainfuckToken(char sym, int jne, int pos)
+		{
+			this.sym = sym;
+			this.jne = jne;
+			this.pos = pos;
+		}
 	}
 }
 
