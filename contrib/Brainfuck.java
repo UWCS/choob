@@ -54,7 +54,8 @@ public class Brainfuck
 
 		try
 		{
-			reply = eval(mods.util.getParamString(mes));
+			String[] tokens = {"<", ">", "+", "-", ".", "[", "]"};
+			reply = eval(mods.util.getParamString(mes), tokens);
 
 			if (reply.length() == 0)
 			{
@@ -77,9 +78,9 @@ public class Brainfuck
 		irc.sendContextReply(mes, reply);
 	}
 
-	public String eval(String expr) throws BrainfuckException
+	public String eval(String expr, String[] tokens) throws BrainfuckException
 	{
-		BrainfuckInterpreter interp = new BrainfuckInterpreter(expr, MAX_INSTRUCTIONS, MAX_OUTPUT);
+		BrainfuckInterpreter interp = new BrainfuckInterpreter(expr, tokens, MAX_INSTRUCTIONS, MAX_OUTPUT);
 		return interp.eval();
 	}
 }
@@ -91,13 +92,15 @@ class BrainfuckInterpreter
 	private int ptr = 0; 
 	private int count = 0;
 
-	private int max_output;
-	private int max_instructions;
 	private String expr;
+	private String[] tokens;
+	private int max_instructions;
+	private int max_output;
 
-	public BrainfuckInterpreter(String expr, int max_instructions, int max_output)
+	public BrainfuckInterpreter(String expr, String[] tokens, int max_instructions, int max_output)
 	{
 		this.expr = expr;
+		this.tokens = tokens;
 		this.max_instructions = max_instructions;
 		this.max_output = max_output;
 	}
@@ -106,14 +109,14 @@ class BrainfuckInterpreter
 	public String eval() throws BrainfuckException
 	{
 		StringBuilder output = new StringBuilder();
-		List<BrainfuckToken> tokens = tokenise();
+		List<BrainfuckToken> my_tokens = tokenise();
 
 		BrainfuckToken token;
 		int pc = 0;
 
-		while (pc < tokens.size())
+		while (pc < my_tokens.size())
 		{
-			token = tokens.get(pc);
+			token = my_tokens.get(pc);
 			++count;
 
 			if (count == max_instructions)
@@ -161,42 +164,45 @@ class BrainfuckInterpreter
 
 	private List<BrainfuckToken> tokenise() throws BrainfuckException
 	{
-	  	List<BrainfuckToken> tokens = new ArrayList<BrainfuckToken>();
+	  	List<BrainfuckToken> my_tokens = new ArrayList<BrainfuckToken>();
 		Stack<Integer> pc_stack = new Stack();
 
 		int pos = 0;
 		int jne = 0;
 
+		char[] symbols = {'<', '>', '+', '-', '.', '[', ']'};
+
 		while (pos < expr.length())
 		{
-			switch (expr.charAt(pos))
+			boolean flag = true;
+			for (int i = 0; (i < tokens.length) && flag; ++i)
 			{
-				case '>':
-				case '<':
-				case '-':
-				case '+':
-				case '.':
-					break;
-				case '[':
-					pc_stack.push(tokens.size());
-					break;
-				case ']':
-					try
+				if (expr.substring(pos, pos + tokens[i].length()).equals(tokens[i]))
+				{
+					switch (symbols[i])
 					{
-						jne = pc_stack.pop();
-						tokens.get(jne).jne = pos;
+						case '[':
+							pc_stack.push(my_tokens.size());
+							break;
+						case ']':
+							try
+							{
+								jne = pc_stack.pop();
+								my_tokens.get(jne).jne = my_tokens.size();
+							}
+							catch (EmptyStackException e)
+							{
+								throw new ParseErrorException(pos);
+							}
+							break;
 					}
-					catch (EmptyStackException e)
-					{
-						throw new ParseErrorException(pos);
-					}
-					break;
-				default:
-					++pos;
-					continue;
+
+					my_tokens.add(new BrainfuckToken(symbols[i], jne, pos + 1));
+					pos += tokens[i].length() - 1;
+					flag = true;
+				}
 			}
 
-			tokens.add(new BrainfuckToken(expr.charAt(pos), jne, pos + 1));
 			++pos;
 		}
 
@@ -205,7 +211,7 @@ class BrainfuckInterpreter
 			throw new ParseErrorException(pos);
 		}
 
-		return tokens;
+		return my_tokens;
 	}
 
 	class BrainfuckToken
