@@ -3,6 +3,7 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -30,21 +31,20 @@ public class Where
 
 	abstract class Callback
 	{
-		
 		Callback(ContextEvent con)
 		{
 			target = con;
 		}
-		
+
 		final ContextEvent target;
 
 		abstract void complete(Details d);
-		
+
 	}
 
 	Callback fromPredicate(ContextEvent con, final Predicate p, final String msg)
 	{
-		return new Callback(con) 
+		return new Callback(con)
 		{
 			void complete(Details d)
 			{
@@ -54,16 +54,17 @@ public class Where
 						if (p.hit(add))
 							hitted.add(entr.getKey());
 
+				Collections.sort(hitted);
 				irc.sendContextReply(target, hitted.size() + " " + (hitted.size() == 1 ? "person" : "people") + " (" + hrList(hitted) + ") " + (hitted.size() == 1 ? "is" : "are") + " " + msg + ".");
 			}
 		};
 	}
-	
+
 	abstract class Predicate
 	{
 		abstract boolean hit(InetAddress add);
 	}
-	
+
 	class Details
 	{
 		Details(Callback c)
@@ -76,14 +77,14 @@ public class Where
 		Callback callback;
 		// Username -> addresses
 		Map<String, Set<InetAddress>> localmap;
-		
+
 		// Nick -> host.
 		Map<String, Set<InetAddress>> users;
 	}
-	
+
 	// (Target) channel -> Outstanding queries in it.
 	Map<String, Queue<Details>> outst = new HashMap<String, Queue<Details>>();
-	
+
 	public Where(Modules mods, IRCInterface irc)
 	{
 		this.irc = irc;
@@ -95,9 +96,9 @@ public class Where
 
 	<T>	boolean matches(Pattern p, T o)
 	{
-		return p.matcher(o.toString()).matches();
+		return p.matcher(o.toString()).find();
 	}
-	
+
 	// "User", hostname, server, nick, ...
 	final Pattern splitUp = Pattern.compile("^([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) .*");
 	public synchronized void onServerResponse(ServerResponse resp)
@@ -113,11 +114,11 @@ public class Where
 
 		final String aboutWhat = ma.group(1);
 		final String tail = ma.group(2);
-	
+
 		Queue<Details> detst = outst.get(aboutWhat);
 		if (detst == null || detst.isEmpty())
 		{
-			// The server has sent us a "WHO" line for a channel we don't care about. 
+			// The server has sent us a "WHO" line for a channel we don't care about.
 			// Ignoring when it hates us, and we're hitting a RAAAAAAACE CONDITIONS..
 			// it does this when we asked for a WHO nick. Assume that this is the only one we're going to get.
 
@@ -128,7 +129,7 @@ public class Where
 		Details d = detst.peek();
 		if (d == null)
 			return; // Lol whut.
-		
+
 		if (atend)
 		{
 			d.callback.complete(d);
@@ -138,7 +139,7 @@ public class Where
 		{
 			if (!(ma = splitUp.matcher(tail)).matches())
 				return; // Lol whut.
-			
+
 			try
 			{
 				// D.users is Nick -> Ip.
@@ -146,19 +147,19 @@ public class Where
 				InetAddress toStore = InetAddress.getByName(ma.group(2));
 				final String nick = ma.group(4);
 				Set<InetAddress> newones;
-				
+
 				Set<InetAddress> addto;
-				
+
 				if ((addto = d.users.get(nick)) == null)
 					d.users.put(nick, addto = new HashSet<InetAddress>());
-				
+
 				if (!isLocal(toStore) || (newones = d.localmap.get(ma.group(1))) == null)
 					addto.add(toStore);
 				else
 					addto.addAll(newones);
-				
+
 			}
-			catch (UnknownHostException e) 
+			catch (UnknownHostException e)
 			{
 				// Ignore, abort the put.
 			}
@@ -167,14 +168,19 @@ public class Where
 
 	boolean isLocal(InetAddress add)
 	{
-		return matches(Pattern.compile("localhost/127.*"), add) || matches(Pattern.compile("compsoc.sunion.warwick.ac.uk/.*"), add);
+		return matches(Pattern.compile("^localhost/127"), add) || matches(Pattern.compile("compsoc.sunion.warwick.ac.uk/.*"), add);
 	}
-	
+
 	boolean isCampus(InetAddress add)
 	{
-		return !isLocal(add) && matches(Pattern.compile(".*/137.205.*"), add);
+		return !isLocal(add) && matches(Pattern.compile("/137.205"), add);
 	}
-	
+
+	boolean isDCSLab(InetAddress add)
+	{
+		return matches(Pattern.compile("/137\\.205\\.11[23]"), add);
+	}
+
 	// Username -> set of addresses.
 	Map<String, Set<InetAddress>> buildLocalMap()
 	{
@@ -186,7 +192,7 @@ public class Where
 			// There's a nefarious reason why this is here.
 			if (proc.waitFor() != 0)
 				return ret;
-			
+
 			BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 			br.readLine(); // Discard header.
 			String s;
@@ -208,7 +214,7 @@ public class Where
 		}
 		return ret; // Don't care about part results.
 	}
-	
+
 	<T> String hrList(List<T> el)
 	{
 		String ret = "";
@@ -224,48 +230,76 @@ public class Where
 		}
 		return ret;
 	}
-	
-	// mes only for command line. 
-	synchronized void goDo( Message mes, Callback c )
+
+	// mes only for command line.
+	void goDo( Message mes, Callback c )
 	{
 		String what = mods.util.getParamString(mes).trim().intern();
 		if (what.length() == 0)
 			what = mes.getContext();
 
+		goDo(what, c);
+	}
+
+	synchronized void goDo( String what, Callback c )
+	{
 		Queue<Details> d = outst.get(what);
 		if (d == null)
 			d = new LinkedList<Details>();
-		
+
 		d.add(new Details(c));
 
 		outst.put(what, d);
-		
+
 		irc.sendRawLine("WHO " + what);
 	}
-	
+
 	public void commandDebug(Message mes)
 	{
-		goDo(mes, new Callback(mes) 
-		{
-			public void complete(Details d)
+		goDo(mes,
+			new Callback(mes)
 			{
-				List<String> unres = new ArrayList<String>(), wcampus = new ArrayList<String>();
-				for (Entry<String, Set<InetAddress>> entr : d.users.entrySet())
-					for (InetAddress add : entr.getValue())
-						if (isCampus(add))
-							wcampus.add(entr.getKey());
-						else if (isLocal(add))
-							unres.add(entr.getKey());
-						else
-							System.out.println(add.toString());
-				irc.sendContextReply(target, "Found " + d.users.size() + " people, " + wcampus.size() + " are on campus (" + hrList(wcampus) + "), " + hrList(unres) + " are unresolvable.");
+				public void complete(Details d)
+				{
+					List<String> unres = new ArrayList<String>(), wcampus = new ArrayList<String>();
+					for (Entry<String, Set<InetAddress>> entr : d.users.entrySet())
+						for (InetAddress add : entr.getValue())
+							if (isCampus(add))
+								wcampus.add(entr.getKey());
+							else if (isLocal(add))
+								unres.add(entr.getKey());
+							else
+								System.out.println(add.toString());
+					irc.sendContextReply(target, "Found " + d.users.size() + " people, " + wcampus.size() + " are on campus (" + hrList(wcampus) + "), " + hrList(unres) + " are unresolvable.");
+				}
 			}
-		}
 		);
 	}
-	
+
 	public void commandOnCampus(Message mes)
 	{
 		goDo(mes, fromPredicate(mes, new Predicate() { boolean hit(InetAddress add) { return isCampus(add); } }, "on campus"));
+	}
+
+	public void commandDCSLabs(Message mes)
+	{
+		goDo(mes, fromPredicate(mes, new Predicate() { boolean hit(InetAddress add) { return isDCSLab(add); } }, "in a DCS lab"));
+	}
+
+	public void commandRegex(Message mes)
+	{
+		Matcher ma = Pattern.compile("^(.+?)((?: [^ ]+)?)$").matcher(mods.util.getParamString(mes).trim());
+		if (!ma.matches())
+		{
+			irc.sendContextReply(mes, "Expected: regex [what]");
+			return;
+		}
+		String what = ma.group(2).trim();
+		if (what.length() == 0)
+			what = mes.getContext();
+
+		final Pattern p = Pattern.compile(ma.group(1));
+
+		goDo(what, fromPredicate(mes, new Predicate() { boolean hit(InetAddress add) { return matches(p, add); } }, "matching"));
 	}
 }
