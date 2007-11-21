@@ -178,7 +178,7 @@ public class Where
 
 	boolean isDCSLab(InetAddress add)
 	{
-		return matches(Pattern.compile("/137\\.205\\.11[23]"), add);
+		return matches(Pattern.compile("/137\\.205\\.11"), add);
 	}
 
 	// Username -> set of addresses.
