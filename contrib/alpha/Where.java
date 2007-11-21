@@ -302,4 +302,57 @@ public class Where
 
 		goDo(what, fromPredicate(mes, new Predicate() { boolean hit(InetAddress add) { return matches(p, add); } }, "matching"));
 	}
+
+	class MutableInteger
+	{
+		private int value;
+
+		public MutableInteger(int value)
+		{
+			this.value = value;
+		}
+
+		public int preDecrement()
+		{
+			return --value;
+		}
+	}
+
+	public void commandGlobalDCS(Message mes)
+	{
+		final String channels[] = { "#compsoc", "#wuglug", "#bots", "#wug", "#choob" };
+		final Set<String> users = new HashSet<String>();
+		final MutableInteger count = new MutableInteger(channels.length);
+
+		for (String channel : channels)
+		{
+			goDo(channel,
+				new Callback(mes)
+				{
+					public void complete(Details d)
+					{
+						for (Entry<String, Set<InetAddress>> entr : d.users.entrySet())
+						{
+							for (InetAddress add : entr.getValue())
+							{
+								if (isDCSLab(add))
+								{
+									users.add(entr.getKey());
+								}
+							}
+						}
+
+						synchronized (count)
+						{
+							if (count.preDecrement() == 0)
+							{
+								irc.sendContextReply(target, "Total users in DCS: " + users.size());
+							}
+						}
+					}
+				}
+			);
+		}
+	}
+
 }
