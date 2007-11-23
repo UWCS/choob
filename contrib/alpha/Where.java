@@ -176,7 +176,7 @@ public class Where
 		return !isLocal(add) && matches(Pattern.compile("/137.205"), add);
 	}
 
-	boolean isDCSLab(InetAddress add)
+	boolean isDCS(InetAddress add)
 	{
 		return matches(Pattern.compile("/137\\.205\\.11"), add);
 	}
@@ -281,9 +281,9 @@ public class Where
 		goDo(mes, fromPredicate(mes, new Predicate() { boolean hit(InetAddress add) { return isCampus(add); } }, "on campus"));
 	}
 
-	public void commandDCSLabs(Message mes)
+	public void commandInDCS(Message mes)
 	{
-		goDo(mes, fromPredicate(mes, new Predicate() { boolean hit(InetAddress add) { return isDCSLab(add); } }, "in a DCS lab"));
+		goDo(mes, fromPredicate(mes, new Predicate() { boolean hit(InetAddress add) { return isDCS(add); } }, "in DCS"));
 	}
 
 	public void commandRegex(Message mes)
@@ -335,7 +335,7 @@ public class Where
 						{
 							for (InetAddress add : entr.getValue())
 							{
-								if (isDCSLab(add))
+								if (isDCS(add))
 								{
 									users.add(entr.getKey());
 								}
