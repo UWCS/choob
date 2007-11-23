@@ -29,6 +29,9 @@ public class Where
 	Modules mods;
 	IRCInterface irc;
 
+	private final String channels[] = { "#compsoc", "#wuglug", "#bots", "#wug", "#choob" };
+	private enum Location { Campus, DCS };
+
 	abstract class Callback
 	{
 		Callback(ContextEvent con)
@@ -320,7 +323,16 @@ public class Where
 
 	public void commandGlobalDCS(Message mes)
 	{
-		final String channels[] = { "#compsoc", "#wuglug", "#bots", "#wug", "#choob" };
+		global(mes, Location.DCS, "in DCS");
+	}
+
+	public void commandGlobalCampus(Message mes)
+	{
+		global(mes, Location.Campus, "on campus");
+	}
+
+	private void global(Message mes, final Location loc, final String str)
+	{
 		final Set<String> users = new HashSet<String>();
 		final MutableInteger count = new MutableInteger(channels.length);
 
@@ -335,7 +347,19 @@ public class Where
 						{
 							for (InetAddress add : entr.getValue())
 							{
-								if (isDCS(add))
+								boolean flag = false;
+
+								switch (loc)
+								{
+									case DCS:
+										flag = isDCS(add);
+										break;
+									case Campus:
+										flag = isCampus(add);
+										break;
+								}
+									
+								if (flag)
 								{
 									users.add(entr.getKey());
 								}
@@ -346,7 +370,7 @@ public class Where
 						{
 							if (count.preDecrement() == 0)
 							{
-								irc.sendContextReply(target, "Total users in DCS: " + users.size());
+								irc.sendContextReply(target, "Total users " + str + ": " + users.size());
 							}
 						}
 					}
