@@ -102,6 +102,15 @@ public class Where
 		return p.matcher(o.toString()).find();
 	}
 
+	// InetAddress.getByName doesn't resolve textual ips (to addresses) by default, trigger it (and discard the result) such that toString() returns the hostname.
+	// Note that the reverse lookups are cached (indefinitely) by Java, so that's not duplicated here.
+	private InetAddress getByName(String name) throws UnknownHostException
+	{
+		InetAddress temp = InetAddress.getByName(name);
+		temp.getHostName();
+		return temp;
+	}
+
 	// "User", hostname, server, nick, ...
 	final Pattern splitUp = Pattern.compile("^([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) .*");
 	public synchronized void onServerResponse(ServerResponse resp)
@@ -147,7 +156,7 @@ public class Where
 			{
 				// D.users is Nick -> Ip.
 				// If the user is local, attempt to hax their real ip.
-				InetAddress toStore = InetAddress.getByName(ma.group(2));
+				InetAddress toStore = getByName(ma.group(2));
 				final String nick = ma.group(4);
 				Set<InetAddress> newones;
 
@@ -207,7 +216,7 @@ public class Where
 					final String un = ma.group(1);
 					if (ret.get(un) == null)
 						ret.put(un, new HashSet<InetAddress>());
-					ret.get(un).add(InetAddress.getByName(ma.group(2)));
+					ret.get(un).add(getByName(ma.group(2)));
 				}
 			}
 		}
@@ -358,7 +367,7 @@ public class Where
 										flag = isCampus(add);
 										break;
 								}
-									
+
 								if (flag)
 								{
 									users.add(entr.getKey());
@@ -378,5 +387,4 @@ public class Where
 			);
 		}
 	}
-
 }
