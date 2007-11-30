@@ -149,11 +149,15 @@ public class Events
 				return "";
 
 			if (acceptsSignups())
-				return  " [" + signupCurrent + "/" + signupMax + "]";
+				return  " [" + shortSignupsOutOf() + "]";
 
 			return "";
 		}
 
+		public String shortSignupsOutOf()
+		{
+			return signupCurrent + "/" + (signupMax == 0 ? "*" : signupMax);
+		}
 	}
 
 	private enum Groups
@@ -290,7 +294,7 @@ public class Events
 							// Announce the change.
 							irc.sendMessage(announceChannel,
 								"Signups for " + n.boldNameShortDetails() +
-								" now " + n.signupCurrent + "/" + n.signupMax +
+								" now " + n.shortSignupsOutOf() +
 								" (" + sigts + ")."
 							);
 						}
@@ -374,10 +378,11 @@ public class Events
 				{
 					final String signup;
 
-					if (ev.signupMax != 0)
+					if (ev.hasSignups())
 					{
 						if (ev.signupCurrent != 0)
-							signup = " Currently " + ev.signupCurrent + " signup" + (ev.signupCurrent == 1 ? "" : "s") + " out of " + ev.signupMax + ".";
+							signup = " Currently " + ev.signupCurrent + " signup" + (ev.signupCurrent == 1 ? "" : "s") +
+								(ev.signupMax == 0 ? ", no limit." : " out of " + ev.signupMax + ".");
 						else
 							signup = " Nobody has signed up yet" +
 								(ev.acceptsSignups() ?
@@ -535,7 +540,7 @@ public class Events
 						irc.sendContextReply(mes,
 							(searching ? "Matching s" : "S") + "ignups for " + ev.boldNameShortDetails() +
 							" at " + ev.location +
-							(ev.signupMax != 0 ? " [" + ev.signupCurrent + "/" + ev.signupMax + "]" : "") + ": " +
+							ev.shortSignups() + ": " +
 							nameList(names, mes, ev.signupMax, Colors.BOLD + "Reserves: " + Colors.NORMAL) +
 							"."
 						);
@@ -579,13 +584,14 @@ public class Events
 	{
 		return nameList(names, mes, -1, "");
 	}
+
 	private static String nameList(List<String> names, Message mes, int after, String message)
 	{
 		StringBuilder namelistb = new StringBuilder();
 		int i=0;
 		for (String name : names)
 		{
-			if (i++ == after)
+			if (i++ == after && after != 0)
 				namelistb.append(message);
 			namelistb.append(name).append(", ");
 		}
