@@ -22,13 +22,21 @@ import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.ContextEvent;
 import uk.co.uwcs.choob.support.events.Message;
 import uk.co.uwcs.choob.support.events.ServerResponse;
-
+import uk.co.uwcs.choob.support.events.ChannelMessage;
 
 public class Where
 {
 	Modules mods;
 	IRCInterface irc;
 
+	//ignore hosts people screen from that we can't finger.
+	//hardcoding ftw.
+	private final static String[] IGNORED_HOSTS = 
+	{
+		//raw
+		"137.205.210.18/32",
+		"raw.sunion.warwick.ac.uk/.*"
+	};
 	private final String channels[] = { "#compsoc", "#wuglug", "#bots", "#wug", "#choob" };
 	private enum Location { Campus, DCS };
 
@@ -158,13 +166,18 @@ public class Where
 				// If the user is local, attempt to hax their real ip.
 				InetAddress toStore = getByName(ma.group(2));
 				final String nick = ma.group(4);
+
+				//ignore hosts we can't/don't want to check.
+				if (shouldIgnore(toStore))
+					return;
+
 				Set<InetAddress> newones;
 
 				Set<InetAddress> addto;
 
 				if ((addto = d.users.get(nick)) == null)
 					d.users.put(nick, addto = new HashSet<InetAddress>());
-
+				
 				if (!isLocal(toStore) || (newones = d.localmap.get(ma.group(1))) == null)
 					addto.add(toStore);
 				else
@@ -181,6 +194,18 @@ public class Where
 	boolean isLocal(InetAddress add)
 	{
 		return matches(Pattern.compile("^localhost/127"), add) || matches(Pattern.compile("compsoc.sunion.warwick.ac.uk/.*"), add);
+	}
+
+	boolean shouldIgnore(InetAddress add)
+	{
+		for (String ignoreHost : IGNORED_HOSTS)
+		{
+			if (matches(Pattern.compile(ignoreHost),add))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	boolean isCampus(InetAddress add)
@@ -288,16 +313,40 @@ public class Where
 		);
 	}
 
+	private void hint(Message mes)
+	{
+		if ((!(mes instanceof ChannelMessage)) && (mods.util.getParams(mes,2).size() < 2))
+			irc.sendContextReply(mes,"Hint, try " + mods.util.getParams(mes,2).get(0) + " <ChannelName> for relevant results in PM");
+	}
+
+	public String[] helpCommandOnCampus = {
+		"Displays a list of people connected to IRC from IPs in the university of warwick IP range. Also works properly for those using screens on the server on which the plugin is running.",
+		"[<ChannelName>]",
+		"<ChannelName> is the name of the channel to return results for."
+	};
 	public void commandOnCampus(Message mes)
 	{
+		hint(mes);
 		goDo(mes, fromPredicate(mes, new Predicate() { boolean hit(InetAddress add) { return isCampus(add); } }, "on campus"));
 	}
 
+	public String[] helpCommandInDCS = {
+		"Displays a list of people connected to IRC from IPs in the university of warwick department of computer science IP range. Also works properly for those using screens on the server on which the plugin is running.",
+		"[<ChannelName>]",
+		"<ChannelName> is the name of the channel to return results for."
+	};
 	public void commandInDCS(Message mes)
 	{
+		hint(mes);
 		goDo(mes, fromPredicate(mes, new Predicate() { boolean hit(InetAddress add) { return isDCS(add); } }, "in DCS"));
 	}
 
+	public String[] helpCommandRegex = {
+		"Displays a list of people connected to IRC from IPs matching the specified regex",
+		"<regex> [<ChannelName>]",
+		"<Regex> is the regex to match people's IPs against",
+		"<ChannelName> is the name of the channel to return results for."
+	};
 	public void commandRegex(Message mes)
 	{
 		Matcher ma = Pattern.compile("^(.+?)((?: [^ ]+)?)$").matcher(mods.util.getParamString(mes).trim());
