@@ -1632,16 +1632,49 @@ public class Quote
 				irc.sendContextMessage( ev, greeting + ev.getNick() + "!");
 			else
 			{
-				for (String nick : irc.getUsers(ev.getChannel()))
+				// Build a regexp of all the nicks in the channel.
+				StringBuffer nick_r = new StringBuffer();
+				List<String> nicklist = irc.getUsersList(ev.getChannel());
+
+				nick_r.append("(?i)\\b(?:");
+				nick_r.append(nicklist.remove(0));
+
+				for (String nick : nicklist)
 				{
 					if ( nick.equals( ev.getNick() ) )
 						continue;
 
-					quote = quote.replaceAll(
-						nick.replaceAll("([^a-zA-Z0-9_])", "\\\\$1"),
-						nick.replaceAll("([a-zA-Z])([^, ]+)","$1'$2")
-					);
+					nick.replaceAll("([^a-zA-Z0-9_])", "\\\\$1");
+
+					nick_r.append("|");
+					nick_r.append(nick);
 				}
+
+				nick_r.append(")\\b");
+
+				// Match the nicks, ignoring case.
+				Pattern nick_pattern = Pattern.compile(nick_r.toString());
+				Matcher nick_matcher = nick_pattern.matcher(quote);
+
+				// Insert an apostrophe into all occurrences.
+				StringBuffer quote_sb = new StringBuffer();
+				while (nick_matcher.find()) {
+					// FIXME: This is as ugly as your mum.
+					nick_matcher.appendReplacement(quote_sb, "");
+					StringBuffer new_nick = new StringBuffer(nick_matcher.group());
+					/* FIXME: Why is this if() really needed?
+					 * 
+					 * It breaks in real life, even without pathological nicks.
+					 * It could be a problem with the regex above, or getUsers().
+					 */
+					if (new_nick.length() > 0)
+						new_nick.insert(1, '\'');
+					quote_sb.append(new_nick);
+				}
+				nick_matcher.appendTail(quote_sb);
+				quote = quote_sb.toString();
+
+				// Reply with escaped quote.
 				irc.sendContextMessage( ev, greeting + ev.getNick() + ": \"" + quote + "\"");
 			}
 		}
