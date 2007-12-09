@@ -4,10 +4,12 @@
  * @author Marc A. Mnich
  */
 package uk.co.uwcs.choob.support;
-import com.mchange.v2.c3p0.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.mchange.v2.c3p0.DataSources;
 
 public final class DbConnectionBroker
 {

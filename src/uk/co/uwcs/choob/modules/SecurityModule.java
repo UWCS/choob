@@ -6,11 +6,13 @@
 
 package uk.co.uwcs.choob.modules;
 
-import uk.co.uwcs.choob.support.*;
-import java.sql.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.security.*;
-import java.lang.reflect.*;
+import java.sql.*;
 import java.util.*;
+
+import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
 
 /**
@@ -64,7 +66,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	public AccessControlContext getPluginContext( )
 	{
 		return new AccessControlContext(new ProtectionDomain[] {
-			getContextProtectionDomain() 
+			getContextProtectionDomain()
 		});
 	}
 
@@ -82,7 +84,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	{
 		return getPluginNames(null);
 	}
-	
+
 	public List<String> getPluginNames(String debugKey)
 	{
 		List<String> pluginStack = new ArrayList<String>();
@@ -418,11 +420,11 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		try
 		{
 			dbConn = dbBroker.getConnection();
-			stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? && NodeClass = ?");
+			stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = ?");
 			stat.setString(1, nodeName);
 			stat.setInt(2, nodeType);
 			ResultSet results = stat.executeQuery();
-			if ( results.first() )
+			if ( results.next() )
 			{
 				int idGot = results.getInt(1);
 				nodeIDCache.get(nodeType).put(nodeName.toLowerCase(), idGot);
@@ -522,7 +524,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 		return output;
 	}
-	
+
 	/**
 	 * Check if the given nickname has some form of authentication token
 	 * @param userEvent The event to validate and check the permission on.
@@ -533,7 +535,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			throw new ChoobGeneralAuthError();
 		}
 	}
-	
+
 	/**
 	 * Check if the given nickname has some form of authentication token.
 	 * @param nick The nickname to validate.
@@ -544,7 +546,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			throw new ChoobGeneralAuthError();
 		}
 	}
-	
+
 	/**
 	 * Check if the given nickname has some form of authentication.
 	 * @param userEvent The event to validate and check the permission on
@@ -556,7 +558,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 		return hasAuth(userEvent.getNick());
 	}
-	
+
 	/**
 	 * Check if the given nickname has some form of authentication.
 	 * @param nick The nickname to validate.
@@ -564,7 +566,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	public boolean hasAuth(String nick) {
 		try {
-						
+
 			// Attempt to confirm which authentication module we are using
 			String authPlugin = (String)mods.plugin.callAPI("AuthSelector", "GetAuthMethod");
 			if (authPlugin == null) {
@@ -576,13 +578,13 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					return true;
 				}
 			}
-			
+
 			if ((authPlugin.equals("quakenet")) || (authPlugin.equals("unknown"))){
 				if (hasQ(nick)) {
 					return true;
 				}
 			}
-			
+
 			// Unsupported setting - should not occur.
 			return false;
 		} catch (ChoobNoSuchPluginException e) {
@@ -593,7 +595,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			if (hasQ(nick)) {
 				return true;
 			}
-			
+
 			// No successful auth
 			return false;
 		} catch (ChoobException e) {
@@ -603,7 +605,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Check if the given nickname is authed with NickServ (if it is loaded).
 	 * @param nick The nickname to validate.
@@ -631,7 +633,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Check if the nickname given is authed with Q (if QuakenetAuth is loaded)
 	 * @param nick The nick to check.
@@ -639,13 +641,13 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	private boolean hasQ(String nick) {
 		try {
-			
+
 			// Get the account name being used by the current nick
 			String account = (String)mods.plugin.callAPI("QuakenetAuth", "Account", nick);
 			if (account == null) {
 				return false;
 			}
-			
+
 			// User has a current Q auth.
 			return true;
 		} catch (ChoobNoSuchPluginException e) {
@@ -679,7 +681,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	public boolean hasNickPerm(Permission permission, UserEvent userEvent) {
 		// XXX: Check for synthetic userEvent here.
-		
+
 		if (!hasAuth(userEvent)) {
 			return false;
 		}
@@ -694,13 +696,13 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			// No idea what auth method to use... do them all
 			System.err.println("No authentication method specified. Trying everything.");
 		}
-		
+
 		if ((authPlugin.equals("nickserv")) || (authPlugin.equals("unknown"))) {
 			if (hasNSPerm(permission, userEvent)) {
 				return true;
 			}
 		}
-		
+
 		if ((authPlugin.equals("quakenet")) || (authPlugin.equals("unknown"))) {
 			try {
 				String account = (String)mods.plugin.callAPI("QuakenetAuth", "Account", userEvent.getNick());
@@ -712,7 +714,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				System.err.println("Can not perform quakenet authentication. Please load QuakenetAuth plugin.");
 			}
 		}
-		
+
 		// No valid authentication method found.
 		return false;
 	}
@@ -737,9 +739,9 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	public boolean hasPerm(Permission permission, UserEvent userEvent) {
 		return hasNickPerm(permission, userEvent);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param permission
 	 * @param userEvent
 	 * @throws ChoobUserAuthError
@@ -749,7 +751,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			throw new ChoobUserAuthError(permission);
 		}
 	}
-	
+
 	/**
 	 * Confirm if a nick has permission under the NS style (i.e. a nick is only authed, but has no account name)
 	 * @param permission Permission to check.
@@ -758,7 +760,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	private boolean hasNSPerm(Permission permission, UserEvent userEvent) {
 		// XXX: Check for synthetic userEvent here.
-		
+
 		int userNode = getNodeIDFromUserName(userEvent);
 
 		System.out.println("Checking permission on user " + userEvent.getNick() + "(" + userNode + ")" + ": " + permission);
@@ -770,7 +772,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		return hasPerm(permission, userNode);
 
 	}
-	
+
 	public void checkQPerm(Permission permission, String account) throws ChoobUserAuthError {
 		if (!hasQPerm(permission, account)) {
 			throw new ChoobUserAuthError(permission);
@@ -789,7 +791,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				return hasPerm(permission, anonID, true);
 			}
 		}
-		
+
 		return hasPerm(permission, userNode);
 	}
 
@@ -955,6 +957,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	private void sqlErr(String task, SQLException e)
 	{
 		System.err.println("ACK! SQL error when " + task + ": " + e);
+		e.printStackTrace();
 		throw new ChoobError("An SQL error occurred when " + task + ". Please ask the bot administrator to check the logs.");
 	}
 
@@ -1498,7 +1501,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			try
 			{
 				dbConn = dbBroker.getConnection();
-				
+
 				if (permission instanceof AllPermission)
 				{
 					stat = dbConn.prepareStatement("DELETE FROM UserNodePermissions WHERE NodeID = ? AND Type = ?");
@@ -1517,7 +1520,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				{
 					// Don't care if this failed.
 				}
-				
+
 				stat = dbConn.prepareStatement("INSERT INTO UserNodePermissions (NodeID, Type, Permission, Action) VALUES (?, ?, ?, ?)");
 				stat.setInt(1, groupID);
 				stat.setString(2, permission.getClass().getName());
@@ -1691,14 +1694,14 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			if (sok.equals("true"))
 				return;
 		}
-		
+
 		if (e instanceof MessageEvent)
 			throw new ChoobEventExpired("Security exception: " + e.getClass().getName() + " from " + new java.util.Date(e.getMillis()).toString() + " ('" + ((MessageEvent)e).getMessage() + "') failed security." );
 		else
 			throw new ChoobEventExpired("Security exception: " + e.getClass().getName() + " from " + new java.util.Date(e.getMillis()).toString() + " failed security." );
 	}
-	
-	
+
+
 	/**
 	 * Get the auth name of a user for confirming that they are who they say they are
 	 * @param nick The nick of the user to check for the account name of.
@@ -1716,7 +1719,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			// No idea what auth method to use... assume it's their nickname then
 			return nick;
 		}
-		
+
 		// If quakenet then perform check
 		if (authPlugin.equals("quakenet")) {
 			try {
@@ -1731,7 +1734,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				return nick;
 			}
 		}
-		
+
 		// Otherwise assume it is their nickname
 		return nick;
 	}

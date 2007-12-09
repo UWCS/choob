@@ -6,7 +6,8 @@
 
 package uk.co.uwcs.choob.modules;
 
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Helper functions for dealing with users' nicks.

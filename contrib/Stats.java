@@ -1,12 +1,11 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobBadSyntaxError;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.*;
-
-import java.util.*;
-import java.util.regex.*;
-
-import org.jibble.pircbot.Colors;
 
 /**
  * Fun (live) stats for all the family.
@@ -14,7 +13,7 @@ import org.jibble.pircbot.Colors;
  * @author Faux
  */
 
-public class EntityStat
+class EntityStat
 {
 	public int id;
 	public String statName;

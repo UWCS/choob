@@ -1,12 +1,13 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
-import java.text.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.*;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class GenericDict2
 {
@@ -368,6 +369,8 @@ public class GenericDict2
 
 class GenericDictException extends Exception
 {
+	private static final long serialVersionUID = 1696799760595440266L;
+
 	public GenericDictException(String message)
 	{
 		super(message);

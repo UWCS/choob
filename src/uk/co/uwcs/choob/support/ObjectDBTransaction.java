@@ -1,13 +1,14 @@
 package uk.co.uwcs.choob.support;
 
-import uk.co.uwcs.choob.support.ParseException;
-import uk.co.uwcs.choob.modules.*;
-import java.util.*;
-import java.sql.*;
-import java.lang.String;
-import java.lang.reflect.*;
+import java.lang.reflect.Type;
 import java.security.AccessController;
-import org.mozilla.javascript.*;
+import java.sql.*;
+import java.util.*;
+
+import org.mozilla.javascript.Function;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.modules.ObjectDbModule;
 
 /**
  * Wraps up the database in an ObjectDB-friendly way, which can be used to
@@ -459,7 +460,8 @@ public class ObjectDBTransaction // Needs to be non-final
 	 *               are desired. FIXME: link to docs on format.
 	 * @return {@link List} of objects, typed according to the caller.
 	 */
-	public final List<?> retrieve(Object storedClass, String clause)
+	@SuppressWarnings("unchecked")
+	public final List retrieve(Object storedClass, String clause)
 	{
 		return retrieve(NewClassWrapper(storedClass), clause);
 	}
@@ -473,7 +475,8 @@ public class ObjectDBTransaction // Needs to be non-final
 	 *               are desired. FIXME: link to docs on format.
 	 * @return {@link List} of objects, typed according to the caller.
 	 */
-	public final List<?> retrieve(final ObjectDBClass storedClass, String clause)
+	@SuppressWarnings("unchecked")
+	public final List retrieve(final ObjectDBClass storedClass, String clause)
 	{
 		String sqlQuery;
 

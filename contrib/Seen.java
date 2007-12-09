@@ -1,9 +1,9 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
-import java.text.*;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.*;
 
 /**
  * Choob nickserv checker
@@ -15,7 +15,7 @@ import java.text.*;
  */
 
 // Holds the NickServ result
-public class SeenObj
+class SeenObj
 {
 	public int id;
 	public String name;

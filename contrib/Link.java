@@ -1,11 +1,12 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
-import java.text.*;
-import java.io.*;
 
 /**
  * Choob link plugin
@@ -14,7 +15,7 @@ import java.io.*;
  *
  */
 
-public class OldLink
+class OldLink
 {
 	public int id;
 	public String URL;
@@ -228,14 +229,6 @@ public class Link
 				+ mods.scrape.readyForHtml(link.channel) + "<br />");
 
 		out.flush();
-	}
-
-	private String escapeHTML(String s)
-	{
-		return s.replaceAll("&", "&amp;")
-			.replaceAll("<", "&lt;")
-			.replaceAll(">", "&gt;")
-			.replaceAll("\"", "&quot;");
 	}
 
 	public void webLastLink(PrintWriter out, String params, String[] user)

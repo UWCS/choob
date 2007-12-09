@@ -1,11 +1,8 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
-import java.security.*;
-import org.jibble.pircbot.Colors;
-import java.util.regex.*;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.IRCInterface;
 
 /**
  * Choob antiflood plugin. Provides generic flood protection for plugins.
@@ -14,7 +11,7 @@ import java.util.regex.*;
  */
 
 // Keeps track of the most recent messages from people.
-public class FloodObj
+class FloodObj
 {
 	private long lastmes[];
 	private int tailback; // Number of message times to remember.
@@ -85,18 +82,13 @@ public class Flood
 		};
 	}
 
-	private static int TIMEOUT = 10000; // Time between flood culls.
-
 	/**
 	 * Map plugin name to Map of (keys to flood objects)
 	 */
 	private Map<String,Map<String,FloodObj>> floods;
 	private Modules mods;
-	private IRCInterface irc;
-
 	public Flood(Modules mods, IRCInterface irc)
 	{
-		this.irc = irc;
 		this.mods = mods;
 		floods = new HashMap<String,Map<String,FloodObj>>();
 	}

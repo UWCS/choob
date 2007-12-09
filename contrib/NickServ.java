@@ -1,12 +1,15 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
+import java.io.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.jibble.pircbot.Colors;
+
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.security.*;
-import org.jibble.pircbot.Colors;
-import java.util.regex.*;
-import java.io.*;
 
 
 /**
@@ -19,7 +22,7 @@ import java.io.*;
  */
 
 // Holds the NickServ result
-public class ResultObj
+class ResultObj
 {
 	int result;
 	long time;
@@ -42,7 +45,6 @@ public class NickServ
 	private static int TIMEOUT = 10000; // Timeout on nick checks.
 //	private static int CACHE_TIMEOUT = 3600000; // Timeout on nick check cache (1 hour).
 	// ^^ Can only be used once we can verify a user is in a channel and thus trust their online-ness.
-	private static int CACHE_TIMEOUT = 300000; // Timeout on nick check cache (5 mins).
 
 	private Map<String,ResultObj> nickChecks;
 	Modules mods;
@@ -70,7 +72,7 @@ public class NickServ
 	public synchronized void interval( Object parameter, Modules mods, IRCInterface irc ) throws ChoobException
 	{
 		String nick = "ignore-me"; // It's completely irrelevant what this nick is.
-		ResultObj result = getNewNickCheck( nick );
+		getNewNickCheck( nick );
 	}
 
 	public void destroy(Modules mods)
@@ -170,7 +172,7 @@ public class NickServ
 				// Not already waiting on this one
 				result = new ResultObj();
 				result.result = -1;
-				AccessController.doPrivileged( new PrivilegedAction() {
+				AccessController.doPrivileged( new PrivilegedAction<Object>() {
 					public Object run()
 					{
 						irc.sendMessage("NickServ", (infooverride ? "INFO " : "STATUS ") + nick);

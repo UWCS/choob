@@ -4,14 +4,15 @@
  * Created on 12 July 2006, 16:18
  */
 
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
 import java.io.*;
 import java.net.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Plugin to retrieve the release date of a particular game from Gameplay.co.uk
@@ -95,7 +96,7 @@ public class ReleaseDate {
 	 * @param param The parameter to search for on the website.
 	 * @returns A message string to display.
 	 */
-	private String gameplaySearch(String param) {
+	protected String gameplaySearch(String param) {
 		try {
 			URL url = generateURL("http://shop.gameplay.co.uk/webstore/advanced_search.asp?keyword=", param);
 			//Info from the following regepx: Title - group 1
@@ -166,7 +167,7 @@ public class ReleaseDate {
 	
 	/* -- Start of code stolen from Dict.java -- */
 		private String prettyReply(String text, String url, int lines) {
-		int maxlen=((irc.MAX_MESSAGE_LENGTH-15)*lines) - url.length();
+		int maxlen=((IRCInterface.MAX_MESSAGE_LENGTH-15)*lines) - url.length();
 		text=text.replaceAll("\\s+"," ");
 		if (text.length()>maxlen) {
 			return text.substring(0, maxlen) + "..., see " + url;
@@ -195,20 +196,23 @@ public class ReleaseDate {
 		}
 	}
 	/* -- End of stolen code -- */
-}
 
-public class LookupException extends ChoobException {
-	
-	public LookupException(String text)	{
-		super(text);
-	}
-	
-	public LookupException(String text, Throwable e) {
-		super(text, e);
-	}
-	
-	public String toString() {
-		return getMessage();
+	class LookupException extends ChoobException {
+		
+		private static final long serialVersionUID = -1;
+
+		public LookupException(String text)	{
+			super(text);
+		}
+		
+		public LookupException(String text, Throwable e) {
+			super(text, e);
+		}
+		
+		public String toString() {
+			return getMessage();
+		}
+
 	}
 
 }

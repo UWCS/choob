@@ -6,10 +6,12 @@
 
 package uk.co.uwcs.choob;
 
-import uk.co.uwcs.choob.support.*;
 import java.util.*;
-import java.util.concurrent.*;
-import uk.co.uwcs.choob.modules.*;
+import java.util.concurrent.RejectedExecutionException;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.Interval;
 
 /**
  * Continually monitors the list of active callbacks, executing them as required.

@@ -1,6 +1,7 @@
 package uk.co.uwcs.choob.support;
 
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.Scriptable;
 
 public final class JSUtils {
 	public static Object mapJSToJava(Object jsObject) {

@@ -6,7 +6,7 @@
 
 package uk.co.uwcs.choob.support;
 
-import java.security.*;
+import java.security.BasicPermission;
 
 /**
  * Skeleton Permission for integration into modules that have priviledged access.

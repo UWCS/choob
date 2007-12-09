@@ -1,18 +1,21 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.jibble.pircbot.Colors;
+
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.security.*;
-import org.jibble.pircbot.Colors;
-import java.util.regex.*;
-import java.io.*;
 
 /**
  * Class to cache results
  *
  */
-public class QAuthResult {
+class QAuthResult {
 	String account;
 	long time;
 }
@@ -38,12 +41,6 @@ public class QuakenetAuth {
 	
 	// In case Q auth is not possible.
 	private boolean whoisfallback = false;
-	
-	/**
-	 * If enabled all checks will also be confirmed against the user's
-	 * hostname.
-	 */
-	private boolean ipOverride = false;
 	
 	public String[] info()	{
 		return new String[] {
@@ -212,8 +209,6 @@ public class QuakenetAuth {
 			return;
 		}
 		
-		List<String> params = mods.util.getParams(mes);
-		
 		String nick = null;
 		String account = null;
 		
@@ -232,7 +227,7 @@ public class QuakenetAuth {
 			
 			if ((user != null) && (pass != null)) {
 				final String authmessage = "auth " + user + " " + pass;
-				AccessController.doPrivileged(new PrivilegedAction() {
+				AccessController.doPrivileged(new PrivilegedAction<Object>() {
 					public Object run() {
 						irc.sendMessage("Q@CServe.quakenet.org", authmessage);
 						return null;
@@ -347,7 +342,7 @@ public class QuakenetAuth {
 				result = new QAuthResult();
 				result.account = null;
 				
-				AccessController.doPrivileged(new PrivilegedAction() {
+				AccessController.doPrivileged(new PrivilegedAction<Object>() {
 					public Object run() {
 						irc.sendMessage("Q", "whois " + nick);
 						return null;

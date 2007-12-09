@@ -1,7 +1,8 @@
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Brainfuck interpreter.
@@ -88,7 +89,6 @@ public class Brainfuck
 class BrainfuckInterpreter
 {
 	private byte[] mem = new byte[30000];
-	private int pc = 0;
 	private int ptr = 0; 
 	private int count = 0;
 
@@ -165,7 +165,7 @@ class BrainfuckInterpreter
 	private List<BrainfuckToken> tokenise() throws BrainfuckException
 	{
 	  	List<BrainfuckToken> my_tokens = new ArrayList<BrainfuckToken>();
-		Stack<Integer> pc_stack = new Stack();
+		Stack<Integer> pc_stack = new Stack<Integer>();
 
 		int pos = 0;
 		int jne = 0;
@@ -231,6 +231,7 @@ class BrainfuckInterpreter
 
 class BrainfuckException extends Exception
 {
+	private static final long serialVersionUID = -7656099851954125772L;
 	int offset;
 
 	public BrainfuckException(String message, int offset)
@@ -247,6 +248,8 @@ class BrainfuckException extends Exception
 
 class ParseErrorException extends BrainfuckException
 {
+	private static final long serialVersionUID = 4152970669488324439L;
+
 	public ParseErrorException(int offset)
 	{
 		super("Mismatched bracket", offset);
@@ -255,6 +258,8 @@ class ParseErrorException extends BrainfuckException
 
 class InstructionCountExceededException extends BrainfuckException
 {
+	private static final long serialVersionUID = 7180806496577431500L;
+
 	public InstructionCountExceededException(String output, int offset)
 	{
 		super(output, offset);
@@ -263,6 +268,8 @@ class InstructionCountExceededException extends BrainfuckException
 
 class OutputLengthExceededException extends BrainfuckException
 {
+	private static final long serialVersionUID = 2318303252562127659L;
+
 	public OutputLengthExceededException(String output, int offset)
 	{
 		super(output, offset);

@@ -6,10 +6,13 @@
 
 package uk.co.uwcs.choob.modules;
 
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Set of general functions that tend to be frequently used in plugins.

@@ -1,9 +1,10 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
+import java.util.List;
+
+import uk.co.uwcs.choob.ChoobThread;
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.text.*;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.PrivateEvent;
 
 /**
  * Options plugin - allows other plugins to access options which users can set.
@@ -11,7 +12,7 @@ import java.text.*;
  * @author bucko
  */
 
-public class UserOption
+class UserOption
 {
 	public int id;
 	public String pluginName;
@@ -20,7 +21,7 @@ public class UserOption
 	public String optionValue;
 }
 
-public class GeneralOption
+class GeneralOption
 {
 	public int id;
 	public String pluginName;

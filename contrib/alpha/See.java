@@ -1,19 +1,14 @@
 /** @author Faux */
 
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import java.io.PrintWriter;
 import java.sql.*;
-import java.text.*;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.io.*;
-import java.text.DateFormatSymbols;
-import org.jibble.pircbot.User;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class See
 {
@@ -130,7 +125,6 @@ public class See
 			String ret=nick + " was sleeping: ";
 			while (rs.next())
 			{
-				final Timestamp gotup=rs.getTimestamp("end");
 				final Date start = new Date(rs.getTimestamp("start").getTime());
 				final Date end = new Date(rs.getTimestamp("end").getTime());
 				ret += datelet(start) + " -> " + datelet(end) + ", ";
@@ -203,8 +197,6 @@ public class See
 				String[] nicks = nickset.toArray(new String[0]);
 
 				int succ = 0, fail=0;
-				ArrayList<String> succers = new ArrayList<String>();
-				
 				for (String n : nicks)
 				{
 					try
@@ -266,7 +258,6 @@ public class See
 
 			while (rs.next())
 			{
-				final Timestamp gotup=rs.getTimestamp("end");
 				final Date start = new Date(rs.getTimestamp("start").getTime());
 				final Date end = new Date(rs.getTimestamp("end").getTime());
 

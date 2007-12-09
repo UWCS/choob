@@ -1,6 +1,6 @@
 package uk.co.uwcs.choob.support;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Type;
 
 public interface ObjectDBObject {
 	/**

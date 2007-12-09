@@ -1,12 +1,14 @@
 //import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
-//import java.security.*;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class UserTypeCheckResult
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.ServerResponse;
+
+class UserTypeCheckResult
 {
 	boolean hasChecked;
 	boolean isBot;
@@ -45,9 +47,7 @@ public class UserTypeCheck
 	private final int USER_TYPE_FLAG_IRCOP       = 3;
 	private final int USER_TYPE_FLAG_REGISTERED  = 4;
 	private final int USER_TYPE_FLAG_SECURE      = 5;
-	private final int USER_TYPE_FLAG__MIN = USER_TYPE_FLAG_BOT;
-	private final int USER_TYPE_FLAG__MAX = USER_TYPE_FLAG_SECURE;
-	
+
 	/* Return values from the API "check" */
 	private final int USER_TYPE_RV_ERROR = -1;
 	private final int USER_TYPE_RV_NO    =  0;

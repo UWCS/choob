@@ -3,12 +3,10 @@
  * @author bucko
  */
 
-package uk.co.uwcs.choob.misc;
-
-import java.util.*;
 import java.io.*;
-import java.nio.*;
-import java.util.regex.*;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class HorriblePerlScript
 {
@@ -153,7 +151,6 @@ public final class HorriblePerlScript
 
 	public String getConstructorOrder(String className, Map<String,String> paramValueMap)
 	{
-		List<String> inherited = getInherit(className);
 		boolean first = true;
 		StringBuffer ret = new StringBuffer();
 		for(String param: getParamNames(className, false))
@@ -435,12 +432,10 @@ public final class HorriblePerlScript
 				continue;
 
 			List<String> inherited = getInherit(className);
-			List<String> paramNames = getParamNames(className, true);
 			List<String> realParamNames = getParamNames(className, false);
 			List<String> memberVariables = getMemberNames(className);
 			Map<String,String> paramTypes = getParamTypes(className);
 			List<String> myOverrides = getOverrides(className, false);
-			List<String> superInherited = directInheritance == null ? new ArrayList<String>() : getInherit(directInheritance[0]);
 			List<String> superParams = directInheritance == null ? new ArrayList<String>() : getParamNames(directInheritance[0], false);
 			List<String> superOverrides = directInheritance == null ? new ArrayList<String>() : getOverrides(directInheritance[0], true);
 
@@ -686,7 +681,6 @@ public final class HorriblePerlScript
 			if (notinterfaces.contains(interfaceName))
 				continue;
 
-			List<String> inherited = getInherit(interfaceName);
 			List<String> paramNames = getParamNames(interfaceName, true);
 			Map<String,String> paramTypes = getParamTypes(interfaceName);
 

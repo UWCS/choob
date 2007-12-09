@@ -6,12 +6,13 @@
 
 package uk.co.uwcs.choob.support;
 
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.events.*;
 import java.security.AccessController;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+
+import uk.co.uwcs.choob.Choob;
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.events.*;
 
 /**
  * The primary way for plugins to pass feedback to IRC.

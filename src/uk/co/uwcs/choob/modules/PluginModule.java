@@ -6,16 +6,18 @@
 
 package uk.co.uwcs.choob.modules;
 
-import uk.co.uwcs.choob.plugins.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import uk.co.uwcs.choob.*;
-import java.util.*;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.*;
 import java.sql.*;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.security.AccessControlException;
+import java.util.ArrayList;
+import java.util.List;
+
+import uk.co.uwcs.choob.*;
+import uk.co.uwcs.choob.plugins.HaxSunPluginManager;
+import uk.co.uwcs.choob.plugins.JavaScriptPluginManager;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Module that performs functions relating to the plugin architecture of the bot.
@@ -76,7 +78,7 @@ public final class PluginModule
 		// Small hack to allow the ChoobTask to return a value.
 		final boolean[] existed = new boolean[] { false };
 		final ChoobException[] err = new ChoobException[] { null };
-		
+
 		ChoobTask task = new ChoobTask(null, "addPlugin-" + pluginName) {
 			public void run() {
 				try {
@@ -91,21 +93,21 @@ public final class PluginModule
 		};
 		ChoobThread thread = new ChoobThread(task, "choob-addPlugin-" + pluginName);
 		thread.pushPlugin(pluginName);
-		
+
 		thread.start();
 		try {
 			thread.join();
 		} catch (InterruptedException e) {}
-		
+
 		if (err[0] != null)
 			throw err[0];
-		
+
 		// Inform plugins, if they want to know.
 		if (existed[0])
 			bot.onPluginReLoaded(pluginName);
 		else
 			bot.onPluginLoaded(pluginName);
-		
+
 		addPluginToDb(pluginName, URL);
 	}
 
@@ -181,11 +183,11 @@ public final class PluginModule
 	 * @param APIString The name of the routine to call.
 	 * @param params Parameters to pass to the routine.
 	 */
-	
+
 	public List<CallAPIResult> broadcastCallAPI(String APIString, Object... params)
 	{
 		List<CallAPIResult> rvList = new ArrayList<CallAPIResult>();
-		
+
 		String[] plugins = dPlugMan.plugins();
 		for (int i = 0; i < plugins.length; i++)
 		{
@@ -205,7 +207,7 @@ public final class PluginModule
 			}
 			rvList.add(rv);
 		}
-		
+
 		return rvList;
 	}
 
@@ -372,7 +374,7 @@ public final class PluginModule
 		// Small hack to allow the ChoobTask to return a value. Default here is
 		// 1 thread/plugin.
 		final int[] limit = new int[] { 1 };
-		
+
 		ChoobTask task = new ChoobTask(null, "getConcurrencyLimit") {
 			public void run() {
 				try {
@@ -384,12 +386,12 @@ public final class PluginModule
 		};
 		ChoobThread thread = new ChoobThread(task, "choob-getConcurrencyLimit");
 		thread.pushPlugin(pluginName);
-		
+
 		thread.start();
 		try {
 			thread.join();
 		} catch (InterruptedException e) {}
-		
+
 		return limit[0];
 	}
 

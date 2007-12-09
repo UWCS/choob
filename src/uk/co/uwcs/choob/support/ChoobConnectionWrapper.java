@@ -4,7 +4,8 @@
  */
 package uk.co.uwcs.choob.support;
 import java.sql.*;
-import java.util.*;
+import java.util.Map;
+import java.util.Properties;
 
 public final class ChoobConnectionWrapper implements Connection
 {

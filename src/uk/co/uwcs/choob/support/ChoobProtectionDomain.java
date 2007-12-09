@@ -1,7 +1,8 @@
 package uk.co.uwcs.choob.support;
 
-import java.security.ProtectionDomain;
 import java.security.Permission;
+import java.security.ProtectionDomain;
+
 import uk.co.uwcs.choob.modules.SecurityModule;
 
 /**

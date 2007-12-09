@@ -1,10 +1,12 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
 import java.util.*;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.jibble.pircbot.Colors;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.Message;
 
 
 /**
@@ -279,8 +281,6 @@ public class Help
 					int dotPos = alias.indexOf('.');
 					if (dotPos == -1 || dotPos >= spacePos - 1)
 					{
-						// Die! This alias seems invalid!
-						List<String> retList = new ArrayList<String>();
 						allHelp.add( formatCommand(plugin) + " appears to be aliased to an invalid alias: " + formatAlias(alias) );
 					}
 					else
@@ -311,7 +311,6 @@ public class Help
 				}
 				else
 				{
-					List<String> retList = new ArrayList<String>();
 					allHelp.add( "Sorry, the Alias plugin isn't behaving and sent invalid help." );
 				}
 				didAlias = true;
@@ -559,21 +558,14 @@ public class Help
 			simpleAlias = pos == -1;
 		}
 
-		int start, finish;
 		if (mode == MODE_ALL)
 		{
-			start = 0;
-			finish = help.length;
 		}
 		else if (mode == MODE_SUMMARY)
 		{
-			start = 0;
-			finish = 1;
 		}
 		else // (mode == MODE_SYNTAX)
 		{
-			start = 1;
-			finish = 2;
 		}
 
 		if (isLong)
@@ -938,8 +930,6 @@ public class Help
 	{
 		try
 		{
-			String help;
-
 			// Help on some specific thingy.
 			Object ret;
 			if (type == null)
@@ -950,7 +940,6 @@ public class Help
 			if (ret instanceof String[] && ((String[])ret).length > 0)
 			{
 				String[] helpArr = (String[])ret;
-				String[] returnArr = new String[helpArr.length];
 				return helpArr;
 			}
 			else
@@ -962,14 +951,6 @@ public class Help
 		{
 			return null;
 		}
-	}
-
-	// Helpers
-	private String titleCase(String s)
-	{
-		StringBuilder sb = new StringBuilder(s.toLowerCase());
-		sb.setCharAt(0,s.substring(0,1).toUpperCase().charAt(0));
-		return sb.toString();
 	}
 
 	private Object callMethod(String plugin, String topic, String param) throws ChoobNoSuchCallException

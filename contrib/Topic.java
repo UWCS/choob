@@ -1,12 +1,12 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.text.*;
-import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class TopicStr
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.events.ChannelInfo;
+
+class TopicStr
 {
 	public int id;
 	public String chan;
@@ -285,7 +285,6 @@ public class Topic
 		}
 		else if (nPos != newTopic.length())
 		{
-			int nStart = Math.max(0, nPos - CONTEXT);
 			changes.add("added \"" + newTopic.substring(nPos) + "\" at end");
 		}
 

@@ -1,13 +1,15 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
+import java.io.PrintWriter;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
-import java.io.*;
-import java.util.*;
-import java.util.regex.*;
-import java.text.*;
 
-public class QuoteObject
+class QuoteObject
 {
 	public int id;
 	public String quoter;
@@ -19,7 +21,7 @@ public class QuoteObject
 	public long time;
 }
 
-public class QuoteLine
+class QuoteLine
 {
 	public int id;
 	public int quoteID;
@@ -29,7 +31,7 @@ public class QuoteLine
 	public boolean isAction;
 }
 
-public class RecentQuote
+class RecentQuote
 {
 	public QuoteObject quote;
 	// No sense in caching the lines here.
@@ -41,7 +43,7 @@ public class RecentQuote
 	public int type;
 }
 
-public class QuoteEnumerator
+class QuoteEnumerator
 {
 	public QuoteEnumerator()
 	{
@@ -162,7 +164,7 @@ public class Quote
 	};
 
 	// A class to track the scores of a person.
-	class ScoreTracker implements Comparable
+	class ScoreTracker implements Comparable<ScoreTracker>
 	{
 		public String name;
 		public int count;
@@ -179,7 +181,7 @@ public class Quote
 		}
 
 		// Compare to another ScoreTracker.
-		public int compareTo(Object o)
+		public int compareTo(ScoreTracker o)
 		{
 			// Ignore the "null" case.
 			if (o == null)
@@ -217,7 +219,6 @@ public class Quote
 			irc.sendContextReply( mes, "Sorry, this command can only be used in a channel" );
 			return;
 		}
-		String chan = ((ChannelEvent)mes).getChannel();
 		List<Message> history = mods.history.getLastMessages( mes, HISTORY );
 
 		String param = mods.util.getParamString(mes).trim();
@@ -309,7 +310,7 @@ public class Quote
 		}
 		else if (param.toLowerCase().startsWith("action:") || param.toLowerCase().startsWith("privmsg:"))
 		{
-			Class thing;
+			final Class<? extends ChannelEvent> thing;
 			if (param.toLowerCase().startsWith("action:"))
 				thing = ChannelAction.class;
 			else
@@ -503,7 +504,7 @@ public class Quote
 
 		// QuoteLine object; quoteID will be filled in later.
 
-		final List quoteLines = new ArrayList(lines.size());
+		final List<QuoteLine> quoteLines = new ArrayList<QuoteLine>(lines.size());
 
 		mods.odb.runTransaction( new ObjectDBTransaction() {
 			public void run()
@@ -622,7 +623,7 @@ public class Quote
 
 		// QuoteLine object; quoteID will be filled in later.
 
-		final List quoteLines = new ArrayList(lines.length);
+		final List<QuoteLine> quoteLines = new ArrayList<QuoteLine>(lines.length);
 
 		mods.odb.runTransaction( new ObjectDBTransaction() {
 			public void run()
@@ -789,8 +790,8 @@ public class Quote
 
 		QuoteObject quote = pickRandomQuote(quotes, mes.getContext() + ":" + whereClause);
 
-		List lines = mods.odb.retrieve(QuoteLine.class, "WHERE quoteID = " + quote.id + " ORDER BY lineNumber");
-		Iterator l = lines.iterator();
+		List<QuoteLine> lines = mods.odb.retrieve(QuoteLine.class, "WHERE quoteID = " + quote.id + " ORDER BY lineNumber");
+		Iterator<QuoteLine> l = lines.iterator();
 		if (!l.hasNext())
 		{
 			irc.sendContextReply(mes, "Found quote " + quote.id + " but it was empty!");
@@ -798,7 +799,7 @@ public class Quote
 		}
 		while(l.hasNext())
 		{
-			QuoteLine line = (QuoteLine)l.next();
+			QuoteLine line = l.next();
 			if (line.isAction)
 				irc.sendContextMessage( mes, "* " + line.nick + " " + line.message );
 			else
@@ -829,11 +830,11 @@ public class Quote
 	public String apiSingleLineQuote(String nick, String context, String querysuffix)
 	{
 		String whereClause = getClause(nick + " length:=1" + " " + querysuffix);
-		List quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause);
+		List<QuoteObject> quotes = mods.odb.retrieve( QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause);
 		if (quotes.size() == 0)
 			return null;
 
-		QuoteObject quote = (QuoteObject)quotes.get(0);
+		QuoteObject quote = quotes.get(0);
 		List <QuoteLine>lines = mods.odb.retrieve( QuoteLine.class, "WHERE quoteID = " + quote.id );
 
 		if (lines.size() == 0)
@@ -1155,7 +1156,6 @@ public class Quote
 			ListIterator<RecentQuote> iter = recent.listIterator();
 
 			RecentQuote info = null;
-			QuoteObject quote = null;
 			boolean first = true;
 			String output = null;
 			int remain = count;
@@ -1236,14 +1236,14 @@ public class Quote
 			}
 		}
 
-		List quotes = mods.odb.retrieve( QuoteObject.class, "WHERE id = " + quoteID );
+		List<QuoteObject> quotes = mods.odb.retrieve( QuoteObject.class, "WHERE id = " + quoteID );
 		if (quotes.size() == 0)
 		{
 			irc.sendContextReply( mes, "No such quote to " + leet + "!" );
 			return;
 		}
 
-		QuoteObject quote = (QuoteObject)quotes.get(0);
+		QuoteObject quote = quotes.get(0);
 		if (up)
 		{
 			if (quote.score == THRESHOLD - 1)
@@ -1402,6 +1402,16 @@ public class Quote
 						throw new ChoobError("Invalid id selector: " + param);
 					}
 					clauses.add("id " + op + " " + value);
+					fiddled = true;
+				}
+				else if (first.equals("last"))
+				{
+					if (param.length() == 0)
+						throw new ChoobError("Empty nickname in last: selector.");
+					clauses.add("join"+joins+".quoteID = id");
+					clauses.add("lines - 1 = join" + joins + ".lineNumber");
+					clauses.add("join" + joins + ".nick = \"" + mods.odb.escapeString(param) + "\"");
+					joins++;
 					fiddled = true;
 				}
 				// That's all the special cases out of the way. If we're still
@@ -1690,7 +1700,7 @@ public class Quote
 	{
 		return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 	}
-	
+
 	public void webGetQuote(PrintWriter out, String args, String[] from)
 	{
 		try
@@ -1700,7 +1710,7 @@ public class Quote
 			out.println();
 
 			String whereClause = getClause(args);
-			List quotes;
+			List<QuoteObject> quotes;
 			try
 			{
 				quotes = mods.odb.retrieve(QuoteObject.class, "SORT BY RANDOM LIMIT (1) " + whereClause);
@@ -1713,15 +1723,15 @@ public class Quote
 			if (quotes.size() == 0)
 				return;
 
-			QuoteObject quote = (QuoteObject)quotes.get(0);
-			List lines = mods.odb.retrieve(QuoteLine.class, "WHERE quoteID = " + quote.id + " ORDER BY lineNumber");
-			Iterator l = lines.iterator();
+			QuoteObject quote = quotes.get(0);
+			List<QuoteLine> lines = mods.odb.retrieve(QuoteLine.class, "WHERE quoteID = " + quote.id + " ORDER BY lineNumber");
+			Iterator<QuoteLine> l = lines.iterator();
 			if (!l.hasNext())
 				return;
 
 			while(l.hasNext())
 			{
-				QuoteLine line = (QuoteLine)l.next();
+				QuoteLine line = l.next();
 				if (line.isAction)
 					out.println("* " + line.nick +  " " + line.message + "\n");
 				else
@@ -1734,9 +1744,9 @@ public class Quote
 			e.printStackTrace();
 		}
 	}
-	
+
 	private static Pattern qotdAction = Pattern.compile("^(\\d+)/(\\w+)$", Pattern.CASE_INSENSITIVE);
-	
+
 	public void webQOTD(PrintWriter out, String args, String[] from)
 	{
 		try
@@ -1744,11 +1754,11 @@ public class Quote
 			out.println("HTTP/1.0 200 OK");
 			out.println("Content-Type: text/html");
 			out.println();
-			
+
 			if (args.length() == 0)
 			{
 				// Show a single, random score=0 quote.
-				List quotes;
+				List<QuoteObject> quotes;
 				try
 				{
 					quotes = mods.odb.retrieve(QuoteObject.class, "WHERE score = 0 SORT BY RANDOM");
@@ -1762,16 +1772,16 @@ public class Quote
 					out.println("<P>Shock! There are no score=0 quotes.</P>");
 					return;
 				}
-				
-				QuoteObject quote = (QuoteObject)quotes.get(0);
-				List lines = mods.odb.retrieve(QuoteLine.class, "WHERE quoteID = " + quote.id + " ORDER BY lineNumber");
-				Iterator l = lines.iterator();
+
+				QuoteObject quote = quotes.get(0);
+				List<QuoteLine> lines = mods.odb.retrieve(QuoteLine.class, "WHERE quoteID = " + quote.id + " ORDER BY lineNumber");
+				Iterator<QuoteLine> l = lines.iterator();
 				if (!l.hasNext())
 					return;
-				
+
 				while(l.hasNext())
 				{
-					QuoteLine line = (QuoteLine)l.next();
+					QuoteLine line = l.next();
 					if (line.isAction)
 						out.println(safeHTML("* " + line.nick +  " " + line.message) + "<BR>");
 					else
@@ -1783,23 +1793,23 @@ public class Quote
 			else
 			{
 				Matcher qotdMatch = qotdAction.matcher(args);
-				
+
 				if (qotdMatch.find())
 				{
-					List quotes = mods.odb.retrieve(QuoteObject.class, "WHERE id = " + qotdMatch.group(1));
+					List<QuoteObject> quotes = mods.odb.retrieve(QuoteObject.class, "WHERE id = " + qotdMatch.group(1));
 					if (quotes.size() == 0)
 					{
 						out.println("<P>Quote ID " + qotdMatch.group(1) + " does not exist!</P>");
 						return;
 					}
-					
-					QuoteObject quote = (QuoteObject)quotes.get(0);
+
+					QuoteObject quote = quotes.get(0);
 					if (quote.score != 0)
 					{
 						out.println("<P>Sorry, this quote has already been leeted/lamed from 0.</P>");
 						return;
 					}
-					
+
 					if (qotdMatch.group(2).equals("leet"))
 					{
 						quote.score++;

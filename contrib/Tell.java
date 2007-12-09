@@ -1,11 +1,10 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
+import java.util.*;
+
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
 
-public class TellObject
+class TellObject
 {
 	public int id;
 	public String type;
@@ -18,7 +17,7 @@ public class TellObject
 }
 
 // Delivery Service Notifications
-public class TellDSNObject
+class TellDSNObject
 {
 	public int id;
 	public String type; // Type of original tell.

@@ -5,10 +5,13 @@
  */
 package uk.co.uwcs.choob;
 
+import java.net.URL;
+import java.util.LinkedList;
+import java.util.List;
+
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.net.*;
+import uk.co.uwcs.choob.support.events.Event;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Root class of a plugin manager

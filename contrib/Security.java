@@ -1,10 +1,11 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.security.*;
+import java.security.Permission;
 import java.util.*;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Choob plugin for fiddling with security privs
@@ -22,7 +23,6 @@ public class Security
 		};
 	}
 
-	private static int TIMEOUT = 300;
 	private Map<String,List<String>> linkMap;
 	private Modules mods;
 	private IRCInterface irc;
@@ -43,7 +43,7 @@ public class Security
 	{
 		mods.security.checkAuth(mes);
 
-		List params = mods.util.getParams( mes );
+		List<String> params = mods.util.getParams( mes );
 
 		String userName;
 		if (params.size() == 1)
@@ -64,7 +64,7 @@ public class Security
 			// Must check permission!
 			userName = (String)params.get(1);
 			// Sure, this will be checked for us. But what about the user who called us?
-			mods.security.checkPerm( new ChoobPermission("user.add") , mes);
+			mods.security.checkNickPerm( new ChoobPermission("user.add") , mes);
 		}
 		// Can add the user...
 		try
@@ -96,7 +96,7 @@ public class Security
 	{
 		mods.security.checkAuth(mes);
 
-		List params = mods.util.getParams( mes );
+		List<String> params = mods.util.getParams( mes );
 
 		String userName;
 		if (params.size() == 1)
@@ -111,7 +111,7 @@ public class Security
 			// Must check permission!
 			userName = mods.security.getUserAuthName((String)params.get(1));
 			// Sure, this will be checked for us. But what about the user who called us?
-			mods.security.checkPerm( new ChoobPermission("user.del") , mes );
+			mods.security.checkNickPerm( new ChoobPermission("user.del") , mes );
 		}
 		// Can add the user...
 		try
@@ -148,7 +148,7 @@ public class Security
 
 		mods.security.checkAuth(mes);
 
-		List params = mods.util.getParams( mes );
+		List<String> params = mods.util.getParams( mes );
 		if (params.size() == 1)
 		{
 			irc.sendContextReply(mes, "Syntax: Security.BeginLink <NICKNAME> [<NICKNAME> ...]");
@@ -206,7 +206,7 @@ public class Security
 		if (params.size() == 2)
 		{
 			leafName = mods.security.getUserAuthName(mes.getNick());
-			rootName = (String)params.get(1);
+			rootName = params.get(1);
 			List<String> nicks = null;
 			synchronized(linkMap)
 			{
@@ -225,10 +225,10 @@ public class Security
 		else
 		{
 			// Must check permission!
-			rootName = (String)params.get(1);
-			leafName = mods.security.getUserAuthName((String)params.get(2));
+			rootName = params.get(1);
+			leafName = mods.security.getUserAuthName(params.get(2));
 			// Sure, this will be checked for us. But what about the user who called us?
-			mods.security.checkPerm( new ChoobPermission("user.link") , mes);
+			mods.security.checkNickPerm( new ChoobPermission("user.link") , mes);
 		}
 
 		// Can add the user...
@@ -296,7 +296,7 @@ public class Security
 	{
 		mods.security.checkAuth(mes);
 
-		List params = mods.util.getParams( mes );
+		List<String> params = mods.util.getParams( mes );
 
 		String groupName;
 		if (params.size() != 2)
@@ -312,7 +312,7 @@ public class Security
 			boolean check = groupCheck(groupName, mods.security.getUserAuthName(mes.getNick()));
 			// Sure, this will be checked for us. But what about the user who called us?
 			if (!check)
-				mods.security.checkPerm( new ChoobPermission("group.add." + groupName) , mes);
+				mods.security.checkNickPerm( new ChoobPermission("group.add." + groupName) , mes);
 		}
 		// Can add the user...
 		try
@@ -356,7 +356,7 @@ public class Security
 	{
 		mods.security.checkAuth(mes);
 
-		List params = mods.util.getParams( mes );
+		List<String> params = mods.util.getParams( mes );
 
 		String childName;
 		String parentName;
@@ -376,7 +376,7 @@ public class Security
 			boolean check = groupCheck(parentName, mods.security.getUserAuthName(mes.getNick()));
 			// Sure, this will be checked for us. But what about the user who called us?
 			if (!check)
-				mods.security.checkPerm( new ChoobPermission("group.members." + parentName) , mes);
+				mods.security.checkNickPerm( new ChoobPermission("group.members." + parentName) , mes);
 		}
 		// Can add the user...
 		try
@@ -502,7 +502,7 @@ public class Security
 	{
 		mods.security.checkAuth(mes);
 
-		List params = mods.util.getParams( mes );
+		List<String> params = mods.util.getParams( mes );
 
 		if (params.size() < 3 || params.size() > 5)
 		{
@@ -521,12 +521,11 @@ public class Security
 		String permType = (String)params.get(2);
 		String groupName = (String)params.get(1);
 
-		int len = mes.getNick().length() + 6;
 		String permString = isGranting ? "grant." : "revoke.";
 		boolean check = groupCheck(groupName, mods.security.getUserAuthName(mes.getNick()));
 		// Sure, this will be checked for us. But what about the user who called us?
 		if (!check)
-			mods.security.checkPerm( new ChoobPermission("group." + permString + groupName) , mes);
+			mods.security.checkNickPerm( new ChoobPermission("group." + permString + groupName) , mes);
 
 		Permission permission = makePermission(permType, permName, actions);
 		if (permission == null)
@@ -536,7 +535,7 @@ public class Security
 		}
 
 		// Now check the user has the permission...
-		if (isGranting && ! mods.security.hasPerm( permission, mes) )
+		if (isGranting && ! mods.security.hasNickPerm( permission, mes) )
 		{
 			irc.sendContextReply( mes, "You can only grant privileges you yourself have!" );
 			return;
@@ -570,7 +569,7 @@ public class Security
 	};
 	public void commandFindPermission( Message mes )
 	{
-		List params = mods.util.getParams( mes );
+		List<String> params = mods.util.getParams( mes );
 
 		if (params.size() < 3 || params.size() > 5)
 		{

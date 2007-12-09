@@ -1,7 +1,6 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.events.Message;
 
 
 public class Admin

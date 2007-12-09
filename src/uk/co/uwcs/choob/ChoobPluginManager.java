@@ -5,14 +5,19 @@
  */
 package uk.co.uwcs.choob;
 
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import uk.co.uwcs.choob.modules.*;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.security.AccessController;
+import java.security.ProtectionDomain;
 import java.util.*;
-import java.io.*;
-import java.net.*;
-import java.util.regex.*;
-import java.security.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.Event;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Root class of a plugin manager

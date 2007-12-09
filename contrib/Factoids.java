@@ -1,11 +1,13 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class FactoidObject
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
+
+class FactoidObject
 {
 	public FactoidObject()
 	{
@@ -85,7 +87,7 @@ public class Factoids
 
 		final String item = params.get(1).replaceAll("\\?","");
 
-		List facts = mods.odb.retrieve( FactoidObject.class , "SORT RANDOM LIMIT (1) WHERE subject = \"" + mods.odb.escapeString(item.toLowerCase()) + "\"");
+		List<FactoidObject> facts = mods.odb.retrieve( FactoidObject.class , "SORT RANDOM LIMIT (1) WHERE subject = \"" + mods.odb.escapeString(item.toLowerCase()) + "\"");
 
 		if( facts.size() > 0 )
 		{

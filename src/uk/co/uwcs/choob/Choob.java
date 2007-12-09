@@ -11,13 +11,17 @@
 
 package uk.co.uwcs.choob;
 
-import org.jibble.pircbot.*;
 import java.io.*;
-import java.util.*;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jibble.pircbot.IrcException;
+import org.jibble.pircbot.PircBot;
+
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
-import uk.co.uwcs.choob.modules.*;
-import java.sql.*;
 
 /**
  * Core class of the Choob bot, main interaction with IRC.

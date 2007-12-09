@@ -1,12 +1,14 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
-import java.text.*;
 import java.io.*;
 import java.net.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class MiscMsg
 {
@@ -202,16 +204,15 @@ public class MiscMsg
 
 			Process proc = Runtime.getRuntime().exec(command);
 
-			// get its output (your input) stream
+			// There's a nefarious reason why this is here.
+			try { proc.waitFor(); } catch (InterruptedException e1) {}
 
-			DataInputStream in = new DataInputStream( proc.getInputStream());
-
+			BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+			
 			try
 			{
 				while ((str = in.readLine()) != null)
-				{
 					rep.append(str);
-				}
 			}
 			catch (IOException e)
 			{
@@ -320,7 +321,6 @@ public class MiscMsg
 
 			int diff = (int)Math.floor(getTimeRelativeToTerm((int)(now.getTime() / 1000)) / 86400);
 			String day = dayFmt.format(now);
-			String week = diffToTermWeek(diff);
 
 			irc.sendContextReply(mes, day + " is " + diffToTermWeek(diff) + ".");
 		} else if ((isNumber(params.get(1)) && (
@@ -442,7 +442,6 @@ public class MiscMsg
 		} else if (diff < 7 * 10 - 2) {
 			int week = (int)Math.floor(diff / 7) + 1;
 			int tw = week - 0;
-			int rbw = week + 0;
 			return "week " + week + " (week " + tw + " of term 1)";
 		} else if (diff < 7 * 14 - 0) {
 			int week = (int)Math.floor(diff / 7) - 9;

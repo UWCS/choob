@@ -1,14 +1,12 @@
 /** @author Faux */
 
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
 import java.sql.*;
-import java.text.*;
-import java.io.*;
 import java.text.DateFormatSymbols;
+
+import uk.co.uwcs.choob.modules.DateModule;
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class Lectures
 {
@@ -110,7 +108,7 @@ public class Lectures
 				rs.beforeFirst();
 
 				while (rs.next())
-					ret+=rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + mods.date.absoluteDateFormat(rs.getTimestamp("start")) + ", ";
+					ret+=rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + DateModule.absoluteDateFormat(rs.getTimestamp("start")) + ", ";
 
 				ret=ret.substring(0, ret.length()-2);
 
@@ -129,7 +127,7 @@ public class Lectures
 
 				rs.first(); // It has to exist.
 
-				irc.sendContextReply(mes, "Thers is a " + rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + mods.date.absoluteDateFormat(rs.getTimestamp("start")) + ".");
+				irc.sendContextReply(mes, "There is a " + rs.getString("modulename") + " (" + rs.getString("modulecode") + ") in " + rs.getString("roomname") + " at " + DateModule.absoluteDateFormat(rs.getTimestamp("start")) + ".");
 
 			}
 

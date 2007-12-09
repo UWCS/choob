@@ -1,13 +1,16 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
-import java.util.regex.*;
-import java.text.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.jibble.pircbot.Colors;
+
+import uk.co.uwcs.choob.modules.DateModule;
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class Events
 {
@@ -226,8 +229,6 @@ public class Events
 
 		if (current!=null && !current.equals(ne))
 		{
-			ListIterator<EventItem> ni = ne.listIterator();
-
 			// Generate a hashmap of current (ie. before the change) event ids -> eventitems.
 			HashMap<Integer, EventItem>curr=new HashMap<Integer, EventItem>();
 
@@ -399,8 +400,8 @@ public class Events
 						( !"".equals(ev.shortdesc) ? " (" + ev.shortdesc + ")" : "") +
 						" (" + ev.id +
 						") " + (ev.start == ev.end ?
-						        "at " + mods.date.absoluteDateFormat(ev.start) :
-						        "from " + mods.date.absoluteDateFormat(ev.start) + " to " + mods.date.absoluteDateFormat(ev.end)) +
+						        "at " + DateModule.absoluteDateFormat(ev.start) :
+						        "from " + DateModule.absoluteDateFormat(ev.start) + " to " + DateModule.absoluteDateFormat(ev.end)) +
 						"." +
 						signup
 					);
@@ -577,12 +578,6 @@ public class Events
 				.append(--c != 0 ? ", " : ".");
 		}
 		irc.sendContextReply(mes, "Events: " + rep.toString());
-	}
-
-	/** Convert an arraylist of names into a string, b'reaking them up to prevent pings if not in pm. */
-	private static String nameList(List<String> names, Message mes)
-	{
-		return nameList(names, mes, -1, "");
 	}
 
 	private static String nameList(List<String> names, Message mes, int after, String message)

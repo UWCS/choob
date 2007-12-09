@@ -1,15 +1,15 @@
 /** @author Faux */
 
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-
-import java.util.*;
-import java.util.regex.*;
-
-import java.net.*;
 import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class Pogo
 {
@@ -19,14 +19,14 @@ public class Pogo
 	static ServerThread servthread;
 
 	public Map <String, ClientHandler> commands;
-	public Map <Message, Stack> pipecommands;
+	public HashMap<Message,Stack<String>> pipecommands;
 
 	public Pogo(Modules mods, IRCInterface irc) throws ChoobException
 	{
 		this.mods=mods; this.irc=irc;
 
 		commands=new HashMap<String, ClientHandler>();
-		pipecommands=new HashMap<Message, Stack>();
+		pipecommands=new HashMap<Message, Stack<String>>();
 
 		try
 		{
@@ -43,7 +43,7 @@ public class Pogo
 	public void commandCommands( Message mes )
 	{
 		String s="";
-		Iterator i=commands.keySet().iterator();
+		Iterator<String> i=commands.keySet().iterator();
 		while (i.hasNext())
 			s+=i.next()+", ";
 		irc.sendContextReply(mes, "Commands: " + s);
@@ -63,7 +63,6 @@ public class Pogo
 		while (it.hasNext())
 		{
 			final Map.Entry<String, ClientHandler> entry = it.next();
-			final String key = entry.getKey();
 			final ClientHandler value = entry.getValue();
 
 			if (value==c)
@@ -128,7 +127,7 @@ public class Pogo
 
 		if (mes instanceof TaggedMessage)
 		{
-			final Stack cs=pipecommands.get(mes);
+			final Stack<String> cs=pipecommands.get(mes);
 			if (cs!=null && !cs.empty())
 			{
 				final String t=cs.pop() + " " + text;
@@ -176,7 +175,7 @@ final class ServerThread extends Thread
 		System.out.println("New server");
 		serv=new ServerSocket(3090);
 
-		this.p=p;
+		ServerThread.p=p;
 	}
 
 	public void run()

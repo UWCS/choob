@@ -1,15 +1,12 @@
-import org.omg.CORBA.portable.ValueBase;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import uk.co.uwcs.choob.modules.*;
-import java.net.*;
-import java.io.*;
 import java.util.*;
-import java.util.regex.*;
-import java.text.SimpleDateFormat;
+
 import org.jibble.pircbot.Colors;
 
-public class ActiveVote {
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.*;
+
+class ActiveVote {
 	public int id;
 	public String text;
 	public String responses; // comma-seperated
@@ -22,7 +19,7 @@ public class ActiveVote {
 	public boolean nickserv; //Does the user need to be nickserv identified to vote?
 }
 
-public class Voter {
+class Voter {
 	public int id;
 	public int voteID;
 	public String nick;

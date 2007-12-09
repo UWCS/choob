@@ -1,14 +1,13 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import uk.co.uwcs.choob.modules.*;
-import java.net.*;
-import java.io.*;
 import java.util.*;
-import java.util.regex.*;
-import java.text.SimpleDateFormat;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class TimedEvent
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.IRCEvent;
+import uk.co.uwcs.choob.support.events.Message;
+
+class TimedEvent
 {
 	public int id;
 	public int mesID; // For duplication

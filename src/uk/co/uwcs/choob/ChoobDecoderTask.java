@@ -1,10 +1,13 @@
 package uk.co.uwcs.choob;
 
-import uk.co.uwcs.choob.modules.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
 
 public class ChoobDecoderTask extends ChoobTask
 {

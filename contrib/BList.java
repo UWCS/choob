@@ -1,13 +1,14 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
-import java.net.*;
 import java.io.*;
+import java.net.*;
+import java.util.HashSet;
+import java.util.List;
 
-public class ListItem
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
+
+class ListItem
 {
 	public int id;
 
@@ -59,7 +60,7 @@ public class BList
 			irc.sendContextReply(mes,"Usage: Get <ListName> [<Regex>]");
 			return;
 		}
-		List thisList = null;
+		List<ListItem> thisList = null;
 		String key = params.get(1).toLowerCase();
 		if (params.size() == 2)
 		{
@@ -101,7 +102,7 @@ public class BList
 			irc.sendContextReply(mes,"Usage: Count <ListName> [<Regex>]");
 			return;
 		}
-		List thisList = null;
+		List<ListItem> thisList = null;
 		String key = params.get(1).toLowerCase();
 		if (params.size() == 2)
 		{
@@ -203,7 +204,6 @@ public class BList
 		}
 		String key = params.get(1);
 		String url = params.get(2);
-		String[] content = new String[0];
 		int added = 0;
 		try
 		{
@@ -261,7 +261,7 @@ public class BList
 		String key = params.get(1).toLowerCase();
 		try
 		{
-			List thisList = mods.odb.retrieve( ListItem.class , "WHERE key =\"" + key + "\"");
+			List<ListItem> thisList = mods.odb.retrieve( ListItem.class , "WHERE key =\"" + key + "\"");
 			for (Object item : thisList)
 			{
 				mods.odb.delete(item);
@@ -293,7 +293,7 @@ public class BList
 		int deleted = 0;
 		try
 		{
-			List thisList = mods.odb.retrieve( ListItem.class , "WHERE key =\"" + key + "\" AND content REGEXP'.*" + regex + ".*'");
+			List<ListItem> thisList = mods.odb.retrieve( ListItem.class , "WHERE key =\"" + key + "\" AND content REGEXP'.*" + regex + ".*'");
 			for (Object item : thisList)
 			{
 				mods.odb.delete(item);

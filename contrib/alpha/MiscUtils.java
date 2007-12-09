@@ -1,11 +1,10 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
-import java.io.*;
-import java.net.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class MiscUtils
 {
@@ -53,7 +52,6 @@ public class MiscUtils
 			if (replace.length > 2)  replacement = replace[2].replaceAll("\\[:FWSLASH:\\]","/");
 
 			List<Message> history = mods.history.getLastMessages( mes, 10 );
-			String lastMessage;
 			for(int i=0; i<history.size(); i++)
 			{
 				Message thisLine = history.get(i);

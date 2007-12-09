@@ -25,12 +25,11 @@
 
 package uk.co.uwcs.choob;
 
-import com.swabunga.spell.engine.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
-import java.io.*;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.LinkedList;
+import com.swabunga.spell.engine.SpellDictionaryASpell;
 
 /**
  * Taken from SpellDictionaryHashTable in Jazzy. Not thread-safe.

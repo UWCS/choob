@@ -1,10 +1,9 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
+import java.util.List;
+
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
-import java.io.*;
+import uk.co.uwcs.choob.support.events.ChannelPart;
+import uk.co.uwcs.choob.support.events.Message;
 
 
 public class Test
@@ -362,12 +361,12 @@ public class Test
 	}*/
 }
 
-public class TestObj1
+class TestObj1
 {
 	public int id;
 }
 
-public class TestObj2
+class TestObj2
 {
 	public int id;
 	public String var1;
@@ -382,7 +381,7 @@ public class TestObj2
 	public String var10;
 }
 
-public class TestObj3
+class TestObj3
 {
 	public int id;
 	public int var1;

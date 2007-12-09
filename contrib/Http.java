@@ -1,13 +1,15 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.net.*;
 import java.io.*;
-import java.util.regex.*;
+import java.net.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class HashedStringObject
+import uk.co.uwcs.choob.ChoobThread;
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.Message;
+
+class HashedStringObject
 {
 	public int id;
 	public String hash;
@@ -285,7 +287,7 @@ public class Http
 	};
 	public void commandClose(Message mes)
 	{
-		if (!mods.security.hasPerm(new ChoobPermission("plugins.http.close"), mes))
+		if (!mods.security.hasNickPerm(new ChoobPermission("plugins.http.close"), mes))
 		{
 			irc.sendContextReply(mes, "You lack authority!");
 			return;

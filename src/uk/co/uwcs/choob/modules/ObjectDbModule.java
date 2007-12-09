@@ -6,11 +6,12 @@
 
 package uk.co.uwcs.choob.modules;
 
-import uk.co.uwcs.choob.support.*;
-import java.util.*;
-import java.sql.*;
-import java.lang.String;
 import java.security.AccessController;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+
+import uk.co.uwcs.choob.support.*;
 
 /**
  * An interface with the ObjectDB, for use by plugins and core code alike.
@@ -89,11 +90,13 @@ public final class ObjectDbModule
 	 * @param storedClass The .class of the object you want to retrieve.
 	 * @param clause The clause specifying which objects you want to select.
 	 */
-	public List retrieve(Class storedClass, String clause)
+	@SuppressWarnings("unchecked")
+	public <T> List<T> retrieve(Class<T> storedClass, String clause)
 	{
 		return retrieve((Object)storedClass, clause);
 	}
 
+	@SuppressWarnings("unchecked")
 	public List retrieve(Object storedClass, String clause)
 	{
 		Connection dbConn = null;

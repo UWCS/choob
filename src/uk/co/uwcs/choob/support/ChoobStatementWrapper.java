@@ -4,7 +4,6 @@
  */
 package uk.co.uwcs.choob.support;
 import java.sql.*;
-import java.util.*;
 
 public final class ChoobStatementWrapper implements Statement
 {

@@ -1,11 +1,11 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
 import java.io.*;
 import java.net.*;
+import java.util.List;
+import java.util.regex.Matcher;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class Weather
 {
@@ -209,7 +209,7 @@ public class Weather
 
 	private String prettyReply(String text, String url, int lines)
 	{
-		int maxlen=((irc.MAX_MESSAGE_LENGTH-100)*lines) -url.length();
+		int maxlen=((IRCInterface.MAX_MESSAGE_LENGTH-100)*lines) -url.length();
 
 		String returnText = text;
 
@@ -222,6 +222,8 @@ public class Weather
 
 class LookupException extends ChoobException
 {
+	private static final long serialVersionUID = 3590062831364827374L;
+
 	public LookupException(String text)
 	{
 		super(text);

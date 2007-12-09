@@ -6,9 +6,10 @@
 
 package uk.co.uwcs.choob.modules;
 
+import java.util.List;
+
+import uk.co.uwcs.choob.Choob;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.*;
-import java.util.*;
 
 /**
  * Wrapper for the group of Modules in the bot.

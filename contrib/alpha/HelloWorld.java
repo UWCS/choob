@@ -1,13 +1,12 @@
 /** @author Faux */
 
-import org.uwcs.choob.*;
-import org.uwcs.choob.modules.*;
-import org.uwcs.choob.support.*;
-import org.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class HelloWorld
 {
-	public void commandOne( Message mes )
+	public void commandOne( Message mes, Modules mods, IRCInterface irc )
 	{
 		irc.sendContextReply(mes, "Hello world!");
 	}

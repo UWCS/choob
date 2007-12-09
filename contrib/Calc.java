@@ -1,10 +1,6 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.text.*;
-import java.io.*;
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class Calc
 {
@@ -25,8 +21,6 @@ public class Calc
 		this.mods = mods;
 		this.irc = irc;
 	}
-
-	private static boolean hascoin = true;
 
 	public String[] helpCommandCalc = {
 		"Evaluates a mathematical expression.",
@@ -53,7 +47,7 @@ public class Calc
 	}
 }
 
-public class MathParser
+class MathParser
 {
 	String expr;
 	int ptr; // Holds position in the string.
@@ -167,7 +161,6 @@ public class MathParser
 	public double numberExpr() throws BadMathException
 	{
 		int origPtr = ptr;
-		int dpLength = 0;
 		while(true)
 		{
 			if (ptr == length)
@@ -263,8 +256,10 @@ public class MathParser
 	}
 }
 
-public class BadMathException extends Exception
+class BadMathException extends Exception
 {
+	private static final long serialVersionUID = 1L;
+
 	public BadMathException(String text)
 	{
 		super(text);

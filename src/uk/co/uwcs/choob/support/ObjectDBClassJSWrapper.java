@@ -13,7 +13,6 @@ public final class ObjectDBClassJSWrapper implements ObjectDBClass {
 	}
 	
 	public String getName() {
-		Context cx = Context.enter();
 		try {
 			try {
 				String ctorName = (String)JSUtils.getProperty((Scriptable)cls, "name");
@@ -35,7 +34,7 @@ public final class ObjectDBClassJSWrapper implements ObjectDBClass {
 				// Do nothing.
 			}
 		} finally {
-			cx.exit();
+			Context.exit();
 		}
 		return "";
 	}
@@ -46,7 +45,7 @@ public final class ObjectDBClassJSWrapper implements ObjectDBClass {
 			Scriptable scope = cls.getParentScope();
 			return cls.construct(cx, scope, new Object[0]);
 		} finally {
-			cx.exit();
+			Context.exit();
 		}
 	}
 }

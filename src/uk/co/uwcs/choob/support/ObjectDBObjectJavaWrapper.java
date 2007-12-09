@@ -1,10 +1,10 @@
 package uk.co.uwcs.choob.support;
 
-import java.lang.reflect.*;
-import java.util.*;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
+import java.lang.reflect.Field;
+import java.lang.reflect.Type;
+import java.security.*;
+import java.util.LinkedList;
+import java.util.List;
 
 public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 	private Object obj;

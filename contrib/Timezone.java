@@ -1,15 +1,11 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
-import java.net.*;
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.text.ParseException;
-import java.lang.StringBuilder;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 public class Timezone
 {
 
@@ -76,7 +72,6 @@ public class Timezone
 			return;
 		}
 
-		String input = params.get(1) + " " + params.get(2);
 		try
 		{
 			SimpleDateFormat df = new SimpleDateFormat(PATTERN);
@@ -161,7 +156,6 @@ public class Timezone
 	public void commandTimeIn(Message mes)
 	{
 		List<String> params = mods.util.getParams(mes,3);
-		HashSet<String> lists = new HashSet<String>();
 		String input = checkOption(mes.getNick());
 
 		if ((params.size() != 2) && (input == null))

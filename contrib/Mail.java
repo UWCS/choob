@@ -1,11 +1,11 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
-import java.net.*;
 import java.io.*;
+import java.net.Socket;
+import java.util.Date;
+import java.util.List;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class Mail
 {
@@ -24,6 +24,7 @@ public class Mail
 
 	public class MailException extends ChoobException
 	{
+		private static final long serialVersionUID = 5965468056173754247L;
 		public MailException(String text)
 		{
 			super(text);

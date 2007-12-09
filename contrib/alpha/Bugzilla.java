@@ -1,14 +1,15 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.net.URL;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.List;
+import java.util.regex.Matcher;
 
-public class BugzillaDetails
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
+
+class BugzillaDetails
 {
 	public int id;
 	public BugzillaDetails(){}
@@ -37,18 +38,9 @@ public class Bugzilla
 		return mods.odb.retrieve( BugzillaDetails.class , "WHERE alias = \"" + alias + "\"");
 	}
 
-	private List<BugzillaDetails> get(String alias, String regex)
-	{
-		return mods.odb.retrieve( BugzillaDetails.class , "WHERE alias = \"" + alias + "\" AND url REGEXP'.*" + regex + ".*'");
-	}
-
 	private boolean dupe(String alias, String url)
 	{
-		for (BugzillaDetails item : get(alias))
-		{
-			return true;
-		}
-		return false;
+		return get(alias).size() != 0;
 	}
 
 	public void commandAdd(Message mes)
@@ -67,7 +59,7 @@ public class Bugzilla
 
 		try 
 		{
-			URL tmp = new URL(url);
+			new URL(url);
 		} catch (MalformedURLException e)
 		{
 			irc.sendContextReply(mes,"Second parameter must be a valid url");
@@ -103,7 +95,7 @@ public class Bugzilla
 
 		try
 		{
-			List thisBugzilla = mods.odb.retrieve( BugzillaDetails.class , "WHERE alias =\"" + alias + "\"");
+			List<BugzillaDetails> thisBugzilla = mods.odb.retrieve( BugzillaDetails.class , "WHERE alias =\"" + alias + "\"");
 			for (Object item : thisBugzilla)
 			{
 				mods.odb.delete(item);
@@ -153,7 +145,7 @@ public class Bugzilla
 		}
 
 
-		List thisBugzillaList = get(alias);
+		List<BugzillaDetails> thisBugzillaList = get(alias);
 
 		if ((thisBugzillaList == null) || (thisBugzillaList.size() == 0)) 
 		{

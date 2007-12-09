@@ -1,21 +1,17 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.security.*;
-import org.jibble.pircbot.Colors;
-import java.util.regex.*;
-import java.io.*;
+import java.security.Permission;
+import java.util.List;
 
-public class StoredSetting {
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
+
+class StoredSetting {
 	public int id;
 	public String method;
 }
 
 public class AuthSelector {
-	
-	private String authMethod = "unknown";
 	
 	private Modules mods;
 	private IRCInterface irc;

@@ -1,24 +1,21 @@
 /** @author Faux */
 
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.io.*;
-import java.net.*;
+import java.io.ByteArrayInputStream;
+import java.net.URL;
+import java.text.DateFormat;
 import java.util.*;
-import java.util.regex.*;
-import java.text.*;
-import org.jibble.pircbot.Colors;
 
-import java.io.*;
-import org.xml.sax.*;
-import org.xml.sax.helpers.DefaultHandler;
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
-import java.util.Collections;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class Tv
 {
@@ -100,8 +97,6 @@ public class Tv
 	public void commandSearch (Message mes)
 	{
 		List <String>parms=mods.util.getParams(mes, 1);
-		boolean replied=false;
-
 		if (parms.size()<2)
 		{
 			irc.sendContextReply(mes, "Not enough params, expected 'searchstring'.");
@@ -160,8 +155,6 @@ public class Tv
 	public synchronized void commandInfo (Message mes)
 	{
 		List <String>parms=mods.util.getParams(mes, 2);
-		boolean replied=false;
-
 		if (parms.size()<3)
 		{
 			irc.sendContextReply(mes, "Not enough params, expected 'tag searchstring'. Tags: http://bleb.org/tv/data/listings/0/ for list. eg. 'bbc1'.");

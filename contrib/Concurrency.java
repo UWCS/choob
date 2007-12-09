@@ -1,8 +1,8 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
+import java.util.List;
+
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Choob concurrency plugin.
@@ -11,7 +11,7 @@ import java.util.*;
  *
  */
 
-public class PluginConcurrencyLimit {
+class PluginConcurrencyLimit {
 	public int id;
 	public String pluginName;
 	public int threadLimit;
@@ -61,7 +61,7 @@ public class Concurrency {
 	{
 		mods.security.checkAuth(mes);
 		
-		List params = mods.util.getParams(mes);
+		List<String> params = mods.util.getParams(mes);
 		if (params.size() != 2)
 			throw new ChoobBadSyntaxError();
 		
@@ -86,12 +86,12 @@ public class Concurrency {
 	{
 		mods.security.checkAuth(mes);
 		
-		if (!mods.security.hasPerm(new ChoobPermission("plugin.threadlimit"), mes)) {
+		if (!mods.security.hasNickPerm(new ChoobPermission("plugin.threadlimit"), mes)) {
 			irc.sendContextReply(mes, "You do not have permission to change the thread limit of plugins.");
 			return;
 		}
 		
-		List params = mods.util.getParams(mes);
+		List<String> params = mods.util.getParams(mes);
 		if (params.size() != 3)
 			throw new ChoobBadSyntaxError();
 		

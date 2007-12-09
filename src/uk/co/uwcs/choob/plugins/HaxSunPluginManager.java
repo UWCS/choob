@@ -6,18 +6,21 @@
 package uk.co.uwcs.choob.plugins;
 
 import java.io.*;
-import java.net.*;
-import java.security.*;
 import java.lang.reflect.*;
+import java.net.URL;
+import java.net.URLConnection;
+import java.security.*;
 import java.util.*;
 import java.util.regex.*;
 
 import javax.tools.*;
 
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.ChoobPluginManager;
+import uk.co.uwcs.choob.ChoobTask;
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.modules.*;
+import uk.co.uwcs.choob.support.events.Event;
+import uk.co.uwcs.choob.support.events.Message;
 
 public final class HaxSunPluginManager extends ChoobPluginManager
 {
@@ -109,6 +112,9 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		int skipLines = 0;
 		while((line = reader.readLine()) != null)
 		{
+			if (line.startsWith("class "))
+				line = "public " + line;
+
 			if (line.startsWith("import "))
 			{
 				skipLines--; // imports get added anyway...
@@ -365,18 +371,17 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	{
 		final String pluginName = meth.getDeclaringClass().getSimpleName();
 		final Object plugin = allPlugins.getPluginObj(pluginName);
-		Object[] params;
+		final Object[] params;
 		if (meth.getParameterTypes().length == 1)
 			params = new Object[] { param };
 		else
 			params = new Object[] { param, mods, irc };
 
-		final Object[] params2 = params;
 		return new ChoobTask(pluginName) {
 			public void run() {
 				try
 				{
-					meth.invoke(plugin, params2);
+					meth.invoke(plugin, params);
 				}
 				catch (InvocationTargetException e)
 				{

@@ -4,16 +4,22 @@
 package uk.co.uwcs.choob.plugins;
 
 import java.io.*;
-import java.net.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.security.*;
 import java.util.*;
-import java.util.regex.*;
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.support.events.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.modules.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.mozilla.javascript.*;
-import org.mozilla.javascript.regexp.*;
+import org.mozilla.javascript.regexp.NativeRegExp;
+
+import uk.co.uwcs.choob.ChoobPluginManager;
+import uk.co.uwcs.choob.ChoobTask;
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.Event;
+import uk.co.uwcs.choob.support.events.Message;
 
 /*
  * Deals with all the magic for JavaScript plugins. Woo.
@@ -263,7 +269,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 					throw e;
 					
 				} finally {
-					cx.exit();
+					Context.exit();
 				}
 			}
 		};
@@ -558,12 +564,12 @@ final class JavaScriptPluginMap {
 	}
 
 	synchronized List<JavaScriptPluginMethod> getEvent(String eventName) {
-		Object event = events.get(eventName.toLowerCase());
+		List<JavaScriptPluginMethod> event = events.get(eventName.toLowerCase());
 		if (event == null) {
 			return null;
 		}
-		LinkedList<JavaScriptPluginMethod> list = (LinkedList<JavaScriptPluginMethod>)event;
-		return (List<JavaScriptPluginMethod>)list.clone();
+
+		return new LinkedList<JavaScriptPluginMethod>(event);
 	}
 
 	synchronized List<JavaScriptPluginMethod> getFilter(String message) {
@@ -583,7 +589,7 @@ final class JavaScriptPluginMap {
 					rv.add(method);
 				}
 			} finally {
-				cx.exit();
+				Context.exit();
 			}
 		}
 		return rv;
@@ -717,7 +723,7 @@ final class JavaScriptPlugin {
 			throw new ChoobException(e.details() + " Line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
 
 		} finally {
-			cx.exit();
+			Context.exit();
 		}
 	}
 

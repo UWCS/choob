@@ -1,7 +1,8 @@
 package uk.co.uwcs.choob.plugins;
 
 import java.io.*;
-import java.net.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.security.*;
 
 public final class HaxSunPluginClassLoader extends ClassLoader

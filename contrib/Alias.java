@@ -1,11 +1,13 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
 
-public class AliasObject
+class AliasObject
 {
 	public AliasObject(String name, String converted, String owner)
 	{
@@ -134,8 +136,6 @@ public class Alias
 				irc.sendContextReply(mes, "Sorry, you tried to use a recursive alias to '" + subAlias + "' - but '" + subAlias + "' doesn't exist!");
 				return;
 			}
-
-			String aliasText = alias.converted;
 
 			// Rebuild params with no upper limit.
 			params = mods.util.getParamArray(mes);
@@ -615,7 +615,6 @@ public class Alias
 			return;
 		}
 
-		int recurseLevel = 1;
 		boolean securityOK = false;
 
 		// Message extends IRCEvent, so this cast will always succeed.
@@ -664,7 +663,6 @@ public class Alias
 		// Extract command name etc. We know they're non-null.
 		int dotPos = newText.indexOf('.');
 		int spacePos = newText.indexOf(' ');
-		String extra = "";
 		if (spacePos == -1)
 			spacePos = newText.length();
 

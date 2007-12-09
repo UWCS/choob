@@ -7,7 +7,8 @@
 package uk.co.uwcs.choob.modules;
 
 import java.util.*;
-import uk.co.uwcs.choob.support.*;
+
+import uk.co.uwcs.choob.support.Interval;
 
 /**
  * Generates a call-back to a plugin at a specified point in time.

@@ -1,10 +1,10 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import uk.co.uwcs.choob.modules.*;
-import java.net.*;
 import java.io.*;
-import java.util.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.IRCInterface;
 
 public class SVN
 {

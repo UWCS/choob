@@ -1,7 +1,7 @@
 package uk.co.uwcs.choob.modules;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.text.*;
 
 /** Some functions to help with time and date manipulation. */
 public final class DateModule {

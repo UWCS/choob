@@ -1,15 +1,17 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.sql.*;
+import java.io.PrintWriter;
 import java.util.*;
-import java.util.regex.*;
-import java.io.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.jibble.pircbot.Colors;
 
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.PrivateEvent;
 
-public class KarmaObject
+
+class KarmaObject
 {
 	public int id;
 	public String string;
@@ -25,7 +27,7 @@ public class KarmaObject
 	}
 }
 
-public class KarmaReasonObject
+class KarmaReasonObject
 {
 	public int id;
 	public String string;
@@ -33,7 +35,7 @@ public class KarmaReasonObject
 	public String reason;
 }
 
-public class KarmaReasonEnumerator
+class KarmaReasonEnumerator
 {
 	public KarmaReasonEnumerator()
 	{
@@ -587,8 +589,7 @@ public class Karma
 
 		String nick = mods.nick.getBestPrimaryNick(mes.getNick());
 
-		HashSet used = new HashSet();
-		List<String> names = new ArrayList<String>();
+		HashSet<String> used = new HashSet<String>();
 		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
 
 		while (karmaMatch.find() && karmaObjs.size() < 5)
@@ -812,8 +813,6 @@ public class Karma
 			params.add(getName(ma));
 		
 		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
-		List<String> names = new ArrayList<String>();
-		
 		//Nab the params
 		if (params.size() == 2) 
 		{
@@ -879,7 +878,6 @@ public class Karma
 			params.add(getName(ma));
 		
 		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
-		List<String> names = new ArrayList<String>();
 		
 		if (params.size() > 0)
 			for (int i=0;i<params.size();i++)
@@ -938,8 +936,6 @@ public class Karma
 			params.add(getName(ma));
 
 		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
-		List<String> names = new ArrayList<String>();
-
 		if (params.size() > 0)
 			for (int i=0; i<params.size(); i++)
 			{
@@ -993,8 +989,6 @@ public class Karma
 
 		List<String> params = mods.util.getParams( mes );
 		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
-		List<String> names = new ArrayList<String>();
-
 		for (int i=1; i<params.size(); i++)
 		{
 			String param = params.get(i);

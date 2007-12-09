@@ -1,9 +1,11 @@
 package uk.co.uwcs.choob;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.modules.*;
-import java.util.*;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobPermission;
 
 /**
  * Manager for queueing new tasks and stuff

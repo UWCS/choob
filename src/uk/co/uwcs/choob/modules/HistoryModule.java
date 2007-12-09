@@ -6,12 +6,13 @@
 
 package uk.co.uwcs.choob.modules;
 
+import java.security.*;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.*;
-import java.security.*;
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Logs lines from IRC to the database.

@@ -1,9 +1,10 @@
 package uk.co.uwcs.choob;
 
-import uk.co.uwcs.choob.support.ChoobPermission;
-import java.security.Permission;
 import java.security.AccessController;
+import java.security.Permission;
 import java.util.Stack;
+
+import uk.co.uwcs.choob.support.ChoobPermission;
 
 /**
  * Simple base class for tasks that can be queued into Choob.

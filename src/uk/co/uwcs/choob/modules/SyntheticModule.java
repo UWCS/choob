@@ -6,9 +6,9 @@
 
 package uk.co.uwcs.choob.modules;
 
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import uk.co.uwcs.choob.*;
+import uk.co.uwcs.choob.Choob;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Facilitates the synthesis of artificial message events.

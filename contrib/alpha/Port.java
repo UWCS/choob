@@ -1,15 +1,15 @@
 /** @author Faux */
 
-import org.uwcs.choob.*;
-import org.uwcs.choob.modules.*;
-import org.uwcs.choob.support.*;
-import org.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.regex.Matcher;
 
-import org.jibble.pircbot.Colors;
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class Port
 {
@@ -60,20 +60,10 @@ public class Port
 
 	}
 
-	private String prettyReply(String text, String url, int lines)
-	{
-		int maxlen=((irc.MAX_MESSAGE_LENGTH-15)*lines) -url.length();
-		if (text.length()>maxlen)
-			return text.substring(0, maxlen) + "..., see " + url + ".";
-		else
-			return text + " See " + url + ".";
-	}
-
 	private void updateSources() throws IOException
 	{
 		ports=new HashMap<String, String>();
 		Matcher ma=mods.scrape.getMatcher(iana_numbers, (long)60*60*1000, "(.{17}) +([0-9]+)/(?:(?:tcp)|(?:udp)) +(.*)");
-		int i=0;
 		while (ma.find())
 		{
 			ports.put(ma.group(1).trim(), ma.group(2) + " (" + ma.group(3) + ")");

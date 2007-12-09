@@ -1,21 +1,20 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-
-import org.jibble.pircbot.Colors;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.net.*;
-import java.text.*;
+
+import javax.xml.parsers.*;
 
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.ChannelJoin;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Take advantage of Quote's API for theming greetings.
@@ -25,7 +24,7 @@ import javax.xml.parsers.SAXParser;
  */
 
 // The XML parser callback.
-public class GreetingsParserHandler extends DefaultHandler
+class GreetingsParserHandler extends DefaultHandler
 {
 
 	// Enum for the subelements of <event>

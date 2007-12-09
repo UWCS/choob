@@ -1,15 +1,19 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import uk.co.uwcs.choob.modules.*;
-import java.util.*;
-import java.util.regex.*;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.util.Hashtable;
-import javax.naming.*;
-import javax.naming.directory.*;
-import java.text.*;
-import java.io.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.naming.NameNotFoundException;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.InitialDirContext;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 public class Lookup
 {

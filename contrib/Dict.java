@@ -1,17 +1,19 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
 import java.io.*;
 import java.net.*;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.zuckerfrei.jcfd.*;
-import org.jibble.pircbot.Colors;
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
-public class DictionaryException extends ChoobException
+class DictionaryException extends ChoobException
 {
+	private static final long serialVersionUID = 1L;
+
 	public DictionaryException(String text)
 	{
 		super(text);
@@ -199,7 +201,7 @@ public class Dict
 
 	private String prettyReply(String text, String url, int lines)
 	{
-		int maxlen=((irc.MAX_MESSAGE_LENGTH-15)*lines) - url.length();
+		int maxlen=((IRCInterface.MAX_MESSAGE_LENGTH-15)*lines) - url.length();
 		text=text.replaceAll("\\s+"," ");
 		if (text.length()>maxlen)
 			return text.substring(0, maxlen) + "..., see " + url + ".";
@@ -346,7 +348,7 @@ public class Dict
 
 		StringBuilder s=new StringBuilder();
 
-		while (ma.find() && s.length()<((irc.MAX_MESSAGE_LENGTH-77-50)*lines))
+		while (ma.find() && s.length()<((IRCInterface.MAX_MESSAGE_LENGTH-77-50)*lines))
 			s.append(mods.scrape.readyForIrc(ma.group(1))).append(", ");
 
 		if (s.length()==0)

@@ -1,13 +1,12 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-
-//Calendar support
-import java.util.*;
-import java.text.DateFormatSymbols;
-import java.util.regex.*;
 import java.awt.Color;
+import java.text.DateFormatSymbols;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Random command implementations from myself. Quality not certain. Use at own risk.
@@ -208,7 +207,7 @@ public class MFJ
 	public static String colourForToday()
 	{
 		GregorianCalendar cal = new GregorianCalendar();
-		int type = (cal.get(cal.DAY_OF_MONTH) + 31 * cal.get(cal.MONTH) + 12 * cal.get(cal.YEAR)) % colours.size();
+		int type = (cal.get(Calendar.DAY_OF_MONTH) + 31 * cal.get(Calendar.MONTH) + 12 * cal.get(Calendar.YEAR)) % colours.size();
 
 		String[] col = colours.values().toArray(new String[] {});
 
@@ -329,7 +328,7 @@ public class MFJ
 	{
 		GregorianCalendar cal = new GregorianCalendar();
 
-		irc.sendContextMessage( con, "It is the year " + cal.get(cal.YEAR) + ".");
+		irc.sendContextMessage( con, "It is the year " + cal.get(Calendar.YEAR) + ".");
 	}
 
 	/**
@@ -343,7 +342,7 @@ public class MFJ
 
 		String[] months = dfc.getMonths();
 
-		irc.sendContextMessage( con, "It is " + months[cal.get(cal.MONTH)] + ".");
+		irc.sendContextMessage( con, "It is " + months[cal.get(Calendar.MONTH)] + ".");
 	}
 
 	/**
@@ -357,6 +356,6 @@ public class MFJ
 
 		String[] days = dfc.getWeekdays();
 
-		irc.sendContextMessage( con, "It is " + days[cal.get(cal.DAY_OF_WEEK)] + ".");
+		irc.sendContextMessage( con, "It is " + days[cal.get(Calendar.DAY_OF_WEEK)] + ".");
 	}
 }

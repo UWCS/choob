@@ -1,11 +1,14 @@
 package uk.co.uwcs.choob.modules;
 
-import java.util.*;
-import uk.co.uwcs.choob.support.*;
-import java.net.URL;
 import java.io.IOException;
-import java.util.regex.*;
+import java.net.URL;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.jibble.pircbot.Colors;
+
+import uk.co.uwcs.choob.support.GetContentsCached;
 
 // I'm going to assume that java caches regex stuff.
 /**

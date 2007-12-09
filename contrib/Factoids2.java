@@ -1,12 +1,15 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.io.*;
+import java.io.PrintWriter;
 import java.util.*;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class Factoid
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.ChannelMessage;
+import uk.co.uwcs.choob.support.events.Message;
+
+class Factoid
 {
 	public Factoid()
 	{
@@ -31,7 +34,7 @@ public class Factoid
 	public long date;
 }
 
-public class FactoidEnumerator
+class FactoidEnumerator
 {
 	public FactoidEnumerator()
 	{
@@ -186,13 +189,6 @@ public class Factoids2
 			}
 		}
 		return rumourCount;
-	}
-	
-	private Factoid pickDefinition(List<Factoid> definitions, String enumSource)
-	{
-		if (countFacts(definitions) > 0)
-			return pickFact(definitions, enumSource);
-		return pickRumour(definitions, enumSource);
 	}
 	
 	private Factoid pickFact(List<Factoid> definitions, String enumSource)
@@ -393,7 +389,7 @@ public class Factoids2
 			List<Factoid> results = mods.odb.retrieve(Factoid.class, "WHERE fact = 0 AND subject = '" + mods.odb.escapeString(subject) + "' SORT DESC date");
 			
 			for (int i = 5; i < results.size(); i++) {
-				Factoid oldRumour = (Factoid)results.get(i);
+				Factoid oldRumour = results.get(i);
 				mods.odb.delete(oldRumour);
 			}
 		}
@@ -719,7 +715,7 @@ public class Factoids2
 					}
 				}
 				
-				ArrayList<String> sortTerms = new ArrayList(termsUsed);
+				ArrayList<String> sortTerms = new ArrayList<String>(termsUsed);
 				Collections.sort(sortTerms);
 				for (int i = 0; i < sortTerms.size(); i++) {
 					String subj = sortTerms.get(i);
