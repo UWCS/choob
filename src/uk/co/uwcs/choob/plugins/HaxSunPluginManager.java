@@ -107,6 +107,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 		String line;
 		StringBuffer imps = new StringBuffer();
+		StringBuffer ants = new StringBuffer();
 		PrintStream classOut = null;
 		List<String> fileNames = new ArrayList<String>();
 		int skipLines = 0;
@@ -119,6 +120,11 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			{
 				skipLines--; // imports get added anyway...
 				imps.append(line + "\n");
+			}
+			else if (line.startsWith("@"))
+			{
+				ants.append(line + "\n");
+				continue;
 			}
 			else if (line.startsWith("package "))
 			{
@@ -141,6 +147,8 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				classOut.print(imps);
 				for(int i=0; i<skipLines; i++)
 					classOut.print("\n");
+				classOut.print(ants);
+				ants = new StringBuffer();
 			}
 			skipLines++;
 			if (classOut != null)
