@@ -377,10 +377,10 @@ public final class HorriblePerlScript
 				eventHandler.append("\t\t\tspinThread(new Channel" + className + "(" + constructorParamsPublic + "));\n");
 				eventHandler.append("\t\telse\n");
 				eventHandler.append("\t\t\tspinThread(new Private" + className + "(" + constructorParamsPrivate + "));\n\t}\n\n");
-				
+
 			} else if (className.equals("NickChange")) {
 				String constructorParams = getConstructorOrder(className, paramValueMap);
-				
+
 				eventHandler.append("\t\t// Force update of name to match nick, as PircBot confuses the two.\n");
 				eventHandler.append("\t\tthis.setName(this.getNick());\n");
 				eventHandler.append("\t\tspinThread(new " + className + "(" + constructorParams + "));\n\t}\n\n");
@@ -646,15 +646,20 @@ public final class HorriblePerlScript
 			classContent.append("))\n\t\t\treturn false;\n\t\t");
 			if (directInheritance != null)
 				classContent.append("if ( !super.equals(obj) )\n\t\t\treturn false;\n\t\t");
-			classContent.append(className + " thing = (" + className + ")obj;\n\t\tif ( true");
-			for(String fieldName: memberVariables)
+			if (memberVariables.size() == 0)
+				classContent.append("\treturn true;\n\t}\n\n");
+			else
 			{
-				if (paramTypes.get(fieldName).equals("String"))
-					classContent.append(" && " + fieldName + ".equals(thing." + fieldName + ")");
-				else
-					classContent.append(" && (" + fieldName + " == thing." + fieldName + ")");
+				classContent.append(className + " thing = (" + className + ")obj;\n\t\tif ( true");
+				for(String fieldName: memberVariables)
+				{
+					if (paramTypes.get(fieldName).equals("String"))
+						classContent.append(" && " + fieldName + ".equals(thing." + fieldName + ")");
+					else
+						classContent.append(" && (" + fieldName + " == thing." + fieldName + ")");
+				}
+				classContent.append(" )\n\t\t\treturn true;\n\t\treturn false;\n\t}\n\n");
 			}
-			classContent.append(" )\n\t\t\treturn true;\n\t\treturn false;\n\t}\n\n");
 
 			// toString
 			classContent.append("\tpublic String toString()\n\t{\n\t\tStringBuffer out = new StringBuffer(\"");
