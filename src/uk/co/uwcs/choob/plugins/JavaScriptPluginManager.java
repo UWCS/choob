@@ -269,7 +269,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 					throw e;
 					
 				} finally {
-					Context.exit();
+					cx.exit();
 				}
 			}
 		};
@@ -589,7 +589,7 @@ final class JavaScriptPluginMap {
 					rv.add(method);
 				}
 			} finally {
-				Context.exit();
+				cx.exit();
 			}
 		}
 		return rv;
@@ -723,7 +723,7 @@ final class JavaScriptPlugin {
 			throw new ChoobException(e.details() + " Line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
 
 		} finally {
-			Context.exit();
+			cx.exit();
 		}
 	}
 
