@@ -39,7 +39,10 @@ public class UnknownEvent extends IRCEvent
 			return false;
 		if ( !super.equals(obj) )
 			return false;
+		UnknownEvent thing = (UnknownEvent)obj;
+		if ( true )
 			return true;
+		return false;
 	}
 
 	public String toString()

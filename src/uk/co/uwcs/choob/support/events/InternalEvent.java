@@ -39,7 +39,10 @@ public class InternalEvent extends Event implements InternalRootEvent
 			return false;
 		if ( !super.equals(obj) )
 			return false;
+		InternalEvent thing = (InternalEvent)obj;
+		if ( true )
 			return true;
+		return false;
 	}
 
 	public String toString()
