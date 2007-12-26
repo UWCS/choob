@@ -73,10 +73,9 @@ SET ProgFiles64=
 IF DEFINED ProgramFiles(x86) SET ProgFiles64=%ProgramFiles%
 :do-setup-progs64-set
 IF NOT EXIST "%ProgFiles64%" (
-	ECHO FATAL ERROR: Cannot find 64bit "Program Files" folder.
+	ECHO WARNING:     Cannot find 64bit "Program Files" folder.
 	ECHO              You can specify this using the "ProgFiles64" environment
 	ECHO              variable.
-	GOTO :EOF
 )
 ECHO Program files 64bit: %ProgFiles64%
 
@@ -119,7 +118,7 @@ IF NOT EXIST "%JavaHome%\javac.exe" (
 SET JavaHome=%JavaHome%
 
 ECHO Java JDK home      : %JavaHome%
-SET PATH=%PATH%;%JavaHome%
+SET PATH=%JavaHome%;%PATH%
 
 REM Must find MySQL install location!
 IF DEFINED MysqlHome GOTO :do-setup-mysql-set
