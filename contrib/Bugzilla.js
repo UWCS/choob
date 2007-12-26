@@ -33,8 +33,8 @@ function Bugzilla(mods, irc) {
 	this._seenMsgs = new Object();
 	this._firstTime = true;
 	this._rebuilding = false;
-	this._updateSpeed      = 30000; // 30s
-	this._updateSpeedError = 30000; // 30s
+	this._updateSpeed      =     60 * 1000; // 1 minute
+	this._updateSpeedError = 5 * 60 * 1000; // 5 minutes
 	
 	var targets = this._mods.odb.retrieve(BugmailTarget, "");
 	for (var i = 0; i < targets.size(); i++) {
@@ -367,7 +367,7 @@ Bugzilla.prototype.commandQueue.help = [
 
 // Command: RebuildDB
 Bugzilla.prototype.commandRebuildDB = function(mes, mods, irc) {
-	var params = mods.util.getParams(mes, 0);
+	var params = mods.util.getParams(mes, 1);
 	if (params.size() <= 0) {
 		irc.sendContextReply(mes, "Syntax: Bugzilla.RebuildDB");
 		return;
@@ -378,40 +378,53 @@ Bugzilla.prototype.commandRebuildDB = function(mes, mods, irc) {
 		return;
 	}
 	
-	this._rebuilding = true;
-	irc.sendContextReply(mes, "Removing existing data...");
-	
-	// Delete all BugzillaActivityGroup.
-	var flags = this._mods.odb.retrieve(BugzillaActivityGroup, "");
-	for (var i = 0; i < flags.size(); i++)
-		this._mods.odb["delete"](flags.get(i));
-	
-	// Delete all BugzillaActivity.
-	var flags = this._mods.odb.retrieve(BugzillaActivity, "");
-	for (var i = 0; i < flags.size(); i++)
-		this._mods.odb["delete"](flags.get(i));
-	
-	var changesList = new Array();
-	try {
-		var self = this;
-		var shown = false;
-		this._checkMail(function(pop3, messageID) {
-			if (!shown) {
-				irc.sendContextReply(mes, "Rebuilding database from bugmail, this may take a few minutes...");
-				shown = true;
-			}
-			var changes = new BugmailParser(pop3.getMessage(messageID));
-			changesList.push(changes);
-			return true;
-		});
-	} catch(ex) {
-		irc.sendContextReply(mes, "Error checking bugmail: " + ex);
-		this._rebuilding = false;
-		return;
+	var cmd = "";
+	if (params.size() > 1) {
+		cmd = String(params.get(1)).trim();
 	}
 	
-	this._updateActivityDB(changesList);
-	irc.sendContextReply(mes, "Database rebuilt from bugmail.");
+	this._rebuilding = true;
+	
+	if (!cmd || (cmd == "clear")) {
+		irc.sendContextReply(mes, "Removing existing data...");
+		
+		// Delete all BugzillaActivityGroup.
+		var flags = this._mods.odb.retrieve(BugzillaActivityGroup, "");
+		for (var i = 0; i < flags.size(); i++)
+			this._mods.odb["delete"](flags.get(i));
+		
+		// Delete all BugzillaActivity.
+		var flags = this._mods.odb.retrieve(BugzillaActivity, "");
+		for (var i = 0; i < flags.size(); i++)
+			this._mods.odb["delete"](flags.get(i));
+		
+		irc.sendContextReply(mes, "Removed existing data.");
+	}
+	
+	if (!cmd || (cmd == "build")) {
+		var changesList = new Array();
+		try {
+			var self = this;
+			var shown = false;
+			this._checkMail(function(pop3, messageID) {
+				if (!shown) {
+					irc.sendContextReply(mes, "Rebuilding database from bugmail, this may take a few minutes...");
+					shown = true;
+				}
+				var changes = new BugmailParser(pop3.getMessage(messageID));
+				changesList.push(changes);
+				return true;
+			});
+		} catch(ex) {
+			irc.sendContextReply(mes, "Error rebuilding from bugmail: " + ex);
+			this._rebuilding = false;
+			return;
+		}
+		
+		this._updateActivityDB(changesList);
+		irc.sendContextReply(mes, "Rebuilt database from bugmail.");
+	}
+	
 	this._rebuilding = false;
 }
 Bugzilla.prototype.commandRebuildDB.help = [
