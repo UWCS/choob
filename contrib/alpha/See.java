@@ -16,6 +16,32 @@ public class See
 	final SimpleDateFormat sdfa = new SimpleDateFormat("Kaa ");
 	final SimpleDateFormat sdfb = new SimpleDateFormat("EEEE");
 
+	private static String[] timezone_desc = {
+		"Samoan",
+		"Tahitian",
+		"Alaskan",
+		"Pacific Standard",
+		"Mountain Standard",
+		"Central Standard",
+		"Eastern (New York)",
+		"Venezuelan",
+		"Argentinan",
+		"Brazilian",
+		"Cape Verde Island",
+		"London",
+		"Paris",
+		"Athens",
+		"Moscow",
+		"Tehran",
+		"Abu Dhabi",
+		"Sri Lankan",
+		"Vietnam",
+		"Chinese",
+		"Korean",
+		"Papua New Guinea",
+		"Solomon Island",
+	};
+
 	private Modules mods;
 	private IRCInterface irc;
 	public See(IRCInterface irc, Modules mods)
@@ -86,9 +112,12 @@ public class See
 				bodyclock++;
 			}
 
+			int cur_hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+			int hour = (int)Math.floor(bodyclock) % 24;
 			ret+=nick + " probably got up " + timeStamp(gotup) + " ago after " +
 				mods.date.timeStamp(diff, false, 2, uk.co.uwcs.choob.modules.DateModule.TimeUnit.HOUR) + " of sleep, making their body-clock time about " +
-				((int)Math.floor(bodyclock) % 24) + ":" + (minutes < 10 ? "0" : "") + minutes;
+				hour + ":" + (minutes < 10 ? "0" : "") + minutes + " and implies they are following " +
+				timezone_desc[(cur_hour - hour + 11 + 24) % 24] + " time";
 
 			irc.sendContextReply(mes, ret + ".");
 		}
