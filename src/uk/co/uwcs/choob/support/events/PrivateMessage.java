@@ -47,10 +47,7 @@ public class PrivateMessage extends Message implements PrivateEvent, CommandEven
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		PrivateMessage thing = (PrivateMessage)obj;
-		if ( true )
 			return true;
-		return false;
 	}
 
 	public String toString()

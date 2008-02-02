@@ -11,7 +11,7 @@ CALL :compare-file-dates misc\HorriblePerlScript.java uk\co\uwcs\choob\Choob.jav
 IF "%CompareFileDates%"=="1" (
 	ECHO Rebuild event system...
 	javac -d misc misc/HorriblePerlScript.java
-	java -cp misc uk.co.uwcs.choob.misc.HorriblePerlScript
+	java -cp misc HorriblePerlScript
 )
 
 CALL :compare-file-dates uk\co\uwcs\choob\support\ObjectDbClauseParser.jjt uk\co\uwcs\choob\support\ObjectDbClauseParser.java
