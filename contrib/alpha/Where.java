@@ -243,12 +243,17 @@ public class Where
 
 	<T> String hrList(List<T> el)
 	{
+		return hrList(el, " and ");
+	}
+	
+	<T> String hrList(List<T> el, String inclusor)
+	{
 		String ret = "";
 		for (int i=0; i<el.size(); ++i)
 		{
 			ret += el.get(i).toString();
 			if (i == el.size() - 2)
-				ret += " and ";
+				ret += inclusor;
 			else if (i == el.size() - 1)
 				ret += "";
 			else
@@ -376,6 +381,41 @@ public class Where
 	public void commandGlobalCampus(Message mes)
 	{
 		global(mes, Location.Campus, "on campus");
+	}
+
+	public void commandHostname(Message mes) throws UnknownHostException
+	{
+		final List<String> params = mods.util.getParams(mes);
+		String context = mes.getContext();
+
+		if (params.size() < 2)
+		{
+			irc.sendContextReply(mes, "Usage: " + params.get(0) + " address [[address...] context]");
+			return;
+		}
+		params.remove(0); // Command name.
+
+		if (params.size() >= 2)
+			context = params.remove(params.size()-1);
+
+		final Set<InetAddress> ipees = new HashSet<InetAddress>();
+		for (String host : params)
+			ipees.add(InetAddress.getByName(host));
+
+		final String finalContext = context;
+		
+		goDo(context, fromPredicate(mes, new Predicate()
+		{
+			boolean hit(InetAddress add)
+			{
+				// Compares the IPs alone, ignoring the host string.
+				for (InetAddress ip : ipees)
+					if (add.equals(ip))
+						return true;
+				return false;
+			}
+		}, "at the same place as " + hrList(params, " and/or ") + 
+			(finalContext.charAt(0) != '#' ? " (Did you really mean to look in " + finalContext + "?)" : "")));
 	}
 
 	private void global(Message mes, final Location loc, final String str)
