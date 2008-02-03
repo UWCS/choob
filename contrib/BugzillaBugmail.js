@@ -1,6 +1,6 @@
-// JavaScript plugin for Bugzilla reporting.
+// JavaScript plugin for BugzillaBugmail bugmail reporting.
 // 
-// Copyright 2006, James G. Ross
+// Copyright 2006 - 2008, James G. Ross
 // 
 
 var BufferedReader    = Packages.java.io.BufferedReader;
@@ -16,14 +16,22 @@ function log(msg) {
 	dumpln("BUGZILLA [" + date + "] " + msg);
 }
 
+function sleep(ms) {
+	try {
+		Packages.java.lang.Thread.sleep(ms);
+	} catch(ex) {
+		log("Exception in sleep: " + ex);
+	}
+}
+
 String.prototype.trim =
 function _trim() {
 	return this.replace(/^\s+/, "").replace(/\s+$/, "");
 }
 
 
-// Constructor: Bugzilla
-function Bugzilla(mods, irc) {
+// Constructor: BugzillaBugmail
+function BugzillaBugmail(mods, irc) {
 	this._mods = mods;
 	this._irc = irc;
 	this._debugChannel = "#testing42";
@@ -52,19 +60,19 @@ function Bugzilla(mods, irc) {
 }
 
 
-Bugzilla.prototype.info = [
-		"Bugzilla bug notification plugin.",
+BugzillaBugmail.prototype.info = [
+		"BugzillaBugmail bug notification plugin.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
 		"$Rev$$Date$"
 	];
 
 
-Bugzilla.prototype.optionsGeneral = ["POP3Server", "POP3Port", "POP3Account", "POP3Password"];
+BugzillaBugmail.prototype.optionsGeneral = ["POP3Server", "POP3Port", "POP3Account", "POP3Password"];
 
 
 // Callback for all intervals from this plugin.
-Bugzilla.prototype.interval = function(param, mods, irc) {
+BugzillaBugmail.prototype.interval = function(param, mods, irc) {
 	function mapCase(s, a, b) {
 		return a.toUpperCase() + b.toLowerCase();
 	};
@@ -90,7 +98,7 @@ Bugzilla.prototype.interval = function(param, mods, irc) {
 
 
 // Interval: bugmail-check
-Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
+BugzillaBugmail.prototype._bugmailCheckInterval = function(param, mods, irc) {
 	var changesList = new Array();
 	
 	try {
@@ -127,10 +135,10 @@ Bugzilla.prototype._bugmailCheckInterval = function(param, mods, irc) {
 
 
 // Command: AddComponent
-Bugzilla.prototype.commandAddComponent = function(mes, mods, irc) {
+BugzillaBugmail.prototype.commandAddComponent = function(mes, mods, irc) {
 	var params = mods.util.getParams(mes, 2);
 	if (params.size() <= 2) {
-		irc.sendContextReply(mes, "Syntax: Bugzilla.AddComponent <channel> <component>");
+		irc.sendContextReply(mes, "Syntax: BugzillaBugmail.AddComponent <channel> <component>");
 		return;
 	}
 	var channel = String(params.get(1)).trim();
@@ -151,7 +159,7 @@ Bugzilla.prototype.commandAddComponent = function(mes, mods, irc) {
 		irc.sendContextReply(mes, "Channel '" + channel + "' already receives bugmail for '" + component + "'.");
 	}
 }
-Bugzilla.prototype.commandAddComponent.help = [
+BugzillaBugmail.prototype.commandAddComponent.help = [
 		"Adds a new component to the list for a channel.",
 		"<channel> <component>",
 		"<channel> is the name of the channel to adjust",
@@ -160,10 +168,10 @@ Bugzilla.prototype.commandAddComponent.help = [
 
 
 // Command: RemoveComponent
-Bugzilla.prototype.commandRemoveComponent = function(mes, mods, irc) {
+BugzillaBugmail.prototype.commandRemoveComponent = function(mes, mods, irc) {
 	var params = mods.util.getParams(mes, 2);
 	if (params.size() <= 2) {
-		irc.sendContextReply(mes, "Syntax: Bugzilla.RemoveComponent <channel> <component>");
+		irc.sendContextReply(mes, "Syntax: BugzillaBugmail.RemoveComponent <channel> <component>");
 		return;
 	}
 	var channel = String(params.get(1)).trim();
@@ -184,7 +192,7 @@ Bugzilla.prototype.commandRemoveComponent = function(mes, mods, irc) {
 		irc.sendContextReply(mes, "Channel '" + channel + "' doesn't receive bugmail for '" + component + "'.");
 	}
 }
-Bugzilla.prototype.commandRemoveComponent.help = [
+BugzillaBugmail.prototype.commandRemoveComponent.help = [
 		"Removes a component from the list for a channel.",
 		"<channel> <component>",
 		"<channel> is the name of the channel to adjust",
@@ -193,10 +201,10 @@ Bugzilla.prototype.commandRemoveComponent.help = [
 
 
 // Command: Log
-Bugzilla.prototype.commandLog = function(mes, mods, irc) {
+BugzillaBugmail.prototype.commandLog = function(mes, mods, irc) {
 	var params = mods.util.getParams(mes, 1);
 	if (params.size() <= 1) {
-		irc.sendContextReply(mes, "Syntax: Bugzilla.Log <bug number>");
+		irc.sendContextReply(mes, "Syntax: BugzillaBugmail.Log <bug number>");
 		return;
 	}
 	var bugNum = Number(params.get(1));
@@ -222,7 +230,7 @@ Bugzilla.prototype.commandLog = function(mes, mods, irc) {
 	
 	this._spam(changesList, mes);
 }
-Bugzilla.prototype.commandLog.help = [
+BugzillaBugmail.prototype.commandLog.help = [
 		"Shows all changes capture for a single bug.",
 		"<bug number>",
 		"<bug number> is the bug number to show the log of"
@@ -230,10 +238,10 @@ Bugzilla.prototype.commandLog.help = [
 
 
 // Command: Search
-Bugzilla.prototype.commandSearch = function(mes, mods, irc) {
+BugzillaBugmail.prototype.commandSearch = function(mes, mods, irc) {
 	var params = mods.util.getParams(mes);
 	if (params.size() <= 1) {
-		irc.sendContextReply(mes, "Syntax: Bugzilla.Search <terms>");
+		irc.sendContextReply(mes, "Syntax: BugzillaBugmail.Search <terms>");
 		return;
 	}
 	
@@ -290,7 +298,7 @@ Bugzilla.prototype.commandSearch = function(mes, mods, irc) {
 	}
 	irc.sendContextReply(mes, "Bugs matching: " + results.join(", ") + ".");
 }
-Bugzilla.prototype.commandSearch.help = [
+BugzillaBugmail.prototype.commandSearch.help = [
 		"Searches known bugs by summary.",
 		"<terms>",
 		"<terms> is one or more words to look for in the summary"
@@ -298,10 +306,10 @@ Bugzilla.prototype.commandSearch.help = [
 
 
 // Command: Queue
-Bugzilla.prototype.commandQueue = function(mes, mods, irc) {
+BugzillaBugmail.prototype.commandQueue = function(mes, mods, irc) {
 	var params = mods.util.getParams(mes, 1);
 	if (params.size() <= 1) {
-		irc.sendContextReply(mes, "Syntax: Bugzilla.Queue <email or name>");
+		irc.sendContextReply(mes, "Syntax: BugzillaBugmail.Queue <email or name>");
 		return;
 	}
 	var email = String(params.get(1)).trim();
@@ -316,7 +324,7 @@ Bugzilla.prototype.commandQueue = function(mes, mods, irc) {
 		}
 	}
 	
-	var q = "WITH plugins.Bugzilla.BugzillaActivityGroup AS Group"
+	var q = "WITH plugins.BugzillaBugmail.BugzillaActivityGroup AS Group"
 			+ " WHERE Group.id = group"
 			+ " AND attachment > 0"
 			+ " AND field = \"Flag\?\""
@@ -327,7 +335,7 @@ Bugzilla.prototype.commandQueue = function(mes, mods, irc) {
 	for (var i = 0; i < flags.size(); i++) {
 		var flag = flags.get(i);
 		
-		q = "WITH plugins.Bugzilla.BugzillaActivityGroup AS Group"
+		q = "WITH plugins.BugzillaBugmail.BugzillaActivityGroup AS Group"
 			+ " WHERE Group.id = group"
 			+ " AND attachment = " + Number(flag.attachment)
 			+ " AND oldValue = \"" + this._mods.odb.escapeString(flag.oldValue) + "\""
@@ -358,7 +366,7 @@ Bugzilla.prototype.commandQueue = function(mes, mods, irc) {
 		irc.sendContextReply(mes, "Queue for " + this._fmtUser(email) + ": " + queue.join(", ") + ".");
 	}
 }
-Bugzilla.prototype.commandQueue.help = [
+BugzillaBugmail.prototype.commandQueue.help = [
 		"Shows the review queue for a user, as seen by the bot.",
 		"<email or name>",
 		"<email or name> is the e-mail address or name of the user to show the queue of"
@@ -366,10 +374,10 @@ Bugzilla.prototype.commandQueue.help = [
 
 
 // Command: RebuildDB
-Bugzilla.prototype.commandRebuildDB = function(mes, mods, irc) {
+BugzillaBugmail.prototype.commandRebuildDB = function(mes, mods, irc) {
 	var params = mods.util.getParams(mes, 1);
 	if (params.size() <= 0) {
-		irc.sendContextReply(mes, "Syntax: Bugzilla.RebuildDB");
+		irc.sendContextReply(mes, "Syntax: BugzillaBugmail.RebuildDB");
 		return;
 	}
 	
@@ -427,17 +435,17 @@ Bugzilla.prototype.commandRebuildDB = function(mes, mods, irc) {
 	
 	this._rebuilding = false;
 }
-Bugzilla.prototype.commandRebuildDB.help = [
+BugzillaBugmail.prototype.commandRebuildDB.help = [
 		"Rebuilds the activity log from currently-stored bugmails.",
 		""
 	];
 
 
 // Command: AddUser
-Bugzilla.prototype.commandAddUser = function(mes, mods, irc) {
+BugzillaBugmail.prototype.commandAddUser = function(mes, mods, irc) {
 	var params = mods.util.getParams(mes, 2);
 	if (params.size() <= 2) {
-		irc.sendContextReply(mes, "Syntax: Bugzilla.AddUser <email> <name>");
+		irc.sendContextReply(mes, "Syntax: BugzillaBugmail.AddUser <email> <name>");
 		return;
 	}
 	var email = String(params.get(1)).trim();
@@ -456,7 +464,7 @@ Bugzilla.prototype.commandAddUser = function(mes, mods, irc) {
 	
 	irc.sendContextReply(mes, "User '" + email + "' (" + name + ") added.");
 }
-Bugzilla.prototype.commandAddUser.help = [
+BugzillaBugmail.prototype.commandAddUser.help = [
 		"Adds a new e-mail to user mapping.",
 		"<email> <name>",
 		"<email> is the e-mail address to map",
@@ -465,10 +473,10 @@ Bugzilla.prototype.commandAddUser.help = [
 
 
 // Command: RemoveUser
-Bugzilla.prototype.commandRemoveUser = function(mes, mods, irc) {
+BugzillaBugmail.prototype.commandRemoveUser = function(mes, mods, irc) {
 	var params = mods.util.getParams(mes, 1);
 	if (params.size() <= 1) {
-		irc.sendContextReply(mes, "Syntax: Bugzilla.RemoveUser <email>");
+		irc.sendContextReply(mes, "Syntax: BugzillaBugmail.RemoveUser <email>");
 		return;
 	}
 	var email = String(params.get(1)).trim();
@@ -484,7 +492,7 @@ Bugzilla.prototype.commandRemoveUser = function(mes, mods, irc) {
 		irc.sendContextReply(mes, "User '" + email + "' didn't exist.");
 	}
 }
-Bugzilla.prototype.commandRemoveUser.help = [
+BugzillaBugmail.prototype.commandRemoveUser.help = [
 		"Removes an e-mail to user mapping.",
 		"<email>",
 		"<email> is the e-mail address to map"
@@ -492,7 +500,7 @@ Bugzilla.prototype.commandRemoveUser.help = [
 
 
 // Internal: calls back for each message.
-Bugzilla.prototype._checkMail = function(callbackFn) {
+BugzillaBugmail.prototype._checkMail = function(callbackFn) {
 	var pop3host     = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Server",   ""]);
 	var pop3port     = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Port",     "110"]);
 	var pop3account  = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Account",  ""]);
@@ -510,7 +518,7 @@ Bugzilla.prototype._checkMail = function(callbackFn) {
 
 
 // Internal: spam list of bugs at their appropriate channels.
-Bugzilla.prototype._spam = function(changesList, mes) {
+BugzillaBugmail.prototype._spam = function(changesList, mes) {
 	var self = this;
 	var odb  = this._mods.odb;
 	
@@ -559,7 +567,7 @@ Bugzilla.prototype._spam = function(changesList, mes) {
 					str += " from " + self._fmtUser(flag.newValue);
 				}
 			} else if ((flag.field == "Flag+") || (flag.field == "Flag-")) {
-				var q = "WITH plugins.Bugzilla.BugzillaActivity AS BugzillaActivity"
+				var q = "WITH plugins.BugzillaBugmail.BugzillaActivity AS BugzillaActivity"
 						+ " WHERE BugzillaActivity.group = id"
 						+ " AND bug = " + Number(g.bug)
 						+ " AND BugzillaActivity.field = \"" + odb.escapeString("Flag?") + "\""
@@ -919,7 +927,7 @@ function _dummy2() {
 }
 
 // Internal: updates the database of changes to bugs.
-Bugzilla.prototype._updateActivityDB = function(changesList) {
+BugzillaBugmail.prototype._updateActivityDB = function(changesList) {
 	var odb = this._mods.odb;
 	
 	function changeGroup(time, user, bug, summary, product, component) {
@@ -1039,7 +1047,7 @@ function _dummy(bugs) {
 }
 
 // Internal: updates the database of currently requested flags.
-Bugzilla.prototype._fmtUser = function(user) {
+BugzillaBugmail.prototype._fmtUser = function(user) {
 	var users = this._mods.odb.retrieve(BugzillaUser, "WHERE email = \"" + this._mods.odb.escapeString(user) + "\"");
 	if (users.size() == 1) {
 		return users.get(0).name;
@@ -1316,11 +1324,11 @@ BugmailParser.prototype._parse = function(lines) {
 			if (debug > 0) log("DATE      : " + ary[1]);
 			this.changeGroup.time = Number(new Date(ary[1]));
 			
-		} else if ((line.substr(0, 11) == "X-Bugzilla-") && (ary = line.match(/^X-Bugzilla-(Product|Component):\s*(.*?)\s*$/i))) {
+		} else if ((line.substr(0, 11) == "X-BugzillaBugmail-") && (ary = line.match(/^X-BugzillaBugmail-(Product|Component):\s*(.*?)\s*$/i))) {
 			if (debug > 0) log((ary[1].toUpperCase() + "          ").substr(0, 10) + ": " + ary[2]);
 			this.changeGroup[ary[1].toLowerCase()] = ary[2];
 			
-		} else if (!haveUser && (line.substr(0, 15) == "X-Bugzilla-Who:") && (ary = line.match(/^X-Bugzilla-Who:\s*(.*?)\s*$/i))) {
+		} else if (!haveUser && (line.substr(0, 15) == "X-BugzillaBugmail-Who:") && (ary = line.match(/^X-BugzillaBugmail-Who:\s*(.*?)\s*$/i))) {
 			if (debug > 0) log("USER      : " + ary[1]);
 			this.changeGroup.user = ary[1];
 			haveUser = true;
