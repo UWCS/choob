@@ -16,32 +16,6 @@ public class See
 	final SimpleDateFormat sdfa = new SimpleDateFormat("Kaa ");
 	final SimpleDateFormat sdfb = new SimpleDateFormat("EEEE");
 
-	private static String[] timezone_desc = {
-		"Samoan",
-		"Tahitian",
-		"Alaskan",
-		"Pacific Standard",
-		"Mountain Standard",
-		"Central Standard",
-		"Eastern (New York)",
-		"Venezuelan",
-		"Argentinan",
-		"Brazilian",
-		"Cape Verde Island",
-		"London",
-		"Paris",
-		"Athens",
-		"Moscow",
-		"Tehran",
-		"Abu Dhabi",
-		"Sri Lankan",
-		"Vietnam",
-		"Chinese",
-		"Korean",
-		"Papua New Guinea",
-		"Solomon Island",
-	};
-
 	private Modules mods;
 	private IRCInterface irc;
 	public See(IRCInterface irc, Modules mods)
@@ -114,10 +88,24 @@ public class See
 
 			int cur_hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
 			int hour = (int)Math.floor(bodyclock) % 24;
-			ret+=nick + " probably got up " + timeStamp(gotup) + " ago after " +
-				mods.date.timeStamp(diff, false, 2, uk.co.uwcs.choob.modules.DateModule.TimeUnit.HOUR) + " of sleep, making their body-clock time about " +
-				hour + ":" + (minutes < 10 ? "0" : "") + minutes + " and implies they are following " +
-				timezone_desc[(cur_hour - hour + 11 + 24) % 24] + " time";
+			String[] candidateZones = TimeZone.getAvailableIDs((cur_hour - hour) * -3600000);
+			String following = "";
+			if (candidateZones.length > 0)
+			{
+				following = 
+					" and implies that he or she is following " + 
+					TimeZone.getTimeZone(candidateZones[0]).getDisplayName() +
+					" and may be located in " + 
+					candidateZones[new Random().nextInt(candidateZones.length)] ;
+			}
+			ret += nick + 
+				" probably got up " + 
+				timeStamp(gotup) + 
+				" ago after " +
+				mods.date.timeStamp(diff, false, 2, uk.co.uwcs.choob.modules.DateModule.TimeUnit.HOUR) + 
+				" of sleep, making his or her body-clock time about " +
+				hour + ":" + (minutes < 10 ? "0" : "") + minutes  + 
+				following;
 
 			irc.sendContextReply(mes, ret + ".");
 		}
