@@ -88,7 +88,7 @@ public class See
 
 			int cur_hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
 			int hour = (int)Math.floor(bodyclock) % 24;
-			String[] candidateZones = TimeZone.getAvailableIDs((cur_hour - hour) * -3600000);
+			String[] candidateZones = TimeZone.getAvailableIDs(((cur_hour - hour + 24) % 24) * -3600000);
 			String following = "";
 			if (candidateZones.length > 0)
 			{
