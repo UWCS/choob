@@ -1,3 +1,6 @@
+import java.lang.management.GarbageCollectorMXBean;
+import java.util.List;
+
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.Message;
@@ -58,7 +61,7 @@ public class Admin
 
 	private String bytesString(long l)
 	{
-		return new Float(((double)l)/1024.0/1024.0).toString() + "mb";
+		return new Float(l/1024.0/1024.0).toString() + "mb";
 	}
 
 	public void commandMemory( Message mes )
@@ -71,6 +74,15 @@ public class Admin
 			" of memory (which can scale up to " +
 			bytesString(Runtime.getRuntime().maxMemory()) +
 		").");
+	}
+
+	public void commandGCs( Message mes )
+	{
+		final List<GarbageCollectorMXBean> gcbeans = java.lang.management.ManagementFactory.getGarbageCollectorMXBeans();
+		String ret = "";
+		for (GarbageCollectorMXBean gcbean : gcbeans)
+			ret += gcbean.getName() + " has run " + gcbean.getCollectionCount() + " times, taking " + gcbean.getCollectionTime() + "ms total. ";
+		irc.sendContextReply(mes, ret);
 	}
 }
 
