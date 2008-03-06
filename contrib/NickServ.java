@@ -55,8 +55,12 @@ public class NickServ
 
 	final Pattern validInfoReply=Pattern.compile("^(?:\\s*Nickname: ([^\\s]+) ?(<< ONLINE >>)?)|(?:The nickname \\[([^\\s]+)\\] is not registered)$");
 	final Pattern athemeNotRegistered=Pattern.compile("^([^\\s]+?) is not registered.$");
-	final Pattern athemeCurrentlyOnline=Pattern.compile("^Nick ([^\\s]+?) is currently online$");
-	final Pattern athemeCurrentlyOffline=Pattern.compile("^Nick ([^\\s]+?) last seen: .*");
+	final Pattern athemeCurrentlyOnline=Pattern.compile("^Last seen.*?: now$");
+	final Pattern athemeCurrentlyOffline=Pattern.compile("^Last seen.*?:.*");
+	final Pattern athemeCurrentNickInfo=Pattern.compile("^Information on ([^\\s]+) ?.*");
+
+	private String nickCheck;
+	private String nickNeedCheck;
 
 	public NickServ(Modules mods, IRCInterface irc)
 	{
@@ -172,6 +176,7 @@ public class NickServ
 				// Not already waiting on this one
 				result = new ResultObj();
 				result.result = -1;
+				this.nickNeedCheck = nick;
 				AccessController.doPrivileged( new PrivilegedAction<Object>() {
 					public Object run()
 					{
@@ -331,27 +336,45 @@ public class NickServ
 		List<String> params = mods.util.getParams( mes );
 
 		String nick;
-		int status;
+		int status = 0;
 		if (infooverride)
 		{
 			// Atheme:
 			Matcher anr = athemeNotRegistered.matcher(mes.getMessage());
 			Matcher aon = athemeCurrentlyOnline.matcher(mes.getMessage());
 			Matcher aoff = athemeCurrentlyOffline.matcher(mes.getMessage());
+			Matcher acni = athemeCurrentNickInfo.matcher(mes.getMessage());
 
-			if (anr.matches())
+			if(acni.matches())
 			{
-				nick = anr.group(1);
-				status = 0;
+				nick = acni.group(1);
+				if(Colors.removeFormattingAndColors(nick).equalsIgnoreCase(this.nickNeedCheck))
+				{
+					this.nickCheck = Colors.removeFormattingAndColors(nick);
+					this.nickNeedCheck = null;
+				}
+				return;
+			}
+			
+			if (anr.matches())
+			{	
+				nick = Colors.removeFormattingAndColors(anr.group(1));
+				if(Colors.removeFormattingAndColors(nick).equalsIgnoreCase(this.nickCheck))
+				{
+					status = 0;
+					this.nickCheck = null;
+				}
 			}
 			else if (aon.matches())
 			{
-				nick = aon.group(1);
+				nick = this.nickCheck;
+				this.nickCheck = null;
 				status = 3;
 			}
 			else if (aoff.matches())
 			{
-				nick = aoff.group(1);
+				nick = this.nickCheck;
+				this.nickCheck = null;
 				status = 1;
 			}
 			else
