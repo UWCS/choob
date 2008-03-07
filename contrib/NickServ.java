@@ -118,9 +118,13 @@ public class NickServ
 		{
 			irc.sendContextReply(mes, nick + " is authed (" + check1 + ")!");
 		}
+		else if ( check1 == 1 )
+		{
+			irc.sendContextReply(mes, nick + " is not identified (" + check1 + ")!");
+		}
 		else
 		{
-			irc.sendContextReply(mes, nick + " is not authed (" + check1 + ")!");
+			irc.sendContextReply(mes, nick + " is not registered (" + check1 + ")!");
 		}
 	}
 
