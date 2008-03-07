@@ -83,7 +83,7 @@ public class Where
 	}
 
 	// (Target) channel -> Outstanding queries in it.
-	Map<String, Queue<Details>> outst = new HashMap<String, Queue<Details>>();
+	Map<String, Queue<Details>> outst = Collections.synchronizedMap(new HashMap<String, Queue<Details>>());
 
 	public Where(Modules mods, IRCInterface irc)
 	{
@@ -110,7 +110,7 @@ public class Where
 
 	// "User", hostname, server, nick, ...
 	final Pattern splitUp = Pattern.compile("^([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) .*");
-	public synchronized void onServerResponse(ServerResponse resp)
+	public void onServerResponse(ServerResponse resp)
 	{
 		// Ensure resp is related to WHO, and remember if we're at the end. I'm sure there's a sane way to write this.
 		final boolean atend = resp.getCode() == PircBot.RPL_ENDOFWHO;
@@ -272,7 +272,7 @@ public class Where
 		goDo(what, c);
 	}
 
-	synchronized void goDo( String what, Callback c )
+	void goDo( String what, Callback c )
 	{
 		Queue<Details> d = outst.get(what);
 		if (d == null)
