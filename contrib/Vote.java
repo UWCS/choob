@@ -221,7 +221,7 @@ public class Vote {
 		mods.odb.save(vote);
 		mods.interval.callBack( vote, duration, vote.id );
 		
-		activeVotes.put(mes.getContext(), vote.id);
+		activeVotes.put(mes.getContext(), Integer.valueOf(vote.id));
 		
 		if (checkOption("","VoteVerbose",true))	{
 			irc.sendContextReply(mes, "OK, called vote #" + vote.id + " on \"" + question + "\"! You have " + durationString + ".");
@@ -392,22 +392,22 @@ public class Vote {
 		int lastPos = 0;
 		
 		if ( (currentPos = time.indexOf('d', lastPos)) >= 0 ) {
-			period += 60 * 60 * 24 * Integer.valueOf(time.substring(lastPos, currentPos));
+			period += 60 * 60 * 24 * Integer.parseInt(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
 		
 		if ( (currentPos = time.indexOf('h', lastPos)) >= 0 ) {
-			period += 60 * 60 * Integer.valueOf(time.substring(lastPos, currentPos));
+			period += 60 * 60 * Integer.parseInt(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
 		
 		if ( (currentPos = time.indexOf('m', lastPos)) >= 0 ) {
-			period += 60 * Integer.valueOf(time.substring(lastPos, currentPos));
+			period += 60 * Integer.parseInt(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
 		
 		if ( (currentPos = time.indexOf('s', lastPos)) >= 0 ) {
-			period += Integer.valueOf(time.substring(lastPos, currentPos));
+			period += Integer.parseInt(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
 		
@@ -487,7 +487,7 @@ public class Vote {
 				irc.sendContextReply(mes, "Sorry, no active vote here! You'll need to specify a vote ID.");
 				return;
 			}
-			voteID = voteIDInt;
+			voteID = voteIDInt.intValue();
 			response = params.get(1);
 		} else if (params.size() == 3) {
 			try {
@@ -499,7 +499,7 @@ public class Vote {
 					irc.sendContextReply(mes, "Sorry, " + params.get(1) + " is not a valid vote ID!");
 					return;
 				}
-				voteID = voteIDInt;
+				voteID = voteIDInt.intValue();
 				response = params.get(1) + " " + params.get(2);
 			}
 		} else {
@@ -599,7 +599,7 @@ public class Vote {
 		}
 	}
 	
-	public synchronized void interval( Object parameter ) throws ChoobException {
+	public synchronized void interval( Object parameter ) {
 		if (parameter != null && parameter instanceof ActiveVote) {
 			// It's a vote ending.
 			final ActiveVote vote = (ActiveVote)parameter;
@@ -661,6 +661,7 @@ public class Vote {
 			
 			// Delete all the buggers!
 			mods.odb.runTransaction( new ObjectDBTransaction() {
+				@Override
 				public void run() {
 					update(vote);
 					for(Voter voter: votes)
@@ -732,7 +733,7 @@ public class Vote {
 	/**
 	 * Method in order to inform a user of new votes that they may wish to vote on that they have yet to do so.
 	 */
-	public synchronized void onJoin(ChannelJoin ev, Modules mods, IRCInterface irc) {
+	public synchronized void onJoin(ChannelJoin ev) {
 		if (ev.getLogin().equalsIgnoreCase("Choob")) {
 			// XXX : Ignore bots, the quick and hacky way
 			return;

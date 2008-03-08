@@ -33,6 +33,7 @@ public class Mail
 		{
 			super(text, e);
 		}
+		@Override
 		public String toString()
 		{
 			return getMessage();
@@ -150,7 +151,10 @@ public class Mail
 				return;
 			}
 		}
-		catch (ChoobNoSuchCallException e){ }
+		catch (ChoobNoSuchCallException e)
+		{
+			// If flood isn't loaded, don't call it, don't care.
+		}
 
 		try
 		{
@@ -184,7 +188,7 @@ public class Mail
 		try
 		{
 			String smtpHost    =             (String)mods.plugin.callAPI("Options", "GetGeneralOption", "SMTPHost", optionsGeneralDefaults[0]);
-			int    smtpPort    = new Integer((String)mods.plugin.callAPI("Options", "GetGeneralOption", "SMTPPort", optionsGeneralDefaults[1]));
+			int    smtpPort    = Integer.valueOf((String)mods.plugin.callAPI("Options", "GetGeneralOption", "SMTPPort", optionsGeneralDefaults[1]));
 			String fromDisplay =             (String)mods.plugin.callAPI("Options", "GetGeneralOption", "From",     optionsGeneralDefaults[2]);
 			String fromUser    =             (String)mods.plugin.callAPI("Options", "GetGeneralOption", "FromUser", optionsGeneralDefaults[3]);
 			String fromHost    =             (String)mods.plugin.callAPI("Options", "GetGeneralOption", "FromHost", optionsGeneralDefaults[4]);

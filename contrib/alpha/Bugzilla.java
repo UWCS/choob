@@ -12,7 +12,10 @@ import uk.co.uwcs.choob.support.events.Message;
 class BugzillaDetails
 {
 	public int id;
-	public BugzillaDetails(){}
+	public BugzillaDetails()
+	{
+		// Unhiding
+	}
 	public BugzillaDetails(String alias, String url)
 	{
 		this.url = url;
@@ -78,7 +81,9 @@ public class Bugzilla
 			irc.sendContextReply(mes, "Ok, added bugzilla");
 		}
 		catch( IllegalStateException e )
-		{	}
+		{
+			irc.sendContextReply(mes, "Failed to add bugzilla: " + e.toString());
+		}
 	}
 
 	public void commandDelete(Message mes)
@@ -100,10 +105,13 @@ public class Bugzilla
 			{
 				mods.odb.delete(item);
 			}
+			irc.sendContextReply(mes,"Ok, deleted specified bugzilla");
 		}
 		catch( IllegalStateException e )
-		{	}
-		irc.sendContextReply(mes,"Ok, deleted specified bugzilla");
+		{
+			irc.sendContextReply(mes,"Couldn't delete: " + e);
+		}
+		
 	}
 
 	private final static String titlePattern = "(?s)<title>(.*?)</title>";
@@ -120,7 +128,7 @@ public class Bugzilla
 				return mods.scrape.readyForIrc(scraped.group(1));
 		} catch (IllegalStateException e)
 		{
-			
+			// What it says below is still true:
 		}
 		return "Could not find bug description.";
 	}
@@ -152,7 +160,7 @@ public class Bugzilla
 			irc.sendContextReply(mes,"No configured bugzilla for that alias.");
 			return;
 		}
-		BugzillaDetails details = (BugzillaDetails)thisBugzillaList.get(0);
+		BugzillaDetails details = thisBugzillaList.get(0);
 		try
 		{
 			irc.sendContextReply(mes,getBugSummary(details.url,bugno));

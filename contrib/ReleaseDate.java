@@ -171,9 +171,8 @@ public class ReleaseDate {
 		text=text.replaceAll("\\s+"," ");
 		if (text.length()>maxlen) {
 			return text.substring(0, maxlen) + "..., see " + url;
-		} else {
-			return text + " See " + url;
 		}
+		return text + " See " + url;
 	}
 
 	private URL generateURL(String base, String url) throws LookupException {
@@ -209,6 +208,7 @@ public class ReleaseDate {
 			super(text, e);
 		}
 		
+		@Override
 		public String toString() {
 			return getMessage();
 		}

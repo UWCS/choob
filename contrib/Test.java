@@ -74,7 +74,7 @@ public class Test
 	{
 		List<String> params = mods.util.getParams( con );
 		if (params.size() > 1) {
-			System.exit(new Integer(params.get(1)));
+			System.exit(Integer.parseInt(params.get(1)));
 		} else {
 			irc.quit("Bye bye!");
 		}
@@ -88,14 +88,14 @@ public class Test
 	// Define the regex for the KarmaPlus filter.
 	public String filterFauxRegex = "Faux sucks";
 
-	public void filterFaux( Message con, Modules modules, IRCInterface irc )
+	public void filterFaux( Message con )
 	{
 		irc.sendContextMessage( con, "No, I disagree, " + con.getNick() + " is the one that is the suck.");
 	}
 
 	public String filterBouncyRegex = "^bouncy bouncy";
 
-	public void filterBouncy( Message con, Modules modules, IRCInterface irc )
+	public void filterBouncy( Message con )
 	{
 		irc.sendContextReply( con, "Ooh, yes please.");
 	}
@@ -123,7 +123,7 @@ public class Test
 		}
 	}*/
 
-	public void onPart( ChannelPart ev, Modules mod, IRCInterface irc )
+	public void onPart( ChannelPart ev )
 	{
 		//irc.sendContextMessage( ev, "Bye, " + ev.getNick() + "!");
 	}

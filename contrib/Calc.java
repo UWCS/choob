@@ -130,7 +130,9 @@ class MathParser
 			if (ptr == length)
 				return total;
 			else if (expr.charAt(ptr) == '^')
-			{ } // Still good...
+			{
+				// Still good...	
+			} 
 			else
 				return total;
 

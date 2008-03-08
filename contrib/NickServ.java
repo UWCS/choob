@@ -73,13 +73,13 @@ public class NickServ
 	}
 
 	// This is triggered by the constructor.
-	public synchronized void interval( Object parameter, Modules mods, IRCInterface irc ) throws ChoobException
+	public synchronized void interval( Object parameter )
 	{
 		String nick = "ignore-me"; // It's completely irrelevant what this nick is.
 		getNewNickCheck( nick );
 	}
 
-	public void destroy(Modules mods)
+	public void destroy()
 	{
 		synchronized(nickChecks)
 		{
@@ -113,7 +113,7 @@ public class NickServ
 		if (nick.length() == 0)
 			nick = mes.getNick();
 
-		int check1 = (Integer)mods.plugin.callAPI("NickServ", "Status", nick);
+		int check1 = ((Integer)mods.plugin.callAPI("NickServ", "Status", nick)).intValue();
 		if ( check1 == 3 )
 		{
 			irc.sendContextReply(mes, nick + " is authed (" + check1 + ")!");
@@ -165,8 +165,7 @@ public class NickServ
 		int stat = apiStatus( nick );
 		if (stat == -1)
 			return assumption;
-		else
-			return stat >= 3;
+		return stat >= 3;
 	}
 
 	private ResultObj getNewNickCheck( final String nick )
@@ -203,7 +202,7 @@ public class NickServ
 	{
 		synchronized(nickChecks)
 		{
-			return (ResultObj)nickChecks.get( nick );
+			return nickChecks.get( nick );
 		}
 	}
 
@@ -212,7 +211,7 @@ public class NickServ
 		ResultObj result;
 		synchronized(nickChecks)
 		{
-			result = (ResultObj)nickChecks.get( nick );
+			result = nickChecks.get( nick );
 			if ( result == null )
 				// !!! This should never really happen
 				return null;
@@ -443,8 +442,8 @@ public class NickServ
 			}
 			else if ( params.get(0).equalsIgnoreCase("status") )
 			{
-				nick = (String)params.get(1);
-				status = Integer.valueOf((String)params.get(2));
+				nick = params.get(1);
+				status = Integer.valueOf(params.get(2)).intValue();
 
 				if (status == 0)
 				{

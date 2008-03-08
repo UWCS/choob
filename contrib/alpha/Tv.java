@@ -3,7 +3,15 @@
 import java.io.ByteArrayInputStream;
 import java.net.URL;
 import java.text.DateFormat;
-import java.util.*;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Random;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -13,7 +21,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
@@ -28,7 +35,7 @@ public class Tv
 
 	final static String propend = "app=Choob&email=chrisrwest@gmail.com";
 
-	public Tv(Modules mods, IRCInterface irc) throws ChoobException
+	public Tv(Modules mods, IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -261,9 +268,9 @@ class ChannelInfo
 				p.end=t.getTimeInMillis();
 			}
 		}
-		catch (java.text.ParseException e)
+		catch (ParseException e)
 		{
-
+			// Nothing we can do about any error.
 		}
 	}
 }
@@ -280,6 +287,7 @@ class ParseHandler extends DefaultHandler
 		c=chan;
 	}
 
+	@Override
 	public void startElement(String namespaceURI, String lName, String qName, Attributes attrs) throws SAXException
 	{
 		String eName = lName; // element name
@@ -320,13 +328,23 @@ class ParseHandler extends DefaultHandler
 		else if (eName.equals("title"))
 			op=4;
 	}
-	public void startDocument () throws SAXException {}
-	public void endDocument () throws SAXException {}
+	@Override
+	public void startDocument () throws SAXException 
+	{
+		// Ignore
+	}
+	@Override
+	public void endDocument () throws SAXException 
+	{
+		// Ignore
+	}
+	@Override
 	public void endElement (String namespaceURI, String sName, String qName) throws SAXException
 	{
 		op=0;
 	}
 
+	@Override
 	public void characters(char buf[], int offset, int len) throws SAXException
 	{
 		String s = new String(buf, offset, len);

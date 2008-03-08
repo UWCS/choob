@@ -62,7 +62,7 @@ public class Security
 		else
 		{
 			// Must check permission!
-			userName = (String)params.get(1);
+			userName = params.get(1);
 			// Sure, this will be checked for us. But what about the user who called us?
 			mods.security.checkNickPerm( new ChoobPermission("user.add") , mes);
 		}
@@ -109,7 +109,7 @@ public class Security
 		else
 		{
 			// Must check permission!
-			userName = mods.security.getUserAuthName((String)params.get(1));
+			userName = mods.security.getUserAuthName(params.get(1));
 			// Sure, this will be checked for us. But what about the user who called us?
 			mods.security.checkNickPerm( new ChoobPermission("user.del") , mes );
 		}
@@ -177,13 +177,16 @@ public class Security
 		StringBuffer output = new StringBuffer();
 		for(int i=1; i<params.size(); i++)
 		{
-			if (i == 1) {}
+			if (i == 1) 
+			{
+				// Do nothing.
+			}
 			else if (i == params.size() - 1)
 				output.append(" and ");
 			else
 				output.append(", ");
-			output.append(((String)params.get(i)).toLowerCase());
-			nicks.add(((String)params.get(i)).toLowerCase());
+			output.append(params.get(i).toLowerCase());
+			nicks.add(params.get(i).toLowerCase());
 		}
 
 		irc.sendContextReply(mes, "OK, ready to link " + output + " to " + rootName + ". Change nickname, identify, then use \"Security.Link " + rootName + "\".");
@@ -255,15 +258,12 @@ public class Security
 			String chunk = groupName.toLowerCase().substring(5);
 			if (chunk.startsWith(userName.toLowerCase() + "."))
 				return true;
-			else
-			{
-				// Check root, too...
-				String rootName = mods.security.getRootUser( userName );
-				if (rootName == null)
-					rootName = userName;
-				if (chunk.startsWith(rootName.toLowerCase() + "."))
-					return true;
-			}
+			// Check root, too...
+			String rootName = mods.security.getRootUser( userName );
+			if (rootName == null)
+				rootName = userName;
+			if (chunk.startsWith(rootName.toLowerCase() + "."))
+				return true;
 		}
 		return false;
 	}
@@ -304,16 +304,13 @@ public class Security
 			irc.sendContextReply( mes, "You must specify exactly one group!" );
 			return;
 		}
-		else
-		{
-			// Must check permission!
-			groupName = (String)params.get(1);
+		// Must check permission!
+		groupName = params.get(1);
 
-			boolean check = groupCheck(groupName, mods.security.getUserAuthName(mes.getNick()));
-			// Sure, this will be checked for us. But what about the user who called us?
-			if (!check)
-				mods.security.checkNickPerm( new ChoobPermission("group.add." + groupName) , mes);
-		}
+		boolean check = groupCheck(groupName, mods.security.getUserAuthName(mes.getNick()));
+		// Sure, this will be checked for us. But what about the user who called us?
+		if (!check)
+			mods.security.checkNickPerm( new ChoobPermission("group.add." + groupName) , mes);
 		// Can add the user...
 		try
 		{
@@ -366,18 +363,15 @@ public class Security
 			irc.sendContextReply( mes, "You must specify a child user/group and a parent group!" );
 			return;
 		}
-		else
-		{
-			// Must check permission!
-			parentName = (String)params.get(1);
-			childName = ((String)params.get(2));
-			if (childName.indexOf('.') != -1)
-				isGroup = true;
-			boolean check = groupCheck(parentName, mods.security.getUserAuthName(mes.getNick()));
-			// Sure, this will be checked for us. But what about the user who called us?
-			if (!check)
-				mods.security.checkNickPerm( new ChoobPermission("group.members." + parentName) , mes);
-		}
+		// Must check permission!
+		parentName = params.get(1);
+		childName = params.get(2);
+		if (childName.indexOf('.') != -1)
+			isGroup = true;
+		boolean check = groupCheck(parentName, mods.security.getUserAuthName(mes.getNick()));
+		// Sure, this will be checked for us. But what about the user who called us?
+		if (!check)
+			mods.security.checkNickPerm( new ChoobPermission("group.members." + parentName) , mes);
 		// Can add the user...
 		try
 		{
@@ -512,14 +506,14 @@ public class Security
 
 		String actions = null;
 		if (params.size() == 5)
-			actions = (String)params.get(4);
+			actions = params.get(4);
 
 		String permName = null;
 		if (params.size() >= 4)
-			permName = (String)params.get(3);
+			permName = params.get(3);
 
-		String permType = (String)params.get(2);
-		String groupName = (String)params.get(1);
+		String permType = params.get(2);
+		String groupName = params.get(1);
 
 		String permString = isGranting ? "grant." : "revoke.";
 		boolean check = groupCheck(groupName, mods.security.getUserAuthName(mes.getNick()));
@@ -579,14 +573,14 @@ public class Security
 
 		String actions = null;
 		if (params.size() == 5)
-			actions = (String)params.get(4);
+			actions = params.get(4);
 
 		String permName = null;
 		if (params.size() >= 4)
-			permName = (String)params.get(3);
+			permName = params.get(3);
 
-		String permType = (String)params.get(2);
-		String groupName = (String)params.get(1);
+		String permType = params.get(2);
+		String groupName = params.get(1);
 
 		Permission permission = makePermission(permType, permName, actions);
 		if (permission == null)

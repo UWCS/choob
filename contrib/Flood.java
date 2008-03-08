@@ -1,7 +1,8 @@
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.IRCInterface;
 
 /**
@@ -49,18 +50,14 @@ class FloodObj
 			nextWarn = time + DELAY;
 			return true;
 		}
-		else
-			return false;
+		return false;
 	}
 
 	public boolean isFlooding()
 	{
 		lastOffset = (lastOffset + 1) % tailback;
 		lastmes[lastOffset] = System.currentTimeMillis();
-		if (average() < limit)
-			return true;
-		else
-			return false;
+		return average() < limit;
 	}
 
 	public boolean canCull(long time)
@@ -94,7 +91,7 @@ public class Flood
 	}
 
 	// Loop over everything, splatting as necessary.
-	public void interval( Object parameter ) throws ChoobException
+	public void interval( Object parameter )
 	{
 		synchronized(floods)
 		{
@@ -118,14 +115,14 @@ public class Flood
 	// 0 = fine, 1 = yes -- message them, 2 = yes -- but don't message them (already done recently)
 	public Integer apiIsFlooding( String key, Integer limit, Integer tailback )
 	{
-		FloodObj flood = getFloodObj(key.toLowerCase(), limit, tailback);
+		FloodObj flood = getFloodObj(key.toLowerCase(), limit.intValue(), tailback.intValue());
 
 		if (!flood.isFlooding())
-			return 0;
+			return Integer.valueOf(0);
 		else if (flood.shouldWarn())
-			return 1;
+			return Integer.valueOf(1);
 		else
-			return 2;
+			return Integer.valueOf(2);
 	}
 
 	private FloodObj getFloodObj(String key, int limit, int tailback)

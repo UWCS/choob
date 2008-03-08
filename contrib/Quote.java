@@ -47,6 +47,7 @@ class QuoteEnumerator
 {
 	public QuoteEnumerator()
 	{
+		// Unhide
 	}
 
 	public QuoteEnumerator(String enumSource, int[] idList)
@@ -187,7 +188,7 @@ public class Quote
 			if (o == null)
 				return 1;
 
-			return ((ScoreTracker)o).count - count;
+			return o.count - count;
 		}
 	}
 
@@ -212,7 +213,7 @@ public class Quote
 		"<Nick> is a nickname to quote",
 		"<Regex> is a regular expression to use to match lines"
 	};
-	public void commandCreate( Message mes ) throws ChoobException
+	public void commandCreate( Message mes )
 	{
 		if (!(mes instanceof ChannelEvent))
 		{
@@ -507,6 +508,7 @@ public class Quote
 		final List<QuoteLine> quoteLines = new ArrayList<QuoteLine>(lines.size());
 
 		mods.odb.runTransaction( new ObjectDBTransaction() {
+			@Override
 			public void run()
 		{
 			quote.id = 0;
@@ -626,6 +628,7 @@ public class Quote
 		final List<QuoteLine> quoteLines = new ArrayList<QuoteLine>(lines.length);
 
 		mods.odb.runTransaction( new ObjectDBTransaction() {
+			@Override
 			public void run()
 		{
 			// Have to set ID etc. here in case transaction blows up.
@@ -674,34 +677,32 @@ public class Quote
 			final QuoteLine line = lines.get(0);
 			return formatPreviewLine(line.nick, line.message, line.isAction);
 		}
+
+		// last is initalised above
+		QuoteLine first = lines.get(0);
+
+		String firstText;
+		if (first.isAction)
+			firstText = "* " + first.nick;
 		else
-		{
-			// last is initalised above
-			QuoteLine first = lines.get(0);
+			firstText = "<" + first.nick + ">";
+		if (first.message.length() > EXCERPT)
+			firstText += " " + first.message.substring(0, 27) + "...";
+		else
+			firstText += " " + first.message;
 
-			String firstText;
-			if (first.isAction)
-				firstText = "* " + first.nick;
-			else
-				firstText = "<" + first.nick + ">";
-			if (first.message.length() > EXCERPT)
-				firstText += " " + first.message.substring(0, 27) + "...";
-			else
-				firstText += " " + first.message;
+		QuoteLine last = lines.get(lines.size() - 1);
+		String lastText;
+		if (last.isAction)
+			lastText = "* " + last.nick;
+		else
+			lastText = "<" + last.nick + ">";
+		if (last.message.length() > EXCERPT)
+			lastText += " " + last.message.substring(0, 27) + "...";
+		else
+			lastText += " " + last.message;
 
-			QuoteLine last = lines.get(lines.size() - 1);
-			String lastText;
-			if (last.isAction)
-				lastText = "* " + last.nick;
-			else
-				lastText = "<" + last.nick + ">";
-			if (last.message.length() > EXCERPT)
-				lastText += " " + last.message.substring(0, 27) + "...";
-			else
-				lastText += " " + last.message;
-
-			return firstText + " -> " + lastText;
-		}
+		return firstText + " -> " + lastText;
 	}
 
 	// Interval
@@ -763,7 +764,7 @@ public class Quote
 		"[ <Clause> [ <Clause> ... ]]",
 		"<Clause> is a clause to select quotes with (see Quote.UsingGet)"
 	};
-	public void commandGet(Message mes) throws ChoobException
+	public void commandGet(Message mes)
 	{
 		String whereClause = getClause(mods.util.getParamString(mes));
 		List<QuoteObject> quotes;
@@ -778,8 +779,7 @@ public class Quote
 				irc.sendContextReply(mes, "Could not retrieve: " + e.getCause());
 				return;
 			}
-			else
-				throw e;
+			throw e;
 		}
 
 		if (quotes.size() == 0)
@@ -850,8 +850,7 @@ public class Quote
 
 		if (line.isAction)
 			return "/me " + line.message;
-		else
-			return line.message;
+		return line.message;
 	}
 
 	private void addLastQuote(String context, QuoteObject quote, int type)
@@ -882,14 +881,14 @@ public class Quote
 		"[ <Clause> [ <Clause> ... ]]",
 		"<Clause> is a clause to select quotes with (see Quote.UsingGet)"
 	};
-	public void commandCount( Message mes ) throws ChoobException
+	public void commandCount( Message mes )
 	{
 		final String whereClause = getClause( mods.util.getParamString( mes ) );
 		final List<QuoteObject> quoteCounts = mods.odb.retrieve( QuoteObject.class, whereClause );
 		final Set<Integer> ids = new HashSet<Integer>();
 
 		for (QuoteObject q : quoteCounts)
-			ids.add(q.id);
+			ids.add(Integer.valueOf(q.id));
 
 		final int count = ids.size();
 
@@ -962,7 +961,8 @@ public class Quote
 		"[ <Clause> [ <Clause> ... ]]",
 		"<Clause> is a clause to select quotes with (see Quote.UsingGet)"
 	};
-	public void commandSummary( Message mes ) throws ChoobException
+	@SuppressWarnings("boxing")
+	public void commandSummary( Message mes )
 	{
 		String whereClause = getClause( mods.util.getParamString(mes) );
 		List<QuoteObject> quoteKarmasSpam = mods.odb.retrieve( QuoteObject.class, whereClause );
@@ -1010,7 +1010,7 @@ public class Quote
 		"[ <QuoteID> ]",
 		"<QuoteID> is the ID of a quote"
 	};
-	public void commandInfo( Message mes ) throws ChoobException
+	public void commandInfo( Message mes )
 	{
 		int quoteID = -1;
 		List<String> params =  mods.util.getParams(mes);
@@ -1066,7 +1066,7 @@ public class Quote
 	public String[] helpCommandRemove = {
 		"Remove your most recently added quote.",
 	};
-	public void commandRemove( Message mes ) throws ChoobException
+	public void commandRemove( Message mes )
 	{
 		// Quotes are stored by context...
 		synchronized(recentQuotes)
@@ -1105,6 +1105,7 @@ public class Quote
 			final QuoteObject theQuote = quote;
 			final List<QuoteLine> quoteLines = mods.odb.retrieve( QuoteLine.class, "WHERE quoteID = " + quote.id );
 			mods.odb.runTransaction( new ObjectDBTransaction() {
+				@Override
 				public void run()
 			{
 				delete(theQuote);
@@ -1127,7 +1128,7 @@ public class Quote
 		"[<Count>]",
 		"<Count> is the maximum number to return (default is 1)"
 	};
-	public void commandLast( Message mes ) throws ChoobException
+	public void commandLast( Message mes )
 	{
 		// Get a count...
 		int count = 1;
@@ -1182,7 +1183,7 @@ public class Quote
 		"<Direction> is 'up' or 'down'",
 		"<ID> is an optional quote ID (default is to use the most recent)"
 	};
-	public synchronized void commandKarmaMod( Message mes ) throws ChoobException
+	public synchronized void commandKarmaMod( Message mes )
 	{
 		int quoteID = -1;
 		boolean up = true;
@@ -1423,7 +1424,9 @@ public class Quote
 			}
 
 			if (fiddled)
-			{ } // Do nothing
+			{ 
+				// Do nothing
+			}
 			// Right. We know that we either have a quoted nickname or a regex...
 			else if (param.charAt(0) == '/')
 			{
@@ -1553,8 +1556,7 @@ public class Quote
 			}
 			return true;
 		}
-		else
-			return true;
+		return true;
 	}
 
 	private boolean shouldMessage( ChannelJoin ev )
@@ -1601,9 +1603,8 @@ public class Quote
 				}
 				return !soFar;
 			}
-			else
-				// No list, so always same as first param.
-				return soFar;
+			// No list, so always same as first param.
+			return soFar;
 		}
 		catch (ChoobNoSuchCallException e)
 		{
@@ -1611,7 +1612,7 @@ public class Quote
 		}
 	}
 
-	public synchronized  void onJoin( ChannelJoin ev, Modules mods, IRCInterface irc )
+	public synchronized  void onJoin( ChannelJoin ev )
 	{
 		if (ev.getLogin().endsWith("Choob") || ev.getLogin().endsWith("choob")) // XXX
 			return;
@@ -1690,7 +1691,7 @@ public class Quote
 		}
 	}
 
-	public void onNickChange(NickChange ev, Modules mods, IRCInterface irc)
+	public void onNickChange(NickChange ev)
 	{
 		if (ev.getNewNick().equals(irc.getNickname()))
 			updatePatterns();

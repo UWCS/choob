@@ -73,7 +73,10 @@ public class Pogo
 	private void die()
 	{
 		ServerThread.running=false;
-		try { ServerThread.serv.close(); } catch (Exception e) {}
+		try { ServerThread.serv.close(); } catch (Exception e) 
+		{
+			// What're we going to do?
+		}
 		ServerThread.serv=null;
 	}
 
@@ -135,8 +138,7 @@ public class Pogo
 				doCommand(t, mes);
 				return;
 			}
-			else
-				pipecommands.remove(mes);
+			pipecommands.remove(mes);
 		}
 
 		if (text.length() > 320)
@@ -149,6 +151,7 @@ public class Pogo
 	{
 		String mcontext;
 
+		@Override
 		public String getContext()
 		{
 			return mcontext;
@@ -178,6 +181,7 @@ final class ServerThread extends Thread
 		ServerThread.p=p;
 	}
 
+	@Override
 	public void run()
 	{
 		while (running)
@@ -213,6 +217,7 @@ final class ClientHandler extends Thread
 		contexts=new HashMap<String, Message>();
 	}
 
+	@Override
 	public void run()
 	{
 		String inputLine;
@@ -286,7 +291,7 @@ final class ClientHandler extends Thread
 
 	public void inform(String command, Message context)
 	{
-		final String key = ((Float)(Math.abs((new Random()).nextFloat()))).toString();
+		final String key = Double.toString(Math.random());
 		contexts.put(key, context);
 
 		System.out.println("To plugin: '" + key + "\t" + command.replaceFirst("\\s+","\t") + "\n" + "'");

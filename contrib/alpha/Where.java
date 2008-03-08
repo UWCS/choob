@@ -2,16 +2,27 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.jibble.pircbot.PircBot;
+import org.jibble.pircbot.ReplyConstants;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.events.ChannelMessage;
+import uk.co.uwcs.choob.support.events.ContextEvent;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.ServerResponse;
 
 public class Where
 {
@@ -27,7 +38,7 @@ public class Where
 		"raw.sunion.warwick.ac.uk/.*"
 	};
 	private final String channels[] = { "#compsoc", "#wuglug", "#bots", "#wug", "#choob" };
-	private enum Location { Campus, DCS };
+	private enum Location { Campus, DCS }
 
 	abstract class Callback
 	{
@@ -46,6 +57,7 @@ public class Where
 	{
 		return new Callback(con)
 		{
+			@Override
 			void complete(Details d)
 			{
 				List<String> hitted = new ArrayList<String>();
@@ -109,12 +121,12 @@ public class Where
 	}
 
 	// "User", hostname, server, nick, ...
-	final Pattern splitUp = Pattern.compile("^([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) .*");
+	final Pattern splitUp = Pattern.compile("^~?([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) .*");
 	public void onServerResponse(ServerResponse resp)
 	{
 		// Ensure resp is related to WHO, and remember if we're at the end. I'm sure there's a sane way to write this.
-		final boolean atend = resp.getCode() == PircBot.RPL_ENDOFWHO;
-		if (!(atend || resp.getCode() == PircBot.RPL_WHOREPLY))
+		final boolean atend = resp.getCode() == ReplyConstants.RPL_ENDOFWHO;
+		if (!(atend || resp.getCode() == ReplyConstants.RPL_WHOREPLY))
 			return;
 
 		Matcher ma;
@@ -225,6 +237,8 @@ public class Where
 			Matcher ma;
 			while ((s = br.readLine()) != null)
 			{
+				// faux       Christopher West    pts/16         Feb 11 16:25 (82.16.66.10:S.0)
+				// account-name SPACE some crap SPACE terminal SPACE date (ip:junk)$
 				if ((ma = Pattern.compile("^([^ ]+) .* \\((.*?)(?::S\\.[0-9]+)?\\)$").matcher(s)).matches())
 				{
 					final String un = ma.group(1);
@@ -290,6 +304,7 @@ public class Where
 		goDo(mes,
 			new Callback(mes)
 			{
+				@Override
 				public void complete(Details d)
 				{
 					List<String> unres = new ArrayList<String>(), wcampus = new ArrayList<String>();
@@ -321,7 +336,7 @@ public class Where
 	public void commandOnCampus(Message mes)
 	{
 		hint(mes);
-		goDo(mes, fromPredicate(mes, new Predicate() { boolean hit(InetAddress add) { return isCampus(add); } }, "on campus"));
+		goDo(mes, fromPredicate(mes, new Predicate() { @Override boolean hit(InetAddress add) { return isCampus(add); } }, "on campus"));
 	}
 
 	public String[] helpCommandInDCS = {
@@ -332,7 +347,7 @@ public class Where
 	public void commandInDCS(Message mes)
 	{
 		hint(mes);
-		goDo(mes, fromPredicate(mes, new Predicate() { boolean hit(InetAddress add) { return isDCS(add); } }, "in DCS"));
+		goDo(mes, fromPredicate(mes, new Predicate() { @Override boolean hit(InetAddress add) { return isDCS(add); } }, "in DCS"));
 	}
 
 	public String[] helpCommandRegex = {
@@ -355,7 +370,7 @@ public class Where
 
 		final Pattern p = Pattern.compile(ma.group(1));
 
-		goDo(what, fromPredicate(mes, new Predicate() { boolean hit(InetAddress add) { return matches(p, add); } }, "matching"));
+		goDo(what, fromPredicate(mes, new Predicate() { @Override boolean hit(InetAddress add) { return matches(p, add); } }, "matching"));
 	}
 
 	class MutableInteger
@@ -406,6 +421,7 @@ public class Where
 		
 		goDo(context, fromPredicate(mes, new Predicate()
 		{
+			@Override
 			boolean hit(InetAddress add)
 			{
 				// Compares the IPs alone, ignoring the host string.
@@ -428,6 +444,7 @@ public class Where
 			goDo(channel,
 				new Callback(mes)
 				{
+					@Override 
 					public void complete(Details d)
 					{
 						for (Entry<String, Set<InetAddress>> entr : d.users.entrySet())

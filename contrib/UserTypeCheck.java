@@ -81,7 +81,7 @@ public class UserTypeCheck
 	}
 
 	/* This is never called. WTF? */
-	public void destroy(Modules mods)
+	public void destroy()
 	{
 		// Notify all threads blocked on user queries. This allows anything
 		// that was asking about a user to continue (and fail) rather than be
@@ -97,7 +97,7 @@ public class UserTypeCheck
 		}
 	}
 	
-	public synchronized void interval(Object parameter, Modules mods, IRCInterface irc)
+	public synchronized void interval(Object parameter)
 	{
 		synchronized(userChecks)
 		{

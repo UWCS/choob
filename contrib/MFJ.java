@@ -30,7 +30,7 @@ public class MFJ
 	 * Implements JB's !dance command, with different outputs
 	 */
 	public String[] helpCommandDance = { "Makes the bot dance with you. If you don't want the bot to dance with you, don't use it." };
-	public void commandDance(Message con, Modules mods, IRCInterface irc)
+	public void commandDance(Message con)
 	{
 		int type = (int) (10 * Math.random());
 		String dance;
@@ -324,7 +324,7 @@ public class MFJ
 	 * Implement JB's !year command
 	 */
 	public String[] helpCommandYear = { "Outputs the current year." };
-	public void commandYear(Message con, Modules mods, IRCInterface irc)
+	public void commandYear(Message con)
 	{
 		GregorianCalendar cal = new GregorianCalendar();
 
@@ -335,7 +335,7 @@ public class MFJ
 	 * Implement JB's !month command
 	 */
 	public String[] helpCommandMonth = { "Outputs the current month." };
-	public void commandMonth(Message con, Modules mods, IRCInterface irc)
+	public void commandMonth(Message con)
 	{
 		GregorianCalendar cal = new GregorianCalendar();
 		DateFormatSymbols dfc = new DateFormatSymbols();
@@ -349,7 +349,7 @@ public class MFJ
 	 * Implement JB's !day command
 	 */
 	public String[] helpCommandDay = { "Outputs the current day." };
-	public void commandDay(Message con, Modules mods, IRCInterface irc)
+	public void commandDay(Message con)
 	{
 		GregorianCalendar cal = new GregorianCalendar();
 		DateFormatSymbols dfc = new DateFormatSymbols();

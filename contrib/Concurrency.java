@@ -65,7 +65,7 @@ public class Concurrency {
 		if (params.size() != 2)
 			throw new ChoobBadSyntaxError();
 		
-		String pluginName = (String)params.get(1);
+		String pluginName = params.get(1);
 		
 		List<PluginConcurrencyLimit> limits = mods.odb.retrieve(PluginConcurrencyLimit.class, "WHERE pluginName = \"" + mods.odb.escapeString(pluginName) + "\"");
 		
@@ -95,8 +95,8 @@ public class Concurrency {
 		if (params.size() != 3)
 			throw new ChoobBadSyntaxError();
 		
-		String pluginName = (String)params.get(1);
-		int limit = Integer.parseInt((String)params.get(2));
+		String pluginName = params.get(1);
+		int limit = Integer.parseInt(params.get(2));
 		
 		List<PluginConcurrencyLimit> limits = mods.odb.retrieve(PluginConcurrencyLimit.class, "WHERE pluginName = \"" + mods.odb.escapeString(pluginName) + "\"");
 		

@@ -17,6 +17,7 @@ class ListItem
 
 	public ListItem()
 	{
+		// Unhide
 	}
 
 	public ListItem(String key, String content)
@@ -75,7 +76,7 @@ public class BList
 			irc.sendContextReply(mes,"Could not find an item matching your criteria");
 			return;
 		}
-		ListItem item = (ListItem)thisList.get(0);
+		ListItem item = thisList.get(0);
 		String permStr = key + "." + mes.getTarget();
 
 		if ((mes.getTarget() == null) || (mods.security.hasPluginPerm(new ChoobPermission(permStr), "BList")))
@@ -125,13 +126,7 @@ public class BList
 
 	private List<ListItem> get(String key, String regex)
 	{
-		if (regex == null)
-		{
-			return mods.odb.retrieve( ListItem.class , "SORT RANDOM WHERE key = \"" + key + "\"");
-		} else
-		{
-			return mods.odb.retrieve( ListItem.class , "SORT RANDOM WHERE key = \"" + key + "\" AND content REGEXP'.*" + regex + ".*'");
-		}
+		return mods.odb.retrieve( ListItem.class , "SORT RANDOM WHERE key = \"" + key + "\"" + (regex == null ? "" : " AND content REGEXP'.*" + regex + ".*'"));
 	}
 
 	private HashSet<String> search(String term)
@@ -184,7 +179,9 @@ public class BList
 			irc.sendContextReply(mes, "Ok, added item to list");
 		}
 		catch( IllegalStateException e )
-		{	}
+		{
+			irc.sendContextReply(mes, "Failed to add to list: " + e.toString());
+		}
 	}
 
 	public String[] helpCommandAddFromFile = {
@@ -226,7 +223,9 @@ public class BList
 							added++;
 						}
 						catch( IllegalStateException e )
-						{	}
+						{
+							// Continue anyway
+						}
 					}
 				}
 			}
@@ -266,10 +265,13 @@ public class BList
 			{
 				mods.odb.delete(item);
 			}
+			irc.sendContextReply(mes,"Ok, deleted specified list");
 		}
 		catch( IllegalStateException e )
-		{	}
-		irc.sendContextReply(mes,"Ok, deleted specified list");
+		{
+			irc.sendContextReply(mes,"Failed to delete item");
+		}
+		
 	}
 
 	public String[] helpCommandDeleteMatching = {
@@ -301,7 +303,9 @@ public class BList
 			}
 		}
 		catch( IllegalStateException e )
-		{	}
+		{	
+			// Ignore
+		}
 
 		irc.sendContextReply(mes,"Ok, deleted " + deleted + " matching items");
 	}

@@ -79,7 +79,7 @@ public class Link
 	 * @param mods The bot modules.
 	 * @param irc The irc interface.
 	 */
-	public void filterLink(Message mes, Modules mods, IRCInterface irc)
+	public void filterLink(Message mes)
 	{
 		// Ignore stuff that isn't a channel message or action
 		// Ignore synthetic messages

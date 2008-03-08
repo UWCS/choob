@@ -47,8 +47,7 @@ public class Topic
 			topic.chan = chan;
 			return topic;
 		}
-		else
-			return results.get(0);
+		return results.get(0);
 	}
 
 	public static String getContextString(String into, int pos, int length)

@@ -64,7 +64,7 @@ class GreetingsParserHandler extends DefaultHandler
 
 			assert false; throw new IllegalArgumentException("Gotcha in some unreachable code, y'bastard.");
 		}
-	};
+	}
 
 	// Data structure of doom.
 	public Map<String, Map<ElementName, List<String>>> data = new HashMap<String, Map<ElementName, List<String>>>();
@@ -73,19 +73,29 @@ class GreetingsParserHandler extends DefaultHandler
 	Map<ElementName, List<String>> currentEvent;
 
 	// Ignore these. Boooooooooring.
+	@Override
 	public void setDocumentLocator(Locator l) { }
+	@Override
 	public void startDocument() throws SAXException { }
+	@Override
 	public void endDocument() throws SAXException { }
+	@Override
 	public void endElement(String namespaceURI, String sName, String qName)	throws SAXException { }
+	@Override
 	public void characters(char buf[], int offset, int len) throws SAXException { }
+	@Override
 	public void ignorableWhitespace(char buf[], int offset, int len) throws SAXException { }
+	@Override
 	public void processingInstruction(String target, String data) throws SAXException {	}
 
 	// These aren't our problem either. Booooooooooooooooooooooooooring.
+	@Override
 	public void error(SAXParseException e) throws SAXParseException { throw e; }
+	@Override
 	public void warning(SAXParseException e) throws SAXParseException { throw e; }
 
 	// Yaaay, do something.
+	@Override
 	public void startElement(String namespaceURI, String lName, String qName, Attributes attrs) throws SAXException
 	{
 		String eName = lName;
@@ -219,7 +229,7 @@ public class Greetings
 	}
 
 
-	public void commandTest(Message mes) throws ChoobException, MalformedURLException
+	public void commandTest(Message mes) throws ChoobException
 	{
 		Map<String, Map<GreetingsParserHandler.ElementName, List<String>>> data = readXMLStuff(dataURL);
 		for (Map.Entry<String, Map<GreetingsParserHandler.ElementName, List<String>>> es : data.entrySet())

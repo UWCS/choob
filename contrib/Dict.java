@@ -22,6 +22,8 @@ class DictionaryException extends ChoobException
 	{
 		super(text, e);
 	}
+
+	@Override
 	public String toString()
 	{
 		return getMessage();
@@ -63,8 +65,7 @@ public class Dict
 			final String rep=apiCorrectBy(item);
 			if (rep==null)
 				return apiSuggestions(item);
-			else
-				return "'" + item + "' is spelt correctly according to " + rep + ".";
+			return "'" + item + "' is spelt correctly according to " + rep + ".";
 		}
 		catch (DictionaryException e)
 		{
@@ -93,41 +94,59 @@ public class Dict
 		{
 			return apiDictionaryCom(item);
 		}
-		catch (DictionaryException e) {}
+		catch (DictionaryException e)
+		{
+			// Fall through..
+		}
 		try
 		{
 			return apiDictionary(item);
 		}
-		catch (DictionaryException e) {}
+		catch (DictionaryException e) 
+		{
+			// Fall through..
+		}
 		try
 		{
 			return apiAcronymFinder(item);
 		}
-		catch (DictionaryException e) {}
+		catch (DictionaryException e) 
+		{
+			// Fall through..
+		}
 
 		return apiSuggestions(item);
 	}
 
-	public String apiCorrectBy( String item ) throws DictionaryException
+	public String apiCorrectBy( String item )
 	{
 		try
 		{
 			apiDictionaryCom(item);
 			return "dictionary.com";
 		}
-		catch (DictionaryException e) {}
+		catch (DictionaryException e) 
+		{
+			// Fall through..
+		}
 		try
 		{
 			apiDictionary(item);
 			return "dict.org";
 		}
-		catch (DictionaryException e) {}
+		catch (DictionaryException e) 
+		{
+			// Fall through..
+		}
 		try
 		{
 			apiAcronymFinder(item);
 			return "acronym finder";
 		}
-		catch (DictionaryException e) {}
+		catch (DictionaryException e) 
+		{
+			// Fall through..
+		}
 
 		return null;
 	}
@@ -156,8 +175,7 @@ public class Dict
 
 		if (ma.find())
 			return prettyReply(mods.scrape.readyForIrc("Suggestions for '" + item + "': " + ma.group(1).replaceAll("<br>",", ")), url.toString(), 1);
-		else
-			throw new DictionaryException("Error parsing dictionary.com's suggestions reply.");
+		throw new DictionaryException("Error parsing dictionary.com's suggestions reply.");
 
 	}
 
@@ -205,8 +223,7 @@ public class Dict
 		text=text.replaceAll("\\s+"," ");
 		if (text.length()>maxlen)
 			return text.substring(0, maxlen) + "..., see " + url + ".";
-		else
-			return text + " See " + url + ".";
+		return text + " See " + url + ".";
 	}
 
 	private URL generateURL(String base, String url) throws DictionaryException
@@ -275,8 +292,7 @@ public class Dict
 			System.out.println("[[[" + foo + "]]]");
 			return prettyReply(mods.scrape.readyForIrc(foo), url.toString(), lines);
 		}
-		else
-			throw new DictionaryException("Error parsing dictionary.com's default reply.");
+		throw new DictionaryException("Error parsing dictionary.com's default reply.");
 	}
 
 
@@ -295,8 +311,7 @@ public class Dict
 
 		if (ma.find())
 			return prettyReply(mods.scrape.readyForIrc(ma.group(1)), url.toString(), lines);
-		else
-			throw new DictionaryException("Error parsing wikipedia's reply.");
+		throw new DictionaryException("Error parsing wikipedia's reply.");
 	}
 
 	public String apiUrbanDictionary( String item ) throws DictionaryException
@@ -314,8 +329,7 @@ public class Dict
 
 		if (ma.find())
 			return prettyReply(mods.scrape.readyForIrc(ma.group(1)), url.toString(), lines);
-		else
-			throw new DictionaryException("Error parsing urbandictionary's reply.");
+		throw new DictionaryException("Error parsing urbandictionary's reply.");
 	}
 
 	public String apiAcronymFinder( String item ) throws DictionaryException

@@ -136,75 +136,70 @@ public class Http
 			boolean b=ma.find();
 			System.out.println(b ? "Match" : "Nomatch");
 
+		
 			// http://www.w3.org/TR/html40/appendix/notes.html#non-ascii-chars
 
-			boolean err = false;
 			String url = null;
 			try
 			{
 				url = URLDecoder.decode(ma.group(1), "UTF-8").trim();
+				
+				if (b)
+					System.out.println(url);
+				
+				Matcher mo=rpcurl.matcher(url);
+				if (url.length() > 5 && url.substring(0,6).equals("store/"))
+				{
+					out.println("HTTP/1.0 200 OK");
+					out.println("Content-Type: text/plain");
+					out.println();
+
+					String hash = url.substring(6).replaceAll("\"", "\\\"");
+
+					System.out.println("\"" + hash + "\"");
+					try
+					{
+						List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = \"" + mods.odb.escapeString(hash) + "\"");
+						if (res.size() != 0)
+							out.println(res.get(0).string);
+						else
+							out.println("No such object: " + hash);
+					}
+					catch (Throwable e)
+					{
+						System.err.println("Error retreiving object ID from database:");
+						e.printStackTrace();
+						out.println("Error retreiving object ID " + hash);
+					}
+				}
+				else if (mo.matches())
+				{
+					try
+					{
+						mods.plugin.callGeneric(mo.group(1), "web", mo.group(2) != null ? mo.group(2) : "", out, (mo.group(3) != null ? mo.group(3) : ""), new String[] { sock.getInetAddress().getHostAddress(), sock.getInetAddress().getHostName()});
+					}
+					catch (Exception e)
+					{
+						out.println("Error: " + e);
+						e.printStackTrace();
+					}
+				}
+				else
+				{
+					out.println("HTTP/1.0 404 Not Found");
+					out.println("Content-Type: text/plain");
+					out.println();
+
+					// Note that this reply is intentionally really short to trigger prettifying in certain browsers.
+					out.println("Oop, no pages here.");
+				}
 			}
 			catch (UnsupportedEncodingException e)
-			{
-				err = true;
-			}
-
-			if (b)
-				System.out.println(url);
-
-			Matcher mo=rpcurl.matcher(url);
-
-			if (err)
 			{
 				out.println("HTTP/1.0 500 Internal Server Error");
 				out.println("Content-Type: text/plain");
 				out.println();
 				out.println("Badly formatted URL: " + ma.group(1));
-			}
-			else if (url.length() > 5 && url.substring(0,6).equals("store/"))
-			{
-				out.println("HTTP/1.0 200 OK");
-				out.println("Content-Type: text/plain");
-				out.println();
-
-				String hash = url.substring(6).replaceAll("\"", "\\\"");
-
-				System.out.println("\"" + hash + "\"");
-				try
-				{
-					List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = \"" + mods.odb.escapeString(hash) + "\"");
-					if (res.size() != 0)
-						out.println(res.get(0).string);
-					else
-						out.println("No such object: " + hash);
-				}
-				catch (Throwable e)
-				{
-					System.err.println("Error retreiving object ID from database:");
-					e.printStackTrace();
-					out.println("Error retreiving object ID " + hash);
-				}
-			}
-			else if (mo.matches())
-			{
-				try
-				{
-					mods.plugin.callGeneric(mo.group(1), "web", mo.group(2) != null ? mo.group(2) : "", out, (mo.group(3) != null ? mo.group(3) : ""), new String[] { sock.getInetAddress().getHostAddress(), sock.getInetAddress().getHostName()});
-				}
-				catch (Exception e)
-				{
-					out.println("Error: " + e);
-					e.printStackTrace();
-				}
-			}
-			else
-			{
-				out.println("HTTP/1.0 404 Not Found");
-				out.println("Content-Type: text/plain");
-				out.println();
-
-				// Note that this reply is intentionally really short to trigger prettifying in certain browsers.
-				out.println("Oop, no pages here.");
 			}
 
 			sock.close();

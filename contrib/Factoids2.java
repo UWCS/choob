@@ -1,10 +1,15 @@
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.ChannelMessage;
 import uk.co.uwcs.choob.support.events.Message;
@@ -13,6 +18,7 @@ class Factoid
 {
 	public Factoid()
 	{
+		// Unhide
 	}
 	
 	public Factoid(String subject, boolean fact, String info, String nick)
@@ -38,6 +44,7 @@ class FactoidEnumerator
 {
 	public FactoidEnumerator()
 	{
+		// Unhide
 	}
 	
 	public FactoidEnumerator(String enumSource, int index, int count)
@@ -360,7 +367,7 @@ public class Factoids2
 	// Collect and store rumours for things.
 	public String filterFactoidsRegex = "(\\w{4,})\\s+((?i:" + splitWords + ")\\s+.{4,})";
 	
-	public void filterFactoids(Message mes) throws ChoobException
+	public void filterFactoids(Message mes)
 	{
 		// Only capture channel messages.
 		if (!(mes instanceof ChannelMessage)) {
@@ -498,7 +505,7 @@ public class Factoids2
 			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
 		};
 	
-	public void commandGet(Message mes) throws ChoobException
+	public void commandGet(Message mes)
 	{
 		FactoidSearchData data = getFactoidSearchDefinitions(mes);
 		
@@ -550,7 +557,7 @@ public class Factoids2
 			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
 		};
 	
-	public void commandGetFact(Message mes) throws ChoobException
+	public void commandGetFact(Message mes)
 	{
 		FactoidSearchData data = getFactoidSearchDefinitions(mes);
 		
@@ -591,7 +598,7 @@ public class Factoids2
 			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
 		};
 	
-	public void commandGetRumour(Message mes) throws ChoobException
+	public void commandGetRumour(Message mes)
 	{
 		FactoidSearchData data = getFactoidSearchDefinitions(mes);
 		
@@ -630,7 +637,7 @@ public class Factoids2
 			""
 		};
 	
-	public void commandRandomRumour(Message mes) throws ChoobException
+	public void commandRandomRumour(Message mes)
 	{
 		List<Factoid> list = mods.odb.retrieve(Factoid.class, "WHERE fact = 0 ORDER BY RAND() LIMIT 1");
 		
@@ -705,13 +712,13 @@ public class Factoids2
 					
 					if (!termsUsed.contains(subj)) {
 						termsUsed.add(subj);
-						termFacts.put(subj, new Integer(0));
-						termRumours.put(subj, new Integer(0));
+						termFacts.put(subj, Integer.valueOf(0));
+						termRumours.put(subj, Integer.valueOf(0));
 					}
 					if (defn.fact) {
-						termFacts.put(subj, new Integer(termFacts.get(subj) + 1));
+						termFacts.put(subj, Integer.valueOf(termFacts.get(subj).intValue() + 1));
 					} else {
-						termRumours.put(subj, new Integer(termRumours.get(subj) + 1));
+						termRumours.put(subj, Integer.valueOf(termRumours.get(subj).intValue() + 1));
 					}
 				}
 				

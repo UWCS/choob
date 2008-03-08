@@ -79,8 +79,8 @@ public class Events
 
 			// The names come in in csv, break them up.
 			signupNames   = new ArrayList<String>();
-			for (String name : ssignupNames.split(", "))
-				signupNames.add(name);
+			for (String nam : ssignupNames.split(", "))
+				signupNames.add(nam);
 		}
 
 		private String name;
@@ -98,7 +98,7 @@ public class Events
 
 		private Date convertTimestamp(String timestamp)
 		{
-			return new Date(Long.parseLong(timestamp)*(long)1000);
+			return new Date(Long.parseLong(timestamp)*1000);
 		}
 
 		public boolean finished()
@@ -159,7 +159,7 @@ public class Events
 
 		public String shortSignupsOutOf()
 		{
-			return signupCurrent + "/" + (signupMax == 0 ? "*" : signupMax);
+			return signupCurrent + "/" + (signupMax == 0 ? "*" : Integer.toString(signupMax));
 		}
 	}
 
@@ -233,14 +233,14 @@ public class Events
 			HashMap<Integer, EventItem>curr=new HashMap<Integer, EventItem>();
 
 			for (EventItem c : current)
-				curr.put(c.id, c);
+				curr.put(Integer.valueOf(c.id), c);
 
 
 			// Now, go through the new items..
 			for (EventItem n : ne)
 			{
 				// Get the corresponding event from the old items
-				EventItem corr=curr.get(n.id);
+				EventItem corr=curr.get(Integer.valueOf(n.id));
 
 				if (corr==null)
 					// It doesn't exist, notify people:
@@ -606,8 +606,9 @@ public class Events
 		{
 			return Integer.parseInt(s);
 		}
-		catch (NumberFormatException e) {}
-
-		return 0;
+		catch (NumberFormatException e) 
+		{
+			return 0;			
+		}
 	}
 }

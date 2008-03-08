@@ -1,9 +1,12 @@
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.events.ChannelMessage;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.PrivateEvent;
 
 public class Shutup
 {
@@ -67,7 +70,7 @@ public class Shutup
 	public String[] helpCommandAdd = {
 		"Make the bot shut up in the current channel.",
 	};
-	public void commandAdd(Message mes, Modules mods, IRCInterface irc)
+	public void commandAdd(Message mes)
 	{
 		final String channel = mes.getContext();
 		
@@ -87,7 +90,7 @@ public class Shutup
 	public String[] helpCommandRemove = {
 		"Make the bot wake up in the current channel.",
 	};
-	public void commandRemove(Message mes, Modules mods, IRCInterface irc)
+	public void commandRemove(Message mes)
 	{
 		if (mes instanceof PrivateEvent)
 		{
@@ -109,7 +112,7 @@ public class Shutup
 	public String[] helpCommandCheck = {
 		"Check if the bot is shut up in the current channel.",
 	};
-	public void commandCheck(Message mes, Modules mods, IRCInterface irc)
+	public void commandCheck(Message mes)
 	{
 		if (mods.pc.isProtected(mes.getContext()))
 			irc.sendContextReply(mes, "Can't speak!");
@@ -123,7 +126,7 @@ public class Shutup
 		mods.pc.removeProtected(channel);
 	}
 	
-	public void onMessage(ChannelMessage mes) throws ChoobException
+	public void onMessage(ChannelMessage mes)
 	{
 		String channel = mes.getContext();
 		if (channel == null)

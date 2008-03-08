@@ -63,7 +63,7 @@ public class Lectures
 		"<Code or Number to display> is either a module code or an integer between 1 and 6."
 	};
 
-	public void commandNextLecture( Message mes, Modules mods, IRCInterface irc ) throws SQLException
+	public void commandNextLecture( Message mes ) throws SQLException
 	{
 		String param=mods.util.getParamString(mes).trim();
 		boolean modcode=false;
@@ -142,7 +142,7 @@ public class Lectures
 	public String[] helpCommandListModules = {
 		"Lists the modules you are registered for."
 	};
-	public void commandListModules(Message mes, Modules mods, IRCInterface irc ) throws SQLException
+	public void commandListModules(Message mes) throws SQLException
 	{
 		PreparedStatement s = null;
 		try
@@ -203,8 +203,7 @@ public class Lectures
 					final int ret=rs.getInt("userid");
 					return ret;
 				}
-				else
-					throw new SQLException("Unexpected result from SQL...");
+				throw new SQLException("Unexpected result from SQL...");
 			}
 			finally
 			{
@@ -283,12 +282,9 @@ public class Lectures
 			}
 
 		}
-		else
-		{
-			irc.sendContextReply(mes, "Module code not recognised. Did you mean: " + sug + "..?");
+		irc.sendContextReply(mes, "Module code not recognised. Did you mean: " + sug + "..?");
 
-			return -1;
-		}
+		return -1;
 	}
 
 	public String[] helpCommandAddLikeModules = {
@@ -334,7 +330,9 @@ public class Lectures
 						i++;
 					}
 					catch (SQLException e)
-					{}
+					{
+						// Count won't've been incremented, all is good.
+					}
 				} while (rt.next());
 
 				irc.sendContextReply(mes, "Okay, added " + i + " module" + (i!=1 ? "s" : "") + "!");

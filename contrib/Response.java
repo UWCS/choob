@@ -45,7 +45,7 @@ public class Response {
 	final private static Pattern badPattern = Pattern.compile("bad|la+me|st(u+|oo+)pid|gooo+d", Pattern.CASE_INSENSITIVE);
 	final private static Pattern goodPattern = Pattern.compile("good|nice", Pattern.CASE_INSENSITIVE);
 
-	public void filterBot( Message mes, Modules mods, IRCInterface irc ) {
+	public void filterBot( Message mes ) {
 		// Ignore synthetic messages
 		if (mes.getSynthLevel() > 0)
 			return;

@@ -104,7 +104,10 @@ public class GenericDict2
 				try
 				{
 					maxLength = Integer.parseInt(opt);
-				} catch (NumberFormatException e) {}
+				} catch (NumberFormatException e)
+				{
+					// Leave at default
+				}
 			}
 
 			if ((maxLength > 0) && (toReturn.length() > maxLength))
@@ -170,8 +173,7 @@ public class GenericDict2
 		{
 			if (required)
 				throw new GenericDictException("No parameters found for required option: " + option);
-			else
-				return new ArrayList<String>();
+			return new ArrayList<String>();
 		}
 		try
 		{

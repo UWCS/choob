@@ -76,7 +76,7 @@ public class See
 			final Timestamp gotup=rs.getTimestamp("end");
 			final long diff=rs.getTimestamp("end").getTime() - rs.getTimestamp("start").getTime();
 
-			float bodyclock=8.0f+(((float)((new java.util.Date()).getTime()-gotup.getTime()))/(1000.0f*60.0f*60.0f));
+			float bodyclock=8.0f+(((new java.util.Date()).getTime()-gotup.getTime())/(1000.0f*60.0f*60.0f));
 
 			long minutes=(Math.round((bodyclock-Math.floor(bodyclock))*60.0f));
 
@@ -173,16 +173,13 @@ public class See
 
 				if (!rs.first())
 					return;
-				else
-				{
-					rs.beforeFirst();
+				rs.beforeFirst();
 
-					while (rs.next())
-					{
-						final Date start = new Date(rs.getTimestamp("start").getTime());
-						final Date end = new Date(rs.getTimestamp("end").getTime());
-						out.println(start.getTime() + " " + end.getTime());
-					}
+				while (rs.next())
+				{
+					final Date start = new Date(rs.getTimestamp("start").getTime());
+					final Date end = new Date(rs.getTimestamp("end").getTime());
+					out.println(start.getTime() + " " + end.getTime());
 				}
 
 				mods.odb.freeConnection(conn);
@@ -237,7 +234,7 @@ public class See
 				}
 				message = "From " + succ + " users in " + mes.getContext() + ", the average";
 
-				t = rt/(float)succ;
+				t = rt/succ;
 			}
 			else
 			{
@@ -268,35 +265,31 @@ public class See
 
 		if (!rs.first())
 			throw new RuntimeException("No data for " + nick + ". Cannot continue.");
-		else
+		rs.beforeFirst();
+		Date lastEnd = null;
+
+		while (rs.next())
 		{
-			rs.beforeFirst();
-			Date lastEnd = null;
+			final Date start = new Date(rs.getTimestamp("start").getTime());
+			final Date end = new Date(rs.getTimestamp("end").getTime());
 
-			while (rs.next())
+			if (lastEnd != null)
 			{
-				final Date start = new Date(rs.getTimestamp("start").getTime());
-				final Date end = new Date(rs.getTimestamp("end").getTime());
-
-				if (lastEnd != null)
+				long foo = -(lastEnd.getTime() - start.getTime());
+				if (foo > minday)
 				{
-					long foo = -(lastEnd.getTime() - start.getTime());
-					if (foo > minday)
-					{
-						Calendar cal = new GregorianCalendar();
-						cal.setTime(new Date(end.getTime() +  foo * (12-8)/(24-8)));
-						midday += cal.get(Calendar.HOUR_OF_DAY) + cal.get(Calendar.MINUTE)/60.0;
-						c++;
-					}
+					Calendar cal = new GregorianCalendar();
+					cal.setTime(new Date(end.getTime() +  foo * (12-8)/(24-8)));
+					midday += cal.get(Calendar.HOUR_OF_DAY) + cal.get(Calendar.MINUTE)/60.0;
+					c++;
 				}
-				lastEnd = start;
 			}
-
+			lastEnd = start;
 		}
 
 		if (c==0)
 			throw new RuntimeException(nick + midday);
-		return midday/(float)c;
+		return midday/c;
 	}
 // */
 }

@@ -45,7 +45,7 @@ public class Timezone
 					fixed = ids[0];
 			} catch (NumberFormatException e)
 			{
-
+				// Can't fix it, just return it.
 			}
 		}
 		return fixed;

@@ -49,14 +49,17 @@ public class Weather
 
 		try
 		{
-			int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Weather" + mes.getNick(), 900000, 2);
+			int ret = ((Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Weather" + mes.getNick(), Integer.valueOf(900000), Integer.valueOf(2))).intValue();
 			if (ret != 0)
 			{
 				irc.sendContextReply(mes, "This command may only be used once every 15 minutes.");
 				return;
 			}
 		}
-		catch (ChoobNoSuchCallException e){ }
+		catch (ChoobNoSuchCallException e)
+		{ 
+			// Don't care about failing to call flooding, assume it's disabled.
+		}
 
 		List<String> params = mods.util.getParams(mes,1);
 		String item = null;
@@ -87,11 +90,8 @@ public class Weather
 					irc.sendContextReply(mes, prettyReply(mods.scrape.readyForIrc(stripUndesirables(ma.group(1))), url.toString(), 2));
 					return;
 				}
-				else
-				{
-					irc.sendContextReply(mes, "Unable to find any weather data for that location");
-					return;
-				}
+				irc.sendContextReply(mes, "Unable to find any weather data for that location");
+				return;
 			}
 	
 			//check for UK postcode
@@ -111,21 +111,16 @@ public class Weather
 					irc.sendContextReply(mes,  prettyReply(mods.scrape.readyForIrc(stripUndesirables(ma.group(1))), url.toString(), 2));
 					return;
 				}
-				else
+				url=generateURL("http://uk.weather.com/weather/local/", item.substring(0,3));
+
+				ma=getMatcher(url, "(?s)CLASS=\"obsText\" ALIGN=\"CENTER\">(.*?)</TABLE>");
+				if (ma.find())
 				{
-					url=generateURL("http://uk.weather.com/weather/local/", item.substring(0,3));
-			
-					ma=getMatcher(url, "(?s)CLASS=\"obsText\" ALIGN=\"CENTER\">(.*?)</TABLE>");
-					if (ma.find())
-					{
-						irc.sendContextReply(mes,  prettyReply(mods.scrape.readyForIrc(stripUndesirables(ma.group(1))), url.toString(), 2));
-						return;
-					}else
-					{
-							irc.sendContextReply(mes, "Unable to find any weather data for that location");
-							return;
-					}
+					irc.sendContextReply(mes,  prettyReply(mods.scrape.readyForIrc(stripUndesirables(ma.group(1))), url.toString(), 2));
+					return;
 				}
+				irc.sendContextReply(mes, "Unable to find any weather data for that location");
+				return;
 			}
 	
 			URL url=generateURL("http://uk.weather.com/search/search?where=", item);
@@ -137,23 +132,17 @@ public class Weather
 				irc.sendContextReply(mes,  prettyReply(mods.scrape.readyForIrc(stripUndesirables(ma.group(1))), url.toString(), 2));
 				return;
 			}
-			else
+			if (maa.find())
 			{
-				if (maa.find())
+				URL urla=generateURL("http://uk.weather.com/weather/local/", maa.group(1));
+				Matcher maaa = getMatcher(urla, "(?s)CLASS=\"obsText\" ALIGN=\"CENTER\">(.*?)</TABLE>");
+				if (maaa.find())
 				{
-					URL urla=generateURL("http://uk.weather.com/weather/local/", maa.group(1));
-					Matcher maaa = getMatcher(urla, "(?s)CLASS=\"obsText\" ALIGN=\"CENTER\">(.*?)</TABLE>");
-					if (maaa.find())
-					{
-						irc.sendContextReply(mes,  prettyReply(mods.scrape.readyForIrc(stripUndesirables(maaa.group(1))), urla.toString(), 2));
-						return;
-					}
-					else
-					{
-						irc.sendContextReply(mes, "Unable to find any weather data for that location");
-						return;
-					}
+					irc.sendContextReply(mes,  prettyReply(mods.scrape.readyForIrc(stripUndesirables(maaa.group(1))), urla.toString(), 2));
+					return;
 				}
+				irc.sendContextReply(mes, "Unable to find any weather data for that location");
+				return;
 			}
 			irc.sendContextReply(mes, "Unable to find any weather data for that location");
 		}
@@ -215,8 +204,7 @@ public class Weather
 
 		if (returnText.length()>maxlen)
 			return returnText.substring(0, maxlen) + "..., see " + url;
-		else
-			return returnText + ". See " + url;
+		return returnText + ". See " + url;
 	}
 }
 
@@ -232,6 +220,7 @@ class LookupException extends ChoobException
 	{
 		super(text, e);
 	}
+	@Override
 	public String toString()
 	{
 		return getMessage();

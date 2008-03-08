@@ -361,14 +361,14 @@ public class QuakenetAuth {
 	
 	private QAuthResult getNickCheck(String nick) {
 		synchronized(qChecks) {
-			return (QAuthResult)qChecks.get(nick);
+			return qChecks.get(nick);
 		}
 	}
 	
 	private QAuthResult getCachedQCheck(String nick) {
 		QAuthResult result;
 		synchronized(qChecks) {
-			result = (QAuthResult)qChecks.get(nick);
+			result = qChecks.get(nick);
 			if (result == null) {
 				// Shouldn't happen
 				return null;

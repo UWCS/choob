@@ -83,7 +83,7 @@ public class Help
 	};
 	public void commandHelp(Message mes)
 	{
-		irc.sendContextReply(mes, apiGetHelp(mods.util.getParamString(mes), true));
+		irc.sendContextReply(mes, apiGetHelp(mods.util.getParamString(mes), Boolean.TRUE));
 	}
 
 	public String[] helpCommandLongHelp = {
@@ -94,7 +94,7 @@ public class Help
 	};
 	public void commandLongHelp(Message mes)
 	{
-		irc.sendContextReply(mes, apiGetHelp(mods.util.getParamString(mes), true));
+		irc.sendContextReply(mes, apiGetHelp(mods.util.getParamString(mes), Boolean.TRUE));
 	}
 
 	public String[] helpCommandBlockHelp = {
@@ -105,7 +105,7 @@ public class Help
 	};
 	public void commandBlockHelp(Message mes)
 	{
-		irc.sendContextReply(mes, apiGetHelp(mods.util.getParamString(mes), false));
+		irc.sendContextReply(mes, apiGetHelp(mods.util.getParamString(mes), Boolean.FALSE));
 	}
 
 	public String[] helpCommandSyntax = {
@@ -150,19 +150,21 @@ public class Help
 		String[] params = mods.util.getParamArray(mes, 2);
 
 		if (params.length == 1)
-			irc.sendContextReply(mes, apiGetCommandList(true));
+			irc.sendContextReply(mes, apiGetCommandList(Boolean.TRUE));
 
 		else if (params.length == 2)
-			irc.sendContextReply(mes, apiGetCommandList(params[1], true));
+			irc.sendContextReply(mes, apiGetCommandList(params[1], Boolean.TRUE));
 
 		else
 			irc.sendContextReply(mes, apiGetSyntax(params[0]));
 	}
 
-	private static final int
-		MODE_ALL = 0,
-		MODE_SYNTAX = 1,
-		MODE_SUMMARY = 2;
+	enum HelpMode
+	{
+		MODE_ALL,
+		MODE_SYNTAX,
+		MODE_SUMMARY;
+	}
 
 	/**    _    ____ ___      _    _     ___    _    ____  _____ ____
 	 *    / \  |  _ \_ _|    / \  | |   |_ _|  / \  / ___|| ____/ ___|
@@ -173,25 +175,25 @@ public class Help
 	// These are used for core help bits, and just alias to other bits of code.
 	public String[] apiGetHelp( String topic )
 	{
-		return _apiGetHelp(topic, true, MODE_ALL);
+		return _apiGetHelp(topic, true, HelpMode.MODE_ALL);
 	}
 
 	public String[] apiGetHelp( String topic, Boolean isLong )
 	{
-		return _apiGetHelp(topic, isLong, MODE_ALL);
+		return _apiGetHelp(topic, isLong, HelpMode.MODE_ALL);
 	}
 
 	public String[] apiGetSyntax( String topic )
 	{
-		return _apiGetHelp(topic, true, MODE_SYNTAX);
+		return _apiGetHelp(topic, true, HelpMode.MODE_SYNTAX);
 	}
 
 	public String[] apiGetSummary( String topic )
 	{
-		return _apiGetHelp(topic, true, MODE_SUMMARY);
+		return _apiGetHelp(topic, true, HelpMode.MODE_SUMMARY);
 	}
 
-	private String[] _apiGetHelp( String helpStr, Boolean isLong, Integer mode )
+	private String[] _apiGetHelp( String helpStr, Boolean isLong, HelpMode helpMode )
 	{
 		String[] params = helpStr.split("\\s+", 2);
 
@@ -205,7 +207,7 @@ public class Help
 		else if (params.length == 1)
 		{
 			fullTopic = params[0];
-			if (mode == MODE_ALL)
+			if (helpMode == HelpMode.MODE_ALL)
 			{
 				if (fullTopic.equalsIgnoreCase("plugins"))
 				{
@@ -293,7 +295,7 @@ public class Help
 							allHelp.add( formatCommand(plugin) + " appears to be aliased to '" + formatAlias(alias) + "', but '" + formatCommand(newPlugin + "." + newCommand) + "' has no help!" );
 
 						else
-							allHelp.addAll(formatCallHelp( plugin, "command", alias, help, isLong, mode ));
+							allHelp.addAll(formatCallHelp( plugin, "command", alias, help, isLong, helpMode ));
 					}
 				}
 				else if (ret instanceof String[])
@@ -307,7 +309,7 @@ public class Help
 
 					String[] help = (String[])ret;
 					// Same as for commands.
-					allHelp.addAll(formatCallHelp( plugin, "command", aliasCommand, help, isLong, mode ));
+					allHelp.addAll(formatCallHelp( plugin, "command", aliasCommand, help, isLong, helpMode ));
 				}
 				else
 				{
@@ -347,7 +349,7 @@ public class Help
 			
 			if (help != null)
 				// Yay, we found help!
-				allHelp.addAll(formatCallHelp( plugin + "." + topic, type, null, help, isLong, mode ));
+				allHelp.addAll(formatCallHelp( plugin + "." + topic, type, null, help, isLong, helpMode ));
 
 			else if (type == null)
 			{
@@ -355,7 +357,7 @@ public class Help
 				help = _getBasicHelpLines( plugin, topic, topicParams );
 
 				if (help != null)
-					allHelp.addAll(formatBasicHelp(help, isLong, mode));
+					allHelp.addAll(formatBasicHelp(help, isLong, helpMode));
 				else
 					return new String[] { "Sorry, can't find topic " + formatTopic(topic) + " in plugin " + formatPlugin(plugin) + "." };
 			}
@@ -396,7 +398,7 @@ public class Help
 			StringBuilder buf = new StringBuilder();
 			for (int j=0; j<plugins.length; j++)
 			{
-				buf.append(formatPlugin(plugins[j]) + ": " + _apiCommandList(plugins[j], false));
+				buf.append(formatPlugin(plugins[j]) + ": " + _apiCommandList(plugins[j], Boolean.FALSE));
 				if (j != plugins.length - 1)
 					buf.append("; ");
 			}
@@ -409,6 +411,7 @@ public class Help
 
 	private String _apiCommandList(String pluginName, Boolean isLong)
 	{
+		boolean isLongb = isLong.booleanValue();
 		String[] commands;
 		try
 		{
@@ -416,38 +419,34 @@ public class Help
 		}
 		catch (ChoobNoSuchPluginException e)
 		{
-			if (isLong)
+			if (isLongb)
 				return "Plugin " + formatPlugin(pluginName) + " does not exist.";
-			else
-				return "does not exist";
+			return "does not exist";
 		}
 		Arrays.sort(commands);
 
 		if (commands.length == 0)
 		{
-			if (isLong)
+			if (isLongb)
 				return "Plugin " + formatPlugin(pluginName) + " has no commands.";
-			else
-				return "None";
+			return "None";
 		}
-		else
-		{
-			StringBuilder buf = new StringBuilder();
-			if (isLong)
-				buf.append("Commands in " + formatPlugin(pluginName) + ": ");
-			for(int i=0; i<commands.length; i++)
-			{
-				buf.append(formatCommand(commands[i]));
-				if (i < commands.length - 2)
-					buf.append(", ");
-				else if (i == commands.length - 2)
-					buf.append(" and ");
-			}
-			if (isLong)
-				buf.append(".");
 
-			return buf.toString();
+		StringBuilder buf = new StringBuilder();
+		if (isLongb)
+			buf.append("Commands in " + formatPlugin(pluginName) + ": ");
+		for(int i=0; i<commands.length; i++)
+		{
+			buf.append(formatCommand(commands[i]));
+			if (i < commands.length - 2)
+				buf.append(", ");
+			else if (i == commands.length - 2)
+				buf.append(" and ");
 		}
+		if (isLongb)
+			buf.append(".");
+
+		return buf.toString();
 	}
 
 	public String[] apiGetPluginList()
@@ -476,12 +475,12 @@ public class Help
 	 * |_|   \___/|_| \_\_|  |_/_/   \_\_|   |_| |_____|_| \_\____/
 	 */
 	// These do the actual formatting of help for the aliases.
-	private List<String> formatBasicHelp( String[] help, boolean isLong, int mode )
+	private List<String> formatBasicHelp( String[] help, boolean isLong, HelpMode helpMode )
 	{
 		List<String> lines = new ArrayList<String>();
 
 		int start, finish;
-		if (mode == MODE_ALL)
+		if (helpMode == HelpMode.MODE_ALL)
 		{
 			start = 0;
 			finish = help.length;
@@ -548,7 +547,7 @@ public class Help
 		return lines;
 	}
 
-	private List<String> formatCallHelp( String command, String type, String alias, String[] help, boolean isLong, int mode )
+	private List<String> formatCallHelp( String command, String type, String alias, String[] help, boolean isLong, HelpMode mode )
 	{
 		List<String> lines = new ArrayList<String>();
 		boolean simpleAlias = true;
@@ -558,20 +557,10 @@ public class Help
 			simpleAlias = pos == -1;
 		}
 
-		if (mode == MODE_ALL)
-		{
-		}
-		else if (mode == MODE_SUMMARY)
-		{
-		}
-		else // (mode == MODE_SYNTAX)
-		{
-		}
-
 		if (isLong)
 		{
 			// Preamble
-			if (mode != MODE_SYNTAX)
+			if (mode != HelpMode.MODE_SYNTAX)
 			{
 				if (alias != null)
 				{
@@ -597,12 +586,12 @@ public class Help
 					lines.add( formatCommand(command) + ": " + formatGeneral(help[0]) );
 			}
 
-			if (mode != MODE_SUMMARY)
+			if (mode != HelpMode.MODE_SUMMARY)
 			{
 				if (type.equalsIgnoreCase("command"))
 				{
 					// Command help has defined form
-					if (help.length == 2 || mode == MODE_SYNTAX)
+					if (help.length == 2 || mode == HelpMode.MODE_SYNTAX)
 					{
 						if (help.length == 1)
 							lines.add( "No syntax for " + formatCommand(command) + "!" );
@@ -634,7 +623,7 @@ public class Help
 		{
 			// Short
 			StringBuilder buf = new StringBuilder();
-			if (mode != MODE_SYNTAX)
+			if (mode != HelpMode.MODE_SYNTAX)
 			{
 				if (alias != null)
 				{
@@ -660,11 +649,11 @@ public class Help
 					buf.append( formatGeneral(help[0]) );
 			}
 
-			if (mode != MODE_SUMMARY)
+			if (mode != HelpMode.MODE_SUMMARY)
 			{
 				if (type.equalsIgnoreCase("command"))
 				{
-					if (help.length == 2 || mode == MODE_SYNTAX)
+					if (help.length == 2 || mode == HelpMode.MODE_SYNTAX)
 					{
 						if (help.length == 1)
 							buf.append( "No syntax for " + formatCommand(command) + "!" );

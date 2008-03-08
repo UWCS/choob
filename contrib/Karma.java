@@ -39,6 +39,7 @@ class KarmaReasonEnumerator
 {
 	public KarmaReasonEnumerator()
 	{
+		// Unhiding.
 	}
 	
 	public KarmaReasonEnumerator(String enumSource, int[] idList)
@@ -115,6 +116,7 @@ class KarmaSortByAbsValue implements Comparator<KarmaObject>
 		return 0;
 	}
 
+	@Override
 	public boolean equals(Object obj) {
 		return false;
 	}
@@ -132,6 +134,7 @@ class KarmaSortByValue implements Comparator<KarmaObject>
 		return 0;
 	}
 
+	@Override
 	public boolean equals(Object obj) {
 		return false;
 	}
@@ -377,20 +380,18 @@ public class Karma
 			nullReason(mes, true);
 			return;
 		}
+
+		Matcher ma=karmaItemPattern.matcher(name);
+		if (ma.find())
+		{
+			reason = apiReasonEnum(mes.getContext(), getName(ma), true);
+			if (reason !=null)
+				name = reason[0];
+		}
 		else
 		{
-			Matcher ma=karmaItemPattern.matcher(name);
-			if (ma.find())
-			{
-				reason = apiReasonEnum(mes.getContext(), getName(ma), true);
-				if (reason !=null)
-					name = reason[0];
-			}
-			else
-			{
-				nullReason(mes, true);
-				return;
-			}
+			nullReason(mes, true);
+			return;
 		}
 
 		if (reason != null)
@@ -509,7 +510,7 @@ public class Karma
 
 	public final String filterKarmaRegex = plusplus_or_minusminus + "\\B";
 
-	public synchronized void filterKarma( Message mes, Modules mods, IRCInterface irc )
+	public synchronized void filterKarma( Message mes )
 	{
 		// Ignore lines that look like commands.
 		if (mes.getFlags().containsKey("command"))
@@ -560,7 +561,9 @@ public class Karma
 					}
 				}
 				catch (ChoobNoSuchCallException e)
-				{ } // ignore
+				{ 
+					// ignore
+				} 
 				catch (Throwable e)
 				{
 					System.err.println("Couldn't do antiflood call: " + e);
@@ -733,7 +736,7 @@ public class Karma
 		return "th";
 	}
 
-	private void commandScores(Message mes, Modules mods, IRCInterface irc, boolean asc)
+	private void commandScores(Message mes, boolean asc)
 	{
 		List<KarmaObject> karmaObjs = retrieveKarmaObjects("SORT " + (asc ? "ASC" : "DESC") + " INTEGER value LIMIT (5)");
 
@@ -762,7 +765,7 @@ public class Karma
 	};
 	public void commandHighScores(Message mes)
 	{
-		commandScores(mes, mods, irc, false);
+		commandScores(mes, false);
 	}
 
 	public String[] helpCommandLowScores = {
@@ -770,7 +773,7 @@ public class Karma
 	};
 	public void commandLowScores(Message mes)
 	{
-		commandScores(mes, mods, irc, true);
+		commandScores(mes, true);
 	}
 
 	private void saveKarmaObjects(List<KarmaObject> karmaObjs)
@@ -790,8 +793,7 @@ public class Karma
 			mods.odb.save(newObj);
 			return newObj;
 		}
-		else
-			return results.get(0);
+		return results.get(0);
 	}
 
 	private List<KarmaObject> retrieveKarmaObjects(String clause)
@@ -804,7 +806,7 @@ public class Karma
 		"<Object 1> <Object 2>",
 	};
 	
-	public void commandFight (Message mes, Modules mods, IRCInterface irc)
+	public void commandFight (Message mes)
 	{
 		List<String> params = new ArrayList<String>();
 		
@@ -869,7 +871,7 @@ public class Karma
 		"<Object> [<Object> ...]",
 		"<Object> is the name of something to get the karma of."
 	};
-	public void commandReal (Message mes, Modules mods, IRCInterface irc)
+	public void commandReal (Message mes)
 	{
 		List<String> params = new ArrayList<String>();
 		Matcher ma=karmaItemPattern.matcher(mods.util.getParamString(mes));
@@ -926,7 +928,7 @@ public class Karma
 		"<Object> is the name of something to get the karma of"
 	};
 	
-	public void commandGet (Message mes, Modules mods, IRCInterface irc)
+	public void commandGet (Message mes)
 	{
 		List<String> params = new ArrayList<String>();
 
@@ -983,7 +985,7 @@ public class Karma
 		"<Object> is the name of something to set the karma of",
 		"<Value> is the value to set the karma to"
 	};
-	public synchronized void commandSet( Message mes, Modules mods, IRCInterface irc )
+	public synchronized void commandSet( Message mes )
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.karma.set"), mes);
 
@@ -1072,7 +1074,7 @@ public class Karma
 		"<Query> [<Query> ...]",
 		"<Query> is some text or a regular expression (in /.../) to find"
 	};
-	public void commandSearch(Message mes, Modules mods, IRCInterface irc)
+	public void commandSearch(Message mes)
 	{
 		final List<KarmaSearchItem> params = new ArrayList<KarmaSearchItem>();
 
@@ -1110,7 +1112,7 @@ public class Karma
 			}
 			System.out.println("    Query: " + odbQuery);
 
-			final List<KarmaObject> odbItems = (List<KarmaObject>)mods.odb.retrieve(KarmaObject.class, odbQuery);
+			final List<KarmaObject> odbItems = mods.odb.retrieve(KarmaObject.class, odbQuery);
 
 			if (odbItems.size() == 0) {
 				irc.sendContextReply(mes, "No karma items matched " + (item.regex ? "/" : "'") + item.name + (item.regex ? "/" : "'") + ".");
@@ -1156,7 +1158,7 @@ public class Karma
 	public String[] helpCommandList = {
 		"Get a list of all karma objects.",
 	};
-	public void commandList (Message mes, Modules mods, IRCInterface irc)
+	public void commandList (Message mes)
 	{
 		irc.sendContextReply(mes, "No chance, matey.");
 	}
@@ -1189,7 +1191,6 @@ public class Karma
 	{
 		if (ma.group(1) != null)
 			return ma.group(1).replaceAll("\\\\(.)", "$1");
-		else
-			return ma.group(2);
+		return ma.group(2);
 	}
 }

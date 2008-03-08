@@ -35,38 +35,38 @@ public class JavaTest
 		}
 	}
 	
-	public void apiAPIResult(Message mes, String text)
+	public void apiAPIResult(Message mes, String text_)
 	{
 		mods.security.getPluginNames("JavaTest:apiAPIResult");
-		irc.sendContextReply(mes, "JavaTest result: " + text);
+		irc.sendContextReply(mes, "JavaTest result: " + text_);
 		
-		this.text = text + "[interval]";
+		this.text = text_ + "[interval]";
 		mods.interval.callBack(mes, 1000, 1);
 	}
 	
-	public void apiAPIResult2(Message mes, String text)
+	public void apiAPIResult2(Message mes, String text_)
 	{
 		mods.security.getPluginNames("JavaTest:apiAPIResult2");
-		irc.sendContextReply(mes, "JavaTest result: " + text);
+		irc.sendContextReply(mes, "JavaTest result: " + text_);
 		
 		try {
-			mods.plugin.callAPI("JSExample", "callapi", "JavaTest", "APIResult3", mes, text + "[api]");
+			mods.plugin.callAPI("JSExample", "callapi", "JavaTest", "APIResult3", mes, text_ + "[api]");
 		} catch(ChoobNoSuchCallException e) {
 			irc.sendContextReply(mes, "Error: " + e);
 		}
 	}
 	
-	public void apiAPIResult3(Message mes, String text)
+	public void apiAPIResult3(Message mes, String text_)
 	{
 		mods.security.getPluginNames("JavaTest:apiAPIResult3");
-		irc.sendContextReply(mes, "JavaTest result: " + text);
+		irc.sendContextReply(mes, "JavaTest result: " + text_);
 	}
 	
 	public void interval(Object param)
 	{
 		mods.security.getPluginNames("JavaTest:interval");
 		try {
-			mods.plugin.callAPI("JSExample", "callapi", "JavaTest", "APIResult2", (Message)param, text + "[api]");
+			mods.plugin.callAPI("JSExample", "callapi", "JavaTest", "APIResult2", param, text + "[api]");
 		} catch(ChoobNoSuchCallException e) {
 			irc.sendContextReply((Message)param, "Error: " + e);
 		}

@@ -580,8 +580,7 @@ public class Options
 
 		if (options.size() == 0)
 			return defult;
-		else
-			return options.get(0).optionValue;
+		return options.get(0).optionValue;
 	}
 
 	public String apiGetUserOption( String nickName, String optionName )
@@ -607,8 +606,7 @@ public class Options
 
 		if (options.size() == 0)
 			return defult;
-		else
-			return options.get(0).optionValue;
+		return options.get(0).optionValue;
 	}
 
 	public void apiSetGeneralOption( String optionName, String value )
@@ -740,19 +738,17 @@ public class Options
 	{
 		try
 		{
-			if( (Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckUser", optionName, optionValue, userName) )
+			if( ((Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckUser", optionName, optionValue, userName)).booleanValue() )
 				return null;
-			else
-				return "Invalid option value!";
+			return "Invalid option value!";
 		}
 		catch (ChoobNoSuchCallException e)
 		{
 			try
 			{
-				if( (Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckUser" + optionName, optionValue, userName) )
+				if( ((Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckUser" + optionName, optionValue, userName)).booleanValue() )
 					return null;
-				else
-					return "Invalid option value!";
+				return "Invalid option value!";
 			}
 			catch (ChoobNoSuchCallException f)
 			{
@@ -769,19 +765,17 @@ public class Options
 	{
 		try
 		{
-			if( (Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckGeneral", optionName, optionValue) )
+			if( ((Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckGeneral", optionName, optionValue)).booleanValue() )
 				return null;
-			else
-				return "Invalid option value!";
+			return "Invalid option value!";
 		}
 		catch (ChoobNoSuchCallException e)
 		{
 			try
 			{
-				if( (Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckGeneral" + optionName, optionValue) )
+				if( ((Boolean)mods.plugin.callGeneric(pluginName, "option", "CheckGeneral" + optionName, optionValue)).booleanValue() )
 					return null;
-				else
-					return "Invalid option value!";
+				return "Invalid option value!";
 			}
 			catch (ChoobNoSuchCallException f)
 			{

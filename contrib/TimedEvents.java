@@ -263,8 +263,7 @@ public class TimedEvents
 				irc.sendContextReply(mes, "Can't make things happen in the past!");
 				return;
 			}
-			else
-				cal.add(Calendar.DAY_OF_MONTH, 1);
+			cal.add(Calendar.DAY_OF_MONTH, 1);
 		}
 
 		// Does the command have a trigger?
@@ -319,22 +318,22 @@ public class TimedEvents
 		int lastPos = 0;
 
 		if ( (currentPos = time.indexOf('d', lastPos)) >= 0 ) {
-			period += 60 * 60 * 24 * Integer.valueOf(time.substring(lastPos, currentPos));
+			period += 60 * 60 * 24 * Integer.parseInt(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
 
 		if ( (currentPos = time.indexOf('h', lastPos)) >= 0 ) {
-			period += 60 * 60 * Integer.valueOf(time.substring(lastPos, currentPos));
+			period += 60 * 60 * Integer.parseInt(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
 
 		if ( (currentPos = time.indexOf('m', lastPos)) >= 0 ) {
-			period += 60 * Integer.valueOf(time.substring(lastPos, currentPos));
+			period += 60 * Integer.parseInt(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
 
 		if ( (currentPos = time.indexOf('s', lastPos)) >= 0 ) {
-			period += Integer.valueOf(time.substring(lastPos, currentPos));
+			period += Integer.parseInt(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
 
@@ -382,7 +381,7 @@ public class TimedEvents
 	public String[] helpCommandLast = {
 		"Find out what the last queued event to be executed was."
 	};
-	public void commandLast( Message mes, Modules mods, IRCInterface irc )
+	public void commandLast( Message mes )
 	{
 		TimedEvent last = lastDelivery.get(mes.getContext());
 		if (last != null)
@@ -410,7 +409,7 @@ public class TimedEvents
 				rv += ",";
 			rv += prop.replaceAll("(\\\\|\"|=|,)", "\\\\$1");
 			rv += "=";
-			rv += ((String)flags.get(prop)).replaceAll("(\\\\|\"|=|,)", "\\\\$1");
+			rv += flags.get(prop).replaceAll("(\\\\|\"|=|,)", "\\\\$1");
 		}
 		return rv;
 	}
@@ -441,7 +440,7 @@ public class TimedEvents
 				return false;
 			}
 
-			mesFlags.put("timedevents.delayed", new Integer(recurseLevel).toString());
+			mesFlags.put("timedevents.delayed", Integer.valueOf(recurseLevel).toString());
 		}
 		else
 		{

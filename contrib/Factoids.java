@@ -3,7 +3,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
@@ -11,6 +10,7 @@ class FactoidObject
 {
 	public FactoidObject()
 	{
+		// Unhide
 	}
 
 	public FactoidObject( String subject, String info )
@@ -46,7 +46,7 @@ public class Factoids
 		this.irc = irc;
 	}
 
-	public void filterFactoids( Message msg ) throws ChoobException
+	public void filterFactoids( Message msg )
 	{
 		Matcher factoidMatcher = (Pattern.compile( filterFactoidsRegex )).matcher( msg.getMessage() );
 
@@ -75,7 +75,7 @@ public class Factoids
 		"<Name>",
 		"<Name> is the name of the object to enquire about"
 	};
-	public void commandWhatIs( Message msg ) throws ChoobException
+	public void commandWhatIs( Message msg )
 	{
 		List<String> params = mods.util.getParams(msg, 1);
 
@@ -91,7 +91,7 @@ public class Factoids
 
 		if( facts.size() > 0 )
 		{
-			FactoidObject fact = (FactoidObject)facts.get(0);
+			FactoidObject fact = facts.get(0);
 			irc.sendContextReply( msg, item + " is " + fact.info );
 		}
 		else

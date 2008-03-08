@@ -71,7 +71,10 @@ public class MiscMsg
 		{
 			max = Double.parseDouble(mods.util.getParamString(mes));
 		}
-		catch (NumberFormatException e) {}
+		catch (NumberFormatException e) 
+		{
+			// Assume 1.
+		}
 		irc.sendContextReply(mes, "Random number between 0 and " + max + " is " + new Random().nextDouble()*max + ".");
 	}
 
@@ -205,7 +208,10 @@ public class MiscMsg
 			Process proc = Runtime.getRuntime().exec(command);
 
 			// There's a nefarious reason why this is here.
-			try { proc.waitFor(); } catch (InterruptedException e1) {}
+			try { proc.waitFor(); } catch (InterruptedException e1) 
+			{
+				// If anything went wrong, the next stage'll bomb properly.
+			}
 
 			BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 			
@@ -261,6 +267,7 @@ public class MiscMsg
 			1444089600 // 2015-10-06
 		};
 
+	@SuppressWarnings("null")
 	public void commandWeek(Message mes)
 	{
 		List<String> params = mods.util.getParams(mes);
@@ -384,10 +391,10 @@ public class MiscMsg
 
 	boolean isNumber(String item) {
 		try {
-			return (item.equals((new Integer(item)).toString()));
+			return (item.equals((Integer.valueOf(item)).toString()));
 		} catch(Exception e) {
+			return false;	
 		}
-		return false;
 	}
 
 	int nameToMonth(String name) {

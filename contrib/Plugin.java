@@ -107,15 +107,13 @@ public class Plugin
 				irc.sendContextReply(mes, "Syntax: [classname] url");
 				return;
 			}
-			else
+
+			url=params.get(2);
+			classname=params.get(1);
+			if ( classname.indexOf("/") != -1 )
 			{
-				url=params.get(2);
-				classname=params.get(1);
-				if ( classname.indexOf("/") != -1 )
-				{
-					irc.sendContextReply(mes, "Arguments the other way around, you spoon.");
-					return;
-				}
+				irc.sendContextReply(mes, "Arguments the other way around, you spoon.");
+				return;
 			}
 		}
 

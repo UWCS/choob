@@ -17,7 +17,10 @@ class AliasObject
 		this.locked = false;
 		this.id = 0;
 	}
-	public AliasObject() {}
+	public AliasObject() 
+	{
+		// Unhide
+	}
 	public int id;
 	public String name;
 	public String converted;
@@ -435,8 +438,7 @@ public class Alias
 
 		if (alias == null)
 			return null;
-		else
-			return alias.converted;
+		return alias.converted;
 	}
 
 	public String[] apiGetHelp( String name )
@@ -448,8 +450,7 @@ public class Alias
 
 		if (alias == null || alias.help == null)
 			return null;
-		else
-			return alias.help.split("\\s*\\|\\|\\|\\s*");
+		return alias.help.split("\\s*\\|\\|\\|\\s*");
 	}
 
 	public String apiGetCoreAlias( String name )
@@ -460,8 +461,7 @@ public class Alias
 
 		if (results.size() == 0)
 			return name;
-		else
-			return results.get(0).name;
+		return results.get(0).name;
 	}
 
 	public String[] helpCommandLock = {
@@ -555,8 +555,7 @@ public class Alias
 
 		if (results.size() == 0)
 			return null;
-		else
-			return results.get(0);
+		return results.get(0);
 	}
 
 	// Trigger on everything, but is a trigger, not an event ==> takes account of ignore etc.
@@ -597,8 +596,7 @@ public class Alias
 		{
 			return; // null alias! Oh noes!
 		}
-		else
-			cmdParams = text.substring(cmdEnd);
+		cmdParams = text.substring(cmdEnd);
 
 		String aliasName = text.substring(offset, cmdEnd);
 
@@ -628,7 +626,7 @@ public class Alias
 		
 		try
 		{
-			int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
+			int ret = ((Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), Integer.valueOf(1500), Integer.valueOf(4))).intValue();
 			if (ret != 0)
 			{
 				if (ret == 1)
@@ -637,7 +635,9 @@ public class Alias
 			}
 		}
 		catch (ChoobNoSuchCallException e)
-		{ } // ignore
+		{
+			// ignore
+		} 
 		catch (Throwable e)
 		{
 			System.err.println("Couldn't do antiflood call: " + e);
@@ -708,8 +708,7 @@ public class Alias
 		{
 			if (origParams != null && origParams.length() > 0)
 				return alias + " " + origParams;
-			else
-				return alias;
+			return alias;
 		}
 		else
 		{

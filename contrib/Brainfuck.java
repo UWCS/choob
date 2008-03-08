@@ -182,12 +182,12 @@ class BrainfuckInterpreter
 					switch (symbols[i])
 					{
 						case '[':
-							pc_stack.push(my_tokens.size());
+							pc_stack.push(Integer.valueOf(my_tokens.size()));
 							break;
 						case ']':
 							try
 							{
-								jne = pc_stack.pop();
+								jne = pc_stack.pop().intValue();
 								my_tokens.get(jne).jne = my_tokens.size();
 							}
 							catch (EmptyStackException e)

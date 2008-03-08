@@ -182,6 +182,7 @@ public class Tell
 		mods.odb.runTransaction(
 			new ObjectDBTransaction()
 			{
+				@Override
 				public void run()
 				{
 					for(int i=0; i<targets.length; i++)

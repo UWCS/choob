@@ -1,9 +1,17 @@
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.events.ChannelAction;
+import uk.co.uwcs.choob.support.events.ChannelKick;
+import uk.co.uwcs.choob.support.events.ChannelMessage;
+import uk.co.uwcs.choob.support.events.ChannelPart;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.NickChange;
+import uk.co.uwcs.choob.support.events.QuitEvent;
 
 /**
  * Choob nickserv checker
@@ -64,7 +72,7 @@ public class Seen
 		"<Name>",
 		"<Name> is the user to look for."
 	};
-	public void commandSeen( Message mes ) throws ChoobException
+	public void commandSeen( Message mes )
 	{
 		if (lockedUntil>(new GregorianCalendar()).getTimeInMillis())
 		{
@@ -177,18 +185,14 @@ public class Seen
 				seen.secondaryData = "";
 				return seen;
 			}
-			else
-				return null;
+			return null;
 		}
-		else
-		{
-			SeenObj seen = objs.get(0);
-			seen.name = sortNick; // To stop nasty errors...
-			return seen;
-		}
+		SeenObj seen = objs.get(0);
+		seen.name = sortNick; // To stop nasty errors...
+		return seen;
 	}
 
-	private void saveSeen(SeenObj seen) throws ChoobException
+	private void saveSeen(SeenObj seen)
 	{
 		if (lockedUntil>(new GregorianCalendar()).getTimeInMillis())
 			return;
@@ -213,7 +217,7 @@ public class Seen
 
 	// Expire old checks when appropriate...
 
-	public void onMessage( ChannelMessage mes ) throws ChoobException
+	public void onMessage( ChannelMessage mes )
 	{
 		// If the event has been faked, don't count it!
 		if (mes.getSynthLevel() > 0)
@@ -222,7 +226,10 @@ public class Seen
 		// Oh! Oh! Ooooh! Can't you *feel* the hacks?
 		try {
 			Thread.sleep(1000);
-		} catch(InterruptedException e) {}
+		} catch(InterruptedException e) 
+		{
+			// It was a hack anyway, who cares?
+		}
 		
 		SeenObj seen = getSeen( mes.getNick(), true );
 		seen.nick = mes.getNick();
@@ -234,12 +241,15 @@ public class Seen
 		saveSeen (seen);
 	}
 
-	public void onAction( ChannelAction mes ) throws ChoobException
+	public void onAction( ChannelAction mes )
 	{
 		// Oh! Oh! Ooooh! Can't you *feel* the hacks?
 		try {
 			Thread.sleep(1000);
-		} catch(InterruptedException e) {}
+		} catch(InterruptedException e)
+		{
+			// It was a hack anyway, who cares?
+		}
 		
 		SeenObj seen = getSeen( mes.getNick(), true );
 		seen.nick = mes.getNick();
@@ -251,7 +261,7 @@ public class Seen
 		saveSeen (seen);
 	}
 
-	public void onNickChange( NickChange nc ) throws ChoobException
+	public void onNickChange( NickChange nc )
 	{
 		SeenObj seen = getSeen( nc.getNick(), true );
 		seen.nick = nc.getNick();
@@ -261,7 +271,7 @@ public class Seen
 		saveSeen (seen);
 	}
 
-	public void onKick( ChannelKick ck ) throws ChoobException
+	public void onKick( ChannelKick ck )
 	{
 		SeenObj seen = getSeen( ck.getTarget(), true );
 		seen.nick = ck.getTarget();
@@ -271,7 +281,7 @@ public class Seen
 		saveSeen (seen);
 	}
 
-	public void onPart( ChannelPart cp ) throws ChoobException
+	public void onPart( ChannelPart cp )
 	{
 		SeenObj seen = getSeen( cp.getNick(), true );
 		seen.nick = cp.getNick();
@@ -281,7 +291,7 @@ public class Seen
 		saveSeen (seen);
 	}
 
-	public void onQuit( QuitEvent qe ) throws ChoobException
+	public void onQuit( QuitEvent qe )
 	{
 		SeenObj seen = getSeen( qe.getNick(), true );
 		seen.nick = qe.getNick();
