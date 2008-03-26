@@ -245,10 +245,7 @@ public final class Choob extends PircBot
 			// I think this is all that's ever really needed...
 			public synchronized boolean implies(java.security.ProtectionDomain d, java.security.Permission p)
 			{
-				if ( !(d instanceof ChoobProtectionDomain) )
-					return true;
-				else
-					return false;
+				return !(d instanceof ChoobProtectionDomain);
 			}
 			public synchronized java.security.PermissionCollection getPermissions(java.security.ProtectionDomain d)
 			{
@@ -257,6 +254,7 @@ public final class Choob extends PircBot
 					p.add( new java.security.AllPermission() );
 				return p;
 			}
+			@Override
 			public synchronized java.security.PermissionCollection getPermissions(java.security.CodeSource s)
 			{
 				java.security.PermissionCollection p = new java.security.Permissions();

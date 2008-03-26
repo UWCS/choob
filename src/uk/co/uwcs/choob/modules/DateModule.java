@@ -29,18 +29,16 @@ public final class DateModule {
 		public String quantity(final boolean useShortTokens, final long quantity) {
 			if (useShortTokens) {
 				return quantity + shortToken;
-			} else {
-				return quantity + " " + longToken + (quantity > 1 ? "s" : "");
 			}
+			return quantity + " " + longToken + (quantity > 1 ? "s" : "");
 		}
 
 		public String lessThanOne(final boolean useShortTokens) {
 			if (useShortTokens) {
 				return "<1" + shortToken;
-			} else {
-				return "less than " + ((this == HOUR) ? "an" : "a") + " "
-						+ longToken;
 			}
+			return "less than " + ((this == HOUR) ? "an" : "a") + " "
+					+ longToken;
 		}
 
 		public int duration() {

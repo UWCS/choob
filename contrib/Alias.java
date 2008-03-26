@@ -710,306 +710,304 @@ public class Alias
 				return alias + " " + origParams;
 			return alias;
 		}
-		else
+
+		// Advanced syntax
+		StringBuilder newCom = new StringBuilder();
+
+		int pos = alias.indexOf('$'), oldPos = 0;
+		int convEnd = alias.length() - 1;
+		int curlyLevel = 0;
+		while (pos != -1 && pos <= convEnd)
 		{
-			// Advanced syntax
-			StringBuilder newCom = new StringBuilder();
-
-			int pos = alias.indexOf('$'), oldPos = 0;
-			int convEnd = alias.length() - 1;
-			int curlyLevel = 0;
-			while (pos != -1 && pos <= convEnd)
+			try
 			{
-				try
+				newCom.append(alias.substring(oldPos, pos));
+
+				// Deal with curlies
+				if (alias.charAt(pos) == '}')
 				{
-					newCom.append(alias.substring(oldPos, pos));
-
-					// Deal with curlies
-					if (alias.charAt(pos) == '}')
+					pos++;
+					if (curlyLevel == 0)
 					{
-						pos++;
-						if (curlyLevel == 0)
-						{
-							newCom.append("}");
-							continue;
-						}
-
-						curlyLevel--;
-						if (pos > convEnd)
-							break;
-
-						if (alias.charAt(pos) != '{')
-							continue;
-
-						// else block
-						int newPos = alias.indexOf('}', pos);
-						if (newPos == -1)
-							continue;
-
-						pos = newPos + 1;
+						newCom.append("}");
 						continue;
 					}
 
-					// Sanity check for $ at end of alias...
-					if (pos == convEnd)
+					curlyLevel--;
+					if (pos > convEnd)
 						break;
 
-					char next = alias.charAt(pos + 1);
-					if (next == '$')
+					if (alias.charAt(pos) != '{')
+						continue;
+
+					// else block
+					int newPos = alias.indexOf('}', pos);
+					if (newPos == -1)
+						continue;
+
+					pos = newPos + 1;
+					continue;
+				}
+
+				// Sanity check for $ at end of alias...
+				if (pos == convEnd)
+					break;
+
+				char next = alias.charAt(pos + 1);
+				if (next == '$')
+				{
+					newCom.append("$");
+					pos = pos + 2;
+				}
+				else if (next == '.')
+				{
+					pos = pos + 2;
+				}
+				else if (next == '*')
+				{
+					for(int i = 1; i < params.length; i++)
+					{
+						newCom.append(params[i]);
+						if (i != params.length - 1)
+							newCom.append(" ");
+					}
+					pos = pos + 2;
+				}
+				else if (next >= '0' && next <= '9')
+				{
+					// Parameter
+					int end = pos + 1;
+					while(true)
+					{
+						if (end > convEnd)
+							break;
+						char test = alias.charAt(end);
+						if (test < '0' || test > '9')
+							break;
+						// Another number!
+						end++;
+					}
+					int paramNo = 0;
+					try
+					{
+						paramNo = Integer.parseInt(alias.substring(pos + 1, end));
+					}
+					catch (NumberFormatException e)
+					{
+						// LIES!
+					}
+					if (paramNo < params.length)
+						newCom.append(params[paramNo]);
+					pos = end;
+				}
+				// $?ParamNo{if-true}
+				// $?ParamNo{if-true}{if-false}
+				else if (next == '?')
+				{
+					// If
+					int newPos = pos + 2;
+					char test = alias.charAt(newPos);
+					if (test < '0' || test > '9')
 					{
 						newCom.append("$");
-						pos = pos + 2;
+						pos++;
+						continue;
 					}
-					else if (next == '.')
+
+					while(newPos < convEnd)
 					{
-						pos = pos + 2;
+						test = alias.charAt(newPos + 1);
+						if (test >= '0' && test <= '9')
+							newPos++;
+						else
+							break;
 					}
-					else if (next == '*')
+
+					newPos++;
+
+					if (alias.charAt(newPos) != '{')
 					{
-						for(int i = 1; i < params.length; i++)
+						newCom.append("$");
+						pos++;
+						continue;
+					}
+
+					int paramNo = Integer.parseInt(alias.substring(pos + 2, newPos));
+
+					newPos++;
+					if (paramNo < params.length)
+					{
+						// true, so do guts.
+						curlyLevel++;
+						pos = newPos;
+					}
+					else
+					{
+						// skip
+						newPos = alias.indexOf('}', newPos);
+						if (newPos == -1)
 						{
-							newCom.append(params[i]);
-							if (i != params.length - 1)
-								newCom.append(" ");
+							// Bad syntax.
+							newCom.append("$");
+							pos++;
+							continue;
 						}
-						pos = pos + 2;
+
+						if (newPos < convEnd && alias.charAt(newPos + 1) == '{')
+						{
+							// else clause
+							curlyLevel++;
+							pos = newPos + 2;
+						}
+						else
+						{
+							pos = newPos + 1;
+						}
 					}
-					else if (next >= '0' && next <= '9')
+				}
+				else if (next == '[')
+				{
+					// Parameter list
+					if (alias.length() < pos + 3)
 					{
-						// Parameter
-						int end = pos + 1;
+						newCom.append("$");
+						pos++;
+						continue;
+					}
+
+					int firstParam = -1, lastParam = -1;
+					int newPos = pos + 2;
+					char test = alias.charAt(newPos);
+
+					// First param is '-' - set firstParam to be undefined.
+					if (test == '-')
+					{
+						firstParam = -2;
+						newPos++;
+						test = alias.charAt(newPos);
+					}
+
+					// Begin eating params.
+					if (test >= '0' && test <= '9')
+					{
+						int end = newPos + 1;
 						while(true)
 						{
 							if (end > convEnd)
 								break;
-							char test = alias.charAt(end);
-							if (test < '0' || test > '9')
+							test = alias.charAt(end);
+
+							// End of number!
+							if (test == '-' || test == ']')
+							{
+								int paramNo = -1;
+								try
+								{
+									paramNo = Integer.parseInt(alias.substring(newPos, end));
+								}
+								catch (NumberFormatException e)
+								{
+									// LIES!
+								}
+								newPos = end + 1;
+								if (firstParam == -1)
+								{
+									if (test == ']')
+										break;
+									firstParam = paramNo;
+								}
+								else if (lastParam == -1)
+								{
+									if (test == '-')
+										break;
+									lastParam = paramNo;
+									break;
+								}
+							}
+							else if (test < '0' || test > '9')
 								break;
 							// Another number!
 							end++;
 						}
-						int paramNo = 0;
-						try
-						{
-							paramNo = Integer.parseInt(alias.substring(pos + 1, end));
-						}
-						catch (NumberFormatException e)
-						{
-							// LIES!
-						}
-						if (paramNo < params.length)
-							newCom.append(params[paramNo]);
-						pos = end;
-					}
-					// $?ParamNo{if-true}
-					// $?ParamNo{if-true}{if-false}
-					else if (next == '?')
-					{
-						// If
-						int newPos = pos + 2;
-						char test = alias.charAt(newPos);
-						if (test < '0' || test > '9')
-						{
-							newCom.append("$");
-							pos++;
-							continue;
-						}
 
-						while(newPos < convEnd)
+						// Sort out undefined length ranges
+						if (firstParam == -2)
 						{
-							test = alias.charAt(newPos + 1);
-							if (test >= '0' && test <= '9')
-								newPos++;
+							// lastParam > 0
+							if (lastParam <= 1)
+								firstParam = params.length - 1;
 							else
-								break;
+								firstParam = 1;
+						}
+						else if (lastParam == -1)
+						{
+							lastParam = params.length - 1;
 						}
 
-						newPos++;
-
-						if (alias.charAt(newPos) != '{')
+						// Process output now.
+						if (lastParam < 0 || firstParam < 0 || lastParam + firstParam > 100)
 						{
 							newCom.append("$");
 							pos++;
-							continue;
-						}
-
-						int paramNo = Integer.parseInt(alias.substring(pos + 2, newPos));
-
-						newPos++;
-						if (paramNo < params.length)
-						{
-							// true, so do guts.
-							curlyLevel++;
-							pos = newPos;
 						}
 						else
 						{
-							// skip
-							newPos = alias.indexOf('}', newPos);
-							if (newPos == -1)
+							int direction = lastParam > firstParam ? 1 : -1;
+							lastParam += direction; // For simpler termination of loop.
+							for(int i = firstParam; i != lastParam; i += direction)
 							{
-								// Bad syntax.
-								newCom.append("$");
-								pos++;
-								continue;
-							}
-
-							if (newPos < convEnd && alias.charAt(newPos + 1) == '{')
-							{
-								// else clause
-								curlyLevel++;
-								pos = newPos + 2;
-							}
-							else
-							{
-								pos = newPos + 1;
-							}
-						}
-					}
-					else if (next == '[')
-					{
-						// Parameter list
-						if (alias.length() < pos + 3)
-						{
-							newCom.append("$");
-							pos++;
-							continue;
-						}
-
-						int firstParam = -1, lastParam = -1;
-						int newPos = pos + 2;
-						char test = alias.charAt(newPos);
-
-						// First param is '-' - set firstParam to be undefined.
-						if (test == '-')
-						{
-							firstParam = -2;
-							newPos++;
-							test = alias.charAt(newPos);
-						}
-
-						// Begin eating params.
-						if (test >= '0' && test <= '9')
-						{
-							int end = newPos + 1;
-							while(true)
-							{
-								if (end > convEnd)
-									break;
-								test = alias.charAt(end);
-
-								// End of number!
-								if (test == '-' || test == ']')
+								if (i < params.length)
 								{
-									int paramNo = -1;
-									try
-									{
-										paramNo = Integer.parseInt(alias.substring(newPos, end));
-									}
-									catch (NumberFormatException e)
-									{
-										// LIES!
-									}
-									newPos = end + 1;
-									if (firstParam == -1)
-									{
-										if (test == ']')
-											break;
-										firstParam = paramNo;
-									}
-									else if (lastParam == -1)
-									{
-										if (test == '-')
-											break;
-										lastParam = paramNo;
-										break;
-									}
+									newCom.append(params[i]);
+									if (i != lastParam - direction)
+										newCom.append(" ");
 								}
-								else if (test < '0' || test > '9')
-									break;
-								// Another number!
-								end++;
 							}
-
-							// Sort out undefined length ranges
-							if (firstParam == -2)
-							{
-								// lastParam > 0
-								if (lastParam <= 1)
-									firstParam = params.length - 1;
-								else
-									firstParam = 1;
-							}
-							else if (lastParam == -1)
-							{
-								lastParam = params.length - 1;
-							}
-
-							// Process output now.
-							if (lastParam < 0 || firstParam < 0 || lastParam + firstParam > 100)
-							{
-								newCom.append("$");
-								pos++;
-							}
-							else
-							{
-								int direction = lastParam > firstParam ? 1 : -1;
-								lastParam += direction; // For simpler termination of loop.
-								for(int i = firstParam; i != lastParam; i += direction)
-								{
-									if (i < params.length)
-									{
-										newCom.append(params[i]);
-										if (i != lastParam - direction)
-											newCom.append(" ");
-									}
-								}
-								pos = end + 1;
-							}
-						}
-						else
-						{
-							// First digit wasn't a number.
-							if (pos + 6 <= convEnd && alias.substring(pos + 2, pos + 7).equalsIgnoreCase("nick]"))
-							{
-								pos += 7;
-								newCom.append(mes.getNick());
-							}
-							else if (pos + 6 <= convEnd && alias.substring(pos + 2, pos + 7).equalsIgnoreCase("chan]"))
-							{
-								pos += 7;
-								newCom.append(mes.getContext());
-							}
-							else
-							{
-								newCom.append("$");
-								pos++;
-							}
+							pos = end + 1;
 						}
 					}
 					else
 					{
-						newCom.append("$");
-						pos++;
+						// First digit wasn't a number.
+						if (pos + 6 <= convEnd && alias.substring(pos + 2, pos + 7).equalsIgnoreCase("nick]"))
+						{
+							pos += 7;
+							newCom.append(mes.getNick());
+						}
+						else if (pos + 6 <= convEnd && alias.substring(pos + 2, pos + 7).equalsIgnoreCase("chan]"))
+						{
+							pos += 7;
+							newCom.append(mes.getContext());
+						}
+						else
+						{
+							newCom.append("$");
+							pos++;
+						}
 					}
 				}
-				finally
+				else
 				{
-					oldPos = pos;
-					int pos1 = alias.indexOf('$', pos);
-					int pos2 = alias.indexOf('}', pos);
-					if (pos1 == -1)
-						pos = pos2;
-					else if (pos2 == -1)
-						pos = pos1;
-					else if (pos1 < pos2)
-						pos = pos1;
-					else
-						pos = pos2;
+					newCom.append("$");
+					pos++;
 				}
 			}
-			newCom.append(alias.substring(oldPos, convEnd + 1));
-			return newCom.toString();
+			finally
+			{
+				oldPos = pos;
+				int pos1 = alias.indexOf('$', pos);
+				int pos2 = alias.indexOf('}', pos);
+				if (pos1 == -1)
+					pos = pos2;
+				else if (pos2 == -1)
+					pos = pos1;
+				else if (pos1 < pos2)
+					pos = pos1;
+				else
+					pos = pos2;
+			}
 		}
+		newCom.append(alias.substring(oldPos, convEnd + 1));
+		return newCom.toString();
 	}
 }

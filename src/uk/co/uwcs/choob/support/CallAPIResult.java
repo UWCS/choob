@@ -33,6 +33,7 @@ public final class CallAPIResult
 		return (object != null) && (exception == null);
 	}
 	
+	@Override
 	public String toString() {
 		if (exception != null) {
 			return "{" + pluginName + "} " + exception.toString();

@@ -8,6 +8,7 @@ import java.security.Permission;
 
 public abstract class ChoobAuthError extends ChoobError
 {
+	private static final long serialVersionUID = 3779784728261098709L;
 	public static final String getPermissionText(Permission permission)
 	{
 		if (permission instanceof java.security.AllPermission)

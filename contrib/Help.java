@@ -271,7 +271,10 @@ public class Help
 				{
 					ret = mods.plugin.callAPI("Alias", "GetHelp", plugin);
 				}
-				catch (ChoobNoSuchCallException e) { } // Leave it null
+				catch (ChoobNoSuchCallException e) 
+				{
+					// Leave it null
+				} 
 
 				if (ret == null)
 				{
@@ -785,8 +788,7 @@ public class Help
 			String core = (String)mods.plugin.callAPI("Alias", "GetCoreAlias", text);
 			if (core == null)
 				return Colors.BOLD + text + Colors.NORMAL;
-			else
-				return Colors.BOLD + core + Colors.NORMAL;
+			return Colors.BOLD + core + Colors.NORMAL;
 		}
 		catch (ChoobNoSuchCallException e)
 		{
@@ -812,8 +814,7 @@ public class Help
 		String[] bits = text.split(" ", 2);
 		if (bits.length == 2)
 			return formatParamName(bits[0]) + " " + formatGeneral(bits[1]);
-		else
-			return formatParamName(bits[0]);
+		return formatParamName(bits[0]);
 	}
 
 	// "<Name>"
@@ -931,10 +932,7 @@ public class Help
 				String[] helpArr = (String[])ret;
 				return helpArr;
 			}
-			else
-			{
-				return new String[] { "Help for " + topic + " was of an unknown format." };
-			}
+			return new String[] { "Help for " + topic + " was of an unknown format." };
 		}
 		catch (ChoobNoSuchCallException e)
 		{

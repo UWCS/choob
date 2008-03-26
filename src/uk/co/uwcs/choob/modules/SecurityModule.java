@@ -489,7 +489,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 		finally
 		{
-			stat.close();
+			if (stat != null)
+				stat.close();
 		}
 	}
 
@@ -736,6 +737,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param permission The permission to check.
 	 * @param userEvent The event to validate and check the permission on.
 	 */
+	@Deprecated
 	public boolean hasPerm(Permission permission, UserEvent userEvent) {
 		return hasNickPerm(permission, userEvent);
 	}

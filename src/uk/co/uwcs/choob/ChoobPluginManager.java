@@ -38,12 +38,12 @@ public abstract class ChoobPluginManager
 		AccessController.checkPermission(new ChoobPermission("root"));
 	}
 
-	public final static void initialise(Modules modules, IRCInterface irc)
+	public final static void initialise(Modules modules, IRCInterface ircinter)
 	{
 		if (mods != null)
 			return;
 		mods = modules;
-		ChoobPluginManager.irc = irc;
+		ChoobPluginManager.irc = ircinter;
 		pluginManagers = new LinkedList<ChoobPluginManager>();
 		pluginMap = new HashMap<String,ChoobPluginManager>();
 		commands = new HashMap<String,List<String>>();
@@ -105,10 +105,7 @@ public abstract class ChoobPluginManager
 			man.destroyPlugin(pluginName);
 
 		// If man existed, so did the plugin.
-		if (man != null)
-			return true;
-		else
-			return false;
+		return man != null;
 	}
 
 	public final void unloadPlugin(String pluginName) throws ChoobNoSuchPluginException

@@ -613,9 +613,8 @@ public class Tell
 	private int checkAuthStatus( String nick ) {
 		if (mods.security.hasAuth(nick)) {
 			return 3;
-		} else {
-			return -1;
 		}
+		return -1;
 	}
 }
 

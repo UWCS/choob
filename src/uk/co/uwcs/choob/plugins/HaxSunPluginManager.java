@@ -86,20 +86,17 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 		if (success)
 			return baosts; // success
-		else
+		System.out.println(baosts);
+
+		String excep="Compile failed.";
+
+		try
 		{
-			System.out.println(baosts);
-
-			String excep="Compile failed.";
-
-			try
-			{
-				String url=(String)mods.plugin.callAPI("Http", "StoreString", baosts);
-				excep="Compile failed, see: " + url + " for details.";
-			}
-			catch (Exception e) {}
-			throw new ChoobException(excep);
+			String url=(String)mods.plugin.callAPI("Http", "StoreString", baosts);
+			excep="Compile failed, see: " + url + " for details.";
 		}
+		catch (Exception e) {}
+		throw new ChoobException(excep);
 	}
 
 	private String[] makeJavaFiles(String pluginName, String outDir, InputStream in) throws IOException
@@ -162,6 +159,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return fileNames.toArray(new String[fileNames.size()]);
 	}
 
+	@Override
 	protected Object createPlugin(String pluginName, URL source) throws ChoobException
 	{
 		String classPath = prefix + File.separator + pluginName + File.separator;
@@ -303,6 +301,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return pluginObj;
 	}
 
+	@Override
 	protected void destroyPlugin(String pluginName)
 	{
 		String[] oldCommands = new String[0];
@@ -386,6 +385,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			params = new Object[] { param, mods, irc };
 
 		return new ChoobTask(pluginName) {
+			@Override
 			public void run() {
 				try
 				{
@@ -412,6 +412,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		};
 	}
 
+	@Override
 	public ChoobTask commandTask(String pluginName, String command, Message ev)
 	{
 		Method meth = allPlugins.getCommand(pluginName + "." + command);
@@ -420,6 +421,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return null;
 	}
 
+	@Override
 	public List<ChoobTask> eventTasks(Event ev)
 	{
 		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
@@ -432,6 +434,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return tasks;
 	}
 
+	@Override
 	public List<ChoobTask> filterTasks(Message ev)
 	{
 		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
@@ -444,6 +447,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return tasks;
 	}
 
+	@Override
 	public ChoobTask intervalTask(String pluginName, Object param)
 	{
 		Method meth = allPlugins.getInterval(pluginName);
@@ -452,10 +456,11 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return null;
 	}
 
-	public Object doGeneric(String pluginName, String prefix, String genName, final Object... params) throws ChoobNoSuchCallException
+	@Override
+	public Object doGeneric(String pluginName, String prefix_, String genName, final Object... params) throws ChoobNoSuchCallException
 	{
 		final Object plugin = allPlugins.getPluginObj(pluginName);
-		String fullName = pluginName + "." + prefix + ":" + genName;
+		String fullName = pluginName + "." + prefix_ + ":" + genName;
 		String sig = getAPISignature(fullName, params);
 		if (plugin == null)
 			throw new ChoobNoSuchPluginException(pluginName, sig);
@@ -481,8 +486,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				public Object run() throws InvocationTargetException, IllegalAccessException {
 					if (meth2 instanceof Method)
 						return ((Method)meth2).invoke(plugin, params);
-					else
-						return ((Field)meth2).get(plugin);
+					return ((Field)meth2).get(plugin);
 				}
 			}, mods.security.getPluginContext() );
 		}
@@ -494,8 +498,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				if (e.getCause() instanceof ChoobError)
 					// Doesn't need wrapping...
 					throw (ChoobError)e.getCause();
-				else
-					throw new ChoobInvocationError(pluginName, fullName, e.getCause());
+				throw new ChoobInvocationError(pluginName, fullName, e.getCause());
 			}
 			else if (e instanceof IllegalAccessException)
 				throw new ChoobError("Could not access method " + fullName + ": " + e);
@@ -504,6 +507,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		}
 	}
 
+	@Override
 	public Object doAPI(String pluginName, String APIName, final Object... params) throws ChoobNoSuchCallException
 	{
 		return doGeneric(pluginName, "api", APIName, params);

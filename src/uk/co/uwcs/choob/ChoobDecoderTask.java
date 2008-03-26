@@ -18,13 +18,13 @@ public class ChoobDecoderTask extends ChoobTask
 	private static Pattern commandPattern;
 	private Event event;
 
-	static void initialise(DbConnectionBroker dbBroker, Modules modules, IRCInterface irc)
+	static void initialise(DbConnectionBroker broker, Modules mods, IRCInterface ircinter)
 	{
 		if (ChoobDecoderTask.dbBroker != null)
 			return;
-		ChoobDecoderTask.dbBroker = dbBroker;
-		ChoobDecoderTask.modules = modules;
-		ChoobDecoderTask.irc = irc;
+		ChoobDecoderTask.dbBroker = broker;
+		ChoobDecoderTask.modules = mods;
+		ChoobDecoderTask.irc = ircinter;
 		commandPattern = Pattern.compile("^([a-zA-Z0-9_]+)\\.([a-zA-Z0-9_]+)$");
 		updatePatterns();
 	}
@@ -41,6 +41,7 @@ public class ChoobDecoderTask extends ChoobTask
 		this.event = event;
 	}
 
+	@Override
 	public synchronized void run()
 	{
 		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
@@ -48,7 +49,7 @@ public class ChoobDecoderTask extends ChoobTask
 		Message mes = null;
 		if (event instanceof Message)
 			mes = (Message)event;
-		
+
 		if (event instanceof NickChange)
 		{
 			NickChange nc = (NickChange)event;
@@ -64,7 +65,7 @@ public class ChoobDecoderTask extends ChoobTask
 		// Check if the message looks like a command in any way.
 		Matcher ma = null;
 		boolean mafind = false;
-		if (event instanceof CommandEvent)
+		if (event instanceof CommandEvent && mes != null)
 		{
 			// First, is does it have a trigger?
 			String matchAgainst = mes.getMessage();

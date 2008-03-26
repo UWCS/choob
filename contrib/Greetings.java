@@ -86,7 +86,7 @@ class GreetingsParserHandler extends DefaultHandler
 	@Override
 	public void ignorableWhitespace(char buf[], int offset, int len) throws SAXException { }
 	@Override
-	public void processingInstruction(String target, String data) throws SAXException {	}
+	public void processingInstruction(String target, String dat) throws SAXException {	}
 
 	// These aren't our problem either. Booooooooooooooooooooooooooring.
 	@Override

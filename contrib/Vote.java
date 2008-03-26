@@ -621,7 +621,7 @@ public class Vote {
 			
 			List<String> results = new ArrayList<String>();
 			boolean first1 = true, first0 = true;
-			List<String> winners = null;
+			List<String> winners = new ArrayList<String>();
 			StringBuilder newResponses = new StringBuilder();
 			StringBuilder newResults = new StringBuilder();
 			for(int i = max; i >= 0; i--) {
