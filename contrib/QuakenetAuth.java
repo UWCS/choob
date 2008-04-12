@@ -31,9 +31,8 @@ public class QuakenetAuth {
 	private static int TIMEOUT = 10000;
 	
 	private boolean hadToAuth = false;
-	
-	final Pattern validAuthReply = Pattern.compile("^(.*) is authed as (.*)\\..?$");
-	final Pattern notAuthedReply = Pattern.compile("^(.*) is NOT authed.?$");
+	final Pattern validAuthReply = Pattern.compile("^\\-Information for user (.*) \\(using account (.*)\\):");
+	final Pattern notAuthedReply = Pattern.compile("^User (.*) is not authed\\.$");
 
 	private Modules mods;
 	private IRCInterface irc;
@@ -212,7 +211,7 @@ public class QuakenetAuth {
 		String nick = null;
 		String account = null;
 		
-		if (mes.getMessage().matches(".*(?i:/msg Q@Cserve.quakenet.org auth).*")) {
+		if (mes.getMessage().matches(".*(?i:whois is only available to authed users.  Try AUTH to authenticate with your)")) {
 			// Oh dear. We need to log in.
 			String user = null;
 			String pass = null;
@@ -244,11 +243,6 @@ public class QuakenetAuth {
 		}
 		
 		if (!whoisfallback) {
-					
-			if (mes.getMessage().indexOf("authed") == -1) {
-				// Not what we were looking for
-				return;
-			}
 			Matcher ma = validAuthReply.matcher(Colors.removeFormattingAndColors(mes.getMessage()));
 			if (!ma.matches()) {
 				// User is not authed get their username and set this
