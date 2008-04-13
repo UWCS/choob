@@ -13,7 +13,7 @@ public class Conversions {
 
 	public String[] info() {
 		return new String[] { "Conversions plugin.", "The Choob Team",
-				"choob@uwcs.co.uk", "$Rev$$Dat$" };
+				"choob@uwcs.co.uk", "$Rev$$Date$" };
 	}
 
 	enum conversionTypes {
