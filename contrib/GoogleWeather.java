@@ -3,6 +3,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
+import java.net.URLEncoder;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -71,7 +72,7 @@ public class GoogleWeather
 	
 	private String getWeather(String weatherLocation) throws IOException, JAXBException, LocationNotFoundException
 	{
-		GoogleMapsResponse response = getXmlFromHTTP(baseURL + weatherLocation, DATA_TYPES);
+		GoogleMapsResponse response = getXmlFromHTTP(baseURL + URLEncoder.encode(weatherLocation), DATA_TYPES);
 		if (response == null || response.getWeather() == null || response.getWeather().getCurrentConditions() == null)
 			throw new LocationNotFoundException();
 		String conditions = response.getWeather().getCurrentConditions().getCondition().getData();
