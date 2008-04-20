@@ -94,7 +94,7 @@ public final class Choob extends PircBot
 		// Use sensible charset, ignoring the platform-default.
 		try
 		{
-			setEncoding("ISO-8859-1");
+			setEncoding("UTF-8");
 		}
 		catch(UnsupportedEncodingException e)
 		{}
