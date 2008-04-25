@@ -226,6 +226,8 @@ public class ObjectDBTransaction // Needs to be non-final
 		clsTypeMap.put(String.class, TYPE_TEXT);
 		dbReverseTypeMap.put(TYPE_TEXT, "TEXT");
 		dbIndexLenMap.put(TYPE_TEXT, "(16)");
+		
+		dbTypeMap.put("mediumtext", TYPE_TEXT); // Allow mediumtext in database. Mysql auto-converts to mediumtext sometimes.
 	}
 
 	/**

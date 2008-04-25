@@ -246,27 +246,30 @@ public class SUSEFactoids
 		"<Factoid1> is the name of the factoid to link",
 		"<Factoid2> is the factoid to link to"
 	};
+	final Pattern linkPattern = Pattern.compile("(.{2,}?)\\s+(?:to)\\s+(.{3,})");
 	public void commandLink(Message mes) throws ChoobException
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.factoids.remember"), mes);
 
-		
-		
-		List<String> params = mods.util.getParams(mes);
-		if (params.size() != 3)
+		List<String> params = mods.util.getParams(mes, 1);
+		Matcher linkMatcher = linkPattern.matcher(params.get(1));
+		if (linkMatcher.find())
 		{
-			
+			String fact1 = linkMatcher.group(1).toLowerCase();
+			String fact2 = linkMatcher.group(2).toLowerCase();
+			try
+			{
+				linkFact(fact1, fact2, mes.getContext());
+				irc.sendContextReply(mes, "Linked " + fact1 + " to " + fact2);
+			} catch (FactNotFoundException e)
+			{
+				irc.sendContextReply(mes, "Could not find the target fact, ensure it exists.");
+				return;		
+			}
+		} else
+		{
 			irc.sendContextReply(mes, "You must specify source and target factoid names");
 			return;
-		}
-		try
-		{
-			linkFact(params.get(1), params.get(2), mes.getContext());
-			irc.sendContextReply(mes, "Linked " + params.get(1) + " to " + params.get(2));
-		} catch (FactNotFoundException e)
-		{
-			irc.sendContextReply(mes, "Could not find the target fact, ensure it exists.");
-			return;		
 		}
 	}
 	
@@ -282,10 +285,9 @@ public class SUSEFactoids
 		mods.security.checkNickPerm(new ChoobPermission("plugins.factoids.remember"), mes);
 
 		
-		List<String> params = mods.util.getParams(mes);
+		List<String> params = mods.util.getParams(mes,1);
 		if (params.size() != 2)
 		{
-			
 			irc.sendContextReply(mes, "You must specify factoid name");
 			return;
 		}
@@ -335,7 +337,7 @@ public class SUSEFactoids
 		} catch (FactNotFoundException e)
 		{
 			fact = new Fact(subject);
-			fact.addConfirmedFact("This factoid used to be linked to " + subject, "unknown");
+			fact.addConfirmedFact("This factoid used to be linked to " + targetSubject, "unknown");
 			fact.lang = getChannelLanguage(context);
 			fact.linkedFactoid = targetSubject;
 			mods.odb.save(fact);		
@@ -725,16 +727,18 @@ public class SUSEFactoids
 		{
 			return true;
 		}
-
+		List<String> params = mods.util.getParams(mes, 0);
+		String lookup = ((params.get(0)).replaceAll("@.*",""));
+		String isAlias = lookup.replaceAll("\\s.*","");
 		try
 		{
-			if (mods.plugin.callAPI("Alias", "Get", mods.util.getParams(mes, 0).get(0)) != null)
+			if (mods.plugin.callAPI("Alias", "Get",isAlias) != null)
 			{
 				return true;
 			}
 		} catch (ChoobNoSuchCallException e)
 		{
-			return false;
+			return true;
 		}
 
 		return false;
