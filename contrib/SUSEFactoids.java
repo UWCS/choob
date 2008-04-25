@@ -378,13 +378,11 @@ public class SUSEFactoids
 	private Fact getExactFact(String subject,String context) throws FactNotFoundException
 	{
 		List<Fact> facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + getChannelLanguage(context) + "\"");
-		System.out.println("EFacts.size " + facts.size());
 		//If none for our language, find for default language
 		if (facts.size() == 0 || ((facts.get(0).whatis() == null) && (facts.get(0).linkedFactoid == null)))
 		{
 			facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + DEFAULT_LANG + "\"");
 		}
-		System.out.println("EFacts.size2 " + facts.size());
 		if (facts.size() > 0) 
 			return facts.get(0);
 		else 
@@ -393,16 +391,13 @@ public class SUSEFactoids
 	
 	private Fact getFact(String subject,String context, int i) throws FactNotFoundException
 	{
-		System.out.println("Get Fact called with " + subject + " " + context + " " + i);
 		//Get facts for our preferred language.
 		List<Fact> facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + getChannelLanguage(context) + "\"");
-		System.out.println("Facts.size " + facts.size());
 		//If none for our language, find for default language
 		if (facts.size() == 0 || ((facts.get(0).whatis() == null) && (facts.get(0).linkedFactoid == null)))
 		{
 			facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + DEFAULT_LANG + "\"");
 		}
-		System.out.println("Facts.size2 " + facts.size());
 		//Follow links as appropriate and return the found fact.
 		if ((facts.size() > 0) && (i < MAX_DEPTH))
 		{
@@ -531,11 +526,9 @@ public class SUSEFactoids
 	private void whatIs(Message mes, boolean quiet, String request)
 	{
 		//Get the components we're interested in
-		System.out.println("1");
 		final String subject = getSubject(request);
 		final String target = getTarget(request);
 		final ReplyMode replyMode = getReplyMode(request);
-		System.out.println("2");
 		//Avoid multiple people requesting same factoid at the same time.
 		//Often happens in a busy channel.
 		synchronized(locks)
@@ -544,7 +537,6 @@ public class SUSEFactoids
 				return;
 			locks.add(subject);
 		}
-		System.out.println("3");
 		try 
 		{
 			sendToIRC(mes, replyMode, target, getFact(subject,mes.getContext()));
@@ -556,8 +548,7 @@ public class SUSEFactoids
 		} finally
 		{
 			//Remove the subject lock in 5s.
-			mods.interval.callBack(subject, 5000, 1);	
-			System.out.println("4");
+			mods.interval.callBack(subject, 5000, 1);
 		}
 	}
 		 
