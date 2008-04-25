@@ -1535,7 +1535,7 @@
   }
 
   public ObjectDBClauseParserTokenManager token_source;
-  SimpleCharStream jj_input_stream;
+  JavaCharStream jj_input_stream;
   public Token token, jj_nt;
   private int jj_ntk;
   private int jj_gen;
@@ -1557,7 +1557,7 @@
      this(stream, null);
   }
   public ObjectDBClauseParser(java.io.InputStream stream, String encoding) {
-    try { jj_input_stream = new SimpleCharStream(stream, encoding, 1, 1); } catch(java.io.UnsupportedEncodingException e) { throw new RuntimeException(e); }
+    try { jj_input_stream = new JavaCharStream(stream, encoding, 1, 1); } catch(java.io.UnsupportedEncodingException e) { throw new RuntimeException(e); }
     token_source = new ObjectDBClauseParserTokenManager(jj_input_stream);
     token = new Token();
     jj_ntk = -1;
@@ -1579,7 +1579,7 @@
   }
 
   public ObjectDBClauseParser(java.io.Reader stream) {
-    jj_input_stream = new SimpleCharStream(stream, 1, 1);
+    jj_input_stream = new JavaCharStream(stream, 1, 1);
     token_source = new ObjectDBClauseParserTokenManager(jj_input_stream);
     token = new Token();
     jj_ntk = -1;
@@ -1652,7 +1652,7 @@
       return (jj_ntk = jj_nt.kind);
   }
 
-  private java.util.Vector<int[]> jj_expentries = new java.util.Vector<int[]>();
+  private java.util.Vector jj_expentries = new java.util.Vector();
   private int[] jj_expentry;
   private int jj_kind = -1;
 

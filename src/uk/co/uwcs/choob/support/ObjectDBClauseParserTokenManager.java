@@ -630,6 +630,9 @@ private final void jjCheckNAddStates(int start)
    jjCheckNAdd(jjnextStates[start + 1]);
 }
 static final long[] jjbitVec0 = {
+   0xfffffffffffffffeL, 0xffffffffffffffffL, 0xffffffffffffffffL, 0xffffffffffffffffL
+};
+static final long[] jjbitVec2 = {
    0x0L, 0x0L, 0xffffffffffffffffL, 0xffffffffffffffffL
 };
 private final int jjMoveNfa_0(int startState, int curPos)
@@ -1492,6 +1495,9 @@ private final int jjMoveNfa_0(int startState, int curPos)
       }
       else
       {
+         int hiByte = (int)(curChar >> 8);
+         int i1 = hiByte >> 6;
+         long l1 = 1L << (hiByte & 077);
          int i2 = (curChar & 0xff) >> 6;
          long l2 = 1L << (curChar & 077);
          MatchLoop: do
@@ -1500,12 +1506,12 @@ private final int jjMoveNfa_0(int startState, int curPos)
             {
                case 17:
                case 19:
-                  if ((jjbitVec0[i2] & l2) != 0L)
+                  if (jjCanMove_0(hiByte, i1, i2, l1, l2))
                      jjCheckNAddStates(8, 10);
                   break;
                case 22:
                case 24:
-                  if ((jjbitVec0[i2] & l2) != 0L)
+                  if (jjCanMove_0(hiByte, i1, i2, l1, l2))
                      jjCheckNAddStates(5, 7);
                   break;
                default : break;
@@ -1530,6 +1536,18 @@ static final int[] jjnextStates = {
    95, 97, 98, 61, 67, 68, 62, 84, 92, 93, 110, 113, 117, 122, 75, 82, 
    65, 49, 51, 59, 45, 46, 29, 38, 
 };
+private static final boolean jjCanMove_0(int hiByte, int i1, int i2, long l1, long l2)
+{
+   switch(hiByte)
+   {
+      case 0:
+         return ((jjbitVec2[i2] & l2) != 0L);
+      default : 
+         if ((jjbitVec0[i1] & l1) != 0L)
+            return true;
+         return false;
+   }
+}
 public static final String[] jjstrLiteralImages = {
 "", null, null, null, null, null, null, null, null, null, null, null, null, 
 null, null, null, null, null, null, null, null, "\50", "\51", null, null, null, null, 
@@ -1545,20 +1563,20 @@ static final long[] jjtoToken = {
 static final long[] jjtoSkip = {
    0xeL, 
 };
-protected SimpleCharStream input_stream;
+protected JavaCharStream input_stream;
 private final int[] jjrounds = new int[123];
 private final int[] jjstateSet = new int[246];
 protected char curChar;
-public ObjectDBClauseParserTokenManager(SimpleCharStream stream){
-   if (SimpleCharStream.staticFlag)
+public ObjectDBClauseParserTokenManager(JavaCharStream stream){
+   if (JavaCharStream.staticFlag)
       throw new Error("ERROR: Cannot use a static CharStream class with a non-static lexical analyzer.");
    input_stream = stream;
 }
-public ObjectDBClauseParserTokenManager(SimpleCharStream stream, int lexState){
+public ObjectDBClauseParserTokenManager(JavaCharStream stream, int lexState){
    this(stream);
    SwitchTo(lexState);
 }
-public void ReInit(SimpleCharStream stream)
+public void ReInit(JavaCharStream stream)
 {
    jjmatchedPos = jjnewStateCnt = 0;
    curLexState = defaultLexState;
@@ -1572,7 +1590,7 @@ private final void ReInitRounds()
    for (i = 123; i-- > 0;)
       jjrounds[i] = 0x80000000;
 }
-public void ReInit(SimpleCharStream stream, int lexState)
+public void ReInit(JavaCharStream stream, int lexState)
 {
    ReInit(stream);
    SwitchTo(lexState);
