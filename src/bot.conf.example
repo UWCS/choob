@@ -15,6 +15,9 @@ dbServer=localhost
 # Trigger that commands should be prefixed with.
 botTrigger=:
 
+# Limit time between messages
+messageLimit = 0
+
 # IRC Server to connect to. Even if you aren't planning on using Choob on irc.uwcs.co.uk, we'd love it if you'd come say hello anyway.
 server=irc.uwcs.co.uk
 

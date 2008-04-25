@@ -37,7 +37,7 @@ public final class Choob extends PircBot
 
 	private ConfigReader conf;
 	private int exitCode;
-
+	private int messageLimit;
 	/**
 	 * Constructor for Choob, initialises vital variables.
 	 */
@@ -58,6 +58,10 @@ public final class Choob extends PircBot
 
 		trigger = conf.getSettingFallback("botTrigger","~");
 
+		messageLimit = Integer.valueOf(conf.getSettingFallback("messageLimit","0"));
+		if (messageLimit < 0)
+			messageLimit = 0;
+		
 		// Create a shiny synchronised (americans--) list
 		intervalList = new ArrayList<Interval>();
 
@@ -132,8 +136,8 @@ public final class Choob extends PircBot
 			throw e;
 		}
 
-		// Disable PircBot's flood protection, reducing percieved lag.
-		this.setMessageDelay(0);
+		// Set PircBot's flood protection
+		this.setMessageDelay(messageLimit);
 
 		// Set Version (the comment).
 		this.setVersion("Choob SVN - http://svn.uwcs.co.uk/repos/choob/");
