@@ -122,7 +122,7 @@ public class Where
 
 	// "User", hostname, server, nick, ...
 	final Pattern splitUp = Pattern.compile("^~?([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) .*");
-	public void onServerResponse(ServerResponse resp)
+	public synchronized void onServerResponse(ServerResponse resp)
 	{
 		// Ensure resp is related to WHO, and remember if we're at the end. I'm sure there's a sane way to write this.
 		final boolean atend = resp.getCode() == ReplyConstants.RPL_ENDOFWHO;
