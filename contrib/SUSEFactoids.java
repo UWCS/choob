@@ -359,7 +359,6 @@ public class SUSEFactoids
 			locks.remove(param);
 		}
 	}
-	
 
 	class FactNotFoundException extends Exception {};
 	private static final int MAX_DEPTH = 5;
@@ -382,9 +381,10 @@ public class SUSEFactoids
 		List<Fact> facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + getChannelLanguage(context) + "\"");
 		//If none for our language, find for default language
 		if (facts.size() == 0 || ((facts.get(0).whatis() == null) && (facts.get(0).linkedFactoid == null)))
-		{
 			facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + DEFAULT_LANG + "\"");
-		}
+		//Fall back to any language, if there are no other alternatives.
+		if (facts.size() == 0 || ((facts.get(0).whatis() == null) && (facts.get(0).linkedFactoid == null)))
+			facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\"");
 		if (facts.size() > 0) 
 			return facts.get(0);
 		else 
@@ -397,9 +397,11 @@ public class SUSEFactoids
 		List<Fact> facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + getChannelLanguage(context) + "\"");
 		//If none for our language, find for default language
 		if (facts.size() == 0 || ((facts.get(0).whatis() == null) && (facts.get(0).linkedFactoid == null)))
-		{
 			facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + DEFAULT_LANG + "\"");
-		}
+		//Fall back to any language, if there are no other alternatives.
+		if (facts.size() == 0 || ((facts.get(0).whatis() == null) && (facts.get(0).linkedFactoid == null)))
+			facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\"");
+		
 		//Follow links as appropriate and return the found fact.
 		if ((facts.size() > 0) && (i < MAX_DEPTH))
 		{
