@@ -362,10 +362,36 @@ public class Events
 	};
 	public void commandInfo(Message mes) throws ChoobException
 	{
+		infoOn(mes);
+	}
+
+	private void infoOn(Message mes) throws ChoobException
+	{
 		String comp=mods.util.getParamString(mes).toLowerCase();
 		if (comp.equals(""))
 		{
-			irc.sendContextReply(mes, "Please name the event you want info on.");
+			ArrayList<EventItem> events=readEventsData();
+			int c=events.size();
+
+			if (events.isEmpty())
+			{
+				irc.sendContextReply(mes, "There are no events! :'(");
+				return;
+			}
+
+			StringBuilder rep = new StringBuilder();
+			for (EventItem ev : events)
+			{
+				rep.append(ev.boldName());
+				if (events.size() < 8)
+					rep.append(" at ").append(ev.location);
+
+				rep.append(ev.shortDetails())
+					.append(ev.inprogress() ? " (started " + mods.date.timeMicroStamp((new Date()).getTime() - ev.start.getTime()) + " ago)" : "")
+					.append(ev.shortSignups())
+					.append(--c != 0 ? ", " : ".");
+			}
+			irc.sendContextReply(mes, "Events: " + rep.toString());
 			return;
 		}
 
@@ -556,28 +582,7 @@ public class Events
 	};
 	public void commandList(Message mes) throws ChoobException
 	{
-		ArrayList<EventItem> events=readEventsData();
-		int c=events.size();
-
-		if (events.isEmpty())
-		{
-			irc.sendContextReply(mes, "There are no events! :'(");
-			return;
-		}
-
-		StringBuilder rep = new StringBuilder();
-		for (EventItem ev : events)
-		{
-			rep.append(ev.boldName());
-			if (events.size() < 8)
-				rep.append(" at ").append(ev.location);
-
-			rep.append(ev.shortDetails())
-				.append(ev.inprogress() ? " (started " + mods.date.timeMicroStamp((new Date()).getTime() - ev.start.getTime()) + " ago)" : "")
-				.append(ev.shortSignups())
-				.append(--c != 0 ? ", " : ".");
-		}
-		irc.sendContextReply(mes, "Events: " + rep.toString());
+		infoOn(mes);
 	}
 
 	private static String nameList(List<String> names, Message mes, int after, String message)
