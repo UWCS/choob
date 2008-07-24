@@ -372,8 +372,8 @@ public final class PluginModule
 	public int getConcurrencyLimit(final String pluginName)
 	{
 		// Small hack to allow the ChoobTask to return a value. Default here is
-		// 1 thread/plugin.
-		final int[] limit = new int[] { 1 };
+		// 2 threads/plugin.
+		final int[] limit = new int[] { 2 };
 
 		ChoobTask task = new ChoobTask(null, "getConcurrencyLimit") {
 			public void run() {
