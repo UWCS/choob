@@ -158,8 +158,7 @@ public class QuakenetAuth {
 			// 401 Nick not found.
 			Matcher ma = Pattern.compile("^[^ ]+ ([^ ]+) ").matcher(resp.getResponse().trim());
 			if (ma.find() && ma.group(1).trim().toLowerCase().equals("q")) {
-				// Q is dead.
-				// XXX Handle - perhaps using L?
+				// Q is dead, fall back to whois responses.
 				whoisfallback = true;
 			}
 		}
