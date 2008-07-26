@@ -30,7 +30,7 @@ public class ChannelAdmin {
         return new String[] {
             "Plugin to allow administration of channels.", "The Choob Team",
             "choob@uwcs.co.uk",
-            "$Rev: 1039 $$Date: 2008-03-08 02:19:12 +0000 (Sat, 08 Mar 2008) $"
+            "$Rev$$Date$"
         };
     }
 
