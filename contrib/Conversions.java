@@ -22,6 +22,11 @@ public class Conversions {
 
 	// TODO: Having all of this data just hard coded is dirty.
 	private static final HashMap<String, conversionTypes> typeMapping = new HashMap<String, conversionTypes>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -8050801112451734011L;
+
 		{
 			// Metric lengths
 			put("millimetre", conversionTypes.LENGTH);
@@ -83,6 +88,11 @@ public class Conversions {
 	};
 
 	private static final HashMap<String, String> typeAliases = new HashMap<String, String>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 8978542459094632598L;
+
 		{
 			// Metric lengths
 			put("mm", "millimetre");
@@ -189,6 +199,11 @@ public class Conversions {
 	};
 
 	private static final HashMap<String, Double> lengthsInMetres = new HashMap<String, Double>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -2368330220527173449L;
+
 		{
 			put("millimetre", 0.001);
 			put("centimetre", 0.01);
@@ -205,6 +220,11 @@ public class Conversions {
 	};
 
 	private static final HashMap<String, Double> volumesInLitres = new HashMap<String, Double>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 2449249239342568114L;
+
 		{
 			put("millilitre", 0.001);
 			put("litre", 1.0);
@@ -220,6 +240,11 @@ public class Conversions {
 	};
 
 	private static final HashMap<String, Double> massesInKilograms = new HashMap<String, Double>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -3137899007763138868L;
+
 		{
 			put("gram", 0.001);
 			put("kilogram", 1.0);
@@ -234,6 +259,11 @@ public class Conversions {
 	};
 
 	private static final HashMap<String, Double> velocitiesInMetresPerSecond = new HashMap<String, Double>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 206156628830835986L;
+
 		{
 			put("metrespersecond", 1.0);
 			put("kilometresperhour", 0.277777778);
