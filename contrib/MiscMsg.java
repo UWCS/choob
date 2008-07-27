@@ -267,7 +267,6 @@ public class MiscMsg
 			1444089600 // 2015-10-06
 		};
 
-	@SuppressWarnings("null")
 	public void commandWeek(Message mes)
 	{
 		List<String> params = mods.util.getParams(mes);

@@ -12,6 +12,11 @@ package uk.co.uwcs.choob.support;
  */
 public class ParseException extends Exception {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2351699797840225244L;
+
   /**
    * This constructor is used by the method "generateParseException"
    * in the generated parser.  Calling this constructor generates

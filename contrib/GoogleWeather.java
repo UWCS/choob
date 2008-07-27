@@ -23,7 +23,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.*;
 import uk.co.uwcs.choob.support.events.Message;
-import javax.xml.ws.WebServiceException;
 
 /**
  * Plugin for Querying weather information from google.
@@ -50,7 +49,10 @@ public class GoogleWeather
 	}
 
 	private static final HashMap<String,String> symbols = new HashMap<String,String>()
-	{{
+	{
+		private static final long serialVersionUID = 997592107556024573L;
+
+	{
 		put("Cloudy","☁");
 		put("Rain","☂");
 	}};
@@ -72,7 +74,7 @@ public class GoogleWeather
 	
 	private String getWeather(String weatherLocation) throws IOException, JAXBException, LocationNotFoundException
 	{
-		GoogleMapsResponse response = getXmlFromHTTP(baseURL + URLEncoder.encode(weatherLocation), DATA_TYPES);
+		GoogleMapsResponse response = getXmlFromHTTP(baseURL + URLEncoder.encode(weatherLocation, "UTF-8"), DATA_TYPES);
 		if (response == null || response.getWeather() == null || response.getWeather().getCurrentConditions() == null)
 			throw new LocationNotFoundException();
 		String conditions = response.getWeather().getCurrentConditions().getCondition().getData();
@@ -193,7 +195,12 @@ public class GoogleWeather
 	}
 }
 
-class LocationNotFoundException extends Exception {}
+class LocationNotFoundException extends Exception {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3732524579011476793L;}
 
 /**
  * Represents the response google maps will send us

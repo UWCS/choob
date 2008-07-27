@@ -360,7 +360,14 @@ public class SUSEFactoids
 		}
 	}
 
-	class FactNotFoundException extends Exception {};
+	class FactNotFoundException extends Exception {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 2747650133533345970L;
+	};
+	
 	private static final int MAX_DEPTH = 5;
 	/**
 	 * Obtains fact with specified subject, for specified channel context.
