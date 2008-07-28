@@ -98,10 +98,20 @@ public final class Choob extends PircBot
 		// Use sensible charset, ignoring the platform-default.
 		try
 		{
-			setEncoding("UTF-8");
+			setEncoding(conf.getSettingFallback("botEncoding", "UTF-8"));
 		}
 		catch(UnsupportedEncodingException e)
-		{}
+		{
+			// Chances are the user entered a crap encoding here, fall back to UTF-8
+			try {
+				setEncoding("UTF-8");
+			} catch (UnsupportedEncodingException ex) {
+				// Really broken
+				System.out.println("Could not set a sensible encoding, exiting.");
+				System.exit(6);
+				return;
+			}
+		}
 
 		// Install security manager etc.
 		setupSecurity();
@@ -116,7 +126,7 @@ public final class Choob extends PircBot
 		this.setName(conf.getSettingFallback("botName", "Choob"));
 
 		// Set the bot's hostname.
-		this.setLogin("Choob");
+		this.setLogin(conf.getSettingFallback("botIdent", "Choob"));
 
 		// Name changed now...
 		modules.util.updateTrigger();

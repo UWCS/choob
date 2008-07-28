@@ -37,7 +37,9 @@ public final class ConfigReader
 		{
 			return getSetting(setting);
 		}
-		catch (ChoobException e) {}
+		catch (ChoobException e) {
+			System.out.println("Warning: Setting " + setting + " was not set, falling back to " + fallback);
+		}
 
 		return fallback;
 	}
