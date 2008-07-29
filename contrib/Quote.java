@@ -1612,82 +1612,127 @@ public class Quote
 		}
 	}
 
+	class NoJoinQuoteException extends Exception { }
+	/**
+	 * @return the quote string to use as a greeting when this user joins the channel
+	 * @throws NoJoinQuoteException if no quote should be used when the user joins the channel.
+	 */
+	private String getGreetingQuoteForUserJoinEvent(ChannelJoin ev) throws NoJoinQuoteException
+	{
+		if ( shouldQuote(ev) )
+		{
+			try
+			{
+				String quote = null;
+				quote = apiSingleLineQuote( ev.getNick(), ev.getContext(), "score:>-1" );
+				if (quote == null)
+					quote = apiSingleLineQuote( ev.getNick(), ev.getContext());
+				if (quote != null)
+					return quote;
+			} catch (ObjectDBError e)
+			{
+				//We'll just have no join quote if there is an error reading the database.
+				System.err.println(e.getMessage());
+				e.printStackTrace();
+			}
+		}
+
+		throw new NoJoinQuoteException();
+	}
+
+	class NoGreetingException extends Exception { }
+	/**
+	 * @return the greeting to use when this user joins the channel
+	 * @throws NoGreetingException if no greeting should be used when the user joins the channel.
+	 */
+	private String getGreetingForUserJoinEvent(ChannelJoin ev) throws NoGreetingException
+	{
+		if (!shouldMessage(ev))
+			throw new NoGreetingException();
+
+		String greeting;
+		try
+		{
+			return (String)mods.plugin.callAPI("Greetings", "GreetingFor", ev) + ev.getNick();
+		}
+		catch (ChoobNoSuchCallException e)
+		{
+			return "Hello, " + ev.getNick();
+		}
+	}
+
+	/**
+	 * Adds apostrophes into user's nicks so that they do not get pinged by other people's joins.
+	 */
+	private String apostrophiseNicks(String toApostrophise, ChannelJoin ev)
+	{
+		StringBuilder nick_r = new StringBuilder();
+		List<String> nicklist = irc.getUsersList(ev.getChannel());
+
+		nick_r.append("(?i)\\b(?:");
+		nick_r.append(nicklist.remove(0));
+
+		for (String nick : nicklist)
+		{
+			if ( nick.equals( ev.getNick() ) )
+				continue;
+
+			nick.replaceAll("([^a-zA-Z0-9_])", "\\\\$1");
+
+			nick_r.append("|");
+			nick_r.append(nick);
+		}
+
+		nick_r.append(")\\b");
+
+		// Match the nicks, ignoring case.
+		Pattern nick_pattern = Pattern.compile(nick_r.toString());
+		Matcher nick_matcher = nick_pattern.matcher(toApostrophise);
+
+		// Insert an apostrophe into all occurrences.
+		StringBuffer quote_sb = new StringBuffer(); //Needs to be string buffer (see sun bug 5066679)
+		while (nick_matcher.find()) {
+			// FIXME: This is as ugly as your mum.
+			nick_matcher.appendReplacement(quote_sb, "");
+			StringBuilder new_nick = new StringBuilder(nick_matcher.group());
+			/* FIXME: Why is this if() really needed?
+			* 
+			* It breaks in real life, even without pathological nicks.
+			* It could be a problem with the regex above, or getUsers().
+			*/
+			if (new_nick.length() > 0)
+				new_nick.insert(1, '\'');
+			quote_sb.append(new_nick);
+		}
+		nick_matcher.appendTail(quote_sb);
+		return quote_sb.toString();
+	}
+
 	public synchronized  void onJoin( ChannelJoin ev )
 	{
 		if (ev.getLogin().endsWith("Choob") || ev.getLogin().endsWith("choob")) // XXX
 			return;
 
-		if (shouldMessage(ev))
+		try
 		{
-			String quote;
-			if ( shouldQuote(ev) )
-			{
-				quote = apiSingleLineQuote( ev.getNick(), ev.getContext(), "score:>-1" );
-				if (quote == null)
-					quote = apiSingleLineQuote( ev.getNick(), ev.getContext());
-			}
-			else
-				quote = null;
+			final StringBuilder greetingBuilder = new StringBuilder();
+			greetingBuilder.append(getGreetingForUserJoinEvent(ev));
 
-			String greeting;
 			try
 			{
-				greeting = (String)mods.plugin.callAPI("Greetings", "GreetingFor", ev);
-			}
-			catch (ChoobNoSuchCallException e)
+				final String greetingQuote = getGreetingQuoteForUserJoinEvent(ev);
+				greetingBuilder
+					.append(": \"")
+					.append(apostrophiseNicks(greetingQuote,ev))
+					.append("\"");
+			} catch (NoJoinQuoteException e)
 			{
-				greeting = "Hello, ";
+				greetingBuilder.append("!");
 			}
-
-			if (quote == null)
-				irc.sendContextMessage( ev, greeting + ev.getNick() + "!");
-			else
-			{
-				// Build a regexp of all the nicks in the channel.
-				StringBuffer nick_r = new StringBuffer();
-				List<String> nicklist = irc.getUsersList(ev.getChannel());
-
-				nick_r.append("(?i)\\b(?:");
-				nick_r.append(nicklist.remove(0));
-
-				for (String nick : nicklist)
-				{
-					if ( nick.equals( ev.getNick() ) )
-						continue;
-
-					nick.replaceAll("([^a-zA-Z0-9_])", "\\\\$1");
-
-					nick_r.append("|");
-					nick_r.append(nick);
-				}
-
-				nick_r.append(")\\b");
-
-				// Match the nicks, ignoring case.
-				Pattern nick_pattern = Pattern.compile(nick_r.toString());
-				Matcher nick_matcher = nick_pattern.matcher(quote);
-
-				// Insert an apostrophe into all occurrences.
-				StringBuffer quote_sb = new StringBuffer();
-				while (nick_matcher.find()) {
-					// FIXME: This is as ugly as your mum.
-					nick_matcher.appendReplacement(quote_sb, "");
-					StringBuffer new_nick = new StringBuffer(nick_matcher.group());
-					/* FIXME: Why is this if() really needed?
-					 * 
-					 * It breaks in real life, even without pathological nicks.
-					 * It could be a problem with the regex above, or getUsers().
-					 */
-					if (new_nick.length() > 0)
-						new_nick.insert(1, '\'');
-					quote_sb.append(new_nick);
-				}
-				nick_matcher.appendTail(quote_sb);
-				quote = quote_sb.toString();
-
-				// Reply with escaped quote.
-				irc.sendContextMessage( ev, greeting + ev.getNick() + ": \"" + quote + "\"");
-			}
+			irc.sendContextMessage( ev, greetingBuilder.toString() ); 
+		} catch (NoGreetingException e)
+		{
+			return;
 		}
 	}
 
