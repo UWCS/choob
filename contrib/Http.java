@@ -18,13 +18,45 @@ class HashedStringObject
 
 public class Http
 {
-	final int portNumber = 8023;
+	int portNumber = 8023;
 
 	// If this is null, the local machine's ip will be used.
-	final String externalName =
-		null
-	;
+	String externalName = null;
+	
+	public String[] optionsGeneral = { "PortNumber", "ExternalName" };
+	public String[] optionsGeneralDefaults = { "8023", "" };
+	
+	// Check it's a number
+	public boolean optionCheckGeneralJoinQuote( String optionValue ) { 
+		try {			
+			portNumber = Integer.parseInt(optionValue);
+			
+			try
+			{
+				listener.close();
+			}
+			catch (IOException e) { }
+			listener = null;
+			
+			return true;
+		} catch (NumberFormatException e) {
+			return false;
+		}
+	}
+	
+	// No real checking required
+	public boolean optionCheckGeneralJoinMessage( String optionValue ) {
+		externalName = optionValue;
+		return true; 
+	}
 
+	public String[] helpOptionPortNumber = {
+			  "Port number to operate the web server on."
+	};
+	public String[] helpOptionExternalName = {
+			  "External hostname to display to users for this web server."
+	};
+	
 	public String[] info()
 	{
 		return new String[] {
@@ -55,6 +87,20 @@ public class Http
 
 	public Http (Modules mods, IRCInterface irc) throws ChoobException
 	{
+		try {
+			String portString = (String)mods.plugin.callAPI("Options", "GetGeneralOption", "PortNumber");
+			if (portString != null) {
+				portNumber = Integer.parseInt(portString);
+			} else {
+				portString = optionsGeneralDefaults[0];
+			}
+			externalName = (String)mods.plugin.callAPI("Options", "GetGeneralOption", "ExternalName");
+		}
+		catch (ChoobNoSuchPluginException e) {
+			
+		}
+		
+		
 		// First, try to get the socket from the old server
 		try
 		{
@@ -248,7 +294,7 @@ public class Http
 		
 		String address = externalName;
 		
-		if (address == null) {
+		if ((address == null) || (address.isEmpty())) {
 			try {
 				address = InetAddress.getLocalHost().getHostAddress();
 			} catch (UnknownHostException e) {
@@ -330,7 +376,7 @@ public class Http
 
 		String address = externalName;
 
-		if (address == null)
+		if ((address == null) || (address.isEmpty())) {
 			try
 			{
 				address = InetAddress.getLocalHost().getHostAddress();
@@ -339,8 +385,8 @@ public class Http
 			{
 				throw new ChoobException("Your network appears to be really, really broken.");
 			}
+		}
 
 		return "http://" + address + ":" + portNumber + "/store/" + hso.hash;
-
 	}
 }
