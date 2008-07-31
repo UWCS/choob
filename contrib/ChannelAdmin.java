@@ -149,9 +149,17 @@ public class ChannelAdmin {
                 irc.deOp(channel, userName);
                 break;
             case 2:
+            	if (irc.getNickname().equals(params[1])) {
+            		irc.sendContextReply(mes, "Can't deop myself!");
+            		break;
+            	}
                 irc.deOp(channel, params[1]);
                 break;
             case 3:
+            	if (irc.getNickname().equals(params[2])) {
+            		irc.sendContextReply(mes, "Can't deop myself!");
+            		break;
+            	}
                 irc.deOp(params[1], params[2]);
                 if (mes instanceof PrivateEvent) {
                     irc.sendContextReply(mes, "Okay");
@@ -277,9 +285,17 @@ public class ChannelAdmin {
                 irc.deVoice(channel, userName);
                 break;
             case 2:
+            	if (irc.getNickname().equals(params[1])) {
+            		irc.sendContextReply(mes, "Can't devoice myself!");
+            		break;
+            	}
                 irc.deVoice(channel, params[1]);
                 break;
             case 3:
+            	if (irc.getNickname().equals(params[1])) {
+            		irc.sendContextReply(mes, "Can't devoice myself!");
+            		break;
+            	}
                 irc.deVoice(params[1], params[2]);
                 if (mes instanceof PrivateEvent) {
                     irc.sendContextReply(mes, "Okay");
@@ -337,9 +353,17 @@ public class ChannelAdmin {
         try {
             switch (params.length) {
             case 3:
+            	if (irc.getNickname().equals(params[1])) {
+            		irc.sendContextReply(mes, "Can't kick myself!");
+            		break;
+            	}
                 irc.kick(channel, params[1], params[2]);
                 break;
             case 4:
+            	if (irc.getNickname().equals(params[2])) {
+            		irc.sendContextReply(mes, "Can't kick myself!");
+            		break;
+            	}
                 irc.kick(params[1], params[2], params[3]);
                 if (mes instanceof PrivateEvent) {
                     irc.sendContextReply(mes, "Okay");
@@ -397,9 +421,17 @@ public class ChannelAdmin {
         try {
             switch (params.length) {
             case 2:
+            	if (irc.getNickname().equals(params[1])) {
+            		irc.sendContextReply(mes, "Can't ban myself!");
+            		break;
+            	}
                 irc.ban(channel, params[1]);
                 break;
             case 3:
+            	if (irc.getNickname().equals(params[2])) {
+            		irc.sendContextReply(mes, "Can't ban myself!");
+            		break;
+            	}
                 irc.ban(params[1], params[2]);
                 if (mes instanceof PrivateEvent) {
                     irc.sendContextReply(mes, "Okay");
@@ -517,10 +549,18 @@ public class ChannelAdmin {
         try {
             switch (params.length) {
             case 3:
+            	if (irc.getNickname().equals(params[1])) {
+            		irc.sendContextReply(mes, "Can't kickban myself!");
+            		break;
+            	}
                 irc.ban(channel, params[1]);
                 irc.kick(channel, params[1], userName + ": " + params[2]);
                 break;
             case 4:
+            	if (irc.getNickname().equals(params[2])) {
+            		irc.sendContextReply(mes, "Can't kickban myself!");
+            		break;
+            	}
                 irc.ban(params[1], params[2]);
                 irc.kick(params[1], params[2], userName + ": " + params[3]);
                 if (mes instanceof PrivateEvent) {
