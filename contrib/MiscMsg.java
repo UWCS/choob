@@ -6,10 +6,14 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.ProduceMime;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
+@Path("MiscMsg")
 public class MiscMsg
 {
 	public String[] info()
@@ -41,6 +45,17 @@ public class MiscMsg
 	public void commandCT( Message mes )
 	{
 		randomReply(mes, new String[] { "Yes, your connection is working fine.", "No, your connection seems really broken." });
+	}
+	
+	/**
+	 * Example usage of Jersey plugin.
+	 */
+	@GET
+	@ProduceMime("text/plain")
+	@Path("ct")
+	public String ct()
+	{
+		return new String[] { "Yes, your connection is working fine.", "No, your connection seems really broken." }[(new Random()).nextInt(2)];
 	}
 
 	public String[] helpCommandTime = {
