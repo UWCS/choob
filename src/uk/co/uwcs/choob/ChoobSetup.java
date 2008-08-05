@@ -10,159 +10,149 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 /**
- * Set up the database to get Choob running.
+ * Sets up a minimal fresh instance of the bot
  * 
  * @author benji
  */
 public class ChoobSetup
 {
-	private final static File BOT_CONF_EXAMPLE = new File("bot.conf.example");
-	private final static File BOT_CONF = new File("bot.conf");
-	private final static File MINIMAL_DATABASE_DUMP = new File(".." + File.separator + "db" + File.separator + "minimal.db");
+	private final String databaseServer;
+	private final String databaseUserName;
+	private final String databasePassword;
+	private final String databaseName;
+	private final String botName;
+	private final String ircServer;
+	private final String ircChannel;
+	private final String rootUser;
 	
-	static
+	
+	private final File BOT_CONF_EXAMPLE = new File("bot.conf.example");
+	private final File BOT_CONF = new File("bot.conf");
+	private final File MINIMAL_DATABASE_DUMP = new File(".." + File.separator + "db" + File.separator + "minimal.db");
+	
+	public ChoobSetup
+		(
+			final String databaseServer,
+			final String databaseUserName,
+			final String databasePassword,
+			final String databaseName,
+			final String botName,
+			final String ircServer,
+			final String ircChannel,
+			final String rootUser
+		) throws MissingFilesException
 	{
+		
 		if (!BOT_CONF_EXAMPLE.exists())
-			throw new MissingFilesError("bot.conf.example does not exist, check your source tree.");
+			throw new MissingFilesException("bot.conf.example does not exist, check your source tree.");
 		if (!MINIMAL_DATABASE_DUMP.exists())
-			throw new MissingFilesError("minimal.db does not exist, check your source tree.");
-	}
-	
-	
-	
-	private static final ParamHandler dbServer = new ParamHandler("The database server to use.","Database server must be set.");
-	private static final ParamHandler dbUser = new ParamHandler("The username to use when connecting to the database server.","dbUser must be set.");
-	private static final ParamHandler database = new ParamHandler("The database name.","database must be set.");
-	private static final ParamHandler dbPass = new ParamHandler("The password to use when connecting to the database server.","dbPass must be set.");
-	private static final ParamHandler botName = new ParamHandler("The irc nick of your bot.","botName must be set.");
-	private static final ParamHandler ircServer = new ParamHandler("The irc server to connect to.","ircServer must be set.");
-	private static final ParamHandler ircChannel = new ParamHandler("The irc channel(s) to connect to (comma separate)","ircChannel must be set.");
-	private static final ParamHandler rootUser = new ParamHandler("The irc user to have full permissions on the bot", "rootUser must be set.");
-	
-	private static final Map<String, ParamHandler> params = new HashMap()
-	{{
-			put("dbServer",dbServer);
-			put("dbUser", dbUser);
-			put("database", database);
-			put("dbPass",  dbPass);
-			put("botName", botName);
-			put("ircServer", ircServer);
-			put("ircChannel", ircChannel);
-			put("rootUser", rootUser);
-	}};
-
-	private static void readParams(String[] args) throws InvalidUsageException
-	{
-		if (args.length != params.size())
-			throw new InvalidUsageException();
+			throw new MissingFilesException("minimal.db does not exist, check your source tree.");
 		
-		for (String arg : args)
-		{
-			String[] parts = arg.split("=");
-			if (parts.length != 2)
-			{
-				throw new InvalidUsageException("All parameters should be in the form Key=Value");
-			}
-			final ParamHandler ph;
-			if ((ph = params.get(parts[0])) != null)
-				ph.setValue(parts[1]);
-			else
-				throw new InvalidUsageException("Unknown parameter " + parts[0]);
-		}
+		checkParam(databaseServer, "Database Server must be specified.");
+		checkParam(databaseUserName, "Database Username must be specified.");
+		checkParam(databasePassword, "Database Password must be specified.");
+		checkParam(databaseName, "Database name must be specified.");
+		checkParam(botName, "The bot's name must be specified.");
+		checkParam(ircServer, "The irc server to connect to must be specified.");
+		checkParam(ircChannel, "The irc channel must be specified.");
+		checkParam(rootUser, "The bot irc root user must be specified.");
+		
+		this.databaseServer = databaseServer;
+		this.databaseUserName = databaseUserName;
+		this.databasePassword = databasePassword;
+		this.databaseName = databaseName;
+		this.botName = botName;
+		this.ircServer = ircServer;
+		this.ircChannel = ircChannel;
+		this.rootUser = rootUser;
 	}
 	
-	private static void printUsageAndExit(InvalidUsageException e)
-	{
-		System.err.println("*** WARNING: Running ChoobSetup will overwrite your bot config and database. ***");
-		
-		System.err.println(e.getMessage());
-		System.err.println();
-		System.err.print("Usage: $ ChoobSetup ");
-		for (String key : params.keySet())
-			System.err.print(key + "=<value> ");
-		System.err.println();
-		System.err.println("Where...");
-		for (String key : params.keySet())
-			System.err.println(key + " is " + params.get(key).getHelp());		
-		System.exit(-1);
-	}
-
-	public static void main(String[] args) 
+	public void setupChoob(final ChoobSetupStatus status) throws ChoobSetupException
 	{
 		try
 		{
-			readParams(args);
 			createBotConfFromExample();
-			System.out.println("Bot config created in " + BOT_CONF.getName());
-			importMinimalDatabaseDump();
-			System.out.println("Database imported from " + MINIMAL_DATABASE_DUMP.getName());
-			System.out.println("Choob is now ready to run.");
-		} catch (InvalidUsageException e)
+			status.onStatus(50, "Bot config created in " + BOT_CONF.getName());
+			setupDatabase();
+			status.onStatus(100, "Database imported from " + MINIMAL_DATABASE_DUMP.getName());
+		} catch (Exception ex)
 		{
-			printUsageAndExit(e);
-		} catch (IOException e)
-		{
-			System.err.println(e);
-			e.printStackTrace();
-		}catch (SQLException e)
-		{
-			System.err.println(e);
-			e.printStackTrace();
-		} catch (ClassNotFoundException e)
-		{
-			System.err.println(e);
-			e.printStackTrace();;
-		} catch (InstantiationException e)
-		{
-			System.err.println(e);
-			e.printStackTrace();
-		} catch (IllegalAccessException e)
-		{
-			System.err.println(e);
-			e.printStackTrace();
+			throw new ChoobSetupException(ex);
 		}
 	}
 	
-	private static void createBotConfFromExample() throws IOException, InvalidUsageException
+	private void checkParam(final Object o, final String messageIfNotSet) throws IllegalArgumentException
+	{
+		if ((o == null) || (o.toString().length() < 1))
+			throw new IllegalArgumentException(messageIfNotSet);
+	}
+	
+	
+	private void createBotConfFromExample() throws IOException, InvalidUsageException
 	{
 
 		Properties botConfProperties = new Properties();
 		botConfProperties.load(new FileInputStream(BOT_CONF_EXAMPLE));
 		
-		for(String str : params.keySet())
-			botConfProperties.setProperty(str, params.get(str).getValue());
+		botConfProperties.setProperty("dbServer", databaseServer);
+		botConfProperties.setProperty("dbUser", databaseUserName);
+		botConfProperties.setProperty("database", databaseName);
+		botConfProperties.setProperty("dbPass", databasePassword);
+		botConfProperties.setProperty("botName", botName);
+		botConfProperties.setProperty("ircServer", ircServer);
+		botConfProperties.setProperty("ircChannel", ircChannel);
 		
 		botConfProperties.store(new FileOutputStream(BOT_CONF), "Autogenerated by ChoobSetup.");
 	}
 	
-	private static void importMinimalDatabaseDump() throws IOException, SQLException, InvalidUsageException, ClassNotFoundException, InstantiationException, IllegalAccessException
+	private void setupDatabase() throws IOException, SQLException, InvalidUsageException, ClassNotFoundException, InstantiationException, IllegalAccessException, MissingFilesException
 	{
 		final Connection conn = getConnection();
-		createMinimalDatabaseCreationStatement(conn.createStatement()).executeBatch();
-		
-		PreparedStatement addUserStmt = conn.prepareStatement(ADD_USER_SQL);
-		addUserStmt.setString(1, rootUser.getValue());
-		addUserStmt.executeUpdate();
-		
-		PreparedStatement addGroupStmt = conn.prepareStatement(ADD_GROUP_SQL);
-		addGroupStmt.executeUpdate();
+		try
+		{
+			createMinimalDatabaseCreationStatement(conn.createStatement()).executeBatch();
+			putUserInRootGroup(createUserAndReturnId(rootUser,conn),conn);
+			
+		} finally
+		{
+			conn.close();
+		}
 	}
 	
-	private static Connection getConnection() throws IOException, SQLException, InvalidUsageException, ClassNotFoundException, InstantiationException, IllegalAccessException
+	private int createUserAndReturnId(final String userName, final Connection conn) throws SQLException
 	{
-		final String url = "jdbc:mysql://" + dbServer.getValue() + "/" + database.getValue();
-		Class.forName("com.mysql.jdbc.Driver").newInstance();
-		return DriverManager.getConnection(url, dbUser.getValue(), dbPass.getValue());
+		PreparedStatement addUserStmt = conn.prepareStatement(ADD_USER_SQL);
+		addUserStmt.setString(1, userName);
+		addUserStmt.executeUpdate();
+		ResultSet idSet = addUserStmt.getGeneratedKeys();
+		while (idSet.next())
+		{
+			return idSet.getInt(1);
+		}
+		throw new SQLException("Created user had no id");
 	}
 	
-	private static Statement createMinimalDatabaseCreationStatement(Statement stmt) throws IOException, SQLException
+	private void putUserInRootGroup(final int userId, final Connection conn) throws SQLException
+	{
+		PreparedStatement makeRootUserStmt = conn.prepareStatement(PUT_USER_INTO_ROOT_GROUP_SQL);
+		makeRootUserStmt.setInt(1, userId);
+		makeRootUserStmt.execute();
+	}
+	
+	private Connection getConnection() throws IOException, SQLException, ClassNotFoundException, InstantiationException, IllegalAccessException
+	{
+		final String url = "jdbc:mysql://" + databaseServer + "/" + databaseName;
+		Class.forName("com.mysql.jdbc.Driver").newInstance();
+		return DriverManager.getConnection(url, databaseUserName, databasePassword);
+	}
+	
+	private Statement createMinimalDatabaseCreationStatement(Statement stmt) throws IOException, SQLException, MissingFilesException
 	{
 		try
 		{
@@ -188,7 +178,7 @@ public class ChoobSetup
 		} catch (FileNotFoundException ex)
 		{
 			//unlikely to happen, we checked earlier.
-			throw new MissingFilesError(ex.getMessage());
+			throw new MissingFilesException(ex.getMessage());
 		}
 		
 	}
@@ -206,7 +196,7 @@ public class ChoobSetup
 				"0" +
 			");";
 	
-	private final static String ADD_GROUP_SQL = 
+	private final static String PUT_USER_INTO_ROOT_GROUP_SQL = 
 		"INSERT INTO " +
 			"GroupMembers " +
 			"(" +
@@ -216,58 +206,34 @@ public class ChoobSetup
 		"VALUES " +
 			"(" +
 				"1," +
-				"1" +
+				"?" +
 			");";
 	
+	public class ChoobSetupException extends Exception
+	{
+		public ChoobSetupException(String message)
+		{
+			super(message);
+		}
+
+		public ChoobSetupException(Exception ex)
+		{
+			super(ex);
+		}
+	}
+
+	public class MissingFilesException extends ChoobSetupException
+	{
+		public MissingFilesException(String message)
+		{
+			super(message);
+		}
+	}
+
+	public interface ChoobSetupStatus
+	{
+		public void onStatus(int percent, String message);
+	}
+	
 }
 
-class InvalidUsageException extends Exception
-{
-	public InvalidUsageException()
-	{
-		super();
-	}
-	
-	public InvalidUsageException(String message)
-	{
-		super(message);
-	}
-}
-
-class MissingFilesError extends Error
-{
-	public MissingFilesError(String message)
-	{
-		super(message);
-	}
-}
-
-class ParamHandler
-{
-	private String help;
-	private String unsetMessage;
-	private String value;
-	
-	public ParamHandler(final String help, final String unsetMessage)
-	{
-		this.help = help;
-		this.unsetMessage = unsetMessage;
-	}
-	
-	public String getHelp()
-	{
-		return help;
-	}
-	
-	public String getValue() throws InvalidUsageException
-	{
-		if (this.value != null)
-			return this.value;
-		else throw new InvalidUsageException(unsetMessage);
-	}
-	
-	public void setValue(final String value)
-	{
-		this.value = value;
-	}
-}
