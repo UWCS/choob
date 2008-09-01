@@ -63,8 +63,12 @@ public class Security
 		{
 			// Must check permission!
 			userName = params.get(1);
-			// Sure, this will be checked for us. But what about the user who called us?
-			mods.security.checkNickPerm( new ChoobPermission("user.add") , mes);
+			//Only require authentication if user is not adding themselves - #322
+			if (!(userName.equals(mods.security.getUserAuthName(mes.getNick()))))
+			{
+				// Sure, this will be checked for us. But what about the user who called us?
+				mods.security.checkNickPerm( new ChoobPermission("user.add") , mes);
+			}
 		}
 		// Can add the user...
 		try
