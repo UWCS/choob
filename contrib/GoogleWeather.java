@@ -21,7 +21,8 @@ import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlRootElement;
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
 /**
@@ -79,6 +80,7 @@ public class GoogleWeather
 			throw new LocationNotFoundException();
 		String conditions = response.getWeather().getCurrentConditions().getCondition().getData();
 		String temp = response.getWeather().getCurrentConditions().getTemp_c().getData();
+		ForecastInformation inf = response.getWeather().getForecastInformation();
 		StringBuilder forecast = new StringBuilder();
 		for (ForecastConditions fCons : response.getWeather().getForeCastConditions())
 			forecast
@@ -88,7 +90,7 @@ public class GoogleWeather
 				.append("; ");
 		
 		return "Weather in " +
-			weatherLocation +
+			((inf != null) ? inf.getCity() : weatherLocation ) +
 			" is " +
 			(symbols.containsKey(conditions) ? symbols.get(conditions) + " " : "") +
 			conditions +
@@ -251,9 +253,22 @@ class Weather
 		}
 		return forecastConditions;
 	}
+
+	public ForecastInformation getForecastInformation()
+	{
+		for (Object o : getForeCastInformation())
+		{
+			if (o instanceof ForecastInformation)
+			{
+				return (ForecastInformation)o;
+			}
+		}
+		return null;
+	}
 	
 	@XmlElementRefs(
 	{
+		@XmlElementRef(name = "forecast_information", type = ForecastInformation.class),
 		@XmlElementRef(name = "current_conditions", type = CurrentConditions.class),
 		@XmlElementRef(name = "forecast_conditions", type = ForecastConditions.class)
 	})
@@ -419,4 +434,26 @@ class DataItem
 	{
 		this.data = value;
 	}
+	
+	@Override
+	public String toString()
+	{
+		return data;
+	}
 }
+
+@XmlRootElement(name="forecast_information")
+class ForecastInformation
+{
+	private DataItem city;
+
+	public DataItem getCity()
+	{
+		return city;
+	}
+
+	public void setCity(DataItem city)
+	{
+		this.city = city;
+	}
+}	
