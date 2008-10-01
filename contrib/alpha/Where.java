@@ -38,7 +38,7 @@ public class Where
 		"raw.sunion.warwick.ac.uk/.*"
 	};
 	private final String channels[] = { "#compsoc", "#wuglug", "#bots", "#wug", "#choob" };
-	private enum Location { Campus, DCS }
+	private enum Location { Campus, DCS, Resnet }
 
 	abstract class Callback
 	{
@@ -194,7 +194,8 @@ public class Where
 
 	boolean isLocal(InetAddress add)
 	{
-		return matches(Pattern.compile("^localhost/127"), add) || matches(Pattern.compile("compsoc.sunion.warwick.ac.uk/.*"), add);
+		return matches(Pattern.compile("/127.*"), add) ||
+			matches(Pattern.compile("/137.205.210.240"), add);
 	}
 
 	boolean shouldIgnore(InetAddress add)
@@ -212,6 +213,12 @@ public class Where
 	boolean isCampus(InetAddress add)
 	{
 		return !isLocal(add) && matches(Pattern.compile("/137.205"), add);
+	}
+
+	boolean isResnet(InetAddress add)
+	{
+		return !isLocal(add) &&
+			matches(Pattern.compile(".*\\.res\\.warwick\\.ac\\.uk/.*"), add);
 	}
 
 	boolean isDCS(InetAddress add)
@@ -339,6 +346,17 @@ public class Where
 		goDo(mes, fromPredicate(mes, new Predicate() { @Override boolean hit(InetAddress add) { return isCampus(add); } }, "on campus"));
 	}
 
+	public String[] helpCommandOnResnet = {
+		"Displays a list of people connected to IRC from IPs in the university of warwick resnet IP range. Also works properly for those using screens on the server on which the plugin is running.",
+		"[<ChannelName>]",
+		"<ChannelName> is the name of the channel to return results for."
+	};
+	public void commandOnResnet(Message mes)
+	{
+		hint(mes);
+		goDo(mes, fromPredicate(mes, new Predicate() { @Override boolean hit(InetAddress add) { return isResnet(add); } }, "on resnet"));
+	}
+
 	public String[] helpCommandInDCS = {
 		"Displays a list of people connected to IRC from IPs in the university of warwick department of computer science IP range. Also works properly for those using screens on the server on which the plugin is running.",
 		"[<ChannelName>]",
@@ -391,6 +409,11 @@ public class Where
 	public void commandGlobalDCS(Message mes)
 	{
 		global(mes, Location.DCS, "in DCS");
+	}
+	
+	public void commandGlobalResnet(Message mes)
+	{
+		global(mes, Location.Resnet, "on resnet");
 	}
 
 	public void commandGlobalCampus(Message mes)
@@ -457,6 +480,9 @@ public class Where
 								{
 									case DCS:
 										flag = isDCS(add);
+										break;
+									case Resnet:
+										flag = isResnet(add);
 										break;
 									case Campus:
 										flag = isCampus(add);
