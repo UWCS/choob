@@ -714,4 +714,11 @@ public final class ScraperModule {
 	public String readyForHtml(String html) {
 		return escapeQuotes(stripTags(quoteURLs(boldTags(cleanup(html)))));
 	}
+	
+	/**
+	 *
+	 */
+	public String escapeForHTML(String html) {
+		return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("'", "&#27;").replaceAll("\"", "&quot;");
+	}
 }

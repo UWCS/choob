@@ -1168,18 +1168,116 @@ public class Karma
 		out.println("HTTP/1.0 200 OK");
 		out.println("Content-Type: text/html");
 		out.println();
-
-		List<KarmaObject> res = retrieveKarmaObjects("WHERE 1 SORT INTEGER value");
-
-
-		out.println("Item count: " + res.size() + "<br/>");
-		for(KarmaObject karmaObject: res)
-		{
-			if (karmaObject == null)
-				out.println("NULL.<br/>");
-			else
-				out.println("" + karmaObject.id + ": " + karmaObject.string + " => " + karmaObject.value + ".<br/>");
+		out.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">");
+		out.println("<HTML>");
+		out.println("<HEAD>");
+		out.println("</HEAD>");
+		out.println("<BODY>");
+		
+		// Parse input data.
+		String karmaSearch = "";
+		for (String param : params.split("&")) {
+			if (param.startsWith("s=")) {
+				karmaSearch = param.substring(2);
+			} else if (param.indexOf("=") == -1) {
+				karmaSearch = normalise(param);
+			}
 		}
+		
+		// Search form!
+		out.println("<FORM METHOD='GET' STYLE='float: right;'>");
+		out.println("/<INPUT TYPE='TEXT' NAME='s' SIZE='20'>/i <INPUT TYPE='SUBMIT' VALUE='Search'>");
+		out.println("</FORM>");
+		
+		// Fetch results.
+		List<KarmaObject> karmaObjects = null;
+		if (karmaSearch != "") {
+			karmaObjects = retrieveKarmaObjects("WHERE string RLIKE \"" + mods.odb.escapeForRLike(karmaSearch) + "\" AND NOT (up = 0 AND down = 0 AND value = 0) SORT INTEGER value");
+			out.println("<H1>" + karmaObjects.size() + " karma item" + (karmaObjects.size() == 1 ? "" : "s") + " matching /" + mods.scrape.escapeForHTML(karmaSearch) + "/i</H1>");
+		} else {
+			karmaObjects = retrieveKarmaObjects("WHERE 1 SORT INTEGER value");
+			out.println("<H1>All Karma items</H1>");
+		}
+		Collections.sort(karmaObjects, new KarmaSortByAbsValue());
+		
+		// Show table of karma items.
+		out.println("  <TABLE>");
+		out.print("    <TR>");
+		out.print("<TH>Item</TH>");
+		out.print("<TH>Value</TH>");
+		out.print("<TH>Up</TH>");
+		out.print("<TH>Down</TH>");
+		out.println("</TR>");
+		for (KarmaObject karmaObject: karmaObjects) {
+			if (karmaObject != null) {
+				out.println("    <TR>");
+				out.print("<TD><A HREF='Karma.View?id=" + karmaObject.id + "'>" + mods.scrape.escapeForHTML(karmaObject.string) + "</A></TD>");
+				out.print("<TD>" + karmaObject.value + "</TD>");
+				out.print("<TD>" + karmaObject.up + "</TD>");
+				out.print("<TD>" + karmaObject.down + "</TD>");
+				out.println("</TR>");
+			}
+		}
+		
+		out.println("  </TABLE>");
+		out.println("</BODY>");
+		out.println("</HTML>");
+	}
+	
+	public void webView(PrintWriter out, String params, String[] user)
+	{
+		out.println("HTTP/1.0 200 OK");
+		out.println("Content-Type: text/html");
+		out.println();
+		out.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">");
+		out.println("<HTML>");
+		out.println("<HEAD>");
+		out.println("</HEAD>");
+		out.println("<BODY>");
+		
+		// Parse input data.
+		int karmaId = 0;
+		for (String param : params.split("&")) {
+			if (param.startsWith("id=")) {
+				karmaId = Integer.parseInt(param.substring(3));
+			}
+		}
+		
+		// Fetch karma item.
+		List<KarmaObject> karmaObjects = mods.odb.retrieve(KarmaObject.class, "WHERE id = " + karmaId);
+		if (karmaObjects.size() >= 1) {
+			KarmaObject karmaObject = karmaObjects.get(0);
+			out.println("<H1>Karma item \"" + mods.scrape.escapeForHTML(karmaObject.string) + "\"</H1>");
+			
+			// Show table of data about this item.
+			out.println("  <TABLE>");
+			out.println("    <TR><TH ALIGN='LEFT'>Item</TH><TD>" + mods.scrape.escapeForHTML(karmaObject.string) + "</TD></TR>");
+			out.println("    <TR><TH ALIGN='LEFT'>Value</TH><TD>" + karmaObject.value + "</TD></TR>");
+			out.println("    <TR><TH ALIGN='LEFT'>Up</TH><TD>" + karmaObject.up + "</TD></TR>");
+			out.println("    <TR><TH ALIGN='LEFT'>Down</TH><TD>" + karmaObject.down + "</TD></TR>");
+			out.println("  </TABLE>");
+			
+			out.println("  <TABLE>");
+			boolean inUp = false;
+			boolean inDown = false;
+			List<KarmaReasonObject> reasons = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + mods.odb.escapeString(karmaObject.string) + "\" SORT INTEGER direction");
+			for (KarmaReasonObject reason : reasons) {
+				if (!inUp && (reason.direction == 1)) {
+					//out.println("  <TR><TH>Reasons for gaining karma</TH></TR>");
+					inUp = true;
+				} else if (!inDown && (reason.direction == -1)) {
+					//out.println("  <TR><TH>Reasons for losing karma</TH></TR>");
+					inDown = true;
+				}
+				out.println("  <TR><TD>" + mods.scrape.escapeForHTML(karmaObject.string + " has " + (reason.direction > 0 ? "gained" : "lost") + " karma " + reason.reason) + "</TD></TR>");
+			}
+			out.println("  </TABLE>");
+		} else {
+			out.println("  <P>The karma ID " + karmaId + " is not valid.</P>");
+		}
+		
+		out.println("</BODY>");
+		out.println("</HTML>");
 	}
 
 	private String normalise(String name)
