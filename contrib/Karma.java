@@ -1240,6 +1240,11 @@ public class Karma
 		for (String param : params.split("&")) {
 			if (param.startsWith("id=")) {
 				karmaId = Integer.parseInt(param.substring(3));
+			} else if (param.indexOf("=") == -1) {
+				List<KarmaObject> temp = mods.odb.retrieve(KarmaObject.class, "WHERE string = \"" + mods.odb.escapeString(param) + "\"");
+				if (temp.size() == 1) {
+					karmaId = temp.get(0).id;
+				}
 			}
 		}
 		
