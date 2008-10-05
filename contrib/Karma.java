@@ -357,9 +357,9 @@ public class Karma
 		}
 
 		if (reason != null)
-			irc.sendContextReply(mes, name + " has " + reason[2] + " karma " + reason[1]);
+			irc.sendContextReply(mes, name + Colors.NORMAL + " has " + reason[2] + " karma " + reason[1]);
 		else
-			irc.sendContextReply(mes, "Nobody has ever told me why " + name + " has changed karma. :(");
+			irc.sendContextReply(mes, "Nobody has ever told me why " + name + Colors.NORMAL + " has changed karma. :(");
 	}
 
 	private void nullReason(Message mes, boolean direction)
@@ -375,7 +375,7 @@ public class Karma
 			return;
 		}
 
-		irc.sendContextReply(mes, name + " has " + (direction ? "gained" : "lost") + " karma " + reason[1]);
+		irc.sendContextReply(mes, name + Colors.NORMAL + " has " + (direction ? "gained" : "lost") + " karma " + reason[1]);
 	}
 
 	public String[] helpCommandReasonUp = {
@@ -408,9 +408,9 @@ public class Karma
 		}
 
 		if (reason != null)
-			irc.sendContextReply(mes, name + " has gained karma " + reason[1]);
+			irc.sendContextReply(mes, name + Colors.NORMAL + " has gained karma " + reason[1]);
 		else
-			irc.sendContextReply(mes, "Nobody has ever told me why " + name + " has gained karma. :(");
+			irc.sendContextReply(mes, "Nobody has ever told me why " + name + Colors.NORMAL + " has gained karma. :(");
 	}
 
 	public String[] helpCommandReasonDown = {
@@ -447,9 +447,9 @@ public class Karma
 
 
 		if (reason != null)
-			irc.sendContextReply(mes, name + " has lost karma " + reason[1]);
+			irc.sendContextReply(mes, name + Colors.NORMAL + " has lost karma " + reason[1]);
 		else
-			irc.sendContextReply(mes, "Nobody has ever told me why " + name + " has lost karma. :(");
+			irc.sendContextReply(mes, "Nobody has ever told me why " + name + Colors.NORMAL + " has lost karma. :(");
 	}
 
 	public String[] helpTopics = { "Using" };
@@ -693,12 +693,12 @@ public class Karma
 			KarmaChangeHolder karma = karmas.get(0);
 			
 			if (karma.flood)
-				irc.sendContextReply(mes, "Denied change to '" + karma.instanceName + "'! Karma changes limited to one change per item per " + FLOOD_RATE_STR + ".");
+				irc.sendContextReply(mes, "Denied change to '" + karma.instanceName + Colors.NORMAL + "'! Karma changes limited to one change per item per " + FLOOD_RATE_STR + ".");
 			else if (karma.karma.string.equals(nick))
 				// This doesn't mention if there was a reason.
 				irc.sendContextReply(mes, "Fool, that's less karma to you! That leaves you with " + karma.karma.value + ".");
 			else
-				irc.sendContextReply(mes, (karma.change > 0 ? "Given more karma" : (karma.change < 0 ? "Given less karma" : "No change")) + " to " + karma.instanceName + (karma.reason != null ? ", and understood your reasons" : "") + ". New karma is " + karma.karma.value + ".");
+				irc.sendContextReply(mes, (karma.change > 0 ? "Given more karma" : (karma.change < 0 ? "Given less karma" : "No change")) + " to " + karma.instanceName + Colors.NORMAL + (karma.reason != null ? ", and understood your reasons" : "") + ". New karma is " + karma.karma.value + ".");
 		}
 		else
 		{
@@ -706,7 +706,7 @@ public class Karma
 			for (int i = 0; i < karmas.size(); i++)
 			{
 				KarmaChangeHolder karma = karmas.get(i);
-				output.append(karma.instanceName);
+				output.append(karma.instanceName + Colors.NORMAL);
 				if (karma.flood)
 				{
 					output.append(" ignored (flood)");
@@ -757,7 +757,7 @@ public class Karma
 		{
 			output.append(String.valueOf(i+1) + postfix(i+1));
 			output.append(": ");
-			output.append(karmaObjs.get(i).string);
+			output.append(karmaObjs.get(i).string + Colors.NORMAL);
 			output.append(" (with " + karmaObjs.get(i).value + ")");
 			if (i != karmaObjs.size() - 1)
 			{
@@ -906,7 +906,7 @@ public class Karma
 		if (karmaObjs.size() == 1)
 		{
 			int realkarma = karmaObjs.get(0).up - karmaObjs.get(0).down;
-			irc.sendContextReply(mes, karmaObjs.get(0).instName + " has a \"real\" karma of " + realkarma + " (" + karmaObjs.get(0).up + " up, " + karmaObjs.get(0).down + " down).");
+			irc.sendContextReply(mes, karmaObjs.get(0).instName + Colors.NORMAL + " has a \"real\" karma of " + realkarma + " (" + karmaObjs.get(0).up + " up, " + karmaObjs.get(0).down + " down).");
 			return;
 		}
 		
@@ -917,7 +917,7 @@ public class Karma
 			for (int i=0;i<karmaObjs.size();i++)
 			{
 				int realkarma = karmaObjs.get(i).up - karmaObjs.get(i).down;
-				output.append(karmaObjs.get(i).instName + ": " + realkarma);
+				output.append(karmaObjs.get(i).instName + Colors.NORMAL + ": " + realkarma);
 				if (i != karmaObjs.size() -1)
 				{
 					if (i == karmaObjs.size() -2)
@@ -963,7 +963,7 @@ public class Karma
 
 		if (karmaObjs.size() == 1)
 		{
-			irc.sendContextReply(mes, karmaObjs.get(0).instName + " has a karma of " + karmaObjs.get(0).value + " (" + karmaObjs.get(0).up + " up, " + karmaObjs.get(0).down + " down).");
+				irc.sendContextReply(mes, karmaObjs.get(0).instName + Colors.NORMAL + " has a karma of " + karmaObjs.get(0).value + " (" + karmaObjs.get(0).up + " up, " + karmaObjs.get(0).down + " down).");
 			return;
 		}
 
@@ -973,7 +973,7 @@ public class Karma
 		{
 			for (int i=0; i<karmaObjs.size(); i++)
 			{
-				output.append(karmaObjs.get(i).instName);
+				output.append(karmaObjs.get(i).instName + Colors.NORMAL);
 				output.append(": " + karmaObjs.get(i).value);
 				if (i != karmaObjs.size() - 1)
 				{
@@ -1044,7 +1044,7 @@ public class Karma
 		output.append(": ");
 		for (int i=0; i<karmaObjs.size(); i++)
 		{
-			output.append(karmaObjs.get(i).instName);
+			output.append(karmaObjs.get(i).instName + Colors.NORMAL);
 			output.append(": now ");
 			output.append(karmaObjs.get(i).value);
 			if (i != karmaObjs.size() - 1)
@@ -1126,11 +1126,11 @@ public class Karma
 			final List<KarmaObject> odbItems = mods.odb.retrieve(KarmaObject.class, odbQuery);
 
 			if (odbItems.size() == 0) {
-				irc.sendContextReply(mes, "No karma items matched " + (item.regex ? "/" : "'") + item.name + (item.regex ? "/" : "'") + ".");
+				irc.sendContextReply(mes, "No karma items matched " + (item.regex ? "/" : "'") + item.name + Colors.NORMAL + (item.regex ? "/" : "'") + ".");
 			} else {
 				Collections.sort(odbItems, new KarmaSortByAbsValue());
 
-				String rpl = "Karma items matching " + (item.regex ? "/" : "'") + item.name + (item.regex ? "/" : "'") + ": ";
+				String rpl = "Karma items matching " + (item.regex ? "/" : "'") + item.name + Colors.NORMAL + (item.regex ? "/" : "'") + ": ";
 				boolean cutOff = false;
 				for (int j = 0; j < odbItems.size(); j++) {
 					KarmaObject ko = odbItems.get(j);
@@ -1141,7 +1141,7 @@ public class Karma
 					if (j > 0) {
 						rpl += ", ";
 					}
-					rpl += ko.string + " (" + ko.value + ")";
+					rpl += ko.string + Colors.NORMAL + " (" + ko.value + ")";
 				}
 				if (cutOff) {
 					rpl += ", ...";
