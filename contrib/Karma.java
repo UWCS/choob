@@ -18,10 +18,9 @@ class KarmaObject
 	public int up;
 	public int down;
 	public int value;
-	boolean increase;
 	String instName;
 	
-	public boolean equals(KarmaObject obj) 
+	public boolean equals(KarmaObject obj)
 	{
 		return this.string.equalsIgnoreCase(obj.string);
 	}
@@ -33,6 +32,20 @@ class KarmaReasonObject
 	public String string;
 	public int direction;
 	public String reason;
+	
+	KarmaReasonObject(String reason)
+	{
+		this.reason = reason;
+	}
+}
+
+class KarmaChangeHolder
+{
+	KarmaObject karma;
+	KarmaReasonObject reason;
+	boolean increase;
+	boolean flood;
+	String instanceName;
 }
 
 class KarmaReasonEnumerator
@@ -510,216 +523,208 @@ public class Karma
 
 	public final String filterKarmaRegex = plusplus_or_minusminus + "\\B";
 
-	public synchronized void filterKarma( Message mes )
+	public synchronized void filterKarma(Message mes)
 	{
 		// Ignore lines that look like commands.
 		if (mes.getFlags().containsKey("command"))
 			return;
-
+		
+		// List of all karma changes that will be applied and hash of their
+		// names so we can avoid duplicates.
+		List<KarmaChangeHolder> karmas = new ArrayList<KarmaChangeHolder>();
+		HashSet<String> karmaUsed = new HashSet<String>();
+		
+		// Find out if we've got a reason going on.
 		Matcher reasonMatch = reasonPattern.matcher(mes.getMessage());
-
-		boolean hasReason = false;
-		String karmaReasonFloodCheck = "";
-		if (reasonMatch.matches())
+		while (reasonMatch.matches())
 		{
-			// Find out which holds our name.
-			String name;
-			boolean skip = false;
+			KarmaChangeHolder karma = new KarmaChangeHolder();
+			
 			// Group 1: quoted karma item
 			// Group 2: raw karma item
 			// Group 3: "++" or "--"
 			// Group 4: reason
 			if (reasonMatch.group(1) != null)
-				name = reasonMatch.group(1).replaceAll("\\\\(.)", "$1");
+			{
+				karma.instanceName = reasonMatch.group(1).replaceAll("\\\\(.)", "$1");
+			}
 			else
 			{
 				// need verification on this one.
-				name = reasonMatch.group(2);
-				if (exceptions.contains(name.toLowerCase()))
-					skip = true;
+				karma.instanceName = reasonMatch.group(2);
+				if (exceptions.contains(karma.instanceName.toLowerCase()))
+					break;
 			}
-			if (!skip)
-			{
-				// Wait until we know there's a real karma change going on.
-				if (mes instanceof PrivateEvent)
-				{
-					irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
-					return;
-				}
-
-				// Karma flood check.
-				karmaReasonFloodCheck = name;
-				try
-				{
-					// 15 minute block for each karma item, irespective of who or direction.
-					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + normalise(name), FLOOD_RATE, 2);
-					if (ret != 0)
-					{
-						if (ret == 1)
-							irc.sendContextReply(mes, "Denied change to '" + name + "'! Karma changes limited to one change per item per " + FLOOD_RATE_STR + ".");
-						return;
-					}
-				}
-				catch (ChoobNoSuchCallException e)
-				{ 
-					// ignore
-				} 
-				catch (Throwable e)
-				{
-					System.err.println("Couldn't do antiflood call: " + e);
-				}
-
-				boolean increase = reasonMatch.group(3).equals("++");
-
-				final String sreason = reasonMatch.group(4);
-
-				if (!reasonExceptions.contains(sreason))
-				{
-					// Store the reason too.
-					KarmaReasonObject reason = new KarmaReasonObject();
-					reason.string = name;
-					reason.reason = sreason;
-					reason.direction = increase ? 1 : -1;
-					mods.odb.save(reason);
-
-					hasReason = true;
-				}
-			}
+			
+			// Up or down?
+			karma.increase = reasonMatch.group(3).equals("++");
+			
+			// Get the reason, if it's not excluded!
+			if (!reasonExceptions.contains(reasonMatch.group(4)))
+				karma.reason = new KarmaReasonObject(reasonMatch.group(4));
+			
+			karmas.add(karma);
+			karmaUsed.add(karma.instanceName.toLowerCase());
+			break;
 		}
-
-		// Not a reasoned match, then.
-		Matcher karmaMatch = karmaPattern.matcher(mes.getMessage());
-
+		
 		String nick = mods.nick.getBestPrimaryNick(mes.getNick());
-
-		HashSet<String> used = new HashSet<String>();
-		List<KarmaObject> karmaObjs = new ArrayList<KarmaObject>();
-
-		while (karmaMatch.find() && karmaObjs.size() < 5)
+		
+		// Find all karma changes now we've covered the reason.
+		Matcher karmaMatch = karmaPattern.matcher(mes.getMessage());
+		while (karmaMatch.find() && karmas.size() < 5)
 		{
-			String name;
-			boolean skip = false;
+			KarmaChangeHolder karma = new KarmaChangeHolder();
+			
 			// Group 1: quoted karma item
 			// Group 2: raw karma item
 			// Group 3: "++" or "--"
 			if (karmaMatch.group(1) != null)
-				name = karmaMatch.group(1).replaceAll("\\\\(.)", "$1");
+			{
+				karma.instanceName = karmaMatch.group(1).replaceAll("\\\\(.)", "$1");
+			}
 			else
 			{
 				// need verification on this one.
-				name = karmaMatch.group(2);
-				if (exceptions.contains(name.toLowerCase()))
-					skip = true;
+				karma.instanceName = karmaMatch.group(2);
+				if (exceptions.contains(karma.instanceName.toLowerCase()))
+					continue;
 			}
-			if (skip)
+			
+			// Up or down?
+			karma.increase = karmaMatch.group(3).equals("++");
+			
+			// If it's "me", replace with user's nickname and force to down.
+			if (karma.instanceName.equals/*NOT IgnoreCase*/("me"))
+			{
+				karma.instanceName = nick;
+				karma.increase = false;
+			}
+			
+			// Have we already done this karma item?
+			if (karmaUsed.contains(karma.instanceName.toLowerCase()))
 				continue;
-
-			// Wait until we know there's a real karma change going on.
-			if (mes instanceof PrivateEvent)
-			{
-				irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
-				return;
-			}
-
-			if (name.equals/*NOT IgnoreCase*/("me"))
-				name=nick;
-
-			// Have we already done this?
-			if (used.contains(name.toLowerCase()))
-				continue;
-			used.add(name.toLowerCase());
-
-			boolean increase = karmaMatch.group(3).equals("++");
-
-			if (name.equalsIgnoreCase(nick))
-				increase = false;
-
-			// Karma flood check (skip if we checked this item with the reason earlier).
-			if (!name.equalsIgnoreCase(karmaReasonFloodCheck))
-			{
-				try
-				{
-					// 15 minute block for each karma item, irespective of who or direction.
-					int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + normalise(name), FLOOD_RATE, 2);
-					if (ret != 0)
-					{
-						if (ret == 1)
-							irc.sendContextReply(mes, "Denied change to '" + name + "'! Karma changes limited to one change per item per " + FLOOD_RATE_STR + ".");
-						return;
-					}
-				}
-				catch (ChoobNoSuchCallException e)
-				{ } // ignore
-				catch (Throwable e)
-				{
-					System.err.println("Couldn't do antiflood call: " + e);
-				}
-			}
-
-			KarmaObject karmaObj = retrieveKarmaObject(name);
-			if (increase)
-			{
-				karmaObj.up++;
-				karmaObj.value++;
-			}
-			else
-			{
-				karmaObj.down++;
-				karmaObj.value--;
-			}
-
-			karmaObj.instName = name;
-			karmaObj.increase = increase;
-
-			karmaObjs.add(karmaObj);
+			
+			karmas.add(karma);
+			karmaUsed.add(karma.instanceName.toLowerCase());
 		}
-
-		saveKarmaObjects(karmaObjs);
-
-		// No actual karma changes. Maybe someone said "c++" or something.
-		if (karmaObjs.size() == 0)
+		
+		// No karma changes? Boring!
+		if (karmas.size() == 0)
 			return;
-
+		
+		// Wait until we know there's a real karma change going on.
+		if (mes instanceof PrivateEvent)
+		{
+			irc.sendContextReply(mes, "I'm sure other people want to hear what you have to think!");
+			return;
+		}
+		
+		// Right. We have a list of karma to apply, we've checked it's a public
+		// place and we have no duplicates. Time for the flood checking.
+		for (KarmaChangeHolder karma : karmas)
+		{
+			try
+			{
+				// 15 minute block for each karma item, irespective of who or direction.
+				int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + normalise(karma.instanceName), FLOOD_RATE, 2);
+				if (ret != 0)
+				{
+					if (ret == 1)
+						karma.flood = true;
+					continue;
+				}
+			}
+			catch (ChoobNoSuchCallException e)
+			{ } // ignore
+			catch (Throwable e)
+			{
+				System.err.println("Couldn't do antiflood call: " + e);
+			}
+		}
+		
+		
+		// Apply all the karma changes!
+		for (KarmaChangeHolder karma : karmas)
+		{
+			// Flooded? Skip it!
+			if (karma.flood)
+				continue;
+			
+			// Fetch the existing karma data for this item.
+			karma.karma = retrieveKarmaObject(karma.instanceName);
+			
+			// Do up or down change first.
+			karma.karma.value += karma.increase ? 1 : -1;
+			if (karma.increase)
+				karma.karma.up++;
+			else
+				karma.karma.down++;
+			
+			// Save the new karma data.
+			mods.odb.update(karma.karma);
+			
+			// Now add the reason, if there is one. Note that there's nothing
+			// to retrieve here so we can save the local object directly.
+			if (karma.reason != null)
+			{
+				karma.reason.string = karma.karma.string;
+				karma.reason.direction = karma.increase ? 1 : -1;
+				mods.odb.save(karma.reason);
+			}
+		}
+		
 		// Generate a pretty reply, all actual processing is done now:
-
-		if (karmaObjs.size() == 1)
+		if (karmas.size() == 1)
 		{
-			KarmaObject info = karmaObjs.get(0);
-
-			if (info.string.equalsIgnoreCase(nick))
-				// This doesn't mention if there was a reason..
-				irc.sendContextReply(mes, "Fool, that's less karma to you! That leaves you with " + info.value + ".");
+			KarmaChangeHolder karma = karmas.get(0);
+			
+			if (karma.flood)
+			{
+				irc.sendContextReply(mes, "Denied change to '" + karma.instanceName + "'! Karma changes limited to one change per item per " + FLOOD_RATE_STR + ".");
+			}
+			else if (karma.karma.string.equalsIgnoreCase(nick))
+			{
+				// This doesn't mention if there was a reason.
+				irc.sendContextReply(mes, "Fool, that's less karma to you! That leaves you with " + karma.karma.value + ".");
+			}
 			else
 			{
-				if (hasReason)
-					irc.sendContextReply(mes, "Given " + (info.increase ? "karma" : "less karma") + " to " + info.instName + ", and understood your reasons. New karma is " + info.value + ".");
+				if (karma.reason != null)
+					irc.sendContextReply(mes, "Given " + (karma.increase ? "karma" : "less karma") + " to " + karma.instanceName + ", and understood your reasons. New karma is " + karma.karma.value + ".");
 				else
-					irc.sendContextReply(mes, "Given " + (info.increase ? "karma" : "less karma") + " to " + info.instName + ". New karma is " + info.value + ".");
+					irc.sendContextReply(mes, "Given " + (karma.increase ? "karma" : "less karma") + " to " + karma.instanceName + ". New karma is " + karma.karma.value + ".");
 			}
-			return;
 		}
-
-		StringBuffer output = new StringBuffer("Karma adjustments: ");
-
-		for (int i=0; i<karmaObjs.size(); i++)
+		else
 		{
-			KarmaObject info = karmaObjs.get(i);
-			output.append(info.instName);
-			output.append(info.increase ? " up" : " down");
-			if (i == 0 && hasReason)
-				output.append(", with reason");
-			output.append(" (now " + info.value + ")");
-			if (i != karmaObjs.size() - 1)
+			StringBuffer output = new StringBuffer("Karma adjustments: ");
+			for (int i = 0; i < karmas.size(); i++)
 			{
-				if (i == karmaObjs.size() - 2)
-					output.append(" and ");
+				KarmaChangeHolder karma = karmas.get(i);
+				output.append(karma.instanceName);
+				if (karma.flood)
+				{
+					output.append(" ignored (flood)");
+				}
 				else
-					output.append(", ");
+				{
+					output.append(karma.increase ? " up" : " down");
+					if ((i == 0) && (karma.reason != null))
+						output.append(" with reason");
+					output.append(" (now " + karma.karma.value + ")");
+				}
+				if (i != karmas.size() - 1)
+				{
+					if (i == karmas.size() - 2)
+						output.append(" and ");
+					else
+						output.append(", ");
+				}
 			}
+			output.append(".");
+			irc.sendContextReply(mes, output.toString());
 		}
-		output.append(".");
-
-		irc.sendContextReply( mes, output.toString());
 	}
 
 	private String postfix(int n)
