@@ -514,35 +514,41 @@ public class Events
 	};
 	public void commandSignups(Message mes) throws ChoobException
 	{
-		String comp=mods.util.getParamString(mes).toLowerCase();
-		final int index = comp.indexOf('/');
+		String eventName = mods.util.getParamString(mes).toLowerCase();
+		String signupRegexp = ""; // You suck, Java.
+		
+		// If there is a "/" in the string, we split it up into the event
+		// name and signup regexp. E.g.
+		//   !events.signups some event /name/
+		//   eventName = "some event"
+		//   signupRegexp = "name"
+		final int index = eventName.indexOf('/');
 		boolean searching = index != -1;
-		String target = ""; //You suck, Java.
 		if (searching)
 		{
-			target = comp.substring(index+1);
-			if (target.length() != 0)
-				target = target.substring(0, target.length()-1).trim();
+			signupRegexp = eventName.substring(index + 1);
+			if (signupRegexp.length() != 0)
+				signupRegexp = signupRegexp.substring(0, signupRegexp.length() - 1).trim();
 			else
 				searching = false;
-
-			comp = comp.substring(0, index).trim();
+			eventName = eventName.substring(0, index).trim();
 		}
-
-		if (comp.equals(""))
+		
+		if (eventName.equals(""))
 		{
 			irc.sendContextReply(mes, "Please name the event you want info on.");
 			return;
 		}
-
-		final int eid=parseId(comp);
+		
+		final int eid = parseId(eventName);
 		ArrayList<EventItem> events = readEventsData();
-
+		
 		for (EventItem ev : events)
 			if (!ev.finished())
-				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
+				if (ev.name.toLowerCase().indexOf(eventName) != -1 || ev.id == eid)
 				{
 					if (ev.signupCurrent == 0)
+					{
 						irc.sendContextReply(mes,
 							"No signups for " + ev.boldNameShortDetails() +
 							" at " + ev.location +
@@ -551,26 +557,44 @@ public class Events
 								", probably because signups aren't open yet!"
 							)
 						);
+					}
 					else
 					{
-						List<String> names = ev.signupNames;
 						if (searching)
 						{
-							List<String> newnames = new ArrayList<String>();
-							Pattern p = Pattern.compile(target, Pattern.CASE_INSENSITIVE);
-							for (String n : names)
+							List<String> names = new ArrayList<String>();
+							Pattern p = Pattern.compile(signupRegexp, Pattern.CASE_INSENSITIVE);
+							for (String n : ev.signupNames)
 								if (p.matcher(n).find())
-									newnames.add(n);
-							names = newnames;
+									names.add(n);
+							if (names.size() > 0) {
+								irc.sendContextReply(mes,
+									"Signups matching /" + signupRegexp + "/i for " + ev.boldNameShortDetails() +
+									" at " + ev.location +
+									ev.shortSignups() + ": " +
+									nameList(names, mes, 0, "") +
+									"."
+								);
+							}
+							else
+							{
+								irc.sendContextReply(mes,
+									"No signups matched /" + signupRegexp + "/i for " + ev.boldNameShortDetails() +
+									" at " + ev.location +
+									ev.shortSignups() + "."
+								);
+							}
 						}
-
-						irc.sendContextReply(mes,
-							(searching ? "Matching s" : "S") + "ignups for " + ev.boldNameShortDetails() +
-							" at " + ev.location +
-							ev.shortSignups() + ": " +
-							nameList(names, mes, ev.signupMax, Colors.BOLD + "Reserves: " + Colors.NORMAL) +
-							"."
-						);
+						else
+						{
+							irc.sendContextReply(mes,
+								"Signups for " + ev.boldNameShortDetails() +
+								" at " + ev.location +
+								ev.shortSignups() + ": " +
+								nameList(ev.signupNames, mes, ev.signupMax, Colors.BOLD + "Reserves: " + Colors.NORMAL) +
+								"."
+							);
+						}
 					}
 					return;
 				}
