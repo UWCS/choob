@@ -32,20 +32,20 @@ class KarmaReasonObject
 	public String string;
 	public int direction;
 	public String reason;
-	
-	KarmaReasonObject(String reason)
-	{
-		this.reason = reason;
-	}
 }
 
 class KarmaChangeHolder
 {
 	KarmaObject karma;
 	KarmaReasonObject reason;
-	boolean increase;
+	int change;
 	boolean flood;
 	String instanceName;
+	
+	KarmaChangeHolder(String instanceName)
+	{
+		this.instanceName = instanceName;
+	}
 }
 
 class KarmaReasonEnumerator
@@ -529,84 +529,94 @@ public class Karma
 		if (mes.getFlags().containsKey("command"))
 			return;
 		
-		// List of all karma changes that will be applied and hash of their
-		// names so we can avoid duplicates.
-		List<KarmaChangeHolder> karmas = new ArrayList<KarmaChangeHolder>();
-		HashSet<String> karmaUsed = new HashSet<String>();
+		List<List<String>> matches = new ArrayList<List<String>>();
+		String nick = mods.nick.getBestPrimaryNick(mes.getNick());
 		
 		// Find out if we've got a reason going on.
 		Matcher reasonMatch = reasonPattern.matcher(mes.getMessage());
-		while (reasonMatch.matches())
+		if (reasonMatch.matches())
 		{
-			KarmaChangeHolder karma = new KarmaChangeHolder();
-			
-			// Group 1: quoted karma item
-			// Group 2: raw karma item
-			// Group 3: "++" or "--"
-			// Group 4: reason
-			if (reasonMatch.group(1) != null)
-			{
-				karma.instanceName = reasonMatch.group(1).replaceAll("\\\\(.)", "$1");
-			}
-			else
-			{
-				// need verification on this one.
-				karma.instanceName = reasonMatch.group(2);
-				if (exceptions.contains(karma.instanceName.toLowerCase()))
-					break;
-			}
-			
-			// Up or down?
-			karma.increase = reasonMatch.group(3).equals("++");
-			
-			// Get the reason, if it's not excluded!
-			if (!reasonExceptions.contains(reasonMatch.group(4)))
-				karma.reason = new KarmaReasonObject(reasonMatch.group(4));
-			
-			karmas.add(karma);
-			karmaUsed.add(karma.instanceName.toLowerCase());
-			break;
+			List<String> groups = new ArrayList<String>();
+			matches.add(groups);
+			for (int i = 0; i <= 4; i++)
+				groups.add(reasonMatch.group(i));
 		}
-		
-		String nick = mods.nick.getBestPrimaryNick(mes.getNick());
 		
 		// Find all karma changes now we've covered the reason.
 		Matcher karmaMatch = karmaPattern.matcher(mes.getMessage());
-		while (karmaMatch.find() && karmas.size() < 5)
+		while (karmaMatch.find())
 		{
-			KarmaChangeHolder karma = new KarmaChangeHolder();
-			
+			List<String> groups = new ArrayList<String>();
+			matches.add(groups);
+			for (int i = 0; i <= 3; i++)
+				groups.add(karmaMatch.group(i));
+		}
+		
+		// If we got multiple matches, and the first one is the reason match,
+		// we need to discard the first non-reason match (always index 1 while
+		// we only support one reasoned item/line) as it's the same as the
+		// reason match.
+		if ((matches.size() > 1) && (matches.get(0).size() == 5))
+			matches.remove(1);
+		
+		// List of all karma changes that will be applied and hash of them
+		// so we can handle duplicates sanely.
+		List<KarmaChangeHolder> karmas = new ArrayList<KarmaChangeHolder>();
+		Map<String,KarmaChangeHolder> karmaMap = new HashMap<String,KarmaChangeHolder>();
+		for (List<String> match : matches)
+		{
 			// Group 1: quoted karma item
 			// Group 2: raw karma item
 			// Group 3: "++" or "--"
-			if (karmaMatch.group(1) != null)
+			// Group 4: reason (optional)
+			String name = "";
+			if (match.get(1) != null)
 			{
-				karma.instanceName = karmaMatch.group(1).replaceAll("\\\\(.)", "$1");
+				name = match.get(1).replaceAll("\\\\(.)", "$1");
 			}
 			else
 			{
-				// need verification on this one.
-				karma.instanceName = karmaMatch.group(2);
-				if (exceptions.contains(karma.instanceName.toLowerCase()))
+				name = match.get(2);
+				if (exceptions.contains(name.toLowerCase()))
 					continue;
 			}
-			
-			// Up or down?
-			karma.increase = karmaMatch.group(3).equals("++");
+			KarmaChangeHolder karma;
+			if (karmaMap.containsKey(name.toLowerCase()))
+				karma = karmaMap.get(name.toLowerCase());
+			else
+				karma = new KarmaChangeHolder(name);
 			
 			// If it's "me", replace with user's nickname and force to down.
-			if (karma.instanceName.equals/*NOT IgnoreCase*/("me"))
+			if (karma.instanceName.equals/*NOT IgnoreCase*/("me") || karma.instanceName.equalsIgnoreCase(nick))
 			{
 				karma.instanceName = nick;
-				karma.increase = false;
+				karma.change--;
+			}
+			// Up or down?
+			else if (match.get(3).equals("++"))
+			{
+				karma.change++;
+			}
+			else
+			{
+				karma.change--;
 			}
 			
-			// Have we already done this karma item?
-			if (karmaUsed.contains(karma.instanceName.toLowerCase()))
-				continue;
+			// Get the reason, if it's not excluded!
+			if ((match.size() > 4) && !reasonExceptions.contains(match.get(4)))
+			{
+				karma.reason = new KarmaReasonObject();
+				karma.reason.reason = match.get(4);
+				karma.reason.direction = match.get(3).equals("++") ? 1 : -1;
+			}
 			
-			karmas.add(karma);
-			karmaUsed.add(karma.instanceName.toLowerCase());
+			if (!karmaMap.containsKey(name.toLowerCase()))
+			{
+				karmas.add(karma);
+				karmaMap.put(karma.instanceName.toLowerCase(), karma);
+				if (karmas.size() >= 5)
+					break;
+			}
 		}
 		
 		// No karma changes? Boring!
@@ -643,7 +653,6 @@ public class Karma
 			}
 		}
 		
-		
 		// Apply all the karma changes!
 		for (KarmaChangeHolder karma : karmas)
 		{
@@ -655,11 +664,16 @@ public class Karma
 			karma.karma = retrieveKarmaObject(karma.instanceName);
 			
 			// Do up or down change first.
-			karma.karma.value += karma.increase ? 1 : -1;
-			if (karma.increase)
+			if (karma.change > 0)
+			{
 				karma.karma.up++;
-			else
+				karma.karma.value++;
+			}
+			else if (karma.change < 0)
+			{
 				karma.karma.down++;
+				karma.karma.value--;
+			}
 			
 			// Save the new karma data.
 			mods.odb.update(karma.karma);
@@ -669,7 +683,6 @@ public class Karma
 			if (karma.reason != null)
 			{
 				karma.reason.string = karma.karma.string;
-				karma.reason.direction = karma.increase ? 1 : -1;
 				mods.odb.save(karma.reason);
 			}
 		}
@@ -680,21 +693,12 @@ public class Karma
 			KarmaChangeHolder karma = karmas.get(0);
 			
 			if (karma.flood)
-			{
 				irc.sendContextReply(mes, "Denied change to '" + karma.instanceName + "'! Karma changes limited to one change per item per " + FLOOD_RATE_STR + ".");
-			}
-			else if (karma.karma.string.equalsIgnoreCase(nick))
-			{
+			else if (karma.karma.string.equals(nick))
 				// This doesn't mention if there was a reason.
 				irc.sendContextReply(mes, "Fool, that's less karma to you! That leaves you with " + karma.karma.value + ".");
-			}
 			else
-			{
-				if (karma.reason != null)
-					irc.sendContextReply(mes, "Given " + (karma.increase ? "karma" : "less karma") + " to " + karma.instanceName + ", and understood your reasons. New karma is " + karma.karma.value + ".");
-				else
-					irc.sendContextReply(mes, "Given " + (karma.increase ? "karma" : "less karma") + " to " + karma.instanceName + ". New karma is " + karma.karma.value + ".");
-			}
+				irc.sendContextReply(mes, (karma.change > 0 ? "Given more karma" : (karma.change < 0 ? "Given less karma" : "No change")) + " to " + karma.instanceName + (karma.reason != null ? ", and understood your reasons" : "") + ". New karma is " + karma.karma.value + ".");
 		}
 		else
 		{
@@ -709,18 +713,20 @@ public class Karma
 				}
 				else
 				{
-					output.append(karma.increase ? " up" : " down");
-					if ((i == 0) && (karma.reason != null))
+					if (karma.change > 0)
+						output.append(" up");
+					else if (karma.change < 0)
+						output.append(" down");
+					else
+						output.append(" unchanged");
+					if (karma.reason != null)
 						output.append(" with reason");
 					output.append(" (now " + karma.karma.value + ")");
 				}
-				if (i != karmas.size() - 1)
-				{
-					if (i == karmas.size() - 2)
-						output.append(" and ");
-					else
-						output.append(", ");
-				}
+				if (i < karmas.size() - 1)
+					output.append(", ");
+				else if (i == karmas.size() - 2)
+					output.append(" and ");
 			}
 			output.append(".");
 			irc.sendContextReply(mes, output.toString());
