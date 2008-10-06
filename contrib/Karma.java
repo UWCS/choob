@@ -699,7 +699,7 @@ public class Karma
 				// This doesn't mention if there was a reason.
 				irc.sendContextReply(mes, "Fool, that's less karma to you! That leaves you with " + karma.karma.value + ".");
 			else
-				irc.sendContextReply(mes, (karma.change > 0 ? "Given more karma" : (karma.change < 0 ? "Given less karma" : "No change")) + " to " + karma.instanceName + Colors.NORMAL + (karma.reason != null ? ", and understood your reasons" : "") + ". New karma is " + karma.karma.value + ".");
+				irc.sendContextReply(mes, (karma.change > 0 ? "Given more karma" : (karma.change < 0 ? "Given less karma" : "No change")) + " to " + karma.instanceName + Colors.NORMAL + (karma.reason != null ? ", and understood your reasons" : "") + ". " + (karma.change == 0 ? "Karma remains at " : "New karma is ") + karma.karma.value + ".");
 		}
 		else
 		{
@@ -722,7 +722,10 @@ public class Karma
 						output.append(" unchanged");
 					if (karma.reason != null)
 						output.append(" with reason");
-					output.append(" (now " + karma.karma.value + ")");
+					if (karma.change == 0)
+						output.append(" (remains " + karma.karma.value + ")");
+					else
+						output.append(" (now " + karma.karma.value + ")");
 				}
 				if (i < karmas.size() - 1)
 					output.append(", ");
