@@ -164,6 +164,7 @@ public class Karma
 		exceptions.add("dc");
 		exceptions.add("visualj");
 		exceptions.add("vc");
+		exceptions.add("tolua");
 		reasonExceptions.add("for that");
 		reasonExceptions.add("because of that");
 	}
