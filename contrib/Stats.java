@@ -267,7 +267,7 @@ public class Stats
 		}
 		
 		Collections.sort(stats, new StatSortByValue());
-		final int space = 400;
+		final int space = 350;
 		StringBuffer text1 = new StringBuffer();
 		StringBuffer text2 = new StringBuffer();
 		boolean addToStart = true;
