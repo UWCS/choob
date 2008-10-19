@@ -26,6 +26,16 @@ import uk.co.uwcs.choob.support.events.ServerResponse;
 
 public class Where
 {
+	public String[] info()
+	{
+		return new String[] {
+			"Location information plugin",
+			"The Choob Team",
+			"choob@uwcs.co.uk",
+			"$Rev$$Date$"
+		};
+	}
+
 	Modules mods;
 	IRCInterface irc;
 
