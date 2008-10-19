@@ -308,7 +308,7 @@ public class Stats
 		int score = 0;
 
 		// remove smilies and trailing whitespace.
-		str = str.replaceAll("(?:^|\\s+)[:pP)/;\\\\o()^.¬ -]{2,4}(\\s+|$)", "$1");
+		str = str.replaceAll("(?:^|\\s+)[:pP)/;\\\\o()^><.¬ _-]{2,4}(\\s+|$)", "$1");
 
 		// remove URLs
 		str = str.replaceAll("[a-z0-9]+:/\\S+", "");
