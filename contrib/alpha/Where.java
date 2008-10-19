@@ -29,6 +29,11 @@ public class Where
 	Modules mods;
 	IRCInterface irc;
 
+	private static void minilog(String s)
+	{
+		System.out.println("[where] " + s);
+	}
+	
 	//ignore hosts people screen from that we can't finger.
 	//hardcoding ftw.
 	private final static String[] IGNORED_HOSTS = 
@@ -50,6 +55,11 @@ public class Where
 		final ContextEvent target;
 
 		abstract void complete(Details d);
+
+		void fail()
+		{
+			irc.sendContextReply(target, "Timeout expired while trying to service request.");
+		}
 
 	}
 
@@ -95,8 +105,26 @@ public class Where
 	}
 
 	// (Target) channel -> Outstanding queries in it.
-	Map<String, Queue<Details>> outst = Collections.synchronizedMap(new HashMap<String, Queue<Details>>());
+	Map<String, Queue<Details>> outst = makeMap();
 
+	private static Map<String, Queue<Details>> makeMap()
+	{
+		return Collections.synchronizedMap(new HashMap<String, Queue<Details>>());
+	}
+	
+	public synchronized void commandReset(Message mes)
+	{
+		int failed = 0;
+		for (Entry<String, Queue<Details>> ent : outst.entrySet())
+			for (Details qu : ent.getValue())
+			{
+				qu.callback.fail();
+				++failed;
+			}
+		outst = makeMap();
+		irc.sendContextReply(mes, "Okay, purged " + failed + " item" + (failed == 1 ? "" : "s") + ".");
+	}
+	
 	public Where(Modules mods, IRCInterface irc)
 	{
 		this.irc = irc;
@@ -131,35 +159,53 @@ public class Where
 
 		Matcher ma;
 		if (!(ma = whatExtract.matcher(resp.getResponse())).matches())
+		{
+			minilog("Lol whut: Couldn't parse server's reply: " + resp.getResponse());
 			return; // Lol whut.
+		}
 
 		final String aboutWhat = ma.group(1);
 		final String tail = ma.group(2);
 
 		Queue<Details> detst = outst.get(aboutWhat);
+		minilog(aboutWhat + " -> " + detst);
+
 		if (detst == null || detst.isEmpty())
 		{
 			// The server has sent us a "WHO" line for a channel we don't care about.
 			// Ignoring when it hates us, and we're hitting a RAAAAAAACE CONDITIONS..
 			// it does this when we asked for a WHO nick. Assume that this is the only one we're going to get.
-
+			minilog("Looks like a line for an individual: " + resp.getResponse());
 			if (!(ma = splitUp.matcher(tail)).matches() || (detst = outst.get(ma.group(4))) == null) // Read the nick.
+			{
+				minilog("...which we wern't expecting. BAIL.");
 				return; // If we wern't looking for this either, just bail.
+			}
 		}
+		else
+			minilog("Looks like a line for a channel: " + resp.getResponse());
 
 		Details d = detst.peek();
 		if (d == null)
+		{
+			minilog("Wtf? There are no outstanding incomming messages for this item (" + aboutWhat + ")");
 			return; // Lol whut.
+		}
 
 		if (atend)
 		{
+			minilog("..and it was the end, so notify them.");
 			d.callback.complete(d);
 			detst.remove();
 		}
 		else
 		{
+			minilog("..which is not at the end, continuing: ");
 			if (!(ma = splitUp.matcher(tail)).matches())
+			{
+				minilog("Wtf? Wasn't matchable: " + tail);
 				return; // Lol whut.
+			}
 
 			try
 			{
@@ -168,16 +214,20 @@ public class Where
 				InetAddress toStore = getByName(ma.group(2));
 				final String nick = ma.group(4);
 
-				//ignore hosts we can't/don't want to check.
-				if (shouldIgnore(toStore))
-					return;
-
-				Set<InetAddress> newones;
-
+				// Work out where we're going to add the nick.
 				Set<InetAddress> addto;
 
 				if ((addto = d.users.get(nick)) == null)
 					d.users.put(nick, addto = new HashSet<InetAddress>());
+				
+				//ignore hosts we can't/don't want to check.
+				if (shouldIgnore(toStore))
+				{
+					minilog("Ignore a host and don't store it.");
+					return;
+				}
+
+				Set<InetAddress> newones;
 				
 				if (!isLocal(toStore) || (newones = d.localmap.get(ma.group(1))) == null)
 					addto.add(toStore);
@@ -187,6 +237,7 @@ public class Where
 			}
 			catch (UnknownHostException e)
 			{
+				minilog("Warning: Couldn't resolve real ip for " + ma.group(4) + ", not a problem: " + ma.group(2));
 				// Ignore, abort the put.
 			}
 		}
@@ -293,15 +344,50 @@ public class Where
 		goDo(what, c);
 	}
 
+	class IntervalArgs
+	{
+		final String what;
+		final Details det;
+
+		public IntervalArgs(String what, Details det)
+		{
+			this.what = what;
+			this.det = det;
+		}
+		
+	}
+	
+	public synchronized void interval(Object o)
+	{
+		IntervalArgs ia = (IntervalArgs) o;
+		Queue<Details> queue = outst.get(ia.what);
+		if (queue == null)
+		{
+			minilog("Attempting to clean-up a non-event, whut.");
+			return;
+		}
+
+		// If it's still present, remove and fail it.
+		if (queue.remove(ia.det))
+		{
+			minilog("Interval failing " + ia.det);
+			ia.det.callback.fail();
+		}
+		else
+			minilog("Interval found only success.");
+	}
+	
 	void goDo( String what, Callback c )
 	{
 		Queue<Details> d = outst.get(what);
 		if (d == null)
 			d = new LinkedList<Details>();
 
-		d.add(new Details(c));
+		Details det = new Details(c);
+		d.add(det);
 
 		outst.put(what, d);
+		mods.interval.callBack(new IntervalArgs(what, det), 10000);
 
 		irc.sendRawLine("WHO " + what);
 	}
@@ -347,7 +433,7 @@ public class Where
 	}
 
 	public String[] helpCommandOnResnet = {
-		"Displays a list of people connected to IRC from IPs in the university of warwick resnet IP range. Also works properly for those using screens on the server on which the plugin is running.",
+		"Displays a list of people connected to IRC from IPs in the University of Warwick resnet IP range. Also works properly for those using screens on the server on which the plugin is running.",
 		"[<ChannelName>]",
 		"<ChannelName> is the name of the channel to return results for."
 	};
