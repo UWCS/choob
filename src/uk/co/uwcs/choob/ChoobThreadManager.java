@@ -146,7 +146,9 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		BlockingQueue<ChoobTask> ret = queues.get(pluginName.toLowerCase());
 		if (ret == null)
 		{
-			ret = new ArrayBlockingQueue<ChoobTask>(30);
+			// When Where spams it's WHO requests, it needs to have a reply line for every user
+			// in the channels queued.
+			ret = new ArrayBlockingQueue<ChoobTask>(1000);
 			queues.put(pluginName.toLowerCase(), ret);
 		}
 		return ret;

@@ -48,8 +48,8 @@ public final class IntervalModule
 
 	/**
 	 * Calls the 'interval' function in the calling plugin, with the specified parameter and after the specified interval.
-	 * @param parameter The paramater that you want passed along to the interval function.
-	 * @param delay The delay after which you want the event to occour.
+	 * @param parameter The parameter that you want passed along to the interval function.
+	 * @param delay The delay after which you want the event to occur, in milliseconds.
 	 */
 	public void callBack( Object parameter, long delay )
 	{

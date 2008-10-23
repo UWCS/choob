@@ -1,6 +1,8 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -158,6 +160,18 @@ public class Where
 		return temp;
 	}
 
+	private static String encode(String s)
+	{
+		try
+		{
+			return URLEncoder.encode(s, "UTF-8");
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			return "FAIL";
+		}
+	}
+	
 	// "User", hostname, server, nick, ...
 	final Pattern splitUp = Pattern.compile("^~?([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) .*");
 	public synchronized void onServerResponse(ServerResponse resp)
@@ -170,7 +184,7 @@ public class Where
 		Matcher ma;
 		if (!(ma = whatExtract.matcher(resp.getResponse())).matches())
 		{
-			minilog("Lol whut: Couldn't parse server's reply: " + resp.getResponse());
+			minilog("Lol whut: Couldn't parse server's reply: " + encode(resp.getResponse()));
 			return; // Lol whut.
 		}
 
@@ -193,12 +207,12 @@ public class Where
 			}
 		}
 		else
-			minilog("Looks like a line for a channel: " + resp.getResponse());
+			minilog("Looks like a line for a channel: " + encode(resp.getResponse()));
 
 		Details d = detst.peek();
 		if (d == null)
 		{
-			minilog("Wtf? There are no outstanding incomming messages for this item (" + aboutWhat + ")");
+			minilog("Wtf? There are no outstanding incomming messages for this item (" + encode(aboutWhat) + ")");
 			return; // Lol whut.
 		}
 
