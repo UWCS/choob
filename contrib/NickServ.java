@@ -1,15 +1,29 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jibble.pircbot.Colors;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.ChannelJoin;
+import uk.co.uwcs.choob.support.events.ChannelKick;
+import uk.co.uwcs.choob.support.events.ChannelPart;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.NickChange;
+import uk.co.uwcs.choob.support.events.PrivateNotice;
+import uk.co.uwcs.choob.support.events.QuitEvent;
+import uk.co.uwcs.choob.support.events.ServerResponse;
 
 
 /**
@@ -46,7 +60,7 @@ public class NickServ
 //	private static int CACHE_TIMEOUT = 3600000; // Timeout on nick check cache (1 hour).
 	// ^^ Can only be used once we can verify a user is in a channel and thus trust their online-ness.
 
-	private Map<String,ResultObj> nickChecks;
+	private final Map<String,ResultObj> nickChecks;
 	Modules mods;
 	IRCInterface irc;
 
@@ -62,7 +76,7 @@ public class NickServ
 	private String nickCheck;
 	private String nickNeedCheck;
 
-	public NickServ(Modules mods, IRCInterface irc)
+	public NickServ(final Modules mods, final IRCInterface irc)
 	{
 		nickChecks = new HashMap<String,ResultObj>();
 		this.irc = irc;
@@ -73,9 +87,9 @@ public class NickServ
 	}
 
 	// This is triggered by the constructor.
-	public synchronized void interval( Object parameter )
+	public synchronized void interval( final Object parameter )
 	{
-		String nick = "ignore-me"; // It's completely irrelevant what this nick is.
+		final String nick = "ignore-me"; // It's completely irrelevant what this nick is.
 		getNewNickCheck( nick );
 	}
 
@@ -83,9 +97,9 @@ public class NickServ
 	{
 		synchronized(nickChecks)
 		{
-			Iterator<String> nicks = nickChecks.keySet().iterator();
+			final Iterator<String> nicks = nickChecks.keySet().iterator();
 			while(nicks.hasNext()) {
-				ResultObj result = getNickCheck(nicks.next());
+				final ResultObj result = getNickCheck(nicks.next());
 				synchronized(result)
 				{
 					result.notifyAll();
@@ -107,13 +121,13 @@ public class NickServ
 		"[<NickName>]",
 		"<NickName> is an optional nick to check"
 	};
-	public void commandCheck( Message mes ) throws ChoobException
+	public void commandCheck( final Message mes ) throws ChoobException
 	{
 		String nick = mods.util.getParamString( mes );
 		if (nick.length() == 0)
 			nick = mes.getNick();
 
-		int check1 = ((Integer)mods.plugin.callAPI("NickServ", "Status", nick)).intValue();
+		final int check1 = ((Integer)mods.plugin.callAPI("NickServ", "Status", nick)).intValue();
 		if ( check1 == 3 )
 		{
 			irc.sendContextReply(mes, nick + " is authed (" + check1 + ")!");
@@ -128,7 +142,7 @@ public class NickServ
 		}
 	}
 
-	public int apiStatus( String nick )
+	public int apiStatus( final String nick )
 	{
 		ResultObj result = getCachedNickCheck( nick.toLowerCase() );
 		if (result != null)
@@ -144,25 +158,25 @@ public class NickServ
 			{
 				result.wait(30000); // Make sure if NickServ breaks we're not screwed
 			}
-			catch (InterruptedException e)
+			catch (final InterruptedException e)
 			{
 				// Ooops, timeout
 				ip_overrides=true;
 				return -1;
 			}
 		}
-		int status = result.result;
+		final int status = result.result;
 		return status;
 	}
 
-	public boolean apiCheck( String nick )
+	public boolean apiCheck( final String nick )
 	{
 		return apiCheck( nick, false );
 	}
 
-	public boolean apiCheck( String nick, boolean assumption )
+	public boolean apiCheck( final String nick, final boolean assumption )
 	{
-		int stat = apiStatus( nick );
+		final int stat = apiStatus( nick );
 		if (stat == -1)
 			return assumption;
 		return stat >= 3;
@@ -198,7 +212,7 @@ public class NickServ
 		return result;
 	}
 
-	private ResultObj getNickCheck( String nick )
+	private ResultObj getNickCheck( final String nick )
 	{
 		synchronized(nickChecks)
 		{
@@ -206,7 +220,7 @@ public class NickServ
 		}
 	}
 
-	private ResultObj getCachedNickCheck( String nick )
+	private ResultObj getCachedNickCheck( final String nick )
 	{
 		ResultObj result;
 		synchronized(nickChecks)
@@ -231,7 +245,7 @@ public class NickServ
 	}
 
 	public String[] optionsGeneral = { "Password" };
-	public boolean optionCheckGeneralPassword( String value ) { return true; }
+	public boolean optionCheckGeneralPassword( final String value ) { return true; }
 	public String[] helpOptionPassword = {
 		"Set this to the bot's NickServ password to make it identify with NickServ."
 	};
@@ -239,17 +253,17 @@ public class NickServ
 	public String[] helpCommandEnableOverride = {
 		"Private use only, mmkay?"
 	};
-	public void commandEnableOverride(Message mes)
+	public void commandEnableOverride(final Message mes)
 	{
 		ip_overrides=true;
 		irc.sendContextReply(mes, "Kay.");
 	}
 
-	public void onServerResponse(ServerResponse resp)
+	public void onServerResponse(final ServerResponse resp)
 	{
 		if (resp.getCode() == 401) // 401 Nick Not Found.
 		{
-			Matcher ma = Pattern.compile("^[^ ]+ ([^ ]+) ").matcher(resp.getResponse().trim());
+			final Matcher ma = Pattern.compile("^[^ ]+ ([^ ]+) ").matcher(resp.getResponse().trim());
 			if (ma.find() && ma.group(1).trim().toLowerCase().equals("nickserv"))
 				ip_overrides=true;
 		}
@@ -264,13 +278,13 @@ public class NickServ
 			 * Choobie| :Faux=+Faux@87029A85.60BE439B.C4C3F075.IP
 			 */
 
-			Matcher ma=Pattern.compile("^[^ ]+ :([^=]+)=(.*)").matcher(resp.getResponse().trim());
+			final Matcher ma=Pattern.compile("^[^ ]+ :([^=]+)=(.*)").matcher(resp.getResponse().trim());
 			if (!ma.find())
 			{
 				System.err.println("Unexpected non-match.");
 				return;
 			}
-			ResultObj result = getNickCheck( ma.group(1).trim().toLowerCase() );
+			final ResultObj result = getNickCheck( ma.group(1).trim().toLowerCase() );
 			if ( result == null )
 			{
 				System.out.println("Something else handled it (" + ma.group(1).trim().toLowerCase() + "), we shouldn't be here.");
@@ -288,7 +302,7 @@ public class NickServ
 
 				try
 				{
-					BufferedReader allowed = new BufferedReader(new FileReader("userip.list"));
+					final BufferedReader allowed = new BufferedReader(new FileReader("userip.list"));
 
 					while((line=allowed.readLine())!=null)
 						if (ma.group(2).equals(line))
@@ -297,7 +311,7 @@ public class NickServ
 							break;
 						}
 				}
-				catch (IOException e)
+				catch (final IOException e)
 				{
 					// e.printStackTrace();
 					ip_overrides=false;
@@ -312,7 +326,7 @@ public class NickServ
 	}
 
 
-	public void onPrivateNotice( Message mes )
+	public void onPrivateNotice( final Message mes )
 	{
 		if ( ! (mes instanceof PrivateNotice) )
 			return; // Only interested in private notices
@@ -336,17 +350,17 @@ public class NickServ
 			return;
 		}
 
-		List<String> params = mods.util.getParams( mes );
+		final List<String> params = mods.util.getParams( mes );
 
 		String nick;
 		int status = 0;
 		if (infooverride)
 		{
 			// Atheme:
-			Matcher anr = athemeNotRegistered.matcher(mes.getMessage());
-			Matcher aon = athemeCurrentlyOnline.matcher(mes.getMessage());
-			Matcher aoff = athemeCurrentlyOffline.matcher(mes.getMessage());
-			Matcher acni = athemeCurrentNickInfo.matcher(mes.getMessage());
+			final Matcher anr = athemeNotRegistered.matcher(mes.getMessage());
+			final Matcher aon = athemeCurrentlyOnline.matcher(mes.getMessage());
+			final Matcher aoff = athemeCurrentlyOffline.matcher(mes.getMessage());
+			final Matcher acni = athemeCurrentNickInfo.matcher(mes.getMessage());
 
 			if(acni.matches())
 			{
@@ -358,9 +372,9 @@ public class NickServ
 				}
 				return;
 			}
-			
+
 			if (anr.matches())
-			{	
+			{
 				nick = Colors.removeFormattingAndColors(anr.group(1));
 				if(Colors.removeFormattingAndColors(nick).equalsIgnoreCase(this.nickCheck))
 				{
@@ -385,7 +399,7 @@ public class NickServ
 				if (mes.getMessage().indexOf("Nickname: ") == -1 && mes.getMessage().indexOf("The nickname [") == -1)
 					return; // Wrong type of message!
 
-				Matcher ma = validInfoReply.matcher(Colors.removeFormattingAndColors(mes.getMessage()));
+				final Matcher ma = validInfoReply.matcher(Colors.removeFormattingAndColors(mes.getMessage()));
 
 				if (!ma.matches())
 					return;
@@ -400,7 +414,7 @@ public class NickServ
 				}
 				else
 					// Registered
-					status = (ma.group(2) == null || ma.group(2).equals("")) ? 1 : 3;
+					status = ma.group(2) == null || ma.group(2).equals("") ? 1 : 3;
 			}
 		}
 		else
@@ -413,7 +427,7 @@ public class NickServ
 				{
 					pass = (String)mods.plugin.callAPI("Options", "GetGeneralOption", "password");
 				}
-				catch (ChoobNoSuchCallException e)
+				catch (final ChoobNoSuchCallException e)
 				{
 					System.err.println("Options plugin not loaded; can't get NickServ password.");
 					return;
@@ -457,7 +471,7 @@ public class NickServ
 				return; // Wrong type of message!
 		}
 
-		ResultObj result = getNickCheck( nick.toLowerCase() );
+		final ResultObj result = getNickCheck( nick.toLowerCase() );
 		if ( result == null )
 			return; // XXX
 
@@ -475,7 +489,7 @@ public class NickServ
 
 	// Expire old checks when appropriate...
 
-	public void onNickChange( NickChange nc )
+	public void onNickChange( final NickChange nc )
 	{
 		synchronized(nickChecks)
 		{
@@ -484,7 +498,7 @@ public class NickServ
 		}
 	}
 
-	public void onJoin( ChannelJoin cj )
+	public void onJoin( final ChannelJoin cj )
 	{
 		synchronized(nickChecks)
 		{
@@ -492,7 +506,7 @@ public class NickServ
 		}
 	}
 
-	public void onKick( ChannelKick ck )
+	public void onKick( final ChannelKick ck )
 	{
 		synchronized(nickChecks)
 		{
@@ -500,7 +514,7 @@ public class NickServ
 		}
 	}
 
-	public void onPart( ChannelPart cp )
+	public void onPart( final ChannelPart cp )
 	{
 		synchronized(nickChecks)
 		{
@@ -508,7 +522,7 @@ public class NickServ
 		}
 	}
 
-	public void onQuit( QuitEvent qe )
+	public void onQuit( final QuitEvent qe )
 	{
 		synchronized(nickChecks)
 		{

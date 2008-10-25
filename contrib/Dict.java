@@ -1,10 +1,18 @@
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.zuckerfrei.jcfd.*;
+import net.zuckerfrei.jcfd.Definition;
+import net.zuckerfrei.jcfd.DefinitionList;
+import net.zuckerfrei.jcfd.DictFactory;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.IRCInterface;
@@ -14,11 +22,11 @@ class DictionaryException extends ChoobException
 {
 	private static final long serialVersionUID = 1L;
 
-	public DictionaryException(String text)
+	public DictionaryException(final String text)
 	{
 		super(text);
 	}
-	public DictionaryException(String text, Throwable e)
+	public DictionaryException(final String text, final Throwable e)
 	{
 		super(text, e);
 	}
@@ -43,9 +51,9 @@ public class Dict
 		};
 	}
 
-	private Modules mods;
-	private IRCInterface irc;
-	public Dict(Modules mods, IRCInterface irc)
+	private final Modules mods;
+	private final IRCInterface irc;
+	public Dict(final Modules mods, final IRCInterface irc)
 	{
 		this.mods=mods;
 		this.irc=irc;
@@ -58,7 +66,7 @@ public class Dict
 		"<word> is the word to look up"
 	};
 
-	String spelt(String item)
+	String spelt(final String item)
 	{
 		try
 		{
@@ -67,7 +75,7 @@ public class Dict
 				return apiSuggestions(item);
 			return "'" + item + "' is spelt correctly according to " + rep + ".";
 		}
-		catch (DictionaryException e)
+		catch (final DictionaryException e)
 		{
 			 return "Unexpected error while checking spelling: " + e;
 		}
@@ -76,25 +84,25 @@ public class Dict
 
 	final public String filterSpRegex = "\\b([a-zA-Z]+) ?\\(sp\\?\\)";
 
-	public void filterSp( Message mes )
+	public void filterSp( final Message mes )
 	{
 		final Matcher ma=Pattern.compile(filterSpRegex).matcher(mes.getMessage());
 		if (ma.find())
 			irc.sendContextReply(mes, spelt(ma.group(1)));
 
 	}
-	public void commandSpelt( Message mes )
+	public void commandSpelt( final Message mes )
 	{
 		irc.sendContextReply(mes, spelt(mods.util.getParamString(mes)));
 	}
 
-	public String apiDefault( String item ) throws DictionaryException
+	public String apiDefault( final String item ) throws DictionaryException
 	{
 		try
 		{
 			return apiDictionaryCom(item);
 		}
-		catch (DictionaryException e)
+		catch (final DictionaryException e)
 		{
 			// Fall through..
 		}
@@ -102,7 +110,7 @@ public class Dict
 		{
 			return apiDictionary(item);
 		}
-		catch (DictionaryException e) 
+		catch (final DictionaryException e)
 		{
 			// Fall through..
 		}
@@ -110,7 +118,7 @@ public class Dict
 		{
 			return apiAcronymFinder(item);
 		}
-		catch (DictionaryException e) 
+		catch (final DictionaryException e)
 		{
 			// Fall through..
 		}
@@ -118,14 +126,14 @@ public class Dict
 		return apiSuggestions(item);
 	}
 
-	public String apiCorrectBy( String item )
+	public String apiCorrectBy( final String item )
 	{
 		try
 		{
 			apiDictionaryCom(item);
 			return "dictionary.com";
 		}
-		catch (DictionaryException e) 
+		catch (final DictionaryException e)
 		{
 			// Fall through..
 		}
@@ -134,7 +142,7 @@ public class Dict
 			apiDictionary(item);
 			return "dict.org";
 		}
-		catch (DictionaryException e) 
+		catch (final DictionaryException e)
 		{
 			// Fall through..
 		}
@@ -143,7 +151,7 @@ public class Dict
 			apiAcronymFinder(item);
 			return "acronym finder";
 		}
-		catch (DictionaryException e) 
+		catch (final DictionaryException e)
 		{
 			// Fall through..
 		}
@@ -151,19 +159,19 @@ public class Dict
 		return null;
 	}
 
-	public String apiSuggestions(String item) throws DictionaryException
+	public String apiSuggestions(final String item) throws DictionaryException
 	{
 		if (item.equals(""))
 			throw new DictionaryException("Lookup what?");
 
-		URL url=generateURL("http://dictionary.reference.com/search?q=", item);
+		final URL url=generateURL("http://dictionary.reference.com/search?q=", item);
 
 		String page;
 		try
 		{
 			page=mods.scrape.getContentsCached(url);
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			throw new DictionaryException("Error reading site: " + e, e);
 		}
@@ -171,7 +179,7 @@ public class Dict
 		if (page.indexOf("<p>No spelling suggestions were found.</p>")!=-1)
 			return "No suggestions were found for '" + item + "'.";
 
-		Matcher ma=Pattern.compile("(?s)\r?\nSuggestions:<br>(.*?)<p>No entry was found in the dictionary. Would you like to").matcher(page);
+		final Matcher ma=Pattern.compile("(?s)\r?\nSuggestions:<br>(.*?)<p>No entry was found in the dictionary. Would you like to").matcher(page);
 
 		if (ma.find())
 			return prettyReply(mods.scrape.readyForIrc("Suggestions for '" + item + "': " + ma.group(1).replaceAll("<br>",", ")), url.toString(), 1);
@@ -179,9 +187,9 @@ public class Dict
 
 	}
 
-	public void commandDict(Message mes)
+	public void commandDict(final Message mes)
 	{
-		List<String> parm=mods.util.getParams(mes, 2);
+		final List<String> parm=mods.util.getParams(mes, 2);
 		if (parm.size()<=1)
 		{
 			irc.sendContextReply(mes, "Please give me a word to lookup.");
@@ -191,7 +199,7 @@ public class Dict
 		{
 			if (parm.size()>2)
 			{
-				String tionary=parm.get(1);
+				final String tionary=parm.get(1);
 				if (tionary.equalsIgnoreCase("wikipedia"))
 					irc.sendContextReply(mes, apiWikipedia(parm.get(2)));
 				else if (tionary.equalsIgnoreCase("urbandict"))
@@ -208,7 +216,7 @@ public class Dict
 			else
 				irc.sendContextReply(mes, apiDefault(parm.get(1)));
 		}
-		catch (DictionaryException e)
+		catch (final DictionaryException e)
 		{
 			irc.sendContextReply(mes, "Lookup failed: " + e);
 			e.printStackTrace();
@@ -217,66 +225,66 @@ public class Dict
 		}
 	}
 
-	private String prettyReply(String text, String url, int lines)
+	private String prettyReply(String text, final String url, final int lines)
 	{
-		int maxlen=((IRCInterface.MAX_MESSAGE_LENGTH-15)*lines) - url.length();
+		final int maxlen=(IRCInterface.MAX_MESSAGE_LENGTH-15)*lines - url.length();
 		text=text.replaceAll("\\s+"," ");
 		if (text.length()>maxlen)
 			return text.substring(0, maxlen) + "..., see " + url + ".";
 		return text + " See " + url + ".";
 	}
 
-	private URL generateURL(String base, String url) throws DictionaryException
+	private URL generateURL(final String base, final String url) throws DictionaryException
 	{
 		try
 		{
 			return new URL(base + URLEncoder.encode(url, "UTF-8"));
 		}
-		catch (UnsupportedEncodingException e)
+		catch (final UnsupportedEncodingException e)
 		{
 			throw new DictionaryException("Unexpected exception generating url.", e);
 		}
-		catch (MalformedURLException e)
+		catch (final MalformedURLException e)
 		{
 			throw new DictionaryException("Error, malformed url generated.", e);
 		}
 	}
 
-	private Matcher getMatcher(URL url, String pat) throws DictionaryException
+	private Matcher getMatcher(final URL url, final String pat) throws DictionaryException
 	{
 		try
 		{
 			return mods.scrape.getMatcher(url, pat);
 		}
-		catch (FileNotFoundException e)
+		catch (final FileNotFoundException e)
 		{
 			throw new DictionaryException("No article found (404).", e);
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			throw new DictionaryException("Error reading from site. " + e, e);
 		}
 
 	}
 
-	public String apiDictionaryCom( String item ) throws DictionaryException
+	public String apiDictionaryCom( final String item ) throws DictionaryException
 	{
 		return apiDictionaryCom(item, 2);
 	}
 
-	public String apiDictionaryCom( String item, int lines ) throws DictionaryException
+	public String apiDictionaryCom( final String item, final int lines ) throws DictionaryException
 	{
 		if (item.equals(""))
 			throw new DictionaryException("Lookup what?");
 
-		URL url=generateURL("http://dictionary.reference.com/search?q=", item);
+		final URL url=generateURL("http://dictionary.reference.com/search?q=", item);
 
 		String page;
 		try
 		{
 			page=mods.scrape.getContentsCached(url);
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			throw new DictionaryException("Error reading site: " + e, e);
 		}
@@ -284,7 +292,7 @@ public class Dict
 		if (page.indexOf("No entry found")!=-1)
 			throw new DictionaryException("No matches found.");
 
-		Matcher ma=Pattern.compile("(?s)<!-- google_ad_region_start=def -->(.*?)<!-- google_ad_region_end=def -->").matcher(page);
+		final Matcher ma=Pattern.compile("(?s)<!-- google_ad_region_start=def -->(.*?)<!-- google_ad_region_end=def -->").matcher(page);
 
 		if (ma.find())
 		{
@@ -296,53 +304,53 @@ public class Dict
 	}
 
 
-	public String apiWikipedia( String item ) throws DictionaryException
+	public String apiWikipedia( final String item ) throws DictionaryException
 	{
 		return apiWikipedia(item, 2);
 	}
 
-	public String apiWikipedia( String item, int lines ) throws DictionaryException
+	public String apiWikipedia( final String item, final int lines ) throws DictionaryException
 	{
 		if (item.equals(""))
 			throw new DictionaryException("Lookup what?");
 
-		URL url=generateURL("http://en.wikipedia.org/wiki/", item);
-		Matcher ma=getMatcher(url, "(?s)(?:(?:<!-- start content -->.*?</table>\n<p>)|(?:<!-- start content -->.*?<p>))(?!<[^bi])(.*?)</p>");
+		final URL url=generateURL("http://en.wikipedia.org/wiki/", item);
+		final Matcher ma=getMatcher(url, "(?s)(?:(?:<!-- start content -->.*?</table>\n<p>)|(?:<!-- start content -->.*?<p>))(?!<[^bi])(.*?)</p>");
 
 		if (ma.find())
 			return prettyReply(mods.scrape.readyForIrc(ma.group(1)), url.toString(), lines);
 		throw new DictionaryException("Error parsing wikipedia's reply.");
 	}
 
-	public String apiUrbanDictionary( String item ) throws DictionaryException
+	public String apiUrbanDictionary( final String item ) throws DictionaryException
 	{
 		return apiUrbanDictionary(item, 2);
 	}
 
-	public String apiUrbanDictionary( String item, int lines ) throws DictionaryException
+	public String apiUrbanDictionary( final String item, final int lines ) throws DictionaryException
 	{
 		if (item.equals(""))
 			throw new DictionaryException("Lookup what?");
 
-		URL url=generateURL("http://www.urbandictionary.com/define.php?term=", item);
-		Matcher ma=getMatcher(url, "(?s)<div class=\"definition\">(.*?)</div>");
+		final URL url=generateURL("http://www.urbandictionary.com/define.php?term=", item);
+		final Matcher ma=getMatcher(url, "(?s)<div class=\"definition\">(.*?)</div>");
 
 		if (ma.find())
 			return prettyReply(mods.scrape.readyForIrc(ma.group(1)), url.toString(), lines);
 		throw new DictionaryException("Error parsing urbandictionary's reply.");
 	}
 
-	public String apiAcronymFinder( String item ) throws DictionaryException
+	public String apiAcronymFinder( final String item ) throws DictionaryException
 	{
 		return apiAcronymFinder(item, 1);
 	}
 
-	public String apiAcronymFinder( String item, int lines ) throws DictionaryException
+	public String apiAcronymFinder( final String item, final int lines ) throws DictionaryException
 	{
 		if (item.equals(""))
 			throw new DictionaryException("Lookup what?");
 
-		URL url=generateURL("http://www.acronymfinder.com/af-query.asp?String=exact&Find=Find&Acronym=", item);
+		final URL url=generateURL("http://www.acronymfinder.com/af-query.asp?String=exact&Find=Find&Acronym=", item);
 
 		String page;
 
@@ -350,7 +358,7 @@ public class Dict
 		{
 			page=mods.scrape.getContentsCached(url);
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			throw new DictionaryException("Error reading site: " + e, e);
 		}
@@ -358,11 +366,11 @@ public class Dict
 		if (page.indexOf("support Java-based browsers/utilities, screen-scraping")!=-1)
 			throw new DictionaryException("Oh nose, acronymfinder have detected our screen-scraping h4x! Run, run and hide!");
 
-		Matcher ma=Pattern.compile("(?s)src=\"l.gif\" title=\"direct link\" ></a>&nbsp;(.*?)</td>").matcher(page);
+		final Matcher ma=Pattern.compile("(?s)src=\"l.gif\" title=\"direct link\" ></a>&nbsp;(.*?)</td>").matcher(page);
 
-		StringBuilder s=new StringBuilder();
+		final StringBuilder s=new StringBuilder();
 
-		while (ma.find() && s.length()<((IRCInterface.MAX_MESSAGE_LENGTH-77-50)*lines))
+		while (ma.find() && s.length()<(IRCInterface.MAX_MESSAGE_LENGTH-77-50)*lines)
 			s.append(mods.scrape.readyForIrc(ma.group(1))).append(", ");
 
 		if (s.length()==0)
@@ -378,24 +386,24 @@ public class Dict
 	}
 
 
-	public String apiDictionary( String item ) throws DictionaryException
+	public String apiDictionary( final String item ) throws DictionaryException
 	{
 		return apiDictionary(item, 2);
 	}
 
-	public String apiDictionary( String item, int lines ) throws DictionaryException
+	public String apiDictionary( final String item, final int lines ) throws DictionaryException
 	{
 		try
 		{
-			String word = item;
+			final String word = item;
 
-			net.zuckerfrei.jcfd.Dict dict = DictFactory.getInstance().getDictClient();
+			final net.zuckerfrei.jcfd.Dict dict = DictFactory.getInstance().getDictClient();
 
-			DefinitionList defList = dict.define(word);
+			final DefinitionList defList = dict.define(word);
 
-			StringBuilder rep=new StringBuilder();
+			final StringBuilder rep=new StringBuilder();
 
-			int count=defList.count();
+			final int count=defList.count();
 			if (count==0)
 				throw new DictionaryException("No definitions found.");
 
@@ -408,18 +416,18 @@ public class Dict
 
 				rep.append(def.getContent() + " (" + def.getDatabase().getName() + ")");
 
-				String[] links = def.getLinks();
+				final String[] links = def.getLinks();
 				if (links.length!=0)
 					rep.append(" See also: ");
-				for (int i = 0; i < links.length; i++)
-					rep.append(links[i] + ", ");
+				for (final String link : links)
+					rep.append(link + ", ");
 
 			}
 
 			dict.close();
 			return prettyReply(mods.scrape.readyForIrc(rep.toString().replaceAll("\r\n","\n").replaceAll("\n\n"," || ").replaceAll("\n", " ")), "http://www.dict.org/bin/Dict?Form=Dict2&Database=*&Query=" + item, lines);
 		}
-		catch (net.zuckerfrei.jcfd.DictException e)
+		catch (final net.zuckerfrei.jcfd.DictException e)
 		{
 			throw new DictionaryException("Unexpected exception.", e);
 		}
@@ -429,9 +437,9 @@ public class Dict
 	/**
 	 * @param id ID of quote to return, any invalid for "all".
 	 */
-	public String[] apiQuoteOfTheDay( int id ) throws DictionaryException
+	public String[] apiQuoteOfTheDay( final int id ) throws DictionaryException
 	{
-		URL url=generateURL("http://quotationspage.com/qotd.html", "");
+		final URL url=generateURL("http://quotationspage.com/qotd.html", "");
 
 		String page;
 
@@ -439,13 +447,13 @@ public class Dict
 		{
 			page=mods.scrape.getContentsCached(url);
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			throw new DictionaryException("Error reading site: " + e, e);
 		}
 
-		Matcher ma=Pattern.compile("<dt class=\"quote\"><a title=\"Click for further information about this quotation\" href=\"/quote/[0-9]+.html\">(.*?)</a>.*?<a href=\"/quotes/.+?/\">(.+?)</a>").matcher(page);
-		List<String> ret = new ArrayList<String>();
+		final Matcher ma=Pattern.compile("<dt class=\"quote\"><a title=\"Click for further information about this quotation\" href=\"/quote/[0-9]+.html\">(.*?)</a>.*?<a href=\"/quotes/.+?/\">(.+?)</a>").matcher(page);
+		final List<String> ret = new ArrayList<String>();
 
 		int i=0;
 		while (ma.find())
@@ -472,9 +480,9 @@ public class Dict
 		"<id> is the optional quoteid to return. 'all' to recieve all of the quotes via. pm.",
 	};
 
-	public void commandQuoteOfTheDay(Message mes)
+	public void commandQuoteOfTheDay(final Message mes)
 	{
-		List<String> params = mods.util.getParams(mes);
+		final List<String> params = mods.util.getParams(mes);
 
 		int passid;
 		if (params.size() <= 1)
@@ -489,7 +497,7 @@ public class Dict
 					if (passid > 4 || passid < 1)
 						passid = randomQuote();
 				}
-				catch (NumberFormatException e)
+				catch (final NumberFormatException e)
 				{
 					passid = randomQuote();
 				}
@@ -498,7 +506,7 @@ public class Dict
 		{
 			irc.sendContextReply(mes, apiQuoteOfTheDay(passid));
 		}
-		catch (DictionaryException e)
+		catch (final DictionaryException e)
 		{
 			irc.sendContextReply(mes, "Unexpected error: " + e);
 		}

@@ -26,8 +26,8 @@ import uk.co.uwcs.choob.support.events.Message;
 
 public class Tv
 {
-	private Modules mods;
-	private IRCInterface irc;
+	private final Modules mods;
+	private final IRCInterface irc;
 
 	final static String[] cts = { "bbc1", "bbc2", "itv1", "ch4", "five", "sky_one", "sky_cinema1", "sky_cinema2", "sky_movies1", "sky_movies2", "sky_movies3", "sky_movies4", "sky_movies5", "sky_movies6", "sky_movies7", "sky_movies8", "sky_movies9" };
 
@@ -35,7 +35,7 @@ public class Tv
 
 	final static String propend = "app=Choob&email=chrisrwest@gmail.com";
 
-	public Tv(Modules mods, IRCInterface irc)
+	public Tv(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -48,7 +48,7 @@ public class Tv
 		mods.interval.callBack(null, 0); // Don't block the constructor.
 	}
 
-	public void interval (Object o)
+	public void interval (final Object o)
 	{
 		try
 		{
@@ -61,17 +61,17 @@ public class Tv
 				Thread.sleep(4000);
 			}
 		}
-		catch (Throwable t)
+		catch (final Throwable t)
 		{
 			t.printStackTrace();
 		}
 
-		mods.interval.callBack(null, (int)(((new Random()).nextFloat()*3.0f+1.0f)*60.0f*60.0f*1000)); // 1->4h in ms.
+		mods.interval.callBack(null, (int)((new Random().nextFloat()*3.0f+1.0f)*60.0f*60.0f*1000)); // 1->4h in ms.
 	}
 
-	public ChannelInfo getChannelInfo(String parm)
+	public ChannelInfo getChannelInfo(final String parm)
 	{
-		ChannelInfo c=new ChannelInfo();
+		final ChannelInfo c=new ChannelInfo();
 		try
 		{
 			final DefaultHandler handler = new ParseHandler(c);
@@ -86,7 +86,7 @@ public class Tv
 				}
 			}
 		}
-		catch (Throwable t)
+		catch (final Throwable t)
 		{
 			t.printStackTrace();
 		}
@@ -101,33 +101,32 @@ public class Tv
 	};
 
 
-	public void commandSearch (Message mes)
+	public void commandSearch (final Message mes)
 	{
-		List <String>parms=mods.util.getParams(mes, 1);
+		final List <String>parms=mods.util.getParams(mes, 1);
 		if (parms.size()<2)
 		{
 			irc.sendContextReply(mes, "Not enough params, expected 'searchstring'.");
 			return;
 		}
 
-		List<String> reps=new ArrayList<String>();
+		final List<String> reps=new ArrayList<String>();
 
-		for (int n=0; n<chans.length; n++)
+		for (final ChannelInfo c : chans)
 		{
 
-			ChannelInfo c=chans[n];
-			Iterator<Programme> i=c.programmes.iterator();
+			final Iterator<Programme> i=c.programmes.iterator();
 
 			try
 			{
 				while (i.hasNext())
 				{
-					Programme p=i.next();
+					final Programme p=i.next();
 					if (p.title.toLowerCase().indexOf(parms.get(1).toLowerCase())!=-1)
-						reps.add(c.key + ", " + (new Date(p.start)).toString() + " -> " + (new Date(p.end)).toString() + ": " + p.title + ": " + p.desc);
+						reps.add(c.key + ", " + new Date(p.start).toString() + " -> " + new Date(p.end).toString() + ": " + p.title + ": " + p.desc);
 				}
 			}
-			catch (Throwable t)
+			catch (final Throwable t)
 			{
 				t.printStackTrace();
 			}
@@ -140,7 +139,7 @@ public class Tv
 			irc.sendContextReply(mes, reps.get(0));
 		else
 		{
-			Iterator <String>p=reps.iterator();
+			final Iterator <String>p=reps.iterator();
 			irc.sendContextReply(mes, "See pm.");
 
 			while (p.hasNext())
@@ -159,9 +158,9 @@ public class Tv
 	};
 
 
-	public synchronized void commandInfo (Message mes)
+	public synchronized void commandInfo (final Message mes)
 	{
-		List <String>parms=mods.util.getParams(mes, 2);
+		final List <String>parms=mods.util.getParams(mes, 2);
 		if (parms.size()<3)
 		{
 			irc.sendContextReply(mes, "Not enough params, expected 'tag searchstring'. Tags: http://bleb.org/tv/data/listings/0/ for list. eg. 'bbc1'.");
@@ -174,21 +173,21 @@ public class Tv
 			return;
 		}
 
-		ChannelInfo c=getChannelInfo(parms.get(1));
-		Iterator<Programme> i=c.programmes.iterator();
-		List<String> reps=new ArrayList<String>();
+		final ChannelInfo c=getChannelInfo(parms.get(1));
+		final Iterator<Programme> i=c.programmes.iterator();
+		final List<String> reps=new ArrayList<String>();
 
 		try
 		{
 			while (i.hasNext())
 			{
-				Programme p=i.next();
+				final Programme p=i.next();
 				if (p.title.toLowerCase().indexOf(parms.get(2).toLowerCase())!=-1)
 					//irc.sendContextReply(mes, parms.get(1) + ", " + (new Date(p.start)).toString() + " -> " + (new Date(p.end)).toString() + ": " + p.title + ": " + p.desc);
-					reps.add(parms.get(1) + ", " + (new Date(p.start)).toString() + " -> " + (new Date(p.end)).toString() + ": " + p.title + ": " + p.desc);
+					reps.add(parms.get(1) + ", " + new Date(p.start).toString() + " -> " + new Date(p.end).toString() + ": " + p.title + ": " + p.desc);
 			}
 		}
-		catch (Throwable t)
+		catch (final Throwable t)
 		{
 			t.printStackTrace();
 		}
@@ -199,7 +198,7 @@ public class Tv
 			irc.sendContextReply(mes, reps.get(0));
 		else
 		{
-			Iterator <String>p=reps.iterator();
+			final Iterator <String>p=reps.iterator();
 			irc.sendContextReply(mes, "See pm.");
 
 			while (p.hasNext())
@@ -215,9 +214,9 @@ class Programme implements Comparable<Programme>
 
 	public long start=0, end=Integer.MAX_VALUE;
 
-	public int compareTo(Programme other) throws ClassCastException
+	public int compareTo(final Programme other) throws ClassCastException
 	{
-		return (new Date(this.end)).compareTo((new Date(other.end)));
+		return new Date(this.end).compareTo(new Date(other.end));
 	}
 
 }
@@ -227,7 +226,7 @@ class ChannelInfo
 	String date, key, source;
 	ArrayList<Programme> programmes;
 
-	public ChannelInfo(String date, String key, String source)
+	public ChannelInfo(final String date, final String key, final String source)
 	{
 		this();
 		this.date=date;
@@ -246,11 +245,11 @@ class ChannelInfo
 		{
 			final Date day=DateFormat.getDateInstance(DateFormat.SHORT, Locale.UK).parse(date);
 			final Iterator<Programme> i=programmes.iterator();
-			Calendar t=new GregorianCalendar();
+			final Calendar t=new GregorianCalendar();
 
 			while (i.hasNext())
 			{
-				Programme p=i.next();
+				final Programme p=i.next();
 				t.setTime(day);
 				t.add(Calendar.HOUR_OF_DAY, (int)(p.start/100));
 				t.add(Calendar.MINUTE, (int)(p.start%100));
@@ -268,7 +267,7 @@ class ChannelInfo
 				p.end=t.getTimeInMillis();
 			}
 		}
-		catch (ParseException e)
+		catch (final ParseException e)
 		{
 			// Nothing we can do about any error.
 		}
@@ -282,13 +281,13 @@ class ParseHandler extends DefaultHandler
 	Programme cp=null;
 	int op;
 
-	public ParseHandler(ChannelInfo chan)
+	public ParseHandler(final ChannelInfo chan)
 	{
 		c=chan;
 	}
 
 	@Override
-	public void startElement(String namespaceURI, String lName, String qName, Attributes attrs) throws SAXException
+	public void startElement(final String namespaceURI, final String lName, final String qName, final Attributes attrs) throws SAXException
 	{
 		String eName = lName; // element name
 		if ("".equals(eName))
@@ -329,25 +328,25 @@ class ParseHandler extends DefaultHandler
 			op=4;
 	}
 	@Override
-	public void startDocument () throws SAXException 
+	public void startDocument () throws SAXException
 	{
 		// Ignore
 	}
 	@Override
-	public void endDocument () throws SAXException 
+	public void endDocument () throws SAXException
 	{
 		// Ignore
 	}
 	@Override
-	public void endElement (String namespaceURI, String sName, String qName) throws SAXException
+	public void endElement (final String namespaceURI, final String sName, final String qName) throws SAXException
 	{
 		op=0;
 	}
 
 	@Override
-	public void characters(char buf[], int offset, int len) throws SAXException
+	public void characters(final char buf[], final int offset, final int len) throws SAXException
 	{
-		String s = new String(buf, offset, len);
+		final String s = new String(buf, offset, len);
 		if (!s.trim().equals(""))
 			switch(op)
 			{

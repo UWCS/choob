@@ -8,12 +8,46 @@ package uk.co.uwcs.choob.modules;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.security.*;
-import java.sql.*;
-import java.util.*;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.AllPermission;
+import java.security.Permission;
+import java.security.PermissionCollection;
+import java.security.Permissions;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.PropertyPermission;
 
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.ChoobAuthError;
+import uk.co.uwcs.choob.support.ChoobError;
+import uk.co.uwcs.choob.support.ChoobEventExpired;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobFakeProtectionDomain;
+import uk.co.uwcs.choob.support.ChoobGeneralAuthError;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.ChoobPluginAuthError;
+import uk.co.uwcs.choob.support.ChoobProtectionDomain;
+import uk.co.uwcs.choob.support.ChoobSpecialStackPermission;
+import uk.co.uwcs.choob.support.ChoobUserAuthError;
+import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.UserNode;
+import uk.co.uwcs.choob.support.events.IRCEvent;
+import uk.co.uwcs.choob.support.events.MessageEvent;
+import uk.co.uwcs.choob.support.events.UserEvent;
 
 /**
  * Security manager for plugins, access control to anything requiring/checking
@@ -25,18 +59,18 @@ import uk.co.uwcs.choob.support.events.*;
  */
 public final class SecurityModule extends SecurityManager // For getClassContext(). Heh.
 {
-	private DbConnectionBroker dbBroker;
-	private Map<Integer,PermissionCollection> nodeMap;
-	private Map<Integer,List<Integer>> nodeTree;
-	private ArrayList<Map<String, Integer>> nodeIDCache;
-	private Modules mods;
-	private int anonID;
+	private final DbConnectionBroker dbBroker;
+	private final Map<Integer,PermissionCollection> nodeMap;
+	private final Map<Integer,List<Integer>> nodeTree;
+	private final ArrayList<Map<String, Integer>> nodeIDCache;
+	private final Modules mods;
+	private final int anonID;
 
 	/**
 	 * Creates a new instance of SecurityModule
 	 * @param dbBroker Database connection pool/broker.
 	 */
-	SecurityModule(DbConnectionBroker dbBroker, Modules mods)
+	SecurityModule(final DbConnectionBroker dbBroker, final Modules mods)
 	{
 		this.dbBroker = dbBroker;
 		this.mods = mods;
@@ -75,7 +109,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		return new ChoobFakeProtectionDomain(getPluginNames());
 	}
 
-	public ProtectionDomain getProtectionDomain(String pluginName)
+	public ProtectionDomain getProtectionDomain(final String pluginName)
 	{
 		return new ChoobProtectionDomain(this, pluginName);
 	}
@@ -85,12 +119,12 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		return getPluginNames(null);
 	}
 
-	public List<String> getPluginNames(String debugKey)
+	public List<String> getPluginNames(final String debugKey)
 	{
-		List<String> pluginStack = new ArrayList<String>();
+		final List<String> pluginStack = new ArrayList<String>();
 		// XXX HAX XXX HAX XXX HAX XXX HAX XXX
 		// ^^ If this doesn't persuade you that this is a hack, nothing will...
-		ChoobSpecialStackPermission perm = new ChoobSpecialStackPermission(pluginStack);
+		final ChoobSpecialStackPermission perm = new ChoobSpecialStackPermission(pluginStack);
 		AccessController.checkPermission(perm);
 		perm.patch();
 		return pluginStack;
@@ -102,8 +136,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @return null if there is no plugin that far back. Otherwise the plugin
 	 *         name.
 	 */
-	public String getPluginName(int skip) {
-		List<String> names = getPluginNames();
+	public String getPluginName(final int skip) {
+		final List<String> names = getPluginNames();
 		if (skip >= names.size()) {
 			return null;
 		}
@@ -113,7 +147,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Force plugin permissions to be reloaded at some later point.
 	 */
-	private void invalidateNodePermissions(int nodeID)
+	private void invalidateNodePermissions(final int nodeID)
 	{
 		synchronized(nodeMap) {
 			nodeMap.remove(nodeID);
@@ -123,14 +157,14 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Force plugin tree to be reloaded at some later point.
 	 */
-	private void invalidateNodeTree(int nodeID)
+	private void invalidateNodeTree(final int nodeID)
 	{
 		synchronized(nodeMap) {
 			nodeTree.remove(nodeID);
 		}
 	}
 
-	private PermissionCollection getNodePermissions(int nodeID)
+	private PermissionCollection getNodePermissions(final int nodeID)
 	{
 		PermissionCollection perms;
 		synchronized(nodeMap)
@@ -149,10 +183,10 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * Update permissions set for the given node ID. Code viciously hacked out
 	 * of ChoobSecurityManager.
 	 */
-	private void updateNodePermissions(int nodeID) {
+	private void updateNodePermissions(final int nodeID) {
 		Connection dbConnection = null;
 
-		Permissions permissions = new Permissions();
+		final Permissions permissions = new Permissions();
 
 		PreparedStatement permissionsSmt = null;
 		try {
@@ -161,21 +195,21 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 			permissionsSmt.setInt(1, nodeID);
 
-			ResultSet permissionsResults = permissionsSmt.executeQuery();
+			final ResultSet permissionsResults = permissionsSmt.executeQuery();
 
 			if ( permissionsResults.first() ) {
 				do
 				{
-					String className = permissionsResults.getString(1);
-					String permissionName = permissionsResults.getString(2);
-					String actions = permissionsResults.getString(3);
+					final String className = permissionsResults.getString(1);
+					final String permissionName = permissionsResults.getString(2);
+					final String actions = permissionsResults.getString(3);
 
 					Class <?> clas;
 					try
 					{
 						clas = Class.forName( className );
 					}
-					catch (ClassNotFoundException e)
+					catch (final ClassNotFoundException e)
 					{
 						System.err.println("Permission class not found: " + className);
 						continue; // XXX I guess this is OK?
@@ -194,7 +228,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					{
 						con = clas.getDeclaredConstructor(String.class, String.class);
 					}
-					catch (NoSuchMethodException e)
+					catch (final NoSuchMethodException e)
 					{
 						System.err.println("Permission class had no valid constructor: " + className);
 						continue; // XXX I guess this is OK?
@@ -205,19 +239,19 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					{
 						perm = (Permission)con.newInstance(permissionName, actions);
 					}
-					catch (IllegalAccessException e)
+					catch (final IllegalAccessException e)
 					{
 						System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
 						e.printStackTrace();
 						continue; // XXX
 					}
-					catch (InstantiationException e)
+					catch (final InstantiationException e)
 					{
 						System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
 						e.printStackTrace();
 						continue; // XXX
 					}
-					catch (InvocationTargetException e)
+					catch (final InvocationTargetException e)
 					{
 						System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
 						e.printStackTrace();
@@ -228,7 +262,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				} while ( permissionsResults.next() );
 			}
 		}
-		catch ( SQLException e )
+		catch ( final SQLException e )
 		{
 			System.err.println("Could not load DB permissions for user node " + nodeID + " (probably now incomplete permissions): " + e.getMessage());
 			e.printStackTrace();
@@ -239,7 +273,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			{
 				dbCleanupSel(permissionsSmt, dbConnection);
 			}
-			catch (ChoobError e) {}
+			catch (final ChoobError e) {}
 		}
 
 		synchronized(nodeMap) {
@@ -252,14 +286,14 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param permission
 	 * @param userNode
 	 */
-	private boolean hasPerm(Permission permission, int userNode)
+	private boolean hasPerm(final Permission permission, final int userNode)
 	{
 		return hasPerm(permission, userNode, false);
 	}
 
-	private boolean hasPerm(Permission permission, int userNode, boolean includeThis)
+	private boolean hasPerm(final Permission permission, final int userNode, final boolean includeThis)
 	{
-		Iterator<Integer> allNodes = getAllNodes(userNode, includeThis);
+		final Iterator<Integer> allNodes = getAllNodes(userNode, includeThis);
 
 		if ( ! allNodes.hasNext() )
 		{
@@ -271,7 +305,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		while( allNodes.hasNext() )
 		{
 			nodeID = allNodes.next();
-			PermissionCollection perms = getNodePermissions( nodeID );
+			final PermissionCollection perms = getNodePermissions( nodeID );
 			// Be careful to avoid invalid groups and stuff.
 			if (perms != null && perms.implies(permission))
 				return true;
@@ -283,7 +317,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Get all nodes linked to the passed node.
 	 */
-	private Iterator<Integer> getAllNodes(int nodeID, boolean addThis)
+	private Iterator<Integer> getAllNodes(final int nodeID, final boolean addThis)
 	{
 		synchronized(nodeTree)
 		{
@@ -292,13 +326,13 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			{
 				dbCon=dbBroker.getConnection();
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				e.printStackTrace();
 				System.err.println("Couldn't get a connection for getAllNodes()");
 				return new ArrayList<Integer>().iterator(); // XXX
 			}
-			List <Integer>list = new ArrayList<Integer>();
+			final List <Integer>list = new ArrayList<Integer>();
 			if (addThis)
 				list.add(nodeID);
 			try
@@ -318,7 +352,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 	}
 
-	private void getAllNodesRecursive(Connection dbConn, List<Integer> list, int nodeID, int recurseDepth)
+	private void getAllNodesRecursive(final Connection dbConn, final List<Integer> list, final int nodeID, final int recurseDepth)
 	{
 		if (recurseDepth >= 5)
 		{
@@ -337,13 +371,13 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat = dbConn.prepareStatement("SELECT GroupID FROM GroupMembers WHERE MemberID = ?");
 				stat.setInt(1, nodeID);
 
-				ResultSet results = stat.executeQuery();
+				final ResultSet results = stat.executeQuery();
 
 				if ( results.first() )
 				{
 					do
 					{
-						int newNode = results.getInt(1);
+						final int newNode = results.getInt(1);
 						if ( !list.contains( newNode ) )
 						{
 							list.add( newNode );
@@ -352,7 +386,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					} while ( results.next() );
 				}
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				sqlErr("getting user nodes", e);
 			}
@@ -363,14 +397,14 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					if (stat != null)
 						stat.close();
 				}
-				catch (SQLException e)
+				catch (final SQLException e)
 				{
 					sqlErr("cleaning up user node statment", e);
 				}
 			}
 		}
 
-		for(int newNode: things)
+		for(final int newNode: things)
 		{
 			if (!list.contains(newNode))
 				list.add(newNode);
@@ -381,7 +415,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Get the node ID that corresponds to a node
 	 */
-	private int getNodeIDFromNode(UserNode node)
+	private int getNodeIDFromNode(final UserNode node)
 	{
 		return getNodeIDFromNodeName(node.getName(), node.getType());
 	}
@@ -389,7 +423,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Get the node ID that corresponds to a node name
 	 */
-	private int getNodeIDFromUserName(UserEvent userEvent)
+	private int getNodeIDFromUserName(final UserEvent userEvent)
 	{
 		if (userEvent instanceof IRCEvent)
 			checkEvent((IRCEvent)userEvent);
@@ -399,7 +433,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Get the node ID that corresponds to a plugin
 	 */
-	private int getNodeIDFromPluginName(String pluginName)
+	private int getNodeIDFromPluginName(final String pluginName)
 	{
 		return getNodeIDFromNodeName(pluginName, 2);
 	}
@@ -407,10 +441,10 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Get the node ID that corresponds to a node name
 	 */
-	private int getNodeIDFromNodeName(String nodeName, int nodeType)
+	private int getNodeIDFromNodeName(final String nodeName, final int nodeType)
 	{
 		// Check the cache.
-		Integer id = nodeIDCache.get(nodeType).get(nodeName.toLowerCase());
+		final Integer id = nodeIDCache.get(nodeType).get(nodeName.toLowerCase());
 		if (id != null) {
 			return id.intValue();
 		}
@@ -423,16 +457,16 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = ?");
 			stat.setString(1, nodeName);
 			stat.setInt(2, nodeType);
-			ResultSet results = stat.executeQuery();
+			final ResultSet results = stat.executeQuery();
 			if ( results.next() )
 			{
-				int idGot = results.getInt(1);
+				final int idGot = results.getInt(1);
 				nodeIDCache.get(nodeType).put(nodeName.toLowerCase(), idGot);
 				return idGot;
 			}
 			System.err.println("Ack! Node name " + nodeName + "(" + nodeType + ") not found!");
 		}
-		catch (SQLException e)
+		catch (final SQLException e)
 		{
 			sqlErr("getting a node ID", e);
 		}
@@ -446,7 +480,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Get the node ID that corresponds to a node name
 	 */
-	private UserNode getNodeFromNodeID(int nodeID)
+	private UserNode getNodeFromNodeID(final int nodeID)
 	{
 		Connection dbConn = null;
 		PreparedStatement stat = null;
@@ -455,14 +489,14 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			dbConn = dbBroker.getConnection();
 			stat = dbConn.prepareStatement("SELECT NodeName, NodeClass FROM UserNodes WHERE NodeID = ?");
 			stat.setInt(1, nodeID);
-			ResultSet results = stat.executeQuery();
+			final ResultSet results = stat.executeQuery();
 			if ( results.first() )
 			{
 				return new UserNode(results.getString(1), results.getInt(2));
 			}
 			System.err.println("Ack! Node " + nodeID + " not found!");
 		}
-		catch (SQLException e)
+		catch (final SQLException e)
 		{
 			System.err.println("Ack! SQL exception when getting node from node ID " + nodeID + ": " + e);
 		}
@@ -476,13 +510,13 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Get the last insert ID
 	 */
-	private int getLastInsertID(Connection dbConn) throws SQLException
+	private int getLastInsertID(final Connection dbConn) throws SQLException
 	{
 		PreparedStatement stat = null;
 		try
 		{
 			stat = dbConn.prepareStatement("SELECT LAST_INSERT_ID()");
-			ResultSet results = stat.executeQuery();
+			final ResultSet results = stat.executeQuery();
 			if ( results.first() )
 				return results.getInt(1);
 			throw new SQLException("Ack! LAST_INSERT_ID() returned no results!");
@@ -500,20 +534,20 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * ================================
 	 */
 
-	public String renderPermission(Permission permission)
+	public String renderPermission(final Permission permission)
 	{
 		if (permission instanceof AllPermission)
 			return "ALL";
 
 		String output;
-		String className = permission.getClass().getSimpleName();
+		final String className = permission.getClass().getSimpleName();
 		if (className.endsWith("Permission"))
 			output = className.substring(0, className.length() - 10);
 		else
 			output = className;
 
-		String name = permission.getName();
-		String actions = permission.getActions();
+		final String name = permission.getName();
+		final String actions = permission.getActions();
 		if (name != null)
 		{
 			output += " with name \"" + name + "\"";
@@ -531,7 +565,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param userEvent The event to validate and check the permission on.
 	 * @throws ChoobAuthError If the nick has no authentication
 	 */
-	public void checkAuth(UserEvent userEvent) throws ChoobAuthError {
+	public void checkAuth(final UserEvent userEvent) throws ChoobAuthError {
 		if (!hasAuth(userEvent.getNick())) {
 			throw new ChoobGeneralAuthError();
 		}
@@ -542,7 +576,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param nick The nickname to validate.
 	 * @throws ChoobAuthError If the nick has no authentication.
 	 */
-	public void checkAuth(String nick) throws ChoobAuthError {
+	public void checkAuth(final String nick) throws ChoobAuthError {
 		if (!hasAuth(nick)) {
 			throw new ChoobGeneralAuthError();
 		}
@@ -553,7 +587,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param userEvent The event to validate and check the permission on
 	 * @return Whether the nick is authorised.
 	 */
-	public boolean hasAuth(UserEvent userEvent) {
+	public boolean hasAuth(final UserEvent userEvent) {
 		if (userEvent instanceof IRCEvent) {
 			checkEvent((IRCEvent)userEvent);
 		}
@@ -565,7 +599,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param nick The nickname to validate.
 	 * @return Whether the nick is authorised.
 	 */
-	public boolean hasAuth(String nick) {
+	public boolean hasAuth(final String nick) {
 		try {
 
 			// Attempt to confirm which authentication module we are using
@@ -574,13 +608,13 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				authPlugin = "unknown";
 			}
 			authPlugin.toLowerCase();
-			if ((authPlugin.equals("nickserv")) || (authPlugin.equals("unknown"))) {
+			if (authPlugin.equals("nickserv") || authPlugin.equals("unknown")) {
 				if (hasNS(nick)) {
 					return true;
 				}
 			}
 
-			if ((authPlugin.equals("quakenet")) || (authPlugin.equals("unknown"))){
+			if (authPlugin.equals("quakenet") || authPlugin.equals("unknown")){
 				if (hasQ(nick)) {
 					return true;
 				}
@@ -588,7 +622,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 			// Unsupported setting - should not occur.
 			return false;
-		} catch (ChoobNoSuchPluginException e) {
+		} catch (final ChoobNoSuchPluginException e) {
 			// No options module, attempt all forms of auth until one works
 			if (hasNS(nick)) {
 				return true;
@@ -599,7 +633,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 			// No successful auth
 			return false;
-		} catch (ChoobException e) {
+		} catch (final ChoobException e) {
 			// Oh. Bugger
 			System.err.println("Authentication broken:");
 			e.printStackTrace(System.err);
@@ -612,21 +646,21 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param nick The nickname to validate.
 	 * @return Whethe the nick is authorised
 	 */
-	private boolean hasNS(String nick) {
+	private boolean hasNS(final String nick) {
 		try
 		{
 
 			//return (Boolean)mods.plugin.callAPI("NickServ", "Check", nickName, false);
 			return (Boolean)mods.plugin.callAPI("NickServ", "Check", nick);
 		}
-		catch (ChoobNoSuchPluginException e)
+		catch (final ChoobNoSuchPluginException e)
 		{
 			// XXX Should this throw an exception?:
 			//if (!allowNoNS)
 			//	throw new ChoobAuthError("The NickServ plugin is not loaded! Holy mother of God save us all!");
 			return true;
 		}
-		catch (ChoobException e)
+		catch (final ChoobException e)
 		{
 			// OMFG!
 			System.err.println("Error calling NickServ check! Details:");
@@ -640,21 +674,21 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param nick The nick to check.
 	 * @return Auth status.
 	 */
-	private boolean hasQ(String nick) {
+	private boolean hasQ(final String nick) {
 		try {
 
 			// Get the account name being used by the current nick
-			String account = (String)mods.plugin.callAPI("QuakenetAuth", "Account", nick);
+			final String account = (String)mods.plugin.callAPI("QuakenetAuth", "Account", nick);
 			if (account == null) {
 				return false;
 			}
 
 			// User has a current Q auth.
 			return true;
-		} catch (ChoobNoSuchPluginException e) {
+		} catch (final ChoobNoSuchPluginException e) {
 			// XXX Ohnoes, no quakenet stuffs!
 			return false;
-		} catch (ChoobException e) {
+		} catch (final ChoobException e) {
 			// Aieeeeee!
 			System.err.println("Error getting QuakenetAuth account! Details:");
 			e.printStackTrace(System.err);
@@ -667,7 +701,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param userEvent The event to validate and check the permission on.
 	 * @throws ChoobAuthError If the nick is not authorised.
 	 */
-	public void checkNickPerm(Permission permission, UserEvent userEvent) throws ChoobAuthError	{
+	public void checkNickPerm(final Permission permission, final UserEvent userEvent) throws ChoobAuthError	{
 		checkAuth(userEvent);
 
 		if (!hasNickPerm(permission, userEvent))
@@ -680,7 +714,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param userEvent The event to validate and check the permission on.
 	 * @return Whether the nick is authorised.
 	 */
-	public boolean hasNickPerm(Permission permission, UserEvent userEvent) {
+	public boolean hasNickPerm(final Permission permission, final UserEvent userEvent) {
 		// XXX: Check for synthetic userEvent here.
 
 		if (!hasAuth(userEvent)) {
@@ -693,24 +727,24 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				authPlugin = "unknown";
 			}
 			authPlugin.toLowerCase();
-		} catch (ChoobNoSuchCallException e) {
+		} catch (final ChoobNoSuchCallException e) {
 			// No idea what auth method to use... do them all
 			System.err.println("No authentication method specified. Trying everything.");
 		}
 
-		if ((authPlugin.equals("nickserv")) || (authPlugin.equals("unknown"))) {
+		if (authPlugin.equals("nickserv") || authPlugin.equals("unknown")) {
 			if (hasNSPerm(permission, userEvent)) {
 				return true;
 			}
 		}
 
-		if ((authPlugin.equals("quakenet")) || (authPlugin.equals("unknown"))) {
+		if (authPlugin.equals("quakenet") || authPlugin.equals("unknown")) {
 			try {
-				String account = (String)mods.plugin.callAPI("QuakenetAuth", "Account", userEvent.getNick());
+				final String account = (String)mods.plugin.callAPI("QuakenetAuth", "Account", userEvent.getNick());
 				if (hasQPerm(permission, account)) {
 					return true;
 				}
-			} catch (ChoobNoSuchCallException e) {
+			} catch (final ChoobNoSuchCallException e) {
 				// Oh dear. We can't do Q auth.
 				System.err.println("Can not perform quakenet authentication. Please load QuakenetAuth plugin.");
 			}
@@ -726,7 +760,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param permission The permission to check.
 	 * @param userEvent The event to validate and check the permission on.
 	 */
-	public void checkPerm(Permission permission, UserEvent userEvent) throws ChoobUserAuthError
+	@Deprecated
+	public void checkPerm(final Permission permission, final UserEvent userEvent) throws ChoobUserAuthError
 	{
 		checkNickPerm(permission, userEvent);
 	}
@@ -738,7 +773,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param userEvent The event to validate and check the permission on.
 	 */
 	@Deprecated
-	public boolean hasPerm(Permission permission, UserEvent userEvent) {
+	public boolean hasPerm(final Permission permission, final UserEvent userEvent) {
 		return hasNickPerm(permission, userEvent);
 	}
 
@@ -748,7 +783,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param userEvent
 	 * @throws ChoobUserAuthError
 	 */
-	public void checkNSPerm(Permission permission, UserEvent userEvent) throws ChoobUserAuthError {
+	public void checkNSPerm(final Permission permission, final UserEvent userEvent) throws ChoobUserAuthError {
 		if (!hasNSPerm(permission, userEvent)) {
 			throw new ChoobUserAuthError(permission);
 		}
@@ -760,10 +795,10 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param userEvent Event to validate and check permission on.
 	 * @return Status of validation
 	 */
-	private boolean hasNSPerm(Permission permission, UserEvent userEvent) {
+	private boolean hasNSPerm(final Permission permission, final UserEvent userEvent) {
 		// XXX: Check for synthetic userEvent here.
 
-		int userNode = getNodeIDFromUserName(userEvent);
+		final int userNode = getNodeIDFromUserName(userEvent);
 
 		System.out.println("Checking permission on user " + userEvent.getNick() + "(" + userNode + ")" + ": " + permission);
 
@@ -775,7 +810,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 	}
 
-	public void checkQPerm(Permission permission, String account) throws ChoobUserAuthError {
+	public void checkQPerm(final Permission permission, final String account) throws ChoobUserAuthError {
 		if (!hasQPerm(permission, account)) {
 			throw new ChoobUserAuthError(permission);
 		}
@@ -786,8 +821,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param account The Q account to use as a username in the check.
 	 * @return Permissio check result.
 	 */
-	private boolean hasQPerm(Permission permission, String account) {
-		int userNode = getNodeIDFromNodeName(account, 0);
+	private boolean hasQPerm(final Permission permission, final String account) {
+		final int userNode = getNodeIDFromNodeName(account, 0);
 		if (userNode == -1) {
 			if (anonID != -1) {
 				return hasPerm(permission, anonID, true);
@@ -802,9 +837,9 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param permission Permission to query
 	 * @throws ChoobPluginAuthError if the permission has not been granted.
 	 */
-	public void checkPluginPerm(Permission permission) throws ChoobPluginAuthError
+	public void checkPluginPerm(final Permission permission) throws ChoobPluginAuthError
 	{
-		String plugin = getPluginName(0);
+		final String plugin = getPluginName(0);
 		checkPluginPerm(permission, plugin);
 	}
 
@@ -812,7 +847,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * Check if the previous plugin on the call stack has a permission
 	 * @param permission Permission to query
 	 */
-	public boolean hasPluginPerm(Permission permission)
+	public boolean hasPluginPerm(final Permission permission)
 	{
 		return hasPluginPerm(permission, getPluginName(0));
 	}
@@ -823,9 +858,9 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param skip Number of plugins to skip
 	 * @throws ChoobPluginAuthError if the permission has not been granted.
 	 */
-	public void checkPluginPerm(Permission permission, int skip) throws ChoobPluginAuthError
+	public void checkPluginPerm(final Permission permission, final int skip) throws ChoobPluginAuthError
 	{
-		String plugin = getPluginName(skip);
+		final String plugin = getPluginName(skip);
 		checkPluginPerm(permission, plugin);
 	}
 
@@ -834,7 +869,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param permission Permission to query
 	 * @param skip Number of plugins to skip
 	 */
-	public boolean hasPluginPerm(Permission permission, int skip)
+	public boolean hasPluginPerm(final Permission permission, final int skip)
 	{
 		return hasPluginPerm(permission, getPluginName(skip));
 	}
@@ -850,7 +885,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param plugin Plugin to query
 	 * @throws ChoobPluginAuthError if the permission has not been granted.
 	 */
-	public void checkPluginPerm(Permission permission, String plugin) throws ChoobPluginAuthError
+	public void checkPluginPerm(final Permission permission, final String plugin) throws ChoobPluginAuthError
 	{
 		if (!hasPluginPerm(permission, plugin))
 			throw new ChoobPluginAuthError(plugin, permission);
@@ -870,7 +905,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		//   line.separator
 		if (permission instanceof PropertyPermission)
 		{
-			PropertyPermission propPerm = (PropertyPermission)permission;
+			final PropertyPermission propPerm = (PropertyPermission)permission;
 			if (propPerm.getActions().equals("read"))
 			{
 				if (propPerm.getName().equals("line.separator"))
@@ -879,9 +914,9 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 
 		// Should prevent circular checks...
-		boolean rv = (AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+		final boolean rv = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
 			public Boolean run() {
-				int nodeID = getNodeIDFromPluginName( plugin );
+				final int nodeID = getNodeIDFromPluginName( plugin );
 
 				// No such user!
 				if (nodeID == -1)
@@ -891,7 +926,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				// Include the plugin.
 				return hasPerm( permission, nodeID, true );
 			}
-		})).booleanValue();
+		}).booleanValue();
 
 		if (!rv) {
 			System.out.println("Plugin " + plugin + " lacks permission " + permission + ".");
@@ -904,19 +939,19 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * ===============================
 	 */
 
-	private Object nodeDbLock;
+	private final Object nodeDbLock;
 
 	/**
 	 * Convenience method
 	 */
-	private void dbCleanupSel(Statement stat, Connection dbConn)
+	private void dbCleanupSel(final Statement stat, final Connection dbConn)
 	{
 		try
 		{
 			if (stat != null)
 				stat.close();
 		}
-		catch (SQLException e)
+		catch (final SQLException e)
 		{
 			sqlErr("closing SQL statement", e);
 		}
@@ -926,14 +961,14 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 	}
 
-	private void dbCleanup(Statement stat, Connection dbConn)
+	private void dbCleanup(final Statement stat, final Connection dbConn)
 	{
 		try
 		{
 			if (stat != null)
 				stat.close();
 		}
-		catch (SQLException e)
+		catch (final SQLException e)
 		{
 			sqlErr("closing SQL statement", e);
 		}
@@ -945,7 +980,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				dbConn.setAutoCommit(true);
 				dbBroker.freeConnection(dbConn);
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				// XXX WTF to do here?
 				sqlErr("cleaning up SQL connection", e);
@@ -956,7 +991,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Convenience method
 	 */
-	private void sqlErr(String task, SQLException e)
+	private void sqlErr(final String task, final SQLException e)
 	{
 		System.err.println("ACK! SQL error when " + task + ": " + e);
 		e.printStackTrace();
@@ -968,11 +1003,12 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @deprecated Perhaps?
 	 */
 	// TODO: Should this simply add plugin.pluginName to user.userName?
-	public void bindPlugin(String pluginName, UserEvent userEvent) throws ChoobException
+	@Deprecated
+	public void bindPlugin(final String pluginName, final UserEvent userEvent) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("plugin.bind"));
 
-		int userID = getNodeIDFromUserName(userEvent);
+		final int userID = getNodeIDFromUserName(userEvent);
 		if ( userID == -1 )
 		{
 			throw new ChoobException("User " + userEvent.getNick() + " does not exist!");
@@ -995,7 +1031,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				// Done!
 				dbConn.commit();
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				sqlErr("binding plugin " + pluginName, e);
 			}
@@ -1010,7 +1046,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Add a user to the database
 	 */
-	public void addUser(String userName) throws ChoobException
+	public void addUser(final String userName) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("user.add"));
 
@@ -1038,7 +1074,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setInt(2, 0);
 				if (stat.executeUpdate() == 0)
 					System.err.println("Ack! No rows updated in user insert!");
-				int userID = getLastInsertID(dbConn);
+				final int userID = getLastInsertID(dbConn);
 				stat.close();
 
 				// Note: group may already exist.
@@ -1073,7 +1109,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				// Done!
 				dbConn.commit();
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				sqlErr("adding user " + userName, e);
 			}
@@ -1087,7 +1123,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Links a user name to a root user name.
 	 */
-	public void linkUser(String root, String leaf) throws ChoobException
+	public void linkUser(final String root, final String leaf) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("user.link"));
 
@@ -1114,7 +1150,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				results = stat.executeQuery();
 				if ( !results.first() )
 					throw new ChoobException ("User " + root + " does not exist!");
-				int rootUserID = results.getInt(1);
+				final int rootUserID = results.getInt(1);
 				stat.close();
 
 				// As group
@@ -1123,7 +1159,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				results = stat.executeQuery();
 				if ( !results.first() )
 					throw new ChoobException ("User " + root + " is a leaf user. You can't link to it!");
-				int rootID = results.getInt(1);
+				final int rootID = results.getInt(1);
 				stat.close();
 
 				// And that they're linked.
@@ -1141,7 +1177,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setInt(2, 0);
 				if (stat.executeUpdate() == 0)
 					System.err.println("Ack! No rows updated in user insert!");
-				int userID = getLastInsertID(dbConn);
+				final int userID = getLastInsertID(dbConn);
 				stat.close();
 
 				// Now bind it.
@@ -1154,7 +1190,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				// Done!
 				dbConn.commit();
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				sqlErr("linking user " + leaf + " to root " + root, e);
 			}
@@ -1169,7 +1205,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * Get the "root" username for a given user.
 	 * @return the root username, or null
 	 */
-	public String getRootUser(String userName)
+	public String getRootUser(final String userName)
 	{
 		Connection dbConn = null;
 		PreparedStatement stat = null;
@@ -1184,7 +1220,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				//throw new ChoobException ("User " + userName + " does not exist!");
 				return null;
 				//return userName;
-			int userID = results.getInt(1);
+			final int userID = results.getInt(1);
 			stat.close();
 
 			stat = dbConn.prepareStatement("SELECT GroupID FROM GroupMembers WHERE MemberID = ?");
@@ -1192,7 +1228,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			results = stat.executeQuery();
 			if ( !results.first() )
 				throw new ChoobError ("Consistency error: User " + userName + " is in no group!");
-			int groupID = results.getInt(1);
+			final int groupID = results.getInt(1);
 			if ( results.next() )
 				throw new ChoobError ("Consistency error: User " + userName + " is in more than one group!");
 			stat.close();
@@ -1203,12 +1239,12 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			results = stat.executeQuery();
 			if ( !results.first() )
 				throw new ChoobError ("Consistency error: Group " + groupID + " does not exist!");
-			String groupName = results.getString(1);
+			final String groupName = results.getString(1);
 			stat.close();
 
 			return groupName;
 		}
-		catch (SQLException e)
+		catch (final SQLException e)
 		{
 			sqlErr("fetching root user name for " + userName, e);
 		}
@@ -1222,7 +1258,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Removes a user name (but not its groups).
 	 */
-	public void delUser(String userName) throws ChoobException
+	public void delUser(final String userName) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("user.del"));
 
@@ -1237,10 +1273,10 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				// Make sure the user exists...
 				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
 				stat.setString(1, userName);
-				ResultSet results = stat.executeQuery();
+				final ResultSet results = stat.executeQuery();
 				if ( !results.first() )
 					throw new ChoobException ("User " + userName + " does not exist!");
-				int userID = results.getInt(1);
+				final int userID = results.getInt(1);
 				stat.close();
 
 				// First, unbind the user.
@@ -1259,7 +1295,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				// Done!
 				dbConn.commit();
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				sqlErr("deleting user " + userName, e);
 			}
@@ -1273,13 +1309,13 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Add a user to the database
 	 */
-	public void addGroup(String groupName) throws ChoobException
+	public void addGroup(final String groupName) throws ChoobException
 	{
-		UserNode group = new UserNode(groupName);
+		final UserNode group = new UserNode(groupName);
 
 		if (group.getType() == 2) // plugins can poke their own groups!
 		{
-			String pluginName = getPluginName(0);
+			final String pluginName = getPluginName(0);
 			if (!(group.getRootName().compareToIgnoreCase(pluginName)==0))
 				AccessController.checkPermission(new ChoobPermission("group.add."+groupName));
 		}
@@ -1300,7 +1336,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = ?");
 				stat.setString(1, group.getName());
 				stat.setInt(2, group.getType());
-				ResultSet results = stat.executeQuery();
+				final ResultSet results = stat.executeQuery();
 				if ( results.first() )
 				{
 					throw new ChoobException("Group " + groupName + " already exists!");
@@ -1314,7 +1350,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					System.err.println("Ack! No rows updated in group " + groupName + " insert!");
 				dbConn.commit();
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				sqlErr("adding group " + groupName, e);
 			}
@@ -1324,25 +1360,25 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 	}
 
-	public void addUserToGroup(String parentName, String childName) throws ChoobException
+	public void addUserToGroup(final String parentName, final String childName) throws ChoobException
 	{
-		UserNode parent = new UserNode(parentName);
-		UserNode child = new UserNode(childName, true);
+		final UserNode parent = new UserNode(parentName);
+		final UserNode child = new UserNode(childName, true);
 		addNodeToNode(parent, child);
 	}
 
-	public void addGroupToGroup(String parentName, String childName) throws ChoobException
+	public void addGroupToGroup(final String parentName, final String childName) throws ChoobException
 	{
-		UserNode parent = new UserNode(parentName);
-		UserNode child = new UserNode(childName);
+		final UserNode parent = new UserNode(parentName);
+		final UserNode child = new UserNode(childName);
 		addNodeToNode(parent, child);
 	}
 
-	public void addNodeToNode(UserNode parent, UserNode child) throws ChoobException
+	public void addNodeToNode(final UserNode parent, final UserNode child) throws ChoobException
 	{
 		if (parent.getType() == 2) // plugins can poke their own groups!
 		{
-			String pluginName = getPluginName(0);
+			final String pluginName = getPluginName(0);
 			if (!(parent.getRootName().compareToIgnoreCase(pluginName)==0))
 				AccessController.checkPermission(new ChoobPermission("group.members."+parent));
 		}
@@ -1352,8 +1388,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 
 		// OK, we're allowed to add.
-		int parentID = getNodeIDFromNode(parent);
-		int childID = getNodeIDFromNode(child);
+		final int parentID = getNodeIDFromNode(parent);
+		final int childID = getNodeIDFromNode(child);
 		if (parentID == -1)
 			throw new ChoobException("Group " + parent + " does not exist!");
 		if (childID == -1)
@@ -1370,7 +1406,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat = dbConn.prepareStatement("SELECT MemberID FROM GroupMembers WHERE GroupID = ? AND MemberID = ?");
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
-				ResultSet results = stat.executeQuery();
+				final ResultSet results = stat.executeQuery();
 				if ( results.first() )
 				{
 					throw new ChoobException("Group " + parent + " already had member " + child);
@@ -1385,7 +1421,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 				dbConn.commit();
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				sqlErr("adding " + child + " to group " + parent, e);
 			}
@@ -1397,25 +1433,25 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		invalidateNodeTree(childID);
 	}
 
-	public void removeUserFromGroup(String parentName, String childName) throws ChoobException
+	public void removeUserFromGroup(final String parentName, final String childName) throws ChoobException
 	{
-		UserNode parent = new UserNode(parentName);
-		UserNode child = new UserNode(childName, true);
+		final UserNode parent = new UserNode(parentName);
+		final UserNode child = new UserNode(childName, true);
 		removeNodeFromNode(parent, child);
 	}
 
-	public void removeGroupFromGroup(String parentName, String childName) throws ChoobException
+	public void removeGroupFromGroup(final String parentName, final String childName) throws ChoobException
 	{
-		UserNode parent = new UserNode(parentName);
-		UserNode child = new UserNode(childName);
+		final UserNode parent = new UserNode(parentName);
+		final UserNode child = new UserNode(childName);
 		removeNodeFromNode(parent, child);
 	}
 
-	public void removeNodeFromNode(UserNode parent, UserNode child) throws ChoobException
+	public void removeNodeFromNode(final UserNode parent, final UserNode child) throws ChoobException
 	{
 		if (parent.getType() == 2) // plugins can poke their own groups!
 		{
-			String pluginName = getPluginName(0);
+			final String pluginName = getPluginName(0);
 			if (!(parent.getRootName().compareToIgnoreCase(pluginName)==0))
 				AccessController.checkPermission(new ChoobPermission("group.members."+parent));
 		}
@@ -1425,8 +1461,8 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 
 		// OK, we're allowed to add.
-		int parentID = getNodeIDFromNode(parent);
-		int childID = getNodeIDFromNode(child);
+		final int parentID = getNodeIDFromNode(parent);
+		final int childID = getNodeIDFromNode(child);
 		if (parentID == -1)
 			throw new ChoobException("Group " + parent + " does not exist!");
 		if (childID == -1)
@@ -1442,7 +1478,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat = dbConn.prepareStatement("SELECT MemberID FROM GroupMembers WHERE GroupID = ? AND MemberID = ?");
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
-				ResultSet results = stat.executeQuery();
+				final ResultSet results = stat.executeQuery();
 				if ( ! results.first() )
 				{
 					throw new ChoobException("Group " + parent + " did not have member " + child);
@@ -1455,7 +1491,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				if ( stat.executeUpdate() == 0 )
 					System.err.println("Ack! Group member remove did nothing: " + parent + ", member " + child);
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				sqlErr("removing " + child + " from " + parent, e);
 			}
@@ -1467,12 +1503,12 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		invalidateNodeTree(childID);
 	}
 
-	public void grantPermission(String groupName, Permission permission) throws ChoobException
+	public void grantPermission(final String groupName, final Permission permission) throws ChoobException
 	{
-		UserNode group = new UserNode(groupName);
+		final UserNode group = new UserNode(groupName);
 		if (group.getType() == 2) // plugins can add their own permissions (kinda)
 		{
-			String pluginName = getPluginName(0);
+			final String pluginName = getPluginName(0);
 			if (!(group.getRootName().compareToIgnoreCase(pluginName)==0))
 				AccessController.checkPermission(new ChoobPermission("group.grant."+group));
 			// OK, that's all fine, BUT:
@@ -1489,7 +1525,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 
 		// OK, we're allowed to add.
-		int groupID = getNodeIDFromNode(group);
+		final int groupID = getNodeIDFromNode(group);
 		if (groupID == -1)
 			throw new ChoobException("Group " + group + " does not exist!");
 
@@ -1541,7 +1577,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 				invalidateNodePermissions(groupID);
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				sqlErr("adding permission " + permission + " to group " + group, e);
 			}
@@ -1555,16 +1591,16 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	/**
 	 * Attempt to work out from whence a group's permissions come.
 	 */
-	public String[] findPermission(String groupName, Permission permission) throws ChoobException
+	public String[] findPermission(final String groupName, final Permission permission) throws ChoobException
 	{
-		UserNode group = new UserNode(groupName);
-		int groupID = getNodeIDFromNode(group);
+		final UserNode group = new UserNode(groupName);
+		final int groupID = getNodeIDFromNode(group);
 		if (groupID == -1)
 			throw new ChoobException("Group " + group + " does not exist!");
 
-		List<String> foundPerms = new LinkedList<String>();
+		final List<String> foundPerms = new LinkedList<String>();
 
-		Iterator<Integer> allNodes = getAllNodes(groupID, true);
+		final Iterator<Integer> allNodes = getAllNodes(groupID, true);
 
 		if ( ! allNodes.hasNext() )
 		{
@@ -1575,15 +1611,15 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		while( allNodes.hasNext() )
 		{
 			nodeID = allNodes.next();
-			PermissionCollection perms = getNodePermissions( nodeID );
+			final PermissionCollection perms = getNodePermissions( nodeID );
 			// Be careful to avoid invalid groups and stuff.
 			if (perms != null && perms.implies(permission))
 			{
 				// Which element?
-				Enumeration<Permission> allPerms = perms.elements();
+				final Enumeration<Permission> allPerms = perms.elements();
 				while( allPerms.hasMoreElements() )
 				{
-					Permission perm = allPerms.nextElement();
+					final Permission perm = allPerms.nextElement();
 					if (perm.implies(permission))
 					{
 						foundPerms.add(getNodeFromNodeID(nodeID).toString() + perm);
@@ -1591,44 +1627,44 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				}
 			}
 		}
-		String[] retVal = new String[foundPerms.size()];
+		final String[] retVal = new String[foundPerms.size()];
 		return foundPerms.toArray(retVal);
 	}
 
 	/**
 	 * Get a list of permissions for a given group.
 	 */
-	public String[] getPermissions(String groupName) throws ChoobException
+	public String[] getPermissions(final String groupName) throws ChoobException
 	{
-		UserNode group = new UserNode(groupName);
-		int groupID = getNodeIDFromNode(group);
+		final UserNode group = new UserNode(groupName);
+		final int groupID = getNodeIDFromNode(group);
 		if (groupID == -1)
 			throw new ChoobException("Group " + group + " does not exist!");
 
-		List<String> foundPerms = new LinkedList<String>();
+		final List<String> foundPerms = new LinkedList<String>();
 
-		PermissionCollection perms = getNodePermissions( groupID );
+		final PermissionCollection perms = getNodePermissions( groupID );
 		// Be careful to avoid invalid groups and stuff.
 		if (perms != null)
 		{
 			// Which element?
-			Enumeration<Permission> allPerms = perms.elements();
+			final Enumeration<Permission> allPerms = perms.elements();
 			while( allPerms.hasMoreElements() )
 			{
-				Permission perm = allPerms.nextElement();
+				final Permission perm = allPerms.nextElement();
 				foundPerms.add(perm.toString());
 			}
 		}
-		String[] retVal = new String[foundPerms.size()];
+		final String[] retVal = new String[foundPerms.size()];
 		return foundPerms.toArray(retVal);
 	}
 
-	public void revokePermission(String groupName, Permission permission) throws ChoobException
+	public void revokePermission(final String groupName, final Permission permission) throws ChoobException
 	{
-		UserNode group = new UserNode(groupName);
+		final UserNode group = new UserNode(groupName);
 		if (group.getType() == 2) // plugins can revoke their own permissions
 		{
-			String pluginName = getPluginName(0);
+			final String pluginName = getPluginName(0);
 			if (!(group.getRootName().compareToIgnoreCase(pluginName)==0))
 				AccessController.checkPermission(new ChoobPermission("group.revoke."+group));
 		}
@@ -1639,7 +1675,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 
 		// OK, we're allowed to add.
-		int groupID = getNodeIDFromNode(group);
+		final int groupID = getNodeIDFromNode(group);
 		if (groupID == -1)
 			throw new ChoobException("Group " + group + " does not exist!");
 
@@ -1675,7 +1711,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 				invalidateNodePermissions(groupID);
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				sqlErr("revoking permission " + permission + " from group " + group, e);
 			}
@@ -1686,13 +1722,13 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 	}
 
-	private void checkEvent(IRCEvent e) throws ChoobEventExpired
+	private void checkEvent(final IRCEvent e) throws ChoobEventExpired
 	// This should probably accept a generic form of all events.
 	{
-		Map<String,String> mesFlags = e.getFlags();
+		final Map<String,String> mesFlags = e.getFlags();
 		if (mesFlags.containsKey("_securityOK"))
 		{
-			String sok = mesFlags.get("_securityOK");
+			final String sok = mesFlags.get("_securityOK");
 			if (sok.equals("true"))
 				return;
 		}
@@ -1709,7 +1745,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * @param nick The nick of the user to check for the account name of.
 	 * @return The authenticated nick
 	 */
-	public String getUserAuthName(String nick) {
+	public String getUserAuthName(final String nick) {
 		String authPlugin = "unknown";
 		try {
 			authPlugin = (String)mods.plugin.callAPI("AuthSelector", "GetAuthMethod");
@@ -1717,7 +1753,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				authPlugin = "unknown";
 			}
 			authPlugin.toLowerCase();
-		} catch (ChoobNoSuchCallException e) {
+		} catch (final ChoobNoSuchCallException e) {
 			// No idea what auth method to use... assume it's their nickname then
 			return nick;
 		}
@@ -1725,13 +1761,13 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		// If quakenet then perform check
 		if (authPlugin.equals("quakenet")) {
 			try {
-				String authName = (String)mods.plugin.callAPI("QuakenetAuth", "Account", nick);
+				final String authName = (String)mods.plugin.callAPI("QuakenetAuth", "Account", nick);
 				if (authName != null) {
 					return authName;
 				} else {
 					return nick;
 				}
-			} catch (ChoobNoSuchCallException e) {
+			} catch (final ChoobNoSuchCallException e) {
 				// Oh, bugger, just give the nickname as it will fail at the has auth stage
 				return nick;
 			}

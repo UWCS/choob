@@ -9,20 +9,20 @@ import java.security.Permission;
 public abstract class ChoobAuthError extends ChoobError
 {
 	private static final long serialVersionUID = 3779784728261098709L;
-	public static final String getPermissionText(Permission permission)
+	public static final String getPermissionText(final Permission permission)
 	{
 		if (permission instanceof java.security.AllPermission)
 			return "ALL";
 
 		String output;
-		String className = permission.getClass().getSimpleName();
+		final String className = permission.getClass().getSimpleName();
 		if (className.endsWith("Permission"))
 			output = className.substring(0, className.length() - 10);
 		else
 			output = className;
 
-		String name = permission.getName();
-		String actions = permission.getActions();
+		final String name = permission.getName();
+		final String actions = permission.getActions();
 		if (name != null && !name.equals(""))
 		{
 			output += " with name \"" + name + "\"";
@@ -34,7 +34,7 @@ public abstract class ChoobAuthError extends ChoobError
 
 		return output;
 	}
-	public ChoobAuthError(String text)
+	public ChoobAuthError(final String text)
 	{
 		super(text);
 	}

@@ -1,12 +1,24 @@
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.net.URLDecoder;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.ChoobThread;
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
 class HashedStringObject
@@ -22,32 +34,32 @@ public class Http
 
 	// If this is null, the local machine's ip will be used.
 	String externalName = null;
-	
+
 	public String[] optionsGeneral = { "PortNumber", "ExternalName" };
 	public String[] optionsGeneralDefaults = { "8023", "" };
-	
+
 	// Check it's a number
-	public boolean optionCheckGeneralJoinQuote( String optionValue ) { 
-		try {			
+	public boolean optionCheckGeneralJoinQuote( final String optionValue ) {
+		try {
 			portNumber = Integer.parseInt(optionValue);
-			
+
 			try
 			{
 				listener.close();
 			}
-			catch (IOException e) { }
+			catch (final IOException e) { }
 			listener = null;
-			
+
 			return true;
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			return false;
 		}
 	}
-	
+
 	// No real checking required
-	public boolean optionCheckGeneralJoinMessage( String optionValue ) {
+	public boolean optionCheckGeneralJoinMessage( final String optionValue ) {
 		externalName = optionValue;
-		return true; 
+		return true;
 	}
 
 	public String[] helpOptionPortNumber = {
@@ -56,7 +68,7 @@ public class Http
 	public String[] helpOptionExternalName = {
 			  "External hostname to display to users for this web server."
 	};
-	
+
 	public String[] info()
 	{
 		return new String[] {
@@ -67,8 +79,8 @@ public class Http
 		};
 	}
 
-	private Modules mods;
-	private IRCInterface irc;
+	private final Modules mods;
+	private final IRCInterface irc;
 
 	private ServerSocket listener;
 
@@ -85,7 +97,7 @@ public class Http
 		+ " containing the address and hostname of the caller."
 	};
 
-	public Http (Modules mods, IRCInterface irc) throws ChoobException
+	public Http (final Modules mods, final IRCInterface irc) throws ChoobException
 	{
 		try {
 			String portString = (String)mods.plugin.callAPI("Options", "GetGeneralOption", "PortNumber");
@@ -96,17 +108,17 @@ public class Http
 			}
 			externalName = (String)mods.plugin.callAPI("Options", "GetGeneralOption", "ExternalName");
 		}
-		catch (ChoobNoSuchPluginException e) {
-			
+		catch (final ChoobNoSuchPluginException e) {
+
 		}
-		
-		
+
+
 		// First, try to get the socket from the old server
 		try
 		{
 			listener = (ServerSocket)mods.plugin.callAPI("Http", "GetSocket");
 		}
-		catch (ChoobNoSuchPluginException e)
+		catch (final ChoobNoSuchPluginException e)
 		{
 //			System.out.println("No such plugin...");
 //			e.printStackTrace();
@@ -120,7 +132,7 @@ public class Http
 				listener = new ServerSocket(portNumber);
 				listener.setSoTimeout(1); // Minimal timeout
 			}
-			catch (IOException f)
+			catch (final IOException f)
 			{
 				// OK, now give up!
 				throw new ChoobException("Can't open the web socket, nor get the old instance...", f);
@@ -133,7 +145,7 @@ public class Http
 		mods.interval.callBack(null, 500);
 	}
 
-	public void interval(Object param)
+	public void interval(final Object param)
 	{
 		// XXX this shouldn't be at the start...
 		mods.interval.callBack(null, 500);
@@ -149,12 +161,12 @@ public class Http
 		{
 			sock = listener.accept();
 		}
-		catch (SocketTimeoutException e)
+		catch (final SocketTimeoutException e)
 		{
 			// This is fine.
 			return;
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			// Oh dear...
 			System.err.println("Ooops, some problem while attempting to accept a socket:");
@@ -167,7 +179,7 @@ public class Http
 		{
 			out = new PrintWriter(sock.getOutputStream(), true);
 			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-			StringBuffer headers = new StringBuffer();
+			final StringBuffer headers = new StringBuffer();
 			String inp;
 			while ((inp = in.readLine()) != null && !inp.equals(""))
 			{
@@ -175,43 +187,43 @@ public class Http
 				headers.append("\n");
 			}
 			System.out.print(headers);
-			Pattern pa = Pattern.compile(".*GET /(.*?) HTTP/1\\..\n.*");
-			Matcher ma = pa.matcher(headers);
+			final Pattern pa = Pattern.compile(".*GET /(.*?) HTTP/1\\..\n.*");
+			final Matcher ma = pa.matcher(headers);
 
 
-			boolean b=ma.find();
+			final boolean b=ma.find();
 			System.out.println(b ? "Match" : "Nomatch");
 
-		
+
 			// http://www.w3.org/TR/html40/appendix/notes.html#non-ascii-chars
 
 			String url = null;
 			try
 			{
 				url = URLDecoder.decode(ma.group(1), "UTF-8").trim();
-				
+
 				if (b)
 					System.out.println(url);
-				
-				Matcher mo=rpcurl.matcher(url);
+
+				final Matcher mo=rpcurl.matcher(url);
 				if (url.length() > 5 && url.substring(0,6).equals("store/"))
 				{
 					out.println("HTTP/1.0 200 OK");
 					out.println("Content-Type: text/plain");
 					out.println();
 
-					String hash = url.substring(6).replaceAll("\"", "\\\"");
+					final String hash = url.substring(6).replaceAll("\"", "\\\"");
 
 					System.out.println("\"" + hash + "\"");
 					try
 					{
-						List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = \"" + mods.odb.escapeString(hash) + "\"");
+						final List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = \"" + mods.odb.escapeString(hash) + "\"");
 						if (res.size() != 0)
 							out.println(res.get(0).string);
 						else
 							out.println("No such object: " + hash);
 					}
-					catch (Throwable e)
+					catch (final Throwable e)
 					{
 						System.err.println("Error retreiving object ID from database:");
 						e.printStackTrace();
@@ -224,7 +236,7 @@ public class Http
 					{
 						mods.plugin.callGeneric(mo.group(1), "web", mo.group(2) != null ? mo.group(2) : "", out, (mo.group(3) != null ? mo.group(3) : ""), new String[] { sock.getInetAddress().getHostAddress(), sock.getInetAddress().getHostName()});
 					}
-					catch (Exception e)
+					catch (final Exception e)
 					{
 						out.println("Error: " + e);
 						e.printStackTrace();
@@ -240,7 +252,7 @@ public class Http
 					out.println("Oop, no pages here.");
 				}
 			}
-			catch (UnsupportedEncodingException e)
+			catch (final UnsupportedEncodingException e)
 			{
 				out.println("HTTP/1.0 500 Internal Server Error");
 				out.println("Content-Type: text/plain");
@@ -251,7 +263,7 @@ public class Http
 			sock.close();
 			sock = null;
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			System.err.println("IO Exception while processing HTTP request:");
 			e.printStackTrace();
@@ -265,7 +277,7 @@ public class Http
 				if (in != null)
 					in.close();
 			}
-			catch (Exception e)
+			catch (final Exception e)
 			{
 				e.printStackTrace();
 			}
@@ -274,7 +286,7 @@ public class Http
 				if (sock != null)
 					sock.close();
 			}
-			catch (Exception e)
+			catch (final Exception e)
 			{
 				e.printStackTrace();
 			}
@@ -286,39 +298,39 @@ public class Http
 		return apiGetRPCURL("");
 	}
 
-	public String apiGetRPCURL(String rpcName) throws ChoobException
+	public String apiGetRPCURL(final String rpcName) throws ChoobException
 	{
-		String pluginName = ChoobThread.getPluginName(1);
+		final String pluginName = ChoobThread.getPluginName(1);
 		if (pluginName == null)
 			throw new ChoobException("Not called from a plugin, can't get RPC URL");
-		
+
 		String address = externalName;
-		
-		if ((address == null) || (address.isEmpty())) {
+
+		if (address == null || address.isEmpty()) {
 			try {
 				address = InetAddress.getLocalHost().getHostAddress();
-			} catch (UnknownHostException e) {
+			} catch (final UnknownHostException e) {
 				throw new ChoobException("Your network appears to be really, really broken.");
 			}
 		}
-		
+
 		return "http://" + address + ":" + portNumber + "/rpc/" + pluginName + "." + rpcName;
 	}
 
-	public void webNickServ(PrintWriter out, String args, String[] from)
+	public void webNickServ(final PrintWriter out, final String args, final String[] from)
 	{
 		try
 		{
 			out.println(args + " (" + mods.plugin.callAPI("NickServ", "Check", args) + ")");
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			out.println("ERROR!");
 			e.printStackTrace();
 		}
 	}
 
-	public void webPants(PrintWriter out, String extra, String[] info)
+	public void webPants(final PrintWriter out, final String extra, final String[] info)
 	{
 		out.println("Badgers!");
 	}
@@ -326,7 +338,7 @@ public class Http
 	public String[] helpCommandClose = {
 		"Close the server socket in case of trouble."
 	};
-	public void commandClose(Message mes)
+	public void commandClose(final Message mes)
 	{
 		if (!mods.security.hasNickPerm(new ChoobPermission("plugins.http.close"), mes))
 		{
@@ -341,7 +353,7 @@ public class Http
 		{
 			listener.close();
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			irc.sendContextReply(mes, "Couldn't close socket: " + e);
 			return;
@@ -352,7 +364,7 @@ public class Http
 
 	public ServerSocket apiGetSocket()
 	{
-		String name = mods.security.getPluginName(1);
+		final String name = mods.security.getPluginName(1);
 		System.out.println("Plugin name is: " + name);
 		if ( name != null && name.toLowerCase().equals("http") )
 		{
@@ -361,27 +373,27 @@ public class Http
 		return null;
 	}
 
-	public String apiStoreString(String s) throws ChoobException
+	public String apiStoreString(final String s) throws ChoobException
 	{
-		HashedStringObject hso=new HashedStringObject();
+		final HashedStringObject hso=new HashedStringObject();
 		hso.string=s;
-		hso.hash=((Integer)((hso.string.hashCode()%128)+256)).toString();
+		hso.hash=((Integer)(hso.string.hashCode()%128+256)).toString();
 
-		List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = '" + mods.odb.escapeString(hso.hash) + "'");
+		final List<HashedStringObject> res = mods.odb.retrieve(HashedStringObject.class, "WHERE hash = '" + mods.odb.escapeString(hso.hash) + "'");
 
-		for (HashedStringObject li : res)
+		for (final HashedStringObject li : res)
 			mods.odb.delete(li);
 
 		mods.odb.save(hso);
 
 		String address = externalName;
 
-		if ((address == null) || (address.isEmpty())) {
+		if (address == null || address.isEmpty()) {
 			try
 			{
 				address = InetAddress.getLocalHost().getHostAddress();
 			}
-			catch (UnknownHostException e)
+			catch (final UnknownHostException e)
 			{
 				throw new ChoobException("Your network appears to be really, really broken.");
 			}

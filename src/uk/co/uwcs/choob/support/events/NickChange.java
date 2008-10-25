@@ -63,7 +63,7 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	/**
 	 * Construct a new NickChange.
 	 */
-	public NickChange(String methodName, long millis, int random, String nick, String login, String hostname, String newNick)
+	public NickChange(final String methodName, final long millis, final int random, final String nick, final String login, final String hostname, final String newNick)
 	{
 		super(methodName, millis, random);
 		this.nick = nick;
@@ -75,7 +75,7 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	/**
 	 * Synthesize a new NickChange from an old one.
 	 */
-	public NickChange(NickChange old)
+	public NickChange(final NickChange old)
 	{
 		super(old);
 		this.nick = old.nick;
@@ -88,26 +88,29 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	 * Synthesize a new NickChange from this one.
 	 * @return The new NickChange object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new NickChange(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof NickChange))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		NickChange thing = (NickChange)obj;
+		final NickChange thing = (NickChange)obj;
 		if ( true && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && newNick.equals(thing.newNick) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("NickChange(");
+		final StringBuffer out = new StringBuffer("NickChange(");
 		out.append(super.toString());
 		out.append(", nick = " + nick);
 		out.append(", login = " + login);

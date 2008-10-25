@@ -12,15 +12,16 @@ import java.util.List;
  */
 public final class ChoobFakeProtectionDomain extends ProtectionDomain
 {
-	private List<String> pluginNames;
+	private final List<String> pluginNames;
 
-	public ChoobFakeProtectionDomain( List<String> pluginNames )
+	public ChoobFakeProtectionDomain( final List<String> pluginNames )
 	{
 		super( null, null );
 		this.pluginNames = pluginNames;
 	}
 
-	public boolean implies( Permission perm )
+	@Override
+	public boolean implies( final Permission perm )
 	{
 		// XXX HAX ATTACK XXX
 		if ( perm instanceof ChoobSpecialStackPermission )

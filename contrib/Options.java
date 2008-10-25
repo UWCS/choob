@@ -2,7 +2,10 @@ import java.util.List;
 
 import uk.co.uwcs.choob.ChoobThread;
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobBadSyntaxError;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 import uk.co.uwcs.choob.support.events.PrivateEvent;
 
@@ -44,7 +47,7 @@ public class Options
 	Modules mods;
 	IRCInterface irc;
 
-	public Options(Modules mods, IRCInterface irc)
+	public Options(final Modules mods, final IRCInterface irc)
 	{
 		this.irc = irc;
 		this.mods = mods;
@@ -55,9 +58,9 @@ public class Options
 		"[ <Plugin> ]",
 		"<Plugin> is the optional name of the plugin to list for (default: All)"
 	};
-	public void commandList( Message mes )
+	public void commandList( final Message mes )
 	{
-		String[] params = mods.util.getParamArray( mes );
+		final String[] params = mods.util.getParamArray( mes );
 
 		// Parse input
 		if (params.length > 2)
@@ -67,14 +70,14 @@ public class Options
 		else if (params.length == 1)
 		{
 			// List all.
-			StringBuilder output = new StringBuilder("Options: ");
+			final StringBuilder output = new StringBuilder("Options: ");
 
-			String[] plugins = mods.plugin.getLoadedPlugins();
+			final String[] plugins = mods.plugin.getLoadedPlugins();
 			boolean first = true;
-			for(int j=0; j<plugins.length; j++)
+			for (final String plugin : plugins)
 			{
-				String[] options = _getUserOptions(plugins[j]);
-				String[] defaults = _getUserOptionDefaults(plugins[j]);
+				final String[] options = _getUserOptions(plugin);
+				final String[] defaults = _getUserOptionDefaults(plugin);
 
 				if (options == null)
 					continue;
@@ -82,7 +85,7 @@ public class Options
 				if (!first)
 					output.append("; ");
 				first = false;
-				output.append(plugins[j] + ": ");
+				output.append(plugin + ": ");
 
 				for(int i=0; i<options.length; i++)
 				{
@@ -101,10 +104,10 @@ public class Options
 		else
 		{
 			// Passed plugin name.
-			String pluginName = params[1];
+			final String pluginName = params[1];
 
-			String[] options = _getUserOptions(pluginName);
-			String[] defaults = _getUserOptionDefaults(pluginName);
+			final String[] options = _getUserOptions(pluginName);
+			final String[] defaults = _getUserOptionDefaults(pluginName);
 
 			if (options == null)
 			{
@@ -112,7 +115,7 @@ public class Options
 				return;
 			}
 
-			StringBuilder output = new StringBuilder("Options for " + pluginName + ": ");
+			final StringBuilder output = new StringBuilder("Options for " + pluginName + ": ");
 			for(int i=0; i<options.length; i++)
 			{
 				output.append(options[i]);
@@ -133,9 +136,9 @@ public class Options
 		"[ <Plugin> ]",
 		"<Plugin> is the optional name of the plugin to list for (default: All)"
 	};
-	public void commandListGeneral( Message mes )
+	public void commandListGeneral( final Message mes )
 	{
-		String[] params = mods.util.getParamArray( mes );
+		final String[] params = mods.util.getParamArray( mes );
 
 		// Parse input
 		if (params.length > 2)
@@ -145,14 +148,14 @@ public class Options
 		else if (params.length == 1)
 		{
 			// List all.
-			StringBuilder output = new StringBuilder("Options: ");
+			final StringBuilder output = new StringBuilder("Options: ");
 
-			String[] plugins = mods.plugin.getLoadedPlugins();
+			final String[] plugins = mods.plugin.getLoadedPlugins();
 			boolean first = true;
-			for(int j=0; j<plugins.length; j++)
+			for (final String plugin : plugins)
 			{
-				String[] options = _getGeneralOptions(plugins[j]);
-				String[] defaults = _getGeneralOptionDefaults(plugins[j]);
+				final String[] options = _getGeneralOptions(plugin);
+				final String[] defaults = _getGeneralOptionDefaults(plugin);
 
 				if (options == null)
 					continue;
@@ -160,7 +163,7 @@ public class Options
 				if (!first)
 					output.append("; ");
 				first = false;
-				output.append(plugins[j] + ": ");
+				output.append(plugin + ": ");
 
 				for(int i=0; i<options.length; i++)
 				{
@@ -179,10 +182,10 @@ public class Options
 		else
 		{
 			// Passed plugin name.
-			String pluginName = params[1];
+			final String pluginName = params[1];
 
-			String[] options = _getGeneralOptions(pluginName);
-			String[] defaults = _getGeneralOptionDefaults(pluginName);
+			final String[] options = _getGeneralOptions(pluginName);
+			final String[] defaults = _getGeneralOptionDefaults(pluginName);
 
 			if (options == null)
 			{
@@ -190,7 +193,7 @@ public class Options
 				return;
 			}
 
-			StringBuilder output = new StringBuilder("Options for " + pluginName + ": ");
+			final StringBuilder output = new StringBuilder("Options for " + pluginName + ": ");
 			for(int i=0; i<options.length; i++)
 			{
 				output.append(options[i]);
@@ -213,11 +216,11 @@ public class Options
 		"<Name> is the name of the option to set",
 		"<Value> is the value to set the option to (omit to unset)"
 	};
-	public void commandSet( Message mes )
+	public void commandSet( final Message mes )
 	{
-		String[] params = mods.util.getParamArray( mes, 2 );
+		final String[] params = mods.util.getParamArray( mes, 2 );
 
-		String nickName = mes.getNick();
+		final String nickName = mes.getNick();
 
 		mods.security.checkAuth(mes);
 		String userName = mods.security.getUserAuthName(nickName);
@@ -225,8 +228,8 @@ public class Options
 
 		if (userName == null)
 		{
-			String primaryNick = mods.nick.getBestPrimaryNick(nickName);
-			String rootNick = mods.security.getRootUser(primaryNick);
+			final String primaryNick = mods.nick.getBestPrimaryNick(nickName);
+			final String rootNick = mods.security.getRootUser(primaryNick);
 			if (nickName.equals( primaryNick ))
 				// They can't have registered their nick at all.
 				irc.sendContextReply( mes, "Sorry, you need to register your username with the bot first. See Help.Help Security.AddUser." );
@@ -248,7 +251,7 @@ public class Options
 			throw new ChoobBadSyntaxError();
 		}
 
-		String[] vals = params[2].split("=", -1);
+		final String[] vals = params[2].split("=", -1);
 		if (vals.length != 2)
 		{
 			throw new ChoobBadSyntaxError();
@@ -257,7 +260,7 @@ public class Options
 		// Check the option is OK
 		if (vals[1].length() > 0)
 		{
-			String err = _checkUserOption( params[1], vals[0].toLowerCase(), vals[1], userName );
+			final String err = _checkUserOption( params[1], vals[0].toLowerCase(), vals[1], userName );
 			if (err != null)
 			{
 				irc.sendContextReply( mes, "Could not set the option! Error: " + err );
@@ -266,14 +269,14 @@ public class Options
 		}
 		else
 		{
-			String[] opts = _getUserOptions( params[1] );
+			final String[] opts = _getUserOptions( params[1] );
 			boolean found = false;
 			if (opts != null)
 			{
-				String opt = vals[0].toLowerCase();
-				for(int i=0; i<opts.length; i++)
+				final String opt = vals[0].toLowerCase();
+				for (final String opt2 : opts)
 				{
-					if (opts[i].toLowerCase().equals(opt))
+					if (opt2.toLowerCase().equals(opt))
 						found = true;
 				}
 			}
@@ -285,14 +288,14 @@ public class Options
 		}
 
 		// OK, have an option.
-		List<UserOption> options = mods.odb.retrieve( UserOption.class,
+		final List<UserOption> options = mods.odb.retrieve( UserOption.class,
 			  "WHERE optionName = '" + mods.odb.escapeString(vals[0]) + "' AND "
 			+ " userName = '" + mods.odb.escapeString(userName) + "' AND "
 			+ " pluginName = '" + mods.odb.escapeString(params[1]) + "'");
 
 		if ( options.size() >= 1 )
 		{
-			UserOption option = options.get(0);
+			final UserOption option = options.get(0);
 			if (vals[1].length() > 0)
 			{
 				option.optionValue = vals[1];
@@ -305,7 +308,7 @@ public class Options
 		}
 		else if (vals[1].length() > 0)
 		{
-			UserOption option = new UserOption();
+			final UserOption option = new UserOption();
 			option.pluginName = params[1];
 			option.userName = userName;
 			option.optionName = vals[0];
@@ -323,9 +326,9 @@ public class Options
 		"<Name> is the name of the option to set",
 		"<Value> is the value to set the option to"
 	};
-	public void commandSetGeneral( Message mes )
+	public void commandSetGeneral( final Message mes )
 	{
-		String[] params = mods.util.getParamArray( mes, 2 );
+		final String[] params = mods.util.getParamArray( mes, 2 );
 
 		// Parse input
 		if (params.length != 3)
@@ -333,7 +336,7 @@ public class Options
 			throw new ChoobBadSyntaxError();
 		}
 
-		String[] vals = params[2].split("=", -1);
+		final String[] vals = params[2].split("=", -1);
 		if (vals.length != 2)
 		{
 			throw new ChoobBadSyntaxError();
@@ -344,7 +347,7 @@ public class Options
 
 		if (vals[1].length() > 0)
 		{
-			String err = _checkGeneralOption( params[1], vals[0].toLowerCase(), vals[1] );
+			final String err = _checkGeneralOption( params[1], vals[0].toLowerCase(), vals[1] );
 			if (err != null)
 			{
 				irc.sendContextReply( mes, "Could not set the option! Error: " + err );
@@ -353,14 +356,14 @@ public class Options
 		}
 		else
 		{
-			String[] opts = _getGeneralOptions( params[1] );
+			final String[] opts = _getGeneralOptions( params[1] );
 			boolean found = false;
 			if ( opts != null )
 			{
-				String opt = vals[0].toLowerCase();
-				for(int i=0; i<opts.length; i++)
+				final String opt = vals[0].toLowerCase();
+				for (final String opt2 : opts)
 				{
-					if (opts[i].toLowerCase().equals(opt))
+					if (opt2.toLowerCase().equals(opt))
 						found = true;
 				}
 			}
@@ -372,13 +375,13 @@ public class Options
 		}
 
 		// OK, have an option.
-		List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class,
+		final List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class,
 			  "WHERE optionName = '" + mods.odb.escapeString(vals[0]) + "' AND "
 			+ " pluginName = '" + mods.odb.escapeString(params[1]) + "'");
 
 		if ( options.size() >= 1 )
 		{
-			GeneralOption option = options.get(0);
+			final GeneralOption option = options.get(0);
 			if (vals[1].length() > 0)
 			{
 				option.optionValue = vals[1];
@@ -391,7 +394,7 @@ public class Options
 		}
 		else if (vals[1].length() > 0)
 		{
-			GeneralOption option = new GeneralOption();
+			final GeneralOption option = new GeneralOption();
 			option.pluginName = params[1];
 			option.optionName = vals[0];
 			option.optionValue = vals[1];
@@ -406,9 +409,9 @@ public class Options
 		"[ <Plugin> ]",
 		"<Plugin> is the plugin to limit options to (default: All)"
 	};
-	public void commandGet( Message mes )
+	public void commandGet( final Message mes )
 	{
-		String[] params = mods.util.getParamArray(mes);
+		final String[] params = mods.util.getParamArray(mes);
 
 		String pluginName;
 		if (params.length > 2)
@@ -423,14 +426,14 @@ public class Options
 		{
 			pluginName = null;
 		}
-		
+
 		String userName = null;
 		if (mods.security.hasAuth(mes)) {
 			userName = mods.security.getRootUser(mods.security.getUserAuthName(mes.getNick()));
 		} else {
 			userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( mes.getNick() ) );
 		}
-		
+
 		if (userName == null)
 			userName = mes.getNick();
 
@@ -449,13 +452,13 @@ public class Options
 		}
 		else
 		{
-			StringBuilder out = new StringBuilder();
+			final StringBuilder out = new StringBuilder();
 			if (pluginName == null)
 				out.append("Options:");
 			else
 				out.append("Options for " + pluginName + ":");
 
-			for(UserOption option: options)
+			for(final UserOption option: options)
 			{
 				if (pluginName == null)
 					out.append(" " + option.pluginName + "." + option.optionName + "=" + option.optionValue);
@@ -471,9 +474,9 @@ public class Options
 		"<Plugin>",
 		"<Plugin> is the plugin to limit options to (warning: some plugins contain passwords!)"
 	};
-	public void commandGetGeneral( Message mes )
+	public void commandGetGeneral( final Message mes )
 	{
-		String[] params = mods.util.getParamArray(mes);
+		final String[] params = mods.util.getParamArray(mes);
 
 		String pluginName;
 		if (params.length != 2)
@@ -508,13 +511,13 @@ public class Options
 		}
 		else
 		{
-			StringBuilder out = new StringBuilder();
+			final StringBuilder out = new StringBuilder();
 			if (pluginName == null)
 				out.append("Options:");
 			else
 				out.append("Options for " + pluginName + ":");
 
-			for(GeneralOption option: options)
+			for(final GeneralOption option: options)
 			{
 				if (pluginName == null)
 					out.append(" " + option.pluginName + "." + option.optionName + "=" + option.optionValue);
@@ -531,14 +534,14 @@ public class Options
 		"<Plugin> is the name of the plugin the option lives in",
 		"<Name> is the name of the option"
 	};
-	public void commandHelp( Message mes )
+	public void commandHelp( final Message mes )
 	{
-		String[] params = mods.util.getParamArray(mes);
+		final String[] params = mods.util.getParamArray(mes);
 
 		String pluginName, optionName;
 		if (params.length == 2)
 		{
-			String[] bits = params[1].split("\\.");
+			final String[] bits = params[1].split("\\.");
 			if (bits.length != 2)
 				throw new ChoobBadSyntaxError();
 
@@ -557,24 +560,24 @@ public class Options
 		{
 			irc.sendContextReply(mes, (String[])mods.plugin.callAPI("Help", "GetHelp", pluginName + ".option." + optionName ));
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			irc.sendContextReply(mes, "Sorry, the help plugin isn't loaded!");
 		}
 	}
 
-	public String apiGetGeneralOption( String optionName )
+	public String apiGetGeneralOption( final String optionName )
 	{
 		return apiGetGeneralOption(optionName, null);
 	}
 
-	public String apiGetGeneralOption( String optionName, String defult )
+	public String apiGetGeneralOption( final String optionName, final String defult )
 	{
 		String pluginName = ChoobThread.getPluginName(1);
 		if (pluginName == null)
 			pluginName = "*Choob*"; // Hopefully an invalid plugin name. :)
 
-		List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class,
+		final List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class,
 			  "WHERE optionName = '" + mods.odb.escapeString(optionName) + "' AND"
 			+ " pluginName = '" + mods.odb.escapeString(pluginName) + "'");
 
@@ -583,12 +586,12 @@ public class Options
 		return options.get(0).optionValue;
 	}
 
-	public String apiGetUserOption( String nickName, String optionName )
+	public String apiGetUserOption( final String nickName, final String optionName )
 	{
 		return apiGetUserOption( nickName, optionName, null );
 	}
 
-	public String apiGetUserOption( String nickName, String optionName, String defult )
+	public String apiGetUserOption( final String nickName, final String optionName, final String defult )
 	{
 		String userName = mods.security.getUserAuthName(nickName);
 		userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick(userName));
@@ -599,7 +602,7 @@ public class Options
 		if (pluginName == null)
 			pluginName = "*Choob*"; // Hopefully an invalid plugin name. :)
 
-		List<UserOption> options = mods.odb.retrieve( UserOption.class,
+		final List<UserOption> options = mods.odb.retrieve( UserOption.class,
 			  "WHERE optionName = '" + mods.odb.escapeString(optionName) + "' AND"
 			+ " userName = '" + mods.odb.escapeString(userName) + "' AND"
 			+ " pluginName = '" + mods.odb.escapeString(pluginName) + "'");
@@ -609,13 +612,13 @@ public class Options
 		return options.get(0).optionValue;
 	}
 
-	public void apiSetGeneralOption( String optionName, String value )
+	public void apiSetGeneralOption( final String optionName, final String value )
 	{
 		String pluginName = ChoobThread.getPluginName(1);
 		if (pluginName == null)
 			pluginName = "*Choob*"; // Hopefully an invalid plugin name. :)
 
-		List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class,
+		final List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class,
 			  "WHERE optionName = '" + mods.odb.escapeString(optionName) + "' AND"
 			+ " pluginName = '" + mods.odb.escapeString(pluginName) + "'");
 
@@ -623,7 +626,7 @@ public class Options
 		{
 			if (value == null)
 				return;
-			GeneralOption option = new GeneralOption();
+			final GeneralOption option = new GeneralOption();
 			option.pluginName = pluginName;
 			option.optionName = optionName;
 			option.optionValue = value;
@@ -631,7 +634,7 @@ public class Options
 		}
 		else
 		{
-			GeneralOption option = options.get(0);
+			final GeneralOption option = options.get(0);
 			if (value == null)
 			{
 				mods.odb.delete(option);
@@ -645,9 +648,9 @@ public class Options
 	}
 
 	// WARNING: Run getBestPrimaryNick on this, and check NickServ first in your plugin!
-	public void apiSetUserOption( String userName, String optionName, String value )
+	public void apiSetUserOption( String userName, final String optionName, final String value )
 	{
-		String rootUser = mods.security.getRootUser(mods.security.getUserAuthName(userName));
+		final String rootUser = mods.security.getRootUser(mods.security.getUserAuthName(userName));
 		if (rootUser != null)
 			userName = rootUser;
 
@@ -655,7 +658,7 @@ public class Options
 		if (pluginName == null)
 			pluginName = "*Choob*"; // Hopefully an invalid plugin name. :)
 
-		List<UserOption> options = mods.odb.retrieve( UserOption.class,
+		final List<UserOption> options = mods.odb.retrieve( UserOption.class,
 			  "WHERE optionName = '" + mods.odb.escapeString(optionName) + "' AND"
 			+ " userName = '" + mods.odb.escapeString(userName) + "' AND"
 			+ " pluginName = '" + mods.odb.escapeString(pluginName) + "'");
@@ -664,7 +667,7 @@ public class Options
 		{
 			if (value == null)
 				return;
-			UserOption option = new UserOption();
+			final UserOption option = new UserOption();
 			option.pluginName = pluginName;
 			option.userName = userName;
 			option.optionName = optionName;
@@ -673,7 +676,7 @@ public class Options
 		}
 		else
 		{
-			UserOption option = options.get(0);
+			final UserOption option = options.get(0);
 			if (value == null)
 			{
 				mods.odb.delete(option);
@@ -686,55 +689,55 @@ public class Options
 		}
 	}
 
-	private String[] _getUserOptions( String pluginName )
+	private String[] _getUserOptions( final String pluginName )
 	{
 		try
 		{
 			return (String[])mods.plugin.callGeneric(pluginName, "options", "User");
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			return null;
 		}
 	}
 
-	private String[] _getUserOptionDefaults( String pluginName )
+	private String[] _getUserOptionDefaults( final String pluginName )
 	{
 		try
 		{
 			return (String[])mods.plugin.callGeneric(pluginName, "options", "UserDefaults");
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			return null;
 		}
 	}
 
-	private String[] _getGeneralOptions( String pluginName )
+	private String[] _getGeneralOptions( final String pluginName )
 	{
 		try
 		{
 			return (String[])mods.plugin.callGeneric(pluginName, "options", "General");
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			return null;
 		}
 	}
 
-	private String[] _getGeneralOptionDefaults( String pluginName )
+	private String[] _getGeneralOptionDefaults( final String pluginName )
 	{
 		try
 		{
 			return (String[])mods.plugin.callGeneric(pluginName, "options", "GeneralDefaults");
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			return null;
 		}
 	}
 
-	private String _checkUserOption( String pluginName, String optionName, String optionValue, String userName )
+	private String _checkUserOption( final String pluginName, final String optionName, final String optionValue, final String userName )
 	{
 		try
 		{
@@ -742,7 +745,7 @@ public class Options
 				return null;
 			return "Invalid option value!";
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			try
 			{
@@ -750,18 +753,18 @@ public class Options
 					return null;
 				return "Invalid option value!";
 			}
-			catch (ChoobNoSuchCallException f)
+			catch (final ChoobNoSuchCallException f)
 			{
 				return null;
 			}
 		}
-		catch (ClassCastException e)
+		catch (final ClassCastException e)
 		{
 			return "Invalid option check return value!";
 		}
 	}
 
-	private String _checkGeneralOption( String pluginName, String optionName, String optionValue )
+	private String _checkGeneralOption( final String pluginName, final String optionName, final String optionValue )
 	{
 		try
 		{
@@ -769,7 +772,7 @@ public class Options
 				return null;
 			return "Invalid option value!";
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			try
 			{
@@ -777,12 +780,12 @@ public class Options
 					return null;
 				return "Invalid option value!";
 			}
-			catch (ChoobNoSuchCallException f)
+			catch (final ChoobNoSuchCallException f)
 			{
 				return null;
 			}
 		}
-		catch (ClassCastException e)
+		catch (final ClassCastException e)
 		{
 			return "Invalid option check return value!";
 		}

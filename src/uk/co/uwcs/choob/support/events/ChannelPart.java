@@ -71,7 +71,7 @@ public class ChannelPart extends IRCEvent implements ChannelEvent, ContextEvent,
 	/**
 	 * Construct a new ChannelPart.
 	 */
-	public ChannelPart(String methodName, long millis, int random, String channel, String nick, String login, String hostname)
+	public ChannelPart(final String methodName, final long millis, final int random, final String channel, final String nick, final String login, final String hostname)
 	{
 		super(methodName, millis, random);
 		this.channel = channel;
@@ -83,7 +83,7 @@ public class ChannelPart extends IRCEvent implements ChannelEvent, ContextEvent,
 	/**
 	 * Synthesize a new ChannelPart from an old one.
 	 */
-	public ChannelPart(ChannelPart old)
+	public ChannelPart(final ChannelPart old)
 	{
 		super(old);
 		this.channel = old.channel;
@@ -96,26 +96,29 @@ public class ChannelPart extends IRCEvent implements ChannelEvent, ContextEvent,
 	 * Synthesize a new ChannelPart from this one.
 	 * @return The new ChannelPart object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new ChannelPart(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelPart))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		ChannelPart thing = (ChannelPart)obj;
+		final ChannelPart thing = (ChannelPart)obj;
 		if ( true && channel.equals(thing.channel) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("ChannelPart(");
+		final StringBuffer out = new StringBuffer("ChannelPart(");
 		out.append(super.toString());
 		out.append(", channel = " + channel);
 		out.append(", nick = " + nick);

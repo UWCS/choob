@@ -12,17 +12,18 @@ import uk.co.uwcs.choob.modules.SecurityModule;
  */
 public final class ChoobProtectionDomain extends ProtectionDomain
 {
-	private SecurityModule mod;
-	private String pluginName;
+	private final SecurityModule mod;
+	private final String pluginName;
 
-	public ChoobProtectionDomain( SecurityModule mod, String pluginName )
+	public ChoobProtectionDomain( final SecurityModule mod, final String pluginName )
 	{
 		super( null, null );
 		this.mod = mod;
 		this.pluginName = pluginName;
 	}
 
-	public boolean implies( Permission perm )
+	@Override
+	public boolean implies( final Permission perm )
 	{
 		// XXX HAX ATTACK XXX
 		if ( perm instanceof ChoobSpecialStackPermission )

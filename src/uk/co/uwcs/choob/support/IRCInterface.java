@@ -12,14 +12,16 @@ import java.util.List;
 
 import uk.co.uwcs.choob.Choob;
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.events.ContextEvent;
+import uk.co.uwcs.choob.support.events.PrivateEvent;
+import uk.co.uwcs.choob.support.events.UserEvent;
 
 /**
  * The primary way for plugins to pass feedback to IRC.
  */
 public final class IRCInterface
 {
-	private Choob bot;
+	private final Choob bot;
 	private Modules mods;
 
 	public final static int MAX_MESSAGE_LENGTH = 400; // Arbiatary hax!
@@ -27,7 +29,7 @@ public final class IRCInterface
 	public final static int MAX_MESSAGES = 3; // Max messages before /msg is employed instead.
 
 	/** Creates a new instance of IRCInterface */
-	public IRCInterface(Choob bot)
+	public IRCInterface(final Choob bot)
 	{
 		this.bot = bot;
 		this.mods = null; // Fixes dependency problem
@@ -44,7 +46,7 @@ public final class IRCInterface
 	 * @param message The text to cleanse.
 	 * @return a safe string.
 	 */
-	public String cleanse(String message)
+	public String cleanse(final String message)
 	{
 		// TODO: See if there's any other nasties.
 		if (message.indexOf('\n') != -1)
@@ -57,7 +59,7 @@ public final class IRCInterface
 	 * @param context A context object to target the reply at.
 	 * @param message A String of the /me you want to send.
 	 */
-	public void sendContextAction(ContextEvent context, String message)
+	public void sendContextAction(final ContextEvent context, String message)
 	{
 		message = cleanse(message);
 		// Can't really cutSting an action...
@@ -76,10 +78,10 @@ public final class IRCInterface
 	 * @param prefix A length to ensure space for in the cut strings.
 	 * @return A list of strings, cut to the max message length.
 	 */
-	public List<String> cutStrings(List<String> messages, int prefix)
+	public List<String> cutStrings(final List<String> messages, final int prefix)
 	{
-		List<String> ret = new ArrayList<String>();
-		for(String line: messages)
+		final List<String> ret = new ArrayList<String>();
+		for(final String line: messages)
 			ret.addAll(cutString(cleanse(line), prefix));
 		return ret;
 	}
@@ -90,10 +92,10 @@ public final class IRCInterface
 	 * @param prefix A length to ensure space for in the cut strings.
 	 * @return A list of strings, cut to the max message length.
 	 */
-	public List<String> cutStrings(String[] messages, int prefix)
+	public List<String> cutStrings(final String[] messages, final int prefix)
 	{
-		List<String> ret = new ArrayList<String>();
-		for(String line: messages)
+		final List<String> ret = new ArrayList<String>();
+		for(final String line: messages)
 			ret.addAll(cutString(cleanse(line), prefix));
 		return ret;
 	}
@@ -104,22 +106,22 @@ public final class IRCInterface
 	 * @param prefix A length to ensure space for in the cut strings.
 	 * @return A list of strings, cut to the max message length.
 	 */
-	public List<String> cutString(String message, int prefix)
+	public List<String> cutString(final String message, final int prefix)
 	{
-		int max_length = MAX_MESSAGE_LENGTH - prefix;
-		List<String> lines = new ArrayList<String>();
+		final int max_length = MAX_MESSAGE_LENGTH - prefix;
+		final List<String> lines = new ArrayList<String>();
 		int pos = 0;
 		while (true)
 		{
 			if (message.length() - pos > max_length)
 			{
 				// must do some cutting.
-				int spacePos = message.lastIndexOf(' ', pos + max_length);
+				final int spacePos = message.lastIndexOf(' ', pos + max_length);
 
 				if (spacePos == -1 || pos + max_length - spacePos > MAX_MESSAGE_TRUNCATION)
 				{
 					// If we're here, need to cut a word...
-					int newPos = pos + max_length - 3;
+					final int newPos = pos + max_length - 3;
 					lines.add(message.substring(pos, newPos) + "...");
 					pos = newPos;
 				}
@@ -147,13 +149,13 @@ public final class IRCInterface
 	 * @param messages A Strings[] containing the message you want to send.
 	 * @param prefix If in a channel, should the reply be prefixed with "&lt;Nick&gt;: "?
 	 */
-	public void sendContextReply(ContextEvent context, String[] messages, boolean prefix)
+	public void sendContextReply(final ContextEvent context, final String[] messages, final boolean prefix)
 	{
 		if ( !(context instanceof UserEvent) )
 			throw new IllegalArgumentException("ConextEvent " + context + " passed to sendContextReply was not a contextEvent!");
 
-		String nick = ((UserEvent)context).getNick();
-		List<String> bits = cutStrings(messages, nick.length() + 2);
+		final String nick = ((UserEvent)context).getNick();
+		final List<String> bits = cutStrings(messages, nick.length() + 2);
 
 		privateSendContextMessage(context, bits, prefix);
 	}
@@ -165,13 +167,13 @@ public final class IRCInterface
 	 * @param messages A list of Strings containing the message you want to send.
 	 * @param prefix If in a channel, should the reply be prefixed with "&lt;Nick&gt;: "?
 	 */
-	public void sendContextReply(ContextEvent context, List<String> messages, boolean prefix)
+	public void sendContextReply(final ContextEvent context, final List<String> messages, final boolean prefix)
 	{
 		if ( !(context instanceof UserEvent) )
 			throw new IllegalArgumentException("ConextEvent " + context + " passed to sendContextReply was not a contextEvent!");
 
-		String nick = ((UserEvent)context).getNick();
-		List<String> bits = cutStrings(messages, nick.length() + 2);
+		final String nick = ((UserEvent)context).getNick();
+		final List<String> bits = cutStrings(messages, nick.length() + 2);
 
 		privateSendContextMessage(context, bits, prefix);
 	}
@@ -183,20 +185,20 @@ public final class IRCInterface
 	 * @param message A String containing the message you want to send.
 	 * @param prefix If in a channel, should the reply be prefixed with "&lt;Nick&gt;: "?
 	 */
-	public void sendContextReply(ContextEvent context, String message, boolean prefix)
+	public void sendContextReply(final ContextEvent context, final String message, final boolean prefix)
 	{
 		if ( !(context instanceof UserEvent) )
 			throw new IllegalArgumentException("ConextEvent " + context + " passed to sendContextReply was not a contextEvent!");
 
-		String nick = ((UserEvent)context).getNick();
-		List<String> bits = cutString(cleanse(message), nick.length() + 2);
+		final String nick = ((UserEvent)context).getNick();
+		final List<String> bits = cutString(cleanse(message), nick.length() + 2);
 
 		privateSendContextMessage(context, bits, prefix);
 	}
 
-	private void privateSendContextMessage(ContextEvent context, List<String> lines, boolean prefix)
+	private void privateSendContextMessage(final ContextEvent context, final List<String> lines, final boolean prefix)
 	{
-		String nick = ((UserEvent)context).getNick();
+		final String nick = ((UserEvent)context).getNick();
 		String target, thePrefix;
 		if( context instanceof PrivateEvent || mods.pc.isProtected(context.getContext()))
 		{
@@ -221,7 +223,7 @@ public final class IRCInterface
 			target = context.getContext();
 		}
 
-		for(String line: lines)
+		for(final String line: lines)
 			privateSendMessage(target, thePrefix + line);
 	}
 
@@ -255,7 +257,7 @@ public final class IRCInterface
 	 * @param context A context to reply in.
 	 * @param message A String containing the message you want to send.
 	 */
-	public void sendContextReply(ContextEvent context, String message)
+	public void sendContextReply(final ContextEvent context, final String message)
 	{
 		sendContextReply(context, message, true);
 	}
@@ -265,7 +267,7 @@ public final class IRCInterface
 	 * @param context A context to reply in.
 	 * @param lines A String[] containing the message you want to send.
 	 */
-	public void sendContextReply(ContextEvent context, String[] lines)
+	public void sendContextReply(final ContextEvent context, final String[] lines)
 	{
 		sendContextReply(context, lines, true);
 	}
@@ -275,7 +277,7 @@ public final class IRCInterface
 	 * @param context A context to reply in.
 	 * @param lines A list of Strings containing the message you want to send.
 	 */
-	public void sendContextReply(ContextEvent context, List<String> lines)
+	public void sendContextReply(final ContextEvent context, final List<String> lines)
 	{
 		sendContextReply(context, lines, true);
 	}
@@ -285,7 +287,7 @@ public final class IRCInterface
 	 * @param context A context to reply in.
 	 * @param message A String containing the message you want to send.
 	 */
-	public void sendContextMessage(ContextEvent context, String message)
+	public void sendContextMessage(final ContextEvent context, final String message)
 	{
 		sendContextReply(context, message, false);
 	}
@@ -295,7 +297,7 @@ public final class IRCInterface
 	 * @param context A context to reply in.
 	 * @param lines A String[] containing the message you want to send.
 	 */
-	public void sendContextMessage(ContextEvent context, String[] lines)
+	public void sendContextMessage(final ContextEvent context, final String[] lines)
 	{
 		sendContextReply(context, lines, false);
 	}
@@ -305,7 +307,7 @@ public final class IRCInterface
 	 * @param context A context to reply in.
 	 * @param lines A list of Strings containing the message you want to send.
 	 */
-	public void sendContextMessage(ContextEvent context, List<String> lines)
+	public void sendContextMessage(final ContextEvent context, final List<String> lines)
 	{
 		sendContextReply(context, lines, false);
 	}
@@ -316,17 +318,17 @@ public final class IRCInterface
 	 * @param target A String of the target you want to recive the message.
 	 * @param message A String of the message you want to send.
 	 */
-	public void sendMessage(String target, String message)
+	public void sendMessage(final String target, final String message)
 	{
 		AccessController.checkPermission(new ChoobPermission("message.send.privmsg"));
 
-		List<String> lines = cutString(cleanse(message), 0);
+		final List<String> lines = cutString(cleanse(message), 0);
 
-		for (String line: lines)
+		for (final String line: lines)
 			privateSendMessage(target, line);
 	}
 
-	private void privateSendMessage(String target, String message)
+	private void privateSendMessage(final String target, final String message)
 	{
 		if (target.trim().equalsIgnoreCase(bot.getName()))
 			return;
@@ -339,7 +341,7 @@ public final class IRCInterface
 	 * @param target A String of the target you want to recive the message.
 	 * @param message A String of the /me you want to send.
 	 */
-	public void sendAction(String target, String message)
+	public void sendAction(final String target, String message)
 	{
 		AccessController.checkPermission(new ChoobPermission("message.send.action"));
 
@@ -355,98 +357,98 @@ public final class IRCInterface
 	 * Sends a raw IRC line to the server. Very dangerous!
 	 * @param line The line of text to send. Should not be terminated with \n.
 	 */
-	public void sendRawLine(String line)
+	public void sendRawLine(final String line)
 	{
 		AccessController.checkPermission(new ChoobPermission("message.send.raw"));
 		bot.sendRawLineViaQueue(line);
 	}
-	
-	public void op(String channel, String nick) throws ChoobException
+
+	public void op(final String channel, final String nick) throws ChoobException
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
 	    bot.op(channel, nick);
 	}
-	
-	public void deOp(String channel, String nick) throws ChoobException
+
+	public void deOp(final String channel, final String nick) throws ChoobException
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
 	    bot.deOp(channel, nick);
 	}
-	
-	public void voice(String channel, String nick) throws ChoobException
+
+	public void voice(final String channel, final String nick) throws ChoobException
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
 	    bot.voice(channel, nick);
 	}
-	
-	public void deVoice(String channel, String nick) throws ChoobException
+
+	public void deVoice(final String channel, final String nick) throws ChoobException
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
 	    bot.deVoice(channel, nick);
 	}
-	
-	public void kick(String channel, String nick) throws ChoobException
+
+	public void kick(final String channel, final String nick) throws ChoobException
     {
         AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
         bot.kick(channel, nick);
     }
-	
-	public void kick(String channel, String nick, String reason) throws ChoobException
+
+	public void kick(final String channel, final String nick, final String reason) throws ChoobException
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
 	    bot.kick(channel, nick, reason);
 	}
-	
-	public void ban(String channel, String nick) throws ChoobException
+
+	public void ban(final String channel, final String nick) throws ChoobException
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
-	    String hostmask = nick + "!*@*";
+	    final String hostmask = nick + "!*@*";
 	    bot.ban(channel, hostmask);
 	}
-	
-	public void unban(String channel, String nick) throws ChoobException
+
+	public void unban(final String channel, final String nick) throws ChoobException
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
-	    String hostmask = nick + "!*@*";
+	    final String hostmask = nick + "!*@*";
 	    bot.unBan(channel, hostmask);
 	}
 
-	public void join(String channel) throws ChoobException
+	public void join(final String channel) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("state.join." + channel));
 		bot.joinChannel(channel);
 	}
 
-	public void part(String channel) throws ChoobException
+	public void part(final String channel) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("state.part." + channel));
 		bot.partChannel(channel);
 	}
 
-	public void quit(String message) throws ChoobException
+	public void quit(final String message) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("state.quit"));
 		bot.setExitCode(0);
 		bot.quitServer(message);
 	}
 
-	public void restart(String message) throws ChoobException
+	public void restart(final String message) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("state.quit"));
 		bot.setExitCode(1);
 		bot.quitServer(message);
 	}
 
-	public String[] getUsers(String channel)
+	public String[] getUsers(final String channel)
 	{
 		return getUsersList(channel).toArray(new String[]{});
 	}
 
-	public List<String> getUsersList(String channel)
+	public List<String> getUsersList(final String channel)
 	{
-		ArrayList<String> nicks = new ArrayList<String>();
-		org.jibble.pircbot.User[] us = bot.getUsers(channel);
-		for (org.jibble.pircbot.User u : us)
+		final ArrayList<String> nicks = new ArrayList<String>();
+		final org.jibble.pircbot.User[] us = bot.getUsers(channel);
+		for (final org.jibble.pircbot.User u : us)
 			nicks.add(u.getNick());
 		return nicks;
 	}

@@ -2,7 +2,10 @@ package uk.co.uwcs.choob.modules;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,7 +18,7 @@ import uk.co.uwcs.choob.support.GetContentsCached;
  * Module providing functionality allowing the BOT to extract information from a website.
  */
 public final class ScraperModule {
-	private Map <java.net.URL, GetContentsCached>sites=Collections.synchronizedMap(new HashMap<URL, GetContentsCached>()); // URL -> GetContentsCached.
+	private final Map <java.net.URL, GetContentsCached>sites=Collections.synchronizedMap(new HashMap<URL, GetContentsCached>()); // URL -> GetContentsCached.
 	private final static HashMap <String, Character>EntityMap=new HashMap<String, Character>();
 
 	static {
@@ -535,7 +538,7 @@ public final class ScraperModule {
 	 * @throws java.io.IOException
 	 * @return The contents of the URL provided.
 	 */
-	public String getContentsCached(URL url) throws IOException {
+	public String getContentsCached(final URL url) throws IOException {
 		return getContentsCached(url, GetContentsCached.DEFAULT_TIMEOUT);
 	}
 
@@ -543,10 +546,10 @@ public final class ScraperModule {
 	 * Get the contents, with caching, of the given URL.
 	 * @param url The URL to get the contents of.
 	 * @param timeout The timeout to use when performing the operation.
-	 * @throws java.io.IOException 
+	 * @throws java.io.IOException
 	 * @return The contents of the URL provided.
 	 */
-	public String getContentsCached(URL url, long timeout) throws IOException {
+	public String getContentsCached(final URL url, final long timeout) throws IOException {
 		GetContentsCached gcc=sites.get(url);
 		if (gcc==null) {
 			gcc=new GetContentsCached(url, timeout);
@@ -557,7 +560,7 @@ public final class ScraperModule {
 		}
 
 		synchronized (sites) {
-			Iterator<Map.Entry<URL, GetContentsCached>> i = sites.entrySet().iterator();
+			final Iterator<Map.Entry<URL, GetContentsCached>> i = sites.entrySet().iterator();
 			while (i.hasNext()) {
 				if (i.next().getValue().expired()) {
 					i.remove();
@@ -573,10 +576,10 @@ public final class ScraperModule {
 	 * @param url The URL to perform the regular expression on.
 	 * @param timeout The timeout to use when performing this operation.
 	 * @param regex The regular expression to use.
-	 * @throws java.io.IOException 
+	 * @throws java.io.IOException
 	 * @return The Matcher object requested.
 	 */
-	public Matcher getMatcher(URL url, long timeout, String regex) throws IOException {
+	public Matcher getMatcher(final URL url, final long timeout, final String regex) throws IOException {
 		return getMatcher(url, timeout, Pattern.compile(regex));
 	}
 
@@ -584,10 +587,10 @@ public final class ScraperModule {
 	 * Get the regular expression Matcher object for a specific URL and regular expression.
 	 * @param url The URL to perform the regular expression on.
 	 * @param regex The regular expression to use.
-	 * @throws java.io.IOException 
+	 * @throws java.io.IOException
 	 * @return The Matcher object requested.
 	 */
-	public Matcher getMatcher(URL url, String regex) throws IOException {
+	public Matcher getMatcher(final URL url, final String regex) throws IOException {
 		return getMatcher(url, Pattern.compile(regex));
 	}
 
@@ -595,10 +598,10 @@ public final class ScraperModule {
 	 * Get the regular expression Matcher object for a specific URL and regular expression.
 	 * @param url The URL to perform the regular expression on.
 	 * @param regex The Pattern object containing the regular expression to use.
-	 * @throws java.io.IOException 
+	 * @throws java.io.IOException
 	 * @return The Matcher object requested.
 	 */
-	public Matcher getMatcher(URL url, Pattern regex) throws IOException {
+	public Matcher getMatcher(final URL url, final Pattern regex) throws IOException {
 		return regex.matcher(getContentsCached(url));
 	}
 
@@ -607,10 +610,10 @@ public final class ScraperModule {
 	 * @param url The URL to perform the regular expression on.
 	 * @param timeout The timeout to use when performing this operation.
 	 * @param regex The Pattern object containing the regular expression to use.
-	 * @throws java.io.IOException 
+	 * @throws java.io.IOException
 	 * @return The Matcher object requested.
 	 */
-	public Matcher getMatcher(URL url, long timeout, Pattern regex) throws IOException {
+	public Matcher getMatcher(final URL url, final long timeout, final Pattern regex) throws IOException {
 		return regex.matcher(getContentsCached(url, timeout));
 	}
 
@@ -622,8 +625,8 @@ public final class ScraperModule {
 	public String convertEntities(final String html) {
 		// Sorry, I just couldn't bring myself to do foreach (hashmap => key, val) html=html.replaceall(key, val);
 
-		StringBuilder buf = new StringBuilder();
-		int l=html.length();
+		final StringBuilder buf = new StringBuilder();
+		final int l=html.length();
 		int p=0;
 		int lastp=0;
 		while (p<l)	{
@@ -633,13 +636,13 @@ public final class ScraperModule {
 				break;
 			}
 
-			int semi=html.indexOf(";",p);
+			final int semi=html.indexOf(";",p);
 
 			if (semi==-1) {
 				break;
 			}
 
-			Character c=EntityMap.get(html.substring(p+1,semi));
+			final Character c=EntityMap.get(html.substring(p+1,semi));
 
 			if (c==null) {
 				buf.append(html.substring(lastp, semi+1));
@@ -660,11 +663,11 @@ public final class ScraperModule {
 	 * @param html The HTML String to perform the replacement on.
 	 * @return The String suitably formatted to perform bold on IRC.
 	 */
-	public String boldTags(String html) {
+	public String boldTags(final String html) {
 		return html.replaceAll("(?i)<b>", Colors.BOLD).replaceAll("(?i)</b>", Colors.NORMAL);
 	}
-	
-	public String quoteURLs(String html) {
+
+	public String quoteURLs(final String html) {
 		//return html.replaceAll("<a +?href *= *\"(.*?)\" *?>","[$1] ").replaceAll("</a>","");
 		return html;
 		//This is going to require more than: return html.replaceAll("<a +?href *= *\"(.*?)\" *?>",Colors.REVERSE + "<$1> " + Colors.NORMAL).replaceAll("</a>","");
@@ -675,7 +678,7 @@ public final class ScraperModule {
 	 * @param html The String to filter.
 	 * @return The String, minus any HTML tags.
 	 */
-	public String stripTags(String html) {
+	public String stripTags(final String html) {
 		return html.replaceAll("<.*?>","");
 	}
 
@@ -684,7 +687,7 @@ public final class ScraperModule {
 	 * @param html The HTML to tidy.
 	 * @return The tidy HTML.
 	 */
-	public String cleanup(String html) {
+	public String cleanup(final String html) {
 		return convertEntities(html.trim().replaceAll("\n",""));
 	}
 
@@ -693,7 +696,7 @@ public final class ScraperModule {
 	 * @param html The String to clean
 	 * @return The clean String, with escaped quotes.
 	 */
-	public String escapeQuotes(String html) {
+	public String escapeQuotes(final String html) {
 		return html.replaceAll("'","\\'").replaceAll("\"", "\\\"");
 	}
 
@@ -702,7 +705,7 @@ public final class ScraperModule {
 	 * @param html The String containing HTML tags that is to be prepared for IRC output.
 	 * @return A string ready for output into IRC.
 	 */
-	public String readyForIrc(String html) {
+	public String readyForIrc(final String html) {
 		return stripTags(quoteURLs(boldTags(cleanup(html))));
 	}
 
@@ -711,14 +714,14 @@ public final class ScraperModule {
 	 * @param html The String containing HTML tags that is to be prepared for HTML output.
 	 * @return A string ready for output into HTML.
 	 */
-	public String readyForHtml(String html) {
+	public String readyForHtml(final String html) {
 		return escapeQuotes(stripTags(quoteURLs(boldTags(cleanup(html)))));
 	}
-	
+
 	/**
 	 *
 	 */
-	public String escapeForHTML(String html) {
+	public String escapeForHTML(final String html) {
 		return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("'", "&#x27;").replaceAll("\"", "&quot;");
 	}
 }

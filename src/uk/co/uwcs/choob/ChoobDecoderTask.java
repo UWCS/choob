@@ -6,8 +6,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.CommandEvent;
+import uk.co.uwcs.choob.support.events.Event;
+import uk.co.uwcs.choob.support.events.FilterEvent;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.NickChange;
+import uk.co.uwcs.choob.support.events.PrivateMessage;
+import uk.co.uwcs.choob.support.events.UserEvent;
 
 public class ChoobDecoderTask extends ChoobTask
 {
@@ -16,9 +24,9 @@ public class ChoobDecoderTask extends ChoobTask
 	private static IRCInterface irc;
 	private static Pattern triggerPattern;
 	private static Pattern commandPattern;
-	private Event event;
+	private final Event event;
 
-	static void initialise(DbConnectionBroker broker, Modules mods, IRCInterface ircinter)
+	static void initialise(final DbConnectionBroker broker, final Modules mods, final IRCInterface ircinter)
 	{
 		if (ChoobDecoderTask.dbBroker != null)
 			return;
@@ -33,9 +41,9 @@ public class ChoobDecoderTask extends ChoobTask
 	{
 		triggerPattern = Pattern.compile("^(?:" + irc.getTriggerRegex() + ")", Pattern.CASE_INSENSITIVE);
 	}
-	
+
 	/** Creates a new instance of ChoobThread */
-	ChoobDecoderTask(Event event)
+	ChoobDecoderTask(final Event event)
 	{
 		super(null, "ChoobDecoderTask:" + event.getMethodName());
 		this.event = event;
@@ -44,15 +52,15 @@ public class ChoobDecoderTask extends ChoobTask
 	@Override
 	public synchronized void run()
 	{
-		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
-		
+		final List<ChoobTask> tasks = new LinkedList<ChoobTask>();
+
 		Message mes = null;
 		if (event instanceof Message)
 			mes = (Message)event;
 
 		if (event instanceof NickChange)
 		{
-			NickChange nc = (NickChange)event;
+			final NickChange nc = (NickChange)event;
 			// Note: the IRC library has already handled this message, so we
 			// match the *new* nickname with the bot's.
 			if (nc.getNewNick().equals(irc.getNickname())) {
@@ -61,7 +69,7 @@ public class ChoobDecoderTask extends ChoobTask
 				modules.util.updateTrigger();
 			}
 		}
-		
+
 		// Check if the message looks like a command in any way.
 		Matcher ma = null;
 		boolean mafind = false;
@@ -70,44 +78,44 @@ public class ChoobDecoderTask extends ChoobTask
 			// First, is does it have a trigger?
 			String matchAgainst = mes.getMessage();
 			ma = triggerPattern.matcher(matchAgainst);
-			
+
 			mafind = ma.find();
 			if (mafind || mes instanceof PrivateMessage)
 			{
 				// Decode into a string we can match as a command.
-				int commandStart = (mafind ? ma.end() : 0);
-				int commandEnd = matchAgainst.indexOf(' ', commandStart);
+				final int commandStart = mafind ? ma.end() : 0;
+				final int commandEnd = matchAgainst.indexOf(' ', commandStart);
 				if (commandEnd != -1)
 					matchAgainst = matchAgainst.substring(commandStart, commandEnd);
 				else
 					matchAgainst = matchAgainst.substring(commandStart);
-				
+
 				if (matchAgainst.indexOf(' ') >= 0)
 					matchAgainst = matchAgainst.substring(0, matchAgainst.indexOf(' '));
-				
+
 				// Store the command name for convenience.
 				mes.getFlags().put("command", matchAgainst);
 			}
 		}
-		
+
 		// Process event calls first
 		tasks.addAll(modules.plugin.getPlugMan().eventTasks(event));
-		
+
 		boolean ignoreTriggers = false;
-		if ((event instanceof UserEvent) &&
-		    ((event instanceof FilterEvent) ||
-		     ((mes != null) && mes.getFlags().containsKey("command"))))
+		if (event instanceof UserEvent &&
+		    (event instanceof FilterEvent ||
+		     mes != null && mes.getFlags().containsKey("command")))
 		{
 			try
 			{
 				if (1 == (Integer)ChoobDecoderTask.modules.plugin.callAPI("UserTypeCheck", "Status", ((UserEvent)event).getNick(), "bot"))
 					ignoreTriggers = true;
 			}
-			catch (ChoobNoSuchCallException e)
+			catch (final ChoobNoSuchCallException e)
 			{
 				// This is fine.
 			}
-			catch (Throwable e)
+			catch (final Throwable e)
 			{
 				// This isn't.
 				System.err.println("EXCEPTION: " + e.toString());
@@ -123,14 +131,14 @@ public class ChoobDecoderTask extends ChoobTask
 			}
 
 			// Now if it's a message, deal with that too
-			if ((mes != null) && mes.getFlags().containsKey("command"))
+			if (mes != null && mes.getFlags().containsKey("command"))
 			{
 				ma = commandPattern.matcher(mes.getFlags().get("command"));
 				if (ma.matches())
 				{
 					try
 					{
-						int ret = (Integer)modules.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
+						final int ret = (Integer)modules.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
 						if (ret != 0)
 						{
 							if (ret == 1)
@@ -138,17 +146,17 @@ public class ChoobDecoderTask extends ChoobTask
 							return;
 						}
 					}
-					catch (ChoobNoSuchCallException e)
+					catch (final ChoobNoSuchCallException e)
 					{ } // Ignore
-					catch (Throwable e)
+					catch (final Throwable e)
 					{
 						System.err.println("Couldn't do antiflood call: " + e);
 					}
 
-					String pluginName  = ma.group(1);
-					String commandName = ma.group(2);
+					final String pluginName  = ma.group(1);
+					final String commandName = ma.group(2);
 
-					ChoobTask task = modules.plugin.getPlugMan().commandTask(pluginName, commandName, mes);
+					final ChoobTask task = modules.plugin.getPlugMan().commandTask(pluginName, commandName, mes);
 					if (task != null)
 						tasks.add(task);
 				}
@@ -156,7 +164,7 @@ public class ChoobDecoderTask extends ChoobTask
 		}
 
 		// We now have a neat list of tasks to perform. Queue them all.
-		for(ChoobTask task: tasks)
+		for(final ChoobTask task: tasks)
 		{
 			ChoobThreadManager.queueTask(task);
 		}

@@ -14,9 +14,9 @@ public class Calc
 		};
 	}
 
-	private IRCInterface irc;
-	private Modules mods;
-	public Calc(Modules mods, IRCInterface irc)
+	private final IRCInterface irc;
+	private final Modules mods;
+	public Calc(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -27,22 +27,22 @@ public class Calc
 		"<Expression>",
 		"<Expression> is some lovely mathematical expression"
 	};
-	public void commandCalc( Message mes )
+	public void commandCalc( final Message mes )
 	{
-		String expr = mods.util.getParamString(mes);
+		final String expr = mods.util.getParamString(mes);
 		try
 		{
 			irc.sendContextReply(mes, expr + " = " + apiEval(expr));
 		}
-		catch (BadMathException e)
+		catch (final BadMathException e)
 		{
 			irc.sendContextReply(mes, "Urgh; could not parse! Error: " + e.getMessage());
 		}
 	}
 
-	public double apiEval(String expr) throws BadMathException
+	public double apiEval(final String expr) throws BadMathException
 	{
-		MathParser parser = new MathParser(expr);
+		final MathParser parser = new MathParser(expr);
 		return parser.eval();
 	}
 }
@@ -52,7 +52,7 @@ class MathParser
 	String expr;
 	int ptr; // Holds position in the string.
 	int length;
-	public MathParser(String expr)
+	public MathParser(final String expr)
 	{
 		this.expr = expr.replaceAll("\\s", ""); // Mmmm, strippage.
 		this.length = this.expr.length();
@@ -61,7 +61,7 @@ class MathParser
 
 	public double eval() throws BadMathException
 	{
-		double result = additionExpr();
+		final double result = additionExpr();
 		if (ptr != length)
 			throw new BadMathException("Trailing characters.");
 		return result;
@@ -76,7 +76,7 @@ class MathParser
 		int op = OP_ADD;
 		while(true)
 		{
-			double term = multExpr();
+			final double term = multExpr();
 			if (op == OP_ADD)
 				total += term;
 			else
@@ -102,7 +102,7 @@ class MathParser
 		int op = OP_MULT;
 		while(true)
 		{
-			double term = powerExpr();
+			final double term = powerExpr();
 			if (op == OP_MULT)
 				total *= term;
 			else
@@ -131,14 +131,14 @@ class MathParser
 				return total;
 			else if (expr.charAt(ptr) == '^')
 			{
-				// Still good...	
-			} 
+				// Still good...
+			}
 			else
 				return total;
 
 			ptr++;
 
-			double term = termExpr();
+			final double term = termExpr();
 			total = Math.pow(total, term);
 		}
 	}
@@ -148,8 +148,8 @@ class MathParser
 	{
 		if (expr.length()<=ptr)
 			throw err();
-		char current = expr.charAt(ptr);
-		if ((current >= '0' && current <= '9') || current == '-' || current == '.')
+		final char current = expr.charAt(ptr);
+		if (current >= '0' && current <= '9' || current == '-' || current == '.')
 			return numberExpr();
 		else if (current == '(')
 			return bracketExpr();
@@ -162,7 +162,7 @@ class MathParser
 	// [0-9]+(?:\.[0-9]+)?
 	public double numberExpr() throws BadMathException
 	{
-		int origPtr = ptr;
+		final int origPtr = ptr;
 		while(true)
 		{
 			if (ptr == length)
@@ -171,13 +171,13 @@ class MathParser
 				{
 					return Double.parseDouble(expr.substring(origPtr,ptr));
 				}
-				catch (NumberFormatException e)
+				catch (final NumberFormatException e)
 				{
 					throw new BadMathException(expr.substring(origPtr,ptr) + " is not a valid number!");
 				}
 			}
-			char current = expr.charAt(ptr);
-			if ((current >= '0' && current <= '9') || current == '.' || (current == '-' && ptr == origPtr))
+			final char current = expr.charAt(ptr);
+			if (current >= '0' && current <= '9' || current == '.' || current == '-' && ptr == origPtr)
 				ptr++;
 			else
 			{
@@ -185,7 +185,7 @@ class MathParser
 				{
 					return Double.parseDouble(expr.substring(origPtr,ptr));
 				}
-				catch (NumberFormatException e)
+				catch (final NumberFormatException e)
 				{
 					throw new BadMathException(expr.substring(origPtr,ptr) + " is not a valid number!");
 				}
@@ -197,8 +197,8 @@ class MathParser
 	public double bracketExpr() throws BadMathException
 	{
 		ptr++;
-		double inner = additionExpr();
-		if ((ptr >= length) || (expr.charAt(ptr) != ')'))
+		final double inner = additionExpr();
+		if (ptr >= length || expr.charAt(ptr) != ')')
 			throw err();
 		ptr++;
 		return inner;
@@ -207,7 +207,7 @@ class MathParser
 	// name bracketExpr()
 	public double funcExpr() throws BadMathException
 	{
-		int oldPtr = ptr;
+		final int oldPtr = ptr;
 		char current = expr.charAt(ptr);
 		while(Character.isLetter(current))
 		{
@@ -217,12 +217,12 @@ class MathParser
 				break;
 			current = expr.charAt(ptr);
 		}
-		String name = expr.substring(oldPtr, ptr).toLowerCase();
+		final String name = expr.substring(oldPtr, ptr).toLowerCase();
 		if (current != '(')
 			throw new BadMathException(name + " must take bracketed operands!");
 
 		// Parse out the parameter.
-		double param = bracketExpr();
+		final double param = bracketExpr();
 
 		if (name.equals("sin"))
 			return Math.sin(param);
@@ -262,7 +262,7 @@ class BadMathException extends Exception
 {
 	private static final long serialVersionUID = 1L;
 
-	public BadMathException(String text)
+	public BadMathException(final String text)
 	{
 		super(text);
 	}

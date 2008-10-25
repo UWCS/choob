@@ -3,8 +3,10 @@ import java.util.List;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.events.ChannelEvent;
 import uk.co.uwcs.choob.support.events.ChannelInfo;
+import uk.co.uwcs.choob.support.events.ChannelTopic;
+import uk.co.uwcs.choob.support.events.Message;
 
 class TopicStr
 {
@@ -30,27 +32,27 @@ public class Topic
 	private static int BLOCK = 10;
 	private static int CONTEXT = 10;
 
-	private IRCInterface irc;
-	private Modules mods;
-	public Topic(Modules mods, IRCInterface irc)
+	private final IRCInterface irc;
+	private final Modules mods;
+	public Topic(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
 	}
 
-	private synchronized TopicStr getTopic(String chan)
+	private synchronized TopicStr getTopic(final String chan)
 	{
-		List<TopicStr> results = mods.odb.retrieve(TopicStr.class, "WHERE chan = \"" + mods.odb.escapeString(chan) + "\"");
+		final List<TopicStr> results = mods.odb.retrieve(TopicStr.class, "WHERE chan = \"" + mods.odb.escapeString(chan) + "\"");
 		if (results.size() == 0)
 		{
-			TopicStr topic = new TopicStr();
+			final TopicStr topic = new TopicStr();
 			topic.chan = chan;
 			return topic;
 		}
 		return results.get(0);
 	}
 
-	public static String getContextString(String into, int pos, int length)
+	public static String getContextString(final String into, final int pos, final int length)
 	{
 		String context;
 		if (pos == 0)
@@ -72,7 +74,7 @@ public class Topic
 		"[Channel]",
 		"[Channel] is the channel to get the diff of. Only valid outside channels."
 	};
-	public synchronized void commandDiff( Message mes )
+	public synchronized void commandDiff( final Message mes )
 	{
 		String which;
 
@@ -88,10 +90,10 @@ public class Topic
 		else
 			which = mes.getContext();
 
-		List<String> changes = new ArrayList<String>();
+		final List<String> changes = new ArrayList<String>();
 
 		// First, let's see if we can do this.
-		TopicStr topic = getTopic(which);
+		final TopicStr topic = getTopic(which);
 		if (topic.newTopic == null)
 		{
 			irc.sendContextReply(mes, "Sorry, don't know the topic!");
@@ -102,8 +104,8 @@ public class Topic
 			irc.sendContextReply(mes, "Sorry, haven't seen the topic change!");
 			return;
 		}
-		String oldTopic = topic.oldTopic;
-		String newTopic = topic.newTopic;
+		final String oldTopic = topic.oldTopic;
+		final String newTopic = topic.newTopic;
 
 		System.out.println("New topic: " + newTopic);
 		System.out.println("Old topic: " + oldTopic);
@@ -147,7 +149,7 @@ public class Topic
 				{
 					giveUp = false;
 					System.out.println("nPos: " + nPos + ", offset: " + offset);
-					String subStr = newTopic.substring(nPos + offset, nPos + offset + BLOCK);
+					final String subStr = newTopic.substring(nPos + offset, nPos + offset + BLOCK);
 					System.out.println("subStr: " + subStr);
 					int found = oldTopic.indexOf(subStr, oPos);
 					if (found != -1)
@@ -183,7 +185,7 @@ public class Topic
 				{
 					giveUp = false;
 					System.out.println("oPos: " + oPos + ", offset: " + offset);
-					String subStr = oldTopic.substring(oPos + offset, oPos + offset + BLOCK);
+					final String subStr = oldTopic.substring(oPos + offset, oPos + offset + BLOCK);
 					System.out.println("subStr: " + subStr);
 					int found = newTopic.indexOf(subStr, nPos);
 					if (found != -1)
@@ -216,7 +218,7 @@ public class Topic
 					}
 				}
 
-				if (offset + BLOCK > MAXDIFFCHUNK || (!notDone1 && !notDone2))
+				if (offset + BLOCK > MAXDIFFCHUNK || !notDone1 && !notDone2)
 					giveUp = true;
 
 				if (giveUp && oLength != -1)
@@ -242,8 +244,8 @@ public class Topic
 					}
 					else
 					{
-						String oldBit = oldTopic.substring(oPos, oPos + oLength);
-						String newBit = newTopic.substring(nPos, nPos + nLength);
+						final String oldBit = oldTopic.substring(oPos, oPos + oLength);
+						final String newBit = newTopic.substring(nPos, nPos + nLength);
 
 						changes.add("\"" + oldBit + "\" changed to \"" + newBit + "\" " + getContextString(newTopic, nPos, nLength));
 					}
@@ -255,8 +257,8 @@ public class Topic
 				else if (giveUp)
 				{
 					// No matches evah. Inference: Everything remaining
-					String oldBit = oldTopic.substring(oPos);
-					String newBit = newTopic.substring(nPos);
+					final String oldBit = oldTopic.substring(oPos);
+					final String newBit = newTopic.substring(nPos);
 
 					if (oldBit.length() > MAXDIFFCHUNK || newBit.length() > MAXDIFFCHUNK)
 					{
@@ -294,7 +296,7 @@ public class Topic
 		else
 		{
 			irc.sendContextReply(mes, "Topic diff: ");
-			for(String diff: changes)
+			for(final String diff: changes)
 				irc.sendContextReply(mes, "   " + diff);
 		}
 	}
@@ -321,14 +323,14 @@ public class Topic
 	public String[] helpCommandGet = {
 		"Give the old and new topics in the current channel."
 	};
-	public synchronized void commandGet( Message mes )
+	public synchronized void commandGet( final Message mes )
 	{
 		if (!(mes instanceof ChannelEvent))
 		{
 			irc.sendContextReply(mes, "Sorry, can only do that in a channel!");
 			return;
 		}
-		TopicStr topic = getTopic(mes.getContext());
+		final TopicStr topic = getTopic(mes.getContext());
 
 		if (topic.id == 0)
 		{
@@ -342,11 +344,11 @@ public class Topic
 		}
 	}
 
-	public synchronized void onChannelInfo( ChannelInfo info )
+	public synchronized void onChannelInfo( final ChannelInfo info )
 	{
 		System.out.println("Channel info: " + info);
-		String chan = info.getChannel();
-		TopicStr topic = getTopic(chan);
+		final String chan = info.getChannel();
+		final TopicStr topic = getTopic(chan);
 		topic.oldTopic = topic.newTopic;
 		topic.newTopic = info.getMessage();
 		if (topic.id == 0)
@@ -355,11 +357,11 @@ public class Topic
 			mods.odb.update(topic);
 	}
 
-	public synchronized void onTopic( ChannelTopic info )
+	public synchronized void onTopic( final ChannelTopic info )
 	{
 		System.out.println("Channel topic: " + info);
-		String chan = info.getChannel();
-		TopicStr topic = getTopic(chan);
+		final String chan = info.getChannel();
+		final TopicStr topic = getTopic(chan);
 		topic.oldTopic = topic.newTopic;
 		topic.newTopic = info.getMessage();
 		if (topic.id == 0)

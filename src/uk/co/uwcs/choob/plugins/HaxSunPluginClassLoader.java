@@ -1,16 +1,22 @@
 package uk.co.uwcs.choob.plugins;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.security.*;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.security.ProtectionDomain;
 
 public final class HaxSunPluginClassLoader extends ClassLoader
 {
-	private String path;
-	private ProtectionDomain domain;
+	private final String path;
+	private final ProtectionDomain domain;
 
-	public HaxSunPluginClassLoader( String pluginName, String path, ProtectionDomain domain )
+	public HaxSunPluginClassLoader( final String pluginName, final String path, final ProtectionDomain domain )
 	{
 		super();
 		this.path = path;
@@ -19,32 +25,33 @@ public final class HaxSunPluginClassLoader extends ClassLoader
 		definePackage("plugins." + pluginName, "", "", "", "", "", "", null);
 	}
 
+	@Override
 	public Class<?> findClass(final String name) throws ClassNotFoundException {
 		try {
 			return AccessController
 					.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
 						public Class<?> run() throws ClassNotFoundException {
 							try {
-								String fileName = path
+								final String fileName = path
 										+ name.replace('.', File.separatorChar)
 										+ ".class";
-								File classFile = new File(fileName);
+								final File classFile = new File(fileName);
 								if (!classFile.isFile())
 								{
 									throw new ClassNotFoundException("Class file " + fileName + " is not a file.");
 								}
 
-								URL classURL = classFile.toURI().toURL();
-								URLConnection classConn = classURL.openConnection();
-								int size = classConn.getContentLength();
+								final URL classURL = classFile.toURI().toURL();
+								final URLConnection classConn = classURL.openConnection();
+								final int size = classConn.getContentLength();
 								if (size == -1)
 								{
 									// XXX
 									throw new ClassNotFoundException("Class " + name + " has unknown content length; not loaded.");
 								}
 
-								InputStream classStream = new FileInputStream(classFile);
-								byte[] classData = new byte[size];
+								final InputStream classStream = new FileInputStream(classFile);
+								final byte[] classData = new byte[size];
 								int read = 0;
 								int avail;
 								while((avail = classStream.available()) > 0)
@@ -55,21 +62,21 @@ public final class HaxSunPluginClassLoader extends ClassLoader
 								if (read != size)
 									throw new ClassNotFoundException("Class " + name + " has was not fully read; not loaded.");
 
-								Class<?> theClass = defineClass(name, classData,
+								final Class<?> theClass = defineClass(name, classData,
 										0, classData.length, domain);
 								return theClass;
 							}
-							catch (IOException e)
+							catch (final IOException e)
 							{
 								System.err.println("Could not open class URL: " + e);
 								throw new ClassNotFoundException("Class " + name + " not found!", e);
 							}
-							catch (ClassFormatError e)
+							catch (final ClassFormatError e)
 							{
 								System.err.println("Could not open class URL: " + e);
 								throw new ClassNotFoundException("Class " + name + " not valid.", e);
 							}
-							catch (NoClassDefFoundError e)
+							catch (final NoClassDefFoundError e)
 							{
 								System.err.println("n class URL: " + e);
 								throw new ClassNotFoundException("Class " + name + " contained no class.", e);
@@ -77,7 +84,7 @@ public final class HaxSunPluginClassLoader extends ClassLoader
 						}
 				}
 			);
-		} catch (PrivilegedActionException e) {
+		} catch (final PrivilegedActionException e) {
 			throw (ClassNotFoundException)e.getException();
 		}
 	}

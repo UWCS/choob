@@ -20,8 +20,8 @@ class Factoid
 	{
 		// Unhide
 	}
-	
-	public Factoid(String subject, boolean fact, String info, String nick)
+
+	public Factoid(final String subject, final boolean fact, final String info, final String nick)
 	{
 		this.subject = subject;
 		this.fact = fact;
@@ -30,7 +30,7 @@ class Factoid
 		this.reads = 0;
 		this.date = System.currentTimeMillis();
 	}
-	
+
 	public int id;
 	public String subject;
 	public boolean fact;
@@ -46,15 +46,15 @@ class FactoidEnumerator
 	{
 		// Unhide
 	}
-	
-	public FactoidEnumerator(String enumSource, int index, int count)
+
+	public FactoidEnumerator(final String enumSource, final int index, final int count)
 	{
 		this.enumSource = enumSource;
 		this.index = index;
 		this.count = count;
 		this.lastUsed = System.currentTimeMillis();
 	}
-	
+
 	public int getNext()
 	{
 		index++;
@@ -64,7 +64,7 @@ class FactoidEnumerator
 		lastUsed = System.currentTimeMillis();
 		return index;
 	}
-	
+
 	public int id;
 	public String enumSource;
 	public int index;
@@ -74,32 +74,32 @@ class FactoidEnumerator
 
 class FactoidParsed
 {
-	public FactoidParsed(String subject, String definition)
+	public FactoidParsed(final String subject, final String definition)
 	{
 		this.subject = subject;
 		this.definition = definition;
 	}
-	
+
 	public String subject;
 	public String definition;
 }
 
 class FactoidSearch
 {
-	public FactoidSearch(String subject)
+	public FactoidSearch(final String subject)
 	{
 		this.subject = subject;
 		this.search = "";
 	}
-	
-	public FactoidSearch(String subject, String search)
+
+	public FactoidSearch(final String subject, final String search)
 	{
 		this.subject = subject;
 		this.search = search;
 		if (this.search == null)
 			this.search = "";
 	}
-	
+
 	public String subject;
 	public String search;
 }
@@ -121,9 +121,9 @@ public class Factoids2
 			"$Rev$$Date$"
 		};
 	}
-	
+
 	private static long ENUM_TIMEOUT = 5 * 60 * 1000; // 5 minutes
-	
+
 	// Subjects to not auto-learn from.
 	private final static Set<String> subjectExclusions = new HashSet<String>();
 	static
@@ -150,18 +150,18 @@ public class Factoids2
 		subjectExclusions.add("will");
 		subjectExclusions.add("would");
 	}
-	
+
 	private final static String splitWords = "is|was|am|be|can|can't|cant|cannot";
-	
-	private Modules mods;
-	private IRCInterface irc;
-	private Pattern filterFactoidsPattern;
-	private Pattern filterQuestionPatter;
-	private Pattern addDefinitionPattern;
-	private Pattern quotedSearchPattern;
-	private Pattern regexpSearchPattern;
-	
-	public Factoids2(Modules mods, IRCInterface irc)
+
+	private final Modules mods;
+	private final IRCInterface irc;
+	private final Pattern filterFactoidsPattern;
+	private final Pattern filterQuestionPatter;
+	private final Pattern addDefinitionPattern;
+	private final Pattern quotedSearchPattern;
+	private final Pattern regexpSearchPattern;
+
+	public Factoids2(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -170,49 +170,49 @@ public class Factoids2
 		addDefinitionPattern = Pattern.compile("\\s*(?i:that\\s+)?(.+?)\\s+((?i:" + splitWords + ")\\s+.+)\\s*");
 		quotedSearchPattern = Pattern.compile("\\s*\"([^\"]+)\"(?:\\s+(.*))?\\s*");
 		regexpSearchPattern = Pattern.compile("\\s*(.+?)\\s+(/([^/]+|\\/)+/)\\s*");
-		
+
 		mods.interval.callBack("clean-enums", 60000, 1);
 	}
-	
-	private int countFacts(List<Factoid> definitions)
+
+	private int countFacts(final List<Factoid> definitions)
 	{
 		int factCount = 0;
 		for (int i = 0; i < definitions.size(); i++) {
-			Factoid defn = definitions.get(i);
+			final Factoid defn = definitions.get(i);
 			if (defn.fact) {
 				factCount++;
 			}
 		}
 		return factCount;
 	}
-	
-	private int countRumours(List<Factoid> definitions)
+
+	private int countRumours(final List<Factoid> definitions)
 	{
 		int rumourCount = 0;
 		for (int i = 0; i < definitions.size(); i++) {
-			Factoid defn = definitions.get(i);
+			final Factoid defn = definitions.get(i);
 			if (!defn.fact) {
 				rumourCount++;
 			}
 		}
 		return rumourCount;
 	}
-	
-	private Factoid pickFact(List<Factoid> definitions, String enumSource)
+
+	private Factoid pickFact(final List<Factoid> definitions, final String enumSource)
 	{
 		return pickDefinition(definitions, true, countFacts(definitions), enumSource);
 	}
-	
-	private Factoid pickRumour(List<Factoid> definitions, String enumSource)
+
+	private Factoid pickRumour(final List<Factoid> definitions, final String enumSource)
 	{
 		return pickDefinition(definitions, false, countRumours(definitions), enumSource);
 	}
-	
-	private Factoid pickDefinition(List<Factoid> definitions, boolean fact, int count, String enumSource)
+
+	private Factoid pickDefinition(final List<Factoid> definitions, final boolean fact, final int count, String enumSource)
 	{
 		int index = -1;
 		enumSource = enumSource.toLowerCase();
-		List<FactoidEnumerator> enums = mods.odb.retrieve(FactoidEnumerator.class, "WHERE enumSource = '" + mods.odb.escapeString(enumSource) + "'");
+		final List<FactoidEnumerator> enums = mods.odb.retrieve(FactoidEnumerator.class, "WHERE enumSource = '" + mods.odb.escapeString(enumSource) + "'");
 		FactoidEnumerator fEnum = null;
 		if (enums.size() >= 1) {
 			fEnum = enums.get(0);
@@ -232,10 +232,10 @@ public class Factoids2
 			fEnum = new FactoidEnumerator(enumSource, index, count);
 			mods.odb.save(fEnum);
 		}
-		
+
 		Factoid rvDefn = null;
 		for (int i = 0; i < definitions.size(); i++) {
-			Factoid defn = definitions.get(i);
+			final Factoid defn = definitions.get(i);
 			if (defn.fact == fact) {
 				if (index == 0) {
 					rvDefn = defn;
@@ -246,13 +246,13 @@ public class Factoids2
 		}
 		return rvDefn;
 	}
-	
-	private List<Factoid> getDefinitions(FactoidSearch factoidSearch)
+
+	private List<Factoid> getDefinitions(final FactoidSearch factoidSearch)
 	{
-		String subject = factoidSearch.subject.toLowerCase();
-		String search = factoidSearch.search;
+		final String subject = factoidSearch.subject.toLowerCase();
+		final String search = factoidSearch.search;
 		String odbQuery = "WHERE subject = '" + mods.odb.escapeString(subject) + "'";
-		
+
 		if (search.length() > 0) {
 			if (search.startsWith("/") && search.endsWith("/")) {
 				// Regexp
@@ -264,68 +264,68 @@ public class Factoids2
 		}
 		return mods.odb.retrieve(Factoid.class, odbQuery);
 	}
-	
+
 	// Get a subject + definition from the message params.
-	private FactoidParsed getParsedFactoid(Message mes)
+	private FactoidParsed getParsedFactoid(final Message mes)
 	{
-		String[] params1 = mods.util.getParamArray(mes, 2);
-		
+		final String[] params1 = mods.util.getParamArray(mes, 2);
+
 		if (params1.length <= 2) {
 			return null;
 		}
-		
-		String[] params2 = mods.util.getParamArray(mes, 1);
-		
+
+		final String[] params2 = mods.util.getParamArray(mes, 1);
+
 		// If they have used is/are, split on that.
-		Matcher mIsAre = addDefinitionPattern.matcher(params2[1]);
+		final Matcher mIsAre = addDefinitionPattern.matcher(params2[1]);
 		if (mIsAre.matches()) {
 			return new FactoidParsed(mIsAre.group(1), mIsAre.group(2));
 		}
-		
+
 		// Default to first word + rest split.
 		return new FactoidParsed(params1[1], params1[2]);
 	}
-	
+
 	// Get a subject + optional search from the message params.
-	private FactoidSearch getFactoidSearch(Message mes)
+	private FactoidSearch getFactoidSearch(final Message mes)
 	{
-		String[] params1 = mods.util.getParamArray(mes, 2);
-		
+		final String[] params1 = mods.util.getParamArray(mes, 2);
+
 		if (params1.length == 2) {
 			return new FactoidSearch(params1[1]);
 		}
 		if (params1.length <= 1) {
 			return null;
 		}
-		
-		String[] params2 = mods.util.getParamArray(mes, 1);
-		
+
+		final String[] params2 = mods.util.getParamArray(mes, 1);
+
 		// If they have used quotes, split on that.
-		Matcher mQuoted = quotedSearchPattern.matcher(params2[1]);
+		final Matcher mQuoted = quotedSearchPattern.matcher(params2[1]);
 		if (mQuoted.matches()) {
 			return new FactoidSearch(mQuoted.group(1), mQuoted.group(2));
 		}
-		
+
 		// If there's a regexp search, split on that.
-		Matcher mRegExp = regexpSearchPattern.matcher(params2[1]);
+		final Matcher mRegExp = regexpSearchPattern.matcher(params2[1]);
 		if (mRegExp.matches()) {
 			return new FactoidSearch(mRegExp.group(1), mRegExp.group(2));
 		}
-		
+
 		// If they have used is/are, split on that.
-		Matcher mIsAre = addDefinitionPattern.matcher(params2[1]);
+		final Matcher mIsAre = addDefinitionPattern.matcher(params2[1]);
 		if (mIsAre.matches()) {
 			return new FactoidSearch(mIsAre.group(1), mIsAre.group(2));
 		}
-		
+
 		// Default to first word + rest split.
 		return new FactoidSearch(params1[1], params1[2]);
 	}
-	
-	private FactoidSearchData getFactoidSearchDefinitions(Message mes)
+
+	private FactoidSearchData getFactoidSearchDefinitions(final Message mes)
 	{
-		FactoidSearchData data = new FactoidSearchData();
-		
+		final FactoidSearchData data = new FactoidSearchData();
+
 		// Try to parse the params into search data.
 		data.search = getFactoidSearch(mes);
 		if (data.search == null) {
@@ -334,13 +334,13 @@ public class Factoids2
 		}
 		// Get matching definitions while we're here.
 		data.definitions = getDefinitions(data.search);
-		
+
 		if (data.definitions.size() == 0) {
 			// Nothing with the normal parser, try the entire thing quoted just in case.
-			String[] params = mods.util.getParamArray(mes, 1);
-			FactoidSearch search = new FactoidSearch(params[1]);
-			List<Factoid> definitions = getDefinitions(search);
-			
+			final String[] params = mods.util.getParamArray(mes, 1);
+			final FactoidSearch search = new FactoidSearch(params[1]);
+			final List<Factoid> definitions = getDefinitions(search);
+
 			// Something did match when quoted - pretend that's what the user asked for originally.
 			if (definitions.size() > 0) {
 				data.search = search;
@@ -349,59 +349,59 @@ public class Factoids2
 		}
 		return data;
 	}
-	
+
 	// Interval
-	public void interval(Object param)
+	public void interval(final Object param)
 	{
 		if ("clean-enums".equals(param)) {
 			// Clean up dead enumerators.
-			long lastUsedCutoff = System.currentTimeMillis() - ENUM_TIMEOUT;
-			List<FactoidEnumerator> deadEnums = mods.odb.retrieve(FactoidEnumerator.class, "WHERE lastUsed < " + lastUsedCutoff);
+			final long lastUsedCutoff = System.currentTimeMillis() - ENUM_TIMEOUT;
+			final List<FactoidEnumerator> deadEnums = mods.odb.retrieve(FactoidEnumerator.class, "WHERE lastUsed < " + lastUsedCutoff);
 			for (int i = 0; i < deadEnums.size(); i++) {
 				mods.odb.delete(deadEnums.get(i));
 			}
 			mods.interval.callBack(param, 60000, 1);
 		}
 	}
-	
+
 	// Collect and store rumours for things.
 	public String filterFactoidsRegex = "(\\w{4,})\\s+((?i:" + splitWords + ")\\s+.{4,})";
-	
-	public void filterFactoids(Message mes)
+
+	public void filterFactoids(final Message mes)
 	{
 		// Only capture channel messages.
 		if (!(mes instanceof ChannelMessage)) {
 			return;
 		}
-		
-		Matcher rMatcher = filterFactoidsPattern.matcher(mes.getMessage());
+
+		final Matcher rMatcher = filterFactoidsPattern.matcher(mes.getMessage());
 		if (rMatcher.matches()) {
-			String subject = rMatcher.group(1).toLowerCase();
-			String defn = rMatcher.group(2);
-			
+			final String subject = rMatcher.group(1).toLowerCase();
+			final String defn = rMatcher.group(2);
+
 			// Exclude questions from the data.
-			Matcher questionMatcher = filterQuestionPatter.matcher(defn);
+			final Matcher questionMatcher = filterQuestionPatter.matcher(defn);
 			if (questionMatcher.matches()) {
 				return;
 			}
-			
+
 			// We don't auto-learn about some things.
 			if (subjectExclusions.contains(subject))
 				return;
-			
-			Factoid rumour = new Factoid(subject, false, defn, mes.getNick());
+
+			final Factoid rumour = new Factoid(subject, false, defn, mes.getNick());
 			mods.odb.save(rumour);
-			
+
 			// Remove oldest so we only have the 5 most recent.
-			List<Factoid> results = mods.odb.retrieve(Factoid.class, "WHERE fact = 0 AND subject = '" + mods.odb.escapeString(subject) + "' SORT DESC date");
-			
+			final List<Factoid> results = mods.odb.retrieve(Factoid.class, "WHERE fact = 0 AND subject = '" + mods.odb.escapeString(subject) + "' SORT DESC date");
+
 			for (int i = 5; i < results.size(); i++) {
-				Factoid oldRumour = results.get(i);
+				final Factoid oldRumour = results.get(i);
 				mods.odb.delete(oldRumour);
 			}
 		}
 	}
-	
+
 	// Get some simple stats.
 	public String[] helpCommandStats = {
 			"Returns some (maybe) interesting statistics from the factoids system.",
@@ -409,27 +409,27 @@ public class Factoids2
 			"<term> is the term to get stats for",
 			"<search> limits the removal to only matching defintions, if multiple ones exist (substring or regexp allowed)"
 		};
-	
-	public void commandStats(Message mes)
+
+	public void commandStats(final Message mes)
 	{
 		FactoidSearchData data = getFactoidSearchDefinitions(mes);
-		
+
 		if (data == null) {
 			data = new FactoidSearchData();
 			data.definitions = mods.odb.retrieve(Factoid.class, "");
 		}
-		
-		if ((data.search != null) && (data.definitions.size() == 1)) {
-			Factoid defn = data.definitions.get(0);
+
+		if (data.search != null && data.definitions.size() == 1) {
+			final Factoid defn = data.definitions.get(0);
 			irc.sendContextReply(mes, "Factoid for '" + data.search.subject +
 					"' is a " + (defn.fact ? "fact" : "rumour") +
 					(defn.fact ? " added by " : " collected from ") + defn.nick +
 					" and displayed " + defn.reads + " time" + (defn.reads != 1 ? "s":"") + ".");
-			
+
 		} else {
-			int factCount   = countFacts(data.definitions);
-			int rumourCount = countRumours(data.definitions);
-			
+			final int factCount   = countFacts(data.definitions);
+			final int rumourCount = countRumours(data.definitions);
+
 			if (data.search != null) {
 				irc.sendContextReply(mes, data.definitions.size() +
 						" factoid" + (data.definitions.size() != 1 ? "s":"") +
@@ -440,7 +440,7 @@ public class Factoids2
 			}
 		}
 	}
-	
+
 	// Manually add facts to the system.
 	public String[] helpCommandAdd = {
 			"Add a new factual definition for a term.",
@@ -448,21 +448,21 @@ public class Factoids2
 			"<term> is the term to which the definition applies",
 			"<defn> is the definition itself"
 		};
-	
-	public void commandAdd(Message mes)
+
+	public void commandAdd(final Message mes)
 	{
-		FactoidParsed factoid = getParsedFactoid(mes);
-		
+		final FactoidParsed factoid = getParsedFactoid(mes);
+
 		if (factoid == null) {
 			irc.sendContextReply(mes, "Syntax: 'Factoids2.Add " + helpCommandAdd[1] + "'");
 			return;
 		}
-		
-		Factoid fact = new Factoid(factoid.subject, true, factoid.definition, mes.getNick());
+
+		final Factoid fact = new Factoid(factoid.subject, true, factoid.definition, mes.getNick());
 		mods.odb.save(fact);
 		irc.sendContextReply(mes, "Added definition for '" + factoid.subject + "'.");
 	}
-	
+
 	// Remove facts from the system.
 	public String[] helpCommandRemove = {
 			"Remove factual definitions for a term.",
@@ -470,19 +470,19 @@ public class Factoids2
 			"<term> is the term to remove",
 			"<search> limits the removal to only matching defintions, if multiple ones exist (substring or regexp allowed)"
 		};
-	
-	public void commandRemove(Message mes)
+
+	public void commandRemove(final Message mes)
 	{
-		FactoidSearchData data = getFactoidSearchDefinitions(mes);
-		
+		final FactoidSearchData data = getFactoidSearchDefinitions(mes);
+
 		if (data == null) {
 			irc.sendContextReply(mes, "Syntax: 'Factoids2.Remove " + helpCommandRemove[1] + "'");
 			return;
 		}
-		
+
 		int count = 0;
 		for (int i = 0; i < data.definitions.size(); i++) {
-			Factoid defn = data.definitions.get(i);
+			final Factoid defn = data.definitions.get(i);
 			if (defn.fact) {
 				mods.odb.delete(defn);
 				count++;
@@ -496,7 +496,7 @@ public class Factoids2
 			irc.sendContextReply(mes, "No factual definitions for '" + data.search.subject + "' found.");
 		}
 	}
-	
+
 	// Retrieve definitions from the system.
 	public String[] helpCommandGet = {
 			"Returns a definition for a term.",
@@ -504,28 +504,28 @@ public class Factoids2
 			"<term> is the term to define",
 			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
 		};
-	
-	public void commandGet(Message mes)
+
+	public void commandGet(final Message mes)
 	{
-		FactoidSearchData data = getFactoidSearchDefinitions(mes);
-		
+		final FactoidSearchData data = getFactoidSearchDefinitions(mes);
+
 		if (data == null) {
 			irc.sendContextReply(mes, "Syntax: 'Factoids2.Get " + helpCommandGet[1] + "'");
 			return;
 		}
-		
+
 		if (data.definitions.size() == 0) {
 			irc.sendContextReply(mes, "Sorry, I don't know anything about '" + data.search.subject + "'!");
-			
+
 		} else {
-			int factCount = countFacts(data.definitions);
-			int rumourCount = countRumours(data.definitions);
-			
+			final int factCount = countFacts(data.definitions);
+			final int rumourCount = countRumours(data.definitions);
+
 			if (factCount > 0) {
-				Factoid fact = pickFact(data.definitions, mes.getContext() + ":" + data.search.subject);
+				final Factoid fact = pickFact(data.definitions, mes.getContext() + ":" + data.search.subject);
 				fact.reads++;
 				mods.odb.update(fact);
-				
+
 				if (factCount > 2) {
 					irc.sendContextReply(mes, fact.subject + " " + fact.info + " (" + (factCount - 1) + " other defns)");
 				} else if (factCount == 2) {
@@ -533,12 +533,12 @@ public class Factoids2
 				} else {
 					irc.sendContextReply(mes, fact.subject + " " + fact.info);
 				}
-				
+
 			} else {
-				Factoid rumour = pickRumour(data.definitions, mes.getContext() + ":" + data.search.subject);
+				final Factoid rumour = pickRumour(data.definitions, mes.getContext() + ":" + data.search.subject);
 				rumour.reads++;
 				mods.odb.update(rumour);
-				
+
 				if (rumourCount > 2) {
 					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info + " (" + (rumourCount - 1) + " other rumours)");
 				} else if (rumourCount == 2) {
@@ -549,34 +549,34 @@ public class Factoids2
 			}
 		}
 	}
-	
+
 	public String[] helpCommandGetFact = {
 			"Returns a factual definition for a term.",
 			"<term> [" + splitWords + "] [<search>]",
 			"<term> is the term to define",
 			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
 		};
-	
-	public void commandGetFact(Message mes)
+
+	public void commandGetFact(final Message mes)
 	{
-		FactoidSearchData data = getFactoidSearchDefinitions(mes);
-		
+		final FactoidSearchData data = getFactoidSearchDefinitions(mes);
+
 		if (data == null) {
 			irc.sendContextReply(mes, "Syntax: 'Factoids2.GetFact " + helpCommandGetFact[1] + "'");
 			return;
 		}
-		
+
 		if (data.definitions.size() == 0) {
 			irc.sendContextReply(mes, "Sorry, I don't know anything about '" + data.search.subject + "'!");
-			
+
 		} else {
-			int factCount = countFacts(data.definitions);
-			
+			final int factCount = countFacts(data.definitions);
+
 			if (factCount > 0) {
-				Factoid fact = pickFact(data.definitions, mes.getContext() + ":" + data.search.subject);
+				final Factoid fact = pickFact(data.definitions, mes.getContext() + ":" + data.search.subject);
 				fact.reads++;
 				mods.odb.update(fact);
-				
+
 				if (factCount > 2) {
 					irc.sendContextReply(mes, fact.subject + " " + fact.info + " (" + (factCount - 1) + " other defns)");
 				} else if (factCount == 2) {
@@ -584,40 +584,40 @@ public class Factoids2
 				} else {
 					irc.sendContextReply(mes, fact.subject + " " + fact.info);
 				}
-				
+
 			} else {
 				irc.sendContextReply(mes, "Sorry, I don't have any facts about '" + data.search.subject + "'.");
 			}
 		}
 	}
-	
+
 	public String[] helpCommandGetRumour = {
 			"Returns a rumour for a term.",
 			"<term> [" + splitWords + "] [<search>]",
 			"<term> is the term to define",
 			"<search> limits the definition(s) given, if multiple ones exist (substring or regexp allowed)"
 		};
-	
-	public void commandGetRumour(Message mes)
+
+	public void commandGetRumour(final Message mes)
 	{
-		FactoidSearchData data = getFactoidSearchDefinitions(mes);
-		
+		final FactoidSearchData data = getFactoidSearchDefinitions(mes);
+
 		if (data == null) {
 			irc.sendContextReply(mes, "Syntax: 'Factoids2.GetRumour " + helpCommandGetRumour[1] + "'");
 			return;
 		}
-		
+
 		if (data.definitions.size() == 0) {
 			irc.sendContextReply(mes, "Sorry, I don't know anything about '" + data.search.subject + "'!");
-			
+
 		} else {
-			int rumourCount = countRumours(data.definitions);
-			
+			final int rumourCount = countRumours(data.definitions);
+
 			if (rumourCount > 0) {
-				Factoid rumour = pickRumour(data.definitions, mes.getContext() + ":" + data.search.subject);
+				final Factoid rumour = pickRumour(data.definitions, mes.getContext() + ":" + data.search.subject);
 				rumour.reads++;
 				mods.odb.update(rumour);
-				
+
 				if (rumourCount > 2) {
 					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info + " (" + (rumourCount - 1) + " other rumours)");
 				} else if (rumourCount == 2) {
@@ -625,56 +625,56 @@ public class Factoids2
 				} else {
 					irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info);
 				}
-				
+
 			} else {
 				irc.sendContextReply(mes, "Sorry, I don't have any rumours about '" + data.search.subject + "'.");
 			}
 		}
 	}
-	
+
 	public String[] helpCommandRandomRumour = {
 			"Returns a completely random rumour.",
 			""
 		};
-	
-	public void commandRandomRumour(Message mes)
+
+	public void commandRandomRumour(final Message mes)
 	{
-		List<Factoid> list = mods.odb.retrieve(Factoid.class, "WHERE fact = 0 ORDER BY RAND() LIMIT 1");
-		
+		final List<Factoid> list = mods.odb.retrieve(Factoid.class, "WHERE fact = 0 ORDER BY RAND() LIMIT 1");
+
 		if (list.size() == 0) {
 			irc.sendContextReply(mes, "Oh dear, I don't have any rumours!");
 		} else {
-			Factoid rumour = list.get(0);
+			final Factoid rumour = list.get(0);
 			irc.sendContextReply(mes, "Rumour has it " + rumour.subject + " " + rumour.info);
 		}
 	}
-	
-	public void webStats(PrintWriter out, String args, String[] from)
+
+	public void webStats(final PrintWriter out, final String args, final String[] from)
 	{
 		try
 		{
 			out.println("HTTP/1.0 200 OK");
 			out.println("Content-Type: text/html");
 			out.println();
-			
+
 			if (args.length() > 0) {
 				out.println("<H1>Factoid &quot;" + args + "&quot;</H1>");
 			} else {
 				out.println("<H1>Factoid Summary</H1>");
 			}
-			
-			FactoidSearchData data = new FactoidSearchData();
-			
+
+			final FactoidSearchData data = new FactoidSearchData();
+
 			if (args.length() > 0) {
 				data.search = new FactoidSearch(args);
 				data.definitions = getDefinitions(data.search);
 			} else {
 				data.definitions = mods.odb.retrieve(Factoid.class, "");
 			}
-			
-			int factCount   = countFacts(data.definitions);
-			int rumourCount = countRumours(data.definitions);
-			
+
+			final int factCount   = countFacts(data.definitions);
+			final int rumourCount = countRumours(data.definitions);
+
 			if (data.search != null) {
 				out.println(data.definitions.size() +
 						" factoid" + (data.definitions.size() != 1 ? "s":"") +
@@ -683,33 +683,33 @@ public class Factoids2
 			} else {
 				out.println("Factoids database contains " + factCount + " fact" + (factCount != 1 ? "s":"") + " and " + rumourCount + " rumour" + (rumourCount != 1 ? "s":"") + ".");
 			}
-			
+
 			if (data.search != null) {
 				out.println("	<STYLE>");
 				out.println("		dd { font-size: smaller; font-style: italic; }");
 				out.println("	</STYLE>");
 				out.println("	<DL>");
 				for (int i = 0; i < data.definitions.size(); i++) {
-					Factoid defn = data.definitions.get(i);
+					final Factoid defn = data.definitions.get(i);
 					out.println("		<DT>&quot;" + defn.subject + " " + defn.info + "&quot;</DT>");
 					out.println("		<DD>" + (defn.fact ? "Fact" : "Rumour") +
 							(defn.fact ? " added by " : " collected from ") + defn.nick +
 							" and displayed " + defn.reads + " time" + (defn.reads != 1 ? "s":"") + ".</DD>");
 				}
 				out.println("	</DL>");
-				
+
 			} else {
-				Set<String>         termsUsed   = new HashSet<String>();
-				Map<String,Integer> termFacts   = new HashMap<String,Integer>();
-				Map<String,Integer> termRumours = new HashMap<String,Integer>();
-				
+				final Set<String>         termsUsed   = new HashSet<String>();
+				final Map<String,Integer> termFacts   = new HashMap<String,Integer>();
+				final Map<String,Integer> termRumours = new HashMap<String,Integer>();
+
 				out.println("	<TABLE BORDER='1'>");
 				out.println("		<TR><TH>Term</TH><TH>Facts</TH><TH>Rumours</TH></TR>");
-				
+
 				for (int i = 0; i < data.definitions.size(); i++) {
-					Factoid defn = data.definitions.get(i);
-					String subj = defn.subject.toLowerCase();
-					
+					final Factoid defn = data.definitions.get(i);
+					final String subj = defn.subject.toLowerCase();
+
 					if (!termsUsed.contains(subj)) {
 						termsUsed.add(subj);
 						termFacts.put(subj, Integer.valueOf(0));
@@ -721,18 +721,18 @@ public class Factoids2
 						termRumours.put(subj, Integer.valueOf(termRumours.get(subj).intValue() + 1));
 					}
 				}
-				
-				ArrayList<String> sortTerms = new ArrayList<String>(termsUsed);
+
+				final ArrayList<String> sortTerms = new ArrayList<String>(termsUsed);
 				Collections.sort(sortTerms);
 				for (int i = 0; i < sortTerms.size(); i++) {
-					String subj = sortTerms.get(i);
+					final String subj = sortTerms.get(i);
 					out.println("		<TR><TD><A HREF='?" + subj + "'>" + subj + "</A></TD><TD>" + termFacts.get(subj) + "</TD><TD>" + termRumours.get(subj) + "</TD></TR>");
 				}
-				
+
 				out.println("	</TABLE>");
 			}
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			out.println("ERROR!");
 			e.printStackTrace();

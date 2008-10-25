@@ -10,12 +10,22 @@ import java.io.IOException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobInvocationError;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Event;
 import uk.co.uwcs.choob.support.events.Message;
 
@@ -38,7 +48,7 @@ public abstract class ChoobPluginManager
 		AccessController.checkPermission(new ChoobPermission("root"));
 	}
 
-	public final static void initialise(Modules modules, IRCInterface ircinter)
+	public final static void initialise(final Modules modules, final IRCInterface ircinter)
 	{
 		if (mods != null)
 			return;
@@ -51,12 +61,12 @@ public abstract class ChoobPluginManager
 		if (!transFile.exists()) {
 			transFile = new File("../share/en_phonet.dat");
 		}
-		
+
 		try
 		{
 			phoneticCommands = new SpellDictionaryChoob(transFile);
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			System.err.println("Could not load phonetics file: " + transFile);
 			throw new RuntimeException("Couldn't load phonetics file", e);
@@ -75,7 +85,7 @@ public abstract class ChoobPluginManager
 	 * @return true if the plugin was reloaded
 	 * @throws Exception Thrown if there's a syntactical error in the plugin's source.
 	 */
-	public final boolean loadPlugin(String pluginName, URL fromLocation) throws ChoobException
+	public final boolean loadPlugin(final String pluginName, final URL fromLocation) throws ChoobException
 	{
 		AccessController.checkPermission(new ChoobPermission("plugin.load." + pluginName.toLowerCase()));
 
@@ -108,7 +118,7 @@ public abstract class ChoobPluginManager
 		return man != null;
 	}
 
-	public final void unloadPlugin(String pluginName) throws ChoobNoSuchPluginException
+	public final void unloadPlugin(final String pluginName) throws ChoobNoSuchPluginException
 	{
 		AccessController.checkPermission(new ChoobPermission("plugin.unload." + pluginName.toLowerCase()));
 
@@ -130,8 +140,8 @@ public abstract class ChoobPluginManager
 	{
 		synchronized(pluginMap)
 		{
-			Set<String> keys = pluginMap.keySet();
-			String[] ret = new String[keys.size()];
+			final Set<String> keys = pluginMap.keySet();
+			final String[] ret = new String[keys.size()];
 			return keys.toArray(ret);
 		}
 	}
@@ -139,14 +149,14 @@ public abstract class ChoobPluginManager
 	/**
 	 * Get a list of commands in a plugin.
 	 */
-	public final String[] commands(String pluginName)
+	public final String[] commands(final String pluginName)
 	{
 		synchronized(commands)
 		{
-			List<String> coms = commands.get(pluginName.toLowerCase());
+			final List<String> coms = commands.get(pluginName.toLowerCase());
 			if (coms == null)
 				return null;
-			String[] ret = new String[coms.size()];
+			final String[] ret = new String[coms.size()];
 			return coms.toArray(ret);
 		}
 	}
@@ -154,7 +164,7 @@ public abstract class ChoobPluginManager
 	/**
 	 * Adds a command to the internal database.
 	 */
-	public final void addCommand(String pluginName, String commandName)
+	public final void addCommand(final String pluginName, final String commandName)
 	{
 		synchronized(phoneticCommands)
 		{
@@ -175,7 +185,7 @@ public abstract class ChoobPluginManager
 	/**
 	 * Removes a command from the internal database.
 	 */
-	public final void removeCommand(String pluginName, String commandName)
+	public final void removeCommand(final String pluginName, final String commandName)
 	{
 		synchronized(phoneticCommands)
 		{
@@ -197,9 +207,9 @@ public abstract class ChoobPluginManager
 	 * Remove a command from the internal database. Use the two parameter
 	 * version in preference to this!
 	 */
-	public final void removeCommand(String commandName)
+	public final void removeCommand(final String commandName)
 	{
-		Matcher ma = Pattern.compile("(\\w+)\\.(\\w+)").matcher(commandName);
+		final Matcher ma = Pattern.compile("(\\w+)\\.(\\w+)").matcher(commandName);
 		if (ma.matches())
 			removeCommand(ma.group(1), ma.group(2));
 		else
@@ -210,16 +220,16 @@ public abstract class ChoobPluginManager
 	 * Add a command to the internal database. Use the two parameter
 	 * version in preference to this!
 	 */
-	public final void addCommand(String commandName)
+	public final void addCommand(final String commandName)
 	{
-		Matcher ma = Pattern.compile("(\\w+)\\.(\\w+)").matcher(commandName);
+		final Matcher ma = Pattern.compile("(\\w+)\\.(\\w+)").matcher(commandName);
 		if (ma.matches())
 			addCommand(ma.group(1), ma.group(2));
 		else
 			addCommand(null, commandName);
 	}
 
-	public final static ProtectionDomain getProtectionDomain( String pluginName )
+	public final static ProtectionDomain getProtectionDomain( final String pluginName )
 	{
 		return mods.security.getProtectionDomain( pluginName );
 	}

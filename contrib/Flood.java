@@ -14,15 +14,15 @@ import uk.co.uwcs.choob.support.IRCInterface;
 // Keeps track of the most recent messages from people.
 class FloodObj
 {
-	private long lastmes[];
-	private int tailback; // Number of message times to remember.
+	private final long lastmes[];
+	private final int tailback; // Number of message times to remember.
 	private int lastOffset;
 	private long nextWarn; // Only warn when last message time > this.
-	private int limit;
+	private final int limit;
 
 	static final int DELAY = 5000; // Warn once every (this) ms.
 
-	public FloodObj(int limit, int tailback)
+	public FloodObj(final int limit, final int tailback)
 	{
 		this.tailback = tailback;
 		this.limit = limit;
@@ -44,7 +44,7 @@ class FloodObj
 
 	public boolean shouldWarn()
 	{
-		long time = System.currentTimeMillis();
+		final long time = System.currentTimeMillis();
 		if (time > nextWarn)
 		{
 			nextWarn = time + DELAY;
@@ -60,7 +60,7 @@ class FloodObj
 		return average() < limit;
 	}
 
-	public boolean canCull(long time)
+	public boolean canCull(final long time)
 	{
 		// If this is true, no messages can possibly have a bearing on stuff...
 		return (time - lastmes[lastOffset]) / tailback < limit;
@@ -82,26 +82,26 @@ public class Flood
 	/**
 	 * Map plugin name to Map of (keys to flood objects)
 	 */
-	private Map<String,Map<String,FloodObj>> floods;
-	private Modules mods;
-	public Flood(Modules mods, IRCInterface irc)
+	private final Map<String,Map<String,FloodObj>> floods;
+	private final Modules mods;
+	public Flood(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		floods = new HashMap<String,Map<String,FloodObj>>();
 	}
 
 	// Loop over everything, splatting as necessary.
-	public void interval( Object parameter )
+	public void interval( final Object parameter )
 	{
 		synchronized(floods)
 		{
-			long time = System.currentTimeMillis();
+			final long time = System.currentTimeMillis();
 
-			Iterator<Map<String,FloodObj>> iter = floods.values().iterator();
+			final Iterator<Map<String,FloodObj>> iter = floods.values().iterator();
 			Map<String,FloodObj> plugFloods;
 			while((plugFloods = iter.next()) != null)
 			{
-				Iterator<FloodObj> iter2 = plugFloods.values().iterator();
+				final Iterator<FloodObj> iter2 = plugFloods.values().iterator();
 				FloodObj plugFlood;
 				while((plugFlood = iter2.next()) != null)
 				{
@@ -113,9 +113,9 @@ public class Flood
 	}
 
 	// 0 = fine, 1 = yes -- message them, 2 = yes -- but don't message them (already done recently)
-	public Integer apiIsFlooding( String key, Integer limit, Integer tailback )
+	public Integer apiIsFlooding( final String key, final Integer limit, final Integer tailback )
 	{
-		FloodObj flood = getFloodObj(key.toLowerCase(), limit.intValue(), tailback.intValue());
+		final FloodObj flood = getFloodObj(key.toLowerCase(), limit.intValue(), tailback.intValue());
 
 		if (!flood.isFlooding())
 			return Integer.valueOf(0);
@@ -125,7 +125,7 @@ public class Flood
 			return Integer.valueOf(2);
 	}
 
-	private FloodObj getFloodObj(String key, int limit, int tailback)
+	private FloodObj getFloodObj(final String key, final int limit, final int tailback)
 	{
 		String pluginName = mods.security.getPluginName(0);
 		if (pluginName == null)

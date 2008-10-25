@@ -10,7 +10,7 @@ import uk.co.uwcs.choob.support.events.PrivateEvent;
 /**
  * Channel administration plugin, allows suitably entitled users to perform
  * channel administration functions.
- * 
+ *
  * @author Blood God
  */
 
@@ -37,7 +37,7 @@ public class ChannelAdmin {
     Modules mods;
     IRCInterface irc;
 
-    public ChannelAdmin(Modules mods, IRCInterface irc) {
+    public ChannelAdmin(final Modules mods, final IRCInterface irc) {
         this.irc = irc;
         this.mods = mods;
     }
@@ -49,10 +49,10 @@ public class ChannelAdmin {
         "<Nick> optional nick to perform action on, if not provided will default to current user"
     };
 
-    public void commandOp(Message mes, Modules mods, IRCInterface irc) {
-        String[] params = mods.util.getParamArray(mes);
-        String userName = mods.security.getUserAuthName(mes.getNick());
-        String channel = mes.getContext();
+    public void commandOp(final Message mes, final Modules mods, final IRCInterface irc) {
+        final String[] params = mods.util.getParamArray(mes);
+        final String userName = mods.security.getUserAuthName(mes.getNick());
+        final String channel = mes.getContext();
 
         // Check that the user is authed
         if (!mods.security.hasAuth(userName)) {
@@ -62,11 +62,11 @@ public class ChannelAdmin {
         }
 
         // Check the user's access level
-        if ((!mods.security.hasNickPerm(new ChoobPermission(
-            "plugins.channeladmin.admin"), mes))
-            && (UserAccess.OWNER != getUserAccess(userName, channel))
-            && (UserAccess.MASTER != getUserAccess(userName, channel))
-            && (UserAccess.OP != getUserAccess(userName, channel))) {
+        if (!mods.security.hasNickPerm(new ChoobPermission(
+            "plugins.channeladmin.admin"), mes)
+            && UserAccess.OWNER != getUserAccess(userName, channel)
+            && UserAccess.MASTER != getUserAccess(userName, channel)
+            && UserAccess.OP != getUserAccess(userName, channel)) {
             irc
                 .sendContextReply(mes,
                     "You do not have the required access on this channel to run this command.");
@@ -99,7 +99,7 @@ public class ChannelAdmin {
                 irc.sendContextReply(mes, "Syntax: ChannelAdmin.Op "
                     + helpOp[1]);
             }
-        } catch (ChoobException e) {
+        } catch (final ChoobException e) {
             irc.sendContextReply(mes, "Could not op user: " + e.getMessage());
         }
     }
@@ -111,10 +111,10 @@ public class ChannelAdmin {
         "<Nick> optional nick to perform action on, if not provided will default to current user"
     };
 
-    public void commandDeop(Message mes, Modules mods, IRCInterface irc) {
-        String[] params = mods.util.getParamArray(mes);
-        String userName = mods.security.getUserAuthName(mes.getNick());
-        String channel = mes.getTarget();
+    public void commandDeop(final Message mes, final Modules mods, final IRCInterface irc) {
+        final String[] params = mods.util.getParamArray(mes);
+        final String userName = mods.security.getUserAuthName(mes.getNick());
+        final String channel = mes.getTarget();
 
         // Check that the user is authed
         if (!mods.security.hasAuth(userName)) {
@@ -124,11 +124,11 @@ public class ChannelAdmin {
         }
 
         // Check the user's access level
-        if ((!mods.security.hasNickPerm(new ChoobPermission(
-            "plugins.channeladmin.admin"), mes))
-            && (UserAccess.OWNER != getUserAccess(userName, channel))
-            && (UserAccess.MASTER != getUserAccess(userName, channel))
-            && (UserAccess.OP != getUserAccess(userName, channel))) {
+        if (!mods.security.hasNickPerm(new ChoobPermission(
+            "plugins.channeladmin.admin"), mes)
+            && UserAccess.OWNER != getUserAccess(userName, channel)
+            && UserAccess.MASTER != getUserAccess(userName, channel)
+            && UserAccess.OP != getUserAccess(userName, channel)) {
             irc
                 .sendContextReply(mes,
                     "You do not have the required access on this channel to run this command.");
@@ -169,7 +169,7 @@ public class ChannelAdmin {
                 irc.sendContextReply(mes, "Syntax: ChannelAdmin.Deop "
                     + helpDeop[1]);
             }
-        } catch (ChoobException e) {
+        } catch (final ChoobException e) {
             irc.sendContextReply(mes, "Could not perform action: "
                 + e.getMessage());
         }
@@ -182,10 +182,10 @@ public class ChannelAdmin {
         "<Nick> optional nick to perform action on, if not provided will default to current user"
     };
 
-    public void commandVoice(Message mes, Modules mods, IRCInterface irc) {
-        String[] params = mods.util.getParamArray(mes);
-        String userName = mods.security.getUserAuthName(mes.getNick());
-        String channel = mes.getTarget();
+    public void commandVoice(final Message mes, final Modules mods, final IRCInterface irc) {
+        final String[] params = mods.util.getParamArray(mes);
+        final String userName = mods.security.getUserAuthName(mes.getNick());
+        final String channel = mes.getTarget();
 
         // Check that the user is authed
         if (!mods.security.hasAuth(userName)) {
@@ -195,12 +195,12 @@ public class ChannelAdmin {
         }
 
         // Check the user's access level
-        if ((!mods.security.hasNickPerm(new ChoobPermission(
-            "plugins.channeladmin.admin"), mes))
-            && (UserAccess.OWNER != getUserAccess(userName, channel))
-            && (UserAccess.MASTER != getUserAccess(userName, channel))
-            && (UserAccess.OP != getUserAccess(userName, channel))
-            && (UserAccess.VOICE != getUserAccess(userName, channel))) {
+        if (!mods.security.hasNickPerm(new ChoobPermission(
+            "plugins.channeladmin.admin"), mes)
+            && UserAccess.OWNER != getUserAccess(userName, channel)
+            && UserAccess.MASTER != getUserAccess(userName, channel)
+            && UserAccess.OP != getUserAccess(userName, channel)
+            && UserAccess.VOICE != getUserAccess(userName, channel)) {
             irc
                 .sendContextReply(mes,
                     "You do not have the required access on this channel to run this command.");
@@ -233,7 +233,7 @@ public class ChannelAdmin {
                 irc.sendContextReply(mes, "Syntax: ChannelAdmin.Voice "
                     + helpVoice[1]);
             }
-        } catch (ChoobException e) {
+        } catch (final ChoobException e) {
             irc.sendContextReply(mes, "Could not perform action: "
                 + e.getMessage());
         }
@@ -246,10 +246,10 @@ public class ChannelAdmin {
         "<Nick> optional nick to perform action on, if not provided will default to current user"
     };
 
-    public void commandDevoice(Message mes, Modules mods, IRCInterface irc) {
-        String[] params = mods.util.getParamArray(mes);
-        String userName = mods.security.getUserAuthName(mes.getNick());
-        String channel = mes.getTarget();
+    public void commandDevoice(final Message mes, final Modules mods, final IRCInterface irc) {
+        final String[] params = mods.util.getParamArray(mes);
+        final String userName = mods.security.getUserAuthName(mes.getNick());
+        final String channel = mes.getTarget();
 
         // Check that the user is authed
         if (!mods.security.hasAuth(userName)) {
@@ -259,12 +259,12 @@ public class ChannelAdmin {
         }
 
         // Check the user's access level
-        if ((!mods.security.hasNickPerm(new ChoobPermission(
-            "plugins.channeladmin.admin"), mes))
-            && (UserAccess.OWNER != getUserAccess(userName, channel))
-            && (UserAccess.MASTER != getUserAccess(userName, channel))
-            && (UserAccess.OP != getUserAccess(userName, channel))
-            && (UserAccess.VOICE != getUserAccess(userName, channel))) {
+        if (!mods.security.hasNickPerm(new ChoobPermission(
+            "plugins.channeladmin.admin"), mes)
+            && UserAccess.OWNER != getUserAccess(userName, channel)
+            && UserAccess.MASTER != getUserAccess(userName, channel)
+            && UserAccess.OP != getUserAccess(userName, channel)
+            && UserAccess.VOICE != getUserAccess(userName, channel)) {
             irc
                 .sendContextReply(mes,
                     "You do not have the required access on this channel to run this command.");
@@ -305,7 +305,7 @@ public class ChannelAdmin {
                 irc.sendContextReply(mes, "Syntax: ChannelAdmin.Devoice "
                     + helpDevoice[1]);
             }
-        } catch (ChoobException e) {
+        } catch (final ChoobException e) {
             irc.sendContextReply(mes, "Could not perform action: "
                 + e.getMessage());
         }
@@ -318,10 +318,10 @@ public class ChannelAdmin {
         "<Nick> User to kick from channel", "<Reason> Reason for kick",
     };
 
-    public void commandKick(Message mes, Modules mods, IRCInterface irc) {
-        String[] params = mods.util.getParamArray(mes);
-        String userName = mods.security.getUserAuthName(mes.getNick());
-        String channel = mes.getTarget();
+    public void commandKick(final Message mes, final Modules mods, final IRCInterface irc) {
+        final String[] params = mods.util.getParamArray(mes);
+        final String userName = mods.security.getUserAuthName(mes.getNick());
+        final String channel = mes.getTarget();
 
         // Check that the user is authed
         if (!mods.security.hasAuth(userName)) {
@@ -331,11 +331,11 @@ public class ChannelAdmin {
         }
 
         // Check the user's access level
-        if ((!mods.security.hasNickPerm(new ChoobPermission(
-            "plugins.channeladmin.admin"), mes))
-            && (UserAccess.OWNER != getUserAccess(userName, channel))
-            && (UserAccess.MASTER != getUserAccess(userName, channel))
-            && (UserAccess.OP != getUserAccess(userName, channel))) {
+        if (!mods.security.hasNickPerm(new ChoobPermission(
+            "plugins.channeladmin.admin"), mes)
+            && UserAccess.OWNER != getUserAccess(userName, channel)
+            && UserAccess.MASTER != getUserAccess(userName, channel)
+            && UserAccess.OP != getUserAccess(userName, channel)) {
             irc
                 .sendContextReply(mes,
                     "You do not have the required access on this channel to run this command.");
@@ -373,7 +373,7 @@ public class ChannelAdmin {
                 irc.sendContextReply(mes, "Syntax: ChannelAdmin.Kick "
                     + helpKick[1]);
             }
-        } catch (ChoobException e) {
+        } catch (final ChoobException e) {
             irc.sendContextReply(mes, "Could not perform action: "
                 + e.getMessage());
         }
@@ -386,10 +386,10 @@ public class ChannelAdmin {
         "<Nick> User to ban from the channel"
     };
 
-    public void commandBan(Message mes, Modules mods, IRCInterface irc) {
-        String[] params = mods.util.getParamArray(mes);
-        String userName = mods.security.getUserAuthName(mes.getNick());
-        String channel = mes.getTarget();
+    public void commandBan(final Message mes, final Modules mods, final IRCInterface irc) {
+        final String[] params = mods.util.getParamArray(mes);
+        final String userName = mods.security.getUserAuthName(mes.getNick());
+        final String channel = mes.getTarget();
 
         // Check that the user is authed
         if (!mods.security.hasAuth(userName)) {
@@ -399,11 +399,11 @@ public class ChannelAdmin {
         }
 
         // Check the user's access level
-        if ((!mods.security.hasNickPerm(new ChoobPermission(
-            "plugins.channeladmin.admin"), mes))
-            && (UserAccess.OWNER != getUserAccess(userName, channel))
-            && (UserAccess.MASTER != getUserAccess(userName, channel))
-            && (UserAccess.OP != getUserAccess(userName, channel))) {
+        if (!mods.security.hasNickPerm(new ChoobPermission(
+            "plugins.channeladmin.admin"), mes)
+            && UserAccess.OWNER != getUserAccess(userName, channel)
+            && UserAccess.MASTER != getUserAccess(userName, channel)
+            && UserAccess.OP != getUserAccess(userName, channel)) {
             irc
                 .sendContextReply(mes,
                     "You do not have the required access on this channel to run this command.");
@@ -441,7 +441,7 @@ public class ChannelAdmin {
                 irc.sendContextReply(mes, "Syntax: ChannelAdmin.Ban "
                     + helpBan[1]);
             }
-        } catch (ChoobException e) {
+        } catch (final ChoobException e) {
             irc.sendContextReply(mes, "Could not perform action: "
                 + e.getMessage());
         }
@@ -454,10 +454,10 @@ public class ChannelAdmin {
         "<Nick> name of the user to unban"
     };
 
-    public void commandUnban(Message mes, Modules mods, IRCInterface irc) {
-        String[] params = mods.util.getParamArray(mes);
-        String userName = mods.security.getUserAuthName(mes.getNick());
-        String channel = mes.getTarget();
+    public void commandUnban(final Message mes, final Modules mods, final IRCInterface irc) {
+        final String[] params = mods.util.getParamArray(mes);
+        final String userName = mods.security.getUserAuthName(mes.getNick());
+        final String channel = mes.getTarget();
 
         // Check that the user is authed
         if (!mods.security.hasAuth(userName)) {
@@ -467,11 +467,11 @@ public class ChannelAdmin {
         }
 
         // Check the user's access level
-        if ((!mods.security.hasNickPerm(new ChoobPermission(
-            "plugins.channeladmin.admin"), mes))
-            && (UserAccess.OWNER != getUserAccess(userName, channel))
-            && (UserAccess.MASTER != getUserAccess(userName, channel))
-            && (UserAccess.OP != getUserAccess(userName, channel))) {
+        if (!mods.security.hasNickPerm(new ChoobPermission(
+            "plugins.channeladmin.admin"), mes)
+            && UserAccess.OWNER != getUserAccess(userName, channel)
+            && UserAccess.MASTER != getUserAccess(userName, channel)
+            && UserAccess.OP != getUserAccess(userName, channel)) {
             irc
                 .sendContextReply(mes,
                     "You do not have the required access on this channel to run this command.");
@@ -501,7 +501,7 @@ public class ChannelAdmin {
                 irc.sendContextReply(mes, "Syntax: ChannelAdmin.Unban "
                     + helpUnban[1]);
             }
-        } catch (ChoobException e) {
+        } catch (final ChoobException e) {
             irc.sendContextReply(mes, "Could not perform action: "
                 + e.getMessage());
         }
@@ -514,10 +514,10 @@ public class ChannelAdmin {
         "<Nick> User to kick ban from channel", "<Reason> Reason for kick"
     };
 
-    public void commandKickBan(Message mes, Modules mods, IRCInterface irc) {
-        String[] params = mods.util.getParamArray(mes);
-        String userName = mods.security.getUserAuthName(mes.getNick());
-        String channel = mes.getTarget();
+    public void commandKickBan(final Message mes, final Modules mods, final IRCInterface irc) {
+        final String[] params = mods.util.getParamArray(mes);
+        final String userName = mods.security.getUserAuthName(mes.getNick());
+        final String channel = mes.getTarget();
 
         // Check that the user is authed
         if (!mods.security.hasAuth(userName)) {
@@ -527,11 +527,11 @@ public class ChannelAdmin {
         }
 
         // Check the user's access level
-        if ((!mods.security.hasNickPerm(new ChoobPermission(
-            "plugins.channeladmin.admin"), mes))
-            && (UserAccess.OWNER != getUserAccess(userName, channel))
-            && (UserAccess.MASTER != getUserAccess(userName, channel))
-            && (UserAccess.OP != getUserAccess(userName, channel))) {
+        if (!mods.security.hasNickPerm(new ChoobPermission(
+            "plugins.channeladmin.admin"), mes)
+            && UserAccess.OWNER != getUserAccess(userName, channel)
+            && UserAccess.MASTER != getUserAccess(userName, channel)
+            && UserAccess.OP != getUserAccess(userName, channel)) {
             irc
                 .sendContextReply(mes,
                     "You do not have the required access on this channel to run this command.");
@@ -571,7 +571,7 @@ public class ChannelAdmin {
                 irc.sendContextReply(mes, "Syntax: ChannelAdmin.KickBan "
                     + helpKickBan[1]);
             }
-        } catch (ChoobException e) {
+        } catch (final ChoobException e) {
             irc.sendContextReply(mes, "Could not perform action: "
                 + e.getMessage());
         }
@@ -585,9 +585,9 @@ public class ChannelAdmin {
         "<Access> Level of access to grant the user, one of: Owner, Master, Op, Voice and None"
     };
 
-    public void commandSetAccess(Message mes, Modules mods, IRCInterface irc) {
-        String[] params = mods.util.getParamArray(mes);
-        String userName = mods.security.getUserAuthName(mes.getNick());
+    public void commandSetAccess(final Message mes, final Modules mods, final IRCInterface irc) {
+        final String[] params = mods.util.getParamArray(mes);
+        final String userName = mods.security.getUserAuthName(mes.getNick());
         String channel = mes.getTarget();
 
         // Check that the user is authed
@@ -598,10 +598,10 @@ public class ChannelAdmin {
         }
 
         // Check the user's access level
-        if ((!mods.security.hasNickPerm(new ChoobPermission(
-            "plugins.channeladmin.admin"), mes))
-            && (UserAccess.OWNER != getUserAccess(userName, channel))
-            && (UserAccess.MASTER != getUserAccess(userName, channel))) {
+        if (!mods.security.hasNickPerm(new ChoobPermission(
+            "plugins.channeladmin.admin"), mes)
+            && UserAccess.OWNER != getUserAccess(userName, channel)
+            && UserAccess.MASTER != getUserAccess(userName, channel)) {
             irc
                 .sendContextReply(mes,
                     "You do not have the required access on this channel to run this command.");
@@ -639,17 +639,17 @@ public class ChannelAdmin {
             return;
         }
 
-        int accessLevel = UserAccess.valueOf(accessSetting.toUpperCase())
+        final int accessLevel = UserAccess.valueOf(accessSetting.toUpperCase())
             .ordinal();
-        if ((!mods.security.hasNickPerm(new ChoobPermission(
-            "plugins.channeladmin.admin"), mes))
-            && (accessLevel < getUserAccess(userName, channel).ordinal())) {
+        if (!mods.security.hasNickPerm(new ChoobPermission(
+            "plugins.channeladmin.admin"), mes)
+            && accessLevel < getUserAccess(userName, channel).ordinal()) {
             irc.sendContextReply(mes,
                 "You do not have the access to set this access level.");
             return;
         }
 
-        List<ChannelUser> results = mods.odb.retrieve(ChannelUser.class,
+        final List<ChannelUser> results = mods.odb.retrieve(ChannelUser.class,
             "WHERE userName = '" + accessUser + "' AND channel = '" + channel
                 + "'");
         ChannelUser user;
@@ -674,13 +674,13 @@ public class ChannelAdmin {
         "<Nick> Optional nick to get access for, either this or Channel is required in a PM"
     };
 
-    public void commandShowAccess(Message mes, Modules mods, IRCInterface irc) {
-        String[] params = mods.util.getParamArray(mes);
-        String channel = mes.getTarget();
+    public void commandShowAccess(final Message mes, final Modules mods, final IRCInterface irc) {
+        final String[] params = mods.util.getParamArray(mes);
+        final String channel = mes.getTarget();
 
         List<ChannelUser> users;
         String query = "WHERE channel = '" + channel + "'";
-        
+
         switch (params.length) {
         default:
         case 1:
@@ -691,34 +691,34 @@ public class ChannelAdmin {
             }
             break;
         case 2:
-            if (('#' == params[1].charAt(0)) || ('&' == params[1].charAt(0))) {
+            if ('#' == params[1].charAt(0) || '&' == params[1].charAt(0)) {
                 query = "WHERE channel = '" + params[1] + "'";
             } else {
-                query = "WHERE userName = '" + params[1] + "'"; 
+                query = "WHERE userName = '" + params[1] + "'";
             }
             break;
         case 3:
             query = "WHERE channel = '" + params[1] + "' AND userName = '" + params[2] + "'";
         }
-        
+
         users = mods.odb.retrieve(ChannelUser.class, query);
         if (0 == users.size()) {
             irc.sendContextReply(mes,
                 "There are no registered users matching this query.");
             return;
         }
-        String[] userInfo = new String[users.size()];
+        final String[] userInfo = new String[users.size()];
         for (int i = 0; i < users.size(); i++) {
-            ChannelUser user = users.get(i);
+            final ChannelUser user = users.get(i);
             userInfo[i] = user.userName + " (" + user.channel + ") :"
                 + UserAccess.values()[user.accessLevel].toString().toLowerCase();
         }
         irc.sendContextReply(mes, userInfo);
     }
 
-    private UserAccess getUserAccess(String userName, String channel) {
+    private UserAccess getUserAccess(final String userName, final String channel) {
         // Retrieve access from ODB.
-        List<ChannelUser> results = mods.odb.retrieve(ChannelUser.class,
+        final List<ChannelUser> results = mods.odb.retrieve(ChannelUser.class,
             "WHERE userName = '" + userName + "' AND channel = '" + channel
                 + "'");
         if (0 == results.size()) {

@@ -1,7 +1,15 @@
 package uk.co.uwcs.choob.modules;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /** Some functions to help with time and date manipulation. */
 public final class DateModule {
@@ -37,7 +45,7 @@ public final class DateModule {
 			if (useShortTokens) {
 				return "<1" + shortToken;
 			}
-			return "less than " + ((this == HOUR) ? "an" : "a") + " "
+			return "less than " + (this == HOUR ? "an" : "a") + " "
 					+ longToken;
 		}
 
@@ -50,10 +58,10 @@ public final class DateModule {
 	 * Helper, converts a long (ms) time to a Map.
 	 */
 	final static Map<TimeUnit, Long> getTimeUnitMap(long interval) {
-		Map<TimeUnit, Long> map = new EnumMap<TimeUnit, Long>(TimeUnit.class);
+		final Map<TimeUnit, Long> map = new EnumMap<TimeUnit, Long>(TimeUnit.class);
 
-		for (TimeUnit unit : EnumSet.allOf(TimeUnit.class)) {
-			final long quantity = (interval / unit.duration());
+		for (final TimeUnit unit : EnumSet.allOf(TimeUnit.class)) {
+			final long quantity = interval / unit.duration();
 			map.put(unit, quantity);
 			interval -= quantity * unit.duration();
 		}
@@ -110,7 +118,7 @@ public final class DateModule {
 			final TimeUnit minGranularity) {
 
 		final Map<TimeUnit, Long> unitQuantity = getTimeUnitMap(interval);
-		Set<TimeUnit> usedUnits = EnumSet.noneOf(TimeUnit.class);
+		final Set<TimeUnit> usedUnits = EnumSet.noneOf(TimeUnit.class);
 
 		int remainingDetail = replyDetail;
 
@@ -118,7 +126,7 @@ public final class DateModule {
 		 * Go through the map, discard empty or invalid parts until we have
 		 * enough (replyDetail).
 		 */
-		for (TimeUnit unit : TimeUnit.values()) {
+		for (final TimeUnit unit : TimeUnit.values()) {
 			if (remainingDetail <= 0) {
 				break;
 			}
@@ -142,8 +150,8 @@ public final class DateModule {
 			time = minGranularity.lessThanOne(shortTokens);
 		} else {
 			// Build a list of the result tokens.
-			List<String> result = new ArrayList<String>();
-			for (TimeUnit unit : usedUnits) {
+			final List<String> result = new ArrayList<String>();
+			for (final TimeUnit unit : usedUnits) {
 				result.add(unit.quantity(shortTokens, unitQuantity.get(unit)));
 			}
 
@@ -151,14 +159,14 @@ public final class DateModule {
 
 			// Concatenate the result as a string.
 			if (shortTokens) {
-				for (String token : result) {
+				for (final String token : result) {
 					b.append(token);
 				}
 			} else {
 				b.append(result.remove(0));
 				if (result.size() > 0) {
-					String lastToken = result.remove(result.size() - 1);
-					for (String token : result) {
+					final String lastToken = result.remove(result.size() - 1);
+					for (final String token : result) {
 						b.append(", ");
 						b.append(token);
 					}
@@ -172,7 +180,7 @@ public final class DateModule {
 	}
 
 	/** Prettyprint a date */
-	public final static String absoluteDateFormat(Date da)
+	public final static String absoluteDateFormat(final Date da)
 	{
 		// Some definitions.
 			final SimpleDateFormat formatter = new SimpleDateFormat("EEEE d MMM h:mma");
@@ -209,7 +217,7 @@ public final class DateModule {
 	}
 
 	/** Convert a Calendar to "8pm", "7am", "7:30am" etc. */
-	public final static String shortTime(Calendar cda)
+	public final static String shortTime(final Calendar cda)
 	{
 		final SimpleDateFormat nomins = new SimpleDateFormat("ha");
 		final SimpleDateFormat wimins = new SimpleDateFormat("h:mma");
@@ -222,7 +230,7 @@ public final class DateModule {
 	}
 
 	/** Work out if a calendar is in the morning, afternoon or evening. */
-	public final static String futurePeriodOfDayString(Calendar cda)
+	public final static String futurePeriodOfDayString(final Calendar cda)
 	{
 		final int hour = cda.get(Calendar.HOUR_OF_DAY);
 

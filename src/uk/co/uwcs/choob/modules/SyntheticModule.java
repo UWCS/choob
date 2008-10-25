@@ -16,16 +16,16 @@ import uk.co.uwcs.choob.support.events.Message;
  */
 public final class SyntheticModule
 {
-	private Choob bot;
+	private final Choob bot;
 
 	/** Creates a new instance of IntervalModule */
-	SyntheticModule( Choob bot )
+	SyntheticModule( final Choob bot )
 	{
 		this.bot = bot;
 	}
 
 	/** Queues the message with the bot, as if it had come from IRC. */
-	public void doSyntheticMessage( Message mes )
+	public void doSyntheticMessage( final Message mes )
 	{
 		if( System.getSecurityManager() != null )
 		{

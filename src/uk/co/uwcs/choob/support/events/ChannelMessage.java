@@ -24,6 +24,7 @@ public class ChannelMessage extends Message implements ChannelEvent, CommandEven
 	 * Get the reply context in which this event resides
 	 * @return The context
 	 */
+	@Override
 	public String getContext() {
 		return getChannel();
 	}
@@ -32,7 +33,7 @@ public class ChannelMessage extends Message implements ChannelEvent, CommandEven
 	/**
 	 * Construct a new ChannelMessage.
 	 */
-	public ChannelMessage(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target, String channel)
+	public ChannelMessage(final String methodName, final long millis, final int random, final String message, final String nick, final String login, final String hostname, final String target, final String channel)
 	{
 		super(methodName, millis, random, message, nick, login, hostname, target);
 		this.channel = channel;
@@ -41,7 +42,7 @@ public class ChannelMessage extends Message implements ChannelEvent, CommandEven
 	/**
 	 * Synthesize a new ChannelMessage from an old one.
 	 */
-	public ChannelMessage(ChannelMessage old, String message)
+	public ChannelMessage(final ChannelMessage old, final String message)
 	{
 		super(old, message);
 		this.channel = old.channel;
@@ -51,26 +52,29 @@ public class ChannelMessage extends Message implements ChannelEvent, CommandEven
 	 * Synthesize a new ChannelMessage from this one.
 	 * @return The new ChannelMessage object.
 	 */
-	public Event cloneEvent(String message)
+	@Override
+	public Event cloneEvent(final String message)
 	{
 		return new ChannelMessage(this, message);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelMessage))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		ChannelMessage thing = (ChannelMessage)obj;
+		final ChannelMessage thing = (ChannelMessage)obj;
 		if ( true && channel.equals(thing.channel) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("ChannelMessage(");
+		final StringBuffer out = new StringBuffer("ChannelMessage(");
 		out.append(super.toString());
 		out.append(", channel = " + channel);
 		out.append(")");

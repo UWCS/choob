@@ -1,14 +1,22 @@
 /** @author Faux */
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
 public class Pogo
@@ -21,7 +29,7 @@ public class Pogo
 	public Map <String, ClientHandler> commands;
 	public HashMap<Message,Stack<String>> pipecommands;
 
-	public Pogo(Modules mods, IRCInterface irc) throws ChoobException
+	public Pogo(final Modules mods, final IRCInterface irc) throws ChoobException
 	{
 		this.mods=mods; this.irc=irc;
 
@@ -32,7 +40,7 @@ public class Pogo
 		{
 			servthread=new ServerThread(this);
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			throw new ChoobException("Couldn't set up server.");
 		}
@@ -40,25 +48,25 @@ public class Pogo
 		servthread.start();
 	}
 
-	public void commandCommands( Message mes )
+	public void commandCommands( final Message mes )
 	{
 		String s="";
-		Iterator<String> i=commands.keySet().iterator();
+		final Iterator<String> i=commands.keySet().iterator();
 		while (i.hasNext())
 			s+=i.next()+", ";
 		irc.sendContextReply(mes, "Commands: " + s);
 	}
 
-	public void commandKill( Message mes )
+	public void commandKill( final Message mes )
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugin.pogo.kill"), mes);
 		die();
 		irc.sendContextReply(mes, "Dead.");
 	}
 
-	void clientDeath(ClientHandler c)
+	void clientDeath(final ClientHandler c)
 	{
-		Iterator <Map.Entry<String, ClientHandler>> it = commands.entrySet().iterator();
+		final Iterator <Map.Entry<String, ClientHandler>> it = commands.entrySet().iterator();
 
 		while (it.hasNext())
 		{
@@ -73,25 +81,25 @@ public class Pogo
 	private void die()
 	{
 		ServerThread.running=false;
-		try { ServerThread.serv.close(); } catch (Exception e) 
+		try { ServerThread.serv.close(); } catch (final Exception e)
 		{
 			// What're we going to do?
 		}
 		ServerThread.serv=null;
 	}
 
-	public void commandInvoke( Message mes )
+	public void commandInvoke( final Message mes )
 	{
-		String text = mods.util.getParamString(mes);
+		final String text = mods.util.getParamString(mes);
 
-		String[] items=text.split("\\|");
+		final String[] items=text.split("\\|");
 		if (items.length<=1)
 			doCommand(text, mes);
 		else
 		{
 
 			final TaggedMessage m = new TaggedMessage(mes);
-			Stack <String>s = new Stack<String>();
+			final Stack <String>s = new Stack<String>();
 			int i=items.length;
 			while (i-->1)
 				s.push(items[i]);
@@ -102,11 +110,11 @@ public class Pogo
 		}
 	}
 
-	private void doCommand(String text, Message mes)
+	private void doCommand(String text, final Message mes)
 	{
 		System.out.println("New command: " + text);
 
-		Matcher matcher = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE).matcher(text);
+		final Matcher matcher = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE).matcher(text);
 
 		if (matcher.find())
 			text = text.substring(matcher.end());
@@ -125,7 +133,7 @@ public class Pogo
 
 	}
 
-	void sendContextReply(Message mes, String text)
+	void sendContextReply(final Message mes, String text)
 	{
 
 		if (mes instanceof TaggedMessage)
@@ -157,7 +165,7 @@ public class Pogo
 			return mcontext;
 		}
 
-		public TaggedMessage(Message old)
+		public TaggedMessage(final Message old)
 		{
 			super(old, "Pogobot sucks!");
 			mcontext=old.getContext();
@@ -173,7 +181,7 @@ final class ServerThread extends Thread
 
 	static protected boolean running=true;
 
-	public ServerThread(Pogo p) throws IOException
+	public ServerThread(final Pogo p) throws IOException
 	{
 		System.out.println("New server");
 		serv=new ServerSocket(3090);
@@ -187,9 +195,9 @@ final class ServerThread extends Thread
 		while (running)
 			try
 			{
-				(new ClientHandler(serv.accept(), p)).start();
+				new ClientHandler(serv.accept(), p).start();
 			}
-			catch (IOException e)
+			catch (final IOException e)
 			{
 				System.out.println(e.toString());
 				return;
@@ -207,7 +215,7 @@ final class ClientHandler extends Thread
 
 	Map <String, Message> contexts;
 
-	public ClientHandler(Socket cs, Pogo p) throws IOException
+	public ClientHandler(final Socket cs, final Pogo p) throws IOException
 	{
 		System.out.println("New clienthandler");
 		sock=cs;
@@ -265,8 +273,8 @@ final class ClientHandler extends Thread
 							ma=Pattern.compile("^LSREG$").matcher(inputLine);
 							if (ma.matches())
 							{
-								Iterator<String>i=p.commands.keySet().iterator();
-								StringBuilder s=new StringBuilder();
+								final Iterator<String>i=p.commands.keySet().iterator();
+								final StringBuilder s=new StringBuilder();
 								while (i.hasNext())
 									s.append(i.next()).append(" ");
 								out.print("OK LSREG " + s.toString() + "\n");
@@ -281,7 +289,7 @@ final class ClientHandler extends Thread
 
 			}
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			System.out.println(e.toString());
 		}
@@ -289,7 +297,7 @@ final class ClientHandler extends Thread
 		p.clientDeath(this);
 	}
 
-	public void inform(String command, Message context)
+	public void inform(final String command, final Message context)
 	{
 		final String key = Double.toString(Math.random());
 		contexts.put(key, context);

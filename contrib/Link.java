@@ -6,7 +6,9 @@ import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.events.ChannelAction;
+import uk.co.uwcs.choob.support.events.ChannelMessage;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Choob link plugin
@@ -46,7 +48,7 @@ public class Link
 	 */
 	private static final long FLOOD_INTERVAL = 15 * 60 * 1000; // 15 minutes
 
-	public Link(Modules mods, IRCInterface irc)
+	public Link(final Modules mods, final IRCInterface irc)
 	{
 		this.irc = irc;
 		this.mods = mods;
@@ -79,23 +81,23 @@ public class Link
 	 * @param mods The bot modules.
 	 * @param irc The irc interface.
 	 */
-	public void filterLink(Message mes)
+	public void filterLink(final Message mes)
 	{
 		// Ignore stuff that isn't a channel message or action
 		// Ignore synthetic messages
 		// Ignore commands
-		if ((!(mes instanceof ChannelMessage||mes instanceof ChannelAction))
-				|| (mes.getSynthLevel() > 0)
-				|| (mes.getFlags().containsKey("command")) )
+		if (!(mes instanceof ChannelMessage||mes instanceof ChannelAction)
+				|| mes.getSynthLevel() > 0
+				|| mes.getFlags().containsKey("command") )
 			return;
 
-		Matcher linkMatch = linkPattern.matcher(mes.getMessage());
-		ArrayList<OldLink> oldLinks = new ArrayList<OldLink>();
+		final Matcher linkMatch = linkPattern.matcher(mes.getMessage());
+		final ArrayList<OldLink> oldLinks = new ArrayList<OldLink>();
 
 		// Iterate over links in line.
 		while (linkMatch.find())
 		{
-			String link = linkMatch.group(0);
+			final String link = linkMatch.group(0);
 			OldLink linkObj = getOldLink(link);
 			if (linkObj != null)
 			{
@@ -132,18 +134,18 @@ public class Link
 	 *
 	 * @param mes The message delivering the command.
 	 */
-	public void commandIsOld(Message mes)
+	public void commandIsOld(final Message mes)
 	{
 		// Ignore messages in channels.
 		if (mes instanceof ChannelMessage)
 			return;
 
-		Matcher linkMatch = linkPattern.matcher(mes.getMessage());
+		final Matcher linkMatch = linkPattern.matcher(mes.getMessage());
 
 		if (linkMatch.find())
 		{
-			String link = linkMatch.group(0);
-			OldLink linkObj = getOldLink(link);
+			final String link = linkMatch.group(0);
+			final OldLink linkObj = getOldLink(link);
 			if (linkObj == null)
 				irc.sendContextReply(mes, "Link is not old.");
 			else if (System.currentTimeMillis() - linkObj.lastPostedTime < FLOOD_INTERVAL)
@@ -163,15 +165,15 @@ public class Link
 	 * @param link The URI to check the database for.
 	 * @return The link object if present in the database, else null.
 	 */
-	private OldLink getOldLink(String link)
+	private OldLink getOldLink(final String link)
 	{
 		// Ensure that the link isn't in our exceptions list
 		if (exceptionPattern.matcher(link).find())
 			return null;
 
 		// Check objectdb
-		String queryString = "WHERE URL = \"" + mods.odb.escapeString(link) + "\"";
-		List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
+		final String queryString = "WHERE URL = \"" + mods.odb.escapeString(link) + "\"";
+		final List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
 
 		// Return the first result, if any.
 		return links.size() > 0 ? links.get(0) : null;
@@ -183,10 +185,10 @@ public class Link
 	 * @param linkObj The olde linke to fetche a response for.
 	 * @return A suitably harsh response.
 	 */
-	private String getOldResponse(OldLink linkObj)
+	private String getOldResponse(final OldLink linkObj)
 	{
-		long timeSinceOriginal = System.currentTimeMillis() - linkObj.firstPostedTime;
-		int oldHours = (int) timeSinceOriginal / (60 * 60 * 1000);
+		final long timeSinceOriginal = System.currentTimeMillis() - linkObj.firstPostedTime;
+		final int oldHours = (int) timeSinceOriginal / (60 * 60 * 1000);
 
 		// Represent the number of hours since the original posting,
 		// in base 2, using upper and lower case 'o's.
@@ -199,7 +201,7 @@ public class Link
 			+ " ago by " + linkObj.poster + ")";
 	}
 
-	public void webListLinks(PrintWriter out, String params, String[] user)
+	public void webListLinks(final PrintWriter out, final String params, final String[] user)
 	{
 		out.println("HTTP/1.0 200 OK");
 		out.println("Content-Type: text/html");
@@ -211,19 +213,19 @@ public class Link
 		{
 			timePeriod = Integer.parseInt(params);
 		}
-		catch( NumberFormatException e )
+		catch( final NumberFormatException e )
 		{
 			out.println("<center><blink><h1>ERROR IN PARAMETER</h1></blink></center>");
 			return;
 		}
 
-		long cutOff = System.currentTimeMillis() - (timePeriod * 60 * 60 * 1000);
+		final long cutOff = System.currentTimeMillis() - timePeriod * 60 * 60 * 1000;
 
-		String queryString = "SORT DESC INTEGER lastPostedTime WHERE firstPostedTime > " + cutOff;
+		final String queryString = "SORT DESC INTEGER lastPostedTime WHERE firstPostedTime > " + cutOff;
 
-		List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
+		final List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
 
-		for( OldLink link : links )
+		for( final OldLink link : links )
 			out.println("<a href=\"" + mods.scrape.readyForHtml(link.URL) + "\">" + mods.scrape.readyForHtml(link.URL)
 				+ "</a>&nbsp;-&nbsp;" + mods.scrape.readyForHtml(link.poster) + " in "
 				+ mods.scrape.readyForHtml(link.channel) + "<br />");
@@ -231,17 +233,17 @@ public class Link
 		out.flush();
 	}
 
-	public void webLastLink(PrintWriter out, String params, String[] user)
+	public void webLastLink(final PrintWriter out, final String params, final String[] user)
 	{
 		out.println("HTTP/1.0 200 OK");
 		out.println("Content-Type: text/html");
 		out.println();
 
-		String queryString = "SORT DESC INTEGER lastPostedTime LIMIT (1)";
+		final String queryString = "SORT DESC INTEGER lastPostedTime LIMIT (1)";
 
-		List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
+		final List<OldLink> links = mods.odb.retrieve(OldLink.class, queryString);
 
-		for( OldLink link : links )
+		for( final OldLink link : links )
 			out.println("<html><head><script>window.location = \"" + mods.scrape.readyForHtml(link.URL) + "\";</script></head><body></body></html>");
 
 		out.println();

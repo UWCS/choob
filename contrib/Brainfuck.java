@@ -1,4 +1,7 @@
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EmptyStackException;
+import java.util.List;
+import java.util.Stack;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
@@ -34,10 +37,10 @@ public class Brainfuck
 	private static int MAX_INSTRUCTIONS = 9000;
 	private static int MAX_OUTPUT = 70;
 
-	private IRCInterface irc;
-	private Modules mods;
+	private final IRCInterface irc;
+	private final Modules mods;
 
-	public Brainfuck(Modules mods, IRCInterface irc)
+	public Brainfuck(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -49,13 +52,13 @@ public class Brainfuck
 		"<expr> is a Brainfuck program"
 	};
 
-	public void commandEval( Message mes )
+	public void commandEval( final Message mes )
 	{
 		String reply;
 
 		try
 		{
-			String[] tokens = {"<", ">", "+", "-", ".", "[", "]"};
+			final String[] tokens = {"<", ">", "+", "-", ".", "[", "]"};
 			reply = eval(mods.util.getParamString(mes), tokens);
 
 			if (reply.length() == 0)
@@ -63,15 +66,15 @@ public class Brainfuck
 				reply = "(no output)";
 			}
 		}
-		catch (InstructionCountExceededException e)
+		catch (final InstructionCountExceededException e)
 		{
 			reply = e.getMessage() + " (halted after " + MAX_INSTRUCTIONS + " instructions at position " + e.getOffset() + ")";
 		}
-		catch (OutputLengthExceededException e)
+		catch (final OutputLengthExceededException e)
 		{
 			reply = e.getMessage() + " (halted after " + MAX_OUTPUT + " chars of output at position " + e.getOffset() + ")";
 		}
-		catch (BrainfuckException e)
+		catch (final BrainfuckException e)
 		{
 			reply = "Parse error at position " + e.getOffset() + ": " + e.getMessage();
 		}
@@ -79,25 +82,25 @@ public class Brainfuck
 		irc.sendContextReply(mes, reply);
 	}
 
-	public String eval(String expr, String[] tokens) throws BrainfuckException
+	public String eval(final String expr, final String[] tokens) throws BrainfuckException
 	{
-		BrainfuckInterpreter interp = new BrainfuckInterpreter(expr, tokens, MAX_INSTRUCTIONS, MAX_OUTPUT);
+		final BrainfuckInterpreter interp = new BrainfuckInterpreter(expr, tokens, MAX_INSTRUCTIONS, MAX_OUTPUT);
 		return interp.eval();
 	}
 }
 
 class BrainfuckInterpreter
 {
-	private byte[] mem = new byte[30000];
-	private int ptr = 0; 
+	private final byte[] mem = new byte[30000];
+	private int ptr = 0;
 	private int count = 0;
 
-	private String expr;
-	private String[] tokens;
-	private int max_instructions;
-	private int max_output;
+	private final String expr;
+	private final String[] tokens;
+	private final int max_instructions;
+	private final int max_output;
 
-	public BrainfuckInterpreter(String expr, String[] tokens, int max_instructions, int max_output)
+	public BrainfuckInterpreter(final String expr, final String[] tokens, final int max_instructions, final int max_output)
 	{
 		this.expr = expr;
 		this.tokens = tokens;
@@ -108,8 +111,8 @@ class BrainfuckInterpreter
 
 	public String eval() throws BrainfuckException
 	{
-		StringBuilder output = new StringBuilder();
-		List<BrainfuckToken> my_tokens = tokenise();
+		final StringBuilder output = new StringBuilder();
+		final List<BrainfuckToken> my_tokens = tokenise();
 
 		BrainfuckToken token;
 		int pc = 0;
@@ -164,18 +167,18 @@ class BrainfuckInterpreter
 
 	private List<BrainfuckToken> tokenise() throws BrainfuckException
 	{
-	  	List<BrainfuckToken> my_tokens = new ArrayList<BrainfuckToken>();
-		Stack<Integer> pc_stack = new Stack<Integer>();
+	  	final List<BrainfuckToken> my_tokens = new ArrayList<BrainfuckToken>();
+		final Stack<Integer> pc_stack = new Stack<Integer>();
 
 		int pos = 0;
 		int jne = 0;
 
-		char[] symbols = {'<', '>', '+', '-', '.', '[', ']'};
+		final char[] symbols = {'<', '>', '+', '-', '.', '[', ']'};
 
 		while (pos < expr.length())
 		{
 			boolean flag = true;
-			for (int i = 0; (i < tokens.length) && flag; ++i)
+			for (int i = 0; i < tokens.length && flag; ++i)
 			{
 				if (expr.substring(pos, pos + tokens[i].length()).equals(tokens[i]))
 				{
@@ -190,7 +193,7 @@ class BrainfuckInterpreter
 								jne = pc_stack.pop().intValue();
 								my_tokens.get(jne).jne = my_tokens.size();
 							}
-							catch (EmptyStackException e)
+							catch (final EmptyStackException e)
 							{
 								throw new ParseErrorException(pos);
 							}
@@ -220,7 +223,7 @@ class BrainfuckInterpreter
 		public int jne;
 		public int pos;
 
-		public BrainfuckToken(char sym, int jne, int pos)
+		public BrainfuckToken(final char sym, final int jne, final int pos)
 		{
 			this.sym = sym;
 			this.jne = jne;
@@ -234,23 +237,23 @@ class BrainfuckException extends Exception
 	private static final long serialVersionUID = -7656099851954125772L;
 	int offset;
 
-	public BrainfuckException(String message, int offset)
+	public BrainfuckException(final String message, final int offset)
 	{
 		super(message);
-		this.offset = offset;	
+		this.offset = offset;
 	}
 
 	public int getOffset()
 	{
 		return offset;
 	}
-} 
+}
 
 class ParseErrorException extends BrainfuckException
 {
 	private static final long serialVersionUID = 4152970669488324439L;
 
-	public ParseErrorException(int offset)
+	public ParseErrorException(final int offset)
 	{
 		super("Mismatched bracket", offset);
 	}
@@ -260,7 +263,7 @@ class InstructionCountExceededException extends BrainfuckException
 {
 	private static final long serialVersionUID = 7180806496577431500L;
 
-	public InstructionCountExceededException(String output, int offset)
+	public InstructionCountExceededException(final String output, final int offset)
 	{
 		super(output, offset);
 	}
@@ -270,7 +273,7 @@ class OutputLengthExceededException extends BrainfuckException
 {
 	private static final long serialVersionUID = 2318303252562127659L;
 
-	public OutputLengthExceededException(String output, int offset)
+	public OutputLengthExceededException(final String output, final int offset)
 	{
 		super(output, offset);
 	}

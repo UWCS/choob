@@ -20,13 +20,13 @@ public class Port
 
 	HashMap<String, String>ports;
 
-	public Port(Modules mods, IRCInterface irc) throws ChoobException, IOException
+	public Port(final Modules mods, final IRCInterface irc) throws ChoobException, IOException
 	{
 		try
 		{
 			iana_numbers=new URL("http://www.iana.org/assignments/port-numbers");
 		}
-		catch (MalformedURLException e)
+		catch (final MalformedURLException e)
 		{
 			throw new ChoobException("Error in constant data", e);
 		}
@@ -36,22 +36,22 @@ public class Port
 		updateSources();
 	}
 
-	public void commandRebuild(Message mes)
+	public void commandRebuild(final Message mes)
 	{
 		try
 		{
 			updateSources();
 			irc.sendContextReply(mes, "Done!");
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			irc.sendContextReply(mes, "Couldn't updated. " + e);
 		}
 	}
 
-	public void commandToNumber(Message mes)
+	public void commandToNumber(final Message mes)
 	{
-		String parm=mods.util.getParamString(mes).trim();
+		final String parm=mods.util.getParamString(mes).trim();
 
 		if (!ports.containsKey(parm))
 			irc.sendContextReply(mes, "Not found.");
@@ -63,7 +63,7 @@ public class Port
 	private void updateSources() throws IOException
 	{
 		ports=new HashMap<String, String>();
-		Matcher ma=mods.scrape.getMatcher(iana_numbers, (long)60*60*1000, "(.{17}) +([0-9]+)/(?:(?:tcp)|(?:udp)) +(.*)");
+		final Matcher ma=mods.scrape.getMatcher(iana_numbers, (long)60*60*1000, "(.{17}) +([0-9]+)/(?:(?:tcp)|(?:udp)) +(.*)");
 		while (ma.find())
 		{
 			ports.put(ma.group(1).trim(), ma.group(2) + " (" + ma.group(3) + ")");

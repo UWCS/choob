@@ -6,13 +6,27 @@
 
 package uk.co.uwcs.choob.modules;
 
-import java.security.*;
-import java.sql.*;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.ChoobError;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.events.ChannelAction;
+import uk.co.uwcs.choob.support.events.ChannelEvent;
+import uk.co.uwcs.choob.support.events.ChannelKick;
+import uk.co.uwcs.choob.support.events.ChannelMessage;
+import uk.co.uwcs.choob.support.events.Event;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.PrivateAction;
+import uk.co.uwcs.choob.support.events.PrivateMessage;
 
 /**
  * Logs lines from IRC to the database.
@@ -20,15 +34,15 @@ import uk.co.uwcs.choob.support.events.*;
  */
 public final class HistoryModule
 {
-	private DbConnectionBroker dbBroker;
+	private final DbConnectionBroker dbBroker;
 
 	/** Creates a new instance of LoggerModule */
-	HistoryModule(DbConnectionBroker dbBroker)
+	HistoryModule(final DbConnectionBroker dbBroker)
 	{
 		this.dbBroker = dbBroker;
 	}
 
-	public void addLog (Message m)
+	public void addLog (final Message m)
 	{
 		addLog((Event)m);
 	}
@@ -39,7 +53,7 @@ public final class HistoryModule
 	 * @throws Exception Thrown from the database access, potential SQL or IO exceptions.
 	 */
 
-	public void addLog( Event ev )
+	public void addLog( final Event ev )
 	{
 		if (ev instanceof Message && ((Message)ev).getSynthLevel() > 0)
 			return;
@@ -58,7 +72,7 @@ public final class HistoryModule
 
 			if (ev instanceof Message)
 			{
-				Message mes = (Message)ev;
+				final Message mes = (Message)ev;
 				insertLine.setString(1, mes.getClass().getName());
 				insertLine.setString(2, mes.getNick());
 				insertLine.setString(3, mes.getLogin()+"@"+mes.getHostname());
@@ -74,7 +88,7 @@ public final class HistoryModule
 			}
 			else if (ev instanceof ChannelKick)
 			{
-				ChannelKick mes = (ChannelKick)ev;
+				final ChannelKick mes = (ChannelKick)ev;
 				insertLine.setString(1, mes.getClass().getName());
 				insertLine.setString(2, mes.getNick());
 				insertLine.setString(3, mes.getLogin()+"@"+mes.getHostname());
@@ -87,7 +101,7 @@ public final class HistoryModule
 			insertLine.executeUpdate();
 
 		}
-		catch( SQLException e )
+		catch( final SQLException e )
 		{
 			System.err.println("Could not write history line to database: " + e);
 			// I think this exception doesn't need to be propogated... --bucko
@@ -99,7 +113,7 @@ public final class HistoryModule
 				if (insertLine != null)
 					insertLine.close();
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				System.err.println("Could not close SQL connection: " + e);
 			}
@@ -117,7 +131,7 @@ public final class HistoryModule
 	 * @param mes The message object to find.
 	 * @return Either a message ID, or -1 if the message didn't exist.
 	 */
-	public int getMessageID( Message mes )
+	public int getMessageID( final Message mes )
 	{
 		Connection dbCon = null;
 		PreparedStatement stat = null;
@@ -139,14 +153,14 @@ public final class HistoryModule
 			stat.setLong(4, mes.getMillis());
 			stat.setInt(5, mes.getRandom());
 
-			ResultSet result = stat.executeQuery();
+			final ResultSet result = stat.executeQuery();
 
 			if ( result.first() )
 				return result.getInt(1);
 			else
 				return -1;
 		}
-		catch( SQLException e )
+		catch( final SQLException e )
 		{
 			System.err.println("Could not read history line from database: " + e);
 			throw new ChoobError("SQL Error reading from database.");
@@ -158,7 +172,7 @@ public final class HistoryModule
 				if (stat != null)
 					stat.close();
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				System.err.println("Could not read history line from database: " + e);
 				throw new ChoobError("SQL Error reading from database.");
@@ -175,7 +189,7 @@ public final class HistoryModule
 	 * @param messageID The message ID, as returned from getMessageID.
 	 * @return The message object or null if it didn't exist.
 	 */
-	public Message getMessage( int messageID )
+	public Message getMessage( final int messageID )
 	{
 		System.out.println("getMessage");
 		Connection dbCon = null;
@@ -193,7 +207,7 @@ public final class HistoryModule
 				System.out.println("resultfirst");
 
 				final String type = result.getString(2);
-				int pos = result.getString(4).indexOf('@');
+				final int pos = result.getString(4).indexOf('@');
 				final String login = result.getString(4).substring(0,pos);
 				final String host = result.getString(4).substring(pos+1);
 				final String channel = result.getString(5);
@@ -217,7 +231,7 @@ public final class HistoryModule
 						}
 					});
 				}
-				catch (PrivilegedActionException e)
+				catch (final PrivilegedActionException e)
 				{
 					throw (SQLException)e.getCause();
 					// Is an SQL exception...
@@ -231,7 +245,7 @@ public final class HistoryModule
 			else
 				return null;
 		}
-		catch( SQLException e )
+		catch( final SQLException e )
 		{
 			System.err.println("Could not read history line from database: " + e);
 			throw new ChoobError("SQL Error reading from database.");
@@ -243,7 +257,7 @@ public final class HistoryModule
 				if (stat != null)
 					stat.close();
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				System.err.println("Could not read history line from database: " + e);
 				throw new ChoobError("SQL Error reading from database.");
@@ -260,7 +274,7 @@ public final class HistoryModule
 	 * @param cause The "cause" - only messages that occurred before this are processed
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public Message getLastMessage( Message cause )
+	public Message getLastMessage( final Message cause )
 	{
 		if (cause instanceof ChannelEvent)
 			return getLastMessage(((ChannelEvent)cause).getChannel(), cause);
@@ -272,7 +286,7 @@ public final class HistoryModule
 	 * @param channel The channel to read
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public Message getLastMessage( String channel )
+	public Message getLastMessage( final String channel )
 	{
 		return getLastMessage(channel, null);
 	}
@@ -283,9 +297,9 @@ public final class HistoryModule
 	 * @param cause The "cause" - only messages that occurred before this are processed
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public Message getLastMessage( String channel, Message cause )
+	public Message getLastMessage( final String channel, final Message cause )
 	{
-		List<Message> ret = getLastMessages(channel, cause, 1);
+		final List<Message> ret = getLastMessages(channel, cause, 1);
 		if (ret.size() == 1)
 			return ret.get(0);
 		else
@@ -298,7 +312,7 @@ public final class HistoryModule
 	 * @param count The maximal number of messages to return.
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public List<Message> getLastMessages( String channel, int count )
+	public List<Message> getLastMessages( final String channel, final int count )
 	{
 		return getLastMessages(channel, null, count);
 	}
@@ -309,7 +323,7 @@ public final class HistoryModule
 	 * @param count The maximal number of messages to return.
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public List<Message> getLastMessages( Message cause, int count )
+	public List<Message> getLastMessages( final Message cause, final int count )
 	{
 		if (cause instanceof ChannelEvent)
 			return getLastMessages(((ChannelEvent)cause).getChannel(), cause, count);
@@ -323,7 +337,7 @@ public final class HistoryModule
 	 * @param count The maximal number of messages to return.
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public List<Message> getLastMessages( final String channel, Message cause, int count )
+	public List<Message> getLastMessages( final String channel, final Message cause, final int count )
 	{
 		Connection dbCon = null;
 		PreparedStatement stat = null;
@@ -338,14 +352,14 @@ public final class HistoryModule
 
 			final ResultSet result = stat.executeQuery();
 
-			List<Message> results = new ArrayList<Message>(count);
+			final List<Message> results = new ArrayList<Message>(count);
 
 			if ( result.first() )
 			{
 				do
 				{
 					final String type = result.getString(2);
-					int pos = result.getString(4).indexOf('@');
+					final int pos = result.getString(4).indexOf('@');
 					final String login = result.getString(4).substring(0,pos);
 					final String host = result.getString(4).substring(pos+1);
 
@@ -363,7 +377,7 @@ public final class HistoryModule
 							}
 						});
 					}
-					catch (PrivilegedActionException e)
+					catch (final PrivilegedActionException e)
 					{
 						throw (SQLException)e.getCause();
 						// Is an SQL exception...
@@ -388,7 +402,7 @@ public final class HistoryModule
 			}
 			return results;
 		}
-		catch( SQLException e )
+		catch( final SQLException e )
 		{
 			System.err.println("Could not read history line from database: " + e);
 			throw new ChoobError("SQL Error reading from database.");
@@ -400,7 +414,7 @@ public final class HistoryModule
 				if (stat != null)
 					stat.close();
 			}
-			catch (SQLException e)
+			catch (final SQLException e)
 			{
 				System.err.println("Could not read history line from database: " + e);
 				throw new ChoobError("SQL Error reading from database.");

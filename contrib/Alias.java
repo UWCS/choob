@@ -4,12 +4,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.ChoobBadSyntaxError;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.IRCEvent;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.PrivateEvent;
 
 class AliasObject
 {
-	public AliasObject(String name, String converted, String owner)
+	public AliasObject(final String name, final String converted, final String owner)
 	{
 		this.name = name;
 		this.converted = converted;
@@ -17,7 +22,7 @@ class AliasObject
 		this.locked = false;
 		this.id = 0;
 	}
-	public AliasObject() 
+	public AliasObject()
 	{
 		// Unhide
 	}
@@ -42,9 +47,9 @@ public class Alias
 		};
 	}
 
-	private Modules mods;
-	private IRCInterface irc;
-	public Alias(Modules mods, IRCInterface irc)
+	private final Modules mods;
+	private final IRCInterface irc;
+	public Alias(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -72,15 +77,15 @@ public class Alias
 		"<Name> is the name of the alias to show/add",
 		"<Alias> is the alias content. See Alias.Syntax"
 	};
-	public void commandAlias( Message mes )
+	public void commandAlias( final Message mes )
 	{
 		String[] params = mods.util.getParamArray(mes, 2);
 
 		if (params.length == 2)
 		{
-			String name = params[1];
+			final String name = params[1];
 
-			AliasObject alias = getAlias(name);
+			final AliasObject alias = getAlias(name);
 
 			if (alias == null)
 				irc.sendContextReply(mes, "Alias not found.");
@@ -95,7 +100,7 @@ public class Alias
 			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params[1];
+		final String name = params[1];
 		String conv = params[2];
 
 		// Validate name against unprintable characters.
@@ -128,11 +133,11 @@ public class Alias
 
 
 		// It doesn't have a dot in it, or (it has a space in it, and the dot is after the space).
-		if (conv.indexOf('.') == -1 || (conv.indexOf(' ') != -1 && conv.indexOf(' ') < conv.indexOf('.')))
+		if (conv.indexOf('.') == -1 || conv.indexOf(' ') != -1 && conv.indexOf(' ') < conv.indexOf('.'))
 		{
 			// Alias recursion?
 
-			AliasObject alias = getAlias(subAlias);
+			final AliasObject alias = getAlias(subAlias);
 
 			if (alias == null)
 			{
@@ -142,11 +147,11 @@ public class Alias
 
 			// Rebuild params with no upper limit.
 			params = mods.util.getParamArray(mes);
-			String[] aliasParams = new String[params.length - 2];
+			final String[] aliasParams = new String[params.length - 2];
 			for(int i=2; i<params.length; i++)
 				aliasParams[i-2] = params[i];
 
-			String newText = applyAlias(subAlias, alias.converted, aliasParams, actualParams, mes);
+			final String newText = applyAlias(subAlias, alias.converted, aliasParams, actualParams, mes);
 			if (newText == null)
 			{
 				irc.sendContextReply(mes, "Sorry, you tried to use a recursive alias to '" + subAlias + "' - but the alias text ('" + alias.converted + "') is invalid!");
@@ -161,7 +166,7 @@ public class Alias
 			return;
 		}
 
-		AliasObject alias = getAlias(name);
+		final AliasObject alias = getAlias(name);
 
 		String nick = mods.security.getUserAuthName(mes.getNick());
 		nick = mods.security.getRootUser(nick);
@@ -198,21 +203,21 @@ public class Alias
 		"<Command> is the name of the command",
 		"<Alias> is the name of the alias"
 	};
-	public void commandSetCoreAlias(Message mes) {
-		String[] params = mods.util.getParamArray(mes);
+	public void commandSetCoreAlias(final Message mes) {
+		final String[] params = mods.util.getParamArray(mes);
 
 		if (params.length != 3)
 		{
 			throw new ChoobBadSyntaxError();
 		}
 
-		String command = params[1];
-		String aliasName = params[2];
+		final String command = params[1];
+		final String aliasName = params[2];
 
 		mods.security.checkNickPerm(new ChoobPermission("plugin.alias.setcore"), mes);
 
 		// Sanity check
-		AliasObject alias = getAlias(aliasName);
+		final AliasObject alias = getAlias(aliasName);
 		if (alias == null)
 		{
 			irc.sendContextReply(mes, "Alias " + aliasName + " does not exist!");
@@ -241,20 +246,20 @@ public class Alias
 		"<Param> is a parameter from the syntax",
 		"<Description> is the description of that parameter"
 	};
-	public void commandAddHelp(Message mes) {
-		String[] params = mods.util.getParamArray(mes, 2);
+	public void commandAddHelp(final Message mes) {
+		final String[] params = mods.util.getParamArray(mes, 2);
 
 		if (params.length <= 2)
 		{
 			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params[1];
+		final String name = params[1];
 
 		// TODO - check help.
-		String[] help = params[2].split("\\s*\\|\\|\\|\\s*");
+		final String[] help = params[2].split("\\s*\\|\\|\\|\\s*");
 
-		AliasObject alias = getAlias(name);
+		final AliasObject alias = getAlias(name);
 
 		String nick = mods.security.getUserAuthName(mes.getNick());
 		nick = mods.security.getRootUser(nick);
@@ -290,15 +295,15 @@ public class Alias
 		"<Name>",
 		"<Name> is the name of the alias to alter"
 	};
-	public void commandRemoveHelp(Message mes) {
-		String[] params = mods.util.getParamArray(mes);
+	public void commandRemoveHelp(final Message mes) {
+		final String[] params = mods.util.getParamArray(mes);
 
 		if (params.length != 2)
 		{
 			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params[1];
+		final String name = params[1];
 
 		if (name.equals(""))
 		{
@@ -306,7 +311,7 @@ public class Alias
 			return;
 		}
 
-		AliasObject alias = getAlias(name);
+		final AliasObject alias = getAlias(name);
 
 		String nick = mods.security.getUserAuthName(mes.getNick());
 		nick = mods.security.getRootUser(nick);
@@ -341,24 +346,24 @@ public class Alias
 		"<Name>",
 		"<Name> is the name of the alias to remove",
 	};
-	public void commandRemove( Message mes )
+	public void commandRemove( final Message mes )
 	{
-		String[] params = mods.util.getParamArray(mes);
+		final String[] params = mods.util.getParamArray(mes);
 
 		if (params.length != 2)
 		{
 			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params[1];
+		final String name = params[1];
 
-		AliasObject alias = getAlias(name);
+		final AliasObject alias = getAlias(name);
 
 		String nick = mods.security.getUserAuthName(mes.getNick());
 		nick = mods.security.getRootUser(nick);
 		if (nick == null)
 			nick = mods.security.getUserAuthName(mes.getNick());
-		
+
 
 		if (alias != null)
 		{
@@ -383,9 +388,9 @@ public class Alias
 		"[<Which>]",
 		"<Which> is either 'locked', or 'unlocked' or 'all' (default: 'locked')"
 	};
-	public void commandList( Message mes )
+	public void commandList( final Message mes )
 	{
-		String params[] = mods.util.getParamArray(mes);
+		final String params[] = mods.util.getParamArray(mes);
 
 		String clause = "locked = 1";
 		if (params.length > 2)
@@ -402,7 +407,7 @@ public class Alias
 				throw new ChoobBadSyntaxError();
 		}
 
-		List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE " + clause );
+		final List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE " + clause );
 
 		if (results.size() == 0)
 			irc.sendContextReply(mes, "No aliases.");
@@ -429,35 +434,35 @@ public class Alias
 		}
 	}
 
-	public String apiGet( String name )
+	public String apiGet( final String name )
 	{
 		if (name == null)
 			return null;
 
-		AliasObject alias = getAlias(name);
+		final AliasObject alias = getAlias(name);
 
 		if (alias == null)
 			return null;
 		return alias.converted;
 	}
 
-	public String[] apiGetHelp( String name )
+	public String[] apiGetHelp( final String name )
 	{
 		if (name == null)
 			return null;
 
-		AliasObject alias = getAlias(name);
+		final AliasObject alias = getAlias(name);
 
 		if (alias == null || alias.help == null)
 			return null;
 		return alias.help.split("\\s*\\|\\|\\|\\s*");
 	}
 
-	public String apiGetCoreAlias( String name )
+	public String apiGetCoreAlias( final String name )
 	{
-		String command = name.toLowerCase();
+		final String command = name.toLowerCase();
 
-		List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE core = \"" + mods.odb.escapeString(command) + "\"" );
+		final List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE core = \"" + mods.odb.escapeString(command) + "\"" );
 
 		if (results.size() == 0)
 			return name;
@@ -469,18 +474,18 @@ public class Alias
 		"<Name>",
 		"<Name> is the name of the alias to lock"
 	};
-	public void commandLock( Message mes )
+	public void commandLock( final Message mes )
 	{
-		String[] params = mods.util.getParamArray(mes);
+		final String[] params = mods.util.getParamArray(mes);
 
 		if (params.length != 2)
 		{
 			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params[1];
+		final String name = params[1];
 
-		AliasObject alias = getAlias(name);
+		final AliasObject alias = getAlias(name);
 
 		if (alias != null)
 		{
@@ -512,18 +517,18 @@ public class Alias
 		"<Name>",
 		"<Name> is the name of the alias to unlock"
 	};
-	public void commandUnlock( Message mes )
+	public void commandUnlock( final Message mes )
 	{
-		String[] params = mods.util.getParamArray(mes);
+		final String[] params = mods.util.getParamArray(mes);
 
 		if (params.length != 2)
 		{
 			throw new ChoobBadSyntaxError();
 		}
 
-		String name = params[1];
+		final String name = params[1];
 
-		AliasObject alias = getAlias(name);
+		final AliasObject alias = getAlias(name);
 
 		if (alias != null)
 		{
@@ -547,11 +552,11 @@ public class Alias
 		}
 	}
 
-	private AliasObject getAlias( String name )
+	private AliasObject getAlias( final String name )
 	{
-		String alias = mods.odb.escapeString(name).toLowerCase();
+		final String alias = mods.odb.escapeString(name).toLowerCase();
 
-		List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE name = \"" + alias + "\"" );
+		final List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE name = \"" + alias + "\"" );
 
 		if (results.size() == 0)
 			return null;
@@ -562,9 +567,9 @@ public class Alias
 	public String filterTriggerRegex = "";
 	public void filterTrigger( Message mes )
 	{
-		String text = mes.getMessage();
+		final String text = mes.getMessage();
 
-		Matcher matcher = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE).matcher(text);
+		final Matcher matcher = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE).matcher(text);
 		int offset = 0;
 
 		// Make sure this is actually a command...
@@ -577,7 +582,7 @@ public class Alias
 			return;
 		}
 
-		int dotIndex = text.indexOf('.', offset);
+		final int dotIndex = text.indexOf('.', offset);
 
 		int cmdEnd = text.indexOf(' ', offset) + 1;
 		if (cmdEnd == 0)
@@ -598,14 +603,14 @@ public class Alias
 		}
 		cmdParams = text.substring(cmdEnd);
 
-		String aliasName = text.substring(offset, cmdEnd);
+		final String aliasName = text.substring(offset, cmdEnd);
 
 		if (aliasName.equals(""))
 		{
 			return;
 		}
 
-		AliasObject alias = getAlias( aliasName );
+		final AliasObject alias = getAlias( aliasName );
 
 		if (alias == null)
 		{
@@ -623,10 +628,10 @@ public class Alias
 			irc.sendContextReply(mes, "Alias command recursion detected (" + alias.name + "). Stopping.");
 			return;
 		}
-		
+
 		try
 		{
-			int ret = ((Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), Integer.valueOf(1500), Integer.valueOf(4))).intValue();
+			final int ret = ((Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), Integer.valueOf(1500), Integer.valueOf(4))).intValue();
 			if (ret != 0)
 			{
 				if (ret == 1)
@@ -634,22 +639,22 @@ public class Alias
 				return;
 			}
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			// ignore
-		} 
-		catch (Throwable e)
+		}
+		catch (final Throwable e)
 		{
 			System.err.println("Couldn't do antiflood call: " + e);
 		}
 
 		if (mesFlags.containsKey("_securityOK"))
-			securityOK = (mesFlags.get("_securityOK").equals("true"));
+			securityOK = mesFlags.get("_securityOK").equals("true");
 
-		String aliasText = alias.converted;
+		final String aliasText = alias.converted;
 
 		String[] params = new String[0];
-		List<String> paramList = mods.util.getParams(mes);
+		final List<String> paramList = mods.util.getParams(mes);
 		params = paramList.toArray(params);
 
 		String newText = applyAlias(aliasName, aliasText, params, cmdParams, mes);
@@ -661,13 +666,13 @@ public class Alias
 		}
 
 		// Extract command name etc. We know they're non-null.
-		int dotPos = newText.indexOf('.');
+		final int dotPos = newText.indexOf('.');
 		int spacePos = newText.indexOf(' ');
 		if (spacePos == -1)
 			spacePos = newText.length();
 
-		String pluginName = newText.substring(0, dotPos);
-		String commandName = newText.substring(dotPos + 1, spacePos);
+		final String pluginName = newText.substring(0, dotPos);
+		final String commandName = newText.substring(dotPos + 1, spacePos);
 
 		newText = pluginName + "." + commandName + newText.substring(spacePos);
 
@@ -691,13 +696,13 @@ public class Alias
 		{
 			mods.plugin.queueCommand( pluginName, commandName, mes );
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			irc.sendContextReply(mes, "Sorry, that command is an alias ('" + alias.converted + "', made by '" + alias.owner + "') that points to an invalid command!");
 		}
 	}
 
-	private String applyAlias(String name, String alias, String[] params, String origParams, Message mes)
+	private String applyAlias(final String name, final String alias, final String[] params, final String origParams, final Message mes)
 	{
 		// Make sure command name is valid...
 		final Pattern validconv=Pattern.compile("^[a-zA-Z0-9]+\\.[a-zA-Z0-9]+.*");
@@ -712,10 +717,10 @@ public class Alias
 		}
 
 		// Advanced syntax
-		StringBuilder newCom = new StringBuilder();
+		final StringBuilder newCom = new StringBuilder();
 
 		int pos = alias.indexOf('$'), oldPos = 0;
-		int convEnd = alias.length() - 1;
+		final int convEnd = alias.length() - 1;
 		int curlyLevel = 0;
 		while (pos != -1 && pos <= convEnd)
 		{
@@ -741,7 +746,7 @@ public class Alias
 						continue;
 
 					// else block
-					int newPos = alias.indexOf('}', pos);
+					final int newPos = alias.indexOf('}', pos);
 					if (newPos == -1)
 						continue;
 
@@ -753,7 +758,7 @@ public class Alias
 				if (pos == convEnd)
 					break;
 
-				char next = alias.charAt(pos + 1);
+				final char next = alias.charAt(pos + 1);
 				if (next == '$')
 				{
 					newCom.append("$");
@@ -781,7 +786,7 @@ public class Alias
 					{
 						if (end > convEnd)
 							break;
-						char test = alias.charAt(end);
+						final char test = alias.charAt(end);
 						if (test < '0' || test > '9')
 							break;
 						// Another number!
@@ -792,7 +797,7 @@ public class Alias
 					{
 						paramNo = Integer.parseInt(alias.substring(pos + 1, end));
 					}
-					catch (NumberFormatException e)
+					catch (final NumberFormatException e)
 					{
 						// LIES!
 					}
@@ -832,7 +837,7 @@ public class Alias
 						continue;
 					}
 
-					int paramNo = Integer.parseInt(alias.substring(pos + 2, newPos));
+					final int paramNo = Integer.parseInt(alias.substring(pos + 2, newPos));
 
 					newPos++;
 					if (paramNo < params.length)
@@ -905,7 +910,7 @@ public class Alias
 								{
 									paramNo = Integer.parseInt(alias.substring(newPos, end));
 								}
-								catch (NumberFormatException e)
+								catch (final NumberFormatException e)
 								{
 									// LIES!
 								}
@@ -952,7 +957,7 @@ public class Alias
 						}
 						else
 						{
-							int direction = lastParam > firstParam ? 1 : -1;
+							final int direction = lastParam > firstParam ? 1 : -1;
 							lastParam += direction; // For simpler termination of loop.
 							for(int i = firstParam; i != lastParam; i += direction)
 							{
@@ -995,8 +1000,8 @@ public class Alias
 			finally
 			{
 				oldPos = pos;
-				int pos1 = alias.indexOf('$', pos);
-				int pos2 = alias.indexOf('}', pos);
+				final int pos1 = alias.indexOf('$', pos);
+				final int pos2 = alias.indexOf('}', pos);
 				if (pos1 == -1)
 					pos = pos2;
 				else if (pos2 == -1)

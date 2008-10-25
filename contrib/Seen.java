@@ -53,7 +53,7 @@ public class Seen
 
 	long lockedUntil;
 
-	public Seen(Modules mods, IRCInterface irc)
+	public Seen(final Modules mods, final IRCInterface irc)
 	{
 		this.irc = irc;
 		this.mods = mods;
@@ -72,16 +72,16 @@ public class Seen
 		"<Name>",
 		"<Name> is the user to look for."
 	};
-	public void commandSeen( Message mes )
+	public void commandSeen( final Message mes )
 	{
-		if (lockedUntil>(new GregorianCalendar()).getTimeInMillis())
+		if (lockedUntil>new GregorianCalendar().getTimeInMillis())
 		{
 			irc.sendContextReply(mes, "An sql exception occoured sometime, Seen offline for a few minutes.");
 			return;
 		}
-		String nick = mods.nick.getBestPrimaryNick(mods.util.getParamString( mes ));
+		final String nick = mods.nick.getBestPrimaryNick(mods.util.getParamString( mes ));
 
-		SeenObj seen = getSeen( nick, false );
+		final SeenObj seen = getSeen( nick, false );
 		if (seen == null)
 		{
 			if (nick.toLowerCase().equals(mods.nick.getBestPrimaryNick(mes.getNick()).toLowerCase()))
@@ -97,8 +97,8 @@ public class Seen
 		if (seen.primaryTime > 0)
 		{
 			// Have spoken
-			String primaryTime = (new Date(seen.primaryTime)).toString();
-			String secondaryTime = (new Date(seen.secondaryTime)).toString();
+			final String primaryTime = new Date(seen.primaryTime).toString();
+			final String secondaryTime = new Date(seen.secondaryTime).toString();
 			switch(seen.secondaryType)
 			{
 				case 0:
@@ -126,7 +126,7 @@ public class Seen
 		else
 		{
 			// Haven't spoken
-			String secondaryTime = (new Date(seen.secondaryTime)).toString();
+			final String secondaryTime = new Date(seen.secondaryTime).toString();
 			switch(seen.secondaryType)
 			{
 				case 0:
@@ -154,21 +154,21 @@ public class Seen
 		}
 	}
 
-	private SeenObj getSeen(String nick, boolean create) // throws ChoobException
+	private SeenObj getSeen(final String nick, final boolean create) // throws ChoobException
 	{
-		if (lockedUntil>(new GregorianCalendar()).getTimeInMillis())
+		if (lockedUntil>new GregorianCalendar().getTimeInMillis())
 			return new SeenObj();
 
-		String sortNick = mods.nick.getBestPrimaryNick(nick).replaceAll("(\\W)", "\\\\$1");
+		final String sortNick = mods.nick.getBestPrimaryNick(nick).replaceAll("(\\W)", "\\\\$1");
 
 		List<SeenObj> objs;
 		try
 		{
 			objs=mods.odb.retrieve( SeenObj.class, "WHERE name = \"" + mods.odb.escapeString(sortNick) + "\"" );
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
-			lockedUntil=(new GregorianCalendar()).getTimeInMillis()+(2*60*1000);
+			lockedUntil=new GregorianCalendar().getTimeInMillis()+2*60*1000;
 			System.err.println("Seen suppressed error:");
 			e.printStackTrace();
 			objs=new ArrayList<SeenObj>();
@@ -178,7 +178,7 @@ public class Seen
 		{
 			if ( create )
 			{
-				SeenObj seen = new SeenObj();
+				final SeenObj seen = new SeenObj();
 				seen.name = sortNick;
 				seen.primaryMessage = "";
 				seen.primaryChannel = "";
@@ -187,14 +187,14 @@ public class Seen
 			}
 			return null;
 		}
-		SeenObj seen = objs.get(0);
+		final SeenObj seen = objs.get(0);
 		seen.name = sortNick; // To stop nasty errors...
 		return seen;
 	}
 
-	private void saveSeen(SeenObj seen)
+	private void saveSeen(final SeenObj seen)
 	{
-		if (lockedUntil>(new GregorianCalendar()).getTimeInMillis())
+		if (lockedUntil>new GregorianCalendar().getTimeInMillis())
 			return;
 
 		try
@@ -207,9 +207,9 @@ public class Seen
 					mods.odb.update(seen);
 				}
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
-			lockedUntil=(new GregorianCalendar()).getTimeInMillis()+(2*60*1000);
+			lockedUntil=new GregorianCalendar().getTimeInMillis()+2*60*1000;
 			System.err.println("Seen suppressed error:");
 			e.printStackTrace();
 		}
@@ -217,21 +217,21 @@ public class Seen
 
 	// Expire old checks when appropriate...
 
-	public void onMessage( ChannelMessage mes )
+	public void onMessage( final ChannelMessage mes )
 	{
 		// If the event has been faked, don't count it!
 		if (mes.getSynthLevel() > 0)
 			return;
-		
+
 		// Oh! Oh! Ooooh! Can't you *feel* the hacks?
 		try {
 			Thread.sleep(1000);
-		} catch(InterruptedException e) 
+		} catch(final InterruptedException e)
 		{
 			// It was a hack anyway, who cares?
 		}
-		
-		SeenObj seen = getSeen( mes.getNick(), true );
+
+		final SeenObj seen = getSeen( mes.getNick(), true );
 		seen.nick = mes.getNick();
 		seen.primaryTime = System.currentTimeMillis();
 		seen.primaryMessage = mes.getMessage();
@@ -241,17 +241,17 @@ public class Seen
 		saveSeen (seen);
 	}
 
-	public void onAction( ChannelAction mes )
+	public void onAction( final ChannelAction mes )
 	{
 		// Oh! Oh! Ooooh! Can't you *feel* the hacks?
 		try {
 			Thread.sleep(1000);
-		} catch(InterruptedException e)
+		} catch(final InterruptedException e)
 		{
 			// It was a hack anyway, who cares?
 		}
-		
-		SeenObj seen = getSeen( mes.getNick(), true );
+
+		final SeenObj seen = getSeen( mes.getNick(), true );
 		seen.nick = mes.getNick();
 		seen.primaryTime = System.currentTimeMillis();
 		seen.primaryMessage = "/me " + mes.getMessage();
@@ -261,9 +261,9 @@ public class Seen
 		saveSeen (seen);
 	}
 
-	public void onNickChange( NickChange nc )
+	public void onNickChange( final NickChange nc )
 	{
-		SeenObj seen = getSeen( nc.getNick(), true );
+		final SeenObj seen = getSeen( nc.getNick(), true );
 		seen.nick = nc.getNick();
 		seen.secondaryTime = System.currentTimeMillis();
 		seen.secondaryData = nc.getNewNick();
@@ -271,9 +271,9 @@ public class Seen
 		saveSeen (seen);
 	}
 
-	public void onKick( ChannelKick ck )
+	public void onKick( final ChannelKick ck )
 	{
-		SeenObj seen = getSeen( ck.getTarget(), true );
+		final SeenObj seen = getSeen( ck.getTarget(), true );
 		seen.nick = ck.getTarget();
 		seen.secondaryTime = System.currentTimeMillis();
 		seen.secondaryData = ck.getChannel() + " with message \"" + ck.getMessage() + "\"";
@@ -281,9 +281,9 @@ public class Seen
 		saveSeen (seen);
 	}
 
-	public void onPart( ChannelPart cp )
+	public void onPart( final ChannelPart cp )
 	{
-		SeenObj seen = getSeen( cp.getNick(), true );
+		final SeenObj seen = getSeen( cp.getNick(), true );
 		seen.nick = cp.getNick();
 		seen.secondaryTime = System.currentTimeMillis();
 		seen.secondaryData = cp.getChannel();
@@ -291,9 +291,9 @@ public class Seen
 		saveSeen (seen);
 	}
 
-	public void onQuit( QuitEvent qe )
+	public void onQuit( final QuitEvent qe )
 	{
-		SeenObj seen = getSeen( qe.getNick(), true );
+		final SeenObj seen = getSeen( qe.getNick(), true );
 		seen.nick = qe.getNick();
 		seen.secondaryTime = System.currentTimeMillis();
 		seen.secondaryData = qe.getMessage();

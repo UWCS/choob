@@ -2,7 +2,14 @@ package uk.co.uwcs.choob;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobPermission;
@@ -14,12 +21,12 @@ import uk.co.uwcs.choob.support.ChoobPermission;
 
 public final class ChoobThreadManager extends ThreadPoolExecutor {
 	private static ChoobThreadManager exe;
-	private Modules mods;
-	private long pwoSetupTime;
-	private Map<String,PluginWaitObject> waitObjects;
+	private final Modules mods;
+	private final long pwoSetupTime;
+	private final Map<String,PluginWaitObject> waitObjects;
 	//private Map<ChoobTask,String> runningTasks;
-	private Map<String,BlockingQueue<ChoobTask>> queues;
-	
+	private final Map<String,BlockingQueue<ChoobTask>> queues;
+
 	// Time during which the PluginWaitObjects are expired immediately. After
 	// this time, they only expire after PLUGIN_WAIT_OBJECT_EXIRES time.
 	private static final long PLUGIN_WAIT_OBJECT_SETUP_TIME =  1 * 60 * 1000; //  1 minute
@@ -30,8 +37,8 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		public int limit;
 		public Semaphore sem;
 		public long expires;
-		
-		public PluginWaitObject(int limit)
+
+		public PluginWaitObject(final int limit)
 		{
 			this.limit = limit;
 			this.sem = new Semaphore(limit);
@@ -39,13 +46,13 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		}
 	}
 
-	private ChoobThreadManager(Modules mods)
+	private ChoobThreadManager(final Modules mods)
 	{
 		super(5, 20, 60l, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 		setThreadFactory( new ThreadFactory() {
 			int count = 0;
-			public Thread newThread(Runnable r) {
-				ChoobThread thread = new ChoobThread(r, "choob-" + ++count);
+			public Thread newThread(final Runnable r) {
+				final ChoobThread thread = new ChoobThread(r, "choob-" + ++count);
 				return thread;
 			}
 		});
@@ -56,12 +63,13 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		this.queues = new HashMap<String,BlockingQueue<ChoobTask>>();
 	}
 
-	protected void afterExecute(Runnable runTask, Throwable thrown)
+	@Override
+	protected void afterExecute(final Runnable runTask, final Throwable thrown)
 	{
 		super.afterExecute(runTask, thrown);
 
-		ChoobTask task = (ChoobTask) runTask;
-		String pluginName = task.getPluginName();
+		final ChoobTask task = (ChoobTask) runTask;
+		final String pluginName = task.getPluginName();
 
 		//synchronized(runningTasks) {
 		//	runningTasks.remove(task);
@@ -74,8 +82,8 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		ChoobThread.clearPluginsStatic(); // Make sure stack is clean
 
 		// Before we finish up, do we have more for this plugin?
-		BlockingQueue<ChoobTask> queue = getQueue(pluginName);
-		ChoobTask next = queue.poll();
+		final BlockingQueue<ChoobTask> queue = getQueue(pluginName);
+		final ChoobTask next = queue.poll();
 		if (next != null)
 		{
 			// If so, just queue that. Don't relinquish the semaphore.
@@ -86,14 +94,14 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 			synchronized(waitObjects)
 			{
 				// If not, let someone else have a chance.
-				PluginWaitObject waitObject = getWaitObject(pluginName);
-				
+				final PluginWaitObject waitObject = getWaitObject(pluginName);
+
 				waitObject.sem.release();
-				
+
 				// Remove the wait object, if we're not using it.
-				if ((waitObject.sem.availablePermits() == waitObject.limit) &&
-					((waitObject.expires < System.currentTimeMillis()) ||
-					 (this.pwoSetupTime > System.currentTimeMillis())))
+				if (waitObject.sem.availablePermits() == waitObject.limit &&
+					(waitObject.expires < System.currentTimeMillis() ||
+					 this.pwoSetupTime > System.currentTimeMillis()))
 				{
 					waitObjects.remove(pluginName.toLowerCase());
 				}
@@ -101,10 +109,11 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		}
 	}
 
-	protected void beforeExecute(Thread thread, Runnable task)
+	@Override
+	protected void beforeExecute(final Thread thread, final Runnable task)
 	{
 		// Queue the plugin up onto the stack
-		String pluginName = ((ChoobTask)task).getPluginName();
+		final String pluginName = ((ChoobTask)task).getPluginName();
 
 		//synchronized(runningTasks) {
 		//	String sf = ((ChoobTask)task).getSystemFunction();
@@ -118,13 +127,13 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		((ChoobThread)thread).pushPlugin(pluginName);
 	}
 
-	static void initialise(Modules mods)
+	static void initialise(final Modules mods)
 	{
 		if (exe == null)
 			exe = new ChoobThreadManager(mods);
 	}
 
-	private PluginWaitObject getWaitObject(String pluginName)
+	private PluginWaitObject getWaitObject(final String pluginName)
 	{
 		// This needs synchronization.
 		synchronized(waitObjects)
@@ -132,7 +141,7 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 			PluginWaitObject ret = waitObjects.get(pluginName.toLowerCase());
 			if (ret == null)
 			{
-				int limit = mods.plugin.getConcurrencyLimit(pluginName);
+				final int limit = mods.plugin.getConcurrencyLimit(pluginName);
 				ret = new PluginWaitObject(limit);
 				waitObjects.put(pluginName.toLowerCase(), ret);
 			}
@@ -141,7 +150,7 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 	}
 
 	// This needs synchronization.
-	private synchronized BlockingQueue<ChoobTask> getQueue(String pluginName)
+	private synchronized BlockingQueue<ChoobTask> getQueue(final String pluginName)
 	{
 		BlockingQueue<ChoobTask> ret = queues.get(pluginName.toLowerCase());
 		if (ret == null)
@@ -154,13 +163,13 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		return ret;
 	}
 
-	public static void queueTask(ChoobTask task) throws RejectedExecutionException
+	public static void queueTask(final ChoobTask task) throws RejectedExecutionException
 	{
 		java.security.AccessController.checkPermission(new ChoobPermission("task.queue"));
 		exe.queue(task);
 	}
 
-	private void queue(ChoobTask task) throws RejectedExecutionException
+	private void queue(final ChoobTask task) throws RejectedExecutionException
 	{
 		//synchronized(runningTasks) {
 		//	System.out.print("ChoobThreadManager.beforeExecute: pool usage = " + getActiveCount() + "/" + getPoolSize());
@@ -169,19 +178,19 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		//	}
 		//	System.out.println();
 		//}
-		
-		String pluginName = task.getPluginName();
+
+		final String pluginName = task.getPluginName();
 		if (pluginName == null)
 		{
 			// system task!
 			execute(task);
 			return;
 		}
-		
+
 		boolean acquireOK = false;
 		synchronized(waitObjects)
 		{
-			PluginWaitObject waitObject = getWaitObject(pluginName);
+			final PluginWaitObject waitObject = getWaitObject(pluginName);
 			acquireOK = waitObject.sem.tryAcquire();
 		}
 		if (acquireOK)
@@ -191,7 +200,7 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		else
 		{
 			// Couldn't get the semaphore lock...
-			BlockingQueue<ChoobTask> queue = getQueue(pluginName);
+			final BlockingQueue<ChoobTask> queue = getQueue(pluginName);
 
 			// Attempt to queue it for later.
 			if (!queue.offer(task))

@@ -11,6 +11,7 @@ public class PrivateAction extends Message implements PrivateEvent, ActionEvent,
 	 * Get the reply context in which this event resides
 	 * @return The context
 	 */
+	@Override
 	public String getContext() {
 		return getNick();
 	}
@@ -19,7 +20,7 @@ public class PrivateAction extends Message implements PrivateEvent, ActionEvent,
 	/**
 	 * Construct a new PrivateAction.
 	 */
-	public PrivateAction(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
+	public PrivateAction(final String methodName, final long millis, final int random, final String message, final String nick, final String login, final String hostname, final String target)
 	{
 		super(methodName, millis, random, message, nick, login, hostname, target);
 	}
@@ -27,7 +28,7 @@ public class PrivateAction extends Message implements PrivateEvent, ActionEvent,
 	/**
 	 * Synthesize a new PrivateAction from an old one.
 	 */
-	public PrivateAction(PrivateAction old, String message)
+	public PrivateAction(final PrivateAction old, final String message)
 	{
 		super(old, message);
 	}
@@ -36,12 +37,14 @@ public class PrivateAction extends Message implements PrivateEvent, ActionEvent,
 	 * Synthesize a new PrivateAction from this one.
 	 * @return The new PrivateAction object.
 	 */
-	public Event cloneEvent(String message)
+	@Override
+	public Event cloneEvent(final String message)
 	{
 		return new PrivateAction(this, message);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof PrivateAction))
 			return false;
@@ -50,9 +53,10 @@ public class PrivateAction extends Message implements PrivateEvent, ActionEvent,
 			return true;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("PrivateAction(");
+		final StringBuffer out = new StringBuffer("PrivateAction(");
 		out.append(super.toString());
 		out.append(")");
 		return out.toString();

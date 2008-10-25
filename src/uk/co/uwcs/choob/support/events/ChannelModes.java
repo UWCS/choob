@@ -37,7 +37,7 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 	/**
 	 * Construct a new ChannelModes.
 	 */
-	public ChannelModes(String methodName, long millis, int random, String channel, String modes)
+	public ChannelModes(final String methodName, final long millis, final int random, final String channel, final String modes)
 	{
 		super(methodName, millis, random);
 		this.channel = channel;
@@ -47,7 +47,7 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 	/**
 	 * Synthesize a new ChannelModes from an old one.
 	 */
-	public ChannelModes(ChannelModes old)
+	public ChannelModes(final ChannelModes old)
 	{
 		super(old);
 		this.channel = old.channel;
@@ -58,26 +58,29 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 	 * Synthesize a new ChannelModes from this one.
 	 * @return The new ChannelModes object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new ChannelModes(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelModes))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		ChannelModes thing = (ChannelModes)obj;
+		final ChannelModes thing = (ChannelModes)obj;
 		if ( true && channel.equals(thing.channel) && modes.equals(thing.modes) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("ChannelModes(");
+		final StringBuffer out = new StringBuffer("ChannelModes(");
 		out.append(super.toString());
 		out.append(", channel = " + channel);
 		out.append(", modes = " + modes);

@@ -1,6 +1,4 @@
 
-import com.sun.jersey.api.container.httpserver.HttpServerFactory;
-import com.sun.net.httpserver.HttpServer;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -8,6 +6,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
@@ -15,10 +14,13 @@ import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
+import com.sun.jersey.api.container.httpserver.HttpServerFactory;
+import com.sun.net.httpserver.HttpServer;
+
 /**
  * Plugin to make choob functionality accessible over HTTP.
  * Uses Java's built in webserver and Jersey.
- * 
+ *
  * @author benji
  */
 public class Jersey
@@ -57,12 +59,12 @@ public class Jersey
 	{
 		this.mods = mods;
 		this.irc = irc;
-		for (File file : (new File("pluginData" + File.separator).listFiles()))
+		for (final File file : new File("pluginData" + File.separator).listFiles())
 		{
 			try
 			{
 				pluginURLs.add(file.toURI().toURL());
-			} catch (MalformedURLException ex)
+			} catch (final MalformedURLException ex)
 			{
 				throw new ChoobException("Unable to create URL for plugin location " + file);
 			}
@@ -75,7 +77,7 @@ public class Jersey
 		"Stop the HTTP Server."
 	};
 
-	public void commandStopServer(Message mes)
+	public void commandStopServer(final Message mes)
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.jersey.stopserver"), mes);
 		irc.sendContextReply(mes,"Requesting server stop...");
@@ -96,12 +98,12 @@ public class Jersey
 				})));
 			server = HttpServerFactory.create("http://localhost:" + portNumber + "/");
 			server.start();
-		} catch (IOException ex)
+		} catch (final IOException ex)
 		{
 			throw new ChoobException(ex.getMessage());
 		}
 	}
-	
+
 	private void updateOptions() throws ChoobException
 	{
 		try
@@ -114,19 +116,19 @@ public class Jersey
 			{
 				portOption = optionsGeneralDefaults[0];
 			}
-		} catch (ChoobNoSuchPluginException e)
+		} catch (final ChoobNoSuchPluginException e)
 		{
-		} catch (NumberFormatException e)
+		} catch (final NumberFormatException e)
 		{
 		}
 	}
-	
+
 	public String[] helpCommandStartServer =
 	{
 		"(Re)Start the HTTP Server, it is running by default after plugin load."
 	};
 
-	public void commandStartServer(Message mes) throws ChoobException
+	public void commandStartServer(final Message mes) throws ChoobException
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.jersey.startserver"), mes);
 		startServer();

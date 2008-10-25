@@ -1,9 +1,16 @@
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
 public class Plugin
@@ -18,24 +25,24 @@ public class Plugin
 		};
 	}
 
-	private Modules mods;
-	private IRCInterface irc;
-	public Plugin(Modules mods, IRCInterface irc)
+	private final Modules mods;
+	private final IRCInterface irc;
+	public Plugin(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
 	}
 
-	void loadOrReloadPlugin(Message mes, String pluginName, String url, boolean reloading)
+	void loadOrReloadPlugin(final Message mes, final String pluginName, final String url, final boolean reloading)
 	{
 		if (!reloading)
 			irc.sendContextReply(mes, "Loading plugin '" + pluginName + "'...");
 		else
 			irc.sendContextReply(mes, "Reloading plugin '" + pluginName + "'...");
-		
-		String actioning = (reloading ? "re" : "") + "loading";
-		String actioned  = (reloading ? "re" : "") + "loaded";
-		
+
+		final String actioning = (reloading ? "re" : "") + "loading";
+		final String actioned  = (reloading ? "re" : "") + "loaded";
+
 		try
 		{
 			if (!reloading)
@@ -49,22 +56,22 @@ public class Plugin
 			else
 				irc.sendContextReply(mes, "Plugin '" + pluginName + "' " + actioned + " OK, but has missing info.");
 		}
-		catch (ChoobNoSuchPluginException e)
+		catch (final ChoobNoSuchPluginException e)
 		{
 			if (!reloading)
 				irc.sendContextReply(mes, "Error " + actioning + " plugin '" + pluginName + "'; plugin not found.");
 			else
 				irc.sendContextReply(mes, "Never seen plugin '" + pluginName + "' before, cannot reload it.");
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			irc.sendContextReply(mes, "Plugin '" + pluginName + "' " + actioned + ", but doesn't have any info.");
 		}
-		catch (ClassCastException e)
+		catch (final ClassCastException e)
 		{
 			irc.sendContextReply(mes, "Plugin '" + pluginName + "' " + actioned + ", but has invalid info.");
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			irc.sendContextReply(mes, "Error " + actioning + " plugin '" + pluginName + "', see log for more details. " + e);
 			e.printStackTrace();
@@ -77,10 +84,10 @@ public class Plugin
 		"<Name> is an optional name for the plugin (if you don't give one, it'll be guessed from the URL)",
 		"<URL> is the URL from which to load the plugin"
 	};
-	public void commandLoad( Message mes )
+	public void commandLoad( final Message mes )
 	{
 		// First, do auth!
-		List<String> params = mods.util.getParams( mes );
+		final List<String> params = mods.util.getParams( mes );
 
 		String url="";
 		String classname="";
@@ -123,7 +130,7 @@ public class Plugin
 		{
 			mods.security.addGroup("plugin." + classname.toLowerCase());
 		}
-		catch (ChoobException e)
+		catch (final ChoobException e)
 		{
 			// TODO: Make a groupExists() or something so we don't need to squelch this
 		}
@@ -136,15 +143,15 @@ public class Plugin
 		"<Name>",
 		"<Name> is the name of the plugin"
 	};
-	public void commandReload(Message mes) {
-		List<String> params = mods.util.getParams(mes);
+	public void commandReload(final Message mes) {
+		final List<String> params = mods.util.getParams(mes);
 		if (params.size() == 1)
 		{
 			irc.sendContextReply(mes, "Syntax: 'Plugin.Reload " + helpCommandReload[1] + "'.");
 			return;
 		}
 
-		String pluginName = params.get(1);
+		final String pluginName = params.get(1);
 
 		mods.security.checkNickPerm(new ChoobPermission("plugin.load." + pluginName.toLowerCase()), mes);
 
@@ -156,22 +163,22 @@ public class Plugin
 		"<Name>",
 		"<Name> is the name of the plugin"
 	};
-	public void commandDetach(Message mes) {
-		List<String> params = mods.util.getParams(mes);
+	public void commandDetach(final Message mes) {
+		final List<String> params = mods.util.getParams(mes);
 		if (params.size() == 1)
 		{
 			irc.sendContextReply(mes, "Syntax: 'Plugin.Detach " + helpCommandDetach[1] + "'.");
 			return;
 		}
 
-		String pluginName = params.get(1);
+		final String pluginName = params.get(1);
 
 		mods.security.checkNickPerm(new ChoobPermission("plugin.unload." + pluginName.toLowerCase()), mes);
 
 		try {
 			mods.plugin.detachPlugin(pluginName);
 			irc.sendContextReply(mes, "Plugin detached OK! (It might still be running stuff, though.)");
-		} catch (ChoobNoSuchPluginException e) {
+		} catch (final ChoobNoSuchPluginException e) {
 			irc.sendContextReply(mes, "Plugin " + pluginName + " isn't loaded!");
 		}
 	}
@@ -181,22 +188,22 @@ public class Plugin
 		"<Name>",
 		"<Name> is the name of the plugin"
 	};
-	public void commandSetCore(Message mes) {
-		List<String> params = mods.util.getParams(mes);
+	public void commandSetCore(final Message mes) {
+		final List<String> params = mods.util.getParams(mes);
 		if (params.size() == 1)
 		{
 			irc.sendContextReply(mes, "Syntax: 'Plugin.SetCore " + helpCommandSetCore[1] + "'.");
 			return;
 		}
 
-		String pluginName = params.get(1);
+		final String pluginName = params.get(1);
 
 		mods.security.checkNickPerm(new ChoobPermission("plugin.core"), mes);
 
 		try {
 			mods.plugin.setCorePlugin(pluginName, true);
 			irc.sendContextReply(mes, "Plugin is now core!");
-		} catch (ChoobNoSuchPluginException e) {
+		} catch (final ChoobNoSuchPluginException e) {
 			irc.sendContextReply(mes, "Plugin " + pluginName + " doesn't exist!");
 		}
 	}
@@ -206,22 +213,22 @@ public class Plugin
 		"<Name>",
 		"<Name> is the name of the plugin"
 	};
-	public void commandUnsetCore(Message mes) {
-		List<String> params = mods.util.getParams(mes);
+	public void commandUnsetCore(final Message mes) {
+		final List<String> params = mods.util.getParams(mes);
 		if (params.size() == 1)
 		{
 			irc.sendContextReply(mes, "Syntax: 'Plugin.UnsetCore " + helpCommandUnsetCore[1] + "'.");
 			return;
 		}
 
-		String pluginName = params.get(1);
+		final String pluginName = params.get(1);
 
 		mods.security.checkNickPerm(new ChoobPermission("plugin.core"), mes);
 
 		try {
 			mods.plugin.setCorePlugin(pluginName, false);
 			irc.sendContextReply(mes, "Plugin is no longer core!");
-		} catch (ChoobNoSuchPluginException e) {
+		} catch (final ChoobNoSuchPluginException e) {
 			irc.sendContextReply(mes, "Plugin " + pluginName + " doesn't exist!");
 		}
 	}
@@ -229,18 +236,18 @@ public class Plugin
 	public String[] helpCommandList = {
 		"List all known plugins."
 	};
-	public void commandList(Message mes) {
+	public void commandList(final Message mes) {
 		// Get all plugins.
-		String[] plugins = mods.plugin.getLoadedPlugins();
+		final String[] plugins = mods.plugin.getLoadedPlugins();
 		Arrays.sort(plugins);
 
 		// Hash all core plugins.
-		String[] corePlugins = mods.plugin.getAllPlugins(true);
-		Set<String> coreSet = new HashSet<String>();
-		for(int i=0; i<corePlugins.length; i++)
-			coreSet.add(corePlugins[i].toLowerCase());
+		final String[] corePlugins = mods.plugin.getAllPlugins(true);
+		final Set<String> coreSet = new HashSet<String>();
+		for (final String corePlugin : corePlugins)
+			coreSet.add(corePlugin.toLowerCase());
 
-		StringBuilder buf = new StringBuilder();
+		final StringBuilder buf = new StringBuilder();
 		buf.append("Plugin list (core marked with *): ");
 		for(int i=0; i<plugins.length; i++)
 		{
@@ -257,7 +264,7 @@ public class Plugin
 		irc.sendContextReply(mes, buf.toString());
 	}
 
-	private String[] getInfo(String pluginName) throws ChoobNoSuchCallException, ClassCastException
+	private String[] getInfo(final String pluginName) throws ChoobNoSuchCallException, ClassCastException
 	{
 		return (String[])mods.plugin.callGeneric(pluginName, "Info", "");
 	}
@@ -267,27 +274,27 @@ public class Plugin
 		"<Plugin>",
 		"<Plugin> is the name of the plugin"
 	};
-	public void commandInfo(Message mes)
+	public void commandInfo(final Message mes)
 	{
-		List<String> params = mods.util.getParams(mes);
+		final List<String> params = mods.util.getParams(mes);
 		if (params.size() == 1)
 		{
 			irc.sendContextReply(mes, "Syntax: 'Plugin.Info " + helpCommandInfo[1] + "'.");
 			return;
 		}
 
-		String pluginName = params.get(1);
+		final String pluginName = params.get(1);
 		String[] info;
 		try
 		{
 			info = getInfo(pluginName);
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			irc.sendContextReply(mes, "Oi! Plugin " + pluginName + " isn't loaded. (Or has no info...)");
 			return;
 		}
-		catch (ClassCastException e)
+		catch (final ClassCastException e)
 		{
 			irc.sendContextReply(mes, "Plugin " + pluginName + " had invalid info!");
 			return;
@@ -301,33 +308,34 @@ public class Plugin
 		"<Plugin>",
 		"<Plugin> is the name of the plugin"
 	};
-	public void commandSource(Message mes)
+	public void commandSource(final Message mes)
 	{
-		List<String> params = mods.util.getParams(mes);
+		final List<String> params = mods.util.getParams(mes);
 		if (params.size() == 1)
 		{
 			irc.sendContextReply(mes, "Syntax: 'Plugin.Source " + helpCommandInfo[1] + "'.");
 			return;
 		}
 
-		String[] plugins = mods.plugin.getLoadedPlugins();
+		final String[] plugins = mods.plugin.getLoadedPlugins();
 
-		String pluginName = params.get(1);
-		String pluginNameL = pluginName.toLowerCase();
+		final String pluginName = params.get(1);
+		final String pluginNameL = pluginName.toLowerCase();
 		String source;
 		try
 		{
 			source = mods.plugin.getPluginSource(pluginName);
 		}
-		catch (ChoobNoSuchPluginException e)
+		catch (final ChoobNoSuchPluginException e)
 		{
 			irc.sendContextReply(mes, "Plugin " + pluginName + " has never been loaded.");
 			return;
 		}
 
 		boolean loaded = false;
-		for (int i = 0; i < plugins.length; i++) {
-			if (plugins[i].toLowerCase().equals(pluginNameL)) {
+		for (final String plugin : plugins)
+		{
+			if (plugin.toLowerCase().equals(pluginNameL)) {
 				loaded = true;
 				break;
 			}

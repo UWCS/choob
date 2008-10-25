@@ -50,7 +50,7 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 	/**
 	 * Construct a new ChannelMode.
 	 */
-	public ChannelMode(String methodName, long millis, int random, String channel, String mode, boolean set)
+	public ChannelMode(final String methodName, final long millis, final int random, final String channel, final String mode, final boolean set)
 	{
 		super(methodName, millis, random);
 		this.channel = channel;
@@ -61,7 +61,7 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 	/**
 	 * Synthesize a new ChannelMode from an old one.
 	 */
-	public ChannelMode(ChannelMode old)
+	public ChannelMode(final ChannelMode old)
 	{
 		super(old);
 		this.channel = old.channel;
@@ -73,26 +73,29 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 	 * Synthesize a new ChannelMode from this one.
 	 * @return The new ChannelMode object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new ChannelMode(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelMode))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		ChannelMode thing = (ChannelMode)obj;
-		if ( true && channel.equals(thing.channel) && mode.equals(thing.mode) && (set == thing.set) )
+		final ChannelMode thing = (ChannelMode)obj;
+		if ( true && channel.equals(thing.channel) && mode.equals(thing.mode) && set == thing.set )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("ChannelMode(");
+		final StringBuffer out = new StringBuffer("ChannelMode(");
 		out.append(super.toString());
 		out.append(", channel = " + channel);
 		out.append(", mode = " + mode);

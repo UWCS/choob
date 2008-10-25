@@ -23,7 +23,7 @@ public final class NickModule
 	 * @param nick String representing the Nick.
 	 * @return User's primary nick, a guess at their primary nick, or the supplied nick.
 	 */
-	public String getBestPrimaryNick(String nick)
+	public String getBestPrimaryNick(final String nick)
 	{
 		Matcher ma = jbNickPattern.matcher(nick);
 

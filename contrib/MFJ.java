@@ -1,6 +1,9 @@
 import java.awt.Color;
 import java.text.DateFormatSymbols;
-import java.util.*;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,9 +21,9 @@ public class MFJ
 {
 	final static Map<Color, String> colours;
 
-	private Modules mods;
-	private IRCInterface irc;
-	public MFJ(Modules mods, IRCInterface irc)
+	private final Modules mods;
+	private final IRCInterface irc;
+	public MFJ(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -30,9 +33,9 @@ public class MFJ
 	 * Implements JB's !dance command, with different outputs
 	 */
 	public String[] helpCommandDance = { "Makes the bot dance with you. If you don't want the bot to dance with you, don't use it." };
-	public void commandDance(Message con)
+	public void commandDance(final Message con)
 	{
-		int type = (int) (10 * Math.random());
+		final int type = (int) (10 * Math.random());
 		String dance;
 
 		switch (type)
@@ -206,22 +209,22 @@ public class MFJ
 
 	public static String colourForToday()
 	{
-		GregorianCalendar cal = new GregorianCalendar();
-		int type = (cal.get(Calendar.DAY_OF_MONTH) + 31 * cal.get(Calendar.MONTH) + 12 * cal.get(Calendar.YEAR)) % colours.size();
+		final GregorianCalendar cal = new GregorianCalendar();
+		final int type = (cal.get(Calendar.DAY_OF_MONTH) + 31 * cal.get(Calendar.MONTH) + 12 * cal.get(Calendar.YEAR)) % colours.size();
 
-		String[] col = colours.values().toArray(new String[] {});
+		final String[] col = colours.values().toArray(new String[] {});
 
 		return col[type];
 	}
 
 
-	private void /*inline*/ invalidArgument(Message mes)
+	private void /*inline*/ invalidArgument(final Message mes)
 	{
 		irc.sendContextMessage(mes, "Invalid argument, expecting: [#]rrggbb, rgb(255,255,255) or a named colour.");
 	}
 
 	// http://mindprod.com/jgloss/hex.html
-	public static String /*inline*/ byteToHex(int b)
+	public static String /*inline*/ byteToHex(final int b)
 	{
 		return Integer.toString( ( b & 0xff ) + 0x100, 16 /* radix */ ).substring( 1 );
 	}
@@ -231,7 +234,7 @@ public class MFJ
 	 * Implements JB's !colour command
 	 */
 	public String[] helpCommandColour = { "Lets you know what today's colour is. Optionally, given a css colour, it will attempt to guess what it looks like." };
-	public void commandColour(Message con)
+	public void commandColour(final Message con)
 	{
 		String parm = mods.util.getParamString(con);
 		if (parm.length() < 3)
@@ -240,7 +243,7 @@ public class MFJ
 			return;
 		}
 
-		for (Color c : colours.keySet())
+		for (final Color c : colours.keySet())
 			if (colours.get(c).equalsIgnoreCase(parm))
 			{
 				irc.sendContextReply(con, "'" + parm + "' is #" + byteToHex(c.getRed()) + byteToHex(c.getGreen()) + byteToHex(c.getBlue()) + ".");
@@ -250,7 +253,7 @@ public class MFJ
 		Color toFind;
 		final String number = "((?:2[0-5][0-9])|(?:1?[0-9]?[0-9]))";
 		//final String number = "([0-9]+)";
-		Matcher ma = Pattern.compile("\\s*rgb\\s*\\(\\s*" + number + ",\\s*" + number + ",\\s*" + number + "\\s*\\)\\s*").matcher(parm);
+		final Matcher ma = Pattern.compile("\\s*rgb\\s*\\(\\s*" + number + ",\\s*" + number + ",\\s*" + number + "\\s*\\)\\s*").matcher(parm);
 		//Matcher ma = Pattern.compile("rgb\\(([0-9]+),([0-9]+),([0-9]+)\\)").matcher(parm);
 
 		try
@@ -284,26 +287,26 @@ public class MFJ
 								);
 			}
 		}
-		catch (NumberFormatException e)
+		catch (final NumberFormatException e)
 		{
 			e.printStackTrace();
 			invalidArgument(con);
 			return;
 		}
-		catch (IllegalArgumentException e)
+		catch (final IllegalArgumentException e)
 		{
 			invalidArgument(con);
 			return;
 		}
 
 
-		float[] rgbtarget = new float[] { toFind.getRed()/255.0f, toFind.getGreen()/255.0f, toFind.getBlue()/255.0f };
+		final float[] rgbtarget = new float[] { toFind.getRed()/255.0f, toFind.getGreen()/255.0f, toFind.getBlue()/255.0f };
 
 		double bestMatch = 500;
 		Color closest = null;
-		for (Color c : colours.keySet())
+		for (final Color c : colours.keySet())
 		{
-			double match = Math.pow(c.getRed()/255.0f - rgbtarget[0], 2) +
+			final double match = Math.pow(c.getRed()/255.0f - rgbtarget[0], 2) +
 						  Math.pow(c.getGreen()/255.0f - rgbtarget[1], 2) +
 						  Math.pow(c.getBlue()/255.0f - rgbtarget[2], 2);
 
@@ -324,9 +327,9 @@ public class MFJ
 	 * Implement JB's !year command
 	 */
 	public String[] helpCommandYear = { "Outputs the current year." };
-	public void commandYear(Message con)
+	public void commandYear(final Message con)
 	{
-		GregorianCalendar cal = new GregorianCalendar();
+		final GregorianCalendar cal = new GregorianCalendar();
 
 		irc.sendContextMessage( con, "It is the year " + cal.get(Calendar.YEAR) + ".");
 	}
@@ -335,12 +338,12 @@ public class MFJ
 	 * Implement JB's !month command
 	 */
 	public String[] helpCommandMonth = { "Outputs the current month." };
-	public void commandMonth(Message con)
+	public void commandMonth(final Message con)
 	{
-		GregorianCalendar cal = new GregorianCalendar();
-		DateFormatSymbols dfc = new DateFormatSymbols();
+		final GregorianCalendar cal = new GregorianCalendar();
+		final DateFormatSymbols dfc = new DateFormatSymbols();
 
-		String[] months = dfc.getMonths();
+		final String[] months = dfc.getMonths();
 
 		irc.sendContextMessage( con, "It is " + months[cal.get(Calendar.MONTH)] + ".");
 	}
@@ -349,12 +352,12 @@ public class MFJ
 	 * Implement JB's !day command
 	 */
 	public String[] helpCommandDay = { "Outputs the current day." };
-	public void commandDay(Message con)
+	public void commandDay(final Message con)
 	{
-		GregorianCalendar cal = new GregorianCalendar();
-		DateFormatSymbols dfc = new DateFormatSymbols();
+		final GregorianCalendar cal = new GregorianCalendar();
+		final DateFormatSymbols dfc = new DateFormatSymbols();
 
-		String[] days = dfc.getWeekdays();
+		final String[] days = dfc.getWeekdays();
 
 		irc.sendContextMessage( con, "It is " + days[cal.get(Calendar.DAY_OF_WEEK)] + ".");
 	}

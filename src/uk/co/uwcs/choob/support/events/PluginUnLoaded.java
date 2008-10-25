@@ -37,7 +37,7 @@ public class PluginUnLoaded extends InternalEvent implements PluginEvent
 	/**
 	 * Construct a new PluginUnLoaded.
 	 */
-	public PluginUnLoaded(String methodName, String pluginName, int pluginStatus)
+	public PluginUnLoaded(final String methodName, final String pluginName, final int pluginStatus)
 	{
 		super(methodName);
 		this.pluginName = pluginName;
@@ -47,7 +47,7 @@ public class PluginUnLoaded extends InternalEvent implements PluginEvent
 	/**
 	 * Synthesize a new PluginUnLoaded from an old one.
 	 */
-	public PluginUnLoaded(PluginUnLoaded old)
+	public PluginUnLoaded(final PluginUnLoaded old)
 	{
 		super(old);
 		this.pluginName = old.pluginName;
@@ -58,26 +58,29 @@ public class PluginUnLoaded extends InternalEvent implements PluginEvent
 	 * Synthesize a new PluginUnLoaded from this one.
 	 * @return The new PluginUnLoaded object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new PluginUnLoaded(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof PluginUnLoaded))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		PluginUnLoaded thing = (PluginUnLoaded)obj;
-		if ( true && pluginName.equals(thing.pluginName) && (pluginStatus == thing.pluginStatus) )
+		final PluginUnLoaded thing = (PluginUnLoaded)obj;
+		if ( true && pluginName.equals(thing.pluginName) && pluginStatus == thing.pluginStatus )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("PluginUnLoaded(");
+		final StringBuffer out = new StringBuffer("PluginUnLoaded(");
 		out.append(super.toString());
 		out.append(", pluginName = " + pluginName);
 		out.append(", pluginStatus = " + pluginStatus);

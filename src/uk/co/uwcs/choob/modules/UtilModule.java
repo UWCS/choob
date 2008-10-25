@@ -19,16 +19,16 @@ import uk.co.uwcs.choob.support.events.Message;
  */
 public final class UtilModule
 {
-	private IRCInterface irc;
+	private final IRCInterface irc;
 	private Pattern triggerPattern;
 
 	long starttime;
 
 	/** Creates a new instance of UtilModule */
-	UtilModule( IRCInterface irc ) {
+	UtilModule( final IRCInterface irc ) {
 		this.irc = irc;
 		updateTrigger();
-		starttime=(new java.util.Date()).getTime();
+		starttime=new java.util.Date().getTime();
 	}
 
 	public void updateTrigger()
@@ -43,9 +43,9 @@ public final class UtilModule
 	}
 
 	/** Get the offset of the trigger in the list of arguments */
-	private int getTriggerOffset( String text )
+	private int getTriggerOffset( final String text )
 	{
-		Matcher ma = triggerPattern.matcher(text);
+		final Matcher ma = triggerPattern.matcher(text);
 		if (ma.find())
 			return ma.end();
 
@@ -58,11 +58,11 @@ public final class UtilModule
 	}
 
 	/** Get the parameter string (ie. message without the command) from a Message object */
-	public String getParamString( Message mes )
+	public String getParamString( final Message mes )
 	{
-		String text = mes.getMessage();
-		int offset = getTriggerOffset(text);
-		int spacePos = text.indexOf(' ', offset);
+		final String text = mes.getMessage();
+		final int offset = getTriggerOffset(text);
+		final int spacePos = text.indexOf(' ', offset);
 		if (spacePos != -1)
 			return text.substring(spacePos + 1).trim();
 
@@ -70,19 +70,19 @@ public final class UtilModule
 	}
 
 	/** Split the parameters of a Message event into a List of Strings */
-	public String[] getParamArray( Message mes )
+	public String[] getParamArray( final Message mes )
 	{
-		String text = mes.getMessage();
-		int offset = getTriggerOffset(text);
+		final String text = mes.getMessage();
+		final int offset = getTriggerOffset(text);
 
 		return text.substring(offset).split("\\s+");
 	}
 
-	public List<String> getParams( Message mes )
+	public List<String> getParams( final Message mes )
 	{
-		String[] params = getParamArray( mes );
-		List<String> temp = new ArrayList<String>(params.length);
-		for(String param: params)
+		final String[] params = getParamArray( mes );
+		final List<String> temp = new ArrayList<String>(params.length);
+		for(final String param: params)
 			temp.add(param);
 		return temp;
 	}
@@ -93,19 +93,19 @@ public final class UtilModule
 	 *
 	 * Note that the command token is /NOT/ included in the count!
 	 */
-	public String[] getParamArray( Message mes, int count )
+	public String[] getParamArray( final Message mes, final int count )
 	{
-		String text = mes.getMessage();
-		int offset = getTriggerOffset(text);
+		final String text = mes.getMessage();
+		final int offset = getTriggerOffset(text);
 
 		return text.substring(offset).split("\\s+", count + 1);
 	}
 
-	public List<String> getParams( Message mes, int count )
+	public List<String> getParams( final Message mes, final int count )
 	{
-		String[] params = getParamArray( mes, count );
-		List<String> temp = new ArrayList<String>(params.length);
-		for(String param: params)
+		final String[] params = getParamArray( mes, count );
+		final List<String> temp = new ArrayList<String>(params.length);
+		for(final String param: params)
 			temp.add(param);
 		return temp;
 	}

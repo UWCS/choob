@@ -1,7 +1,9 @@
 import java.util.List;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobBadSyntaxError;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
 /**
@@ -26,84 +28,84 @@ public class Concurrency {
 			"$Rev$$Date$"
 		};
 	}
-	
+
 	Modules mods;
 	IRCInterface irc;
-	
+
 	// Default thread limit for any plugin without a specific limit set.
 	private static final int DEFAULT_THREAD_LIMIT = 2;
-	
-	public Concurrency(Modules mods, IRCInterface irc) {
+
+	public Concurrency(final Modules mods, final IRCInterface irc) {
 		this.irc = irc;
 		this.mods = mods;
 	}
-	
-	public int apiGetThreadLimit(String pluginName)
+
+	public int apiGetThreadLimit(final String pluginName)
 	{
 		int limit = DEFAULT_THREAD_LIMIT;
-		
-		List<PluginConcurrencyLimit> limits = mods.odb.retrieve(PluginConcurrencyLimit.class, "WHERE pluginName = \"" + mods.odb.escapeString(pluginName) + "\"");
-		
+
+		final List<PluginConcurrencyLimit> limits = mods.odb.retrieve(PluginConcurrencyLimit.class, "WHERE pluginName = \"" + mods.odb.escapeString(pluginName) + "\"");
+
 		if (limits.size() > 0)
 			limit = limits.get(0).threadLimit;
-		
+
 		//System.out.println("Concurrency.apiGetThreadLimit   : plugin = " + pluginName + ", limit = " + limit + (limits.size() > 0 ? " [from ODB]" : ""));
 		return limit;
 	}
-	
+
 	public String[] helpCommandGetThreadLimit = {
 			"Gets the thread limit for a plugin.",
 			"<Plugin>",
 			"<Plugin> is the name of the plugin to look up."
 		};
-	
-	public void commandGetThreadLimit(Message mes)
+
+	public void commandGetThreadLimit(final Message mes)
 	{
 		mods.security.checkAuth(mes);
-		
-		List<String> params = mods.util.getParams(mes);
+
+		final List<String> params = mods.util.getParams(mes);
 		if (params.size() != 2)
 			throw new ChoobBadSyntaxError();
-		
-		String pluginName = params.get(1);
-		
-		List<PluginConcurrencyLimit> limits = mods.odb.retrieve(PluginConcurrencyLimit.class, "WHERE pluginName = \"" + mods.odb.escapeString(pluginName) + "\"");
-		
+
+		final String pluginName = params.get(1);
+
+		final List<PluginConcurrencyLimit> limits = mods.odb.retrieve(PluginConcurrencyLimit.class, "WHERE pluginName = \"" + mods.odb.escapeString(pluginName) + "\"");
+
 		if (limits.size() > 0)
 			irc.sendContextReply(mes, "Plugin '" + pluginName + "' has a specific thread limit of " + limits.get(0).threadLimit + ".");
 		else
 			irc.sendContextReply(mes, "Plugin '" + pluginName + "' has the default thread limit of " + DEFAULT_THREAD_LIMIT + ".");
 	}
-	
+
 	public String[] helpCommandSetThreadLimit = {
 			"Sets the thread limit for a plugin.",
 			"<Plugin> [<ThreadLimit>]",
 			"<Plugin> is the name of the plugin to look up.",
 			"<ThreadLimit> is the maximum number of concurrent threads to allow. Set tot 0 to remove the specific setting and revert to the default."
 		};
-	
-	public void commandSetThreadLimit(Message mes)
+
+	public void commandSetThreadLimit(final Message mes)
 	{
 		mods.security.checkAuth(mes);
-		
+
 		if (!mods.security.hasNickPerm(new ChoobPermission("plugin.threadlimit"), mes)) {
 			irc.sendContextReply(mes, "You do not have permission to change the thread limit of plugins.");
 			return;
 		}
-		
-		List<String> params = mods.util.getParams(mes);
+
+		final List<String> params = mods.util.getParams(mes);
 		if (params.size() != 3)
 			throw new ChoobBadSyntaxError();
-		
-		String pluginName = params.get(1);
-		int limit = Integer.parseInt(params.get(2));
-		
-		List<PluginConcurrencyLimit> limits = mods.odb.retrieve(PluginConcurrencyLimit.class, "WHERE pluginName = \"" + mods.odb.escapeString(pluginName) + "\"");
-		
+
+		final String pluginName = params.get(1);
+		final int limit = Integer.parseInt(params.get(2));
+
+		final List<PluginConcurrencyLimit> limits = mods.odb.retrieve(PluginConcurrencyLimit.class, "WHERE pluginName = \"" + mods.odb.escapeString(pluginName) + "\"");
+
 		if (limits.size() > 0)
 		{
-			PluginConcurrencyLimit pcl = limits.get(0);
-			
+			final PluginConcurrencyLimit pcl = limits.get(0);
+
 			if (limit <= 0)
 			{
 				mods.odb.delete(pcl);
@@ -118,7 +120,7 @@ public class Concurrency {
 		}
 		else
 		{
-			PluginConcurrencyLimit pcl = new PluginConcurrencyLimit();
+			final PluginConcurrencyLimit pcl = new PluginConcurrencyLimit();
 			pcl.pluginName = pluginName;
 			pcl.threadLimit = limit;
 			mods.odb.save(pcl);

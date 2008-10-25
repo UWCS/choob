@@ -3,224 +3,238 @@
  * @author James Ross
  */
 package uk.co.uwcs.choob.support;
-import java.sql.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.NClob;
+import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
 
 public final class ChoobConnectionWrapper implements Connection
 {
 	Connection conn;
-	
-	static void logSQL(String sql) {
+
+	static void logSQL(final String sql) {
 		System.out.println(System.currentTimeMillis() + " " + sql);
 	}
-	
-	public ChoobConnectionWrapper(Connection conn) {
+
+	public ChoobConnectionWrapper(final Connection conn) {
 		this.conn = conn;
 	}
-	
+
 	public void clearWarnings() throws SQLException {
 		conn.clearWarnings();
 	}
-	
+
 	public void close() throws SQLException {
 		conn.close();
 	}
-	
+
 	public void commit() throws SQLException {
 		conn.commit();
 	}
-	
-	public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+
+	public Array createArrayOf(final String typeName, final Object[] elements) throws SQLException {
 		return conn.createArrayOf(typeName, elements);
 	}
-	
+
 	public Blob createBlob() throws SQLException {
 		return conn.createBlob();
 	}
-	
+
 	public Clob createClob() throws SQLException {
 		return conn.createClob();
 	}
-	
+
 	public NClob createNClob() throws SQLException {
 		return conn.createNClob();
 	}
-	
+
 	public SQLXML createSQLXML() throws SQLException {
 		return conn.createSQLXML();
 	}
-	
+
 	public Statement createStatement() throws SQLException {
 		return new ChoobStatementWrapper(conn.createStatement());
 	}
-	
-	public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+
+	public Statement createStatement(final int resultSetType, final int resultSetConcurrency) throws SQLException {
 		return new ChoobStatementWrapper(conn.createStatement(resultSetType, resultSetConcurrency));
 	}
-	
-	public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+
+	public Statement createStatement(final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability) throws SQLException {
 		return new ChoobStatementWrapper(conn.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability));
 	}
-	
-	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+
+	public Struct createStruct(final String typeName, final Object[] attributes) throws SQLException {
 		return conn.createStruct(typeName, attributes);
 	}
-	
+
 	public boolean getAutoCommit() throws SQLException {
 		return conn.getAutoCommit();
 	}
-	
+
 	public String getCatalog() throws SQLException {
 		return conn.getCatalog();
 	}
-	
+
 	public Properties getClientInfo() throws SQLException {
 		return conn.getClientInfo();
 	}
-	
-	public String getClientInfo(String name) throws SQLException {
+
+	public String getClientInfo(final String name) throws SQLException {
 		return conn.getClientInfo(name);
 	}
-	
+
 	public int getHoldability() throws SQLException {
 		return conn.getHoldability();
 	}
-	
+
 	public DatabaseMetaData getMetaData() throws SQLException {
 		return conn.getMetaData();
 	}
-	
+
 	public int getTransactionIsolation() throws SQLException {
 		return conn.getTransactionIsolation();
 	}
-	
+
 	public Map<String,Class<?>> getTypeMap() throws SQLException {
 		return conn.getTypeMap();
 	}
-	
+
 	public SQLWarning getWarnings() throws SQLException {
 		return conn.getWarnings();
 	}
-	
+
 	public boolean isClosed() throws SQLException {
 		return conn.isClosed();
 	}
-	
+
 	public boolean isReadOnly() throws SQLException {
 		return conn.isReadOnly();
 	}
-	
-	public boolean isValid(int timeout) throws SQLException {
+
+	public boolean isValid(final int timeout) throws SQLException {
 		return conn.isValid(timeout);
 	}
-	
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+
+	public boolean isWrapperFor(final Class<?> iface) throws SQLException {
 		return conn.isWrapperFor(iface);
 	}
-	
-	public String nativeSQL(String sql) throws SQLException {
+
+	public String nativeSQL(final String sql) throws SQLException {
 		return conn.nativeSQL(sql);
 	}
-	
-	public CallableStatement prepareCall(String sql) throws SQLException {
+
+	public CallableStatement prepareCall(final String sql) throws SQLException {
 		logSQL(sql);
 		return conn.prepareCall(sql);
 	}
-	
-	public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+
+	public CallableStatement prepareCall(final String sql, final int resultSetType, final int resultSetConcurrency) throws SQLException {
 		logSQL(sql);
 		return conn.prepareCall(sql, resultSetType, resultSetConcurrency);
 	}
-	
-	public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+
+	public CallableStatement prepareCall(final String sql, final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability) throws SQLException {
 		logSQL(sql);
 		return conn.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
-	
-	public PreparedStatement prepareStatement(String sql) throws SQLException {
+
+	public PreparedStatement prepareStatement(final String sql) throws SQLException {
 		logSQL(sql);
 		return conn.prepareStatement(sql);
 	}
-	
-	public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
+
+	public PreparedStatement prepareStatement(final String sql, final int autoGeneratedKeys) throws SQLException {
 		logSQL(sql);
 		return conn.prepareStatement(sql, autoGeneratedKeys);
 	}
-	
-	public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+
+	public PreparedStatement prepareStatement(final String sql, final int[] columnIndexes) throws SQLException {
 		logSQL(sql);
 		return conn.prepareStatement(sql, columnIndexes);
 	}
-	
-	public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+
+	public PreparedStatement prepareStatement(final String sql, final int resultSetType, final int resultSetConcurrency) throws SQLException {
 		logSQL(sql);
 		return conn.prepareStatement(sql, resultSetType, resultSetConcurrency);
 	}
-	
-	public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+
+	public PreparedStatement prepareStatement(final String sql, final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability) throws SQLException {
 		logSQL(sql);
 		return conn.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
-	
-	public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+
+	public PreparedStatement prepareStatement(final String sql, final String[] columnNames) throws SQLException {
 		logSQL(sql);
 		return conn.prepareStatement(sql, columnNames);
 	}
-	
-	public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+
+	public void releaseSavepoint(final Savepoint savepoint) throws SQLException {
 		conn.releaseSavepoint(savepoint);
 	}
-	
+
 	public void rollback() throws SQLException {
 		conn.rollback();
 	}
-	
-	public void rollback(Savepoint savepoint) throws SQLException {
+
+	public void rollback(final Savepoint savepoint) throws SQLException {
 		conn.rollback(savepoint);
 	}
-	
-	public void setAutoCommit(boolean autoCommit) throws SQLException {
+
+	public void setAutoCommit(final boolean autoCommit) throws SQLException {
 		conn.setAutoCommit(autoCommit);
 	}
-	
-	public void setCatalog(String catalog) throws SQLException {
+
+	public void setCatalog(final String catalog) throws SQLException {
 		conn.setCatalog(catalog);
 	}
-	
-	public void setClientInfo(Properties properties) throws SQLClientInfoException {
+
+	public void setClientInfo(final Properties properties) throws SQLClientInfoException {
 		conn.setClientInfo(properties);
 	}
-	
-	public void setClientInfo(String name, String value) throws SQLClientInfoException {
+
+	public void setClientInfo(final String name, final String value) throws SQLClientInfoException {
 		conn.setClientInfo(name, value);
 	}
-	
-	public void setHoldability(int holdability) throws SQLException {
+
+	public void setHoldability(final int holdability) throws SQLException {
 		conn.setHoldability(holdability);
 	}
-	
-	public void setReadOnly(boolean readOnly) throws SQLException {
+
+	public void setReadOnly(final boolean readOnly) throws SQLException {
 		conn.setReadOnly(readOnly);
 	}
-	
+
 	public Savepoint setSavepoint() throws SQLException {
 		return conn.setSavepoint();
 	}
-	
-	public Savepoint setSavepoint(String name) throws SQLException {
+
+	public Savepoint setSavepoint(final String name) throws SQLException {
 		return conn.setSavepoint(name);
 	}
-	
-	public void setTransactionIsolation(int level) throws SQLException {
+
+	public void setTransactionIsolation(final int level) throws SQLException {
 		conn.setTransactionIsolation(level);
 	}
-	
-	public void setTypeMap(Map<String,Class<?>> map) throws SQLException {
+
+	public void setTypeMap(final Map<String,Class<?>> map) throws SQLException {
 		conn.setTypeMap(map);
 	}
-	
-	public <T> T unwrap(Class<T> iface) throws SQLException {
+
+	public <T> T unwrap(final Class<T> iface) throws SQLException {
 		return conn.unwrap(iface);
 	}
 }

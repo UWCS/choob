@@ -1,8 +1,24 @@
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.ObjectDBTransaction;
+import uk.co.uwcs.choob.support.events.ChannelAction;
+import uk.co.uwcs.choob.support.events.ChannelJoin;
+import uk.co.uwcs.choob.support.events.ChannelMessage;
+import uk.co.uwcs.choob.support.events.IRCEvent;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.NickChange;
+import uk.co.uwcs.choob.support.events.PrivateAction;
+import uk.co.uwcs.choob.support.events.PrivateMessage;
 
 class TellObject
 {
@@ -54,12 +70,12 @@ public class Tell
 		};
 	}
 
-	private Modules mods;
-	private IRCInterface irc;
+	private final Modules mods;
+	private final IRCInterface irc;
 
-	private HashMap<String,Long> tellCache;
+	private final HashMap<String,Long> tellCache;
 
-	public Tell (Modules mods, IRCInterface irc)
+	public Tell (final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -89,17 +105,17 @@ public class Tell
 	};
 
 	public String[] helpCache = {
-		  "Whether or not you have a tell is cached for " + (CACHEEXPIRE / 1000)
+		  "Whether or not you have a tell is cached for " + CACHEEXPIRE / 1000
 		+ " seconds. This is to stop tell continually telling you you have"
 		+ " tells but aren't identified. If you DO identify with NickServ"
 		+ " therefore, you need to use the Tell.Get command to reset this and"
 		+ " try again. Note that NickServ status is also cached."
 	};
 
-	public synchronized int apiInject(String from, String[] targets,
-			String message, String type) {
-		TellData tell = validateTell(from, targets, message,
-				(new Date()).getTime(), type);
+	public synchronized int apiInject(final String from, final String[] targets,
+			final String message, final String type) {
+		final TellData tell = validateTell(from, targets, message,
+				new Date().getTime(), type);
 		if (!tell.valid)
 			return tell.error;
 		return 16 + doTell(tell);
@@ -115,7 +131,7 @@ public class Tell
 	synchronized TellData validateTell(final String from,
 			final String[] targets, final String message, final long date,
 			final String type) {
-		TellData rv = new TellData();
+		final TellData rv = new TellData();
 		rv.valid = true;
 		rv.error = 0;
 		rv.from = from;
@@ -127,23 +143,23 @@ public class Tell
 
 		try
 		{
-			boolean requestDSN = ((String)mods.plugin.callAPI("Options",
+			final boolean requestDSN = ((String)mods.plugin.callAPI("Options",
 					"GetUserOption", from, "RequestDSN", "0")).equals("1");
 			rv.requestDSN = requestDSN;
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			// Oh dear, no Options. :(
 		}
 
 		// Only include unique targets.
 		final List<String> validTargets = new ArrayList<String>(MAXTARGETS);
-		for (int i = 0; i < targets.length; i++)
+		for (final String target2 : targets)
 		{
-			String targetNick = mods.nick.getBestPrimaryNick(mods.security.getUserAuthName(targets[i]));
-			String rootTargetNick = mods.security.getRootUser(targetNick);
+			final String targetNick = mods.nick.getBestPrimaryNick(mods.security.getUserAuthName(target2));
+			final String rootTargetNick = mods.security.getRootUser(targetNick);
 
-			String target = rootTargetNick != null ? rootTargetNick : targetNick;
+			final String target = rootTargetNick != null ? rootTargetNick : targetNick;
 
 			// Make sure we don't dup targets.
 			if (validTargets.contains(target))
@@ -163,7 +179,7 @@ public class Tell
 		return rv;
 	}
 
-	synchronized int doTell(TellData tell)
+	synchronized int doTell(final TellData tell)
 	{
 		if (!tell.valid)
 			return 0;
@@ -185,10 +201,10 @@ public class Tell
 				@Override
 				public void run()
 				{
-					for(int i=0; i<targets.length; i++)
+					for (final String target : targets)
 					{
 						tellObj.id = 0;
-						tellObj.target = targets[i];
+						tellObj.target = target;
 						tellObj.nickServ = checkAuthStatus(tellObj.target) > 0;
 
 						clearCache(tellObj.target);
@@ -201,21 +217,21 @@ public class Tell
 		// Send e-mails to people who've asked for them.
 		try
 		{
-			for(int i = 0; i < targets.length; i++)
+			for (final String target : targets)
 			{
-				String email = (String)mods.plugin.callAPI("Options",
-						"GetUserOption", targets[i], "Email", "");
+				final String email = (String)mods.plugin.callAPI("Options",
+						"GetUserOption", target, "Email", "");
 				if (email.length() > 0)
 				{
 					mods.plugin.callAPI("Mail", "SendMail", email,
 							"Tell from " + tellObj.from + " via " + irc.getNickname(),
-							"At " + new Date(tellObj.date) + ", " + tellObj.from + 
+							"At " + new Date(tellObj.date) + ", " + tellObj.from +
 							" told me to " + tellObj.type + " you: " + tellObj.message);
 				}
 			}
 
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			// Oh dear, no Options. :(
 		}
@@ -224,15 +240,15 @@ public class Tell
 
 	}
 
-	int checkTargetSecureStatus(int authStatus, String nick,
-			String rootNick) {
+	int checkTargetSecureStatus(final int authStatus, final String nick,
+			final String rootNick) {
 		// First pick up the setting of Secure.
 		int secureOption;
 		try {
-			String val = (String)mods.plugin.callAPI("Options", "GetUserOption",
+			final String val = (String)mods.plugin.callAPI("Options", "GetUserOption",
 					nick, "Secure", "1" );
 			secureOption = Integer.parseInt(val);
-		} catch (Throwable e) {
+		} catch (final Throwable e) {
 			// No such call(default) or number format issue(!)
 			secureOption = 1;
 		}
@@ -244,7 +260,7 @@ public class Tell
 			// If secure tell is set, we require the
 			// actual nickname to be explicitly linked
 			// to the root.
-			String secureRootNick = mods.security.getRootUser(
+			final String secureRootNick = mods.security.getRootUser(
 					mods.security.getUserAuthName(nick));
 			if (rootNick != null) {
 				// rootNick is set and we're directed at it.
@@ -275,16 +291,16 @@ public class Tell
 		return authStatus; // No change.
 	}
 
-	public synchronized void commandSend( Message mes )
+	public synchronized void commandSend( final Message mes )
 	{
-		String[] params = mods.util.getParamArray(mes, 2);
+		final String[] params = mods.util.getParamArray(mes, 2);
 		if (params.length <= 2)
 		{
 			irc.sendContextReply(mes, "Syntax: 'Tell.Send " + helpCommandSend[1] + "'");
 			return;
 		}
 
-		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
+		final Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
 
 		String typeLocal = "tell";
 		// Allow any alias to this command to be used as the verb.
@@ -299,7 +315,7 @@ public class Tell
 		}
 
 		// It's a question if it has a "?" within 5 characters of it's end. (ie. "? :)").
-		if (typeLocal.equals("tell") && (params[2].indexOf('?', params[2].length() - 5) != -1))
+		if (typeLocal.equals("tell") && params[2].indexOf('?', params[2].length() - 5) != -1)
 			typeLocal = "ask";
 
 
@@ -315,7 +331,7 @@ public class Tell
 			{
 				case 1:
 					irc.sendContextReply(mes,
-							"Sorry, you're only allowed " + MAXTARGETS + 
+							"Sorry, you're only allowed " + MAXTARGETS +
 							" targets for a given tell.");
 					return;
 				default:
@@ -325,11 +341,11 @@ public class Tell
 			}
 		}
 
-		int count = tell.targets.length;
+		final int count = tell.targets.length;
 		if (!mesFlags.containsKey("timedevents.delayed"))
 		{
 			irc.sendContextReply(mes,
-					"Okay, will " + type + " upon next speaking. (Sent to " + 
+					"Okay, will " + type + " upon next speaking. (Sent to " +
 					count + " " + (count == 1 ? "person" : "people") + ".)");
 		}
 
@@ -339,27 +355,27 @@ public class Tell
 	public String[] helpCommandGet = {
 		"Get any tells that have been sent to you. See Cache."
 	};
-	public void commandGet( Message mes )
+	public void commandGet( final Message mes )
 	{
 		clearCache(mes.getNick());
 		loudspew( mes.getNick() );
 		irc.sendContextReply(mes, "OK, if you had any tells, I just sent 'em. :)");
 	}
 
-	private void clearCache( String nick )
+	private void clearCache( final String nick )
 	{
-		String pnick = mods.nick.getBestPrimaryNick(nick);
+		final String pnick = mods.nick.getBestPrimaryNick(nick);
 		String rnick = mods.security.getRootUser(pnick);
 		if (rnick == null)
 			rnick = pnick;
 
 		synchronized(tellCache)
 		{
-			Iterator<String> iter = tellCache.keySet().iterator();
+			final Iterator<String> iter = tellCache.keySet().iterator();
 			while(iter.hasNext())
 			{
-				String item = iter.next();
-				String pitem = mods.nick.getBestPrimaryNick(item);
+				final String item = iter.next();
+				final String pitem = mods.nick.getBestPrimaryNick(item);
 				String ritem = mods.security.getRootUser(pitem);
 				if (ritem == null)
 					ritem = pitem;
@@ -373,10 +389,10 @@ public class Tell
 	public String[] optionsUser = { "Secure", "NickChange", "Email", "RequestDSN" };
 	public String[] optionsUserDefaults = { "1", "1", "", "0" };
 
-	public boolean optionCheckUserSecure( String value, String userName ) {
-		return value.equals("0") || value.equals("1") || value.equals("2"); 
+	public boolean optionCheckUserSecure( final String value, final String userName ) {
+		return value.equals("0") || value.equals("1") || value.equals("2");
 	}
-	
+
 	public String[] helpOptionSecure = {
 		"Choose the security level of your tells.",
 		"Set this to \"0\" to not have secure tells (no NickServ required), " +
@@ -384,43 +400,43 @@ public class Tell
 		"both NickServ and that your nicknames are linked in the bot."
 	};
 
-	public boolean optionCheckUserNickChange( String value, String userName ) {
-		return value.equals("0") || value.equals("1"); 
+	public boolean optionCheckUserNickChange( final String value, final String userName ) {
+		return value.equals("0") || value.equals("1");
 	}
-	
+
 	public String[] helpOptionNickChange = {
 		"Choose to have tells delivered on nick change.",
 		"Set this to \"0\" to not have tells delivered on nick change, " +
 		"default, \"1\", will deliver on nick change."
 	};
 
-	public boolean optionCheckUserEmail( String value, String userName ) { return true; }
+	public boolean optionCheckUserEmail( final String value, final String userName ) { return true; }
 	public String[] helpOptionEmail = {
 		"Choose to have a copy of all tells e-mailed to you.",
 		"Set this to an e-mail address to have copies of all tells sent to " +
 		"you mailed. Set to '' to stop."
 	};
 
-	private synchronized void spew (String nick) 
+	private synchronized void spew (final String nick)
 	{
 		try
 		{
 			loudspew(nick);
 		}
-		catch (Exception e)
+		catch (final Exception e)
 		{
 			System.err.println("Tell.spew suppressed error:");
 			e.printStackTrace();
 		}
 	}
 
-	private synchronized void loudspew( String nick )
+	private synchronized void loudspew( final String nick )
 	{
 		// Use the cache
 		boolean willSkip = false;
 		synchronized(tellCache)
 		{
-			Long cache = tellCache.get(nick);
+			final Long cache = tellCache.get(nick);
 			if (cache != null && cache > System.currentTimeMillis())
 				willSkip = true;
 			tellCache.put(nick, System.currentTimeMillis() + CACHEEXPIRE);
@@ -429,10 +445,10 @@ public class Tell
 			return;
 
 		// getBestPrimaryNick should be safe from injection
-		String testNick = mods.nick.getBestPrimaryNick(
+		final String testNick = mods.nick.getBestPrimaryNick(
 				mods.security.getUserAuthName(nick));
 		// rootNick won't, necessarily
-		String rootNick = mods.security.getRootUser( testNick );
+		final String rootNick = mods.security.getRootUser( testNick );
 
 		List<TellObject> tellResults;
 		List<TellDSNObject> dsnResults;
@@ -454,21 +470,21 @@ public class Tell
 					"WHERE target = '" + mods.odb.escapeString(testNick) + "'");
 		}
 
-		if ((tellResults.size() == 0) && (dsnResults.size() == 0))
+		if (tellResults.size() == 0 && dsnResults.size() == 0)
 			return;
 
-		Comparator<TellObject> tellSorter = new Comparator<TellObject>()
+		final Comparator<TellObject> tellSorter = new Comparator<TellObject>()
 		{
-			public int compare(TellObject l, TellObject r)
+			public int compare(final TellObject l, final TellObject r)
 			{
 				return new Date(l.date).compareTo(new Date(r.date));
 			}
 		};
 
 		// Grr, Java you suck, wtb real templates.
-		Comparator<TellDSNObject> tellDSNSorter = new Comparator<TellDSNObject>()
+		final Comparator<TellDSNObject> tellDSNSorter = new Comparator<TellDSNObject>()
 		{
-			public int compare(TellDSNObject l, TellDSNObject r)
+			public int compare(final TellDSNObject l, final TellDSNObject r)
 			{
 				return new Date(l.date).compareTo(new Date(r.date));
 			}
@@ -479,7 +495,7 @@ public class Tell
 
 		// We do DSNs first because they are less important. Or something.
 		int authStatus = -1;
-		for (TellDSNObject dsnObj : dsnResults)
+		for (final TellDSNObject dsnObj : dsnResults)
 		{
 			if (dsnObj.nickServ)
 			{
@@ -498,7 +514,7 @@ public class Tell
 			mods.odb.delete(dsnObj);
 		}
 
-		for (TellObject tellObj : tellResults)
+		for (final TellObject tellObj : tellResults)
 		{
 			if (tellObj.nickServ)
 			{
@@ -512,12 +528,12 @@ public class Tell
 					continue;
 			}
 			irc.sendMessage(nick,
-					"At " + new Date(tellObj.date) + ", " + tellObj.from + 
+					"At " + new Date(tellObj.date) + ", " + tellObj.from +
 					" told me to " + tellObj.type + " you: " + tellObj.message);
 
 			if (tellObj.requestDSN)
 			{
-				TellDSNObject dsn = new TellDSNObject();
+				final TellDSNObject dsn = new TellDSNObject();
 				dsn.type = tellObj.type;
 				dsn.date = tellObj.date;
 				// These go backwards - we're sending this back.
@@ -538,7 +554,7 @@ public class Tell
 		else if (authStatus == -3)
 			irc.sendMessage(nick,
 					"Hi! I think you have tells, and you have set Secure=2, " +
-					"but you haven't actually registered " + testNick + 
+					"but you haven't actually registered " + testNick +
 					" with the bot. Since this defeats the point of secure " +
 					"tells, I suggest you register it (Security.AddUser), " +
 					"then link this nickname to it (See Help.Help Security.UsingLink).");
@@ -555,40 +571,40 @@ public class Tell
 					"NickServ! Once you've done so, use the Tell.Get command.");
 	}
 
-	public void onAction( ChannelAction ev )
+	public void onAction( final ChannelAction ev )
 	{
 		if (ev.getSynthLevel() > 0)
 			return;
 		spew(ev.getNick());
 	}
 
-	public void onMessage( ChannelMessage ev )
+	public void onMessage( final ChannelMessage ev )
 	{
 		if (ev.getSynthLevel() > 0)
 			return;
 		spew(ev.getNick());
 	}
 
-	public void onPrivateMessage( PrivateMessage ev )
+	public void onPrivateMessage( final PrivateMessage ev )
 	{
 		if (ev.getSynthLevel() > 0)
 			return;
 		spew(ev.getNick());
 	}
 
-	public void onPrivateAction( PrivateAction ev )
+	public void onPrivateAction( final PrivateAction ev )
 	{
 		if (ev.getSynthLevel() > 0)
 			return;
 		spew(ev.getNick());
 	}
 
-	public void onJoin( ChannelJoin ev )
+	public void onJoin( final ChannelJoin ev )
 	{
 		spew(ev.getNick());
 	}
 
-	public void onNickChange( NickChange ev )
+	public void onNickChange( final NickChange ev )
 	{
 		try
 		{
@@ -596,21 +612,21 @@ public class Tell
 					ev.getNewNick(), "NickChange", "1" )).equals("0"))
 				return;
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{} // Non-issue.
 
 		try
 		{
 			Thread.sleep(1000);
 		}
-		catch (InterruptedException e)
+		catch (final InterruptedException e)
 		{
 			// Bah, who cares? :)
 		}
 		spew(ev.getNewNick());
 	}
 
-	private int checkAuthStatus( String nick ) {
+	private int checkAuthStatus( final String nick ) {
 		if (mods.security.hasAuth(nick)) {
 			return 3;
 		}

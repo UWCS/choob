@@ -24,7 +24,7 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 	/**
 	 * Construct a new ChannelUserMode.
 	 */
-	public ChannelUserMode(String methodName, long millis, int random, String channel, String mode, boolean set, String target)
+	public ChannelUserMode(final String methodName, final long millis, final int random, final String channel, final String mode, final boolean set, final String target)
 	{
 		super(methodName, millis, random, channel, mode, set);
 		this.target = target;
@@ -33,7 +33,7 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 	/**
 	 * Synthesize a new ChannelUserMode from an old one.
 	 */
-	public ChannelUserMode(ChannelUserMode old)
+	public ChannelUserMode(final ChannelUserMode old)
 	{
 		super(old);
 		this.target = old.target;
@@ -43,26 +43,29 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 	 * Synthesize a new ChannelUserMode from this one.
 	 * @return The new ChannelUserMode object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new ChannelUserMode(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelUserMode))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		ChannelUserMode thing = (ChannelUserMode)obj;
+		final ChannelUserMode thing = (ChannelUserMode)obj;
 		if ( true && target.equals(thing.target) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("ChannelUserMode(");
+		final StringBuffer out = new StringBuffer("ChannelUserMode(");
 		out.append(super.toString());
 		out.append(", target = " + target);
 		out.append(")");

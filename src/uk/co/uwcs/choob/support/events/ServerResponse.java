@@ -37,7 +37,7 @@ public class ServerResponse extends IRCEvent implements ServerEvent
 	/**
 	 * Construct a new ServerResponse.
 	 */
-	public ServerResponse(String methodName, long millis, int random, int code, String response)
+	public ServerResponse(final String methodName, final long millis, final int random, final int code, final String response)
 	{
 		super(methodName, millis, random);
 		this.code = code;
@@ -47,7 +47,7 @@ public class ServerResponse extends IRCEvent implements ServerEvent
 	/**
 	 * Synthesize a new ServerResponse from an old one.
 	 */
-	public ServerResponse(ServerResponse old)
+	public ServerResponse(final ServerResponse old)
 	{
 		super(old);
 		this.code = old.code;
@@ -58,26 +58,29 @@ public class ServerResponse extends IRCEvent implements ServerEvent
 	 * Synthesize a new ServerResponse from this one.
 	 * @return The new ServerResponse object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new ServerResponse(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof ServerResponse))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		ServerResponse thing = (ServerResponse)obj;
-		if ( true && (code == thing.code) && response.equals(thing.response) )
+		final ServerResponse thing = (ServerResponse)obj;
+		if ( true && code == thing.code && response.equals(thing.response) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("ServerResponse(");
+		final StringBuffer out = new StringBuffer("ServerResponse(");
 		out.append(super.toString());
 		out.append(", code = " + code);
 		out.append(", response = " + response);

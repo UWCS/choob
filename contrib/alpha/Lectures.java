@@ -1,6 +1,9 @@
 /** @author Faux */
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DateFormatSymbols;
 
 import uk.co.uwcs.choob.modules.DateModule;
@@ -20,9 +23,9 @@ public class Lectures
 		};
 	}
 
-	private Modules mods;
-	private IRCInterface irc;
-	public Lectures(IRCInterface irc, Modules mods)
+	private final Modules mods;
+	private final IRCInterface irc;
+	public Lectures(final IRCInterface irc, final Modules mods)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -39,11 +42,11 @@ public class Lectures
 	};
 
 
-	final String days[] = (new DateFormatSymbols()).getWeekdays();
+	final String days[] = new DateFormatSymbols().getWeekdays();
 
-	private PreparedStatement getStatement(String query) throws SQLException
+	private PreparedStatement getStatement(final String query) throws SQLException
 	{
-		Connection con = mods.odb.getConnection();
+		final Connection con = mods.odb.getConnection();
 		return con.prepareStatement(query);
 	}
 
@@ -63,9 +66,9 @@ public class Lectures
 		"<Code or Number to display> is either a module code or an integer between 1 and 6."
 	};
 
-	public void commandNextLecture( Message mes ) throws SQLException
+	public void commandNextLecture( final Message mes ) throws SQLException
 	{
-		String param=mods.util.getParamString(mes).trim();
+		final String param=mods.util.getParamString(mes).trim();
 		boolean modcode=false;
 		int c=1;
 		try
@@ -80,7 +83,7 @@ public class Lectures
 			}
 
 		}
-		catch (NumberFormatException e)
+		catch (final NumberFormatException e)
 		{
 			modcode=true;
 		}
@@ -96,7 +99,7 @@ public class Lectures
 				s.setString(1, mes.getNick());
 				s.setInt(2, c);
 
-				ResultSet rs = s.executeQuery();
+				final ResultSet rs = s.executeQuery();
 				String ret="";
 
 				if (!rs.first())
@@ -117,13 +120,13 @@ public class Lectures
 			}
 			else
 			{
-				int modid=codeSuggestions(param, mes);
+				final int modid=codeSuggestions(param, mes);
 				if (modid==-1)
 					return;
 				s=getStatement("SELECT `modules`.`name` AS modulename, `modules`.`code` AS modulecode, `rooms`.`name` AS roomname,`times`.`start` FROM `times` INNER JOIN `modules` ON (`modules`.`module`=`times`.`module`) INNER JOIN `rooms` ON (`rooms`.`room` = `times`.`room`) WHERE (`start` > NOW()) AND `modules`.`module` = ? ORDER BY `start` LIMIT 1;");
 				s.setInt(1, modid);
 
-				ResultSet rs = s.executeQuery();
+				final ResultSet rs = s.executeQuery();
 
 				rs.first(); // It has to exist.
 
@@ -142,14 +145,14 @@ public class Lectures
 	public String[] helpCommandListModules = {
 		"Lists the modules you are registered for."
 	};
-	public void commandListModules(Message mes) throws SQLException
+	public void commandListModules(final Message mes) throws SQLException
 	{
 		PreparedStatement s = null;
 		try
 		{
 			s = getStatement("SELECT `modules`.`code` from `modules` INNER JOIN `usermods` on (`usermods`.`module`=`modules`.`module`) INNER JOIN `users`on (`users`.`userid`=`usermods`.`userid`) WHERE `nick`=?");
 			s.setString(1, mes.getNick());
-			ResultSet rs = s.executeQuery();
+			final ResultSet rs = s.executeQuery();
 			if (!rs.first())
 			{
 				irc.sendContextMessage(mes, "You appear not to have any modules listed.");
@@ -173,7 +176,7 @@ public class Lectures
 		}
 	}
 
-	private synchronized int getUserId(String nick) throws SQLException
+	private synchronized int getUserId(final String nick) throws SQLException
 	{
 		PreparedStatement s = null;
 		try
@@ -216,7 +219,7 @@ public class Lectures
 		}
 	}
 
-	private synchronized int codeSuggestions (String code, Message mes) throws SQLException
+	private synchronized int codeSuggestions (final String code, final Message mes) throws SQLException
 	{
 		String sug;
 		PreparedStatement s = null;
@@ -224,7 +227,7 @@ public class Lectures
 		{
 			s = getStatement("SELECT `module` from `modules` where `code` = ?");
 			s.setString(1, code);
-			ResultSet rs = s.executeQuery();
+			final ResultSet rs = s.executeQuery();
 
 			if (rs.first())
 			{
@@ -241,7 +244,7 @@ public class Lectures
 		{
 			s = getStatement("SELECT `code` from `modules` where `code` LIKE ? LIMIT 6;");
 			s.setString(1, "%" + code + "%"); // JDBC-- because this really shouldn't work.
-			ResultSet rs = s.executeQuery();
+			final ResultSet rs = s.executeQuery();
 
 			if (!rs.first())
 			{
@@ -270,7 +273,7 @@ public class Lectures
 				s = getStatement("SELECT `module` from `modules` where `code` = ?");
 				s.setString(1, sug);
 
-				ResultSet rs=s.executeQuery();
+				final ResultSet rs=s.executeQuery();
 
 				rs.first();
 				final int ret = rs.getInt("module");
@@ -293,10 +296,10 @@ public class Lectures
 		"<Code String> is the module(s) code to register for."
 	};
 
-	public synchronized void commandAddLikeModules(Message mes ) throws SQLException
+	public synchronized void commandAddLikeModules(final Message mes ) throws SQLException
 	{
 
-		int uid=getUserId(mes.getNick());
+		final int uid=getUserId(mes.getNick());
 		final String code=mods.util.getParamString(mes);
 
 		PreparedStatement s = null;
@@ -311,7 +314,7 @@ public class Lectures
 			{
 				t = getStatement("SELECT `module` from `modules` where `code` LIKE ?;");
 				t.setString(1, code);
-				ResultSet rt = t.executeQuery();
+				final ResultSet rt = t.executeQuery();
 
 				if (!rt.first())
 				{
@@ -329,7 +332,7 @@ public class Lectures
 						s.executeUpdate();
 						i++;
 					}
-					catch (SQLException e)
+					catch (final SQLException e)
 					{
 						// Count won't've been incremented, all is good.
 					}
@@ -354,7 +357,7 @@ public class Lectures
 		"<Code> is the module code to get the name for."
 	};
 
-    public synchronized void commandGetModuleName(Message mes) throws SQLException
+    public synchronized void commandGetModuleName(final Message mes) throws SQLException
     {
 		final int modcode = codeSuggestions(mods.util.getParamString(mes), mes);
 
@@ -367,7 +370,7 @@ public class Lectures
             s = getStatement("SELECT `name`, `code` from `modules` where `module` = ?");
 			s.setInt(1, modcode);
 
-			ResultSet rs = s.executeQuery();
+			final ResultSet rs = s.executeQuery();
 
 			rs.first();
 			final String name = rs.getString("name");
@@ -388,12 +391,12 @@ public class Lectures
 		"<Code> is the module code to register for."
 	};
 
-	public synchronized void commandAddModule(Message mes ) throws SQLException
+	public synchronized void commandAddModule(final Message mes ) throws SQLException
 	{
 
-		int uid=getUserId(mes.getNick());
+		final int uid=getUserId(mes.getNick());
 
-		int modcode=codeSuggestions(mods.util.getParamString(mes), mes);
+		final int modcode=codeSuggestions(mods.util.getParamString(mes), mes);
 
 		if (modcode==-1)
 			return;
@@ -420,12 +423,12 @@ public class Lectures
 		"<Code> is the module code to unregister for."
 	};
 
-	public synchronized void commandRemoveModule(Message mes ) throws SQLException
+	public synchronized void commandRemoveModule(final Message mes ) throws SQLException
 	{
 
-		int uid=getUserId(mes.getNick());
+		final int uid=getUserId(mes.getNick());
 
-		int modcode=codeSuggestions(mods.util.getParamString(mes),mes);
+		final int modcode=codeSuggestions(mods.util.getParamString(mes),mes);
 
 		if (modcode==-1)
 			return;

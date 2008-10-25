@@ -9,7 +9,10 @@ package uk.co.uwcs.choob.modules;
 import java.util.List;
 
 import uk.co.uwcs.choob.Choob;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.Interval;
 
 /**
  * Wrapper for the group of Modules in the bot.
@@ -77,8 +80,8 @@ public final class Modules
 	/**
 	 * Creates a new instance of the Modules.
 	 */
-	public Modules(DbConnectionBroker dbBroker, List<Interval> intervalList,
-			Choob bot, IRCInterface irc) {
+	public Modules(final DbConnectionBroker dbBroker, final List<Interval> intervalList,
+			final Choob bot, final IRCInterface irc) {
 		try {
 			date = new DateModule();
 			history = new HistoryModule(dbBroker);
@@ -92,7 +95,7 @@ public final class Modules
 			synthetic = new SyntheticModule( bot );
 			util = new UtilModule(irc);
 		}
-		catch (ChoobException e)
+		catch (final ChoobException e)
 		{
 			throw new RuntimeException("Could not instantiate modules: " + e);
 		}

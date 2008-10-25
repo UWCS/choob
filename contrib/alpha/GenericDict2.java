@@ -1,7 +1,13 @@
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.*;
-import java.util.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,10 +19,10 @@ public class GenericDict2
 {
 
 
-	private IRCInterface irc;
-	private Modules mods;
+	private final IRCInterface irc;
+	private final Modules mods;
 
-	public GenericDict2(Modules mods, IRCInterface irc)
+	public GenericDict2(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -35,7 +41,7 @@ public class GenericDict2
 		"Example: genericdict --url http://example.com/ ` $1 $2 ` /somemoreurl/ ` $3 ` /endurl --match <a>%SOMEVAR%</a> lalala%BADGERS%lalala --output if ( $1 == example ) { Somevar is %SOMEVAR%. } Here be badgers %BADGERS%.replaceAll(\"Badgers\",\"Ponies\")"
 	};
 
-	public void commandGetHelp(Message mes)
+	public void commandGetHelp(final Message mes)
 	{
 		irc.sendContextMessage(mes,genericDictLongHelp);
 	}
@@ -43,43 +49,43 @@ public class GenericDict2
 	public String[] helpCommandGenericDict = {
 		"A Stupidly complex command to scrape text from a website, use genericdict2.gethelp for detailed usage."
 	};
-	public void commandGenericDict(Message mes)
+	public void commandGenericDict(final Message mes)
 	{
 		try
 		{
-			String message = " " + mods.util.getParamString(mes);
+			final String message = " " + mods.util.getParamString(mes);
 
-			URL url = getURL(getParams(message,"url",true));
+			final URL url = getURL(getParams(message,"url",true));
 
-			HashMap<String,String> matchers = new HashMap<String,String>();
-			HashMap<String,String> values = new HashMap<String,String>();
+			final HashMap<String,String> matchers = new HashMap<String,String>();
+			final HashMap<String,String> values = new HashMap<String,String>();
 
 			final String patternsError = "Your patterns must contain a variable to assign result to";
 			try
 			{
-				for (String regex : getParams(message,"match",true))
+				for (final String regex : getParams(message,"match",true))
 				{
-					String[] split = regex.split("%.*?%");
+					final String[] split = regex.split("%.*?%");
 					matchers.put(getVarName(regex),"(?s)" + split[0] + "(.*?)" + split[1]);
 				}
 			}
-			catch (ArrayIndexOutOfBoundsException e)
+			catch (final ArrayIndexOutOfBoundsException e)
 			{
 				throw new GenericDictException(patternsError);
 			}
-			catch (StringIndexOutOfBoundsException e)
+			catch (final StringIndexOutOfBoundsException e)
 			{
 				throw new GenericDictException(patternsError);
 			}
 
-			for (String key : matchers.keySet())
+			for (final String key : matchers.keySet())
 			{
 				Matcher ma;
 				try
 				{
 					ma = mods.scrape.getMatcher(url,0, matchers.get(key));
 				}
-				catch (IOException e)
+				catch (final IOException e)
 				{
 					throw new GenericDictException("Error reading from specified site");
 				}
@@ -94,28 +100,28 @@ public class GenericDict2
 
 			toReturn = mods.scrape.readyForIrc(toReturn) + " ";
 			boolean appendURL = false;
-			for (String opt : getParams(message,"options",false))
+			for (final String opt : getParams(message,"options",false))
 				if (opt.equals("appendurl"))
 					appendURL = true;
 
 			int maxLength = -1;
-			for (String opt : getParams(message,"limit",false))
+			for (final String opt : getParams(message,"limit",false))
 			{
 				try
 				{
 					maxLength = Integer.parseInt(opt);
-				} catch (NumberFormatException e)
+				} catch (final NumberFormatException e)
 				{
 					// Leave at default
 				}
 			}
 
-			if ((maxLength > 0) && (toReturn.length() > maxLength))
+			if (maxLength > 0 && toReturn.length() > maxLength)
 			{
 				toReturn = toReturn.substring(0,maxLength) + "...";
 			}
 
-			if ((toReturn.length() == 0) || toReturn.matches("^(\\s|\\t|\\r)*$"))
+			if (toReturn.length() == 0 || toReturn.matches("^(\\s|\\t|\\r)*$"))
 				throw new GenericDictException("No results found");
 
 			if (!appendURL)
@@ -124,20 +130,20 @@ public class GenericDict2
 				irc.sendContextReply(mes,toReturn + url.toString());
 
 		}
-		catch (GenericDictException e)
+		catch (final GenericDictException e)
 		{
 			irc.sendContextReply(mes,e.getMessage());
 		}
 	}
 
-	private URL getURL(ArrayList<String> urlParts) throws GenericDictException
+	private URL getURL(final ArrayList<String> urlParts) throws GenericDictException
 	{
 		String urlString = "";
 		boolean skipwhitespace = true;
 		URL url = null;
 		try
 		{
-			for (String urlPart : urlParts)
+			for (final String urlPart : urlParts)
 				if (urlPart.equals("`"))
 				{
 					skipwhitespace = !skipwhitespace;
@@ -154,11 +160,11 @@ public class GenericDict2
 
 			url = new URL(urlString);
 		}
-		catch (MalformedURLException e)
+		catch (final MalformedURLException e)
 		{
 			throw new GenericDictException("Malformed URL");
 		}
-		catch (UnsupportedEncodingException e)
+		catch (final UnsupportedEncodingException e)
 		{
 			throw new GenericDictException("Unsupported Encoding");
 		}
@@ -166,9 +172,9 @@ public class GenericDict2
 		return url;
 	}
 
-	private ArrayList<String> getParams(String message,String option, boolean required) throws GenericDictException
+	private ArrayList<String> getParams(final String message,final String option, final boolean required) throws GenericDictException
 	{
-		int index = message.indexOf(" --" + option + " ");
+		final int index = message.indexOf(" --" + option + " ");
 		if (index == -1)
 		{
 			if (required)
@@ -177,31 +183,31 @@ public class GenericDict2
 		}
 		try
 		{
-			String optionStr = message.substring(index + option.length() + 4).replaceFirst("\\s--\\w.*","");
+			final String optionStr = message.substring(index + option.length() + 4).replaceFirst("\\s--\\w.*","");
 			return new ArrayList<String>(Arrays.asList(optionStr.split("\\s")));
-		} catch (StringIndexOutOfBoundsException e)
+		} catch (final StringIndexOutOfBoundsException e)
 		{
 			throw new GenericDictException("Error reading parameters for " + option);
 		}
 	}
 
-	private String getVarName(String str) throws GenericDictException
+	private String getVarName(final String str) throws GenericDictException
 	{
 		try
 		{
-			String toReturn = str.substring(str.indexOf("%") + 1);
+			final String toReturn = str.substring(str.indexOf("%") + 1);
 			return toReturn.substring(0,toReturn.indexOf("%"));
-		} catch (StringIndexOutOfBoundsException e)
+		} catch (final StringIndexOutOfBoundsException e)
 		{
 			throw new GenericDictException("Unable to find variable name, syntax for variables is %variablename%");
 		}
 	}
 
 	/** Delegate to formatOutputString without a list as the first param */
-	private String formatOutputString(List<String> unformatted, Map<String, String> varValues) throws GenericDictException
+	private String formatOutputString(final List<String> unformatted, final Map<String, String> varValues) throws GenericDictException
 	{
-		StringBuilder sb = new StringBuilder();
-		for (String s : unformatted)
+		final StringBuilder sb = new StringBuilder();
+		for (final String s : unformatted)
 			sb.append(s).append(" ");
 		return formatOutputString(sb.toString(), varValues);
 	}
@@ -211,7 +217,7 @@ public class GenericDict2
 	 * @param varVaules Values of the %THINGS%.
 	 * @return The block of text to be processed before sending to irc.
 	 */
-	private String formatOutputString(String unformatted, Map<String, String> varValues) throws GenericDictException
+	private String formatOutputString(final String unformatted, final Map<String, String> varValues) throws GenericDictException
 	{
 		final String varPattern = "%\\w*?%";
 		final String varReplacePattern = varPattern + "(" + replace_all_statement + ")";
@@ -226,7 +232,7 @@ public class GenericDict2
 		while ((p = vrp.matcher(tmp)).find())
 		{
 			// Run the sane matcher to get the arguments.
-			Matcher moo = Pattern.compile(replace_all_statement).matcher(p.group(1));
+			final Matcher moo = Pattern.compile(replace_all_statement).matcher(p.group(1));
 			if (!moo.find())
 				throw new GenericDictException("syntax of replaceAll is %variable%.replaceAll(\"regex\",\"replacement\")");
 
@@ -246,7 +252,7 @@ public class GenericDict2
 				tmp = tmp.replaceFirst(varReplacePattern, varValues.get(getVarName(tmp)).replaceAll(toReplace,theReplacement));
 			}
 			// (eew) The item didn't exist, so remove it and the statement.
-			catch (NullPointerException e)
+			catch (final NullPointerException e)
 			{
 				tmp = tmp.replaceFirst(varReplacePattern, "");
 			}
@@ -259,7 +265,7 @@ public class GenericDict2
 			{
 				tmp = tmp.replaceFirst(varPattern,varValues.get(getVarName(tmp)));
 			}
-			catch (NullPointerException e)
+			catch (final NullPointerException e)
 			{
 				tmp = tmp.replaceFirst(varPattern,"");
 			}
@@ -275,13 +281,13 @@ public class GenericDict2
 		return toReturn;
 	}
 
-	private String stripUnquotedWhiteSpace(String toStrip)
+	private String stripUnquotedWhiteSpace(final String toStrip)
 	{
 		String toReturn = "";
 		boolean skip = true;
 		for (int i = 0 ; i < toStrip.length(); i++)
 		{
-			char chr = toStrip.charAt(i);
+			final char chr = toStrip.charAt(i);
 			if (chr != ' ')
 			{
 				if (chr == '"')
@@ -296,7 +302,7 @@ public class GenericDict2
 		return toReturn;
 	}
 
-	private String formatConditionals(String unformatted) throws GenericDictException
+	private String formatConditionals(final String unformatted) throws GenericDictException
 	{
 		String toReturn = unformatted.replaceAll("\n","");
 		final String conditional = "(\\s|^)if\\s*?\\((.*?)\\)\\s*?\\{(.*?)\\}";
@@ -313,49 +319,49 @@ public class GenericDict2
 		return toReturn;
 	}
 
-	private boolean doComparison(String comparison) throws GenericDictException
+	private boolean doComparison(final String comparison) throws GenericDictException
 	{
-		int orIndex = comparison.indexOf("||");
-		int andIndex = comparison.indexOf("&&");
+		final int orIndex = comparison.indexOf("||");
+		final int andIndex = comparison.indexOf("&&");
 		if (orIndex != -1)
 		{
-			return (doComparison(comparison.substring(0,orIndex)) || doComparison(comparison.substring(orIndex + 2,comparison.length())));
+			return doComparison(comparison.substring(0,orIndex)) || doComparison(comparison.substring(orIndex + 2,comparison.length()));
 		}
 		if (andIndex != -1)
 		{
-			return (doComparison(comparison.substring(0,andIndex)) || doComparison(comparison.substring(andIndex + 2,comparison.length() )));
+			return doComparison(comparison.substring(0,andIndex)) || doComparison(comparison.substring(andIndex + 2,comparison.length() ));
 		}
-		String stripped = stripUnquotedWhiteSpace(comparison);
+		final String stripped = stripUnquotedWhiteSpace(comparison);
 		final String syntax = "Conditionals must be in the form : 'if ( string <operator> string )";
 		if (stripped.indexOf("==") != -1)
 		{
-			String[] split = ("'" + stripped + "'").split("==");
+			final String[] split = ("'" + stripped + "'").split("==");
 			if (split.length != 2)
 				throw new GenericDictException(syntax);
-			return ((split[0] + "'").equals("'" + split[1]));
+			return (split[0] + "'").equals("'" + split[1]);
 		} else if (stripped.indexOf("!=") != -1)
 		{
-			String[] split = ("'" + stripped + "'").split("!=");
+			final String[] split = ("'" + stripped + "'").split("!=");
 			if (split.length != 2)
 				throw new GenericDictException(syntax);
-			return !((split[0] + "'").equals("'" + split[1]));
+			return !(split[0] + "'").equals("'" + split[1]);
 		} else if (stripped.indexOf(">") != -1)
 		{
-			String[] split = ("'" + stripped + "'").split("");
+			final String[] split = ("'" + stripped + "'").split("");
 			if (split.length != 2)
 				throw new GenericDictException(syntax);
-			return (((split[0] + "'").compareTo("'" + split[1])) > 0);
+			return (split[0] + "'").compareTo("'" + split[1]) > 0;
 		} else if (stripped.indexOf("<") != -1)
 		{
-			String[] split = ("'" + stripped + "'").split("<");
+			final String[] split = ("'" + stripped + "'").split("<");
 			if (split.length != 2)
 				throw new GenericDictException(syntax);
-			return (((split[0] + "'").compareTo("'" + split[1])) < 0);
+			return (split[0] + "'").compareTo("'" + split[1]) < 0;
 		}
 		throw new GenericDictException(syntax);
 	}
 
-	private String stripUndesirables(String original)
+	private String stripUndesirables(final String original)
 	{
 		String toReturn = original;
 		int x = 0;
@@ -373,7 +379,7 @@ class GenericDictException extends Exception
 {
 	private static final long serialVersionUID = 1696799760595440266L;
 
-	public GenericDictException(String message)
+	public GenericDictException(final String message)
 	{
 		super(message);
 	}

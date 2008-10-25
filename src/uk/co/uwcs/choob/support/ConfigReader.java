@@ -16,13 +16,10 @@ public final class ConfigReader
 	 * @param configFile The path of the filename to use for the config file.
 	 * @throws ChoobException Thrown if there was an error reading the config file.
 	 */
-	public ConfigReader(String configFile) throws IOException
+	public ConfigReader(final String configFile) throws IOException
 	{
 		botProps = new Properties();
-		FileInputStream r = new FileInputStream(configFile);
-		if (r == null)
-			throw new IOException("Cannot find config file: " + configFile
-					+ ". Have you created it from the example correctly?");
+		final FileInputStream r = new FileInputStream(configFile);
 		botProps.load(r);
 	}
 
@@ -31,13 +28,13 @@ public final class ConfigReader
 	 * @param setting Setting you're attempting to get the value of.
 	 * @param fallback String to fallback to if it fails.
 	 */
-	public String getSettingFallback( String setting, String fallback)
+	public String getSettingFallback( final String setting, final String fallback)
 	{
 		try
 		{
 			return getSetting(setting);
 		}
-		catch (ChoobException e) {
+		catch (final ChoobException e) {
 			System.out.println("Warning: Setting " + setting + " was not set, falling back to " + fallback);
 		}
 
@@ -49,9 +46,9 @@ public final class ConfigReader
 	 * @param setting Setting you're attempting to get the value of.
 	 * @throws ChoobException Thrown if the setting wasn't found.
 	 */
-	public String getSetting( String setting ) throws ChoobException
+	public String getSetting( final String setting ) throws ChoobException
 	{
-		String p=botProps.getProperty(setting);
+		final String p=botProps.getProperty(setting);
 		if (p!=null)
 			return p;
 		throw new ChoobException("Setting doesn't exist in config file.");

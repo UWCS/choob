@@ -1,10 +1,18 @@
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.jibble.pircbot.Colors;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.ObjectDBTransaction;
+import uk.co.uwcs.choob.support.events.ChannelJoin;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.PrivateEvent;
 
 class ActiveVote {
 	public int id;
@@ -40,45 +48,45 @@ public class Vote {
 			"$Rev$$Date$"
 		};
 	}
-	
-	private Modules mods;
-	private IRCInterface irc;
-	private Map<String,Integer> activeVotes = new HashMap<String,Integer>();
-	
-	public Vote(Modules mods, IRCInterface irc) {
+
+	private final Modules mods;
+	private final IRCInterface irc;
+	private final Map<String,Integer> activeVotes = new HashMap<String,Integer>();
+
+	public Vote(final Modules mods, final IRCInterface irc) {
 		this.mods = mods;
 		this.irc = irc;
-		
+
 		// Reload all old queued objects...
-		long time = System.currentTimeMillis();
-		List<ActiveVote> votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0");
-		for(ActiveVote vote: votes) {
+		final long time = System.currentTimeMillis();
+		final List<ActiveVote> votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0");
+		for(final ActiveVote vote: votes) {
 			mods.interval.callBack( vote, vote.finishTime - time, vote.id );
 		}
 	}
-	
+
 	//Options
 	public String[] optionsUser = { "VoteResultMessage", "VoteJoinNotify" };
 	public String[] optionsUserDefaults = { "1", "1" };
-	public boolean optionCheckUserVoteResultMessage(String value, String nick) {
+	public boolean optionCheckUserVoteResultMessage(final String value, final String nick) {
 		return value.equals("0") || value.equals("1");
 	}
 	public String[] helpOptionVoteResultMessage = {
 		"Choose to be notified of the result of a vote.",
 		"Set this to \"0\" to not have the bot send a message with the result of the vote upon its completion.",
 	};
-	
-	public boolean optionCheckUserVoteJoinNotify(String value, String nick) {
+
+	public boolean optionCheckUserVoteJoinNotify(final String value, final String nick) {
 		return value.equals("0") || value.equals("1");
 	}
 	public String[] helpOptionVoteJoinNotify = {
 		"Choose to be notified of votes you have yet to vote on upon joining a channel with active votes.",
 		"Set this to \"0\" to disable these notifications."
 	};
-	
+
 	public String[] optionsGeneral = { "VoteVerbose" };
 	public String[] optionsGeneralDefaults = {"1"};
-	public boolean optionCheckGeneralVoteVerbose(String value) {
+	public boolean optionCheckGeneralVoteVerbose(final String value) {
 		return value.equals("0") || value.equals("1");
 	}
 	public String[] helpOptionVoteVerbose = {
@@ -86,7 +94,7 @@ public class Vote {
 		"If set to \"0\" the output will be limited to 2 lines.",
 		"If set to \"1\" the output will place each option for the vote on a new line."
 	};
-	
+
 	//Additional help topics
 	public String[] helpTopics = { "Examples" };
 	public String[] helpExamples = {
@@ -102,7 +110,7 @@ public class Vote {
 		"'Vote.Call Best Regime? (Totalitarianism, Communism) 10s' to call a"
 			+ " lightning poll on the virtues of extremes."
 	};
-	
+
 	//Start a vote
 	public String[] helpCommandCall = {
 		"Call a vote for channel members to vote on. See Vote.Examples.",
@@ -112,25 +120,25 @@ public class Vote {
 		"<Duration> is an optional duration to run the vote of the form [<Days>d][<Hours>h][<Minutes>m][<Seconds>s] (default: 60s)",
 		"Note that if you are authenticated with nickserv, voters must authenticate themselves before being allowed to vote."
 	};
-	public synchronized void commandCall( Message mes ) {
-		String paramString = mods.util.getParamString( mes ).trim();
-		
+	public synchronized void commandCall( final Message mes ) {
+		final String paramString = mods.util.getParamString( mes ).trim();
+
 		//Check the parameters
 		if (paramString.length()==0) {
 			irc.sendContextReply(mes, "Sorry, you're missing a few parameters. Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
 			return;
 		}
-		
+
 		//Default parameters for name and options
 		String question = "Which is best?";
 		String[] options = new String[] { "Yes", "No" };
-		
-		
+
+
 		//Parse in the parameters to get the title, options and time
 		int pos = -1;
 		if (paramString.charAt(0) == '"') {
 			// Has question in "s.
-			int endPos = paramString.indexOf('"', 1);
+			final int endPos = paramString.indexOf('"', 1);
 			if (endPos != -1) {
 				question = paramString.substring(1, endPos);
 				pos = endPos + 1;
@@ -141,7 +149,7 @@ public class Vote {
 			}
 		} else if (paramString.charAt(0) != '(') {
 			// Has a question
-			int endPos = paramString.indexOf('(');
+			final int endPos = paramString.indexOf('(');
 			if (endPos == -1) {
 				question = paramString.trim();
 			} else {
@@ -156,10 +164,10 @@ public class Vote {
 			// Has some options
 			pos = paramString.indexOf('(');
 		}
-		
+
 		// Parse the options.
 		if (pos != -1) {
-			int startPos = paramString.indexOf('(', pos);
+			final int startPos = paramString.indexOf('(', pos);
 			int endPos = -1;
 			if (startPos != -1) {
 				endPos = paramString.indexOf(')', startPos);
@@ -167,7 +175,7 @@ public class Vote {
 			if (endPos != -1) {
 				options = paramString.substring(startPos + 1, endPos).split("\\s*,\\s*");
 			}
-			
+
 			if ( options.length == 0 || endPos == -1 ) {
 				if (startPos != -1) {
 					irc.sendContextReply(mes, "Invalid option string! Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
@@ -177,15 +185,15 @@ public class Vote {
 				// Remove trailing/leading spaces.
 				options[0] = options[0].trim();
 				options[options.length - 1] = options[options.length - 1].trim();
-				
+
 				pos = endPos + 1;
 			}
 		} else {
 			pos = paramString.length();
 		}
-		
+
 		// Anything after the end?
-		String remain = paramString.substring(pos).trim();
+		final String remain = paramString.substring(pos).trim();
 		long duration = 60 * 1000;
 		String durationString = "60s";
 		if (remain.length() != 0) {
@@ -195,14 +203,14 @@ public class Vote {
 					durationString = "until " + new Date(System.currentTimeMillis() + duration);
 				else
 					durationString = remain;
-			} catch (NumberFormatException e) {
+			} catch (final NumberFormatException e) {
 				irc.sendContextReply(mes, "Invalid duration string! Syntax: 'Vote.Call " + helpCommandCall[1] + "'. See Help.Help Vote.Examples." );
 				return;
 			}
 		}
-		
+
 		//Create the vote
-		ActiveVote vote = new ActiveVote();
+		final ActiveVote vote = new ActiveVote();
 		vote.caller = mes.getNick();
 		vote.channel = mes.getContext();
 		vote.text = question;
@@ -212,37 +220,37 @@ public class Vote {
 		vote.finishTime = System.currentTimeMillis() + duration;
 		//Determine if the user is nickserv authed, if so then the vote will be open to nickserv authed voters only
 		vote.nickserv = mods.security.hasAuth(mes);
-		
-		StringBuilder responseString = new StringBuilder("Abstain");
-		for(int i=0; i<options.length; i++)
-			responseString.append("," + options[i]);
+
+		final StringBuilder responseString = new StringBuilder("Abstain");
+		for (final String option : options)
+			responseString.append("," + option);
 		vote.responses = responseString.toString();
-		
+
 		mods.odb.save(vote);
 		mods.interval.callBack( vote, duration, vote.id );
-		
+
 		activeVotes.put(mes.getContext(), Integer.valueOf(vote.id));
-		
+
 		if (checkOption("","VoteVerbose",true))	{
 			irc.sendContextReply(mes, "OK, called vote #" + vote.id + " on \"" + question + "\"! You have " + durationString + ".");
-			String trigger = irc.getTrigger();
+			final String trigger = irc.getTrigger();
 			irc.sendContextReply(mes, trigger + "Vote.Vote 0  ==>  Abstain");
 			for(int i=0; i<options.length; i++)
 				irc.sendContextReply(mes, trigger + "Vote.Vote " + (i + 1) + "  ==>  " + options[i]);
 		} else {
-			StringBuilder responseOutput = new StringBuilder("0 for Abstain");
+			final StringBuilder responseOutput = new StringBuilder("0 for Abstain");
 			for(int i=0; i<options.length; i++)
 				responseOutput.append(", " + (i + 1) + " for " + options[i]);
-			
+
 			irc.sendContextReply(mes, "OK, called vote on \"" + question + "\"! You have " + durationString + " to use 'Vote.Vote <Number>' here or 'Vote.Vote " + vote.id + " <Number>' elsewhere, where <Number> is one of:");
 			irc.sendContextReply(mes, responseOutput + ".");
 		}
 	}
-	
+
 	public String[] helpCommandActiveVotes = {
 		"List all active votes."
 	};
-	public void commandActiveVotes(Message mes) {
+	public void commandActiveVotes(final Message mes) {
 		List<ActiveVote> votes;
 		//Only retrieve votes that the user can vote on.
 		if (mods.security.hasAuth(mes)) {
@@ -250,10 +258,10 @@ public class Vote {
 		} else {
 			votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0 AND nickserv = 0");
 		}
-		
-		Map<String,List<ActiveVote>> map = new HashMap<String,List<ActiveVote>>();
-		List<String> channels = new ArrayList<String>();
-		for(ActiveVote vote: votes) {
+
+		final Map<String,List<ActiveVote>> map = new HashMap<String,List<ActiveVote>>();
+		final List<String> channels = new ArrayList<String>();
+		for(final ActiveVote vote: votes) {
 			List<ActiveVote> chanVotes = map.get(vote.channel);
 			if (chanVotes == null) {
 				chanVotes = new ArrayList<ActiveVote>();
@@ -262,22 +270,22 @@ public class Vote {
 			}
 			chanVotes.add(vote);
 		}
-		
+
 		if (channels.size() == 0) {
 			if (mods.security.hasAuth(mes)) {
 				irc.sendContextReply(mes, "Sorry, there are no active votes!");
 			} else {
 				irc.sendContextReply(mes, "Sorry, there are no active votes! Note that some votes are only available for nickserv authed users.");
 			}
-		} else if ((votes.size() == 1) || (mes instanceof PrivateEvent)) {
+		} else if (votes.size() == 1 || mes instanceof PrivateEvent) {
 			//Extended version for private messages
-			StringBuilder buf = new StringBuilder();
+			final StringBuilder buf = new StringBuilder();
 			buf.append("Active votes: ");
 			for(int i=0; i<channels.size(); i++) {
 				buf.append(channels.get(i) + ": ");
-				List<ActiveVote> chanVotes = map.get(channels.get(i));
+				final List<ActiveVote> chanVotes = map.get(channels.get(i));
 				for(int j=0; j<chanVotes.size(); j++) {
-					ActiveVote vote = chanVotes.get(j);
+					final ActiveVote vote = chanVotes.get(j);
 					buf.append("\"" + vote.text + "\" (Vote ID: " + vote.id + ")");
 					if (j != chanVotes.size() - 1)
 						buf.append(", ");
@@ -289,13 +297,13 @@ public class Vote {
 			irc.sendContextReply(mes, buf.toString());
 		} else {
 			// Shorter form for not spamming channels
-			StringBuilder buf = new StringBuilder();
+			final StringBuilder buf = new StringBuilder();
 			buf.append("Too many active votes; listing only IDs: ");
 			for(int i=0; i<channels.size(); i++) {
 				buf.append(channels.get(i) + ": ");
-				List<ActiveVote> chanVotes = map.get(channels.get(i));
+				final List<ActiveVote> chanVotes = map.get(channels.get(i));
 				for(int j=0; j<chanVotes.size(); j++) {
-					ActiveVote vote = chanVotes.get(j);
+					final ActiveVote vote = chanVotes.get(j);
 					buf.append("" + vote.id);
 					if (j != chanVotes.size() - 1)
 						buf.append(", ");
@@ -307,44 +315,44 @@ public class Vote {
 			irc.sendContextReply(mes, buf.toString());
 		}
 	}
-	
+
 	public String[] helpCommandInfo = {
 		"Get info on a vote.",
 		"[<VoteID>]",
 		"<VoteID> is the ID of a vote to query, if this isn't specified a list of active votes will be provided."
 	};
-	public void commandInfo(Message mes) {
-		List<String> params = mods.util.getParams(mes, 1);
-		
+	public void commandInfo(final Message mes) {
+		final List<String> params = mods.util.getParams(mes, 1);
+
 		if (params.size() == 1) {
 			commandActiveVotes(mes);
 			return;
 		}
-		
+
 		int voteID;
 		try {
 			voteID = Integer.parseInt(params.get(1));
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			irc.sendContextReply(mes, "Sorry, " + params.get(1) + " is not a valid vote ID!");
 			return;
 		}
-		
-		List<ActiveVote> votes = mods.odb.retrieve(ActiveVote.class, "WHERE id = " + voteID);
-		
+
+		final List<ActiveVote> votes = mods.odb.retrieve(ActiveVote.class, "WHERE id = " + voteID);
+
 		if (votes.size() == 0) {
 			irc.sendContextReply(mes, "Sorry, that vote doesn't exist!");
 			return;
 		}
-		
-		ActiveVote vote = votes.get(0);
+
+		final ActiveVote vote = votes.get(0);
 		if (vote.finished) {
 			// Vote finished.
-			StringBuilder output = new StringBuilder();
+			final StringBuilder output = new StringBuilder();
 			output.append("Vote " + vote.id + " (\"" + vote.text + "\") finished. It was called by " + vote.caller);
 			output.append(" " + apiEncodePeriod(vote.startTime) + " and finished " + apiEncodePeriod(vote.finishTime));
 			output.append(". Responses: ");
-			String[] responses = vote.responses.split(",");
-			String[] results = vote.results.split(",");
+			final String[] responses = vote.responses.split(",");
+			final String[] results = vote.results.split(",");
 			for(int i=0; i<responses.length; i++) {
 				output.append(responses[i] + " with " + results[i]);
 				if (i == responses.length - 2)
@@ -359,18 +367,18 @@ public class Vote {
 			if (mes instanceof PrivateEvent) {
 				//Determine the conext of the command, and if a PM be more verbose
 				irc.sendContextReply(mes, "Vote #" + vote.id + " on \"" + vote.text + "\"! Finishes " + apiEncodePeriod(vote.finishTime) + ".");
-				String trigger = irc.getTrigger();
-				String[] options = vote.responses.split(",");
+				final String trigger = irc.getTrigger();
+				final String[] options = vote.responses.split(",");
 				for (int i=0;i<options.length;i++) {
 					irc.sendContextReply(mes, trigger + "Vote.Vote " + i + "  ==>  " + options[i]);
 				}
 			} else {
 				//Don't spam out the channel.
-				StringBuilder output = new StringBuilder();
+				final StringBuilder output = new StringBuilder();
 				output.append("Vote " + vote.id + " (\"" + vote.text + "\") is still running. It was called by " + vote.caller);
 				output.append(" " + apiEncodePeriod(vote.startTime) + " and finishes " + apiEncodePeriod(vote.finishTime));
 				output.append(". Responses: ");
-				String[] responses = vote.responses.split(",");
+				final String[] responses = vote.responses.split(",");
 				for(int i=0; i<responses.length; i++) {
 					output.append(i).append(") \"").append(responses[i]).append("\"");
 					if (i == responses.length - 2)
@@ -383,42 +391,42 @@ public class Vote {
 			}
 		}
 	}
-	
+
 	// TODO: export this.
-	public long apiDecodePeriod(String time) throws NumberFormatException {
+	public long apiDecodePeriod(final String time) throws NumberFormatException {
 		int period = 0;
-		
+
 		int currentPos = -1;
 		int lastPos = 0;
-		
+
 		if ( (currentPos = time.indexOf('d', lastPos)) >= 0 ) {
 			period += 60 * 60 * 24 * Integer.parseInt(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
-		
+
 		if ( (currentPos = time.indexOf('h', lastPos)) >= 0 ) {
 			period += 60 * 60 * Integer.parseInt(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
-		
+
 		if ( (currentPos = time.indexOf('m', lastPos)) >= 0 ) {
 			period += 60 * Integer.parseInt(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
-		
+
 		if ( (currentPos = time.indexOf('s', lastPos)) >= 0 ) {
 			period += Integer.parseInt(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
-		
+
 		if (lastPos != time.length())
 			throw new NumberFormatException("Invalid time format: " + time);
-		
+
 		return period;
 	}
-	
-	public String apiEncodePeriod(long time) {
-		int TOOLONG = 60 * 60 * 1000; // One hour
+
+	public String apiEncodePeriod(final long time) {
+		final int TOOLONG = 60 * 60 * 1000; // One hour
 		long remain = time - System.currentTimeMillis();
 		boolean past;
 		if (remain < 0) {
@@ -427,25 +435,25 @@ public class Vote {
 		} else {
 			past = false;
 		}
-		
+
 		if (remain > TOOLONG)
-			return "at " + (new Date(time));
-		
-		StringBuilder out = new StringBuilder();
-		
+			return "at " + new Date(time);
+
+		final StringBuilder out = new StringBuilder();
+
 		if (!past)
 			out.append("in ");
-		
+
 		int got = 0; // Number of fields we've got.
 		remain /= 1000;
 		if (remain > 60 * 60 * 24) {
-			long days = remain / (60 * 60 * 24);
+			final long days = remain / (60 * 60 * 24);
 			got++;
 			out.append("" + days + " days").append(days==1 ? "" : "s").append(", ");
 			remain = remain % (60 * 60 * 24);
 		}
 		if (remain > 60 * 60) {
-			long hours = remain / (60 * 60);
+			final long hours = remain / (60 * 60);
 			if (got > 0)
 				out.append(", ");
 			got++;
@@ -453,36 +461,36 @@ public class Vote {
 			remain = remain % (60 * 60);
 		}
 		if (remain > 60 && got < 2) {
-			long mins = remain / 60;
+			final long mins = remain / 60;
 			if (got > 0)
 				out.append(", ");
 			got++;
 			out.append("" + mins + " min").append(mins==1 ? "" : "s").append(", ");
 			remain = remain % 60;
 		}
-		if (got == 0 || (got == 1 && remain > 0))
+		if (got == 0 || got == 1 && remain > 0)
 			out.append("" + remain + " sec").append(remain==1 ? "" : "s");
-		
+
 		if (past)
 			out.append(" ago");
-		
+
 		return out.toString();
 	}
-	
+
 	public String[] helpCommandVote = {
 		"Vote on an existing vote.",
 		"[<VoteID>] <Response>",
 		"<VoteID> is the optional vote ID - if the vote was called in the current context, this is not required",
 		"<Response> is what to vote for; either the response number or name"
 	};
-	public synchronized void commandVote( Message mes ) {
-		List<String> params = mods.util.getParams(mes, 2);
-		
+	public synchronized void commandVote( final Message mes ) {
+		final List<String> params = mods.util.getParams(mes, 2);
+
 		int voteID;
 		String response;
 		if (params.size() == 2) {
 			// Get the Vote ID...
-			Integer voteIDInt = activeVotes.get(mes.getContext());
+			final Integer voteIDInt = activeVotes.get(mes.getContext());
 			if (voteIDInt == null) {
 				irc.sendContextReply(mes, "Sorry, no active vote here! You'll need to specify a vote ID.");
 				return;
@@ -493,8 +501,8 @@ public class Vote {
 			try {
 				voteID = Integer.parseInt(params.get(1));
 				response = params.get(2);
-			} catch (NumberFormatException e) {
-				Integer voteIDInt = activeVotes.get(mes.getContext());
+			} catch (final NumberFormatException e) {
+				final Integer voteIDInt = activeVotes.get(mes.getContext());
 				if (voteIDInt == null) {
 					irc.sendContextReply(mes, "Sorry, " + params.get(1) + " is not a valid vote ID!");
 					return;
@@ -506,49 +514,49 @@ public class Vote {
 			irc.sendContextReply(mes, "Syntax: 'Vote.Vote " + helpCommandVote[1] + "'.");
 			return;
 		}
-		
+
 		// OK, try to retrieve the vote.
-		List<ActiveVote> matching = mods.odb.retrieve(ActiveVote.class, "WHERE id = " + voteID + " AND finished = 0");
-		
+		final List<ActiveVote> matching = mods.odb.retrieve(ActiveVote.class, "WHERE id = " + voteID + " AND finished = 0");
+
 		if (matching.size() == 0) {
 			irc.sendContextReply(mes, "Sorry, that vote seems to have expired.");
 			return;
 		}
-		
-		ActiveVote vote = matching.get(0);
-		
-		if ((vote.nickserv) && (!mods.security.hasAuth(mes))) {
+
+		final ActiveVote vote = matching.get(0);
+
+		if (vote.nickserv && !mods.security.hasAuth(mes)) {
 			irc.sendContextReply(mes, "You must be authenticated with nickserv in order to cast a vote on this vote!");
 			return;
 		}
-		
-		String[] responses = vote.responses.split(",");
-		
+
+		final String[] responses = vote.responses.split(",");
+
 		int responseID = -1;
 		try {
 			responseID = Integer.parseInt(response);
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			for(int i=0; i<responses.length; i++) {
 				if (responses[i].equalsIgnoreCase(response))
 					responseID = i;
 			}
 		}
-		
+
 		if (responseID < 0 || responseID >= responses.length) {
 			irc.sendContextReply(mes, "Sorry, " + response + " is not a valid response for this vote!");
 			return;
 		}
-		
+
 		// Have they already voted?
-		List<Voter> voted = mods.odb.retrieve(Voter.class, "WHERE voteID = " + voteID + " AND nick = \"" + mods.odb.escapeString(mods.nick.getBestPrimaryNick(mes.getNick())) + "\"");
-		
+		final List<Voter> voted = mods.odb.retrieve(Voter.class, "WHERE voteID = " + voteID + " AND nick = \"" + mods.odb.escapeString(mods.nick.getBestPrimaryNick(mes.getNick())) + "\"");
+
 		if (voted.size() == 1) {
-			Voter existing = voted.get(0);
+			final Voter existing = voted.get(0);
 			existing.response = responseID;
 			mods.odb.update(existing);
 			irc.sendContextReply(mes, "OK, changed your vote to " + responses[responseID]);
 		} else {
-			Voter voter = new Voter();
+			final Voter voter = new Voter();
 			voter.nick = mods.nick.getBestPrimaryNick(mes.getNick());
 			voter.response = responseID;
 			voter.voteID = voteID;
@@ -556,13 +564,13 @@ public class Vote {
 			irc.sendContextReply(mes, "OK, you've voted for " + responses[responseID]);
 		}
 	}
-	
+
 	public String[] helpCommandAbstainAll = {
 		"Abstain on all active votes you have yet to vote upon."
 	};
-	public synchronized void commandAbstainAll(Message mes) {
+	public synchronized void commandAbstainAll(final Message mes) {
 		//The user doesn't care about any of the votes they haven't voted on, so abstain them in all of them.
-		
+
 		//First extract all the votes that the user can abstain in.
 		List<ActiveVote> votes;
 		if (mods.security.hasAuth(mes)) {
@@ -570,15 +578,15 @@ public class Vote {
 		} else {
 			votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0 AND nickserv = 0");
 		}
-		
+
 		//Iterate over all the votes.
-		StringBuilder buf = new StringBuilder();
+		final StringBuilder buf = new StringBuilder();
 		int abstainedVotes = 0;
-		for (ActiveVote vote: votes) {
-			List<Voter> voted = mods.odb.retrieve(Voter.class, "WHERE voteID = " + vote.id + " AND nick = \"" + mods.odb.escapeString(mods.nick.getBestPrimaryNick(mes.getNick())) + "\"");
+		for (final ActiveVote vote: votes) {
+			final List<Voter> voted = mods.odb.retrieve(Voter.class, "WHERE voteID = " + vote.id + " AND nick = \"" + mods.odb.escapeString(mods.nick.getBestPrimaryNick(mes.getNick())) + "\"");
 			if (voted.size() != 1) {
 				//The user hasn't voted... abstain!
-				Voter voter = new Voter();
+				final Voter voter = new Voter();
 				voter.nick = mods.nick.getBestPrimaryNick(mes.getNick());
 				voter.response = 0;
 				voter.voteID = vote.id;
@@ -598,46 +606,47 @@ public class Vote {
 			}
 		}
 	}
-	
-	public synchronized void interval( Object parameter ) {
+
+	public synchronized void interval( final Object parameter ) {
 		if (parameter != null && parameter instanceof ActiveVote) {
 			// It's a vote ending.
 			final ActiveVote vote = (ActiveVote)parameter;
-			
+
 			final List<Voter> votes = mods.odb.retrieve(Voter.class, "WHERE voteID = " + vote.id);
-			
-			String[] responses = vote.responses.split(",");
-			int[] counts = new int[responses.length];
-			
-			for(Voter voter: votes)
+
+			final String[] responses = vote.responses.split(",");
+			final int[] counts = new int[responses.length];
+
+			for(final Voter voter: votes)
 				counts[voter.response]++;
-			
+
 			// Gah! Inefficient, but Java doesn't provide a useful enough sort method!
 			int max = 0;
-			for(int i=0; i<counts.length; i++) {
-				if (max < counts[i])
-					max = counts[i];
+			for (final int count : counts)
+			{
+				if (max < count)
+					max = count;
 			}
-			
-			List<String> results = new ArrayList<String>();
+
+			final List<String> results = new ArrayList<String>();
 			boolean first1 = true, first0 = true;
 			List<String> winners = new ArrayList<String>();
-			StringBuilder newResponses = new StringBuilder();
-			StringBuilder newResults = new StringBuilder();
+			final StringBuilder newResponses = new StringBuilder();
+			final StringBuilder newResults = new StringBuilder();
 			for(int i = max; i >= 0; i--) {
-				List<String> elts = new ArrayList<String>();
+				final List<String> elts = new ArrayList<String>();
 				for(int j=0; j<counts.length; j++)
 					if (counts[j] == i)
 						elts.add(responses[j]);
-				
+
 				if (elts.size() > 0) {
 					if (first1)
 						winners = elts;
 					first1 = false;
-					
-					StringBuilder thisResult = new StringBuilder();
+
+					final StringBuilder thisResult = new StringBuilder();
 					boolean first2 = true;
-					for(String name: elts) {
+					for(final String name: elts) {
 						if (!first0) {
 							newResponses.append(",");
 							newResults.append(",");
@@ -645,7 +654,7 @@ public class Vote {
 						first0 = false;
 						newResponses.append(name);
 						newResults.append("" + i);
-						
+
 						if (!first2)
 							thisResult.append(", ");
 						first2 = false;
@@ -658,26 +667,26 @@ public class Vote {
 			vote.finished = true;
 			vote.responses = newResponses.toString();
 			vote.results = newResults.toString();
-			
+
 			// Delete all the buggers!
 			mods.odb.runTransaction( new ObjectDBTransaction() {
 				@Override
 				public void run() {
 					update(vote);
-					for(Voter voter: votes)
+					for(final Voter voter: votes)
 						delete(voter);
 				}
 			});
-			
+
 			//Check the option for verbose (i.e. spammy) output.
 			if (checkOption("","VoteVerbose",true)) {
 				irc.sendMessage(vote.channel, "Vote on \"" + vote.text + "\" has ended! Results:");
-				for(String result: results)
+				for(final String result: results)
 					irc.sendMessage(vote.channel, result);
 			} else {
-				StringBuilder resultText = new StringBuilder();
+				final StringBuilder resultText = new StringBuilder();
 				boolean first2 = true;
-				for(String result: results) {
+				for(final String result: results) {
 					if (!first2)
 						resultText.append("; ");
 					first2 = false;
@@ -686,11 +695,11 @@ public class Vote {
 				resultText.append(".");
 				irc.sendMessage(vote.channel, "Vote on \"" + vote.text + "\" has ended! Results: " + resultText);
 			}
-			
+
 			if (winners.size() == 1)
 				irc.sendMessage(vote.channel, "Democracy has spoken; " + winners.get(0) + " is the winner!");
 			else {
-				StringBuilder output = new StringBuilder();
+				final StringBuilder output = new StringBuilder();
 				for(int i=0; i<winners.size(); i++) {
 					output.append(winners.get(i));
 					if (i != winners.size() - 1)
@@ -706,14 +715,14 @@ public class Vote {
 					irc.sendMessage(vote.channel, "Result is a draw: " + output + " all got " + max + " votes!");
 				}
 			}
-			
+
 			//Send the user who called the vote a message with the results
 			if (checkOption(vote.caller, "VoteResultMessage", false)) {
 				irc.sendMessage(vote.caller, "Vote on \"" + vote.text + "\" has ended! Results: " + results);
 				if (winners.size() == 1)
 					irc.sendMessage(vote.caller, "The powers that be have picked " + winners.get(0) + " as the winner!");
 				else {
-					StringBuilder output = new StringBuilder();
+					final StringBuilder output = new StringBuilder();
 					for(int i=0; i<winners.size(); i++) {
 						output.append(winners.get(i));
 						if (i != winners.size() - 1)
@@ -733,12 +742,12 @@ public class Vote {
 	/**
 	 * Method in order to inform a user of new votes that they may wish to vote on that they have yet to do so.
 	 */
-	public synchronized void onJoin(ChannelJoin ev) {
+	public synchronized void onJoin(final ChannelJoin ev) {
 		if (ev.getLogin().equalsIgnoreCase("Choob")) {
 			// XXX : Ignore bots, the quick and hacky way
 			return;
 		}
-		
+
 		//Check if the user has specified the option to have the notification enabled.
 		if (checkOption(ev.getNick(),"VoteJoinNotify", false)) {
 			//Get the active votes
@@ -749,10 +758,10 @@ public class Vote {
 				votes = mods.odb.retrieve(ActiveVote.class, "WHERE finished = 0 AND nickserv = 0");
 			}
 
-			Map<String,List<ActiveVote>> map = new HashMap<String,List<ActiveVote>>();
-			List<String> channels = new ArrayList<String>();
+			final Map<String,List<ActiveVote>> map = new HashMap<String,List<ActiveVote>>();
+			final List<String> channels = new ArrayList<String>();
 			//For each of the active votes, get it's channel and stick it in the arraylist
-			for(ActiveVote vote: votes) {
+			for(final ActiveVote vote: votes) {
 				List<ActiveVote> chanVotes = map.get(vote.channel);
 				if (chanVotes == null) {
 					chanVotes = new ArrayList<ActiveVote>();
@@ -762,19 +771,19 @@ public class Vote {
 				chanVotes.add(vote);
 			}
 
-			StringBuilder buf = new StringBuilder();
+			final StringBuilder buf = new StringBuilder();
 			//Loop through the channels
 			for(int i=0; i<channels.size(); i++) {
 				//If the channel is the one the user just joined... let them know what votes there are
 				if (channels.get(i).equals(ev.getChannel())) {
 					buf.append("There are votes you have yet to vote in on " + channels.get(i) + ": ");
-					List<ActiveVote> chanVotes = map.get(channels.get(i));
+					final List<ActiveVote> chanVotes = map.get(channels.get(i));
 					int voteSpamCount = 0; //Keep track of how many votes there are that we let the user know about
 					for(int j=0; j<chanVotes.size(); j++) {
-						ActiveVote vote = chanVotes.get(j);
-						int voteID = vote.id;
+						final ActiveVote vote = chanVotes.get(j);
+						final int voteID = vote.id;
 						//But only if they've not voted
-						List<Voter> voted = mods.odb.retrieve(Voter.class, "WHERE voteID = " + voteID + " AND nick = \"" + mods.odb.escapeString(mods.nick.getBestPrimaryNick(ev.getNick())) + "\"");
+						final List<Voter> voted = mods.odb.retrieve(Voter.class, "WHERE voteID = " + voteID + " AND nick = \"" + mods.odb.escapeString(mods.nick.getBestPrimaryNick(ev.getNick())) + "\"");
 						if (voted.size() != 1) {
 							buf.append("\"" + vote.text + "\" (Vote ID: " + vote.id + ")");
 							if (j != chanVotes.size() - 1)
@@ -793,8 +802,8 @@ public class Vote {
 			}
 		}
 	}
-	
-	private boolean checkOption(String userNick, String option, boolean global) {
+
+	private boolean checkOption(final String userNick, final String option, final boolean global) {
 		try {
 			String value;
 			if (global) {
@@ -802,9 +811,9 @@ public class Vote {
 			} else {
 				value = (String)mods.plugin.callAPI("Options", "GetUserOption", userNick, option, "1");
 			}
-			String[] parts = value.split(":", -1);
+			final String[] parts = value.split(":", -1);
 			return parts[0].equals("1");
-		} catch (ChoobNoSuchCallException e) {
+		} catch (final ChoobNoSuchCallException e) {
 			return true;
 		}
 	}

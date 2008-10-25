@@ -27,7 +27,9 @@ package uk.co.uwcs.choob;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.swabunga.spell.engine.SpellDictionaryASpell;
 
@@ -46,9 +48,9 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	 * The hashmap that contains the word dictionary. The map is hashed on the doublemeta
 	 * code. The map entry contains a LinkedList of words that have the same double meta code.
 	 */
-	private Hashtable<String, List<String>> mainDictionary = new Hashtable<String, List<String>>(INITIAL_CAPACITY);
+	private final Hashtable<String, List<String>> mainDictionary = new Hashtable<String, List<String>>(INITIAL_CAPACITY);
 
-	public SpellDictionaryChoob(File phonetics) throws IOException
+	public SpellDictionaryChoob(final File phonetics) throws IOException
 	{
 		super(phonetics);
 	}
@@ -56,8 +58,8 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	/**
 	 * Allocates a word in the dictionary
 	 */
-	public void addWord(String word) {
-		String code = getCode(word);
+	public void addWord(final String word) {
+		final String code = getCode(word);
 		List<String> list = mainDictionary.get(code);
 		if (list == null)
 		{
@@ -72,9 +74,9 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	/**
 	 * Removes a word from the dictionary
 	 */
-	public void removeWord(String word) {
-		String code = getCode(word);
-		List<String> list = mainDictionary.get(code);
+	public void removeWord(final String word) {
+		final String code = getCode(word);
+		final List<String> list = mainDictionary.get(code);
 		if (list == null)
 			return;
 		list.remove(word.toLowerCase());
@@ -84,9 +86,9 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	 * Returns a list of strings (words) for the code.
 	 */
 	@Override
-	public List<String> getWords(String code) {
+	public List<String> getWords(final String code) {
 		//Check the main dictionary.
-		List<String> mainDictResult = mainDictionary.get(code);
+		final List<String> mainDictResult = mainDictionary.get(code);
 		if (mainDictResult == null)
 			return new LinkedList<String>();
 		return mainDictResult;
@@ -96,7 +98,7 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	 * Returns true if the word is correctly spelled against the current word list.
 	 */
 	@Override
-	public boolean isCorrect(String word) {
+	public boolean isCorrect(final String word) {
 		return getWords(getCode(word)).contains(word.toLowerCase());
 	}
 }

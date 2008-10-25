@@ -1,4 +1,9 @@
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,12 +40,12 @@ public class TimedEvents
 	}
 
 	private static int MAX_DELAYED_COUNT = 2; // Maximum number of times we'll allow an event to be delayed.
-	
-	private Map<String,TimedEvent> lastDelivery;
-	private Modules mods;
-	private IRCInterface irc;
 
-	public TimedEvents(Modules mods, IRCInterface irc)
+	private final Map<String,TimedEvent> lastDelivery;
+	private final Modules mods;
+	private final IRCInterface irc;
+
+	public TimedEvents(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -51,9 +56,9 @@ public class TimedEvents
 		mods.interval.reset();
 
 		// Reload all old queued objects...
-		long time = System.currentTimeMillis();
-		List<TimedEvent> events = mods.odb.retrieve(TimedEvent.class, "WHERE 1");
-		for(TimedEvent event: events)
+		final long time = System.currentTimeMillis();
+		final List<TimedEvent> events = mods.odb.retrieve(TimedEvent.class, "WHERE 1");
+		for(final TimedEvent event: events)
 		{
 			mods.interval.callBack( event, event.executeAt - time, -1 );
 		}
@@ -65,33 +70,33 @@ public class TimedEvents
 		"<When> is a non-empty time of the form [<Days>d][<Hours>h][<Minutes>m][<Seconds>s]",
 		"<Command> is the command to execute"
 	};
-	public void commandIn( Message mes )
+	public void commandIn( final Message mes )
 	{
 		if (!checkForAndUpdateRecursion(mes)) {
 			irc.sendContextReply(mes, "Synthetic event recursion detected (timedevents.delayed). Stopping.");
 			return;
 		}
 
-		List<String> params = mods.util.getParams(mes, 2);
+		final List<String> params = mods.util.getParams(mes, 2);
 
 		if (params.size() <= 2) {
 			irc.sendContextReply(mes, "Syntax is: TimedEvents.In <When> <Command>");
 			return;
 		}
 
-		String time = params.get(1);
+		final String time = params.get(1);
 		String command = params.get(2);
 
 		long period;
 		try {
 			period = apiDecodePeriod(time);
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			irc.sendContextReply(mes, "Bad time format: " + time + ". Examples: 10h, 5m2s, 3d2h.");
 			return;
 		}
 
 		// Does the command have a trigger?
-		Matcher trigMatch = Pattern.compile(irc.getTriggerRegex()).matcher(command);
+		final Matcher trigMatch = Pattern.compile(irc.getTriggerRegex()).matcher(command);
 		if (trigMatch.find())
 			// Yes. Blat it. We'll add it later.
 			command = command.substring(trigMatch.end());
@@ -112,7 +117,7 @@ public class TimedEvents
 			}
 		}
 
-		TimedEvent timedEvent = new TimedEvent();
+		final TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
 		timedEvent.synthLevel = mes.getSynthLevel();
 		timedEvent.flags = encodeFlags(((IRCEvent)mes).getFlags());
@@ -138,14 +143,14 @@ public class TimedEvents
 		"<Time> is a time of the form HH[[:]MM[[:]SS]][am|pm]",
 		"<Command> is the command to execute"
 	};
-	public void commandAt( Message mes )
+	public void commandAt( final Message mes )
 	{
 		if (!checkForAndUpdateRecursion(mes)) {
 			irc.sendContextReply(mes, "Synthetic event recursion detected (timedevents.delayed). Stopping.");
 			return;
 		}
 
-		List<String> params = mods.util.getParams(mes, 2);
+		final List<String> params = mods.util.getParams(mes, 2);
 
 		if (params.size() <= 2)
 		{
@@ -156,10 +161,10 @@ public class TimedEvents
 		String time = params.get(1);
 		String command = params.get(2);
 
-		GregorianCalendar cal = new GregorianCalendar();
+		final GregorianCalendar cal = new GregorianCalendar();
 
 		boolean dateSet = false;
-		Pattern timePat = Pattern.compile("(0?[0-9]|1[0-9]|2[0-3])(?::?([0-5][0-9])(?::?([0-5][0-9]))?)?(am|pm)?");
+		final Pattern timePat = Pattern.compile("(0?[0-9]|1[0-9]|2[0-3])(?::?([0-5][0-9])(?::?([0-5][0-9]))?)?(am|pm)?");
 		Matcher ma = timePat.matcher(time);
 		if (!ma.matches())
 		{
@@ -180,7 +185,7 @@ public class TimedEvents
 				cal.set(Calendar.YEAR, year);
 			}
 
-			int month = Integer.parseInt(ma.group(2));
+			final int month = Integer.parseInt(ma.group(2));
 			if (month > 12 || month == 0)
 			{
 				irc.sendContextReply(mes, "Invalid month: " + month + "!");
@@ -188,7 +193,7 @@ public class TimedEvents
 			}
 			cal.set(Calendar.MONTH, month - 1);
 
-			int day = Integer.parseInt(ma.group(1));
+			final int day = Integer.parseInt(ma.group(1));
 			// TODO: check? This will be difficult.
 			if (day > 31 || day == 0)
 			{
@@ -198,7 +203,7 @@ public class TimedEvents
 			cal.set(Calendar.DAY_OF_MONTH, day);
 
 			// (Oh, the humanity!)
-			int spacePos = command.indexOf(' ');
+			final int spacePos = command.indexOf(' ');
 			if (spacePos == -1 || spacePos == command.length() - 1)
 			{
 				irc.sendContextReply(mes, "Syntax: 'TimedEvents.At " + helpCommandAt[1] + "'.");
@@ -229,7 +234,7 @@ public class TimedEvents
 			if (ma.group(3) != null)
 				s = Integer.parseInt(ma.group(3));
 		}
-		catch (NumberFormatException e)
+		catch (final NumberFormatException e)
 		{
 			irc.sendContextReply( mes, "Bad time format: " + time + ".");
 			return;
@@ -240,7 +245,7 @@ public class TimedEvents
 			if (ma.group(4).equalsIgnoreCase("am") || ma.group(4).equalsIgnoreCase("pm"))
 			{
 				// AM or PM only allow an hour of 1 - 12.
-				if ((h < 1) || (h > 12)) {
+				if (h < 1 || h > 12) {
 					irc.sendContextReply( mes, "Bad time format: " + time + ".");
 					return;
 				}
@@ -267,7 +272,7 @@ public class TimedEvents
 		}
 
 		// Does the command have a trigger?
-		Matcher trigMatch = Pattern.compile(irc.getTriggerRegex()).matcher(command);
+		final Matcher trigMatch = Pattern.compile(irc.getTriggerRegex()).matcher(command);
 		if (trigMatch.find())
 			// Yes. Blat it. We'll add it later.
 			command = command.substring(trigMatch.end());
@@ -290,7 +295,7 @@ public class TimedEvents
 		}
 
 
-		TimedEvent timedEvent = new TimedEvent();
+		final TimedEvent timedEvent = new TimedEvent();
 		timedEvent.mesID = mods.history.getMessageID(mes);
 		timedEvent.synthLevel = mes.getSynthLevel();
 		timedEvent.flags = encodeFlags(((IRCEvent)mes).getFlags());
@@ -303,7 +308,7 @@ public class TimedEvents
 			return;
 		}
 
-		long callbackTime = cal.getTimeInMillis() - System.currentTimeMillis();
+		final long callbackTime = cal.getTimeInMillis() - System.currentTimeMillis();
 
 		mods.odb.save(timedEvent);
 		mods.interval.callBack( timedEvent, callbackTime, -1 );
@@ -311,7 +316,7 @@ public class TimedEvents
 		irc.sendContextReply(mes, "OK, will do at " + cal.getTime() + ".");
 	}
 
-	public long apiDecodePeriod(String time) throws NumberFormatException {
+	public long apiDecodePeriod(final String time) throws NumberFormatException {
 		int period = 0;
 
 		int currentPos = -1;
@@ -343,21 +348,21 @@ public class TimedEvents
 		return period;
 	}
 
-	public synchronized void interval( Object parameter )
+	public synchronized void interval( final Object parameter )
 	{
 		if (parameter != null && parameter instanceof TimedEvent) {
 			// It's a message to be redelivered
 
-			TimedEvent timedEvent = (TimedEvent) parameter;
+			final TimedEvent timedEvent = (TimedEvent) parameter;
 
-			Message mes = mods.history.getMessage(timedEvent.mesID);
+			final Message mes = mods.history.getMessage(timedEvent.mesID);
 			if (mes == null)
 			{
 				System.err.println("Event number " + timedEvent.mesID + " appears to have gone!");
 				return;
 			}
 
-			String command = irc.getTrigger() + timedEvent.command;
+			final String command = irc.getTrigger() + timedEvent.command;
 
 			Message newMes = (Message)mes.cloneEvent(command);
 			// Resynth...
@@ -365,7 +370,7 @@ public class TimedEvents
 				newMes = (Message)newMes.cloneEvent(command);
 
 			// Put back flags.
-			Map<String,String> mesFlags = ((IRCEvent)newMes).getFlags();
+			final Map<String,String> mesFlags = ((IRCEvent)newMes).getFlags();
 			decodeFlags(mesFlags, timedEvent.flags);
 
 			lastDelivery.put(mes.getContext(), timedEvent);
@@ -381,12 +386,12 @@ public class TimedEvents
 	public String[] helpCommandLast = {
 		"Find out what the last queued event to be executed was."
 	};
-	public void commandLast( Message mes )
+	public void commandLast( final Message mes )
 	{
-		TimedEvent last = lastDelivery.get(mes.getContext());
+		final TimedEvent last = lastDelivery.get(mes.getContext());
 		if (last != null)
 		{
-			Message lMes = mods.history.getMessage(last.mesID);
+			final Message lMes = mods.history.getMessage(last.mesID);
 			if (lMes != null)
 				irc.sendContextReply(mes, lMes.getNick() + " queued the following command on " + new Date(lMes.getMillis()).toString() + ": " + last.command);
 			else
@@ -396,15 +401,15 @@ public class TimedEvents
 			irc.sendContextReply(mes, "Nobody queued nuffin', gov'ner.");
 	}
 
-	String encodeFlags(Map<String,String> flags)
+	String encodeFlags(final Map<String,String> flags)
 	{
 		String rv = "";
-		for (String prop : flags.keySet())
+		for (final String prop : flags.keySet())
 		{
 			// Properties starting "_" should not be cloned implicitly.
 			if (prop.startsWith("_"))
 				continue;
-			
+
 			if (rv.length() > 0)
 				rv += ",";
 			rv += prop.replaceAll("(\\\\|\"|=|,)", "\\\\$1");
@@ -414,26 +419,26 @@ public class TimedEvents
 		return rv;
 	}
 
-	void decodeFlags(Map<String,String> flags, String data)
+	void decodeFlags(final Map<String,String> flags, final String data)
 	{
 		if (data == null)
 			return;
-		String[] flagItems = data.split("(?<!\\\\),");
-		for (int i = 0; i < flagItems.length; i++)
+		final String[] flagItems = data.split("(?<!\\\\),");
+		for (final String flagItem : flagItems)
 		{
-			String[] parts = flagItems[i].split("(?<!\\\\)=", 2);
+			final String[] parts = flagItem.split("(?<!\\\\)=", 2);
 			flags.put(parts[0].replaceAll("\\\\([\\\\\"=,])", "$1"), parts[1].replaceAll("\\\\([\\\\\"=,])", "$1"));
 		}
 	}
 
-	boolean checkForAndUpdateRecursion(Message mes)
+	boolean checkForAndUpdateRecursion(final Message mes)
 	{
 		// Message extends IRCEvent, so this cast will always succeed.
-		Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
-		
+		final Map<String,String> mesFlags = ((IRCEvent)mes).getFlags();
+
 		if (mesFlags.containsKey("timedevents.delayed"))
 		{
-			int recurseLevel = Integer.parseInt(mesFlags.get("timedevents.delayed")) + 1;
+			final int recurseLevel = Integer.parseInt(mesFlags.get("timedevents.delayed")) + 1;
 
 			// Stop recursion.
 			if (recurseLevel > MAX_DELAYED_COUNT) {

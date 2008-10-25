@@ -5,7 +5,7 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class Event 
+public class Event
 {
 	/**
 	 * methodName
@@ -24,7 +24,7 @@ public class Event
 	/**
 	 * Construct a new Event.
 	 */
-	public Event(String methodName)
+	public Event(final String methodName)
 	{
 		this.methodName = methodName;
 	}
@@ -32,7 +32,7 @@ public class Event
 	/**
 	 * Synthesize a new Event from an old one.
 	 */
-	public Event(Event old)
+	public Event(final Event old)
 	{
 		this.methodName = old.methodName;
 	}
@@ -46,19 +46,21 @@ public class Event
 		return new Event(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof Event))
 			return false;
-		Event thing = (Event)obj;
+		final Event thing = (Event)obj;
 		if ( true && methodName.equals(thing.methodName) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("Event(");
+		final StringBuffer out = new StringBuffer("Event(");
 		out.append(", methodName = " + methodName);
 		out.append(")");
 		return out.toString();

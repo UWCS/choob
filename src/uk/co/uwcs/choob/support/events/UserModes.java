@@ -24,7 +24,7 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 	/**
 	 * Construct a new UserModes.
 	 */
-	public UserModes(String methodName, long millis, int random, String modes)
+	public UserModes(final String methodName, final long millis, final int random, final String modes)
 	{
 		super(methodName, millis, random);
 		this.modes = modes;
@@ -33,7 +33,7 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 	/**
 	 * Synthesize a new UserModes from an old one.
 	 */
-	public UserModes(UserModes old)
+	public UserModes(final UserModes old)
 	{
 		super(old);
 		this.modes = old.modes;
@@ -43,26 +43,29 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 	 * Synthesize a new UserModes from this one.
 	 * @return The new UserModes object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new UserModes(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof UserModes))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		UserModes thing = (UserModes)obj;
+		final UserModes thing = (UserModes)obj;
 		if ( true && modes.equals(thing.modes) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("UserModes(");
+		final StringBuffer out = new StringBuffer("UserModes(");
 		out.append(super.toString());
 		out.append(", modes = " + modes);
 		out.append(")");

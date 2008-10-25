@@ -10,12 +10,12 @@ public final class UserNode
 	private final String rootName;
 	private final int nodeType;
 
-	public UserNode(String groupName)
+	public UserNode(final String groupName)
 	{
 		this(groupName, false);
 	}
 
-	public UserNode(String nodeName, int nodeType)
+	public UserNode(final String nodeName, final int nodeType)
 	{
 		this.nodeType = nodeType;
 		if ( nodeType == 0 )
@@ -29,7 +29,7 @@ public final class UserNode
 		}
 		else
 		{
-			int pos = nodeName.indexOf('.');
+			final int pos = nodeName.indexOf('.');
 
 			if (pos != -1)
 				this.rootName = nodeName.substring(0, pos);
@@ -40,7 +40,7 @@ public final class UserNode
 		}
 	}
 
-	public UserNode(String groupName, boolean isUser)
+	public UserNode(final String groupName, final boolean isUser)
 	{
 		if ( isUser )
 		{
@@ -50,7 +50,7 @@ public final class UserNode
 		}
 		else
 		{
-			String[] parts = groupName.split("\\.");
+			final String[] parts = groupName.split("\\.");
 
 			if (parts.length < 2)
 				throw new IllegalArgumentException("Invalid group name: " + groupName);
@@ -88,6 +88,7 @@ public final class UserNode
 		return rootName;
 	}
 
+	@Override
 	public String toString()
 	{
 		if (nodeType == 0) return nodeName;

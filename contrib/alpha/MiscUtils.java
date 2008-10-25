@@ -10,9 +10,9 @@ public class MiscUtils
 {
 
 	Modules mods;
-	private IRCInterface irc;
+	private final IRCInterface irc;
 
-	public MiscUtils(Modules mods, IRCInterface irc)
+	public MiscUtils(final Modules mods, final IRCInterface irc)
 	{
 		this.mods=mods;
 		this.irc=irc;
@@ -32,35 +32,35 @@ public class MiscUtils
                         "$Rev$$Date$"
                 };
 	}
-	
+
 	//now less spammy
 	public String filterReplaceRegex = "s\\/.*?\\/.*?\\/";
 	private final int MAXLENGTH = 300;
-	public void filterReplace ( Message mes )
+	public void filterReplace ( final Message mes )
 	{
 		try
 		{
 			Matcher matcher = Pattern.compile(irc.getTriggerRegex() + filterReplaceRegex, Pattern.CASE_INSENSITIVE).matcher(mes.getMessage());
-			String messageString = mes.getMessage().replaceAll("\\\\\\/","[:FWSLASH:]");
+			final String messageString = mes.getMessage().replaceAll("\\\\\\/","[:FWSLASH:]");
 			if (!matcher.find()) {
 				return;
 			}
-			String replace[] = messageString.split("\\/");
-			String original = replace[1].replaceAll("\\[:FWSLASH:\\]","/");
+			final String replace[] = messageString.split("\\/");
+			final String original = replace[1].replaceAll("\\[:FWSLASH:\\]","/");
 			String replacement = "";
 
 			if (replace.length > 2)  replacement = replace[2].replaceAll("\\[:FWSLASH:\\]","/");
 
-			List<Message> history = mods.history.getLastMessages( mes, 10 );
+			final List<Message> history = mods.history.getLastMessages( mes, 10 );
 			for(int i=0; i<history.size(); i++)
 			{
-				Message thisLine = history.get(i);
+				final Message thisLine = history.get(i);
 				matcher = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE).matcher(thisLine.getMessage());
-				if ((thisLine.getNick().equals(mes.getNick())) 
-					&& (thisLine.getContext().equals(mes.getContext())) 
-					&& (thisLine.getMessage().matches(".*" + original + ".*"))
-					&& (!(thisLine.getMessage().matches(filterReplaceRegex)))
-					&& (!matcher.find())
+				if (thisLine.getNick().equals(mes.getNick())
+					&& thisLine.getContext().equals(mes.getContext())
+					&& thisLine.getMessage().matches(".*" + original + ".*")
+					&& !thisLine.getMessage().matches(filterReplaceRegex)
+					&& !matcher.find()
 					)
 				{
 					String newLine = thisLine.getMessage().replaceAll(original,replacement);
@@ -68,16 +68,16 @@ public class MiscUtils
 					irc.sendContextMessage(mes, mes.getNick() + " meant: " + newLine);
 					return;
 				}
-				
+
 			}
 			for(int i=0; i<history.size(); i++)
 			{
-				Message thisLine = history.get(i);
+				final Message thisLine = history.get(i);
 				matcher = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE).matcher(thisLine.getMessage());
-				if ((thisLine.getContext().equals(mes.getContext())) 
-					&& (thisLine.getMessage().matches(".*" + original + ".*"))
-					&& (!(thisLine.getMessage().matches(filterReplaceRegex)))
-					&& (!matcher.find())
+				if (thisLine.getContext().equals(mes.getContext())
+					&& thisLine.getMessage().matches(".*" + original + ".*")
+					&& !thisLine.getMessage().matches(filterReplaceRegex)
+					&& !matcher.find()
 					)
 				{
 					String newLine = thisLine.getMessage().replaceAll(original,replacement);
@@ -85,44 +85,44 @@ public class MiscUtils
 					irc.sendContextMessage(mes, mes.getNick() + " thinks " + thisLine.getNick() + " meant: " + newLine);
 					return;
 				}
-				
+
 			}
 
-		} catch (Exception e) {return;}
+		} catch (final Exception e) {return;}
 	}
-	
+
 
 	public String[] helpCommandFilter = {
 		"Replace <ORIGINAL CHARS> with <REPLACEMENT CHARS> in <MESSAGE>",
 		"<ORIGINAL CHARS> <REPLACEMENT CHARS> <MESSAGE>."
 	};
-	public void commandFilter(Message mes)
+	public void commandFilter(final Message mes)
 	{
-		List<String> parm=mods.util.getParams(mes);
+		final List<String> parm=mods.util.getParams(mes);
 
 		String oldString = parm.get(1);
 		String replacementString = parm.get(2);
 		replacementString = replacementString.replaceAll("\\[:SPACE:\\]"," ");
 		oldString = oldString.replaceAll("\\[:SPACE:\\]"," ");
 
-		char[] oldChars = oldString.toCharArray();
-		char[] replacementChars = replacementString.toCharArray();
+		final char[] oldChars = oldString.toCharArray();
+		final char[] replacementChars = replacementString.toCharArray();
 
-		String returnedString = (mods.util.getParamString(mes));
+		String returnedString = mods.util.getParamString(mes);
 		returnedString = returnedString.substring(returnedString.indexOf(" ") +1);
 		returnedString = returnedString.substring(returnedString.indexOf(" ") +1);
-		String originalString = returnedString;
+		final String originalString = returnedString;
 		for (int i = 0 ; i < returnedString.length(); i++)
 		{
 			for (int ii = 0; ii < oldChars.length; ii++)
 			{
-				if (originalString.charAt(i) == oldChars[ii] ) 
+				if (originalString.charAt(i) == oldChars[ii] )
 				{
-					char[] temp = returnedString.toCharArray();
+					final char[] temp = returnedString.toCharArray();
 					if (ii < replacementChars.length) temp[i] = replacementChars[ii]; else temp[i] = replacementChars[replacementChars.length -1];
 					returnedString = new String(temp);
 				}
-			} 
+			}
 		}
 
 		irc.sendContextMessage(mes,returnedString);
@@ -132,11 +132,11 @@ public class MiscUtils
 		"Replace all instances of <; Separated list of regexes> with <; Separated list of strings>, NB: each replacement is performed successively, so replaceAll a;b b;a will not change anything" ,
 		"<ORIGINAL REGEX(s)> <REPLACEMENT STRING(s)> <MESSAGE>."
 	};
-	public void commandReplaceAll(Message mes)
+	public void commandReplaceAll(final Message mes)
 	{
-		List<String> parms=mods.util.getParams(mes);
+		final List<String> parms=mods.util.getParams(mes);
 
-		String[] parm = new String[parms.size()];
+		final String[] parm = new String[parms.size()];
 
 		for (int i = 0; i < parms.size(); i++)
 		{
@@ -147,23 +147,23 @@ public class MiscUtils
 		{
 			parm[i] = parm[i].replaceAll("\\\\;","[:INSERTCOLON:]");
 		}
-		String[] oldStrings = parm[1].replaceAll("\"","").split(";");
-		String[] replacementStrings = parm[2].replaceAll("\"","").split(";");
+		final String[] oldStrings = parm[1].replaceAll("\"","").split(";");
+		final String[] replacementStrings = parm[2].replaceAll("\"","").split(";");
 
 
-		for (int i = 0; i < oldStrings.length; i++) 
+		for (int i = 0; i < oldStrings.length; i++)
 		{
 			oldStrings[i] = oldStrings[i].replaceAll("\\[:SPACE:\\]"," ").replaceAll("\\[:BLANK:\\]|\\[:NULL:\\]","");
 		}
 
-		for (int i = 0; i < replacementStrings.length; i++) 
+		for (int i = 0; i < replacementStrings.length; i++)
 		{
 			replacementStrings[i] = replacementStrings[i].replaceAll("\\[:SPACE:\\]"," ").replaceAll("\\[:BLANK:\\]|\\[:NULL:\\]","");
 		}
 
-		if (oldStrings.length != replacementStrings.length) 
-		{ 
-			irc.sendContextMessage(mes,"Error, old and replacement parameters do not match"); 
+		if (oldStrings.length != replacementStrings.length)
+		{
+			irc.sendContextMessage(mes,"Error, old and replacement parameters do not match");
 			return;
 		}
 
@@ -173,7 +173,7 @@ public class MiscUtils
 			replacementStrings[i] = replacementStrings[i].replaceAll("\\[:INSERTCOLON:\\]","\\\\;");
 		}
 
-		String returnedString = (mods.util.getParamString(mes));
+		String returnedString = mods.util.getParamString(mes);
 		returnedString = returnedString.substring(returnedString.indexOf(" ") +1);
 		returnedString = returnedString.substring(returnedString.indexOf(" ") +1);
 		for (int i = 0; i < oldStrings.length; i++)

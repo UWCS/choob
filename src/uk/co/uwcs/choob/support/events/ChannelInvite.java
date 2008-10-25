@@ -76,7 +76,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	/**
 	 * Construct a new ChannelInvite.
 	 */
-	public ChannelInvite(String methodName, long millis, int random, String channel, String nick, String login, String hostname, String target)
+	public ChannelInvite(final String methodName, final long millis, final int random, final String channel, final String nick, final String login, final String hostname, final String target)
 	{
 		super(methodName, millis, random);
 		this.channel = channel;
@@ -89,7 +89,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	/**
 	 * Synthesize a new ChannelInvite from an old one.
 	 */
-	public ChannelInvite(ChannelInvite old)
+	public ChannelInvite(final ChannelInvite old)
 	{
 		super(old);
 		this.channel = old.channel;
@@ -103,26 +103,29 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	 * Synthesize a new ChannelInvite from this one.
 	 * @return The new ChannelInvite object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new ChannelInvite(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelInvite))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		ChannelInvite thing = (ChannelInvite)obj;
+		final ChannelInvite thing = (ChannelInvite)obj;
 		if ( true && channel.equals(thing.channel) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && target.equals(thing.target) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("ChannelInvite(");
+		final StringBuffer out = new StringBuffer("ChannelInvite(");
 		out.append(super.toString());
 		out.append(", channel = " + channel);
 		out.append(", nick = " + nick);

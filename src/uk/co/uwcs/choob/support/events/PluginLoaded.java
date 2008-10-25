@@ -37,7 +37,7 @@ public class PluginLoaded extends InternalEvent implements PluginEvent
 	/**
 	 * Construct a new PluginLoaded.
 	 */
-	public PluginLoaded(String methodName, String pluginName, int pluginStatus)
+	public PluginLoaded(final String methodName, final String pluginName, final int pluginStatus)
 	{
 		super(methodName);
 		this.pluginName = pluginName;
@@ -47,7 +47,7 @@ public class PluginLoaded extends InternalEvent implements PluginEvent
 	/**
 	 * Synthesize a new PluginLoaded from an old one.
 	 */
-	public PluginLoaded(PluginLoaded old)
+	public PluginLoaded(final PluginLoaded old)
 	{
 		super(old);
 		this.pluginName = old.pluginName;
@@ -58,26 +58,29 @@ public class PluginLoaded extends InternalEvent implements PluginEvent
 	 * Synthesize a new PluginLoaded from this one.
 	 * @return The new PluginLoaded object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new PluginLoaded(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof PluginLoaded))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		PluginLoaded thing = (PluginLoaded)obj;
-		if ( true && pluginName.equals(thing.pluginName) && (pluginStatus == thing.pluginStatus) )
+		final PluginLoaded thing = (PluginLoaded)obj;
+		if ( true && pluginName.equals(thing.pluginName) && pluginStatus == thing.pluginStatus )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("PluginLoaded(");
+		final StringBuffer out = new StringBuffer("PluginLoaded(");
 		out.append(super.toString());
 		out.append(", pluginName = " + pluginName);
 		out.append(", pluginStatus = " + pluginStatus);

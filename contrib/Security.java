@@ -1,10 +1,15 @@
 import java.security.Permission;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
 /**
@@ -23,10 +28,10 @@ public class Security
 		};
 	}
 
-	private Map<String,List<String>> linkMap;
-	private Modules mods;
-	private IRCInterface irc;
-	public Security (Modules mods, IRCInterface irc) {
+	private final Map<String,List<String>> linkMap;
+	private final Modules mods;
+	private final IRCInterface irc;
+	public Security (final Modules mods, final IRCInterface irc) {
 		linkMap = new HashMap<String,List<String>>();
 		this.mods = mods;
 		this.irc = irc;
@@ -39,11 +44,11 @@ public class Security
 		"[<Name>]",
 		"<Name> is an optional username to add (if omitted, your nickname will be used; if specified you need the 'user.add' permission)"
 	};
-	public void commandAddUser( Message mes )
+	public void commandAddUser( final Message mes )
 	{
 		mods.security.checkAuth(mes);
 
-		List<String> params = mods.util.getParams( mes );
+		final List<String> params = mods.util.getParams( mes );
 
 		String userName;
 		if (params.size() == 1)
@@ -64,7 +69,7 @@ public class Security
 			// Must check permission!
 			userName = params.get(1);
 			//Only require authentication if user is not adding themselves - #322
-			if (!(userName.equals(mods.security.getUserAuthName(mes.getNick()))))
+			if (!userName.equals(mods.security.getUserAuthName(mes.getNick())))
 			{
 				// Sure, this will be checked for us. But what about the user who called us?
 				mods.security.checkNickPerm( new ChoobPermission("user.add") , mes);
@@ -75,16 +80,16 @@ public class Security
 		{
 			mods.security.addUser( userName );
 		}
-		catch ( ChoobException e )
+		catch ( final ChoobException e )
 		{
 			irc.sendContextReply( mes, "The user could not be added: " + e );
 			return;
 		}
-		catch ( SecurityException e )
+		catch ( final SecurityException e )
 		{
 			irc.sendContextReply( mes, "Urgh. We got a security exception." );
 			return;
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			irc.sendContextReply(mes, e.getMessage());
 			return;
 		}
@@ -96,11 +101,11 @@ public class Security
 		"[<Name>]",
 		"<Name> is an optional username to remove (if omitted, your nickname will be used; if specified you need the 'user.del' permission)"
 	};
-	public void commandDelUser( Message mes )
+	public void commandDelUser( final Message mes )
 	{
 		mods.security.checkAuth(mes);
 
-		List<String> params = mods.util.getParams( mes );
+		final List<String> params = mods.util.getParams( mes );
 
 		String userName;
 		if (params.size() == 1)
@@ -122,7 +127,7 @@ public class Security
 		{
 			mods.security.delUser( userName );
 		}
-		catch ( ChoobException e )
+		catch ( final ChoobException e )
 		{
 			irc.sendContextReply( mes, "The user could not be deleted: " + e );
 			return;
@@ -146,13 +151,13 @@ public class Security
 		"<Nick> [<Nick> ...]",
 		"<Nick> is a nickname you'd like to link to your current one"
 	};
-	public void commandBeginLink( Message mes )
+	public void commandBeginLink( final Message mes )
 	{
-		String userName = mods.security.getUserAuthName(mes.getNick());
+		final String userName = mods.security.getUserAuthName(mes.getNick());
 
 		mods.security.checkAuth(mes);
 
-		List<String> params = mods.util.getParams( mes );
+		final List<String> params = mods.util.getParams( mes );
 		if (params.size() == 1)
 		{
 			irc.sendContextReply(mes, "Syntax: Security.BeginLink <NICKNAME> [<NICKNAME> ...]");
@@ -178,10 +183,10 @@ public class Security
 			}
 		}
 
-		StringBuffer output = new StringBuffer();
+		final StringBuffer output = new StringBuffer();
 		for(int i=1; i<params.size(); i++)
 		{
-			if (i == 1) 
+			if (i == 1)
 			{
 				// Do nothing.
 			}
@@ -202,9 +207,9 @@ public class Security
 		"<Root> is the nickname to link to",
 		"<Leaf> is an optional nickname to link from (this defaults to your current nickname; if you specify this, it overrides BeginLink and you need the 'user.link' permission)",
 	};
-	public void commandLink( Message mes )
+	public void commandLink( final Message mes )
 	{
-		List<String> params = mods.util.getParams( mes );
+		final List<String> params = mods.util.getParams( mes );
 
 		mods.security.checkAuth(mes);
 
@@ -243,23 +248,23 @@ public class Security
 		{
 			mods.security.linkUser( rootName, leafName );
 		}
-		catch ( ChoobException e )
+		catch ( final ChoobException e )
 		{
 			irc.sendContextReply( mes, "The user could not be linked: " + e );
 			return;
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			irc.sendContextReply(mes, e.getMessage());
 			return;
 		}
 		irc.sendContextReply( mes, "OK, user " + leafName + " linked to root " + rootName + "!");
 	}
 
-	public boolean groupCheck(String groupName, String userName)
+	public boolean groupCheck(final String groupName, String userName)
 	{
 		userName = mods.security.getUserAuthName(userName);
 		if (groupName.toLowerCase().startsWith("user."))
 		{
-			String chunk = groupName.toLowerCase().substring(5);
+			final String chunk = groupName.toLowerCase().substring(5);
 			if (chunk.startsWith(userName.toLowerCase() + "."))
 				return true;
 			// Check root, too...
@@ -296,11 +301,11 @@ public class Security
 		"<Name>",
 		"<Name> is the name of the group to add (if this isn't of the form 'user.<YourNick>.<Something>', you need the 'group.add.<Name>' permission)"
 	};
-	public void commandAddGroup( Message mes )
+	public void commandAddGroup( final Message mes )
 	{
 		mods.security.checkAuth(mes);
 
-		List<String> params = mods.util.getParams( mes );
+		final List<String> params = mods.util.getParams( mes );
 
 		String groupName;
 		if (params.size() != 2)
@@ -311,7 +316,7 @@ public class Security
 		// Must check permission!
 		groupName = params.get(1);
 
-		boolean check = groupCheck(groupName, mods.security.getUserAuthName(mes.getNick()));
+		final boolean check = groupCheck(groupName, mods.security.getUserAuthName(mes.getNick()));
 		// Sure, this will be checked for us. But what about the user who called us?
 		if (!check)
 			mods.security.checkNickPerm( new ChoobPermission("group.add." + groupName) , mes);
@@ -320,11 +325,11 @@ public class Security
 		{
 			mods.security.addGroup( groupName );
 		}
-		catch ( ChoobException e )
+		catch ( final ChoobException e )
 		{
 			irc.sendContextReply( mes, "The group could not be added: " + e );
 			return;
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			irc.sendContextReply(mes, e.getMessage());
 			return;
 		}
@@ -337,7 +342,7 @@ public class Security
 		"<Parent> is the name of the group to add into",
 		"<Child> is the name of the group to add",
 	};
-	public void commandAddToGroup( Message mes )
+	public void commandAddToGroup( final Message mes )
 	{
 		this.doGroupMemberChange(mes, true);
 	}
@@ -348,16 +353,16 @@ public class Security
 		"<Parent> is the name of the group to remove from",
 		"<Child> is the name of the group to remove",
 	};
-	public void commandRemoveFromGroup( Message mes )
+	public void commandRemoveFromGroup( final Message mes )
 	{
 		this.doGroupMemberChange(mes, false);
 	}
 
-	private void doGroupMemberChange( Message mes, boolean isAdding )
+	private void doGroupMemberChange( final Message mes, final boolean isAdding )
 	{
 		mods.security.checkAuth(mes);
 
-		List<String> params = mods.util.getParams( mes );
+		final List<String> params = mods.util.getParams( mes );
 
 		String childName;
 		String parentName;
@@ -372,7 +377,7 @@ public class Security
 		childName = params.get(2);
 		if (childName.indexOf('.') != -1)
 			isGroup = true;
-		boolean check = groupCheck(parentName, mods.security.getUserAuthName(mes.getNick()));
+		final boolean check = groupCheck(parentName, mods.security.getUserAuthName(mes.getNick()));
 		// Sure, this will be checked for us. But what about the user who called us?
 		if (!check)
 			mods.security.checkNickPerm( new ChoobPermission("group.members." + parentName) , mes);
@@ -394,21 +399,21 @@ public class Security
 					mods.security.removeUserFromGroup( parentName, mods.security.getUserAuthName(childName));
 			}
 		}
-		catch ( ChoobException e )
+		catch ( final ChoobException e )
 		{
 			irc.sendContextReply( mes, "The membership could not be altered: " + e );
 			return;
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			irc.sendContextReply( mes, e.getMessage());
 			return;
 		}
 		irc.sendContextReply( mes, "OK, membership of " + childName + " in " + parentName + " altered!" );
 	}
 
-	private Permission makePermission(String permType, String permName, String permActions)
+	private Permission makePermission(final String permType, final String permName, final String permActions)
 	{
 		String lType = permType.toLowerCase();
-		Matcher ma = Pattern.compile("(?:.*\\.)?(\\w+)(?:permission)?").matcher(lType);
+		final Matcher ma = Pattern.compile("(?:.*\\.)?(\\w+)(?:permission)?").matcher(lType);
 		if (ma.matches())
 			lType = ma.group(1);
 		System.out.println("Permission type: " + lType);
@@ -478,7 +483,7 @@ public class Security
 		"<Name> is the permission's name (optional or not depends on the particular permission)",
 		"<Actions> is the permission's actions (optional or not depends on the particular permission)",
 	};
-	public void commandGrant( Message mes )
+	public void commandGrant( final Message mes )
 	{
 		this.doPermChange( mes, true );
 	}
@@ -491,16 +496,16 @@ public class Security
 		"<Name> is the permission's name (optional or not depends on the particular permission)",
 		"<Actions> is the permission's actions (optional or not depends on the particular permission)",
 	};
-	public void commandRevoke( Message mes )
+	public void commandRevoke( final Message mes )
 	{
 		this.doPermChange( mes, false );
 	}
 
-	private void doPermChange( Message mes, boolean isGranting )
+	private void doPermChange( final Message mes, final boolean isGranting )
 	{
 		mods.security.checkAuth(mes);
 
-		List<String> params = mods.util.getParams( mes );
+		final List<String> params = mods.util.getParams( mes );
 
 		if (params.size() < 3 || params.size() > 5)
 		{
@@ -516,16 +521,16 @@ public class Security
 		if (params.size() >= 4)
 			permName = params.get(3);
 
-		String permType = params.get(2);
-		String groupName = params.get(1);
+		final String permType = params.get(2);
+		final String groupName = params.get(1);
 
-		String permString = isGranting ? "grant." : "revoke.";
-		boolean check = groupCheck(groupName, mods.security.getUserAuthName(mes.getNick()));
+		final String permString = isGranting ? "grant." : "revoke.";
+		final boolean check = groupCheck(groupName, mods.security.getUserAuthName(mes.getNick()));
 		// Sure, this will be checked for us. But what about the user who called us?
 		if (!check)
 			mods.security.checkNickPerm( new ChoobPermission("group." + permString + groupName) , mes);
 
-		Permission permission = makePermission(permType, permName, actions);
+		final Permission permission = makePermission(permType, permName, actions);
 		if (permission == null)
 		{
 			irc.sendContextReply( mes, "Unknown permission type, or missing name/actions: " + permType );
@@ -546,11 +551,11 @@ public class Security
 			else
 				mods.security.revokePermission( groupName, permission );
 		}
-		catch ( ChoobException e )
+		catch ( final ChoobException e )
 		{
 			irc.sendContextReply( mes, "The permission could not be changed: " + e );
 			return;
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			irc.sendContextReply(mes, e.getMessage());
 			return;
 		}
@@ -565,9 +570,9 @@ public class Security
 		"<Name> is the permission's name (optional or not depends on the particular permission)",
 		"<Actions> is the permission's actions (optional or not depends on the particular permission)",
 	};
-	public void commandFindPermission( Message mes )
+	public void commandFindPermission( final Message mes )
 	{
-		List<String> params = mods.util.getParams( mes );
+		final List<String> params = mods.util.getParams( mes );
 
 		if (params.size() < 3 || params.size() > 5)
 		{
@@ -583,10 +588,10 @@ public class Security
 		if (params.size() >= 4)
 			permName = params.get(3);
 
-		String permType = params.get(2);
-		String groupName = params.get(1);
+		final String permType = params.get(2);
+		final String groupName = params.get(1);
 
-		Permission permission = makePermission(permType, permName, actions);
+		final Permission permission = makePermission(permType, permName, actions);
 		if (permission == null)
 		{
 			irc.sendContextReply( mes, "Unknown permission type: " + permType );
@@ -595,7 +600,7 @@ public class Security
 
 		try
 		{
-			String[] perms = mods.security.findPermission( groupName, permission );
+			final String[] perms = mods.security.findPermission( groupName, permission );
 			if (perms.length == 0)
 				irc.sendContextReply(mes, "The given group does not have this permission.");
 			else
@@ -607,11 +612,11 @@ public class Security
 				irc.sendContextReply(mes, reply);
 			}
 		}
-		catch ( ChoobException e )
+		catch ( final ChoobException e )
 		{
 			irc.sendContextReply( mes, "The permission could not be found: " + e );
 			return;
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			irc.sendContextReply(mes, e.getMessage());
 			return;
 		}

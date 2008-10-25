@@ -84,7 +84,7 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 	/**
 	 * Construct a new Message.
 	 */
-	public Message(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
+	public Message(final String methodName, final long millis, final int random, final String message, final String nick, final String login, final String hostname, final String target)
 	{
 		super(methodName, millis, random);
 		this.message = message;
@@ -97,7 +97,7 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 	/**
 	 * Synthesize a new Message from an old one.
 	 */
-	public Message(Message old, String message)
+	public Message(final Message old, final String message)
 	{
 		super(old);
 		this.message = message;
@@ -111,26 +111,28 @@ public class Message extends IRCEvent implements MessageEvent, ContextEvent, Use
 	 * Synthesize a new Message from this one.
 	 * @return The new Message object.
 	 */
-	public Event cloneEvent(String message)
+	public Event cloneEvent(final String message)
 	{
 		return new Message(this, message);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof Message))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		Message thing = (Message)obj;
+		final Message thing = (Message)obj;
 		if ( true && message.equals(thing.message) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && target.equals(thing.target) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("Message(");
+		final StringBuffer out = new StringBuffer("Message(");
 		out.append(super.toString());
 		out.append(", message = " + message);
 		out.append(", nick = " + nick);

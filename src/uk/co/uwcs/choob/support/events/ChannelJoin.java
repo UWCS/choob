@@ -71,7 +71,7 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 	/**
 	 * Construct a new ChannelJoin.
 	 */
-	public ChannelJoin(String methodName, long millis, int random, String channel, String nick, String login, String hostname)
+	public ChannelJoin(final String methodName, final long millis, final int random, final String channel, final String nick, final String login, final String hostname)
 	{
 		super(methodName, millis, random);
 		this.channel = channel;
@@ -83,7 +83,7 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 	/**
 	 * Synthesize a new ChannelJoin from an old one.
 	 */
-	public ChannelJoin(ChannelJoin old)
+	public ChannelJoin(final ChannelJoin old)
 	{
 		super(old);
 		this.channel = old.channel;
@@ -96,26 +96,29 @@ public class ChannelJoin extends IRCEvent implements ChannelEvent, ContextEvent,
 	 * Synthesize a new ChannelJoin from this one.
 	 * @return The new ChannelJoin object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new ChannelJoin(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelJoin))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		ChannelJoin thing = (ChannelJoin)obj;
+		final ChannelJoin thing = (ChannelJoin)obj;
 		if ( true && channel.equals(thing.channel) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("ChannelJoin(");
+		final StringBuffer out = new StringBuffer("ChannelJoin(");
 		out.append(super.toString());
 		out.append(", channel = " + channel);
 		out.append(", nick = " + nick);

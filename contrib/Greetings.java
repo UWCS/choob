@@ -3,11 +3,21 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
-import javax.xml.parsers.*;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
-import org.xml.sax.*;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import uk.co.uwcs.choob.modules.Modules;
@@ -35,7 +45,7 @@ class GreetingsParserHandler extends DefaultHandler
 		DATE;
 
 		/** @returns null on failure. <-- warning. */
-		static ElementName fromString(String one)
+		static ElementName fromString(final String one)
 		{
 			if (one.equalsIgnoreCase("greeting"))
 				return GREETING;
@@ -48,7 +58,7 @@ class GreetingsParserHandler extends DefaultHandler
 		}
 
 		// Gets the attribute name for a given ElementName.
-		static String attrName(ElementName t)
+		static String attrName(final ElementName t)
 		{
 			switch (t)
 			{
@@ -74,29 +84,29 @@ class GreetingsParserHandler extends DefaultHandler
 
 	// Ignore these. Boooooooooring.
 	@Override
-	public void setDocumentLocator(Locator l) { }
+	public void setDocumentLocator(final Locator l) { }
 	@Override
 	public void startDocument() throws SAXException { }
 	@Override
 	public void endDocument() throws SAXException { }
 	@Override
-	public void endElement(String namespaceURI, String sName, String qName)	throws SAXException { }
+	public void endElement(final String namespaceURI, final String sName, final String qName)	throws SAXException { }
 	@Override
-	public void characters(char buf[], int offset, int len) throws SAXException { }
+	public void characters(final char buf[], final int offset, final int len) throws SAXException { }
 	@Override
-	public void ignorableWhitespace(char buf[], int offset, int len) throws SAXException { }
+	public void ignorableWhitespace(final char buf[], final int offset, final int len) throws SAXException { }
 	@Override
-	public void processingInstruction(String target, String dat) throws SAXException {	}
+	public void processingInstruction(final String target, final String dat) throws SAXException {	}
 
 	// These aren't our problem either. Booooooooooooooooooooooooooring.
 	@Override
-	public void error(SAXParseException e) throws SAXParseException { throw e; }
+	public void error(final SAXParseException e) throws SAXParseException { throw e; }
 	@Override
-	public void warning(SAXParseException e) throws SAXParseException { throw e; }
+	public void warning(final SAXParseException e) throws SAXParseException { throw e; }
 
 	// Yaaay, do something.
 	@Override
-	public void startElement(String namespaceURI, String lName, String qName, Attributes attrs) throws SAXException
+	public void startElement(final String namespaceURI, final String lName, final String qName, final Attributes attrs) throws SAXException
 	{
 		String eName = lName;
 		if ("".equals(eName)) eName = qName;
@@ -111,7 +121,7 @@ class GreetingsParserHandler extends DefaultHandler
 		else
 		{
 			// It's not an event tag, see if it's a valid internal?
-			ElementName c = ElementName.fromString(eName);
+			final ElementName c = ElementName.fromString(eName);
 			if (c == null)
 				// Nope.
 				return;
@@ -132,7 +142,7 @@ class GreetingsParserHandler extends DefaultHandler
 	}
 
 	// Get an attribute of the given name from an attrs.
-	static String getAttr(Attributes attrs, String name)
+	static String getAttr(final Attributes attrs, final String name)
 	{
 		for (int i = 0; i < attrs.getLength(); i++) // attrs.getLength() will 'always' be 1.
 		{
@@ -165,9 +175,9 @@ public class Greetings
 	}
 
 	// Normal premable.
-	private Modules mods;
-	private IRCInterface irc;
-	public Greetings(Modules mods, IRCInterface irc) throws MalformedURLException
+	private final Modules mods;
+	private final IRCInterface irc;
+	public Greetings(final Modules mods, final IRCInterface irc) throws MalformedURLException
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -175,7 +185,7 @@ public class Greetings
 	}
 
 	// This is the bit Quote calls.
-	public String apiGreetingFor(ChannelJoin ev)
+	public String apiGreetingFor(final ChannelJoin ev)
 	{
 		try
 		{
@@ -184,28 +194,28 @@ public class Greetings
 			final String td = sdf.format(today());
 
 			// Grab the data file.
-			Map<String, Map<GreetingsParserHandler.ElementName, List<String>>> data = readXMLStuff(dataURL);
+			final Map<String, Map<GreetingsParserHandler.ElementName, List<String>>> data = readXMLStuff(dataURL);
 
 			// Go through it.
-			for (Map.Entry<String, Map<GreetingsParserHandler.ElementName, List<String>>> es : data.entrySet())
+			for (final Map.Entry<String, Map<GreetingsParserHandler.ElementName, List<String>>> es : data.entrySet())
 			{
 				// Im is the data from this <event>.
-				Map<GreetingsParserHandler.ElementName, List<String>> im = es.getValue();
-				List<String> dates = im.get(GreetingsParserHandler.ElementName.DATE);
+				final Map<GreetingsParserHandler.ElementName, List<String>> im = es.getValue();
+				final List<String> dates = im.get(GreetingsParserHandler.ElementName.DATE);
 
 				// See if the date matches.
 				if (dates.contains("*") || dates.contains(td))
 				{
-					List<String> nicks = im.get(GreetingsParserHandler.ElementName.USER);
+					final List<String> nicks = im.get(GreetingsParserHandler.ElementName.USER);
 
 					// See if the nick matches.
 					if (nicks.contains("*") || nicks.contains(mods.nick.getBestPrimaryNick(ev.getNick())))
 					{
 
 						// Return a random greeting.
-						List<String> greetings = im.get(GreetingsParserHandler.ElementName.GREETING);
+						final List<String> greetings = im.get(GreetingsParserHandler.ElementName.GREETING);
 						assert greetings.size() > 0;
-						String [] greets = greetings.toArray(new String[] {} );
+						final String [] greets = greetings.toArray(new String[] {} );
 
 						return greets[new Random().nextInt(greets.length)];
 					}
@@ -215,7 +225,7 @@ public class Greetings
 
 		}
 		// Not much we can do with these.
-		catch (ChoobException ce)
+		catch (final ChoobException ce)
 		{
 			ce.printStackTrace();
 		}
@@ -229,43 +239,43 @@ public class Greetings
 	}
 
 
-	public void commandTest(Message mes) throws ChoobException
+	public void commandTest(final Message mes) throws ChoobException
 	{
-		Map<String, Map<GreetingsParserHandler.ElementName, List<String>>> data = readXMLStuff(dataURL);
-		for (Map.Entry<String, Map<GreetingsParserHandler.ElementName, List<String>>> es : data.entrySet())
+		final Map<String, Map<GreetingsParserHandler.ElementName, List<String>>> data = readXMLStuff(dataURL);
+		for (final Map.Entry<String, Map<GreetingsParserHandler.ElementName, List<String>>> es : data.entrySet())
 			irc.sendContextReply(mes, es.getKey() + ": " + es.getValue().get(GreetingsParserHandler.ElementName.DATE).get(0));
 
 	}
 
 	// Grab the file into the datatype of d00m.
-	synchronized Map<String, Map<GreetingsParserHandler.ElementName, List<String>>> readXMLStuff(URL path) throws ChoobException
+	synchronized Map<String, Map<GreetingsParserHandler.ElementName, List<String>>> readXMLStuff(final URL path) throws ChoobException
 	{
-		GreetingsParserHandler handler = new GreetingsParserHandler();
+		final GreetingsParserHandler handler = new GreetingsParserHandler();
 		// Use the validating parser
-		SAXParserFactory factory = SAXParserFactory.newInstance();
+		final SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setValidating(true);
 
 		try
 		{
 			// Parse the input
-			SAXParser saxParser = factory.newSAXParser();
+			final SAXParser saxParser = factory.newSAXParser();
 			saxParser.parse( new ByteArrayInputStream(mods.scrape.getContentsCached(path).getBytes()) , handler);
 
 			return handler.data;
 		}
-		catch (SAXParseException spe)
+		catch (final SAXParseException spe)
 		{
 			throw new ChoobException("Parse exception", spe);
 		}
-		catch (SAXException sxe)
+		catch (final SAXException sxe)
 		{
 			throw new ChoobException("Parser exception", sxe);
 		}
-		catch (ParserConfigurationException pce)
+		catch (final ParserConfigurationException pce)
 		{
 			throw new ChoobException("Parser configuration exception", pce);
 		}
-		catch (IOException ioe)
+		catch (final IOException ioe)
 		{
 			throw new ChoobException("IO exception", ioe);
 		}

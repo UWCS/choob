@@ -27,18 +27,18 @@ public final class DbConnectionBroker
 	 * @param logFile		PrintWriter to log to.
 	 * @param maxCheckoutSeconds	Max time a connection can be checked out before being recycled. Zero value turns option off, default is 60 seconds.
 	 */
-	public DbConnectionBroker(String dbDriver, String dbServer, String dbLogin, String dbPassword, int minConns, int maxConns, PrintWriter logFile, int maxCheckoutSeconds) throws SQLException
+	public DbConnectionBroker(final String dbDriver, final String dbServer, final String dbLogin, final String dbPassword, final int minConns, final int maxConns, final PrintWriter logFile, final int maxCheckoutSeconds) throws SQLException
 	{
 		setupBroker(dbDriver, dbServer, dbLogin, dbPassword, minConns, maxConns, logFile, maxCheckoutSeconds);
 	}
 
-	private void setupBroker(String dbDriver, String dbServer, String dbLogin, String dbPassword, int minConns, int maxConns, PrintWriter logFile, int maxCheckoutSeconds) throws SQLException	{
+	private void setupBroker(final String dbDriver, final String dbServer, final String dbLogin, final String dbPassword, final int minConns, final int maxConns, final PrintWriter logFile, final int maxCheckoutSeconds) throws SQLException	{
 		cpds = new ComboPooledDataSource();
 		try
 		{
 			cpds.setDriverClass(dbDriver);
 		}
-		catch (java.beans.PropertyVetoException e)
+		catch (final java.beans.PropertyVetoException e)
 		{
 			e.printStackTrace();
 			throw new SQLException("Error setting driver class.");
@@ -74,12 +74,12 @@ public final class DbConnectionBroker
 	}
 
 	/** Free (check-back-in) a checked-out Connection. */
-	public void freeConnection(Connection conn)
+	public void freeConnection(final Connection conn)
 	{
 		if (conn != null) {
 			try {
 				conn.close();
-			} catch (SQLException e) {
+			} catch (final SQLException e) {
 				e.printStackTrace();
 			}
 		}

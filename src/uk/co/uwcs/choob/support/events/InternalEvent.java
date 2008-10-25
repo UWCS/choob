@@ -11,7 +11,7 @@ public class InternalEvent extends Event implements InternalRootEvent
 	/**
 	 * Construct a new InternalEvent.
 	 */
-	public InternalEvent(String methodName)
+	public InternalEvent(final String methodName)
 	{
 		super(methodName);
 	}
@@ -19,7 +19,7 @@ public class InternalEvent extends Event implements InternalRootEvent
 	/**
 	 * Synthesize a new InternalEvent from an old one.
 	 */
-	public InternalEvent(InternalEvent old)
+	public InternalEvent(final InternalEvent old)
 	{
 		super(old);
 	}
@@ -28,12 +28,14 @@ public class InternalEvent extends Event implements InternalRootEvent
 	 * Synthesize a new InternalEvent from this one.
 	 * @return The new InternalEvent object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new InternalEvent(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof InternalEvent))
 			return false;
@@ -42,9 +44,10 @@ public class InternalEvent extends Event implements InternalRootEvent
 			return true;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("InternalEvent(");
+		final StringBuffer out = new StringBuffer("InternalEvent(");
 		out.append(super.toString());
 		out.append(")");
 		return out.toString();

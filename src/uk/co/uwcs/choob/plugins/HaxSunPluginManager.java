@@ -5,20 +5,51 @@
 
 package uk.co.uwcs.choob.plugins;
 
-import java.io.*;
-import java.lang.reflect.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLConnection;
-import java.security.*;
-import java.util.*;
-import java.util.regex.*;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
+import javax.tools.ToolProvider;
 
 import uk.co.uwcs.choob.ChoobPluginManager;
 import uk.co.uwcs.choob.ChoobTask;
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobError;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobInvocationError;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Event;
 import uk.co.uwcs.choob.support.events.Message;
 
@@ -32,7 +63,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	private final static String prefix = "pluginData";
 	private final ChoobPluginMap allPlugins;
 
-	public HaxSunPluginManager(Modules mods, IRCInterface irc)
+	public HaxSunPluginManager(final Modules mods, final IRCInterface irc)
 			throws ChoobException {
 		this.mods = mods;
 		this.irc = irc;
@@ -45,20 +76,20 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 	private String compile(final String[] fileNames, final String classPath) throws ChoobException
 	{
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		final PrintWriter output = new PrintWriter(baos);
 
 		final StandardJavaFileManager fileManager = compiler
 				.getStandardFileManager(null, null, null);
-		
+
 		final File outputLocation = new File(classPath);
 		final List<File> outputLocationList = new ArrayList<File>();
 		outputLocationList.add(outputLocation);
-		
+
 		try {
 			fileManager.setLocation(StandardLocation.CLASS_OUTPUT, outputLocationList);
-		} catch (IOException e) {
-			throw (ChoobException) (e.getCause());
+		} catch (final IOException e) {
+			throw (ChoobException) e.getCause();
 		}
 		final Iterable<? extends JavaFileObject> compilationUnit = fileManager
 			.getJavaFileObjectsFromStrings(Arrays.asList(fileNames));
@@ -72,17 +103,17 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 									null, null, compilationUnit).call();
 						}
 					});
-		} catch (PrivilegedActionException e) {
-			throw (ChoobException) (e.getCause());
+		} catch (final PrivilegedActionException e) {
+			throw (ChoobException) e.getCause();
 		}
 
 		try {
 			fileManager.close();
-		} catch (IOException e) {
-			throw (ChoobException) (e.getCause());
+		} catch (final IOException e) {
+			throw (ChoobException) e.getCause();
 		}
 
-		String baosts = baos.toString();
+		final String baosts = baos.toString();
 
 		if (success)
 			return baosts; // success
@@ -92,21 +123,21 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 		try
 		{
-			String url=(String)mods.plugin.callAPI("Http", "StoreString", baosts);
+			final String url=(String)mods.plugin.callAPI("Http", "StoreString", baosts);
 			excep="Compile failed, see: " + url + " for details.";
 		}
-		catch (Exception e) {}
+		catch (final Exception e) {}
 		throw new ChoobException(excep);
 	}
 
-	private String[] makeJavaFiles(String pluginName, String outDir, InputStream in) throws IOException
+	private String[] makeJavaFiles(final String pluginName, final String outDir, final InputStream in) throws IOException
 	{
-		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 		String line;
-		StringBuffer imps = new StringBuffer();
+		final StringBuffer imps = new StringBuffer();
 		StringBuffer ants = new StringBuffer();
 		PrintStream classOut = null;
-		List<String> fileNames = new ArrayList<String>();
+		final List<String> fileNames = new ArrayList<String>();
 		int skipLines = 0;
 		while((line = reader.readLine()) != null)
 		{
@@ -129,11 +160,11 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			}
 			else if (line.startsWith("public class "))
 			{
-				String[] bits = line.split(" ");
-				String className = bits[2];
-				String fileName = outDir + className + ".java";
+				final String[] bits = line.split(" ");
+				final String className = bits[2];
+				final String fileName = outDir + className + ".java";
 				fileNames.add(fileName);
-				File javaFile = new File(fileName);
+				final File javaFile = new File(fileName);
 				if (classOut != null)
 				{
 					classOut.flush();
@@ -160,20 +191,20 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	}
 
 	@Override
-	protected Object createPlugin(String pluginName, URL source) throws ChoobException
+	protected Object createPlugin(final String pluginName, final URL source) throws ChoobException
 	{
-		String classPath = prefix + File.separator + pluginName + File.separator;
+		final String classPath = prefix + File.separator + pluginName + File.separator;
 		if (source != null)
 		{
-			File javaDir = new File(classPath);
-			String javaFileName = classPath + pluginName + ".java";
-			File javaFile = new File(javaFileName);
+			final File javaDir = new File(classPath);
+			final String javaFileName = classPath + pluginName + ".java";
+			final File javaFile = new File(javaFileName);
 			URLConnection sourceConn;
 			try
 			{
 				sourceConn = source.openConnection();
 			}
-			catch (IOException e)
+			catch (final IOException e)
 			{
 				throw new ChoobException("Problem opening connection: " + e);
 			}
@@ -186,13 +217,13 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				{
 					javaDir.mkdirs();
 					in = sourceConn.getInputStream();
-					String[] names = makeJavaFiles(pluginName, classPath, in);
+					final String[] names = makeJavaFiles(pluginName, classPath, in);
 					compile(names, classPath);
 					// This should help to aleviate timezone differences.
 					javaFile.setLastModified( sourceConn.getLastModified() );
 					success = true;
 				}
-				catch (IOException e)
+				catch (final IOException e)
 				{
 					throw new ChoobException("Failed to set up for compiler: " + e);
 				}
@@ -201,36 +232,36 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 					try {
 						if (in != null)
 							in.close();
-					} catch (IOException e) {}
-					
+					} catch (final IOException e) {}
+
 					if (!success)
 						javaFile.delete();
 				}
 			}
 		}
-		ClassLoader loader = new HaxSunPluginClassLoader(pluginName, classPath, getProtectionDomain(pluginName));
+		final ClassLoader loader = new HaxSunPluginClassLoader(pluginName, classPath, getProtectionDomain(pluginName));
 		try
 		{
 			return instantiatePlugin(loader.loadClass("plugins." + pluginName + "." + pluginName), pluginName);
 		}
-		catch (ClassNotFoundException e)
+		catch (final ClassNotFoundException e)
 		{
 			throw new ChoobException("Could not find plugin class for " + pluginName + ": " + e);
 		}
 	}
 
-	protected Object instantiatePlugin(Class<?> newClass, String pluginName) throws ChoobException
+	protected Object instantiatePlugin(final Class<?> newClass, final String pluginName) throws ChoobException
 	{
 		Object pluginObj=null;
 
 		// Squiggly brackets are for the weak.
 
-		Constructor<?> c[] = newClass.getConstructors();
+		final Constructor<?> c[] = newClass.getConstructors();
 
-		for (int i = 0; i < c.length; i++)
+		for (final Constructor<?> element : c)
 			try {
-				Class<?>[] t = c[i].getParameterTypes();
-				Object[] arg = new Object[t.length];
+				final Class<?>[] t = element.getParameterTypes();
+				final Object[] arg = new Object[t.length];
 
 				for (int j=0; j<t.length; j++)
 					if (t[j] == IRCInterface.class)
@@ -240,18 +271,18 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 							arg[j]=mods;
 						else
 							throw new ChoobException("Unknown parameter in constructor.");
-				pluginObj = c[i].newInstance(arg);
+				pluginObj = element.newInstance(arg);
 				break;
 			}
-			catch (IllegalAccessException e)
+			catch (final IllegalAccessException e)
 			{
 				throw new ChoobException("Plugin " + pluginName + " had no constructor (this error shouldn't occour, something serious is wrong): " + e);
 			}
-			catch (InvocationTargetException e)
+			catch (final InvocationTargetException e)
 			{
 				throw new ChoobException("Plugin " + pluginName + "'s constructor threw an exception: " + e.getCause(), e.getCause());
 			}
-			catch (InstantiationException e)
+			catch (final InstantiationException e)
 			{
 				throw new ChoobException("Plugin " + pluginName + "'s constructor threw an exception: " + e.getCause(), e.getCause());
 			}
@@ -260,19 +291,19 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		{
 			// XXX Isn't this a bit pointless? newInstance() calls the
 			// (redefinable) constructor anyway...
-			Method meth = newClass.getMethod("create");
+			final Method meth = newClass.getMethod("create");
 			meth.invoke(pluginObj);
 
 		}
-		catch (NoSuchMethodException e)
+		catch (final NoSuchMethodException e)
 		{
 			// This is nonfatal and in fact to be expected!
 		}
-		catch (IllegalAccessException e)
+		catch (final IllegalAccessException e)
 		{
 			// So is this.
 		}
-		catch (InvocationTargetException e)
+		catch (final InvocationTargetException e)
 		{
 			// This isn't.
 			throw new ChoobException("Plugin " + pluginName + "'s create() threw an exception: " + e.getCause(), e.getCause());
@@ -293,21 +324,21 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				newCommands = coms.toArray(newCommands);
 		}
 
-		for(int i=0; i<oldCommands.length; i++)
-			removeCommand(oldCommands[i]);
-		for(int i=0; i<newCommands.length; i++)
-			addCommand(newCommands[i]);
+		for (final String oldCommand : oldCommands)
+			removeCommand(oldCommand);
+		for (final String newCommand : newCommands)
+			addCommand(newCommand);
 
 		return pluginObj;
 	}
 
 	@Override
-	protected void destroyPlugin(String pluginName)
+	protected void destroyPlugin(final String pluginName)
 	{
 		String[] oldCommands = new String[0];
 		synchronized(allPlugins)
 		{
-			List<String> coms = allPlugins.getCommands(pluginName);
+			final List<String> coms = allPlugins.getCommands(pluginName);
 			if (coms != null)
 				oldCommands = coms.toArray(oldCommands);
 		}
@@ -318,8 +349,8 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			allPlugins.resetPlugin(pluginName, null);
 		}
 
-		for(int i=0; i<oldCommands.length; i++)
-			removeCommand(oldCommands[i]);
+		for (final String oldCommand : oldCommands)
+			removeCommand(oldCommand);
 	}
 
 	/**
@@ -329,14 +360,14 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	 * @param methods The list of things to search.
 	 * @param args The arguments of the method we hope to resolve.
 	 */
-	private Member javaHorrorMethodResolve(List<Member> methods, Object[] args)
+	private Member javaHorrorMethodResolve(final List<Member> methods, final Object[] args)
 	{
 		// Do any of them have the right signature?
-		List<Member> filtered = new LinkedList<Member>();
-		Iterator<Member> it = methods.iterator();
+		final List<Member> filtered = new LinkedList<Member>();
+		final Iterator<Member> it = methods.iterator();
 		while(it.hasNext())
 		{
-			Member thing = it.next();
+			final Member thing = it.next();
 			if (thing instanceof Field)
 			{
 				if (args.length == 0)
@@ -345,9 +376,9 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			else
 			{
 				// Is a method
-				Method method = (Method) thing;
-				Class<?>[] types = method.getParameterTypes();
-				int paramlength = types.length;
+				final Method method = (Method) thing;
+				final Class<?>[] types = method.getParameterTypes();
+				final int paramlength = types.length;
 				if (paramlength != args.length)
 					continue;
 
@@ -391,19 +422,19 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				{
 					meth.invoke(plugin, params);
 				}
-				catch (InvocationTargetException e)
+				catch (final InvocationTargetException e)
 				{
 					// Let the user know what happened.
 					if (param instanceof Message)
 					{
-						Throwable cause = e.getCause();
+						final Throwable cause = e.getCause();
 
 						mods.plugin.exceptionReply((Message)param, cause, pluginName);
 					}
 					System.err.println("Exception invoking method " + meth);
 					e.getCause().printStackTrace();
 				}
-				catch (IllegalAccessException e)
+				catch (final IllegalAccessException e)
 				{
 					System.err.println("Could not access method " + meth);
 					e.printStackTrace();
@@ -413,21 +444,21 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	}
 
 	@Override
-	public ChoobTask commandTask(String pluginName, String command, Message ev)
+	public ChoobTask commandTask(final String pluginName, final String command, final Message ev)
 	{
-		Method meth = allPlugins.getCommand(pluginName + "." + command);
+		final Method meth = allPlugins.getCommand(pluginName + "." + command);
 		if(meth != null)
 			return callCommand(meth, ev);
 		return null;
 	}
 
 	@Override
-	public List<ChoobTask> eventTasks(Event ev)
+	public List<ChoobTask> eventTasks(final Event ev)
 	{
-		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
-		List<Method> meths = allPlugins.getEvent(ev.getMethodName());
+		final List<ChoobTask> tasks = new LinkedList<ChoobTask>();
+		final List<Method> meths = allPlugins.getEvent(ev.getMethodName());
 		if(meths != null)
-			for(Method meth: meths)
+			for(final Method meth: meths)
 			{
 				tasks.add(callCommand(meth, ev));
 			}
@@ -435,12 +466,12 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	}
 
 	@Override
-	public List<ChoobTask> filterTasks(Message ev)
+	public List<ChoobTask> filterTasks(final Message ev)
 	{
-		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
-		List<Method> meths = allPlugins.getFilter(ev.getMessage());
+		final List<ChoobTask> tasks = new LinkedList<ChoobTask>();
+		final List<Method> meths = allPlugins.getFilter(ev.getMessage());
 		if(meths != null)
-			for(Method meth: meths)
+			for(final Method meth: meths)
 			{
 				tasks.add(callCommand(meth, ev));
 			}
@@ -448,20 +479,20 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	}
 
 	@Override
-	public ChoobTask intervalTask(String pluginName, Object param)
+	public ChoobTask intervalTask(final String pluginName, final Object param)
 	{
-		Method meth = allPlugins.getInterval(pluginName);
+		final Method meth = allPlugins.getInterval(pluginName);
 		if(meth != null)
 			return callCommand(meth, param);
 		return null;
 	}
 
 	@Override
-	public Object doGeneric(String pluginName, String prefix_, String genName, final Object... params) throws ChoobNoSuchCallException
+	public Object doGeneric(final String pluginName, final String prefix_, final String genName, final Object... params) throws ChoobNoSuchCallException
 	{
 		final Object plugin = allPlugins.getPluginObj(pluginName);
-		String fullName = pluginName + "." + prefix_ + ":" + genName;
-		String sig = getAPISignature(fullName, params);
+		final String fullName = pluginName + "." + prefix_ + ":" + genName;
+		final String sig = getAPISignature(fullName, params);
 		if (plugin == null)
 			throw new ChoobNoSuchPluginException(pluginName, sig);
 
@@ -469,7 +500,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		if (meth == null)
 		{
 			// OK, not cached. But maybe it's still there...
-			List<Member> meths = allPlugins.getAllGeneric(fullName);
+			final List<Member> meths = allPlugins.getAllGeneric(fullName);
 
 			if (meths != null)
 				meth = javaHorrorMethodResolve(meths, params);
@@ -490,9 +521,9 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				}
 			}, mods.security.getPluginContext() );
 		}
-		catch (PrivilegedActionException pe)
+		catch (final PrivilegedActionException pe)
 		{
-			Throwable e = pe.getCause();
+			final Throwable e = pe.getCause();
 			if (e instanceof InvocationTargetException)
 			{
 				if (e.getCause() instanceof ChoobError)
@@ -508,15 +539,15 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	}
 
 	@Override
-	public Object doAPI(String pluginName, String APIName, final Object... params) throws ChoobNoSuchCallException
+	public Object doAPI(final String pluginName, final String APIName, final Object... params) throws ChoobNoSuchCallException
 	{
 		return doGeneric(pluginName, "api", APIName, params);
 	}
 
 	// Helper methods for the class below.
-	static boolean checkCommandSignature(Method meth)
+	static boolean checkCommandSignature(final Method meth)
 	{
-		Class<?>[] params = meth.getParameterTypes();
+		final Class<?>[] params = meth.getParameterTypes();
 		if (params.length == 1)
 		{
 			if (!Message.class.isAssignableFrom(params[0]))
@@ -537,9 +568,9 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return true;
 	}
 
-	static boolean checkEventSignature(Method meth)
+	static boolean checkEventSignature(final Method meth)
 	{
-		Class<?>[] params = meth.getParameterTypes();
+		final Class<?>[] params = meth.getParameterTypes();
 		if (params.length == 1)
 		{
 			// XXX could be better
@@ -561,9 +592,9 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return true;
 	}
 
-	static boolean checkIntervalSignature(Method meth)
+	static boolean checkIntervalSignature(final Method meth)
 	{
-		Class<?>[] params = meth.getParameterTypes();
+		final Class<?>[] params = meth.getParameterTypes();
 		if (params.length == 1)
 		{
 			// OK
@@ -581,14 +612,14 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return true;
 	}
 
-	static boolean checkAPISignature(Method meth)
+	static boolean checkAPISignature(final Method meth)
 	{
 		return true;
 	}
 
-	static String getAPISignature(String APIName, Object... args)
+	static String getAPISignature(final String APIName, final Object... args)
 	{
-		StringBuffer buf = new StringBuffer(APIName + "(");
+		final StringBuffer buf = new StringBuffer(APIName + "(");
 		for(int i=0; i<args.length; i++)
 		{
 			if (args[i] != null)
@@ -657,9 +688,9 @@ final class ChoobPluginMap
 	}
 
 	// Wipe out details for plugin <name>, and if pluginObj is not null, add new ones.
-	synchronized void resetPlugin(String pluginName, Object pluginObj)
+	synchronized void resetPlugin(final String pluginName, final Object pluginObj)
 	{
-		String lname = pluginName.toLowerCase();
+		final String lname = pluginName.toLowerCase();
 		if (plugins.get(lname) != null)
 		{
 			// Must clear out old values
@@ -679,20 +710,20 @@ final class ChoobPluginMap
 			it = pluginGenCallSigs.get(lname).iterator();
 			while (it.hasNext())
 				genCallSigs.remove(it.next());
-			Iterator<Pattern> it3 = pluginFilters.get(lname).iterator();
+			final Iterator<Pattern> it3 = pluginFilters.get(lname).iterator();
 			while (it3.hasNext())
 			{
-				Iterator<Method> it2 = filters.get(it3.next()).iterator();
+				final Iterator<Method> it2 = filters.get(it3.next()).iterator();
 				while(it2.hasNext())
 				{
 					if (it2.next().getDeclaringClass().getSimpleName().compareToIgnoreCase(pluginName) == 0)
 						it2.remove();
 				}
 			}
-			Iterator<Method> it2 = pluginEvents.get(lname).iterator();
+			final Iterator<Method> it2 = pluginEvents.get(lname).iterator();
 			while (it2.hasNext())
 			{
-				Method m = it2.next();
+				final Method m = it2.next();
 				events.get(m.getName()).remove(m);
 			}
 		}
@@ -712,33 +743,33 @@ final class ChoobPluginMap
 
 		plugins.put(lname, pluginObj);
 		// OK, now load in new values...
-		List<String> coms = new LinkedList<String>();
+		final List<String> coms = new LinkedList<String>();
 		pluginCommands.put(lname, coms);
 		//List<String> apis = new LinkedList<String>();
 		//pluginApiCalls.put(lname, apis);
 		//List<String> apiss = new LinkedList<String>();
 		//pluginApiCallSigs.put(lname, apiss);
-		List<String> gens = new LinkedList<String>();
+		final List<String> gens = new LinkedList<String>();
 		pluginGenCalls.put(lname, gens);
-		List<String> genss = new LinkedList<String>();
+		final List<String> genss = new LinkedList<String>();
 		pluginGenCallSigs.put(lname, genss);
-		List<Pattern> fils = new LinkedList<Pattern>();
+		final List<Pattern> fils = new LinkedList<Pattern>();
 		pluginFilters.put(lname, fils);
-		List<Method> evs = new LinkedList<Method>();
+		final List<Method> evs = new LinkedList<Method>();
 		pluginEvents.put(lname, evs);
 
-		Class<?> pluginClass = pluginObj.getClass();
-		Method[] meths = pluginClass.getMethods();
-		for(Method meth: meths)
+		final Class<?> pluginClass = pluginObj.getClass();
+		final Method[] meths = pluginClass.getMethods();
+		for(final Method meth: meths)
 		{
 			// We don't want these. :)
 			if (meth.getDeclaringClass() != pluginClass)
 				continue;
 
-			String name = meth.getName();
+			final String name = meth.getName();
 			if (name.startsWith("command"))
 			{
-				String commandName = lname + "." + name.substring(7).toLowerCase();
+				final String commandName = lname + "." + name.substring(7).toLowerCase();
 				// Command
 				if (HaxSunPluginManager.checkCommandSignature(meth))
 				{
@@ -772,17 +803,17 @@ final class ChoobPluginMap
 				{
 					filter = (String)pluginClass.getField(name + "Regex").get(pluginObj);
 				}
-				catch (NoSuchFieldException e)
+				catch (final NoSuchFieldException e)
 				{
 					System.err.println("Plugin " + pluginName + " had filter " + name + " with no regex.");
 					continue;
 				}
-				catch (ClassCastException e)
+				catch (final ClassCastException e)
 				{
 					System.err.println("Plugin " + pluginName + " had filter " + name + " with no non-String regex.");
 					continue;
 				}
-				catch (IllegalAccessException e)
+				catch (final IllegalAccessException e)
 				{
 					System.err.println("Plugin " + pluginName + " had non-public filter " + name + ".");
 					continue;
@@ -792,7 +823,7 @@ final class ChoobPluginMap
 				{
 					pattern = Pattern.compile(filter, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 				}
-				catch (PatternSyntaxException e)
+				catch (final PatternSyntaxException e)
 				{
 					System.err.println("Plugin " + pluginName + " had invalid filter " + filter + ": " + e);
 					continue;
@@ -837,13 +868,13 @@ final class ChoobPluginMap
 			else
 			{
 				// File it as a generic.
-				Matcher matcher = Pattern.compile("([a-z]+)([A-Z].+)?").matcher(name);
+				final Matcher matcher = Pattern.compile("([a-z]+)([A-Z].+)?").matcher(name);
 				if (matcher.matches())
 				{
 					// Is a real generic.
-					String prefix = matcher.group(1);
-					String gName = name.substring(prefix.length()).toLowerCase();
-					String fullName = lname + "." + prefix + ":" + gName;
+					final String prefix = matcher.group(1);
+					final String gName = name.substring(prefix.length()).toLowerCase();
+					final String fullName = lname + "." + prefix + ":" + gName;
 					if (HaxSunPluginManager.checkAPISignature(meth))
 					{
 						gens.add(fullName);
@@ -862,14 +893,14 @@ final class ChoobPluginMap
 				}
 			}
 		}
-		Field[] fields = pluginClass.getFields();
-		for(Field field: fields)
+		final Field[] fields = pluginClass.getFields();
+		for(final Field field: fields)
 		{
 			// We don't want these. :)
 			if (field.getDeclaringClass() != pluginClass)
 				continue;
 
-			String name = field.getName();
+			final String name = field.getName();
 			if (name.startsWith("command"))
 			{
 			}
@@ -888,13 +919,13 @@ final class ChoobPluginMap
 			else
 			{
 				// File it as a generic.
-				Matcher matcher = Pattern.compile("([a-z]+)([A-Z].+)?").matcher(name);
+				final Matcher matcher = Pattern.compile("([a-z]+)([A-Z].+)?").matcher(name);
 				if (matcher.matches())
 				{
 					// Is a real generic.
-					String prefix = matcher.group(1);
-					String gName = name.substring(prefix.length()).toLowerCase();
-					String fullName = lname + "." + prefix + ":" + gName;
+					final String prefix = matcher.group(1);
+					final String gName = name.substring(prefix.length()).toLowerCase();
+					final String fullName = lname + "." + prefix + ":" + gName;
 
 					gens.add(fullName);
 					if (genCalls.get(fullName) == null)
@@ -909,22 +940,22 @@ final class ChoobPluginMap
 		}
 	}
 
-	synchronized Object getPluginObj(String pluginName)
+	synchronized Object getPluginObj(final String pluginName)
 	{
 		return plugins.get(pluginName.toLowerCase());
 	}
 
-	synchronized Object getPluginObj(Member meth)
+	synchronized Object getPluginObj(final Member meth)
 	{
 		return getPluginObj(meth.getDeclaringClass().getSimpleName().toLowerCase());
 	}
 
-	synchronized Method getCommand(String commandName)
+	synchronized Method getCommand(final String commandName)
 	{
 		return commands.get(commandName.toLowerCase());
 	}
 
-	synchronized List<String> getCommands(String pluginName)
+	synchronized List<String> getCommands(final String pluginName)
 	{
 		return pluginCommands.get(pluginName.toLowerCase());
 	}
@@ -945,44 +976,44 @@ final class ChoobPluginMap
 		return apiCalls.get(apiName.toLowerCase());
 	}*/
 
-	synchronized Member getGeneric(String genName)
+	synchronized Member getGeneric(final String genName)
 	{
 		return genCallSigs.get(genName.toLowerCase());
 	}
 
-	synchronized void setGeneric(String genName, Member obj)
+	synchronized void setGeneric(final String genName, final Member obj)
 	{
 		pluginGenCallSigs.get(obj.getDeclaringClass().getSimpleName().toLowerCase()).add(genName.toLowerCase());
 		genCallSigs.put(genName.toLowerCase(), obj);
 	}
 
-	synchronized List<Member> getAllGeneric(String genName)
+	synchronized List<Member> getAllGeneric(final String genName)
 	{
 		return genCalls.get(genName.toLowerCase());
 	}
 
-	synchronized List<Method> getFilter(String text)
+	synchronized List<Method> getFilter(final String text)
 	{
-		List<Method> ret = new LinkedList<Method>();
-		Iterator<Pattern> pats = filters.keySet().iterator();
+		final List<Method> ret = new LinkedList<Method>();
+		final Iterator<Pattern> pats = filters.keySet().iterator();
 		while(pats.hasNext())
 		{
-			Pattern pat = pats.next();
+			final Pattern pat = pats.next();
 			if (pat.matcher(text).find())
 				ret.addAll(filters.get(pat));
 		}
 		return ret;
 	}
 
-	synchronized List<Method> getEvent(String eventName)
+	synchronized List<Method> getEvent(final String eventName)
 	{
-		List<Method> handlers = events.get(eventName);
+		final List<Method> handlers = events.get(eventName);
 		if (handlers != null)
 			return new ArrayList<Method>(handlers);
 		return null;
 	}
 
-	synchronized Method getInterval(String pluginName)
+	synchronized Method getInterval(final String pluginName)
 	{
 		return pluginInterval.get(pluginName.toLowerCase());
 	}

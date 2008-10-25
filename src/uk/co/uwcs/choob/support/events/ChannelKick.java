@@ -97,7 +97,7 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 	/**
 	 * Construct a new ChannelKick.
 	 */
-	public ChannelKick(String methodName, long millis, int random, String message, String channel, String nick, String login, String hostname, String target)
+	public ChannelKick(final String methodName, final long millis, final int random, final String message, final String channel, final String nick, final String login, final String hostname, final String target)
 	{
 		super(methodName, millis, random);
 		this.message = message;
@@ -111,7 +111,7 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 	/**
 	 * Synthesize a new ChannelKick from an old one.
 	 */
-	public ChannelKick(ChannelKick old, String message)
+	public ChannelKick(final ChannelKick old, final String message)
 	{
 		super(old);
 		this.message = message;
@@ -126,26 +126,28 @@ public class ChannelKick extends IRCEvent implements MessageEvent, ChannelEvent,
 	 * Synthesize a new ChannelKick from this one.
 	 * @return The new ChannelKick object.
 	 */
-	public Event cloneEvent(String message)
+	public Event cloneEvent(final String message)
 	{
 		return new ChannelKick(this, message);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelKick))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		ChannelKick thing = (ChannelKick)obj;
+		final ChannelKick thing = (ChannelKick)obj;
 		if ( true && message.equals(thing.message) && channel.equals(thing.channel) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) && target.equals(thing.target) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("ChannelKick(");
+		final StringBuffer out = new StringBuffer("ChannelKick(");
 		out.append(super.toString());
 		out.append(", message = " + message);
 		out.append(", channel = " + channel);

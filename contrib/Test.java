@@ -1,7 +1,9 @@
 import java.util.List;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.ChannelPart;
 import uk.co.uwcs.choob.support.events.Message;
 
@@ -18,17 +20,17 @@ public class Test
 		};
 	}
 
-	private Modules mods;
-	private IRCInterface irc;
-	public Test(Modules mods, IRCInterface irc)
+	private final Modules mods;
+	private final IRCInterface irc;
+	public Test(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
 	}
 
-	public void commandSecurity( Message con )
+	public void commandSecurity( final Message con )
 	{
-		String priv = mods.util.getParamString( con );
+		final String priv = mods.util.getParamString( con );
 
 		if (priv.trim().equals(""))
 		{
@@ -42,37 +44,37 @@ public class Test
 			irc.sendContextReply(con, "You don't have " + priv + "!" );
 	}
 
-	public void commandJoin( Message con ) throws ChoobException
+	public void commandJoin( final Message con ) throws ChoobException
 	{
 		irc.join(mods.util.getParamString(con));
 		irc.sendContextReply(con, "Okay!");
 	}
 
-	public void commandPart( Message con ) throws ChoobException
+	public void commandPart( final Message con ) throws ChoobException
 	{
 		irc.part(mods.util.getParamString(con));
 		irc.sendContextReply(con, "Okay!");
 	}
 
 
-	public void commandPirate( Message con )
+	public void commandPirate( final Message con )
 	{
 		irc.sendContextReply(con, "Yarr!");
 	}
 
-	public void commandPiratey( Message con )
+	public void commandPiratey( final Message con )
 	{
 		irc.sendContextReply(con, "(:;test.piratey:)");
 	}
 
-	public void commandInMy( Message con )
+	public void commandInMy( final Message con )
 	{
 		irc.sendContextMessage(con, "..Pants!");
 	}
 
-	public void commandExit( Message con ) throws ChoobException
+	public void commandExit( final Message con ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams( con );
+		final List<String> params = mods.util.getParams( con );
 		if (params.size() > 1) {
 			System.exit(Integer.parseInt(params.get(1)));
 		} else {
@@ -80,7 +82,7 @@ public class Test
 		}
 	}
 
-	public void commandRestart( Message con ) throws ChoobException
+	public void commandRestart( final Message con ) throws ChoobException
 	{
 		irc.restart("Restarting...");
 	}
@@ -88,14 +90,14 @@ public class Test
 	// Define the regex for the KarmaPlus filter.
 	public String filterFauxRegex = "Faux sucks";
 
-	public void filterFaux( Message con )
+	public void filterFaux( final Message con )
 	{
 		irc.sendContextMessage( con, "No, I disagree, " + con.getNick() + " is the one that is the suck.");
 	}
 
 	public String filterBouncyRegex = "^bouncy bouncy";
 
-	public void filterBouncy( Message con )
+	public void filterBouncy( final Message con )
 	{
 		irc.sendContextReply( con, "Ooh, yes please.");
 	}
@@ -123,36 +125,36 @@ public class Test
 		}
 	}*/
 
-	public void onPart( ChannelPart ev )
+	public void onPart( final ChannelPart ev )
 	{
 		//irc.sendContextMessage( ev, "Bye, " + ev.getNick() + "!");
 	}
 
-	public void commandAPI ( Message mes ) throws ChoobException
+	public void commandAPI ( final Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams( mes );
+		final List<String> params = mods.util.getParams( mes );
 		irc.sendContextReply(mes, mods.plugin.callAPI( params.get(1), params.get(2), params.get(3) ).toString());
 	}
 
-	public void commandGeneric ( Message mes ) throws ChoobException
+	public void commandGeneric ( final Message mes ) throws ChoobException
 	{
-		List<String> params = mods.util.getParams( mes );
+		final List<String> params = mods.util.getParams( mes );
 		if (params.size() == 5)
 			irc.sendContextReply(mes, mods.plugin.callGeneric( params.get(1), params.get(2), params.get(3), params.get(4) ).toString());
 		else
 			irc.sendContextReply(mes, mods.plugin.callGeneric( params.get(1), params.get(2), params.get(3) ).toString());
 	}
 
-	public void commandWait (Message mes)
+	public void commandWait (final Message mes)
 	{
-		Object test = new Object();
+		final Object test = new Object();
 		synchronized(test)
 		{
 			try
 			{
 				test.wait(3000);
 			}
-			catch (InterruptedException e)
+			catch (final InterruptedException e)
 			{
 				irc.sendContextReply(mes, "Interrupted!");
 			}

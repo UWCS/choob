@@ -1,8 +1,18 @@
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
-import java.util.*;
-import java.util.regex.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.PrivateEvent;
 
 
 class ChannelOptions
@@ -10,13 +20,13 @@ class ChannelOptions
 	public int id;
 	public String channelName;
 	public String lang;
-	
+
 	public ChannelOptions()
 	{
 		//This space intentionally left blank
 	}
-	
-	public ChannelOptions(String channelName, String lang)
+
+	public ChannelOptions(final String channelName, final String lang)
 	{
 		this.channelName = channelName;
 		this.lang = lang;
@@ -27,7 +37,7 @@ class ChannelOptions
 		return channelName;
 	}
 
-	public void setChannelName(String channelName)
+	public void setChannelName(final String channelName)
 	{
 		this.channelName = channelName;
 	}
@@ -37,11 +47,11 @@ class ChannelOptions
 		return lang;
 	}
 
-	public void setLang(String lang)
+	public void setLang(final String lang)
 	{
 		this.lang = lang;
 	}
-	
+
 }
 
 class Fact
@@ -62,7 +72,7 @@ class Fact
 	{
 	}
 
-	public Fact(String subject)
+	public Fact(final String subject)
 	{
 		this.subject = subject;
 		lastRequestedBy = "";
@@ -70,28 +80,28 @@ class Fact
 		lang = "";
 	}
 
-	public void addConfirmedFact(String info, String author)
+	public void addConfirmedFact(final String info, final String author)
 	{
 		confirmedFact = info;
 
 		this.author = author;
 		this.lastRequestedBy = author;
 
-		Date now = new Date();
-		java.text.SimpleDateFormat niceDate = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		final Date now = new Date();
+		final java.text.SimpleDateFormat niceDate = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		created = niceDate.format(now);
 		lastRequestedAt = created;
 
 	}
 
-	public String whatis(String requester)
+	public String whatis(final String requester)
 	{
 		numberOfRequests++;
 
 		lastRequestedBy = requester;
 
-		Date now = new Date();
-		java.text.SimpleDateFormat niceDate = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		final Date now = new Date();
+		final java.text.SimpleDateFormat niceDate = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		lastRequestedAt = niceDate.format(now);
 
 
@@ -112,28 +122,28 @@ class Fact
 public class SUSEFactoids
 {
 
-	private Modules mods;
-	private IRCInterface irc;
+	private final Modules mods;
+	private final IRCInterface irc;
 
-	private Set<String> locks = new HashSet<String>();
-	
-	public SUSEFactoids(Modules mods, IRCInterface irc)
+	private final Set<String> locks = new HashSet<String>();
+
+	public SUSEFactoids(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
 		triggerPattern = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE);
 	}
-	
-	private void setChannelLanguage(String channelName, String language)
+
+	private void setChannelLanguage(final String channelName, final String language)
 	{
-		List<ChannelOptions> opts = mods.odb.retrieve(ChannelOptions.class, "WHERE channelName = \"" + channelName + "\"");
+		final List<ChannelOptions> opts = mods.odb.retrieve(ChannelOptions.class, "WHERE channelName = \"" + channelName + "\"");
 		if (opts.size() == 0)
 		{
 			try
 			{
-				ChannelOptions option = new ChannelOptions(channelName,language);
+				final ChannelOptions option = new ChannelOptions(channelName,language);
 				mods.odb.save(option);
-			} catch (IllegalStateException e)
+			} catch (final IllegalStateException e)
 			{
 				//This space intentionally left blank.
 			}
@@ -141,73 +151,73 @@ public class SUSEFactoids
 		{
 			try
 			{
-				ChannelOptions option = opts.get(0);
+				final ChannelOptions option = opts.get(0);
 				option.setChannelName(channelName);
 				option.setLang(language);
 				mods.odb.update(option);
-			} catch (IllegalStateException e)
+			} catch (final IllegalStateException e)
 			{
 				//This space intentionally left blank.
 			}
-		}		
+		}
 	}
 	private static final String DEFAULT_LANG = "en_GB";
-	private String getChannelLanguage(String channelName)
+	private String getChannelLanguage(final String channelName)
 	{
-		List<ChannelOptions> opts = mods.odb.retrieve(ChannelOptions.class, "WHERE channelName = \"" + channelName + "\"");
-		
+		final List<ChannelOptions> opts = mods.odb.retrieve(ChannelOptions.class, "WHERE channelName = \"" + channelName + "\"");
+
 		if (opts.size() != 0)
 		{
 			try
 			{
-				ChannelOptions option = opts.get(0);
+				final ChannelOptions option = opts.get(0);
 				return option.getLang();
-			} catch (IllegalStateException e)
+			} catch (final IllegalStateException e)
 			{
 				//This space intentionally left blank.
 			}
-		}		
+		}
 		return DEFAULT_LANG;
 	}
-	
+
 	public String[] helpCommandSetChannelLanguage =
 	{
 		"Set the preferred factoid language for a channel",
 		"<ChannelName> is The name of the channel",
 		"<Language> is the language"
 	};
-	public void commandSetChannelLanguage(Message mes) throws ChoobException
+	public void commandSetChannelLanguage(final Message mes) throws ChoobException
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.factoids.setchannellanguage"), mes);
-		List<String> params = mods.util.getParams(mes, 3);
+		final List<String> params = mods.util.getParams(mes, 3);
 		if (params.size() != 3)
 		{
 			irc.sendContextMessage(mes,"Usage: <ChannelName> <Language>");
 			return;
 		}
-		
+
 		setChannelLanguage(params.get(1), params.get(2));
 		irc.sendContextMessage(mes, "Ok, set " + params.get(1) + " language to " + params.get(2));
 	}
-	
+
 	public String[] helpCommandGetChannelLanguage =
 	{
 		"Set the preferred factoid language for a channel",
 		"<ChannelName> is The name of the channel",
 		"<Language> is the language"
 	};
-	public void commandGetChannelLanguage(Message mes) throws ChoobException
+	public void commandGetChannelLanguage(final Message mes) throws ChoobException
 	{
-		
-		List<String> params = mods.util.getParams(mes, 2);
+
+		final List<String> params = mods.util.getParams(mes, 2);
 		if (params.size() != 2)
 		{
 			irc.sendContextMessage(mes,"Usage: <ChannelName>");
 			return;
 		}
 		irc.sendContextMessage(mes, "Language for " + params.get(1) + " is " + getChannelLanguage(params.get(1)));
-	}		
-	
+	}
+
 	public String[] helpCommandRemember =
 	{
 		"Make the bot remember a specified factoid",
@@ -216,19 +226,19 @@ public class SUSEFactoids
 		"<FactoidValue> is the content of this factoid"
 	};
 	final Pattern rememberPattern = Pattern.compile("(.{2,}?)\\s+(?:is|was)\\s+(.{3,})");
-	public void commandRemember(Message mes) throws ChoobException
+	public void commandRemember(final Message mes) throws ChoobException
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.factoids.remember"), mes);
 
-		List<String> params = mods.util.getParams(mes, 1);
-		Matcher factoidMatcher = rememberPattern.matcher(params.get(1));
+		final List<String> params = mods.util.getParams(mes, 1);
+		final Matcher factoidMatcher = rememberPattern.matcher(params.get(1));
 
 		if (factoidMatcher.find())
 		{
 
-			String factName = factoidMatcher.group(1).toLowerCase();
+			final String factName = factoidMatcher.group(1).toLowerCase();
 
-			String factValue = factoidMatcher.group(2);
+			final String factValue = factoidMatcher.group(2);
 
 			irc.sendContextReply(mes, "Remembering " + factName + "..");
 
@@ -238,7 +248,7 @@ public class SUSEFactoids
 			irc.sendContextReply(mes, "I don't understand!");
 		}
 	}
-	
+
 	public String[] helpCommandLink =
 	{
 		"Make the bot link a specified factoid to another",
@@ -247,24 +257,24 @@ public class SUSEFactoids
 		"<Factoid2> is the factoid to link to"
 	};
 	final Pattern linkPattern = Pattern.compile("(.{2,}?)\\s+(?:to)\\s+(.{3,})");
-	public void commandLink(Message mes) throws ChoobException
+	public void commandLink(final Message mes) throws ChoobException
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.factoids.remember"), mes);
 
-		List<String> params = mods.util.getParams(mes, 1);
-		Matcher linkMatcher = linkPattern.matcher(params.get(1));
+		final List<String> params = mods.util.getParams(mes, 1);
+		final Matcher linkMatcher = linkPattern.matcher(params.get(1));
 		if (linkMatcher.find())
 		{
-			String fact1 = linkMatcher.group(1).toLowerCase();
-			String fact2 = linkMatcher.group(2).toLowerCase();
+			final String fact1 = linkMatcher.group(1).toLowerCase();
+			final String fact2 = linkMatcher.group(2).toLowerCase();
 			try
 			{
 				linkFact(fact1, fact2, mes.getContext());
 				irc.sendContextReply(mes, "Linked " + fact1 + " to " + fact2);
-			} catch (FactNotFoundException e)
+			} catch (final FactNotFoundException e)
 			{
 				irc.sendContextReply(mes, "Could not find the target fact, ensure it exists.");
-				return;		
+				return;
 			}
 		} else
 		{
@@ -272,7 +282,7 @@ public class SUSEFactoids
 			return;
 		}
 	}
-	
+
 
 	public String[] helpCommandUnLink =
 	{
@@ -280,12 +290,12 @@ public class SUSEFactoids
 		"<Factoid1>",
 		"<Factoid1> is the name of the factoid to unlink"
 	};
-	public void commandUnLink(Message mes) throws ChoobException
+	public void commandUnLink(final Message mes) throws ChoobException
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.factoids.remember"), mes);
 
-		
-		List<String> params = mods.util.getParams(mes,1);
+
+		final List<String> params = mods.util.getParams(mes,1);
 		if (params.size() != 2)
 		{
 			irc.sendContextReply(mes, "You must specify factoid name");
@@ -295,37 +305,37 @@ public class SUSEFactoids
 		{
 			unlinkFact(params.get(1), mes.getContext());
 			irc.sendContextReply(mes, "UnLinked " + params.get(1));
-		} catch (FactNotFoundException e)
+		} catch (final FactNotFoundException e)
 		{
 			irc.sendContextReply(mes, "Could not find the fact to unlink, ensure it exists.");
-			return;		
+			return;
 		}
 	}
-	
-	private void rememberFact(String subject, String value, String nick, String context)
+
+	private void rememberFact(final String subject, final String value, final String nick, final String context)
 	{
 		Fact fact;
 		try
 		{
 			fact = getFact(subject,context);
 			//remove the <reply> and <action> tags as we ignore those now.
-			
+
 			//Only update this fact if it is for our context, prevent people accidentally clobbering other channels' factoids.
 			if (fact.lang.equals(getChannelLanguage(context)))
 			{
 				fact.addConfirmedFact(value.replaceAll("<.*?>",""), nick);
 				mods.odb.update(fact);
 			} else throw new FactNotFoundException();
-		} catch (FactNotFoundException e)
+		} catch (final FactNotFoundException e)
 		{
 			fact = new Fact(subject);
 			fact.addConfirmedFact(value.replaceAll("<.*?>",""), nick);
 			fact.lang = getChannelLanguage(context);
-			mods.odb.save(fact);		
+			mods.odb.save(fact);
 		}
 	}
 
-	private void linkFact(String subject, String targetSubject, String context) throws FactNotFoundException
+	private void linkFact(final String subject, final String targetSubject, final String context) throws FactNotFoundException
 	{
 		getFact(targetSubject, context);
 		Fact fact;
@@ -334,25 +344,25 @@ public class SUSEFactoids
 			fact = getExactFact(subject, context);
 			fact.linkedFactoid = targetSubject;
 			mods.odb.update(fact);
-		} catch (FactNotFoundException e)
+		} catch (final FactNotFoundException e)
 		{
 			fact = new Fact(subject);
 			fact.addConfirmedFact("This factoid used to be linked to " + targetSubject, "unknown");
 			fact.lang = getChannelLanguage(context);
 			fact.linkedFactoid = targetSubject;
-			mods.odb.save(fact);		
+			mods.odb.save(fact);
 		}
 	}
-	
-	private void unlinkFact(String subject,  String context) throws FactNotFoundException
+
+	private void unlinkFact(final String subject,  final String context) throws FactNotFoundException
 	{
-		Fact fact = getExactFact(subject, context);
+		final Fact fact = getExactFact(subject, context);
 		fact.linkedFactoid = "";
 		mods.odb.update(fact);
 	}
-		
-	
-	public void interval(Object param)
+
+
+	public void interval(final Object param)
 	{
 		synchronized(locks)
 		{
@@ -363,57 +373,57 @@ public class SUSEFactoids
 	class FactNotFoundException extends Exception {
 
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 2747650133533345970L;
 	};
-	
+
 	private static final int MAX_DEPTH = 5;
 	/**
 	 * Obtains fact with specified subject, for specified channel context.
 	 * Will follow linked factoids up to a maximum depth of 5 to avoid loops.
-	 * 
+	 *
 	 * @param subject	The factoid key.
 	 * @param context	The channel, to allow localised factoids
 	 * @return	The factoid
 	 * @throws SUSEFactoids.FactNotFoundException
 	 */
-	private Fact getFact(String subject,String context) throws FactNotFoundException
+	private Fact getFact(final String subject,final String context) throws FactNotFoundException
 	{
 		return getFact(subject,context,0);
 	}
-	
-	private Fact getExactFact(String subject,String context) throws FactNotFoundException
+
+	private Fact getExactFact(final String subject,final String context) throws FactNotFoundException
 	{
 		List<Fact> facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + getChannelLanguage(context) + "\"");
 		//If none for our language, find for default language
-		if (facts.size() == 0 || ((facts.get(0).whatis() == null) && (facts.get(0).linkedFactoid == null)))
+		if (facts.size() == 0 || facts.get(0).whatis() == null && facts.get(0).linkedFactoid == null)
 			facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + DEFAULT_LANG + "\"");
 		//Fall back to any language, if there are no other alternatives.
-		if (facts.size() == 0 || ((facts.get(0).whatis() == null) && (facts.get(0).linkedFactoid == null)))
+		if (facts.size() == 0 || facts.get(0).whatis() == null && facts.get(0).linkedFactoid == null)
 			facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\"");
-		if (facts.size() > 0) 
+		if (facts.size() > 0)
 			return facts.get(0);
-		else 
+		else
 			throw new FactNotFoundException();
 	}
-	
-	private Fact getFact(String subject,String context, int i) throws FactNotFoundException
+
+	private Fact getFact(final String subject,final String context, final int i) throws FactNotFoundException
 	{
 		//Get facts for our preferred language.
 		List<Fact> facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + getChannelLanguage(context) + "\"");
 		//If none for our language, find for default language
-		if (facts.size() == 0 || ((facts.get(0).whatis() == null) && (facts.get(0).linkedFactoid == null)))
+		if (facts.size() == 0 || facts.get(0).whatis() == null && facts.get(0).linkedFactoid == null)
 			facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + DEFAULT_LANG + "\"");
 		//Fall back to any language, if there are no other alternatives.
-		if (facts.size() == 0 || ((facts.get(0).whatis() == null) && (facts.get(0).linkedFactoid == null)))
+		if (facts.size() == 0 || facts.get(0).whatis() == null && facts.get(0).linkedFactoid == null)
 			facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\"");
-		
+
 		//Follow links as appropriate and return the found fact.
-		if ((facts.size() > 0) && (i < MAX_DEPTH))
+		if (facts.size() > 0 && i < MAX_DEPTH)
 		{
-			Fact fact = facts.get(0);
-			if ((fact.linkedFactoid != null) && (fact.linkedFactoid.length() > 0))
+			final Fact fact = facts.get(0);
+			if (fact.linkedFactoid != null && fact.linkedFactoid.length() > 0)
 				return getFact(fact.linkedFactoid,context, i + 1);
 			else
 				return fact;
@@ -421,34 +431,34 @@ public class SUSEFactoids
 		else
 			throw new FactNotFoundException();
 	}
-	
+
 	/**
 	 * Deletes all facts with specified subject, for specified channel context only
-	 * 
+	 *
 	 * @param subject	The factoid key.
 	 * @param context	The channel, to allow localised factoids
 	 * @return	The factoid
 	 * @throws SUSEFactoids.FactNotFoundException
 	 */
-	private void deleteFacts(String subject, String context) throws FactNotFoundException
+	private void deleteFacts(final String subject, final String context) throws FactNotFoundException
 	{
 		deleteFacts(subject, context,0);
 	}
-	
-	private void deleteFacts(String subject, String context,int i) throws FactNotFoundException
+
+	private void deleteFacts(final String subject, final String context,int i) throws FactNotFoundException
 	{
-		List<Fact> facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + getChannelLanguage(context) + "\"");
+		final List<Fact> facts = mods.odb.retrieve(Fact.class, "WHERE subject = \"" + subject.toLowerCase() + "\" AND lang = \"" + getChannelLanguage(context) + "\"");
 
 		//Follow links as appropriate and delete the found fact and all parents.
-		if ((facts.size() > 0) && (i < MAX_DEPTH))
+		if (facts.size() > 0 && i < MAX_DEPTH)
 		{
 			i++;
-			Fact fact = facts.get(0);
+			final Fact fact = facts.get(0);
 			try //to delete linked facts
 			{
-				if ((fact.linkedFactoid != null) && (fact.linkedFactoid.length() > 0))
+				if (fact.linkedFactoid != null && fact.linkedFactoid.length() > 0)
 					deleteFacts(fact.linkedFactoid,context);
-			} catch (FactNotFoundException e)
+			} catch (final FactNotFoundException e)
 			{
 				//Ignore
 			}
@@ -456,9 +466,9 @@ public class SUSEFactoids
 			mods.odb.delete(fact);
 		}
 		else
-			throw new FactNotFoundException();	
+			throw new FactNotFoundException();
 	}
-	
+
 
 	enum ReplyMode
 	{
@@ -466,8 +476,8 @@ public class SUSEFactoids
 		REPLY,
 		PRIVATE
 	}
-	
-	private ReplyMode getReplyMode(String request)
+
+	private ReplyMode getReplyMode(final String request)
 	{
 		if (request.matches(".*>.*"))
 			return ReplyMode.PRIVATE;
@@ -476,18 +486,18 @@ public class SUSEFactoids
 		else
 			return ReplyMode.NORMAL;
 	}
-	
-	private String getTarget(String request)
+
+	private String getTarget(final String request)
 	{
 		return request.replaceAll(".*?(>|@)\\s*", "").replaceAll("\\s.*", "");
 	}
-	
-	private String getSubject(String request)
+
+	private String getSubject(final String request)
 	{
 		return request.replaceAll("(@|#|>).*", "");
 	}
-	
-	private void privateMessage(Message mes, String target, String message)
+
+	private void privateMessage(final Message mes, final String target, final String message)
 	{
 		if (Arrays.asList(irc.getUsers(mes.getContext())).contains(target))
 		{
@@ -497,15 +507,15 @@ public class SUSEFactoids
 		{
 			irc.sendContextMessage(mes, "User " + target + " does not appear to be in the channel.");
 			return;
-		}	
+		}
 	}
-	
-	private void sendToIRC(Message mes, ReplyMode mode, String target, Fact fact)
+
+	private void sendToIRC(final Message mes, final ReplyMode mode, final String target, final Fact fact)
 	{
 		sendToIRC(mes, mode, target, fact.whatis(mes.getNick()));
 	}
-	
-	private void sendToIRC(Message mes, ReplyMode mode, String target, String message)
+
+	private void sendToIRC(final Message mes, final ReplyMode mode, final String target, final String message)
 	{
 		if (mode == ReplyMode.PRIVATE)
 			privateMessage(mes, target, message);
@@ -514,17 +524,17 @@ public class SUSEFactoids
 		else if (mode == ReplyMode.NORMAL)
 			irc.sendContextMessage(mes, message);
 	}
-	
+
 	public String[] helpCommandWhatis =
 	{
 		"Returns either a Factoid the bot has been taught, or, if none exists a rumour prefixed with \"Rumour has it:\".",
 		"<Factoid>",
 		"<Factoid> is the name of the Factoid to lookup."
 	};
-	
-	private void whatIs(Message mes, boolean quiet)
+
+	private void whatIs(final Message mes, final boolean quiet)
 	{
-		List<String> params = mods.util.getParams(mes, 1);
+		final List<String> params = mods.util.getParams(mes, 1);
 
 		if (params.size() < 2)
 		{
@@ -533,8 +543,8 @@ public class SUSEFactoids
 		}
 		whatIs(mes,quiet,params.get(1));
 	}
-	
-	private void whatIs(Message mes, boolean quiet, String request)
+
+	private void whatIs(final Message mes, final boolean quiet, final String request)
 	{
 		//Get the components we're interested in
 		final String subject = getSubject(request);
@@ -548,22 +558,22 @@ public class SUSEFactoids
 				return;
 			locks.add(subject);
 		}
-		try 
+		try
 		{
 			sendToIRC(mes, replyMode, target, getFact(subject,mes.getContext()));
-		} catch (FactNotFoundException e)
+		} catch (final FactNotFoundException e)
 		{
 			if (!quiet)
 				sendToIRC(mes, replyMode, target, "I'm afraid I don't know anything about " + subject + ".");
-			return;	
+			return;
 		} finally
 		{
 			//Remove the subject lock in 5s.
 			mods.interval.callBack(subject, 5000, 1);
 		}
 	}
-		 
-	public void commandWhatis(Message mes)
+
+	public void commandWhatis(final Message mes)
 	{
 		whatIs(mes,false);
 	}
@@ -575,10 +585,10 @@ public class SUSEFactoids
 		"<String> is the string to search for matching factoids to."
 	};
 
-	public void commandSearch(Message mes)
+	public void commandSearch(final Message mes)
 	{
 
-		List<String> params = mods.util.getParams(mes, 1);
+		final List<String> params = mods.util.getParams(mes, 1);
 
 		if (params.size() < 2)
 		{
@@ -588,7 +598,7 @@ public class SUSEFactoids
 
 		final String item = params.get(1).replaceAll("\\?", "");
 
-		List<Fact> facts = mods.odb.retrieve(Fact.class, "WHERE subject REGEXP'.*" + item.toLowerCase() + ".*' AND lang = \"" + getChannelLanguage(mes.getContext()) + "\"");
+		final List<Fact> facts = mods.odb.retrieve(Fact.class, "WHERE subject REGEXP'.*" + item.toLowerCase() + ".*' AND lang = \"" + getChannelLanguage(mes.getContext()) + "\"");
 
 		if (facts.size() == 0)
 		{
@@ -596,7 +606,7 @@ public class SUSEFactoids
 		} else
 		{
 			boolean found = false;
-			StringBuilder resultString = new StringBuilder(" ");
+			final StringBuilder resultString = new StringBuilder(" ");
 			byte maxNo = 100;
 			for (int i = 0; i < facts.size(); i++)
 			{
@@ -619,16 +629,16 @@ public class SUSEFactoids
 			irc.sendContextMessage(mes, "Matching factoids: " + resultString.toString());
 		}
 	}
-	
+
 	public String[] helpCommandFactInfo =
 	{
 		"Returns meta-data about the specified Factoid",
 		"<Factoid>",
 		"<Factoid> is the factoid to return meta-data about."
 	};
-	public void commandFactInfo(Message mes)
+	public void commandFactInfo(final Message mes)
 	{
-		List<String> params = mods.util.getParams(mes, 1);
+		final List<String> params = mods.util.getParams(mes, 1);
 
 		if (params.size() < 2)
 		{
@@ -637,31 +647,31 @@ public class SUSEFactoids
 		}
 
 		final String item = params.get(1).replaceAll("\\?", "");
-		
+
 		try
 		{
-			Fact thisFact = getFact(item, mes.getContext());
-			irc.sendContextMessage(mes, 
-				"Factoid for \"" + 
-				thisFact.subject + 
-				"\", was created by " + 
-				thisFact.author + 
-				" at " + 
-				thisFact.created + 
-				". Last requested by " + 
-				thisFact.lastRequestedBy + 
-				" at " + 
-				thisFact.lastRequestedAt + 
-				", requested " + 
-				thisFact.numberOfRequests + 
+			final Fact thisFact = getFact(item, mes.getContext());
+			irc.sendContextMessage(mes,
+				"Factoid for \"" +
+				thisFact.subject +
+				"\", was created by " +
+				thisFact.author +
+				" at " +
+				thisFact.created +
+				". Last requested by " +
+				thisFact.lastRequestedBy +
+				" at " +
+				thisFact.lastRequestedAt +
+				", requested " +
+				thisFact.numberOfRequests +
 				" times."
 			);
-		} catch (FactNotFoundException e)
+		} catch (final FactNotFoundException e)
 		{
 			irc.sendContextReply(mes, "Couldn't find any factoids matching " + item);
 		}
 	}
-	
+
 	public String[] helpCommandForget =
 	{
 		"Deletes the specified factoid",
@@ -669,7 +679,7 @@ public class SUSEFactoids
 		"<Factoid> is the factoid to delete."
 	};
 
-	public void commandForget(Message mes)
+	public void commandForget(final Message mes)
 	{
 		commandDelete(mes);
 	}
@@ -681,11 +691,11 @@ public class SUSEFactoids
 		"<Factoid>",
 		"<Factoid> is the factoid to delete."
 	};
-	public void commandDelete(Message mes)
+	public void commandDelete(final Message mes)
 	{
 		mods.security.checkNickPerm(new ChoobPermission("plugins.factoids.delete"), mes);
 
-		List<String> params = mods.util.getParams(mes, 1);
+		final List<String> params = mods.util.getParams(mes, 1);
 
 		if (params.size() < 2)
 		{
@@ -699,18 +709,18 @@ public class SUSEFactoids
 		{
 			deleteFacts(item, mes.getContext());
 			irc.sendContextReply(mes, "Ok. Deleted " + item);
-		} catch (FactNotFoundException e)
+		} catch (final FactNotFoundException e)
 		{
 			irc.sendContextReply(mes, "I don't know anything about " + item + " in this context's language, so can't delete it.");
 		}
 	}
 
 
-	private boolean shouldIgnore(Message mes)
+	private boolean shouldIgnore(final Message mes)
 	{
-		String text = mes.getMessage();
+		final String text = mes.getMessage();
 
-		Matcher matcher = triggerPattern.matcher(text);
+		final Matcher matcher = triggerPattern.matcher(text);
 		int offset = 0;
 
 		// Make sure this is actually a command...
@@ -722,7 +732,7 @@ public class SUSEFactoids
 			return true;
 		}
 
-		int dotIndex = text.indexOf('.', offset);
+		final int dotIndex = text.indexOf('.', offset);
 
 		int cmdEnd = text.indexOf(' ', offset) + 1;
 		if (cmdEnd == 0)
@@ -736,43 +746,43 @@ public class SUSEFactoids
 		{
 			return true;
 		}
-		List<String> params = mods.util.getParams(mes, 0);
-		String lookup = ((params.get(0)).replaceAll("@.*",""));
-		String isAlias = lookup.replaceAll("\\s.*","");
+		final List<String> params = mods.util.getParams(mes, 0);
+		final String lookup = params.get(0).replaceAll("@.*","");
+		final String isAlias = lookup.replaceAll("\\s.*","");
 		try
 		{
 			if (mods.plugin.callAPI("Alias", "Get",isAlias) != null)
 			{
 				return true;
 			}
-		} catch (ChoobNoSuchCallException e)
+		} catch (final ChoobNoSuchCallException e)
 		{
 			return true;
 		}
 
 		return false;
 	}
-	
-	
+
+
 	public String filterTriggerRegex = "";
 	private final Pattern triggerPattern;
 	private final Pattern factoidPattern = Pattern.compile("(.{2,}?)\\s+(?:is)\\s+(.{3,})");
-	public void filterTrigger(Message mes)
+	public void filterTrigger(final Message mes)
 	{
 		try
 		{
 			if (shouldIgnore(mes))
 				return;
-			
-			List<String> params = mods.util.getParams(mes, 0);
-			String lookup = params.get(0);
+
+			final List<String> params = mods.util.getParams(mes, 0);
+			final String lookup = params.get(0);
 			if (lookup.matches(".*\\sis\\s.*"))
 			{
-				Matcher factoidMatcher = factoidPattern.matcher(lookup);
+				final Matcher factoidMatcher = factoidPattern.matcher(lookup);
 				if (factoidMatcher.find())
 				{
-					String factName = factoidMatcher.group(1).toLowerCase();
-					String factValue = factoidMatcher.group(2);
+					final String factName = factoidMatcher.group(1).toLowerCase();
+					final String factValue = factoidMatcher.group(2);
 					irc.sendContextReply(mes, "Remembering " + factName + ".");
 					rememberFact(factName, factValue, mes.getNick(),mes.getContext());
 				} else
@@ -784,7 +794,7 @@ public class SUSEFactoids
 				whatIs(mes, true,lookup);
 			}
 
-		} catch (Exception e)
+		} catch (final Exception e)
 		{
 			//Don't want error spamming channel from filters
 			return;

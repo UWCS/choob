@@ -5,7 +5,8 @@
 
 package uk.co.uwcs.choob.support.events;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class IRCEvent extends Event implements IRCRootEvent
 {
@@ -65,7 +66,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 	/**
 	 * Construct a new IRCEvent.
 	 */
-	public IRCEvent(String methodName, long millis, int random)
+	public IRCEvent(final String methodName, final long millis, final int random)
 	{
 		super(methodName);
 		this.millis = millis;
@@ -78,7 +79,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 	/**
 	 * Synthesize a new IRCEvent from an old one.
 	 */
-	public IRCEvent(IRCEvent old)
+	public IRCEvent(final IRCEvent old)
 	{
 		super(old);
 		this.millis = old.millis;
@@ -87,9 +88,9 @@ public class IRCEvent extends Event implements IRCRootEvent
 		this.synthLevel = old.synthLevel + 1;
 		this.flags = new HashMap<String,String>();
 		// Properties starting "_" should not be cloned implicitly.
-		for (String prop : old.flags.keySet()) {
+		for (final String prop : old.flags.keySet()) {
 			if (!prop.startsWith("_"))
-				this.flags.put(prop, new String((old.flags.get(prop))));
+				this.flags.put(prop, new String(old.flags.get(prop)));
 		}
 	}
 
@@ -97,26 +98,29 @@ public class IRCEvent extends Event implements IRCRootEvent
 	 * Synthesize a new IRCEvent from this one.
 	 * @return The new IRCEvent object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new IRCEvent(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof IRCEvent))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		IRCEvent thing = (IRCEvent)obj;
-		if ( true && (millis == thing.millis) && (random == thing.random) && (synthLevel == thing.synthLevel) && (flags == thing.flags) )
+		final IRCEvent thing = (IRCEvent)obj;
+		if ( true && millis == thing.millis && random == thing.random && synthLevel == thing.synthLevel && flags == thing.flags )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("IRCEvent(");
+		final StringBuffer out = new StringBuffer("IRCEvent(");
 		out.append(super.toString());
 		out.append(", millis = " + millis);
 		out.append(", random = " + random);

@@ -1,14 +1,23 @@
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.ProduceMime;
+
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
@@ -26,12 +35,12 @@ public class MiscMsg
 		};
 	}
 
-	private IRCInterface irc;
-	private Modules mods;
+	private final IRCInterface irc;
+	private final Modules mods;
 
 	final static Random rand = new Random();
 
-	public MiscMsg(Modules mods, IRCInterface irc)
+	public MiscMsg(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -42,11 +51,11 @@ public class MiscMsg
 	public String[] helpCommandCT = {
 		"Replies indicating whether the bot suspects your connection is up the spout."
 	};
-	public void commandCT( Message mes )
+	public void commandCT( final Message mes )
 	{
 		randomReply(mes, new String[] { "Yes, your connection is working fine.", "No, your connection seems really broken." });
 	}
-	
+
 	/**
 	 * Example usage of Jersey plugin.
 	 */
@@ -55,13 +64,13 @@ public class MiscMsg
 	@Path("ct")
 	public String ct()
 	{
-		return new String[] { "Yes, your connection is working fine.", "No, your connection seems really broken." }[(new Random()).nextInt(2)];
+		return new String[] { "Yes, your connection is working fine.", "No, your connection seems really broken." }[new Random().nextInt(2)];
 	}
 
 	public String[] helpCommandTime = {
 		"Replies with the current time."
 	};
-	public void commandTime( Message mes )
+	public void commandTime( final Message mes )
 	{
 		irc.sendContextReply(mes, new SimpleDateFormat("'The time is 'HH:mm:ss'.'").format(new Date()));
 	}
@@ -69,7 +78,7 @@ public class MiscMsg
 	public String[] helpCommandDate = {
 		"Replies with the current date."
 	};
-	public void commandDate( Message mes )
+	public void commandDate( final Message mes )
 	{
 		irc.sendContextReply(mes, new SimpleDateFormat("'The date is 'd MMM yyyy'.'").format(new Date()));
 	}
@@ -79,28 +88,28 @@ public class MiscMsg
 		"[<Max>]",
 		"<Max> is the optional maximum to return"
 	};
-	public void commandRandom( Message mes )
+	public void commandRandom( final Message mes )
 	{
 		double max = 1;
 		try
 		{
 			max = Double.parseDouble(mods.util.getParamString(mes));
 		}
-		catch (NumberFormatException e) 
+		catch (final NumberFormatException e)
 		{
 			// Assume 1.
 		}
 		irc.sendContextReply(mes, "Random number between 0 and " + max + " is " + new Random().nextDouble()*max + ".");
 	}
 
-	private void randomReply(Message mes, String[] replies )
+	private void randomReply(final Message mes, final String[] replies )
 	{
-		irc.sendContextReply(mes, replies[(new Random()).nextInt(replies.length)]);
+		irc.sendContextReply(mes, replies[new Random().nextInt(replies.length)]);
 	}
 
 	public String[] helpCommandFeatureRequest = { "Provides the URL from where feature requests can be made." };
 
-	public void commandFeatureRequest( Message mes )
+	public void commandFeatureRequest( final Message mes )
 	{
 		irc.sendContextReply(mes, "Feature requests can be made from: http://trac.uwcs.co.uk/choob/cgi-bin/trac.cgi/newticket");
 	}
@@ -108,7 +117,7 @@ public class MiscMsg
 
 	public String[] helpCommandBugReport = { "Provides the URL from where bug reports can be made." };
 
-	public void commandBugReport( Message mes )
+	public void commandBugReport( final Message mes )
 	{
 		irc.sendContextReply(mes, "Bug reports can be made from: http://trac.uwcs.co.uk/choob/cgi-bin/trac.cgi/newticket");
 	}
@@ -119,7 +128,7 @@ public class MiscMsg
 		"<Reply> is some reply to write on one of the sides of the coin (coins can have more than 2 sides!)"
 	};
 
-	public void commandFlipACoin( Message mes )
+	public void commandFlipACoin( final Message mes )
 	{
 		if (!hascoin)
 		{
@@ -151,7 +160,7 @@ public class MiscMsg
 			params = params.substring(0,params.length()-1);
 
 		// Pre: String contains " or ", split on " or " or ", ";
-		String[] tokens = params.split("(?:^|\\s*,\\s*|\\s+)or(?:\\s*,\\s*|\\s+|$)");
+		final String[] tokens = params.split("(?:^|\\s*,\\s*|\\s+)or(?:\\s*,\\s*|\\s+|$)");
 		if (tokens.length <= 1)
 		{
 			irc.sendContextReply(mes, "My answer is " + (rand.nextBoolean() ? "yes" : "no" ) + ".");
@@ -159,9 +168,9 @@ public class MiscMsg
 		}
 
 		// Then split the first group on ","
-		String[] tokens2 = tokens[0].split("\\s*,\\s*");
+		final String[] tokens2 = tokens[0].split("\\s*,\\s*");
 
-		int choice = rand.nextInt(tokens.length + tokens2.length - 1);
+		final int choice = rand.nextInt(tokens.length + tokens2.length - 1);
 
 		// Java can't see it's guaranteed to be set.
 		// Let's all laugh at its expense!
@@ -196,52 +205,52 @@ public class MiscMsg
 		"<Question>",
 		"<Question> is some a question for the 8 ball the think over."
 	};
-	public void command8Ball( Message mes )
+	public void command8Ball( final Message mes )
 	{
 		// http://r.wesley.edwards.net/writes/JavaScript/magic8ball.js
 		randomReply(mes, new String[] {"Signs point to yes.", "Yes.", "Reply hazy, try again.", "Without a doubt.", "My sources say no.", "As I see it, yes.", "You may rely on it.", "Concentrate and ask again.", "Outlook not so good.", "It is decidedly so.", "Better not tell you now.", "Very doubtful.", "Yes - definitely.", "It is certain.", "Cannot predict now.", "Most likely.", "Ask again later.", "My reply is no.", "Outlook good.", "Don't count on it." });
 	}
 
-	public void commandDiscordianDate(Message mes)
+	public void commandDiscordianDate(final Message mes)
 	{
 		shellExec(mes, "ddate");
 	}
-	
-	public void commandServerUptime(Message mes)
+
+	public void commandServerUptime(final Message mes)
 	{
 		shellExec(mes, "uptime");
 	}
 
-	private void shellExec(Message mes, String command)
+	private void shellExec(final Message mes, final String command)
 	{
-		StringBuilder rep=new StringBuilder();
+		final StringBuilder rep=new StringBuilder();
 
 		try
 		{
 			String str;
 
-			Process proc = Runtime.getRuntime().exec(command);
+			final Process proc = Runtime.getRuntime().exec(command);
 
 			// There's a nefarious reason why this is here.
-			try { proc.waitFor(); } catch (InterruptedException e1) 
+			try { proc.waitFor(); } catch (final InterruptedException e1)
 			{
 				// If anything went wrong, the next stage'll bomb properly.
 			}
 
-			BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-			
+			final BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+
 			try
 			{
 				while ((str = in.readLine()) != null)
 					rep.append(str);
 			}
-			catch (IOException e)
+			catch (final IOException e)
 			{
 				rep.append("IOException. ").append(e);
 			}
 
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			rep.append("IOException (2). ").append(e);
 		}
@@ -253,9 +262,9 @@ public class MiscMsg
 		"Find out how long the bot has been running for.",
 	};
 
-	public void commandUptime( Message mes )
+	public void commandUptime( final Message mes )
 	{
-		irc.sendContextReply(mes, "I have been up " + mods.date.timeLongStamp((new Date()).getTime() - mods.util.getStartTime(), 3) + ".");
+		irc.sendContextReply(mes, "I have been up " + mods.date.timeLongStamp(new Date().getTime() - mods.util.getStartTime(), 3) + ".");
 	}
 
 	public String[] helpCommandWeek = {
@@ -282,10 +291,11 @@ public class MiscMsg
 			1444089600 // 2015-10-06
 		};
 
-	public void commandWeek(Message mes)
+	@SuppressWarnings("null")
+	public void commandWeek(final Message mes)
 	{
-		List<String> params = mods.util.getParams(mes);
-		String message = mods.util.getParamString(mes);
+		final List<String> params = mods.util.getParams(mes);
+		final String message = mods.util.getParamString(mes);
 
 		Matcher dateMatcher = null;
 		if (params.size() >= 2) {
@@ -295,24 +305,24 @@ public class MiscMsg
 		}
 
 		if (params.size() <= 1) {
-			Date now = new Date();
-			DateFormat dayFmt = new SimpleDateFormat("EEE");
+			final Date now = new Date();
+			final DateFormat dayFmt = new SimpleDateFormat("EEE");
 
-			int diff = (int)Math.floor(getTimeRelativeToTerm((int)(now.getTime() / 1000)) / 86400);
-			String day = dayFmt.format(now);
-			String week = diffToTermWeek(diff);
+			final int diff = (int)Math.floor(getTimeRelativeToTerm((int)(now.getTime() / 1000)) / 86400);
+			final String day = dayFmt.format(now);
+			final String week = diffToTermWeek(diff);
 
 			if (week.indexOf("week") != -1) {
 				irc.sendContextReply(mes, "It's " + day + ", " + diffToTermWeek(diff) + ".");
 			} else {
 				irc.sendContextReply(mes, "It's " + diffToTermWeek(diff) + ".");
 			}
-		} else if ((params.size() >= 2) && dateMatcher.matches()) {
+		} else if (params.size() >= 2 && dateMatcher.matches()) {
 			Date now = new Date();
-			DateFormat dayFmt = new SimpleDateFormat("EEE, d MMM yyyy");
+			final DateFormat dayFmt = new SimpleDateFormat("EEE, d MMM yyyy");
 
 			if (dateMatcher.group(1) != null) {
-				now = (new GregorianCalendar(Integer.parseInt(dateMatcher.group(1)), Integer.parseInt(dateMatcher.group(2)) - 1, Integer.parseInt(dateMatcher.group(3)), 12, 0, 0)).getTime();
+				now = new GregorianCalendar(Integer.parseInt(dateMatcher.group(1)), Integer.parseInt(dateMatcher.group(2)) - 1, Integer.parseInt(dateMatcher.group(3)), 12, 0, 0).getTime();
 			} else if (dateMatcher.group(4) != null) {
 				int year = Integer.parseInt(dateMatcher.group(6));
 				if (year < 80)
@@ -320,9 +330,9 @@ public class MiscMsg
 				if (year < 100)
 					year += 1900;
 
-				now = (new GregorianCalendar(year, Integer.parseInt(dateMatcher.group(5)) - 1, Integer.parseInt(dateMatcher.group(4)), 12, 0, 0)).getTime();
+				now = new GregorianCalendar(year, Integer.parseInt(dateMatcher.group(5)) - 1, Integer.parseInt(dateMatcher.group(4)), 12, 0, 0).getTime();
 			} else if (dateMatcher.group(7) != null) {
-				int month = nameToMonth(dateMatcher.group(8));
+				final int month = nameToMonth(dateMatcher.group(8));
 				if (month == -1) {
 					irc.sendContextReply(mes, "Sorry, I can't parse that date. Please use yyyy-mm-dd, dd/mm/yyyy or dd mmm yyyy.");
 					return;
@@ -334,49 +344,49 @@ public class MiscMsg
 				if (year < 100)
 					year += 1900;
 
-				now = (new GregorianCalendar(year, month, Integer.parseInt(dateMatcher.group(7)), 12, 0, 0)).getTime();
+				now = new GregorianCalendar(year, month, Integer.parseInt(dateMatcher.group(7)), 12, 0, 0).getTime();
 			} else {
 				irc.sendContextReply(mes, "Sorry, I can't parse that date. Please use yyyy-mm-dd, dd/mm/yyyy or dd mmm yyyy.");
 				return;
 			}
 
-			int diff = (int)Math.floor(getTimeRelativeToTerm((int)(now.getTime() / 1000)) / 86400);
-			String day = dayFmt.format(now);
+			final int diff = (int)Math.floor(getTimeRelativeToTerm((int)(now.getTime() / 1000)) / 86400);
+			final String day = dayFmt.format(now);
 
 			irc.sendContextReply(mes, day + " is " + diffToTermWeek(diff) + ".");
-		} else if ((isNumber(params.get(1)) && (
-					((params.size() == 2)) ||
-					((params.size() == 4) && params.get(2).equals("term") && isNumber(params.get(3))) ||
-					((params.size() == 5) && params.get(2).equals("of") && params.get(3).equals("term") && isNumber(params.get(4)))
-				)) ||
-					((params.size() == 3) && params.get(1).toLowerCase().equals("rbw") && isNumber(params.get(2)))) {
+		} else if (isNumber(params.get(1)) && (
+					params.size() == 2 ||
+					params.size() == 4 && params.get(2).equals("term") && isNumber(params.get(3)) ||
+					params.size() == 5 && params.get(2).equals("of") && params.get(3).equals("term") && isNumber(params.get(4))
+				) ||
+					params.size() == 3 && params.get(1).toLowerCase().equals("rbw") && isNumber(params.get(2))) {
 			// Week number.
 			int weekNum = 0;
 			int num = 0;
-			boolean rbw = params.get(1).toLowerCase().equals("rbw");
+			final boolean rbw = params.get(1).toLowerCase().equals("rbw");
 
 			if (rbw) {
 				weekNum = Integer.parseInt(params.get(2));
 				num = weekNum;
-				if ((weekNum < 1) || (weekNum > 39)) {
+				if (weekNum < 1 || weekNum > 39) {
 					irc.sendContextReply(mes, weekNum + " isn't a valid Room Booking week number. It must be between 1 and 39, inclusive.");
 					return;
 				}
 			} else {
 				weekNum = Integer.parseInt(params.get(1));
 				if (params.size() > 3) {
-					if ((weekNum < 1) || (weekNum > 10)) {
+					if (weekNum < 1 || weekNum > 10) {
 						irc.sendContextReply(mes, weekNum + " isn't a valid week number. It must be between 1 and 10, inclusive.");
 						return;
 					}
-					int term = Integer.parseInt(params.get(params.size() - 1));
-					if ((term < 1) || (term > 3)) {
+					final int term = Integer.parseInt(params.get(params.size() - 1));
+					if (term < 1 || term > 3) {
 						irc.sendContextReply(mes, term + " isn't a valid term. It must be between 1 and 3, inclusive.");
 						return;
 					}
 					weekNum += 10 * (term - 1);
 				}
-				if ((weekNum < 1) || (weekNum > 30)) {
+				if (weekNum < 1 || weekNum > 30) {
 					irc.sendContextReply(mes, weekNum + " isn't a valid week number. It must be between 1 and 30, inclusive.");
 					return;
 				}
@@ -385,17 +395,17 @@ public class MiscMsg
 				if (weekNum > 10) weekNum += 4;
 			}
 
-			DateFormat weekFmt = new SimpleDateFormat("EEE, d MMM yyyy");
+			final DateFormat weekFmt = new SimpleDateFormat("EEE, d MMM yyyy");
 
-			int dateSt = getCurrentTermStart() + ((weekNum - 1) * 86400 * 7);
-			int dateEn = dateSt + (86400 * 6);
+			final int dateSt = getCurrentTermStart() + (weekNum - 1) * 86400 * 7;
+			int dateEn = dateSt + 86400 * 6;
 
-			if ((weekNum == 24) || (weekNum == 39)) {
-				dateEn -= (86400 * 2);
+			if (weekNum == 24 || weekNum == 39) {
+				dateEn -= 86400 * 2;
 			}
 
-			String dateStS = weekFmt.format(new Date((long)dateSt * 1000));
-			String dateEnS = weekFmt.format(new Date((long)dateEn * 1000));
+			final String dateStS = weekFmt.format(new Date((long)dateSt * 1000));
+			final String dateEnS = weekFmt.format(new Date((long)dateEn * 1000));
 
 			irc.sendContextReply(mes, (rbw ? "Room Booking week " : "Week ") + num + " is from " + dateStS + " to " + dateEnS + ".");
 		} else {
@@ -403,11 +413,11 @@ public class MiscMsg
 		}
 	}
 
-	boolean isNumber(String item) {
+	boolean isNumber(final String item) {
 		try {
-			return (item.equals((Integer.valueOf(item)).toString()));
-		} catch(Exception e) {
-			return false;	
+			return item.equals(Integer.valueOf(item).toString());
+		} catch(final Exception e) {
+			return false;
 		}
 	}
 
@@ -430,28 +440,29 @@ public class MiscMsg
 	}
 
 	int getCurrentTermStart() {
-		int time = (int)((new Date()).getTime() / 1000);
-		
-		for (int i = 0; i < termStarts.length; i++) {
-			if (termStarts[i] + (39 * 7 * 86400) > time) {
-				return termStarts[i];
+		final int time = (int)(new Date().getTime() / 1000);
+
+		for (final int termStart : termStarts)
+		{
+			if (termStart + 39 * 7 * 86400 > time) {
+				return termStart;
 			}
 		}
-		
+
 		return time;
 	}
 
-	int getTimeRelativeToTerm(int time) {
+	int getTimeRelativeToTerm(final int time) {
 		for (int i = 1; i < termStarts.length; i++) {
 			if (termStarts[i] > time) {
 				return time - termStarts[i - 1];
 			}
 		}
-		
+
 		return time - termStarts[termStarts.length - 1];
 	}
 
-	String diffToTermWeek(int diff) {
+	String diffToTermWeek(final int diff) {
 		//           Christmas             Easter
 		//  <term1>  <4 weeks>  <term2>  <5 weeks>  <term3>
 		// 0   -   10    -    14   -   24    -    29   -   39
@@ -461,29 +472,29 @@ public class MiscMsg
 		} else if (diff < 0) {
 			return "the summer holidays";
 		} else if (diff < 7 * 10 - 2) {
-			int week = (int)Math.floor(diff / 7) + 1;
-			int tw = week - 0;
+			final int week = (int)Math.floor(diff / 7) + 1;
+			final int tw = week - 0;
 			return "week " + week + " (week " + tw + " of term 1)";
 		} else if (diff < 7 * 14 - 0) {
-			int week = (int)Math.floor(diff / 7) - 9;
-			int rbw = week + 10;
+			final int week = (int)Math.floor(diff / 7) - 9;
+			final int rbw = week + 10;
 			return "week " + week + " of the Christmas holidays (room booking week " + rbw + ")";
 		} else if (diff < 7 * 24 - 2) {
-			int week = (int)Math.floor(diff / 7) - 3;
-			int tw = week - 10;
-			int rbw = week + 4;
+			final int week = (int)Math.floor(diff / 7) - 3;
+			final int tw = week - 10;
+			final int rbw = week + 4;
 			return "week " + week + " (week " + tw + " of term 2, room booking week " + rbw + ")";
 		} else if (diff < 7 * 29 - 0) {
-			int week = (int)Math.floor(diff / 7) - 23;
-			int rbw = week + 24;
+			final int week = (int)Math.floor(diff / 7) - 23;
+			final int rbw = week + 24;
 			return "week " + week + " of the Easter holidays (room booking week " + rbw + ")";
 		} else if (diff < 7 * 39 - 2) {
-			int week = (int)Math.floor(diff / 7) - 8;
-			int tw = week - 20;
-			int rbw = week + 9;
+			final int week = (int)Math.floor(diff / 7) - 8;
+			final int tw = week - 20;
+			final int rbw = week + 9;
 			return "week " + week + " (week " + tw + " of term 3, room booking week " + rbw + ")";
 		} else if(diff < 7 * 53) {
-			int week = (int)Math.floor(diff / 7) - 38;
+			final int week = (int)Math.floor(diff / 7) - 38;
 			return "week " + week + " of the summer holidays";
 		} else {
 			return "beyond the academic year data";
@@ -499,7 +510,7 @@ public class MiscMsg
 		"[amount] is the amount to convert (defaults to 1).",
 	};
 
-	public void commandExchange(Message mes)
+	public void commandExchange(final Message mes)
 	{
 		String[] command = mods.util.getParamString(mes).replaceAll("[\\(\\),]+", " ").trim().split(" +");
 		if (command.length == 2)
@@ -518,12 +529,12 @@ public class MiscMsg
 		{
 			url = new URL("http://finance.yahoo.com/currency/convert?amt=" + URLEncoder.encode(command[2], "UTF-8") + "&from=" + URLEncoder.encode(command[0], "UTF-8") + "&to=" + URLEncoder.encode(command[1], "UTF-8") + "&submit=Convert");
 		}
-		catch (UnsupportedEncodingException e)
+		catch (final UnsupportedEncodingException e)
 		{
 			irc.sendContextReply(mes, "Unexpected exception generating url.");
 			return;
 		}
-		catch (MalformedURLException e)
+		catch (final MalformedURLException e)
 		{
 			irc.sendContextReply(mes, "Error, malformed url generated.");
 			return;
@@ -534,14 +545,14 @@ public class MiscMsg
 		{
 			s = mods.scrape.getContentsCached(url);
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			irc.sendContextReply(mes, "Failed to read site.");
 			return;
 		}
-		Matcher fromFull = Pattern.compile("(?s)<td class=\"yfnc_tablehead1\"><b>Symbol</b></td>\\s*<td class=\"yfnc_tablehead1\"><b>([^\n]+?)</b></td>").matcher(s);
-		Matcher toFull = Pattern.compile("(?s)Rate</b></td>\\s*<td class=\"yfnc_tablehead1\"><b>([^\n]+?)</b></td>").matcher(s);
-		Matcher converted = Pattern.compile("(?s)[0-9]</td>\\s*<td class=\"yfnc_tabledata1\"><b>([^\n]+?)</b></td>").matcher(s);
+		final Matcher fromFull = Pattern.compile("(?s)<td class=\"yfnc_tablehead1\"><b>Symbol</b></td>\\s*<td class=\"yfnc_tablehead1\"><b>([^\n]+?)</b></td>").matcher(s);
+		final Matcher toFull = Pattern.compile("(?s)Rate</b></td>\\s*<td class=\"yfnc_tablehead1\"><b>([^\n]+?)</b></td>").matcher(s);
+		final Matcher converted = Pattern.compile("(?s)[0-9]</td>\\s*<td class=\"yfnc_tabledata1\"><b>([^\n]+?)</b></td>").matcher(s);
 
 		if (fromFull.find() && toFull.find() && converted.find())
 			irc.sendContextReply(mes, command[2] + " " + command[0] + " (" + fromFull.group(1) + ") is " + converted.group(1) + " " + command[1] + " (" + toFull.group(1) + ").");

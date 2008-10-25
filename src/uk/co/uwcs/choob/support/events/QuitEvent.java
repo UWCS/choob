@@ -63,7 +63,7 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 	/**
 	 * Construct a new QuitEvent.
 	 */
-	public QuitEvent(String methodName, long millis, int random, String message, String nick, String login, String hostname)
+	public QuitEvent(final String methodName, final long millis, final int random, final String message, final String nick, final String login, final String hostname)
 	{
 		super(methodName, millis, random);
 		this.message = message;
@@ -75,7 +75,7 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 	/**
 	 * Synthesize a new QuitEvent from an old one.
 	 */
-	public QuitEvent(QuitEvent old, String message)
+	public QuitEvent(final QuitEvent old, final String message)
 	{
 		super(old);
 		this.message = message;
@@ -88,26 +88,28 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 	 * Synthesize a new QuitEvent from this one.
 	 * @return The new QuitEvent object.
 	 */
-	public Event cloneEvent(String message)
+	public Event cloneEvent(final String message)
 	{
 		return new QuitEvent(this, message);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof QuitEvent))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		QuitEvent thing = (QuitEvent)obj;
+		final QuitEvent thing = (QuitEvent)obj;
 		if ( true && message.equals(thing.message) && nick.equals(thing.nick) && login.equals(thing.login) && hostname.equals(thing.hostname) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("QuitEvent(");
+		final StringBuffer out = new StringBuffer("QuitEvent(");
 		out.append(super.toString());
 		out.append(", message = " + message);
 		out.append(", nick = " + nick);

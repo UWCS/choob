@@ -1,9 +1,14 @@
 /** @author Amorya */
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.modules.ObjectDbModule;
@@ -13,18 +18,18 @@ import uk.co.uwcs.choob.support.events.Message;
 
 class Fish
 {
-	public void commandRepeatMe( Message con, Modules mods, IRCInterface irc ) throws SQLException
+	public void commandRepeatMe( final Message con, final Modules mods, final IRCInterface irc ) throws SQLException
 	{
-		ObjectDbModule broker = mods.odb;
-		Connection dbConnection = broker.getConnection();
+		final ObjectDbModule broker = mods.odb;
+		final Connection dbConnection = broker.getConnection();
 		PreparedStatement coreplugSmt = null;
 		try
 		{
 			coreplugSmt = dbConnection.prepareStatement("SELECT * FROM History ORDER BY LineID DESC LIMIT 2;");
-			ResultSet coreplugResults = coreplugSmt.executeQuery();
-	
+			final ResultSet coreplugResults = coreplugSmt.executeQuery();
+
 			int flag = 0;
-	
+
 			if ( coreplugResults.first() )
 				do
 				{
@@ -42,11 +47,11 @@ class Fish
 		}
 	}
 
-	public void commandWUBRS( Message con, Modules mods, IRCInterface irc ) throws IOException
+	public void commandWUBRS( final Message con, final Modules mods, final IRCInterface irc ) throws IOException
 	{
-		URL yahoo = new URL("http://www.wubrs.org.uk/quote.php");
-		URLConnection yc = yahoo.openConnection();
-		BufferedReader in = new BufferedReader(new InputStreamReader(yc.getInputStream()));
+		final URL yahoo = new URL("http://www.wubrs.org.uk/quote.php");
+		final URLConnection yc = yahoo.openConnection();
+		final BufferedReader in = new BufferedReader(new InputStreamReader(yc.getInputStream()));
 		String inputLine;
 
 		while ((inputLine = in.readLine()) != null)

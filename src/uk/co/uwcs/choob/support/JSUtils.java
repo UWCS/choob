@@ -4,28 +4,28 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 
 public final class JSUtils {
-	public static Object mapJSToJava(Object jsObject) {
+	public static Object mapJSToJava(final Object jsObject) {
 		// Most Native* types from Rhino are automatically converted, or
 		// something. Arrays, however, definately are not. This code will map
 		// JS arrays into Java ones. It tries to use sensible types, as well.
-		
+
 		if (jsObject instanceof NativeArray) {
-			NativeArray ary = (NativeArray)jsObject;
-			int aryLen = (int)ary.getLength();
-			
-			Object[]  aryO = new Object [aryLen];
-			String[]  aryS = new String [aryLen];
-			boolean[] aryB = new boolean[aryLen];
-			double[]  aryN = new double [aryLen];
+			final NativeArray ary = (NativeArray)jsObject;
+			final int aryLen = (int)ary.getLength();
+
+			final Object[]  aryO = new Object [aryLen];
+			final String[]  aryS = new String [aryLen];
+			final boolean[] aryB = new boolean[aryLen];
+			final double[]  aryN = new double [aryLen];
 			boolean isStringArray  = true;
 			boolean isBooleanArray = true;
 			boolean isNumberArray  = true;
-			
+
 			for (int i = 0; i < aryLen; i++) {
-				Object item = ary.get(i, ary);
-				
+				final Object item = ary.get(i, ary);
+
 				aryO[i] = mapJSToJava(item);
-				
+
 				if (isStringArray) {
 					if (item instanceof String) {
 						aryS[i] = (String)item;
@@ -48,7 +48,7 @@ public final class JSUtils {
 					}
 				}
 			}
-			
+
 			if (isStringArray) {
 				return aryS;
 			}
@@ -62,14 +62,14 @@ public final class JSUtils {
 		}
 		return jsObject;
 	}
-	
-	public static Object mapJavaToJS(Object javaObject) {
+
+	public static Object mapJavaToJS(final Object javaObject) {
 		return javaObject;
 	}
-	
-	public static Object getProperty(Scriptable obj, String prop) throws NoSuchFieldException {
+
+	public static Object getProperty(Scriptable obj, final String prop) throws NoSuchFieldException {
 		while (obj != null) {
-			Object val = obj.get(prop, obj);
+			final Object val = obj.get(prop, obj);
 			if (val != Scriptable.NOT_FOUND) {
 				return val;
 			}
@@ -77,8 +77,8 @@ public final class JSUtils {
 		}
 		throw new NoSuchFieldException(prop);
 	}
-	
-	public static void setProperty(Scriptable obj, String prop, Object value) {
+
+	public static void setProperty(final Scriptable obj, final String prop, final Object value) {
 		obj.put(prop, obj, value);
 	}
 }

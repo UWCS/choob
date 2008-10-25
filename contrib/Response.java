@@ -26,7 +26,7 @@ public class Response {
 	Modules mods;
 	IRCInterface irc;
 
-	public Response(Modules mods, IRCInterface irc) {
+	public Response(final Modules mods, final IRCInterface irc) {
 		this.irc = irc;
 		this.mods = mods;
 	}
@@ -45,12 +45,12 @@ public class Response {
 	final private static Pattern badPattern = Pattern.compile("bad|la+me|st(u+|oo+)pid|gooo+d", Pattern.CASE_INSENSITIVE);
 	final private static Pattern goodPattern = Pattern.compile("good|nice", Pattern.CASE_INSENSITIVE);
 
-	public void filterBot( Message mes ) {
+	public void filterBot( final Message mes ) {
 		// Ignore synthetic messages
 		if (mes.getSynthLevel() > 0)
 			return;
 
-		Matcher botMatch = botPattern.matcher(mes.getMessage());
+		final Matcher botMatch = botPattern.matcher(mes.getMessage());
 		int counter = 0;
 		boolean triggered = false;
 
@@ -64,7 +64,7 @@ public class Response {
 				triggered = true;
 			}
 		}
-		
+
 		// Work out the balance of the statements, and reply
 		if (counter > 0) {
 			irc.sendContextMessage(mes, "Thanks, " + mes.getNick() + " :-)");
@@ -84,8 +84,8 @@ public class Response {
 class chooseRand {
 	static Random generator = new Random();
 
-    public static String from (String[] array) {
-        int rand = generator.nextInt(array.length);
+    public static String from (final String[] array) {
+        final int rand = generator.nextInt(array.length);
         return array[rand];
     }
 }

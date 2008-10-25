@@ -9,7 +9,9 @@ import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
 import uk.co.uwcs.choob.support.events.Event;
 import uk.co.uwcs.choob.support.events.Message;
 
@@ -24,13 +26,15 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 		super();
 	}
 
-	protected Object createPlugin(String pluginName, URL fromLocation) throws ChoobException
+	@Override
+	protected Object createPlugin(final String pluginName, final URL fromLocation) throws ChoobException
 	{
 		throw new ChoobException("Cannot load plugins here");
 	}
 
 	// Should never be called
-	protected void destroyPlugin(String pluginName)
+	@Override
+	protected void destroyPlugin(final String pluginName)
 	{}
 
 	/**
@@ -38,6 +42,7 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	 * @param command Command to call.
 	 * @param ev Message object from IRC.
 	 */
+	@Override
 	public ChoobTask commandTask(final String plugin, final String command, final Message ev)
 	{
 		ChoobPluginManager man;
@@ -55,33 +60,34 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 
 			task = new ChoobTask(null, "commandTask:suggestions")
 			{
+				@Override
 				public void run()
 				{
-					String[] commands;
+					String[] lcommands;
 					final String notFoundPrefix = "Command " + plugin + "." + command + " not found";
 					try
 					{
-						commands = mods.plugin.getPluginCommands(plugin);
-						if (commands.length == 0)
+						lcommands = mods.plugin.getPluginCommands(plugin);
+						if (lcommands.length == 0)
 							irc.sendContextReply(ev, notFoundPrefix + ", the plugin doesn't have any commands in it!");
-						else if (commands.length == 1)
-							irc.sendContextReply(ev, notFoundPrefix + ", you must have meant " + plugin + "." + commands[0] + "?");
+						else if (lcommands.length == 1)
+							irc.sendContextReply(ev, notFoundPrefix + ", you must have meant " + plugin + "." + lcommands[0] + "?");
 						else
 						{
-							StringBuilder sb = new StringBuilder(notFoundPrefix).append(", did you mean one of ")
+							final StringBuilder sb = new StringBuilder(notFoundPrefix).append(", did you mean one of ")
 									// Plugin's/pluginnames'
 									.append(plugin).append("'").append(plugin.substring(plugin.length()-1, plugin.length()).equalsIgnoreCase("s") ? "" : "s")
 									.append(" other commands; ");
-							for (int i=0; i<commands.length - 1; i++)
-								if (i == commands.length - 2)
-									sb.append(commands[i]).append(" or ");
+							for (int i=0; i<lcommands.length - 1; i++)
+								if (i == lcommands.length - 2)
+									sb.append(lcommands[i]).append(" or ");
 								else
-									sb.append(commands[i]).append(", ");
-							
-							irc.sendContextReply(ev, sb.append(commands[commands.length - 1]).append("?").toString());
+									sb.append(lcommands[i]).append(", ");
+
+							irc.sendContextReply(ev, sb.append(lcommands[lcommands.length - 1]).append("?").toString());
 						}
 					}
-					catch (ChoobNoSuchPluginException e)
+					catch (final ChoobNoSuchPluginException e)
 					{
 						irc.sendContextReply(ev, notFoundPrefix + ", the plugin doesn't exist or isn't loaded.");
 					}
@@ -94,7 +100,8 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	/**
 	 * Run an interval on the given plugin
 	 */
-	public ChoobTask intervalTask(String pluginName, Object param)
+	@Override
+	public ChoobTask intervalTask(final String pluginName, final Object param)
 	{
 		ChoobPluginManager man;
 		synchronized(pluginMap)
@@ -110,14 +117,15 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	 * Perform any event handling on the given Event.
 	 * @param ev Event to pass along.
 	 */
-	public List<ChoobTask> eventTasks(Event ev)
+	@Override
+	public List<ChoobTask> eventTasks(final Event ev)
 	{
 		ChoobPluginManager[] mans = new ChoobPluginManager[0];
 		synchronized(pluginManagers)
 		{
 			mans = pluginManagers.toArray(mans);
 		}
-		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
+		final List<ChoobTask> tasks = new LinkedList<ChoobTask>();
 		for(int i=0; i<mans.length; i++)
 			if (!(mans[i] instanceof ChoobDistributingPluginManager))
 				tasks.addAll(mans[i].eventTasks(ev));
@@ -128,14 +136,15 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	 * Run any filters on the given Message.
 	 * @param ev Message to pass along
 	 */
-	public List<ChoobTask> filterTasks(Message ev)
+	@Override
+	public List<ChoobTask> filterTasks(final Message ev)
 	{
 		ChoobPluginManager[] mans = new ChoobPluginManager[0];
 		synchronized(pluginManagers)
 		{
 			mans = pluginManagers.toArray(mans);
 		}
-		List<ChoobTask> tasks = new LinkedList<ChoobTask>();
+		final List<ChoobTask> tasks = new LinkedList<ChoobTask>();
 		for(int i=0; i<mans.length; i++)
 			if (!(mans[i] instanceof ChoobDistributingPluginManager))
 				tasks.addAll(mans[i].filterTasks(ev));
@@ -147,7 +156,8 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	 * @param APIName The name of the API call.
 	 * @param params The parameters to pass.
 	 */
-	public Object doAPI(String pluginName, String APIName, Object... params) throws ChoobNoSuchCallException
+	@Override
+	public Object doAPI(final String pluginName, final String APIName, final Object... params) throws ChoobNoSuchCallException
 	{
 		ChoobPluginManager man;
 		synchronized(pluginMap)
@@ -165,7 +175,8 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	 * @param genericName The name of the call.
 	 * @param params Params to pass.
 	 */
-	public Object doGeneric(String pluginName, String prefix, String genericName, Object... params) throws ChoobNoSuchCallException
+	@Override
+	public Object doGeneric(final String pluginName, final String prefix, final String genericName, final Object... params) throws ChoobNoSuchCallException
 	{
 		ChoobPluginManager man;
 		synchronized(pluginMap)

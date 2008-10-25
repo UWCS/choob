@@ -3,8 +3,8 @@
 package uk.co.uwcs.choob.support;
 
 class JJTObjectDBClauseParserState {
-  private java.util.Stack nodes;
-  private java.util.Stack marks;
+  private final java.util.Stack nodes;
+  private final java.util.Stack marks;
 
   private int sp;		// number of nodes on stack
   private int mk;		// current mark
@@ -40,7 +40,7 @@ class JJTObjectDBClauseParserState {
   }
 
   /* Pushes a node on to the stack. */
-  void pushNode(Node n) {
+  void pushNode(final Node n) {
     nodes.push(n);
     ++sp;
   }
@@ -66,7 +66,7 @@ class JJTObjectDBClauseParserState {
   }
 
 
-  void clearNodeScope(Node n) {
+  void clearNodeScope(final Node n) {
     while (sp > mk) {
       popNode();
     }
@@ -74,7 +74,7 @@ class JJTObjectDBClauseParserState {
   }
 
 
-  void openNodeScope(Node n) {
+  void openNodeScope(final Node n) {
     marks.push(new Integer(mk));
     mk = sp;
     n.jjtOpen();
@@ -85,10 +85,10 @@ class JJTObjectDBClauseParserState {
      children.  That number of nodes are popped from the stack and
      made the children of the definite node.  Then the definite node
      is pushed on to the stack. */
-  void closeNodeScope(Node n, int num) {
+  void closeNodeScope(final Node n, int num) {
     mk = ((Integer)marks.pop()).intValue();
     while (num-- > 0) {
-      Node c = popNode();
+      final Node c = popNode();
       c.jjtSetParent(n);
       n.jjtAddChild(c, num);
     }
@@ -103,12 +103,12 @@ class JJTObjectDBClauseParserState {
      made children of the the conditional node, which is then pushed
      on to the stack.  If the condition is false the node is not
      constructed and they are left on the stack. */
-  void closeNodeScope(Node n, boolean condition) {
+  void closeNodeScope(final Node n, final boolean condition) {
     if (condition) {
       int a = nodeArity();
       mk = ((Integer)marks.pop()).intValue();
       while (a-- > 0) {
-	Node c = popNode();
+	final Node c = popNode();
 	c.jjtSetParent(n);
 	n.jjtAddChild(c, a);
       }

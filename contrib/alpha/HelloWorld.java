@@ -6,7 +6,7 @@ import uk.co.uwcs.choob.support.events.Message;
 
 public class HelloWorld
 {
-	public void commandOne( Message mes, Modules mods, IRCInterface irc )
+	public void commandOne( final Message mes, final Modules mods, final IRCInterface irc )
 	{
 		irc.sendContextReply(mes, "Hello world!");
 	}

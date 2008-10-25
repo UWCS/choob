@@ -1,10 +1,15 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.Date;
 import java.util.List;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
 public class Mail
@@ -19,17 +24,17 @@ public class Mail
 		};
 	}
 
-	private Modules mods;
-	private IRCInterface irc;
+	private final Modules mods;
+	private final IRCInterface irc;
 
 	public class MailException extends ChoobException
 	{
 		private static final long serialVersionUID = 5965468056173754247L;
-		public MailException(String text)
+		public MailException(final String text)
 		{
 			super(text);
 		}
-		public MailException(String text, Throwable e)
+		public MailException(final String text, final Throwable e)
 		{
 			super(text, e);
 		}
@@ -40,16 +45,16 @@ public class Mail
 		}
 	}
 
-	public Mail(Modules mods, IRCInterface irc)
+	public Mail(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
 	}
-	
+
 	// General options
 	public String[] optionsGeneral = { "SMTPHost", "SMTPPort", "From", "FromUser", "FromHost" };
 	public String[] optionsGeneralDefaults = { "127.0.0.1", "25", "", "", "" };
-	
+
 	public String[] helpOptionSMTPHost = {
 		"The hostname to connect to for sending mail."
 	};
@@ -65,55 +70,55 @@ public class Mail
 	public String[] helpOptionFromHost = {
 		"The hostname for use in 'From:'."
 	};
-	
+
 	// User options
 	public String[] optionsUser = { "Email" };
 	public String[] optionsUserDefaults = { "" };
-	
+
 	public String[] helpOptionEmail = {
 		"The public e-mail address to show to users requesting it."
 	};
-	
+
 	public String[] helpCommandMail = {
 		"Displays the public e-mail address of the given person",
 		"<Nickname>",
 		"<Nickname> is the person you want the public e-mail address of"
 	};
-	public void commandMail(Message mes)
+	public void commandMail(final Message mes)
 	{
-		List<String> params = mods.util.getParams(mes, 1);
+		final List<String> params = mods.util.getParams(mes, 1);
 		if (params.size() < 2)
 		{
 			irc.sendContextReply(mes,"You need to supply a nickname.");
 			return;
 		}
-		
-		String nick = params.get(1);
+
+		final String nick = params.get(1);
 		String userName = null;
 		if (mods.security.hasAuth(nick)) {
 			userName = mods.security.getUserAuthName(nick);
 		} else {
 			userName = mods.security.getRootUser(mods.nick.getBestPrimaryNick(nick));
 		}
-		if (userName == null) 
+		if (userName == null)
 			userName = mods.nick.getBestPrimaryNick(nick);
-		
+
 		try
 		{
-			String email = (String)mods.plugin.callAPI("Options", "GetUserOption", userName, "Email", optionsUserDefaults[0]);
-			
+			final String email = (String)mods.plugin.callAPI("Options", "GetUserOption", userName, "Email", optionsUserDefaults[0]);
+
 			if (email.length() > 0)
 				irc.sendContextReply(mes, "'" + userName + "' has public e-mail address " + email);
 			else
 				irc.sendContextReply(mes, "No public e-mail address set for '" + userName + "'.");
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			irc.sendContextReply(mes, "Unable to load mail options. Please load 'Options' plugin.");
 		}
 	}
-	
-	private String sanitize(String message)
+
+	private String sanitize(final String message)
 	{
 		return message.replaceAll("[^ /\\w\\.!\\(\\)\\?,;'\"£$%&\\*@#]","");
 	}
@@ -123,9 +128,9 @@ public class Mail
 		"<Message>",
 		"<Message> is the content of the message to post to the mailing list"
 	};
-	public void commandTechteam(Message mes)
+	public void commandTechteam(final Message mes)
 	{
-		List<String> params = mods.util.getParams(mes, 1);
+		final List<String> params = mods.util.getParams(mes, 1);
 		if (params.size() < 2)
 		{
 			irc.sendContextReply(mes,"You need to supply a message.");
@@ -136,22 +141,22 @@ public class Mail
 			irc.sendContextReply(mes,"To reduce abuse you may only use this command in public channels.");
 			return;
 		}
-		if ((params.get(1)).length() < 20)
+		if (params.get(1).length() < 20)
 		{
 			irc.sendContextReply(mes,"Message is too short - try putting more detail in!");
 			return;
-		}	
+		}
 
 		try
 		{
-			int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "techteam" + mes.getNick(), 300000, 2);
+			final int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "techteam" + mes.getNick(), 300000, 2);
 			if (ret != 0)
 			{
 				irc.sendContextReply(mes, "This command may only be used once every 5 minutes.");
 				return;
 			}
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			// If flood isn't loaded, don't call it, don't care.
 		}
@@ -162,7 +167,7 @@ public class Mail
 			     "Message from " + mes.getNick() + " via " + irc.getNickname(),
 			     "Message from " + mes.getNick() + " (" + mes.getLogin() + "@" + mes.getHostname() + ") in " + mes.getTarget() + ":" + "\r\n" + "\r\n" + sanitize(params.get(1)));
 		}
-		catch (MailException e)
+		catch (final MailException e)
 		{
 			irc.sendContextReply(mes, e.toString());
 			return;
@@ -170,52 +175,52 @@ public class Mail
 		irc.sendContextReply(mes,"Message sent.");
 	}
 
-	public void apiSendMail(String to, String subject, String message) throws MailException
+	public void apiSendMail(final String to, final String subject, final String message) throws MailException
 	{
 		send(to, subject, message);
 	}
 
-	private void valid(String response, int code) throws MailException
+	private void valid(final String response, final int code) throws MailException
 	{
 		if (response.matches("^" + code + ".*"))
 			return;
-		
+
 		throw new MailException("Error sending message: " + response);
 	}
 
-	private void send(String to, String subject, String message) throws MailException
+	private void send(final String to, final String subject, final String message) throws MailException
 	{
 		try
 		{
-			String smtpHost    =             (String)mods.plugin.callAPI("Options", "GetGeneralOption", "SMTPHost", optionsGeneralDefaults[0]);
-			int    smtpPort    = Integer.valueOf((String)mods.plugin.callAPI("Options", "GetGeneralOption", "SMTPPort", optionsGeneralDefaults[1]));
+			final String smtpHost    =             (String)mods.plugin.callAPI("Options", "GetGeneralOption", "SMTPHost", optionsGeneralDefaults[0]);
+			final int    smtpPort    = Integer.valueOf((String)mods.plugin.callAPI("Options", "GetGeneralOption", "SMTPPort", optionsGeneralDefaults[1]));
 			String fromDisplay =             (String)mods.plugin.callAPI("Options", "GetGeneralOption", "From",     optionsGeneralDefaults[2]);
-			String fromUser    =             (String)mods.plugin.callAPI("Options", "GetGeneralOption", "FromUser", optionsGeneralDefaults[3]);
-			String fromHost    =             (String)mods.plugin.callAPI("Options", "GetGeneralOption", "FromHost", optionsGeneralDefaults[4]);
-			
+			final String fromUser    =             (String)mods.plugin.callAPI("Options", "GetGeneralOption", "FromUser", optionsGeneralDefaults[3]);
+			final String fromHost    =             (String)mods.plugin.callAPI("Options", "GetGeneralOption", "FromHost", optionsGeneralDefaults[4]);
+
 			if (fromUser.length() == 0)
 				throw new MailException("No 'From:' username configured.");
 			if (fromHost.length() == 0)
 				throw new MailException("No 'From:' hostname configured.");
-			
+
 			if (fromDisplay.length() == 0)
 				fromDisplay = irc.getNickname();
-			
+
 			//System.out.println("Mail:send:");
 			//System.out.println("    SMTP   : " + smtpHost + ":" + smtpPort);
 			//System.out.println("    From   : " + fromDisplay + " <" + fromUser + "@" + fromHost + ">");
 			//System.out.println("    To     : " + to);
 			//System.out.println("    Subject: " + subject);
 			//System.out.println("    Message: " + message.replaceAll("\n", "\n           : "));
-			
-			Date now = new Date();
-			java.text.SimpleDateFormat RFC822date = new java.text.SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
-			java.text.SimpleDateFormat MIDdate    = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
-			
-			Socket socket = new Socket(smtpHost, smtpPort);
-			DataOutputStream outgoing = new DataOutputStream(socket.getOutputStream());
-			BufferedReader incoming = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			
+
+			final Date now = new Date();
+			final java.text.SimpleDateFormat RFC822date = new java.text.SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
+			final java.text.SimpleDateFormat MIDdate    = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
+
+			final Socket socket = new Socket(smtpHost, smtpPort);
+			final DataOutputStream outgoing = new DataOutputStream(socket.getOutputStream());
+			final BufferedReader incoming = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
 			// Connection sequence.
 			// Expects a particular server response at every stage, else fails.
 			valid(incoming.readLine(), 220);
@@ -239,11 +244,11 @@ public class Mail
 			outgoing.writeBytes("QUIT" + "\r\n");
 			socket.close();
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			throw new MailException("Unable to load mail options. Please load 'Options' plugin.");
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			throw new MailException("Input Output Error: " + e.toString());
 		}

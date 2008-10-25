@@ -45,7 +45,7 @@ public class ChannelTopic extends IRCEvent implements MessageEvent, ChannelEvent
 	/**
 	 * Construct a new ChannelTopic.
 	 */
-	public ChannelTopic(String methodName, long millis, int random, String message, String channel)
+	public ChannelTopic(final String methodName, final long millis, final int random, final String message, final String channel)
 	{
 		super(methodName, millis, random);
 		this.message = message;
@@ -55,7 +55,7 @@ public class ChannelTopic extends IRCEvent implements MessageEvent, ChannelEvent
 	/**
 	 * Synthesize a new ChannelTopic from an old one.
 	 */
-	public ChannelTopic(ChannelTopic old, String message)
+	public ChannelTopic(final ChannelTopic old, final String message)
 	{
 		super(old);
 		this.message = message;
@@ -66,26 +66,28 @@ public class ChannelTopic extends IRCEvent implements MessageEvent, ChannelEvent
 	 * Synthesize a new ChannelTopic from this one.
 	 * @return The new ChannelTopic object.
 	 */
-	public Event cloneEvent(String message)
+	public Event cloneEvent(final String message)
 	{
 		return new ChannelTopic(this, message);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelTopic))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		ChannelTopic thing = (ChannelTopic)obj;
+		final ChannelTopic thing = (ChannelTopic)obj;
 		if ( true && message.equals(thing.message) && channel.equals(thing.channel) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("ChannelTopic(");
+		final StringBuffer out = new StringBuffer("ChannelTopic(");
 		out.append(super.toString());
 		out.append(", message = " + message);
 		out.append(", channel = " + channel);

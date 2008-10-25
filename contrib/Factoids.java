@@ -13,7 +13,7 @@ class FactoidObject
 		// Unhide
 	}
 
-	public FactoidObject( String subject, String info )
+	public FactoidObject( final String subject, final String info )
 	{
 		this.subject = subject;
 		this.info = info;
@@ -38,26 +38,26 @@ public class Factoids
 		};
 	}
 
-	private Modules mods;
-	private IRCInterface irc;
-	public Factoids(Modules mods, IRCInterface irc)
+	private final Modules mods;
+	private final IRCInterface irc;
+	public Factoids(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
 	}
 
-	public void filterFactoids( Message msg )
+	public void filterFactoids( final Message msg )
 	{
-		Matcher factoidMatcher = (Pattern.compile( filterFactoidsRegex )).matcher( msg.getMessage() );
+		final Matcher factoidMatcher = Pattern.compile( filterFactoidsRegex ).matcher( msg.getMessage() );
 
 		factoidMatcher.find();
 
 		try
 		{
-			FactoidObject fact = new FactoidObject( factoidMatcher.group(1).toLowerCase() , factoidMatcher.group(2) );
+			final FactoidObject fact = new FactoidObject( factoidMatcher.group(1).toLowerCase() , factoidMatcher.group(2) );
 			mods.odb.save( fact );
 		}
-		catch( IllegalStateException e )
+		catch( final IllegalStateException e )
 		{
 			// Well shiver me timbers! What the hell causes this?
 		}
@@ -75,9 +75,9 @@ public class Factoids
 		"<Name>",
 		"<Name> is the name of the object to enquire about"
 	};
-	public void commandWhatIs( Message msg )
+	public void commandWhatIs( final Message msg )
 	{
-		List<String> params = mods.util.getParams(msg, 1);
+		final List<String> params = mods.util.getParams(msg, 1);
 
 		if (params.size()<2)
 		{
@@ -87,11 +87,11 @@ public class Factoids
 
 		final String item = params.get(1).replaceAll("\\?","");
 
-		List<FactoidObject> facts = mods.odb.retrieve( FactoidObject.class , "SORT RANDOM LIMIT (1) WHERE subject = \"" + mods.odb.escapeString(item.toLowerCase()) + "\"");
+		final List<FactoidObject> facts = mods.odb.retrieve( FactoidObject.class , "SORT RANDOM LIMIT (1) WHERE subject = \"" + mods.odb.escapeString(item.toLowerCase()) + "\"");
 
 		if( facts.size() > 0 )
 		{
-			FactoidObject fact = facts.get(0);
+			final FactoidObject fact = facts.get(0);
 			irc.sendContextReply( msg, item + " is " + fact.info );
 		}
 		else

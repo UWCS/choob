@@ -24,6 +24,7 @@ public class ChannelAction extends Message implements ChannelEvent, ActionEvent,
 	 * Get the reply context in which this event resides
 	 * @return The context
 	 */
+	@Override
 	public String getContext() {
 		return getChannel();
 	}
@@ -32,7 +33,7 @@ public class ChannelAction extends Message implements ChannelEvent, ActionEvent,
 	/**
 	 * Construct a new ChannelAction.
 	 */
-	public ChannelAction(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target, String channel)
+	public ChannelAction(final String methodName, final long millis, final int random, final String message, final String nick, final String login, final String hostname, final String target, final String channel)
 	{
 		super(methodName, millis, random, message, nick, login, hostname, target);
 		this.channel = channel;
@@ -41,7 +42,7 @@ public class ChannelAction extends Message implements ChannelEvent, ActionEvent,
 	/**
 	 * Synthesize a new ChannelAction from an old one.
 	 */
-	public ChannelAction(ChannelAction old, String message)
+	public ChannelAction(final ChannelAction old, final String message)
 	{
 		super(old, message);
 		this.channel = old.channel;
@@ -51,26 +52,29 @@ public class ChannelAction extends Message implements ChannelEvent, ActionEvent,
 	 * Synthesize a new ChannelAction from this one.
 	 * @return The new ChannelAction object.
 	 */
-	public Event cloneEvent(String message)
+	@Override
+	public Event cloneEvent(final String message)
 	{
 		return new ChannelAction(this, message);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelAction))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		ChannelAction thing = (ChannelAction)obj;
+		final ChannelAction thing = (ChannelAction)obj;
 		if ( true && channel.equals(thing.channel) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("ChannelAction(");
+		final StringBuffer out = new StringBuffer("ChannelAction(");
 		out.append(super.toString());
 		out.append(", channel = " + channel);
 		out.append(")");

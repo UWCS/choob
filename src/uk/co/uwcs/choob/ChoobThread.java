@@ -16,9 +16,9 @@ public class ChoobThread extends Thread
 	private static final Permission perm = new ChoobPermission("root");
 
 	private String pluginName;
-	private Stack<String> pluginStack;
+	private final Stack<String> pluginStack;
 
-	public ChoobThread(Runnable r, String name)
+	public ChoobThread(final Runnable r, final String name)
 	{
 		super(r, name);
 		pluginName = null;
@@ -28,15 +28,15 @@ public class ChoobThread extends Thread
 
 	public static ChoobThread runningThread()
 	{
-		Thread executing = Thread.currentThread();
+		final Thread executing = Thread.currentThread();
 		if (!(executing instanceof ChoobThread))
 			throw new RuntimeException("ChoobThread static calls accessed from outside a ChoobThread (" + executing.getName() + ")!");
 		return (ChoobThread)executing;
 	}
 
-	public static void pushPluginStatic(String pluginName)
+	public static void pushPluginStatic(final String pluginName)
 	{
-		ChoobThread thread = runningThread();
+		final ChoobThread thread = runningThread();
 		if (thread == null) return;
 
 		thread.pushPlugin(pluginName);
@@ -44,7 +44,7 @@ public class ChoobThread extends Thread
 
 	public static void popPluginStatic()
 	{
-		ChoobThread thread = runningThread();
+		final ChoobThread thread = runningThread();
 		if (thread == null) return;
 
 		thread.popPlugin();
@@ -52,30 +52,30 @@ public class ChoobThread extends Thread
 
 	public static void clearPluginsStatic()
 	{
-		ChoobThread thread = runningThread();
+		final ChoobThread thread = runningThread();
 		if (thread == null) return;
 
 		thread.clearPlugins();
 	}
-	
+
 	public static String getPluginStack()
 	{
 		String rv = "?";
 		try {
-			rv = ChoobThread.currentThread().toString();
+			rv = Thread.currentThread().toString();
 			int i = 0;
 			for (String s = ChoobThread.getPluginName(0); s != null; s = ChoobThread.getPluginName(++i))
 			{
 				rv += ", " + s;
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 		}
 		return rv;
 	}
 
-	public static synchronized String getPluginName(int i)
+	public static synchronized String getPluginName(final int i)
 	{
-		ChoobThread thread = runningThread();
+		final ChoobThread thread = runningThread();
 		if (thread == null) return null;
 
 		if (i == 0)
@@ -87,11 +87,11 @@ public class ChoobThread extends Thread
 			return null;
 	}
 
-	public synchronized void pushPlugin(String pluginName)
+	public synchronized void pushPlugin(final String mpluginName)
 	{
 		AccessController.checkPermission(perm);
-		this.pluginName = pluginName;
-		pluginStack.push(pluginName);
+		this.pluginName = mpluginName;
+		pluginStack.push(mpluginName);
 	}
 
 	public synchronized void popPlugin()

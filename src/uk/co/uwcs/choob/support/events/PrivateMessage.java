@@ -11,6 +11,7 @@ public class PrivateMessage extends Message implements PrivateEvent, CommandEven
 	 * Get the reply context in which this event resides
 	 * @return The context
 	 */
+	@Override
 	public String getContext() {
 		return getNick();
 	}
@@ -19,7 +20,7 @@ public class PrivateMessage extends Message implements PrivateEvent, CommandEven
 	/**
 	 * Construct a new PrivateMessage.
 	 */
-	public PrivateMessage(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target)
+	public PrivateMessage(final String methodName, final long millis, final int random, final String message, final String nick, final String login, final String hostname, final String target)
 	{
 		super(methodName, millis, random, message, nick, login, hostname, target);
 	}
@@ -27,7 +28,7 @@ public class PrivateMessage extends Message implements PrivateEvent, CommandEven
 	/**
 	 * Synthesize a new PrivateMessage from an old one.
 	 */
-	public PrivateMessage(PrivateMessage old, String message)
+	public PrivateMessage(final PrivateMessage old, final String message)
 	{
 		super(old, message);
 	}
@@ -36,12 +37,14 @@ public class PrivateMessage extends Message implements PrivateEvent, CommandEven
 	 * Synthesize a new PrivateMessage from this one.
 	 * @return The new PrivateMessage object.
 	 */
-	public Event cloneEvent(String message)
+	@Override
+	public Event cloneEvent(final String message)
 	{
 		return new PrivateMessage(this, message);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof PrivateMessage))
 			return false;
@@ -50,9 +53,10 @@ public class PrivateMessage extends Message implements PrivateEvent, CommandEven
 			return true;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("PrivateMessage(");
+		final StringBuffer out = new StringBuffer("PrivateMessage(");
 		out.append(super.toString());
 		out.append(")");
 		return out.toString();

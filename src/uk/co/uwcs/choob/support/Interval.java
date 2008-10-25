@@ -25,7 +25,7 @@ public final class Interval
 	{
 	}
 
-	public Interval(String plugin, Object parameter, long trigger, int id)
+	public Interval(final String plugin, final Object parameter, final long trigger, final int id)
 	{
 		this.plugin = plugin;
 		this.parameter = parameter;
@@ -46,7 +46,7 @@ public final class Interval
 	 * Setter for property trigger.
 	 * @param trigger New value of property trigger.
 	 */
-	public void setTrigger(long trigger)
+	public void setTrigger(final long trigger)
 	{
 		this.trigger = trigger;
 	}
@@ -64,7 +64,7 @@ public final class Interval
 	 * Setter for property id.
 	 * @param id New value of property id.
 	 */
-	public void setId(int id)
+	public void setId(final int id)
 	{
 		this.id = id;
 	}
@@ -82,7 +82,7 @@ public final class Interval
 	 * Setter for property plugin.
 	 * @param plugin New value of property plugin.
 	 */
-	public void setPlugin(java.lang.String plugin)
+	public void setPlugin(final java.lang.String plugin)
 	{
 		this.plugin = plugin;
 	}
@@ -100,11 +100,12 @@ public final class Interval
 	 * Setter for property parameter.
 	 * @param parameter New value of property parameter.
 	 */
-	public void setParameter(java.lang.Object parameter)
+	public void setParameter(final java.lang.Object parameter)
 	{
 		this.parameter = parameter;
 	}
 
+	@Override
 	public String toString()
 	{
 		return "Interval( Date: " + getTrigger() + ", Plugin: " + getPlugin() +" )";

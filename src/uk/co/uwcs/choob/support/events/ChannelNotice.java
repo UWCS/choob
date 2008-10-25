@@ -24,6 +24,7 @@ public class ChannelNotice extends Message implements ChannelEvent
 	 * Get the reply context in which this event resides
 	 * @return The context
 	 */
+	@Override
 	public String getContext() {
 		return getChannel();
 	}
@@ -32,7 +33,7 @@ public class ChannelNotice extends Message implements ChannelEvent
 	/**
 	 * Construct a new ChannelNotice.
 	 */
-	public ChannelNotice(String methodName, long millis, int random, String message, String nick, String login, String hostname, String target, String channel)
+	public ChannelNotice(final String methodName, final long millis, final int random, final String message, final String nick, final String login, final String hostname, final String target, final String channel)
 	{
 		super(methodName, millis, random, message, nick, login, hostname, target);
 		this.channel = channel;
@@ -41,7 +42,7 @@ public class ChannelNotice extends Message implements ChannelEvent
 	/**
 	 * Synthesize a new ChannelNotice from an old one.
 	 */
-	public ChannelNotice(ChannelNotice old, String message)
+	public ChannelNotice(final ChannelNotice old, final String message)
 	{
 		super(old, message);
 		this.channel = old.channel;
@@ -51,26 +52,29 @@ public class ChannelNotice extends Message implements ChannelEvent
 	 * Synthesize a new ChannelNotice from this one.
 	 * @return The new ChannelNotice object.
 	 */
-	public Event cloneEvent(String message)
+	@Override
+	public Event cloneEvent(final String message)
 	{
 		return new ChannelNotice(this, message);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof ChannelNotice))
 			return false;
 		if ( !super.equals(obj) )
 			return false;
-		ChannelNotice thing = (ChannelNotice)obj;
+		final ChannelNotice thing = (ChannelNotice)obj;
 		if ( true && channel.equals(thing.channel) )
 			return true;
 		return false;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("ChannelNotice(");
+		final StringBuffer out = new StringBuffer("ChannelNotice(");
 		out.append(super.toString());
 		out.append(", channel = " + channel);
 		out.append(")");

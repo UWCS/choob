@@ -1,8 +1,12 @@
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.*;
+import uk.co.uwcs.choob.support.events.ContextEvent;
+import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.PrivateMessage;
 
 /**
  * Choob "passthrough" module.
@@ -29,7 +33,7 @@ public class PassThru
 
 	Map<String,ContextEvent> reply = new HashMap<String,ContextEvent>();
 
-	public PassThru(Modules mods, IRCInterface irc)
+	public PassThru(final Modules mods, final IRCInterface irc)
 	{
 		this.irc = irc;
 		this.mods = mods;
@@ -41,9 +45,9 @@ public class PassThru
 		"<Bot> is the bot's nickname",
 		"<Message> is the command"
 	};
-	public void commandSend( Message mes )
+	public void commandSend( final Message mes )
 	{
-		List<String> params = mods.util.getParams( mes, 2 );
+		final List<String> params = mods.util.getParams( mes, 2 );
 
 		if (params.size() != 3)
 		{
@@ -51,7 +55,7 @@ public class PassThru
 			return;
 		}
 
-		String target = params.get(1).toLowerCase();
+		final String target = params.get(1).toLowerCase();
 		if (!target.equals("jinglybot"))
 		{
 			irc.sendContextReply( mes, "Sorry, I'm not allowed to pass through to " + params.get(1) );
@@ -63,9 +67,9 @@ public class PassThru
 		irc.sendMessage( params.get(1), params.get(2) );
 	}
 
-	public synchronized void onPrivateMessage( PrivateMessage mes )
+	public synchronized void onPrivateMessage( final PrivateMessage mes )
 	{
-		ContextEvent context = reply.get(mes.getNick().toLowerCase());
+		final ContextEvent context = reply.get(mes.getNick().toLowerCase());
 		if (context != null)
 			irc.sendContextReply( context, mes.getMessage() );
 	}

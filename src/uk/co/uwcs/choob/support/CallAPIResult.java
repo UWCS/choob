@@ -7,32 +7,32 @@ package uk.co.uwcs.choob.support;
 
 public final class CallAPIResult
 {
-	private String pluginName;
-	private Object object;
-	private Exception exception;
-	
-	public CallAPIResult(String pluginName, Object object, Exception exception) {
+	private final String pluginName;
+	private final Object object;
+	private final Exception exception;
+
+	public CallAPIResult(final String pluginName, final Object object, final Exception exception) {
 		this.pluginName = pluginName;
 		this.object     = object;
 		this.exception  = exception;
 	}
-	
+
 	public String getPluginName() {
 		return pluginName;
 	}
-	
+
 	public Object getObject() {
 		return object;
 	}
-	
+
 	public Exception getException() {
 		return exception;
 	}
-	
+
 	public Boolean isSuccessful() {
-		return (object != null) && (exception == null);
+		return object != null && exception == null;
 	}
-	
+
 	@Override
 	public String toString() {
 		if (exception != null) {

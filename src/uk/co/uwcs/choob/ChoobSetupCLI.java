@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * Set up the database to get Choob running.
- * 
+ *
  * @author benji
  */
 public class ChoobSetupCLI
@@ -19,10 +19,10 @@ public class ChoobSetupCLI
 	private static final ParamHandler ircServer = new ParamHandler("The irc server to connect to.", "ircServer must be set.");
 	private static final ParamHandler ircChannel = new ParamHandler("The irc channel(s) to connect to (comma separate)", "ircChannel must be set.");
 	private static final ParamHandler rootUser = new ParamHandler("The irc user to have full permissions on the bot", "rootUser must be set.");
-	private static final Map<String, ParamHandler> params = new HashMap()
+	private static final Map<String, ParamHandler> params = new HashMap<String, ParamHandler>()
 	{
 
-		
+
 		{
 			put("dbServer", dbServer);
 			put("dbUser", dbUser);
@@ -35,15 +35,15 @@ public class ChoobSetupCLI
 		}
 	};
 
-	private static void readParams(String[] args) throws InvalidUsageException
+	private static void readParams(final String[] args) throws InvalidUsageException
 	{
 		if (args.length != params.size())
 		{
 			throw new InvalidUsageException();
 		}
-		for (String arg : args)
+		for (final String arg : args)
 		{
-			String[] parts = arg.split("=");
+			final String[] parts = arg.split("=");
 			if (parts.length != 2)
 			{
 				throw new InvalidUsageException("All parameters should be in the form Key=Value");
@@ -58,33 +58,33 @@ public class ChoobSetupCLI
 			}
 		}
 	}
-	
-	private static void printUsageAndExit(InvalidUsageException e)
+
+	private static void printUsageAndExit(final InvalidUsageException e)
 	{
 		System.err.println("*** WARNING: Running ChoobSetup will overwrite your bot config and database. ***");
-		
+
 		System.err.println(e.getMessage());
 		System.err.println();
 		System.err.print("Usage: $ ChoobSetup ");
-		for (String key : params.keySet())
+		for (final String key : params.keySet())
 		{
 			System.err.print(key + "=<value> ");
 		}
 		System.err.println();
 		System.err.println("Where...");
-		for (String key : params.keySet())
+		for (final String key : params.keySet())
 		{
-			System.err.println(key + " is " + params.get(key).getHelp());		
+			System.err.println(key + " is " + params.get(key).getHelp());
 		}
 		System.exit(-1);
 	}
 
-	public static void main(String[] args)	
+	public static void main(final String[] args)
 	{
 		try
 		{
 			readParams(args);
-			ChoobSetup cs = new ChoobSetup
+			final ChoobSetup cs = new ChoobSetup
 				(
 					dbServer.getValue(),
 					dbUser.getValue(),
@@ -97,19 +97,19 @@ public class ChoobSetupCLI
 				);
 			cs.setupChoob(new ChoobSetup.ChoobSetupStatus()
 			{
-				public void onStatus(int percent, String message)
+				public void onStatus(final int percent, final String message)
 				{
 					System.out.println(message);
 				}
 			});
-		} catch (InvalidUsageException e)
+		} catch (final InvalidUsageException e)
 		{
 			printUsageAndExit(e);
-		} catch (ChoobSetup.MissingFilesException e)
+		} catch (final ChoobSetup.MissingFilesException e)
 		{
 			System.err.println(e.getMessage());
 			System.exit(2);
-		} catch (ChoobSetup.ChoobSetupException e)
+		} catch (final ChoobSetup.ChoobSetupException e)
 		{
 			System.err.println(e.getMessage());
 			e.printStackTrace();
@@ -125,8 +125,8 @@ class InvalidUsageException extends Exception
 	{
 		super();
 	}
-	
-	public InvalidUsageException(String message)
+
+	public InvalidUsageException(final String message)
 	{
 		super(message);
 	}
@@ -135,32 +135,30 @@ class InvalidUsageException extends Exception
 class ParamHandler
 {
 
-	private String help;
-	private String unsetMessage;
+	private final String help;
+	private final String unsetMessage;
 	private String value;
-	
+
 	public ParamHandler(final String help, final String unsetMessage)
 	{
 		this.help = help;
 		this.unsetMessage = unsetMessage;
 	}
-	
+
 	public String getHelp()
 	{
 		return help;
 	}
-	
+
 	public String getValue() throws InvalidUsageException
 	{
 		if (this.value != null)
 		{
 			return this.value;
-		} else
-		{
-			throw new InvalidUsageException(unsetMessage);
 		}
+		throw new InvalidUsageException(unsetMessage);
 	}
-	
+
 	public void setValue(final String value)
 	{
 		this.value = value;

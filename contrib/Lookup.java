@@ -1,6 +1,10 @@
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.net.UnknownHostException;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -43,9 +47,9 @@ public class Lookup
 	private final static String regor = ")|(?:";
 	private final static Pattern ipv6 = Pattern.compile("(?:" + IPv6Pattern + regor + IPv6Pattern_6Hex4Dec + regor + IPv6Pattern_HEXCompressed + regor + IPv6Pattern_Hex4DecCompressed + ")");
 
-	private IRCInterface irc;
-	private Modules mods;
-	public Lookup(Modules mods, IRCInterface irc)
+	private final IRCInterface irc;
+	private final Modules mods;
+	public Lookup(final Modules mods, final IRCInterface irc)
 	{
 		this.irc = irc;
 		this.mods = mods;
@@ -57,12 +61,12 @@ public class Lookup
 		env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
 	}
 
-	private String reverseLookup(String s)
+	private String reverseLookup(final String s)
 	{
 		try
 		{
-			InetAddress ia = InetAddress.getByName(s);
-			String hostname = ia.getHostName();
+			final InetAddress ia = InetAddress.getByName(s);
+			final String hostname = ia.getHostName();
 			if (!hostname.trim().equalsIgnoreCase(s.trim()))
 				return hostname;
 
@@ -71,11 +75,11 @@ public class Lookup
 			{
 				url = new URL("http://www.showmyip.com/xml/?ip=" + URLEncoder.encode(s, "UTF-8") + "&app=Choob");
 			}
-			catch (UnsupportedEncodingException e)
+			catch (final UnsupportedEncodingException e)
 			{
 				return "Unexpected exception generating url.";
 			}
-			catch (MalformedURLException e)
+			catch (final MalformedURLException e)
 			{
 				return "Error, malformed url generated.";
 			}
@@ -86,7 +90,7 @@ public class Lookup
 				// Cache for a day.
 				showmyip = mods.scrape.getContentsCached(url, 24*60*60*1000);
 			}
-			catch (IOException e)
+			catch (final IOException e)
 			{
 				return "No direct lookup avaliable. " + e;
 			}
@@ -140,18 +144,18 @@ public class Lookup
 				(scity		!= null ? "City: "			+ scity		+ (scity2		!= null ? " (or possibly: " + scity2	+ ")" : "") + ";" : "") + " " +
 				(sisp		!= null ? "Isp: "			+ sisp		+ "." : "");
 		}
-		catch(UnknownHostException e)
+		catch(final UnknownHostException e)
 		{
 			return "Failed.";
 		}
 	}
 
-	private Attribute getAttributes(String what, String where) throws NameNotFoundException, NamingException
+	private Attribute getAttributes(final String what, final String where) throws NameNotFoundException, NamingException
 	{
-		return (new InitialDirContext( env )).getAttributes( what, new String[] { where }).get( where );
+		return new InitialDirContext( env ).getAttributes( what, new String[] { where }).get( where );
 	}
 
-	private String apiLookup(String what, String where)
+	private String apiLookup(final String what, final String where)
 	{
 		if (where.equals("REV"))
 			return what + " [reverse lookup] --> " + reverseLookup(what) + ".";
@@ -164,7 +168,7 @@ public class Lookup
 
 			if( attr == null )
 				return "None found...";
-			StringBuilder rep=new StringBuilder();
+			final StringBuilder rep=new StringBuilder();
 			for (int i=0; i<attr.size(); i++)
 			{
 				rep.append(attr.get(i));
@@ -174,11 +178,11 @@ public class Lookup
 
 			return what + " [" + where + "] --> " + rep.toString() + ".";
 		}
-		catch ( NameNotFoundException e )
+		catch ( final NameNotFoundException e )
 		{
 			return "Not found: " + what;
 		}
-		catch ( NamingException e )
+		catch ( final NamingException e )
 		{
 			return "Unexpected error: " + e;
 		}
@@ -190,9 +194,9 @@ public class Lookup
 		"<Domain> is the domain name",
 		"<Record> is the optional record type"
 	};
-	public void commandLookupIn( Message mes )
+	public void commandLookupIn( final Message mes )
 	{
-		List<String> params = mods.util.getParams(mes, 2);
+		final List<String> params = mods.util.getParams(mes, 2);
 		String domain, record;
 
 		if (params.size() <= 1)
@@ -214,7 +218,7 @@ public class Lookup
 					p = new URL(domain);
 					try
 					{
-						Attribute attr = getAttributes(p.getHost(), "A");
+						final Attribute attr = getAttributes(p.getHost(), "A");
 						if (attr == null)
 							reply = "None found...";
 						else
@@ -225,11 +229,11 @@ public class Lookup
 							reply = p.toString();
 						}
 					}
-					catch ( NameNotFoundException e )
+					catch ( final NameNotFoundException e )
 					{
 						reply = "Not found: " + p.getHost();
 					}
-					catch ( NamingException e )
+					catch ( final NamingException e )
 					{
 						reply = "Unexpected error: " + e;
 					}
@@ -237,7 +241,7 @@ public class Lookup
 					irc.sendContextReply(mes, reply);
 					return;
 				}
-				catch ( MalformedURLException e )
+				catch ( final MalformedURLException e )
 				{
 					// Squish.
 				}

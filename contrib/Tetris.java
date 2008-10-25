@@ -8,7 +8,7 @@ import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.IRCInterface;
 
-public class SVN
+public class Tetris
 {
 	public String[] info()
 	{
@@ -22,7 +22,7 @@ public class SVN
 
 	private final Modules mods;
 	private final IRCInterface irc;
-	public SVN( final Modules mods, final IRCInterface irc )
+	public Tetris( final Modules mods, final IRCInterface irc )
 	{
 		mods.interval.callBack( null, 100 );
 		this.irc = irc;

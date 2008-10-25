@@ -5,13 +5,13 @@
 
 package uk.co.uwcs.choob.support.events;
 
-public class UnknownEvent extends IRCEvent 
+public class UnknownEvent extends IRCEvent
 {
 
 	/**
 	 * Construct a new UnknownEvent.
 	 */
-	public UnknownEvent(String methodName, long millis, int random)
+	public UnknownEvent(final String methodName, final long millis, final int random)
 	{
 		super(methodName, millis, random);
 	}
@@ -19,7 +19,7 @@ public class UnknownEvent extends IRCEvent
 	/**
 	 * Synthesize a new UnknownEvent from an old one.
 	 */
-	public UnknownEvent(UnknownEvent old)
+	public UnknownEvent(final UnknownEvent old)
 	{
 		super(old);
 	}
@@ -28,12 +28,14 @@ public class UnknownEvent extends IRCEvent
 	 * Synthesize a new UnknownEvent from this one.
 	 * @return The new UnknownEvent object.
 	 */
+	@Override
 	public Event cloneEvent()
 	{
 		return new UnknownEvent(this);
 	}
 
-	public boolean equals(Object obj)
+	@Override
+	public boolean equals(final Object obj)
 	{
 		if (obj == null || !(obj instanceof UnknownEvent))
 			return false;
@@ -42,9 +44,10 @@ public class UnknownEvent extends IRCEvent
 			return true;
 	}
 
+	@Override
 	public String toString()
 	{
-		StringBuffer out = new StringBuffer("UnknownEvent(");
+		final StringBuffer out = new StringBuffer("UnknownEvent(");
 		out.append(super.toString());
 		out.append(")");
 		return out.toString();

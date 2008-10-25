@@ -6,7 +6,10 @@
 
 package uk.co.uwcs.choob;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
 import uk.co.uwcs.choob.modules.Modules;
@@ -18,27 +21,28 @@ import uk.co.uwcs.choob.support.Interval;
  */
 public final class ChoobWatcherThread extends Thread
 {
-	private List<Interval> intervalList;
+	private final List<Interval> intervalList;
 	private boolean running;
-	private Modules mods;
+	private final Modules mods;
 
 	/** Creates a new instance of ChoobWatcherThread */
-	ChoobWatcherThread(List<Interval> intervalList, IRCInterface irc,
-			Modules mods) {
+	ChoobWatcherThread(final List<Interval> intervalList, final IRCInterface irc,
+			final Modules mods) {
 		this.intervalList = intervalList;
 		this.mods = mods;
 	}
 
+	@Override
 	public void run()
 	{
 		running = true;
 
 		do
 		{
-			long timeNow = (new Date()).getTime();
+			final long timeNow = new Date().getTime();
 			long next = timeNow + 1000;
 			List<Interval> requeuedIntervals;
-			
+
 			synchronized( intervalList )
 			{
 				Iterator<Interval> tempIt = intervalList.iterator();
@@ -46,25 +50,25 @@ public final class ChoobWatcherThread extends Thread
 
 				while( tempIt.hasNext() )
 				{
-					Interval tempInterval = tempIt.next();
+					final Interval tempInterval = tempIt.next();
 
 					if (tempInterval.getTrigger() <= timeNow)
 					{
 						tempIt.remove();
-						ChoobTask t = mods.plugin.doInterval(tempInterval.getPlugin(), tempInterval.getParameter());
+						final ChoobTask t = mods.plugin.doInterval(tempInterval.getPlugin(), tempInterval.getParameter());
 						if (t != null)
 						{
 							try
 							{
 								ChoobThreadManager.queueTask(t);
 							}
-							catch (RejectedExecutionException e)
+							catch (final RejectedExecutionException e)
 							{
 								// Plugin is at concurreny limit. Requeue task for later.
 								tempInterval.setTrigger(tempInterval.getTrigger() + 1000);
 								requeuedIntervals.add(tempInterval);
 							}
-							catch (Exception e)
+							catch (final Exception e)
 							{
 								System.err.println("Plugin " + tempInterval.getPlugin() + " got exception queuing task.");
 								System.err.println(e);
@@ -79,18 +83,18 @@ public final class ChoobWatcherThread extends Thread
 					else if (next > tempInterval.getTrigger())
 						next = tempInterval.getTrigger();
 				}
-				
+
 				// Re-queue any items here.
 				// We need to kill the iterator before this will work.
 				tempIt = requeuedIntervals.iterator();
 				while (tempIt.hasNext())
 				{
-					Interval tempInterval = tempIt.next();
+					final Interval tempInterval = tempIt.next();
 					intervalList.add(tempInterval);
 				}
 			}
 
-			long delay = next - timeNow;
+			final long delay = next - timeNow;
 
 			synchronized( this )
 			{
@@ -98,7 +102,7 @@ public final class ChoobWatcherThread extends Thread
 				{
 					wait(delay);
 				}
-				catch( InterruptedException e )
+				catch( final InterruptedException e )
 				{
 					// Well shucks Batman, I guess that _was_ a gay bar.
 				}

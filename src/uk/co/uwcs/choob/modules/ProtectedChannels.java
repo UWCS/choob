@@ -1,6 +1,8 @@
 package uk.co.uwcs.choob.modules;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Module that currently only exists for shutup, but should be expandable for any other controls that are needed over channels.
@@ -11,17 +13,17 @@ public final class ProtectedChannels
 {
 	List <String>channels=Collections.synchronizedList(new ArrayList<String>());
 
-	public boolean isProtected (String channel)
+	public boolean isProtected (final String channel)
 	{
 		return channels.contains(channel);
 	}
 
-	public void addProtected (String channel)
+	public void addProtected (final String channel)
 	{
 		channels.add(channel);
 	}
 
-	public void removeProtected (String channel)
+	public void removeProtected (final String channel)
 	{
 		channels.remove(channel);
 	}

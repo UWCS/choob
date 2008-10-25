@@ -1,12 +1,19 @@
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
-import java.net.URLEncoder;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElementRef;
+import javax.xml.bind.annotation.XmlElementRefs;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.namespace.QName;
 import javax.xml.transform.Source;
 import javax.xml.ws.Dispatch;
@@ -14,12 +21,6 @@ import javax.xml.ws.Service;
 import javax.xml.ws.handler.MessageContext;
 import javax.xml.ws.http.HTTPBinding;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlElementRefs;
-import javax.xml.bind.annotation.XmlRootElement;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.IRCInterface;
@@ -33,7 +34,7 @@ public class GoogleWeather
 {
 	private static final String baseURL = "http://www.google.com/ig/api?weather=";
 	private static final Class[] DATA_TYPES = {GoogleMapsResponse.class,Weather.class,CurrentConditions.class,ForecastConditions.class,DataItem.class};
-	
+
 	private GoogleWeather()
 	{
 
@@ -57,53 +58,53 @@ public class GoogleWeather
 		put("Cloudy","☁");
 		put("Rain","☂");
 	}};
-	
+
 	public <T> T getXmlFromHTTP(final String url, final Class... dataTypes) throws IOException, JAXBException
 	{
-		QName qname = new QName("", "");
-		Service service = Service.create(qname);
+		final QName qname = new QName("", "");
+		final Service service = Service.create(qname);
 		service.addPort(qname, HTTPBinding.HTTP_BINDING, baseURL);
-		Dispatch<Source> dispatcher =  service.createDispatch(qname, Source.class, Service.Mode.PAYLOAD);
-		Map<String, Object> requestContext = dispatcher.getRequestContext();
+		final Dispatch<Source> dispatcher =  service.createDispatch(qname, Source.class, Service.Mode.PAYLOAD);
+		final Map<String, Object> requestContext = dispatcher.getRequestContext();
 		requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "GET");
 		requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
-		Source got = dispatcher.invoke(null);
-		JAXBContext context = JAXBContext.newInstance(dataTypes);
-		Unmarshaller u = context.createUnmarshaller();
+		final Source got = dispatcher.invoke(null);
+		final JAXBContext context = JAXBContext.newInstance(dataTypes);
+		final Unmarshaller u = context.createUnmarshaller();
 		return (T)u.unmarshal(got);
 	}
-	
-	private String getWeather(String weatherLocation) throws IOException, JAXBException, LocationNotFoundException
+
+	private String getWeather(final String weatherLocation) throws IOException, JAXBException, LocationNotFoundException
 	{
-		GoogleMapsResponse response = getXmlFromHTTP(baseURL + URLEncoder.encode(weatherLocation, "UTF-8"), DATA_TYPES);
+		final GoogleMapsResponse response = getXmlFromHTTP(baseURL + URLEncoder.encode(weatherLocation, "UTF-8"), DATA_TYPES);
 		if (response == null || response.getWeather() == null || response.getWeather().getCurrentConditions() == null)
 			throw new LocationNotFoundException();
-		String conditions = response.getWeather().getCurrentConditions().getCondition().getData();
-		String temp = response.getWeather().getCurrentConditions().getTemp_c().getData();
-		ForecastInformation inf = response.getWeather().getForecastInformation();
-		StringBuilder forecast = new StringBuilder();
-		for (ForecastConditions fCons : response.getWeather().getForeCastConditions())
+		final String conditions = response.getWeather().getCurrentConditions().getCondition().getData();
+		final String temp = response.getWeather().getCurrentConditions().getTemp_c().getData();
+		final ForecastInformation inf = response.getWeather().getForecastInformation();
+		final StringBuilder forecast = new StringBuilder();
+		for (final ForecastConditions fCons : response.getWeather().getForeCastConditions())
 			forecast
 				.append(fCons.getDay_of_week().getData())
 				.append(" ")
 				.append(fCons.getCondition().getData())
 				.append("; ");
-		
+
 		return "Weather in " +
-			((inf != null) ? inf.getCity() : weatherLocation ) +
+			(inf != null ? inf.getCity() : weatherLocation ) +
 			" is " +
 			(symbols.containsKey(conditions) ? symbols.get(conditions) + " " : "") +
 			conditions +
 			". Current temperature is " +
 			temp +
-			"°C. " + 
+			"°C. " +
 			(forecast.length() > 0 ? "Forecast is - " + forecast.toString() : "");
 	}
 
 	private Modules mods;
 	private IRCInterface irc;
 
-	public GoogleWeather(Modules mods, IRCInterface irc)
+	public GoogleWeather(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -112,36 +113,36 @@ public class GoogleWeather
 	public String[] optionsUser = { "Location" };
 	public String[] optionsUserDefaults = { "coventry" };
 
-	public String[] helpOptionGoogleWeatherLocation = 
+	public String[] helpOptionGoogleWeatherLocation =
 	{
 		"Set your home location for the weather command with no parameters."
 	};
 
-	public boolean optionCheckUserWeather(String value, String nick) 
+	public boolean optionCheckUserWeather(final String value, final String nick)
 	{
 		return true; //hmm
 	}
-	
-	private String checkOption(String userNick) 
+
+	private String checkOption(final String userNick)
 	{
-		try 
+		try
 		{
  			return (String)mods.plugin.callAPI("Options", "GetUserOption", userNick,"Location", optionsUserDefaults[0]);
-		} catch (ChoobNoSuchCallException e) 
+		} catch (final ChoobNoSuchCallException e)
 		{
 			return optionsUserDefaults[0];
 		}
 	}
 
-	public String[] helpCommandWeather = 
+	public String[] helpCommandWeather =
 	{
 		"Return weather data for a location",
 		"<LOCATION>",
 		"<LOCATION> can be any of a text location eg: 'london' or a US zip code, or any other location google weather accepts"
 	};
-	public void commandWeather( Message mes )
+	public void commandWeather( final Message mes )
 	{
-		List<String> params = mods.util.getParams(mes,2);
+		final List<String> params = mods.util.getParams(mes,2);
 		String location = "";
 		if (params.size()<2)
 		{
@@ -159,20 +160,20 @@ public class GoogleWeather
 		try
 		{
 			irc.sendContextReply(mes,getWeather(location));
-		} catch (IOException e)
+		} catch (final IOException e)
 		{
 			System.err.println(e.getMessage());
 			e.printStackTrace();
 			irc.sendContextReply(mes,"Could not contact the site to obtain weather information");
-		} catch (JAXBException e)
+		} catch (final JAXBException e)
 		{
 			System.err.println(e.getMessage());
 			e.printStackTrace();
 			irc.sendContextReply(mes,"Could not understand the weather information");
-		} catch (LocationNotFoundException e)
+		} catch (final LocationNotFoundException e)
 		{
 			irc.sendContextReply(mes,"Could not retrieve any weather information for that location");
-		} catch (Throwable e)
+		} catch (final Throwable e)
 		{
 			Throwable ex = e;
 			while (ex != null)
@@ -185,14 +186,14 @@ public class GoogleWeather
 		}
 	}
 
-	public static void main(String[] args) throws IOException, JAXBException, LocationNotFoundException
+	public static void main(final String[] args) throws IOException, JAXBException, LocationNotFoundException
 	{
 		if (args.length != 1)
 		{
 			System.err.println("Usage: <Location>");
 			System.exit(-1);
 		}
-		GoogleWeather m = new GoogleWeather();
+		final GoogleWeather m = new GoogleWeather();
 		System.out.println(m.getWeather(args[0]));
 	}
 }
@@ -200,7 +201,7 @@ public class GoogleWeather
 class LocationNotFoundException extends Exception {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 3732524579011476793L;}
 
@@ -214,7 +215,7 @@ class GoogleMapsResponse
 
 	private Weather weather;
 
-	public void setWeather(Weather weather)
+	public void setWeather(final Weather weather)
 	{
 		this.weather = weather;
 	}
@@ -231,7 +232,7 @@ class Weather
 
 	public CurrentConditions getCurrentConditions()
 	{
-		for (Object o : getForeCastInformation())
+		for (final Object o : getForeCastInformation())
 		{
 			if (o instanceof CurrentConditions)
 			{
@@ -240,11 +241,11 @@ class Weather
 		}
 		return null;
 	}
-	
+
 	public List<ForecastConditions> getForeCastConditions()
 	{
-		ArrayList<ForecastConditions> forecastConditions = new ArrayList<ForecastConditions>();
-		for (Object o : getForeCastInformation())
+		final ArrayList<ForecastConditions> forecastConditions = new ArrayList<ForecastConditions>();
+		for (final Object o : getForeCastInformation())
 		{
 			if (o instanceof ForecastConditions)
 			{
@@ -256,7 +257,7 @@ class Weather
 
 	public ForecastInformation getForecastInformation()
 	{
-		for (Object o : getForeCastInformation())
+		for (final Object o : getForeCastInformation())
 		{
 			if (o instanceof ForecastInformation)
 			{
@@ -265,7 +266,7 @@ class Weather
 		}
 		return null;
 	}
-	
+
 	@XmlElementRefs(
 	{
 		@XmlElementRef(name = "forecast_information", type = ForecastInformation.class),
@@ -299,7 +300,7 @@ class ForecastConditions
 		return day_of_week;
 	}
 
-	public void setDay_of_week(DataItem day_of_week)
+	public void setDay_of_week(final DataItem day_of_week)
 	{
 		this.day_of_week = day_of_week;
 	}
@@ -309,7 +310,7 @@ class ForecastConditions
 		return low;
 	}
 
-	public void setLow(DataItem low)
+	public void setLow(final DataItem low)
 	{
 		this.low = low;
 	}
@@ -319,7 +320,7 @@ class ForecastConditions
 		return high;
 	}
 
-	public void setHigh(DataItem high)
+	public void setHigh(final DataItem high)
 	{
 		this.high = high;
 	}
@@ -329,7 +330,7 @@ class ForecastConditions
 		return icon;
 	}
 
-	public void setIcon(DataItem icon)
+	public void setIcon(final DataItem icon)
 	{
 		this.icon = icon;
 	}
@@ -339,7 +340,7 @@ class ForecastConditions
 		return condition;
 	}
 
-	public void setCondition(DataItem condition)
+	public void setCondition(final DataItem condition)
 	{
 		this.condition = condition;
 	}
@@ -362,7 +363,7 @@ class CurrentConditions
 		return condition;
 	}
 
-	public void setCondition(DataItem condition)
+	public void setCondition(final DataItem condition)
 	{
 		this.condition = condition;
 	}
@@ -372,7 +373,7 @@ class CurrentConditions
 		return temp_f;
 	}
 
-	public void setTemp_f(DataItem temp_f)
+	public void setTemp_f(final DataItem temp_f)
 	{
 		this.temp_f = temp_f;
 	}
@@ -382,7 +383,7 @@ class CurrentConditions
 		return temp_c;
 	}
 
-	public void setTemp_c(DataItem temp_c)
+	public void setTemp_c(final DataItem temp_c)
 	{
 		this.temp_c = temp_c;
 	}
@@ -392,7 +393,7 @@ class CurrentConditions
 		return humidity;
 	}
 
-	public void setHumidity(DataItem humidity)
+	public void setHumidity(final DataItem humidity)
 	{
 		this.humidity = humidity;
 	}
@@ -402,7 +403,7 @@ class CurrentConditions
 		return icon;
 	}
 
-	public void setIcon(DataItem icon)
+	public void setIcon(final DataItem icon)
 	{
 		this.icon = icon;
 	}
@@ -412,7 +413,7 @@ class CurrentConditions
 		return wind_direction;
 	}
 
-	public void setWind_direction(DataItem wind_direction)
+	public void setWind_direction(final DataItem wind_direction)
 	{
 		this.wind_direction = wind_direction;
 	}
@@ -430,11 +431,11 @@ class DataItem
 		return data;
 	}
 
-	public void setData(String value)
+	public void setData(final String value)
 	{
 		this.data = value;
 	}
-	
+
 	@Override
 	public String toString()
 	{
@@ -452,8 +453,8 @@ class ForecastInformation
 		return city;
 	}
 
-	public void setCity(DataItem city)
+	public void setCity(final DataItem city)
 	{
 		this.city = city;
 	}
-}	
+}

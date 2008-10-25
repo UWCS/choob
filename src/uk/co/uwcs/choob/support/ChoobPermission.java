@@ -20,7 +20,7 @@ public class ChoobPermission extends BasicPermission
 	 *
 	 * @param name
 	 */
-	public ChoobPermission( String name )
+	public ChoobPermission( final String name )
 	{
 		super(name);
 	}
@@ -30,7 +30,7 @@ public class ChoobPermission extends BasicPermission
 	 * @param name
 	 * @param actions
 	 */
-	public ChoobPermission( String name, String actions ) {
+	public ChoobPermission( final String name, final String actions ) {
 		this(name);
 	}
 	/**
@@ -38,7 +38,8 @@ public class ChoobPermission extends BasicPermission
 	 * @param obj
 	 * @throws SecurityException
 	 */
-	public void checkGuard(Object obj) throws java.lang.SecurityException
+	@Override
+	public void checkGuard(final Object obj) throws java.lang.SecurityException
 	{
 		super.checkGuard(obj);
 	}
@@ -46,6 +47,7 @@ public class ChoobPermission extends BasicPermission
 	/**
 	 *
 	 */
+	@Override
 	public String getActions()
 	{
 		String retValue;
@@ -58,7 +60,8 @@ public class ChoobPermission extends BasicPermission
 	 *
 	 * @param permission
 	 */
-	public boolean implies(java.security.Permission permission)
+	@Override
+	public boolean implies(final java.security.Permission permission)
 	{
 		boolean retValue;
 

@@ -23,7 +23,7 @@ public class Conversions {
 	// TODO: Having all of this data just hard coded is dirty.
 	private static final HashMap<String, conversionTypes> typeMapping = new HashMap<String, conversionTypes>() {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -8050801112451734011L;
 
@@ -89,7 +89,7 @@ public class Conversions {
 
 	private static final HashMap<String, String> typeAliases = new HashMap<String, String>() {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 8978542459094632598L;
 
@@ -200,7 +200,7 @@ public class Conversions {
 
 	private static final HashMap<String, Double> lengthsInMetres = new HashMap<String, Double>() {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -2368330220527173449L;
 
@@ -221,7 +221,7 @@ public class Conversions {
 
 	private static final HashMap<String, Double> volumesInLitres = new HashMap<String, Double>() {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 2449249239342568114L;
 
@@ -241,7 +241,7 @@ public class Conversions {
 
 	private static final HashMap<String, Double> massesInKilograms = new HashMap<String, Double>() {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -3137899007763138868L;
 
@@ -260,7 +260,7 @@ public class Conversions {
 
 	private static final HashMap<String, Double> velocitiesInMetresPerSecond = new HashMap<String, Double>() {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 206156628830835986L;
 
@@ -290,10 +290,11 @@ public class Conversions {
 			"<to> Unit to convert to",
 			"[quantity] Optional quantity to convert" };
 
-	public void commandConvert(Message mes, Modules mods, IRCInterface irc) {
+	@SuppressWarnings("fallthrough")
+	public void commandConvert(final Message mes, final Modules mods, final IRCInterface irc) {
 		// Check that we have a suitable number of arguments for the conversion
 		// Two will do the conversion for a unit quantity
-		String[] parameters = mods.util.getParamArray(mes);
+		final String[] parameters = mods.util.getParamArray(mes);
 		String inputFrom = "";
 		String inputTo = "";
 		Double qty = 1.0;
@@ -302,7 +303,7 @@ public class Conversions {
 			try {
 				qty = Double.valueOf(Colors
 						.removeFormattingAndColors(parameters[3]));
-			} catch (NumberFormatException nfe) {
+			} catch (final NumberFormatException nfe) {
 				// Wasn't a number!
 				irc.sendContextReply(mes,
 						"The third parameter must be a number");
@@ -322,15 +323,15 @@ public class Conversions {
 		}
 
 		// Perform aliasing
-		String from = doTypeAliases(inputFrom);
-		String to = doTypeAliases(inputTo);
+		final String from = doTypeAliases(inputFrom);
+		final String to = doTypeAliases(inputTo);
 
 		// Parse the first argument for the type of thing being converted
 		if (!typeMapping.containsKey(from)) {
 			irc.sendContextReply(mes, "Cannot convert from " + from);
 			return;
 		}
-		conversionTypes fromType = typeMapping.get(from);
+		final conversionTypes fromType = typeMapping.get(from);
 
 		// Parse the second argument to confirm that it is of the same type
 		if (!typeMapping.containsKey(to)) {
@@ -346,7 +347,7 @@ public class Conversions {
 
 		// Don't bother doing sums if they are the same unit
 		if (from.equals(to)) {
-			StringBuffer responseBuffer = new StringBuffer();
+			final StringBuffer responseBuffer = new StringBuffer();
 			responseBuffer.append(qty);
 			responseBuffer.append(" ");
 			responseBuffer.append(inputFrom);
@@ -359,7 +360,7 @@ public class Conversions {
 		}
 
 		// Do the conversion using the lookup tables
-		Double result = doConvert(from, to, qty);
+		final Double result = doConvert(from, to, qty);
 		if (result.isNaN()) {
 			// Oh dear, the conversion broke
 			irc.sendContextReply(mes, "Could not perform conversion");
@@ -369,7 +370,7 @@ public class Conversions {
 			irc.sendContextReply(mes, "Value was too large to convert.");
 			return;
 		}
-		StringBuffer responseBuffer = new StringBuffer();
+		final StringBuffer responseBuffer = new StringBuffer();
 		responseBuffer.append(qty);
 		responseBuffer.append(" ");
 		responseBuffer.append(inputFrom);
@@ -381,16 +382,15 @@ public class Conversions {
 
 	}
 
-	private String doTypeAliases(String aliased) {
+	private String doTypeAliases(final String aliased) {
 		if (typeAliases.containsKey(aliased)) {
 			return typeAliases.get(aliased);
-		} else {
-			return aliased;
 		}
+		return aliased;
 	}
 
-	private Double doConvert(String from, String to, Double qty) {
-		conversionTypes type = typeMapping.get(from);
+	private Double doConvert(final String from, final String to, final Double qty) {
+		final conversionTypes type = typeMapping.get(from);
 		switch (type) {
 		case MASS:
 			return doMassConversion(from, to, qty);
@@ -407,9 +407,9 @@ public class Conversions {
 		}
 	}
 
-	private Double doVelocityConversion(String from, String to, Double qty) {
-		if ((!velocitiesInMetresPerSecond.containsKey(from))
-				|| (!velocitiesInMetresPerSecond.containsKey(to))) {
+	private Double doVelocityConversion(final String from, final String to, final Double qty) {
+		if (!velocitiesInMetresPerSecond.containsKey(from)
+				|| !velocitiesInMetresPerSecond.containsKey(to)) {
 			return Double.NaN;
 		}
 		return qty.doubleValue()
@@ -417,10 +417,10 @@ public class Conversions {
 				/ velocitiesInMetresPerSecond.get(to).doubleValue();
 	}
 
-	private Double doTemperatureConversion(String from, String to, Double qty) {
+	private Double doTemperatureConversion(final String from, final String to, final Double qty) {
 		if ("celsius".equals(from)) {
 			if ("fahrenheit".equals(to)) {
-				return (qty * 1.8) + 32;
+				return qty * 1.8 + 32;
 			} else if ("kelvin".equals(to)) {
 				return qty + 273.15;
 			}
@@ -429,34 +429,34 @@ public class Conversions {
 				return (qty - 32) / 1.8;
 			}
 			if ("kelvin".equals(to)) {
-				return ((qty - 32) / 1.8) + 273.15;
+				return (qty - 32) / 1.8 + 273.15;
 			}
 		}
 		return Double.NaN;
 	}
 
-	private Double doLengthConversion(String from, String to, Double qty) {
+	private Double doLengthConversion(final String from, final String to, final Double qty) {
 		// Convert qty to metres
-		if ((!lengthsInMetres.containsKey(from))
-				|| (!lengthsInMetres.containsKey(to))) {
+		if (!lengthsInMetres.containsKey(from)
+				|| !lengthsInMetres.containsKey(to)) {
 			return Double.NaN;
 		}
 		return qty.doubleValue() * lengthsInMetres.get(from).doubleValue()
 				/ lengthsInMetres.get(to).doubleValue();
 	}
 
-	private Double doVolumeConversion(String from, String to, Double qty) {
-		if ((!volumesInLitres.containsKey(from))
-				|| (!volumesInLitres.containsKey(to))) {
+	private Double doVolumeConversion(final String from, final String to, final Double qty) {
+		if (!volumesInLitres.containsKey(from)
+				|| !volumesInLitres.containsKey(to)) {
 			return Double.NaN;
 		}
 		return qty.doubleValue() * volumesInLitres.get(from).doubleValue()
 				/ volumesInLitres.get(to).doubleValue();
 	}
 
-	private Double doMassConversion(String from, String to, Double qty) {
-		if ((!massesInKilograms.containsKey(from))
-				|| (!massesInKilograms.containsKey(to))) {
+	private Double doMassConversion(final String from, final String to, final Double qty) {
+		if (!massesInKilograms.containsKey(from)
+				|| !massesInKilograms.containsKey(to)) {
 			return Double.NaN;
 		}
 		return qty.doubleValue() * massesInKilograms.get(from).doubleValue()

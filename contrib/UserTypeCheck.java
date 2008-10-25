@@ -1,5 +1,8 @@
 //import uk.co.uwcs.choob.*;
-import java.util.*;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,17 +24,17 @@ class UserTypeCheckResult
 
 public class UserTypeCheck
 {
-	private Modules mods;
-	private IRCInterface irc;
-	private Map<String,UserTypeCheckResult> userChecks;
-	private int[] statsCalled;
-	private int[] statsWhoisd;
-	private int[] statsFailed;
+	private final Modules mods;
+	private final IRCInterface irc;
+	private final Map<String,UserTypeCheckResult> userChecks;
+	private final int[] statsCalled;
+	private final int[] statsWhoisd;
+	private final int[] statsFailed;
 	private int statsIndex;
 	private int statsLastHour;
-	
+
 	private final int STATS_COUNT = 24;
-	
+
 	/* Time that the API will wait for data to arrive */
 	private final int USER_DATA_WAIT = 10000; // 10 seconds
 	/* If true, cached requests will block until the live request times out */
@@ -40,7 +43,7 @@ public class UserTypeCheck
 	private final int USER_DATA_INTERVAL = 30000; // 30 seconds
 	/* the time for which an entry is cached. */
 	private final int USER_DATA_TIMEOUT = USER_DATA_INTERVAL * 10; // 5 minutes
-	
+
 	/* Different flag types... */
 	private final int USER_TYPE_FLAG_BOT         = 1;
 	private final int USER_TYPE_FLAG_AWAY        = 2;
@@ -52,24 +55,24 @@ public class UserTypeCheck
 	private final int USER_TYPE_RV_ERROR = -1;
 	private final int USER_TYPE_RV_NO    =  0;
 	private final int USER_TYPE_RV_YES   =  1;
-	
+
 	private final Pattern SplitWhoisLine = Pattern.compile("^([^ ]+) ([^ ]+) (.*)$");
-	
-	public UserTypeCheck(Modules mods, IRCInterface irc)
+
+	public UserTypeCheck(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
-		
+
 		userChecks = new HashMap<String,UserTypeCheckResult>();
 		statsIndex = 0;
 		statsLastHour = -1;
 		statsCalled = new int[STATS_COUNT];
 		statsWhoisd = new int[STATS_COUNT];
 		statsFailed = new int[STATS_COUNT];
-		
+
 		mods.interval.callBack(null, 1);
 	}
-	
+
 	public String[] info()
 	{
 		return new String[] {
@@ -88,16 +91,16 @@ public class UserTypeCheck
 		// stuck for all eternity.
 		synchronized(userChecks)
 		{
-			Iterator<String> user = userChecks.keySet().iterator();
+			final Iterator<String> user = userChecks.keySet().iterator();
 			while(user.hasNext()) {
-				UserTypeCheckResult entry = userChecks.get(user.next());
+				final UserTypeCheckResult entry = userChecks.get(user.next());
 				//FIXME: synchronized?//
 				entry.notifyAll();
 			}
 		}
 	}
-	
-	public synchronized void interval(Object parameter)
+
+	public synchronized void interval(final Object parameter)
 	{
 		synchronized(userChecks)
 		{
@@ -107,7 +110,7 @@ public class UserTypeCheck
 				// We want to remove any items that have expired, but leave
 				// those still in progress.
 				nick = user.next();
-				UserTypeCheckResult entry = userChecks.get(nick);
+				final UserTypeCheckResult entry = userChecks.get(nick);
 				if (System.currentTimeMillis() > entry.timestamp + USER_DATA_TIMEOUT) {
 					userChecks.remove(nick);
 					// Restart iterator, otherwise it gets all touchy.
@@ -115,12 +118,12 @@ public class UserTypeCheck
 				}
 			}
 		}
-		
+
 		// Update stats.
-		int newHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+		final int newHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
 		if (statsLastHour != newHour) {
 			statsLastHour = newHour;
-			
+
 			double totalC = 0;
 			double totalW = 0;
 			double totalF = 0;
@@ -129,36 +132,36 @@ public class UserTypeCheck
 				totalW += statsWhoisd[i];
 				totalF += statsFailed[i];
 			}
-			System.out.println("UTC: Average API usage            : " + (totalC / STATS_COUNT) + "/hour");
-			System.out.println("UTC: Average WHOIS commands issued: " + (totalW / STATS_COUNT) + "/hour");
-			System.out.println("UTC: Average failed requests      : " + (totalF / STATS_COUNT) + "/hour");
-			
+			System.out.println("UTC: Average API usage            : " + totalC / STATS_COUNT + "/hour");
+			System.out.println("UTC: Average WHOIS commands issued: " + totalW / STATS_COUNT + "/hour");
+			System.out.println("UTC: Average failed requests      : " + totalF / STATS_COUNT + "/hour");
+
 			statsIndex = (statsIndex + 1) % STATS_COUNT;
 			statsCalled[statsIndex] = 0;
 			statsWhoisd[statsIndex] = 0;
 			statsFailed[statsIndex] = 0;
 		}
-		
+
 		mods.interval.callBack(null, USER_DATA_INTERVAL);
 	}
-	
+
 	public String[] helpCommandCheck = {
 		"Displays some cached status information about a user.",
 		"[<nickname>]",
 		"<nickname> is an optional nick to check"
 	};
-	public void commandCheck(Message mes)
+	public void commandCheck(final Message mes)
 	{
 		String nick = mods.util.getParamString(mes);
 		if (nick.length() == 0)
 			nick = mes.getNick();
-		
-		int Bot = apiStatus(nick, "bot");
-		int Away = apiStatus(nick, "away");
-		int IRCop = apiStatus(nick, "ircop");
-		int Reg = apiStatus(nick, "registered");
-		int SSL = apiStatus(nick, "secure");
-		
+
+		final int Bot = apiStatus(nick, "bot");
+		final int Away = apiStatus(nick, "away");
+		final int IRCop = apiStatus(nick, "ircop");
+		final int Reg = apiStatus(nick, "registered");
+		final int SSL = apiStatus(nick, "secure");
+
 		irc.sendContextReply(mes, "Status for " + nick +
 				": bot = " + mapRVToString(Bot) +
 				"; away = " + mapRVToString(Away) +
@@ -167,7 +170,7 @@ public class UserTypeCheck
 				"; secure = " + mapRVToString(SSL) +
 				".");
 	}
-	
+
 	/*
 	 * Checks the status of the nickname and returns the status of the specified
 	 * flag. This bblocks the caller if a client-server check is needed for this
@@ -182,11 +185,11 @@ public class UserTypeCheck
 	 * @return 1 meaning the flag is true/set for the user, 0 if it is false/not
 	 *         set and -1 if an error occurs.
 	 */
-	public int apiStatus(String nick, String flag)
+	public int apiStatus(final String nick, final String flag)
 	{
 		statsCalled[statsIndex]++;
-		String nickl = nick.toLowerCase();
-		String flagl = flag.toLowerCase();
+		final String nickl = nick.toLowerCase();
+		final String flagl = flag.toLowerCase();
 		if (flagl.equals("bot"))
 			return getStatus(nickl, USER_TYPE_FLAG_BOT);
 		if (flagl.equals("away"))
@@ -199,25 +202,25 @@ public class UserTypeCheck
 			return getStatus(nickl, USER_TYPE_FLAG_SECURE);
 		return USER_TYPE_RV_ERROR;
 	}
-	
-	public void onServerResponse(ServerResponse ev)
+
+	public void onServerResponse(final ServerResponse ev)
 	{
 		// Check for a code we care about first. If we don't care about the
 		// code, we can bail right here. This saves on using the RegExp, and
 		// the |synchronized| stuff below.
-		int code = ev.getCode();
-		if ((code != 301) && (code != 307) && (code != 313)
-				&& (code != 318) && (code != 335) && (code != 671)) {
+		final int code = ev.getCode();
+		if (code != 301 && code != 307 && code != 313
+				&& code != 318 && code != 335 && code != 671) {
 			return;
 		}
-		
+
 		// ^([^ ]+) ([^ ]+) (.*)$
-		Matcher sp = SplitWhoisLine.matcher(ev.getResponse());
+		final Matcher sp = SplitWhoisLine.matcher(ev.getResponse());
 		if (!sp.matches())
 			return;
-		
-		String nickl = sp.group(2).toLowerCase();
-		
+
+		final String nickl = sp.group(2).toLowerCase();
+
 		UserTypeCheckResult userData;
 		synchronized(userChecks) {
 			userData = userChecks.get(nickl);
@@ -225,7 +228,7 @@ public class UserTypeCheck
 		if (userData == null) {
 			return;
 		}
-		
+
 		synchronized(userData) {
 			if (code == 335) {
 				userData.isBot = true;
@@ -249,39 +252,39 @@ public class UserTypeCheck
 			}
 		}
 	}
-	
-	private int getStatus(String nick, int flag)
+
+	private int getStatus(final String nick, final int flag)
 	{
-		UserTypeCheckResult userData = getUserData(nick);
+		final UserTypeCheckResult userData = getUserData(nick);
 		if (userData == null) {
 			return USER_TYPE_RV_ERROR;
 		}
-		
+
 		switch(flag) {
 			case USER_TYPE_FLAG_BOT:
 				return mapBooleanToCheckRV(userData.isBot);
-			
+
 			case USER_TYPE_FLAG_AWAY:
 				return mapBooleanToCheckRV(userData.isAway);
-			
+
 			case USER_TYPE_FLAG_IRCOP:
 				return mapBooleanToCheckRV(userData.isOperator);
-			
+
 			case USER_TYPE_FLAG_REGISTERED:
 				return mapBooleanToCheckRV(userData.isRegistered);
-			
+
 			case USER_TYPE_FLAG_SECURE:
 				return mapBooleanToCheckRV(userData.isSecure);
 		}
 		return USER_TYPE_RV_ERROR;
 	}
-	
-	private UserTypeCheckResult getUserData(String nick)
+
+	private UserTypeCheckResult getUserData(final String nick)
 	{
 		UserTypeCheckResult data;
 		synchronized(userChecks) {
 			data = userChecks.get(nick);
-			
+
 			if (data != null) {
 				if (!USER_DATA_CACHE_BLOCK && !data.hasChecked) {
 					statsFailed[statsIndex]++;
@@ -295,7 +298,7 @@ public class UserTypeCheck
 					return data;
 				}
 			}
-			
+
 			// Create new data thing and send query off.
 			data = new UserTypeCheckResult();
 			data.hasChecked = false;
@@ -304,11 +307,11 @@ public class UserTypeCheck
 		}
 		statsWhoisd[statsIndex]++;
 		irc.sendRawLine("WHOIS " + nick);
-		
+
 		synchronized(data) {
 			try {
 				data.wait(USER_DATA_WAIT);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				// Do nothing, as data.hasChecked will be false anyway.
 			}
 			if (!data.hasChecked) {
@@ -318,15 +321,15 @@ public class UserTypeCheck
 			return data;
 		}
 	}
-	
-	private int mapBooleanToCheckRV(boolean in)
+
+	private int mapBooleanToCheckRV(final boolean in)
 	{
 		if (in)
 			return USER_TYPE_RV_YES;
 		return USER_TYPE_RV_NO;
 	}
-	
-	private String mapRVToString(int rv)
+
+	private String mapRVToString(final int rv)
 	{
 		switch (rv) {
 			case USER_TYPE_RV_YES: return "yes";

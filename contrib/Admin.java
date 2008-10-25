@@ -2,7 +2,9 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.util.List;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
 
@@ -18,15 +20,15 @@ public class Admin
 		};
 	}
 
-	private Modules mods;
-	private IRCInterface irc;
-	public Admin(Modules mods, IRCInterface irc)
+	private final Modules mods;
+	private final IRCInterface irc;
+	public Admin(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
 	}
 
-	public void commandJoin( Message mes )
+	public void commandJoin( final Message mes )
 	{
 		if ( mods.security.hasNickPerm( new ChoobPermission("state.join"), mes ) )
 			try
@@ -34,13 +36,13 @@ public class Admin
 				irc.join(mods.util.getParamString(mes));
 				irc.sendContextReply(mes, "Okay!");
 			}
-			catch (ChoobException e)
+			catch (final ChoobException e)
 			{
 				irc.sendContextReply(mes, "Couldn't join :/");
 			}
 	}
 
-	public void commandGc( Message mes )
+	public void commandGc( final Message mes )
 	{
 		if ( mods.security.hasNickPerm( new ChoobPermission("system.gc"), mes ) )
 		{
@@ -51,7 +53,7 @@ public class Admin
 			irc.sendContextReply(mes, "Denied." );
 	}
 
-	public void commandRaw( Message mes )
+	public void commandRaw( final Message mes )
 	{
 		if ( mods.security.hasNickPerm( new ChoobPermission("admin.raw"), mes ) )
 			irc.sendRawLine(mods.util.getParamString(mes));
@@ -59,14 +61,14 @@ public class Admin
 			irc.sendContextReply(mes, "Don't do that.");
 	}
 
-	private String bytesString(long l)
+	private String bytesString(final long l)
 	{
 		return new Float(l/1024.0/1024.0).toString() + "mb";
 	}
 
-	public void commandMemory( Message mes )
+	public void commandMemory( final Message mes )
 	{
-		long total = Runtime.getRuntime().totalMemory();
+		final long total = Runtime.getRuntime().totalMemory();
 		irc.sendContextReply(mes, "I'm using " +
 			bytesString(total - Runtime.getRuntime().freeMemory()) +
 			" out of " +
@@ -76,11 +78,11 @@ public class Admin
 		").");
 	}
 
-	public void commandGCs( Message mes )
+	public void commandGCs( final Message mes )
 	{
 		final List<GarbageCollectorMXBean> gcbeans = java.lang.management.ManagementFactory.getGarbageCollectorMXBeans();
 		String ret = "";
-		for (GarbageCollectorMXBean gcbean : gcbeans)
+		for (final GarbageCollectorMXBean gcbean : gcbeans)
 			ret += gcbean.getName() + " has run " + gcbean.getCollectionCount() + " times, taking " + gcbean.getCollectionTime() + "ms total. ";
 		irc.sendContextReply(mes, ret);
 	}

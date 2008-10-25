@@ -9,10 +9,10 @@ import java.security.Permission;
 public final class ChoobPluginAuthError extends ChoobAuthError
 {
 	private static final long serialVersionUID = -4702733953713229195L;
-	private Permission permission;
+	private final Permission permission;
 	private String plugin;
 
-	public ChoobPluginAuthError(String plugin, Permission permission)
+	public ChoobPluginAuthError(final String plugin, final Permission permission)
 	{
 		super("The plugin " + plugin + " needs this permission: " + getPermissionText(permission));
 		this.permission = permission;

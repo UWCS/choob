@@ -1,6 +1,9 @@
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.TimeZone;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
@@ -9,8 +12,8 @@ import uk.co.uwcs.choob.support.events.Message;
 public class Timezone
 {
 
-	private Modules mods;
-	private IRCInterface irc;
+	private final Modules mods;
+	private final IRCInterface irc;
 
 
 	public String[] info()
@@ -23,14 +26,14 @@ public class Timezone
 		};
 	}
 
-	public Timezone(Modules mods, IRCInterface irc)
+	public Timezone(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
 	}
 	private static final String PATTERN = "HH:mm:ss";
 
-	private String fixZone(String inputZone)
+	private String fixZone(final String inputZone)
 	{
 		String fixed = inputZone;
 		if (fixed.length() == 3)
@@ -39,11 +42,11 @@ public class Timezone
 		{
 			try
 			{
-				int offset = Integer.parseInt(fixed.replaceAll(":|\\+",""));
-				String[] ids = TimeZone.getAvailableIDs(offset * 36000);
+				final int offset = Integer.parseInt(fixed.replaceAll(":|\\+",""));
+				final String[] ids = TimeZone.getAvailableIDs(offset * 36000);
 				if (ids.length > 0)
 					fixed = ids[0];
-			} catch (NumberFormatException e)
+			} catch (final NumberFormatException e)
 			{
 				// Can't fix it, just return it.
 			}
@@ -58,13 +61,13 @@ public class Timezone
 		"<Original TimeZone> is the timezone to convert from.",
 		"<Target TimeZone> is the TimeZone to convert to."
 	};
-	public void commandWhenIs(Message mes)
+	public void commandWhenIs(final Message mes)
 	{
-		List<String> params = mods.util.getParams(mes,5);
+		final List<String> params = mods.util.getParams(mes,5);
 		TimeZone targetTimeZone = TimeZone.getTimeZone("Europe/London");
-		if ((params.size() == 5) && (params.get(3).equals("in")))
+		if (params.size() == 5 && params.get(3).equals("in"))
 		{
-			String input = fixZone(params.get(4));
+			final String input = fixZone(params.get(4));
 			targetTimeZone = TimeZone.getTimeZone(input);
 		} else if (params.size() != 3)
 		{
@@ -74,13 +77,13 @@ public class Timezone
 
 		try
 		{
-			SimpleDateFormat df = new SimpleDateFormat(PATTERN);
-			GregorianCalendar cal = new GregorianCalendar();
-			String zone = fixZone(params.get(2));
-			TimeZone sourceTimeZone = TimeZone.getTimeZone(zone);
+			final SimpleDateFormat df = new SimpleDateFormat(PATTERN);
+			final GregorianCalendar cal = new GregorianCalendar();
+			final String zone = fixZone(params.get(2));
+			final TimeZone sourceTimeZone = TimeZone.getTimeZone(zone);
 			cal.setTimeZone(sourceTimeZone);
-			String[] splitTime = params.get(1).split(":");
-				
+			final String[] splitTime = params.get(1).split(":");
+
 			int hour = 0;
 			int min = 0;
 			int sec = 0;
@@ -98,7 +101,7 @@ public class Timezone
 				{
 					throw new ParseException("Wrong time format",0);
 				}
-			} catch (NumberFormatException e)
+			} catch (final NumberFormatException e)
 			{
 				throw new ParseException("Wrong time format",0);
 			}
@@ -107,10 +110,10 @@ public class Timezone
 			cal.set(Calendar.MINUTE,min);
 			cal.set(Calendar.SECOND,sec);
 			df.setTimeZone(targetTimeZone);
-			boolean sourceInDst = sourceTimeZone.inDaylightTime(cal.getTime());
-			boolean targetInDst = targetTimeZone.inDaylightTime(cal.getTime());
-			
-			StringBuilder response = new StringBuilder();
+			final boolean sourceInDst = sourceTimeZone.inDaylightTime(cal.getTime());
+			final boolean targetInDst = targetTimeZone.inDaylightTime(cal.getTime());
+
+			final StringBuilder response = new StringBuilder();
 			response.append(params.get(1));
 			response.append(" (");
 			response.append(sourceTimeZone.getDisplayName(sourceInDst,TimeZone.LONG));
@@ -121,7 +124,7 @@ public class Timezone
 			response.append(")");
 			irc.sendContextReply(mes,response.toString());
 
-		} catch (ParseException e)
+		} catch (final ParseException e)
 		{
 			irc.sendContextReply(mes,"Error parsing input time, should be in format: " + PATTERN);
 			return;
@@ -135,14 +138,14 @@ public class Timezone
 		"Set your timezone for the timein command with no parameters."
 	};
 
-	public boolean optionCheckUserTimezone(String value, String nick) {
+	public boolean optionCheckUserTimezone(final String value, final String nick) {
 		return true; //hmm
 	}
-	
-	private String checkOption(String userNick) {
+
+	private String checkOption(final String userNick) {
 		try {
  			return (String)mods.plugin.callAPI("Options", "GetUserOption", userNick,"Zone", optionsUserDefaults[0]);
-		} catch (ChoobNoSuchCallException e) {
+		} catch (final ChoobNoSuchCallException e) {
 			return optionsUserDefaults[0];
 		}
 	}
@@ -153,28 +156,28 @@ public class Timezone
 		"<TimeZone (eg GMT or Europe/London or +00:00)>",
 		"<TimeZone> is the timezone to return the current time of."
 	};
-	public void commandTimeIn(Message mes)
+	public void commandTimeIn(final Message mes)
 	{
-		List<String> params = mods.util.getParams(mes,3);
+		final List<String> params = mods.util.getParams(mes,3);
 		String input = checkOption(mes.getNick());
 
-		if ((params.size() != 2) && (input == null))
+		if (params.size() != 2 && input == null)
 		{
 			irc.sendContextReply(mes,"Usage timein <timezone>");
 			return;
 		}
 
-		if ((params.size() == 2) || (input == null))
+		if (params.size() == 2 || input == null)
 			input = fixZone(params.get(1));
-		
 
-		SimpleDateFormat df = new SimpleDateFormat(PATTERN);
-		GregorianCalendar now = new GregorianCalendar();
-		TimeZone timeZone = TimeZone.getTimeZone(input);
-		boolean dst = timeZone.inDaylightTime(now.getTime());
+
+		final SimpleDateFormat df = new SimpleDateFormat(PATTERN);
+		final GregorianCalendar now = new GregorianCalendar();
+		final TimeZone timeZone = TimeZone.getTimeZone(input);
+		final boolean dst = timeZone.inDaylightTime(now.getTime());
 		df.setTimeZone(timeZone);
 		irc.sendContextReply(mes,"Current time in " + timeZone.getDisplayName(dst,TimeZone.LONG) + " is: " + df.format(now.getTime()));
-	
+
 	}
 
 }

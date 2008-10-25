@@ -6,7 +6,9 @@
 
 package uk.co.uwcs.choob.modules;
 
-import java.util.*;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 import uk.co.uwcs.choob.support.Interval;
 
@@ -15,11 +17,11 @@ import uk.co.uwcs.choob.support.Interval;
  */
 public final class IntervalModule
 {
-	private List <Interval> intervalList;
-	private Modules mods;
+	private final List <Interval> intervalList;
+	private final Modules mods;
 
 	/** Creates a new instance of IntervalModule */
-	IntervalModule( List <Interval> intervalList, Modules mods )
+	IntervalModule( final List <Interval> intervalList, final Modules mods )
 	{
 		this.intervalList = intervalList;
 		this.mods = mods;
@@ -30,7 +32,7 @@ public final class IntervalModule
 	 * @param parameter The paramater that you want passed along to the interval function.
 	 * @param interval The Date at which you want the event to occour.
 	 */
-	public void callBack( Object parameter, Date interval )
+	public void callBack( final Object parameter, final Date interval )
 	{
 		callBackReal( parameter, interval.getTime(), 0 );
 	}
@@ -41,7 +43,7 @@ public final class IntervalModule
 	 * @param interval The Date at which you want the event to occour.
 	 * @param id The unique id of this interval (-1 for no ID).
 	 */
-	public void callBack( Object parameter, Date interval, int id )
+	public void callBack( final Object parameter, final Date interval, final int id )
 	{
 		callBackReal( parameter, interval.getTime(), id );
 	}
@@ -51,7 +53,7 @@ public final class IntervalModule
 	 * @param parameter The parameter that you want passed along to the interval function.
 	 * @param delay The delay after which you want the event to occur, in milliseconds.
 	 */
-	public void callBack( Object parameter, long delay )
+	public void callBack( final Object parameter, final long delay )
 	{
 		callBackReal( parameter, System.currentTimeMillis() + delay, 0 );
 	}
@@ -62,29 +64,29 @@ public final class IntervalModule
 	 * @param delay The delay after which you want the event to occour.
 	 * @param id The unique id of this interval (-1 for no ID).
 	 */
-	public void callBack( Object parameter, long delay, int id )
+	public void callBack( final Object parameter, final long delay, final int id )
 	{
 		callBackReal( parameter, System.currentTimeMillis() + delay, id );
 	}
 
-	private void callBackReal (Object parameter, long when, int id)
+	private void callBackReal (final Object parameter, final long when, final int id)
 	{
-		String plugin = mods.security.getPluginName(0);
+		final String plugin = mods.security.getPluginName(0);
 		if (plugin == null)
 		{
 			System.err.println("A plugin tried to call callBack, but wasn't on the stack...");
 			return;
 		}
-		Interval newInt = new Interval( plugin, parameter, when, id );
+		final Interval newInt = new Interval( plugin, parameter, when, id );
 		synchronized(intervalList)
 		{
 			if ( id != -1 )
 			{
 				// XXX this is damn inefficient...
-				Iterator<Interval> iterator = intervalList.iterator();
+				final Iterator<Interval> iterator = intervalList.iterator();
 				while(iterator.hasNext())
 				{
-					Interval thisInt = iterator.next();
+					final Interval thisInt = iterator.next();
 					if ( id == thisInt.getId() && plugin.equals(thisInt.getPlugin()) )
 						iterator.remove();
 				}
@@ -98,7 +100,7 @@ public final class IntervalModule
 	 */
 	public void reset ()
 	{
-		String plugin = mods.security.getPluginName(0);
+		final String plugin = mods.security.getPluginName(0);
 		if (plugin == null)
 		{
 			System.err.println("A plugin tried to call reset, but wasn't on the stack...");
@@ -107,10 +109,10 @@ public final class IntervalModule
 		synchronized(intervalList)
 		{
 			// XXX this is damn inefficient...
-			Iterator<Interval> iterator = intervalList.iterator();
+			final Iterator<Interval> iterator = intervalList.iterator();
 			while(iterator.hasNext())
 			{
-				Interval thisInt = iterator.next();
+				final Interval thisInt = iterator.next();
 				if ( plugin.equals(thisInt.getPlugin()) )
 					iterator.remove();
 			}

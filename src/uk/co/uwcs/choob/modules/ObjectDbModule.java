@@ -11,17 +11,21 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobError;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.ObjectDBDeadlockError;
+import uk.co.uwcs.choob.support.ObjectDBTransaction;
 
 /**
  * An interface with the ObjectDB, for use by plugins and core code alike.
- * 
+ *
  * The ObjectDB provides a simple and clean interface for storing, updating,
  * deleting and - most importantly - retrieving generic objects. Objects need
  * not support any particular interface, nor inherit from any particular class;
  * instead, the only requirement is that they have an "id" property of type
  * "int".<p>
- * 
+ *
  * All public read/write properties of the following types are loaded and
  * saved by ObjectDB for Java objects:
  *
@@ -35,11 +39,11 @@ import uk.co.uwcs.choob.support.*;
  *     <li>Double</li>
  *     <li>String</li>
  * </ul>
- * 
+ *
  * For JavaScript objects, properties are always public, so the ObjectDB only
  * saves ones that do not start with an underscore (<tt>_</tt>). The following
  * JavaScript types are saved:
- * 
+ *
  * <ul>
  *     <li>Boolean</li>
  *     <li>Number</li>
@@ -48,11 +52,11 @@ import uk.co.uwcs.choob.support.*;
  */
 public final class ObjectDbModule
 {
-	private DbConnectionBroker broker;
-	private Modules mods;
+	private final DbConnectionBroker broker;
+	private final Modules mods;
 
 	/** Creates a new instance of ObjectDbModule */
-	ObjectDbModule(DbConnectionBroker broker, Modules mods)
+	ObjectDbModule(final DbConnectionBroker broker, final Modules mods)
 	{
 		this.broker = broker;
 		this.mods = mods;
@@ -62,7 +66,7 @@ public final class ObjectDbModule
 	 * Escapes a string safely for use inside single- or double-quoted strings
 	 * in an ObjectDB query.
 	 */
-	public String escapeString(String text)
+	public String escapeString(final String text)
 	{
 		return text.replaceAll("(\\W)", "\\\\$1");
 	}
@@ -71,7 +75,7 @@ public final class ObjectDbModule
 	 * Escapes a string safely for use inside single- or double-quoted strings
 	 * in a <tt>LIKE</tt> comparison in an ObjectDB query.
 	 */
-	public String escapeForLike(String text)
+	public String escapeForLike(final String text)
 	{
 		return escapeString(text).replaceAll("([_%])", "\\\\$1");
 	}
@@ -80,7 +84,7 @@ public final class ObjectDbModule
 	 * Escapes a string safely for use inside single- or double-quoted strings
 	 * in a <tt>RLIKE</tt> comparison in an ObjectDB query.
 	 */
-	public String escapeForRLike(String text)
+	public String escapeForRLike(final String text)
 	{
 		return escapeString(text);
 	}
@@ -91,24 +95,24 @@ public final class ObjectDbModule
 	 * @param clause The clause specifying which objects you want to select.
 	 */
 	@SuppressWarnings("unchecked")
-	public <T> List<T> retrieve(Class<T> storedClass, String clause)
+	public <T> List<T> retrieve(final Class<T> storedClass, final String clause)
 	{
 		return retrieve((Object)storedClass, clause);
 	}
 
 	@SuppressWarnings("unchecked")
-	public List retrieve(Object storedClass, String clause)
+	public List retrieve(final Object storedClass, final String clause)
 	{
 		Connection dbConn = null;
 		try
 		{
 			dbConn = broker.getConnection();
 		}
-		catch (SQLException e)
+		catch (final SQLException e)
 		{
 			throw new ChoobError("Sql Exception", e);
 		}
-		ObjectDBTransaction trans = new ObjectDBTransaction();
+		final ObjectDBTransaction trans = new ObjectDBTransaction();
 		trans.setConn(dbConn);
 		trans.setMods(mods);
 		try
@@ -163,7 +167,8 @@ public final class ObjectDbModule
 	{
 		synchronized( strObject.getClass() )
 		{
-			runTransaction( new ObjectDBTransaction() { public void run() {
+			runTransaction( new ObjectDBTransaction() { @Override
+			public void run() {
 				delete(strObject);
 			} } );
 		}
@@ -177,7 +182,8 @@ public final class ObjectDbModule
 	{
 		synchronized( strObject.getClass() )
 		{
-			runTransaction( new ObjectDBTransaction() { public void run() {
+			runTransaction( new ObjectDBTransaction() { @Override
+			public void run() {
 				update(strObject);
 			} } );
 		}
@@ -191,20 +197,21 @@ public final class ObjectDbModule
 	{
 		synchronized( strObject.getClass() )
 		{
-			runTransaction( new ObjectDBTransaction() { public void run() {
+			runTransaction( new ObjectDBTransaction() { @Override
+			public void run() {
 				save(strObject);
 			} } );
 		}
 	}
 
-	public void runTransaction( ObjectDBTransaction trans )
+	public void runTransaction( final ObjectDBTransaction trans )
 	{
 		Connection dbConn = null;
 		try
 		{
 			dbConn = broker.getConnection();
 		}
-		catch (SQLException e)
+		catch (final SQLException e)
 		{
 			throw new ChoobError("Sql Exception", e);
 		}
@@ -224,7 +231,7 @@ public final class ObjectDbModule
 					trans.commit();
 					break;
 				}
-				catch (ObjectDBDeadlockError e)
+				catch (final ObjectDBDeadlockError e)
 				{
 					// Is it time to give up?
 					if (i == 20)
@@ -232,7 +239,7 @@ public final class ObjectDbModule
 
 					trans.rollback();
 					System.err.println("SQL Deadlock occurred. Rolling back and backing off for " + delay + "ms.");
-					try { synchronized(trans) { trans.wait(delay); } } catch (InterruptedException ie) { }
+					try { synchronized(trans) { trans.wait(delay); } } catch (final InterruptedException ie) { }
 					delay *= 1.3; // XXX Makes baby LucidIon cry.
 				}
 			}
@@ -244,14 +251,14 @@ public final class ObjectDbModule
 		}
 	}
 
-	public void runNonRepeatableTransaction( ObjectDBTransaction trans )
+	public void runNonRepeatableTransaction( final ObjectDBTransaction trans )
 	{
 		Connection dbConn = null;
 		try
 		{
 			dbConn = broker.getConnection();
 		}
-		catch (SQLException e)
+		catch (final SQLException e)
 		{
 			throw new ChoobError("Sql Exception", e);
 		}
@@ -279,13 +286,13 @@ public final class ObjectDbModule
 		{
 			return broker.getConnection();
 		}
-		catch (SQLException e)
+		catch (final SQLException e)
 		{
 			throw new ChoobError("Sql Exception", e);
 		}
 	}
 
-	public void freeConnection(Connection c)
+	public void freeConnection(final Connection c)
 	{
 		AccessController.checkPermission(new ChoobPermission("db.connection.checkin"));
 		broker.freeConnection( c );

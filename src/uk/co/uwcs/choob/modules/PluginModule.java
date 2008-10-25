@@ -8,15 +8,36 @@ package uk.co.uwcs.choob.modules;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.*;
-import java.sql.*;
+import java.security.AccessControlException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.co.uwcs.choob.*;
+import uk.co.uwcs.choob.Choob;
+import uk.co.uwcs.choob.ChoobDistributingPluginManager;
+import uk.co.uwcs.choob.ChoobPluginManager;
+import uk.co.uwcs.choob.ChoobTask;
+import uk.co.uwcs.choob.ChoobThread;
+import uk.co.uwcs.choob.ChoobThreadManager;
 import uk.co.uwcs.choob.plugins.HaxSunPluginManager;
 import uk.co.uwcs.choob.plugins.JavaScriptPluginManager;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.CallAPIResult;
+import uk.co.uwcs.choob.support.ChoobAuthError;
+import uk.co.uwcs.choob.support.ChoobBadSyntaxError;
+import uk.co.uwcs.choob.support.ChoobError;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobInternalError;
+import uk.co.uwcs.choob.support.ChoobInvocationError;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
 /**
@@ -25,20 +46,20 @@ import uk.co.uwcs.choob.support.events.Message;
  */
 public final class PluginModule
 {
-	private DbConnectionBroker broker;
-	private Modules mods;
-	private ChoobPluginManager hsPlugMan;
-	private ChoobPluginManager dPlugMan;
-	private ChoobPluginManager jsPlugMan;
-	private Choob bot;
-	private IRCInterface irc;
+	private final DbConnectionBroker broker;
+	private final Modules mods;
+	private final ChoobPluginManager hsPlugMan;
+	private final ChoobPluginManager dPlugMan;
+	private final ChoobPluginManager jsPlugMan;
+	private final Choob bot;
+	private final IRCInterface irc;
 
 	/**
 	 * Creates a new instance of the PluginModule.
 	 * @param pluginMap Map containing currently loaded plugins.
 	 */
-	PluginModule(DbConnectionBroker broker, Modules mods,
-			IRCInterface irc, Choob bot) throws ChoobException {
+	PluginModule(final DbConnectionBroker broker, final Modules mods,
+			final IRCInterface irc, final Choob bot) throws ChoobException {
 		this.broker = broker;
 		this.mods = mods;
 		this.hsPlugMan = new HaxSunPluginManager(mods, irc);
@@ -64,13 +85,13 @@ public final class PluginModule
 	 * @param pluginName Name for the class of the new plugin.
 	 * @throws ChoobException Thrown if there's a syntactical error in the plugin's source.
 	 */
-	public void addPlugin(final String pluginName, String URL) throws ChoobException {
+	public void addPlugin(final String pluginName, final String URL) throws ChoobException {
 		final URL srcURL;
 		try
 		{
 			srcURL = new URL(URL);
 		}
-		catch (MalformedURLException e)
+		catch (final MalformedURLException e)
 		{
 			throw new ChoobException("URL " + URL + " is malformed: " + e);
 		}
@@ -79,25 +100,26 @@ public final class PluginModule
 		final boolean[] existed = new boolean[] { false };
 		final ChoobException[] err = new ChoobException[] { null };
 
-		ChoobTask task = new ChoobTask(null, "addPlugin-" + pluginName) {
+		final ChoobTask task = new ChoobTask(null, "addPlugin-" + pluginName) {
+			@Override
 			public void run() {
 				try {
 					if (srcURL.getFile().endsWith(".js"))
 						existed[0] = jsPlugMan.loadPlugin(pluginName, srcURL);
 					else
 						existed[0] = hsPlugMan.loadPlugin(pluginName, srcURL);
-				} catch (ChoobException e) {
+				} catch (final ChoobException e) {
 					err[0] = e;
 				}
 			}
 		};
-		ChoobThread thread = new ChoobThread(task, "choob-addPlugin-" + pluginName);
+		final ChoobThread thread = new ChoobThread(task, "choob-addPlugin-" + pluginName);
 		thread.pushPlugin(pluginName);
 
 		thread.start();
 		try {
 			thread.join();
-		} catch (InterruptedException e) {}
+		} catch (final InterruptedException e) {}
 
 		if (err[0] != null)
 			throw err[0];
@@ -119,7 +141,7 @@ public final class PluginModule
 	 * @throws ChoobException Thrown if there's a syntactical error in the plugin's source.
 	 */
 	public void reloadPlugin(String pluginName) throws ChoobException {
-		String URL = getPluginURL(pluginName);
+		final String URL = getPluginURL(pluginName);
 		pluginName = getPluginName(pluginName); // Fix the case of the param
 		if (URL == null)
 			throw new ChoobNoSuchPluginException(pluginName);
@@ -142,7 +164,7 @@ public final class PluginModule
 	 * @param pluginName Name of the plugin to reload.
 	 * @throws ChoobNoSuchPluginException Thrown if the plugin doesn't exist.
 	 */
-	public void setCorePlugin(String pluginName, boolean isCore) throws ChoobNoSuchPluginException {
+	public void setCorePlugin(final String pluginName, final boolean isCore) throws ChoobNoSuchPluginException {
 		AccessController.checkPermission(new ChoobPermission("plugin.core"));
 		setCoreStatus(pluginName, isCore);
 	}
@@ -155,7 +177,7 @@ public final class PluginModule
 	 * @throws ChoobNoSuchCallException If the call could not be resolved.
 	 * @throws ChoobInvocationError If the call threw an exception.
 	 */
-	public Object callAPI(final String pluginName, String APIString, Object... params) throws ChoobNoSuchCallException
+	public Object callAPI(final String pluginName, final String APIString, final Object... params) throws ChoobNoSuchCallException
 	{
 		AccessController.doPrivileged(new PrivilegedAction<Object>() {
 			public Object run() {
@@ -184,26 +206,26 @@ public final class PluginModule
 	 * @param params Parameters to pass to the routine.
 	 */
 
-	public List<CallAPIResult> broadcastCallAPI(String APIString, Object... params)
+	public List<CallAPIResult> broadcastCallAPI(final String APIString, final Object... params)
 	{
-		List<CallAPIResult> rvList = new ArrayList<CallAPIResult>();
+		final List<CallAPIResult> rvList = new ArrayList<CallAPIResult>();
 
-		String[] plugins = dPlugMan.plugins();
-		for (int i = 0; i < plugins.length; i++)
+		final String[] plugins = dPlugMan.plugins();
+		for (final String plugin : plugins)
 		{
 			CallAPIResult rv;
 			try
 			{
-				rv = new CallAPIResult(plugins[i], callAPI(plugins[i], APIString, params), null);
+				rv = new CallAPIResult(plugin, callAPI(plugin, APIString, params), null);
 			}
-			catch (ChoobNoSuchCallException e)
+			catch (final ChoobNoSuchCallException e)
 			{
 				// Plugin doesn't support this API call, so ignore error.
 				continue;
 			}
-			catch (Exception e)
+			catch (final Exception e)
 			{
-				rv = new CallAPIResult(plugins[i], null, e);
+				rv = new CallAPIResult(plugin, null, e);
 			}
 			rvList.add(rv);
 		}
@@ -220,7 +242,7 @@ public final class PluginModule
 	 * @throws ChoobNoSuchCallException If the call could not be resolved.
 	 * @throws ChoobInvocationError If the call threw an exception.
 	 */
-	public Object callGeneric(final String pluginName, String type, String name, Object... params) throws ChoobNoSuchCallException
+	public Object callGeneric(final String pluginName, final String type, final String name, final Object... params) throws ChoobNoSuchCallException
 	{
 		AccessController.checkPermission(new ChoobPermission("generic." + type));
 
@@ -252,17 +274,17 @@ public final class PluginModule
 	 * @param mes The message to pass to the routing
 	 * @throws ChoobNoSuchCallException If the call could not be resolved.
 	 */
-	public void queueCommand(String pluginName, String command, Message mes) throws ChoobNoSuchCallException
+	public void queueCommand(final String pluginName, final String command, final Message mes) throws ChoobNoSuchCallException
 	{
 		AccessController.checkPermission(new ChoobPermission("generic.command"));
-		ChoobTask task = dPlugMan.commandTask(pluginName, command, mes);
+		final ChoobTask task = dPlugMan.commandTask(pluginName, command, mes);
 		if (task != null)
 			ChoobThreadManager.queueTask(task);
 		else
 			throw new ChoobNoSuchCallException(pluginName, "command " + command);
 	}
 
-	public void exceptionReply(Message mes, Throwable e, String pluginName)
+	public void exceptionReply(final Message mes, final Throwable e, final String pluginName)
 	{
 		if (pluginName == null)
 		{
@@ -270,11 +292,11 @@ public final class PluginModule
 			{
 				try
 				{
-					String[] params = mods.util.getParamArray(mes);
-					String[] guts = (String[])callAPI("Help", "GetSyntax", params[0]);
+					final String[] params = mods.util.getParamArray(mes);
+					final String[] guts = (String[])callAPI("Help", "GetSyntax", params[0]);
 					irc.sendContextReply(mes, guts);
 				}
-				catch (ChoobNoSuchCallException f)
+				catch (final ChoobNoSuchCallException f)
 				{
 					irc.sendContextReply(mes, "Bad syntax! Unfortunately, I don't have Help loaded to tell you what it should be.");
 				}
@@ -292,11 +314,11 @@ public final class PluginModule
 			{
 				try
 				{
-					String[] params = mods.util.getParamArray(mes);
-					String[] guts = (String[])callAPI("Help", "GetSyntax", params[0]);
+					final String[] params = mods.util.getParamArray(mes);
+					final String[] guts = (String[])callAPI("Help", "GetSyntax", params[0]);
 					irc.sendContextReply(mes, guts);
 				}
-				catch (ChoobNoSuchCallException f)
+				catch (final ChoobNoSuchCallException f)
 				{
 					irc.sendContextReply(mes, "Bad syntax! Unfortunately, I don't have Help loaded to tell you what it should be.");
 				}
@@ -316,7 +338,7 @@ public final class PluginModule
 	 * @param param The parameter to pass to the interval handler.
 	 * @return A ChoobTask that will run the handler.
 	 */
-	public ChoobTask doInterval(String plugin, Object param)
+	public ChoobTask doInterval(final String plugin, final Object param)
 	{
 		AccessController.checkPermission(new ChoobPermission("interval"));
 		return dPlugMan.intervalTask(plugin, param);
@@ -336,9 +358,9 @@ public final class PluginModule
 	 * @param pluginName plugin name to query
 	 * @return Names of all commands in the plugin.
 	 */
-	public String[] getPluginCommands(String pluginName) throws ChoobNoSuchPluginException
+	public String[] getPluginCommands(final String pluginName) throws ChoobNoSuchPluginException
 	{
-		String[] commands = dPlugMan.commands(pluginName);
+		final String[] commands = dPlugMan.commands(pluginName);
 		if (commands == null)
 			throw new ChoobNoSuchPluginException(pluginName);
 		return commands;
@@ -349,7 +371,7 @@ public final class PluginModule
 	 * @param onlyCore whether to only return known core plugins
 	 * @return Names of all loaded plugins.
 	 */
-	public String[] getAllPlugins(boolean onlyCore)
+	public String[] getAllPlugins(final boolean onlyCore)
 	{
 		return getPluginList(onlyCore);
 	}
@@ -359,7 +381,7 @@ public final class PluginModule
 	 * @param pluginName The name of the plugin to get the source URL for.
 	 * @return URL string for the plugin.
 	 */
-	public String getPluginSource(String pluginName) throws ChoobNoSuchPluginException
+	public String getPluginSource(final String pluginName) throws ChoobNoSuchPluginException
 	{
 		return getPluginURL(pluginName);
 	}
@@ -375,36 +397,37 @@ public final class PluginModule
 		// 2 threads/plugin.
 		final int[] limit = new int[] { 2 };
 
-		ChoobTask task = new ChoobTask(null, "getConcurrencyLimit") {
+		final ChoobTask task = new ChoobTask(null, "getConcurrencyLimit") {
+			@Override
 			public void run() {
 				try {
 					limit[0] = (Integer)mods.plugin.callAPI("Concurrency", "GetThreadLimit", pluginName);
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					// Don't care about anything. Lalala.
 				}
 			}
 		};
-		ChoobThread thread = new ChoobThread(task, "choob-getConcurrencyLimit");
+		final ChoobThread thread = new ChoobThread(task, "choob-getConcurrencyLimit");
 		thread.pushPlugin(pluginName);
 
 		thread.start();
 		try {
 			thread.join();
-		} catch (InterruptedException e) {}
+		} catch (final InterruptedException e) {}
 
 		return limit[0];
 	}
 
-	private void setCoreStatus(String pluginName, boolean isCore) throws ChoobNoSuchPluginException {
+	private void setCoreStatus(final String pluginName, final boolean isCore) throws ChoobNoSuchPluginException {
 		Connection dbCon = null;
 		try {
 			dbCon = broker.getConnection();
-			PreparedStatement sqlSetCore = dbCon.prepareStatement("UPDATE Plugins SET CorePlugin = ? WHERE PluginName = ?");
+			final PreparedStatement sqlSetCore = dbCon.prepareStatement("UPDATE Plugins SET CorePlugin = ? WHERE PluginName = ?");
 			sqlSetCore.setInt(1, isCore ? 1 : 0);
 			sqlSetCore.setString(2, pluginName);
 			if (sqlSetCore.executeUpdate() == 0)
 				throw new ChoobNoSuchPluginException(pluginName);
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			e.printStackTrace();
 			throw new ChoobInternalError("SQL Exception while setting core status on the plugin.");
 		} finally {
@@ -413,7 +436,7 @@ public final class PluginModule
 		}
 	}
 
-	private String[] getPluginList(boolean onlyCore) {
+	private String[] getPluginList(final boolean onlyCore) {
 		Connection dbCon = null;
 		try {
 			dbCon = broker.getConnection();
@@ -423,20 +446,20 @@ public final class PluginModule
 			else
 				sqlPlugins = dbCon.prepareStatement("SELECT PluginName FROM Plugins");
 
-			ResultSet names = sqlPlugins.executeQuery();
+			final ResultSet names = sqlPlugins.executeQuery();
 
-			String[] plugins = new String[0];
+			final String[] plugins = new String[0];
 			if (!names.first())
 				return plugins;
 
-			List<String> plugList = new ArrayList<String>();
+			final List<String> plugList = new ArrayList<String>();
 			do
 			{
 				plugList.add(names.getString(1));
 			}
 			while(names.next());
 			return plugList.toArray(plugins);
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			e.printStackTrace();
 			throw new ChoobInternalError("SQL Exception while setting core status on the plugin.");
 		} finally {
@@ -445,19 +468,19 @@ public final class PluginModule
 		}
 	}
 
-	private String getPluginURL(String pluginName) throws ChoobNoSuchPluginException {
+	private String getPluginURL(final String pluginName) throws ChoobNoSuchPluginException {
 		Connection dbCon = null;
 		try {
 			dbCon = broker.getConnection();
-			PreparedStatement sqlGetURL = dbCon.prepareStatement("SELECT URL FROM Plugins WHERE PluginName = ?");
+			final PreparedStatement sqlGetURL = dbCon.prepareStatement("SELECT URL FROM Plugins WHERE PluginName = ?");
 			sqlGetURL.setString(1, pluginName);
-			ResultSet url = sqlGetURL.executeQuery();
+			final ResultSet url = sqlGetURL.executeQuery();
 
 			if (!url.first())
 				throw new ChoobNoSuchPluginException(pluginName);
 
 			return url.getString("URL");
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			e.printStackTrace();
 			throw new ChoobInternalError("SQL Exception while finding the plugin in the database.");
 		} finally {
@@ -466,19 +489,19 @@ public final class PluginModule
 		}
 	}
 
-	private String getPluginName(String pluginName) throws ChoobNoSuchPluginException {
+	private String getPluginName(final String pluginName) throws ChoobNoSuchPluginException {
 		Connection dbCon = null;
 		try {
 			dbCon = broker.getConnection();
-			PreparedStatement sqlGetName = dbCon.prepareStatement("SELECT PluginName FROM Plugins WHERE PluginName = ?");
+			final PreparedStatement sqlGetName = dbCon.prepareStatement("SELECT PluginName FROM Plugins WHERE PluginName = ?");
 			sqlGetName.setString(1, pluginName);
-			ResultSet name = sqlGetName.executeQuery();
+			final ResultSet name = sqlGetName.executeQuery();
 
 			if (!name.first())
 				throw new ChoobNoSuchPluginException(pluginName);
 
 			return name.getString("PluginName");
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			e.printStackTrace();
 			throw new ChoobInternalError("SQL Exception while finding the plugin in the database.");
 		} finally {
@@ -487,18 +510,18 @@ public final class PluginModule
 		}
 	}
 
-	private void addPluginToDb(String pluginName, String URL) {
+	private void addPluginToDb(final String pluginName, final String URL) {
 		Connection dbCon = null;
 		try {
 			dbCon = broker.getConnection();
-			PreparedStatement pluginReplace = dbCon.prepareStatement("INSERT INTO Plugins (PluginName, URL) VALUES (?, ?) ON DUPLICATE KEY UPDATE URL = ?");
+			final PreparedStatement pluginReplace = dbCon.prepareStatement("INSERT INTO Plugins (PluginName, URL) VALUES (?, ?) ON DUPLICATE KEY UPDATE URL = ?");
 
 			pluginReplace.setString(1, pluginName);
 			pluginReplace.setString(2, URL);
 			pluginReplace.setString(3, URL);
 
 			pluginReplace.executeUpdate();
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			e.printStackTrace();
 			throw new ChoobInternalError("SQL Exception while adding the plugin to the database...");
 		} finally {
@@ -506,26 +529,26 @@ public final class PluginModule
 		}
 	}
 
-	public boolean commandExists(String pluginName, String commandName)
+	public boolean commandExists(final String pluginName, final String commandName)
 	{
 		String commands[];
 		try
 		{
 			commands=getPluginCommands(pluginName);
 		}
-		catch (ChoobNoSuchPluginException e)
+		catch (final ChoobNoSuchPluginException e)
 		{
 			return false;
 		}
 
-		for (int i = 0; i < commands.length; i++)
-			if (commands[i].equalsIgnoreCase(commandName))
+		for (final String command : commands)
+			if (command.equalsIgnoreCase(commandName))
 				return true;
 		return false;
 	}
 
 
-	public boolean validCommand(String command)
+	public boolean validCommand(final String command)
 	{
 		if (validInternalCommand(command))
 			return true;
@@ -534,22 +557,22 @@ public final class PluginModule
 		return false;
 	}
 
-	public boolean validAliasCommand(String command)
+	public boolean validAliasCommand(final String command)
 	{
-		String[] bits=command.split("\\.");
+		final String[] bits=command.split("\\.");
 		try
 		{
 			if (bits.length == 1 && mods.plugin.callAPI("Alias", "Get", bits[0].trim())!=null)
 				return true;
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{}
 		return false;
 	}
 
-	public boolean validInternalCommand(String command)
+	public boolean validInternalCommand(final String command)
 	{
-		String[] bits=command.split("\\.");
+		final String[] bits=command.split("\\.");
 		if (bits.length == 2 && mods.plugin.commandExists(bits[0], bits[1]))
 			return true;
 		return false;

@@ -1,7 +1,14 @@
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -9,7 +16,9 @@ import org.jibble.pircbot.Colors;
 
 import uk.co.uwcs.choob.modules.DateModule;
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobError;
+import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
 public class Events
@@ -38,22 +47,22 @@ public class Events
 	{
 		/** Constructor from strings, as will be fed from the events_pattern matches */
 		public EventItem(
-			String sid,
-			String sname,
-			String sstart,
-			String send,
-			String ssignupCode,
-			String ssignupMax,
-			String ssignupCurrent,
-			String ssignupNames,
-			String sdesc,
-			String slocation
+			final String sid,
+			final String sname,
+			final String sstart,
+			final String send,
+			final String ssignupCode,
+			final String ssignupMax,
+			final String ssignupCurrent,
+			final String ssignupNames,
+			final String sdesc,
+			final String slocation
 		)
 		{
 			id            = parseId(sid);
 			name          = sname;
 			start         = convertTimestamp(sstart);
-			end           = (send.equals("-") ? start : convertTimestamp(send));
+			end           = send.equals("-") ? start : convertTimestamp(send);
 			signupMax     = Integer.parseInt(ssignupMax);
 			signupCurrent = Integer.parseInt(ssignupCurrent);
 
@@ -79,11 +88,11 @@ public class Events
 
 			// The names come in in csv, break them up.
 			signupNames   = new ArrayList<String>();
-			for (String nam : ssignupNames.split(", "))
+			for (final String nam : ssignupNames.split(", "))
 				signupNames.add(nam);
 		}
 
-		private String name;
+		private final String name;
 		private SignupCodes signupCode;
 
 		public int id;
@@ -96,14 +105,14 @@ public class Events
 		public String longdesc;
 		public String location;
 
-		private Date convertTimestamp(String timestamp)
+		private Date convertTimestamp(final String timestamp)
 		{
 			return new Date(Long.parseLong(timestamp)*1000);
 		}
 
 		public boolean finished()
 		{
-			return signupCode == SignupCodes.FINISHED || (new Date()).compareTo(end) > 0;
+			return signupCode == SignupCodes.FINISHED || new Date().compareTo(end) > 0;
 		}
 
 		public boolean cancelled()
@@ -113,7 +122,7 @@ public class Events
 
 		public boolean inprogress()
 		{
-			return signupCode == SignupCodes.RUNNING || !finished() && (new Date()).compareTo(start) > 0;
+			return signupCode == SignupCodes.RUNNING || !finished() && new Date().compareTo(start) > 0;
 		}
 
 		public String boldName()
@@ -177,7 +186,7 @@ public class Events
 		DESC,
 		LOCATION;
 
-		public String getFromMatcher(Matcher ma)
+		public String getFromMatcher(final Matcher ma)
 		{
 			return ma.group(ordinal());
 		}
@@ -186,8 +195,8 @@ public class Events
 	public static final String announceChannel="#bots";
 	private static final long checkInterval=60000; // The crond job is run every minute.
 
-	private Modules mods;
-	private IRCInterface irc;
+	private final Modules mods;
+	private final IRCInterface irc;
 
 	private final URL eventsurl;
 
@@ -203,7 +212,7 @@ public class Events
 		};
 	}
 
-	public Events(Modules mods, IRCInterface irc) throws ChoobError
+	public Events(final Modules mods, final IRCInterface irc) throws ChoobError
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -211,36 +220,36 @@ public class Events
 		{
 			eventsurl = new URL("http://faux.uwcs.co.uk/events.data");
 		}
-		catch (MalformedURLException e)
+		catch (final MalformedURLException e)
 		{
 			throw new ChoobError("Error in constant data.");
 		}
 		mods.interval.callBack(null, checkInterval);
 	}
 
-	private String microStampFromNow(Date d)
+	private String microStampFromNow(final Date d)
 	{
-		return mods.date.timeMicroStamp(d.getTime() - (new Date()).getTime());
+		return mods.date.timeMicroStamp(d.getTime() - new Date().getTime());
 	}
 
-	public void interval(Object param) throws ChoobException
+	public void interval(final Object param) throws ChoobException
 	{
-		ArrayList<EventItem> ne = readEventsData();
+		final ArrayList<EventItem> ne = readEventsData();
 
 		if (current!=null && !current.equals(ne))
 		{
 			// Generate a hashmap of current (ie. before the change) event ids -> eventitems.
-			HashMap<Integer, EventItem>curr=new HashMap<Integer, EventItem>();
+			final HashMap<Integer, EventItem>curr=new HashMap<Integer, EventItem>();
 
-			for (EventItem c : current)
+			for (final EventItem c : current)
 				curr.put(Integer.valueOf(c.id), c);
 
 
 			// Now, go through the new items..
-			for (EventItem n : ne)
+			for (final EventItem n : ne)
 			{
 				// Get the corresponding event from the old items
-				EventItem corr=curr.get(Integer.valueOf(n.id));
+				final EventItem corr=curr.get(Integer.valueOf(n.id));
 
 				if (corr==null)
 					// It doesn't exist, notify people:
@@ -253,32 +262,32 @@ public class Events
 					{
 						// Diff the lists.
 
-						HashSet <String> beforeSet = new HashSet<String>();
-						HashSet <String> afterSet  = new HashSet<String>();
+						final HashSet <String> beforeSet = new HashSet<String>();
+						final HashSet <String> afterSet  = new HashSet<String>();
 
 						// Create a set of names for each list, before (being the current names) and after (being the new ones).
-						for (String name : corr.signupNames)
+						for (final String name : corr.signupNames)
 							beforeSet.add(name.trim());
 
-						for (String name : n.signupNames)
+						for (final String name : n.signupNames)
 							afterSet.add(name.trim());
 
-						Iterator <String>it = beforeSet.iterator();
+						final Iterator <String>it = beforeSet.iterator();
 
 						// Go through the list of names that's were there "before". If it exists in the "after" list, remove it from both.
 						while (it.hasNext())
 							if (afterSet.remove(it.next()))
 								it.remove();
 
-						StringBuilder sig=new StringBuilder();
+						final StringBuilder sig=new StringBuilder();
 
 						// Now, anything left in "before" is not in "after", so it's been removed:
-						for (String name : beforeSet)
+						for (final String name : beforeSet)
 							if (name.length()>1)
 								sig.append("-").append(name).append(", ");
 
 						// Same applies for "after", anything in here isn't in "before", so it's been added.
-						for (String name : afterSet)
+						for (final String name : afterSet)
 							if (name.length()>1)
 								sig.append("+").append(name).append(", ");
 
@@ -309,10 +318,10 @@ public class Events
 
 	private class DateComparator implements Comparator<EventItem>
 	{
-		public int compare(EventItem a, EventItem b)
+		public int compare(final EventItem a, final EventItem b)
 		{
 			// Hax. This means that if the events have the same (well, within a few milliseconds of each other) start time, pick the one with the most signups.
-			int stt = new Date(a.start.getTime() - a.signupCurrent).compareTo(new Date(b.start.getTime() - b.signupCurrent));
+			final int stt = new Date(a.start.getTime() - a.signupCurrent).compareTo(new Date(b.start.getTime() - b.signupCurrent));
 
 			if (stt == 0)
 				return a.end.compareTo(b.end);
@@ -324,14 +333,14 @@ public class Events
 
 	private ArrayList<EventItem> readEventsData() throws ChoobException
 	{
-		ArrayList<EventItem> events=new ArrayList<EventItem>();
+		final ArrayList<EventItem> events=new ArrayList<EventItem>();
 		Matcher ma;
 
 		try
 		{
 			ma=mods.scrape.getMatcher(eventsurl, checkInterval, events_pattern);
 		}
-		catch (IOException e)
+		catch (final IOException e)
 		{
 			throw new ChoobException("Error reading events data file.");
 		}
@@ -360,17 +369,17 @@ public class Events
 		"<Key>",
 		"<Key> is a key to use for event searching"
 	};
-	public void commandInfo(Message mes) throws ChoobException
+	public void commandInfo(final Message mes) throws ChoobException
 	{
 		infoOn(mes);
 	}
 
-	private void infoOn(Message mes) throws ChoobException
+	private void infoOn(final Message mes) throws ChoobException
 	{
-		String comp=mods.util.getParamString(mes).toLowerCase();
+		final String comp=mods.util.getParamString(mes).toLowerCase();
 		if (comp.equals(""))
 		{
-			ArrayList<EventItem> events=readEventsData();
+			final ArrayList<EventItem> events=readEventsData();
 			int c=events.size();
 
 			if (events.isEmpty())
@@ -379,15 +388,15 @@ public class Events
 				return;
 			}
 
-			StringBuilder rep = new StringBuilder();
-			for (EventItem ev : events)
+			final StringBuilder rep = new StringBuilder();
+			for (final EventItem ev : events)
 			{
 				rep.append(ev.boldName());
 				if (events.size() < 8)
 					rep.append(" at ").append(ev.location);
 
 				rep.append(ev.shortDetails())
-					.append(ev.inprogress() ? " (started " + mods.date.timeMicroStamp((new Date()).getTime() - ev.start.getTime()) + " ago)" : "")
+					.append(ev.inprogress() ? " (started " + mods.date.timeMicroStamp(new Date().getTime() - ev.start.getTime()) + " ago)" : "")
 					.append(ev.shortSignups())
 					.append(--c != 0 ? ", " : ".");
 			}
@@ -397,9 +406,9 @@ public class Events
 
 		final int eid=parseId(comp);
 
-		ArrayList<EventItem> events = readEventsData();
+		final ArrayList<EventItem> events = readEventsData();
 
-		for (EventItem ev : events)
+		for (final EventItem ev : events)
 			if (!ev.finished())
 				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
@@ -442,9 +451,9 @@ public class Events
 		"<Key>",
 		"<Key> is a key to use for event searching"
 	};
-	public void commandSignup(Message mes) throws ChoobException
+	public void commandSignup(final Message mes) throws ChoobException
 	{
-		String comp=mods.util.getParamString(mes).toLowerCase();
+		final String comp=mods.util.getParamString(mes).toLowerCase();
 		if (comp.equals(""))
 		{
 			irc.sendContextReply(mes, "Please name the event you want info on.");
@@ -453,11 +462,11 @@ public class Events
 
 		final int eid=parseId(comp);
 
-		ArrayList<EventItem> events = readEventsData();
+		final ArrayList<EventItem> events = readEventsData();
 
-		StringBuilder rep = new StringBuilder();
+		final StringBuilder rep = new StringBuilder();
 
-		for (EventItem ev : events)
+		for (final EventItem ev : events)
 			if (!ev.finished())
 				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
@@ -483,9 +492,9 @@ public class Events
 		"<Key>",
 		"<Key> is a key to use for event searching"
 	};
-	public void commandLink(Message mes) throws ChoobException
+	public void commandLink(final Message mes) throws ChoobException
 	{
-		String comp=mods.util.getParamString(mes).toLowerCase();
+		final String comp=mods.util.getParamString(mes).toLowerCase();
 		if (comp.equals(""))
 		{
 			irc.sendContextReply(mes, "Please name the event you want info on.");
@@ -494,9 +503,9 @@ public class Events
 
 		final int eid=parseId(comp);
 
-		ArrayList<EventItem> events=readEventsData();
+		final ArrayList<EventItem> events=readEventsData();
 
-		for (EventItem ev : events)
+		for (final EventItem ev : events)
 			if (!ev.finished())
 				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
@@ -512,11 +521,11 @@ public class Events
 		"<Key>",
 		"<Key> is a key to use for event searching"
 	};
-	public void commandSignups(Message mes) throws ChoobException
+	public void commandSignups(final Message mes) throws ChoobException
 	{
 		String eventName = mods.util.getParamString(mes).toLowerCase();
 		String signupRegexp = ""; // You suck, Java.
-		
+
 		// If there is a "/" in the string, we split it up into the event
 		// name and signup regexp. E.g.
 		//   !events.signups some event /name/
@@ -533,17 +542,17 @@ public class Events
 				searching = false;
 			eventName = eventName.substring(0, index).trim();
 		}
-		
+
 		if (eventName.equals(""))
 		{
 			irc.sendContextReply(mes, "Please name the event you want info on.");
 			return;
 		}
-		
+
 		final int eid = parseId(eventName);
-		ArrayList<EventItem> events = readEventsData();
-		
-		for (EventItem ev : events)
+		final ArrayList<EventItem> events = readEventsData();
+
+		for (final EventItem ev : events)
 			if (!ev.finished())
 				if (ev.name.toLowerCase().indexOf(eventName) != -1 || ev.id == eid)
 				{
@@ -562,9 +571,9 @@ public class Events
 					{
 						if (searching)
 						{
-							List<String> names = new ArrayList<String>();
-							Pattern p = Pattern.compile(signupRegexp, Pattern.CASE_INSENSITIVE);
-							for (String n : ev.signupNames)
+							final List<String> names = new ArrayList<String>();
+							final Pattern p = Pattern.compile(signupRegexp, Pattern.CASE_INSENSITIVE);
+							for (final String n : ev.signupNames)
 								if (p.matcher(n).find())
 									names.add(n);
 							if (names.size() > 0) {
@@ -604,16 +613,16 @@ public class Events
 	public String[] helpCommandList = {
 		"Get a list of events.",
 	};
-	public void commandList(Message mes) throws ChoobException
+	public void commandList(final Message mes) throws ChoobException
 	{
 		infoOn(mes);
 	}
 
-	private static String nameList(List<String> names, Message mes, int after, String message)
+	private static String nameList(final List<String> names, final Message mes, final int after, final String message)
 	{
-		StringBuilder namelistb = new StringBuilder();
+		final StringBuilder namelistb = new StringBuilder();
 		int i=0;
-		for (String name : names)
+		for (final String name : names)
 		{
 			if (i++ == after && after != 0)
 				namelistb.append(message);
@@ -629,15 +638,15 @@ public class Events
 		return namelist;
 	}
 
-	private static int parseId(String s)
+	private static int parseId(final String s)
 	{
 		try
 		{
 			return Integer.parseInt(s);
 		}
-		catch (NumberFormatException e) 
+		catch (final NumberFormatException e)
 		{
-			return 0;			
+			return 0;
 		}
 	}
 }

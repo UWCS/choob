@@ -1,11 +1,15 @@
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jibble.pircbot.Colors;
 
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
+import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
+import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
 
@@ -40,7 +44,7 @@ public class Help
 	Modules mods;
 	IRCInterface irc;
 
-	public Help(Modules mods, IRCInterface irc)
+	public Help(final Modules mods, final IRCInterface irc)
 	{
 		this.irc = irc;
 		this.mods = mods;
@@ -81,7 +85,7 @@ public class Help
 		"<Topic> is either a plugin name or of the form <Plugin>.<Name> or <Plugin>.<Type>.<Name>",
 		"<Params> is an optional parameter to pass to the help"
 	};
-	public void commandHelp(Message mes)
+	public void commandHelp(final Message mes)
 	{
 		irc.sendContextReply(mes, apiGetHelp(mods.util.getParamString(mes), Boolean.TRUE));
 	}
@@ -92,7 +96,7 @@ public class Help
 		"<Topic> is either a plugin name or of the form <Plugin>.<Name> or <Plugin>.<Type>.<Name>",
 		"<Params> is an optional parameter to pass to the help"
 	};
-	public void commandLongHelp(Message mes)
+	public void commandLongHelp(final Message mes)
 	{
 		irc.sendContextReply(mes, apiGetHelp(mods.util.getParamString(mes), Boolean.TRUE));
 	}
@@ -103,7 +107,7 @@ public class Help
 		"<Topic> is either a plugin name or of the form <Plugin>.<Name> or <Plugin>.<Type>.<Name>",
 		"<Params> is an optional parameter to pass to the help"
 	};
-	public void commandBlockHelp(Message mes)
+	public void commandBlockHelp(final Message mes)
 	{
 		irc.sendContextReply(mes, apiGetHelp(mods.util.getParamString(mes), Boolean.FALSE));
 	}
@@ -114,7 +118,7 @@ public class Help
 		"<Topic> is either a plugin name or of the form <Plugin>.<Name> or <Plugin>.<Type>.<Name>",
 		"<Params> is an optional parameter to pass to the help"
 	};
-	public void commandSyntax(Message mes)
+	public void commandSyntax(final Message mes)
 	{
 		// TODO check
 		irc.sendContextReply(mes, apiGetSyntax(mods.util.getParamString(mes)));
@@ -126,7 +130,7 @@ public class Help
 		"<Topic> is either a plugin name or of the form <Plugin>.<Name> or <Plugin>.<Type>.<Name>",
 		"<Params> is an optional parameter to pass to the help"
 	};
-	public void commandSummary(Message mes)
+	public void commandSummary(final Message mes)
 	{
 		irc.sendContextReply(mes, apiGetSummary(mods.util.getParamString(mes)));
 	}
@@ -135,7 +139,7 @@ public class Help
 	public String[] helpCommandPlugins = {
 		"Get a list of loaded plugins.",
 	};
-	public void commandPlugins( Message mes )
+	public void commandPlugins( final Message mes )
 	{
 		irc.sendContextReply(mes, apiGetPluginList());
 	}
@@ -145,9 +149,9 @@ public class Help
 		"<Plugin>",
 		"<Plugin> is the name of a loaded plugin."
 	};
-	public void commandCommands( Message mes )
+	public void commandCommands( final Message mes )
 	{
-		String[] params = mods.util.getParamArray(mes, 2);
+		final String[] params = mods.util.getParamArray(mes, 2);
 
 		if (params.length == 1)
 			irc.sendContextReply(mes, apiGetCommandList(Boolean.TRUE));
@@ -173,29 +177,29 @@ public class Help
 	 * /_/   \_\_|  |___| /_/   \_\_____|___/_/   \_\____/|_____|____/
 	 */
 	// These are used for core help bits, and just alias to other bits of code.
-	public String[] apiGetHelp( String topic )
+	public String[] apiGetHelp( final String topic )
 	{
 		return _apiGetHelp(topic, true, HelpMode.MODE_ALL);
 	}
 
-	public String[] apiGetHelp( String topic, Boolean isLong )
+	public String[] apiGetHelp( final String topic, final Boolean isLong )
 	{
 		return _apiGetHelp(topic, isLong, HelpMode.MODE_ALL);
 	}
 
-	public String[] apiGetSyntax( String topic )
+	public String[] apiGetSyntax( final String topic )
 	{
 		return _apiGetHelp(topic, true, HelpMode.MODE_SYNTAX);
 	}
 
-	public String[] apiGetSummary( String topic )
+	public String[] apiGetSummary( final String topic )
 	{
 		return _apiGetHelp(topic, true, HelpMode.MODE_SUMMARY);
 	}
 
-	private String[] _apiGetHelp( String helpStr, Boolean isLong, HelpMode helpMode )
+	private String[] _apiGetHelp( final String helpStr, final Boolean isLong, final HelpMode helpMode )
 	{
-		String[] params = helpStr.split("\\s+", 2);
+		final String[] params = helpStr.split("\\s+", 2);
 
 		// Parse input.
 		String fullTopic, topicParams;
@@ -228,13 +232,13 @@ public class Help
 		}
 
 		// Break up the topic string.
-		Matcher topicMatcher = Pattern.compile("([^\\s.]+)(?:\\.([^\\s.]+)(?:\\.([^\\s.]+))?)?").matcher(fullTopic);
+		final Matcher topicMatcher = Pattern.compile("([^\\s.]+)(?:\\.([^\\s.]+)(?:\\.([^\\s.]+))?)?").matcher(fullTopic);
 		if (!topicMatcher.matches())
 		{
 			return new String[] { "Help topics must be of the form <Plugin>, <Plugin>.<Name>, or <Plugin>.<Type>.<Name>." };
 		}
 
-		String plugin = topicMatcher.group(1);
+		final String plugin = topicMatcher.group(1);
 		String topic, type;
 		if (topicMatcher.group(3) == null)
 		{
@@ -247,7 +251,7 @@ public class Help
 			type = topicMatcher.group(2);
 		}
 
-		List<String> allHelp = new ArrayList<String>();
+		final List<String> allHelp = new ArrayList<String>();
 
 		// Do alias related stuff.
 		boolean didAlias = false;
@@ -259,7 +263,7 @@ public class Help
 			{
 				alias = (String)mods.plugin.callAPI("Alias", "Get", plugin);
 			}
-			catch (ChoobNoSuchCallException e)
+			catch (final ChoobNoSuchCallException e)
 			{
 				// No alias plugin ==> must be plugin name
 			}
@@ -271,10 +275,10 @@ public class Help
 				{
 					ret = mods.plugin.callAPI("Alias", "GetHelp", plugin);
 				}
-				catch (ChoobNoSuchCallException e) 
+				catch (final ChoobNoSuchCallException e)
 				{
 					// Leave it null
-				} 
+				}
 
 				if (ret == null)
 				{
@@ -283,17 +287,17 @@ public class Help
 					if (spacePos == -1)
 						spacePos = alias.length();
 
-					int dotPos = alias.indexOf('.');
+					final int dotPos = alias.indexOf('.');
 					if (dotPos == -1 || dotPos >= spacePos - 1)
 					{
 						allHelp.add( formatCommand(plugin) + " appears to be aliased to an invalid alias: " + formatAlias(alias) );
 					}
 					else
 					{
-						String newPlugin = alias.substring(0, dotPos);
-						String newCommand = alias.substring(dotPos + 1, spacePos);
+						final String newPlugin = alias.substring(0, dotPos);
+						final String newCommand = alias.substring(dotPos + 1, spacePos);
 
-						String[] help = _getCallHelpLines( newPlugin, "command", newCommand, null );
+						final String[] help = _getCallHelpLines( newPlugin, "command", newCommand, null );
 						if (help == null)
 							allHelp.add( formatCommand(plugin) + " appears to be aliased to '" + formatAlias(alias) + "', but '" + formatCommand(newPlugin + "." + newCommand) + "' has no help!" );
 
@@ -304,13 +308,13 @@ public class Help
 				else if (ret instanceof String[])
 				{
 					String aliasCommand;
-					int pos = alias.indexOf(' ');
+					final int pos = alias.indexOf(' ');
 					if (pos == -1)
 						aliasCommand = alias;
 					else
 						aliasCommand = alias.substring(0, pos);
 
-					String[] help = (String[])ret;
+					final String[] help = (String[])ret;
 					// Same as for commands.
 					allHelp.addAll(formatCallHelp( plugin, "command", aliasCommand, help, isLong, helpMode ));
 				}
@@ -329,7 +333,7 @@ public class Help
 
 		if (topic.equalsIgnoreCase("topics"))
 		{
-			String[] help = _getPluginHelpLines( plugin, type, topicParams );
+			final String[] help = _getPluginHelpLines( plugin, type, topicParams );
 
 			if (help != null)
 				allHelp.addAll(formatPluginHelp( plugin, help, isLong, didAlias ));
@@ -349,7 +353,7 @@ public class Help
 			else
 				help = _getCallHelpLines( plugin, type, topic, topicParams );
 
-			
+
 			if (help != null)
 				// Yay, we found help!
 				allHelp.addAll(formatCallHelp( plugin + "." + topic, type, null, help, isLong, helpMode ));
@@ -368,7 +372,7 @@ public class Help
 				return new String[] { "Sorry, can't find topic " + formatTopic(type + "." + topic) + " in plugin " + formatPlugin(plugin) + "." };
 		}
 
-		String[] ret = new String[0];
+		final String[] ret = new String[0];
 		return allHelp.toArray(ret);
 	}
 
@@ -379,26 +383,26 @@ public class Help
 	 * /_/   \_\_|  |___|
 	 */
 	// These actually generate outputtable help.
-	public String[] apiGetCommandList(String pluginName, Boolean isLong)
+	public String[] apiGetCommandList(final String pluginName, final Boolean isLong)
 	{
 		return new String[] { _apiCommandList(pluginName, isLong) };
 	}
 
-	public String[] apiGetCommandList(Boolean isLong)
+	public String[] apiGetCommandList(final Boolean isLong)
 	{
 		// Full command list, then...
-		List<String> output = new ArrayList<String>();
+		final List<String> output = new ArrayList<String>();
 
-		String[] plugins = mods.plugin.getLoadedPlugins();
+		final String[] plugins = mods.plugin.getLoadedPlugins();
 		Arrays.sort(plugins);
 		if (isLong)
 		{
-			for (int j=0; j<plugins.length; j++)
-				output.add(_apiCommandList(plugins[j], true));
+			for (final String plugin : plugins)
+				output.add(_apiCommandList(plugin, true));
 		}
 		else
 		{
-			StringBuilder buf = new StringBuilder();
+			final StringBuilder buf = new StringBuilder();
 			for (int j=0; j<plugins.length; j++)
 			{
 				buf.append(formatPlugin(plugins[j]) + ": " + _apiCommandList(plugins[j], Boolean.FALSE));
@@ -408,19 +412,19 @@ public class Help
 			buf.append(".");
 			output.add(buf.toString());
 		}
-		String[] ret = new String[0];
+		final String[] ret = new String[0];
 		return output.toArray(ret);
 	}
 
-	private String _apiCommandList(String pluginName, Boolean isLong)
+	private String _apiCommandList(final String pluginName, final Boolean isLong)
 	{
-		boolean isLongb = isLong.booleanValue();
+		final boolean isLongb = isLong.booleanValue();
 		String[] commands;
 		try
 		{
 			commands = mods.plugin.getPluginCommands(pluginName);
 		}
-		catch (ChoobNoSuchPluginException e)
+		catch (final ChoobNoSuchPluginException e)
 		{
 			if (isLongb)
 				return "Plugin " + formatPlugin(pluginName) + " does not exist.";
@@ -435,7 +439,7 @@ public class Help
 			return "None";
 		}
 
-		StringBuilder buf = new StringBuilder();
+		final StringBuilder buf = new StringBuilder();
 		if (isLongb)
 			buf.append("Commands in " + formatPlugin(pluginName) + ": ");
 		for(int i=0; i<commands.length; i++)
@@ -454,10 +458,10 @@ public class Help
 
 	public String[] apiGetPluginList()
 	{
-		String[] plugins = mods.plugin.getLoadedPlugins();
+		final String[] plugins = mods.plugin.getLoadedPlugins();
 		Arrays.sort(plugins);
 
-		StringBuilder buf = new StringBuilder("Plugins: ");
+		final StringBuilder buf = new StringBuilder("Plugins: ");
 		for(int i=0; i<plugins.length; i++)
 		{
 			if (i != 0)
@@ -478,9 +482,9 @@ public class Help
 	 * |_|   \___/|_| \_\_|  |_/_/   \_\_|   |_| |_____|_| \_\____/
 	 */
 	// These do the actual formatting of help for the aliases.
-	private List<String> formatBasicHelp( String[] help, boolean isLong, HelpMode helpMode )
+	private List<String> formatBasicHelp( final String[] help, final boolean isLong, final HelpMode helpMode )
 	{
-		List<String> lines = new ArrayList<String>();
+		final List<String> lines = new ArrayList<String>();
 
 		int start, finish;
 		if (helpMode == HelpMode.MODE_ALL)
@@ -502,7 +506,7 @@ public class Help
 		else
 		{
 			// Short.
-			StringBuilder buf = new StringBuilder();
+			final StringBuilder buf = new StringBuilder();
 			for(int i=start; i<finish; i++)
 				buf.append(formatGeneral(help[i]) + " ");
 			lines.add(buf.toString());
@@ -510,9 +514,9 @@ public class Help
 		return lines;
 	}
 
-	private List<String> formatPluginHelp( String plugin, String[] help, boolean isLong, boolean didAlias )
+	private List<String> formatPluginHelp( final String plugin, final String[] help, final boolean isLong, final boolean didAlias )
 	{
-		List<String> lines = new ArrayList<String>();
+		final List<String> lines = new ArrayList<String>();
 
 		if (help == null)
 		{
@@ -534,7 +538,7 @@ public class Help
 		else
 		{
 			// Short.
-			StringBuilder buf = new StringBuilder();
+			final StringBuilder buf = new StringBuilder();
 			if (didAlias)
 				buf.append("Help for " + Colors.BOLD + plugin + Colors.NORMAL + ": ");
 			if (help[0] != null)
@@ -550,13 +554,13 @@ public class Help
 		return lines;
 	}
 
-	private List<String> formatCallHelp( String command, String type, String alias, String[] help, boolean isLong, HelpMode mode )
+	private List<String> formatCallHelp( String command, final String type, final String alias, final String[] help, final boolean isLong, final HelpMode mode )
 	{
-		List<String> lines = new ArrayList<String>();
+		final List<String> lines = new ArrayList<String>();
 		boolean simpleAlias = true;
 		if (alias != null)
 		{
-			int pos = alias.indexOf(' ');
+			final int pos = alias.indexOf(' ');
 			simpleAlias = pos == -1;
 		}
 
@@ -571,7 +575,7 @@ public class Help
 					if (!simpleAlias)
 					{
 						String aliasCommand;
-						int pos = alias.indexOf(' ');
+						final int pos = alias.indexOf(' ');
 						if (pos == -1)
 							aliasCommand = alias;
 						else
@@ -625,7 +629,7 @@ public class Help
 		else
 		{
 			// Short
-			StringBuilder buf = new StringBuilder();
+			final StringBuilder buf = new StringBuilder();
 			if (mode != HelpMode.MODE_SYNTAX)
 			{
 				if (alias != null)
@@ -634,7 +638,7 @@ public class Help
 					if (!simpleAlias)
 					{
 						String aliasCommand;
-						int pos = alias.indexOf(' ');
+						final int pos = alias.indexOf(' ');
 						if (pos == -1)
 							aliasCommand = alias;
 						else
@@ -701,12 +705,12 @@ public class Help
 				+ "(<\\w+>)"
 			+ ")"
 	);
-	private String formatGeneral(String text)
+	private String formatGeneral(final String text)
 	{
-		StringBuilder result = new StringBuilder();
+		final StringBuilder result = new StringBuilder();
 
 		// This'll be the hardest, then...
-		Matcher match = generalSpotter.matcher(text);
+		final Matcher match = generalSpotter.matcher(text);
 
 		int pos = 0;
 		while(match.find())
@@ -728,17 +732,17 @@ public class Help
 		return result.toString();
 	}
 
-	private String formatSyntax(String text)
+	private String formatSyntax(final String text)
 	{
 		return "Syntax: '" + formatSyntaxInternal(text, true) + "'";
 	}
 
 	Pattern paramPattern = Pattern.compile("<\\w+>");
-	private String formatSyntaxInternal(String text, boolean resolve)
+	private String formatSyntaxInternal(final String text, final boolean resolve)
 	{
-		StringBuilder result = new StringBuilder();
+		final StringBuilder result = new StringBuilder();
 
-		String[] bits = text.split(" ", 2);
+		final String[] bits = text.split(" ", 2);
 
 		result.append(irc.getTrigger());
 
@@ -751,7 +755,7 @@ public class Help
 		{
 			result.append(" ");
 
-			Matcher match = paramPattern.matcher(bits[1]);
+			final Matcher match = paramPattern.matcher(bits[1]);
 
 			int pos = 0;
 			while(match.find())
@@ -765,60 +769,60 @@ public class Help
 		return result.toString();
 	}
 
-	private String formatAlias(String text)
+	private String formatAlias(final String text)
 	{
 		return formatSyntaxInternal(text, false);
 	}
 
-	private String formatPlugin(String text)
+	private String formatPlugin(final String text)
 	{
 		return Colors.BOLD + text + Colors.NORMAL;
 	}
 
-	private String formatCommand(String text)
+	private String formatCommand(final String text)
 	{
 		return Colors.BOLD + text + Colors.NORMAL;
 	}
 
-	private String formatFullCommand(String text)
+	private String formatFullCommand(final String text)
 	{
 		// TODO: Core alias here.
 		try
 		{
-			String core = (String)mods.plugin.callAPI("Alias", "GetCoreAlias", text);
+			final String core = (String)mods.plugin.callAPI("Alias", "GetCoreAlias", text);
 			if (core == null)
 				return Colors.BOLD + text + Colors.NORMAL;
 			return Colors.BOLD + core + Colors.NORMAL;
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			return Colors.BOLD + text + Colors.NORMAL;
 		}
 	}
 
 	// "See <x>"
-	private String formatRef(String text)
+	private String formatRef(final String text)
 	{
-		String[] bits = text.split(" ", 2);
+		final String[] bits = text.split(" ", 2);
 		return bits[0] + " '" + formatSyntaxInternal("Help.Help " + bits[1], true) + "'";
 	}
 
-	private String formatTopic(String text)
+	private String formatTopic(final String text)
 	{
 		return Colors.BOLD + text + Colors.NORMAL;
 	}
 
 	// "<Name> explanation"
-	private String formatParam(String text)
+	private String formatParam(final String text)
 	{
-		String[] bits = text.split(" ", 2);
+		final String[] bits = text.split(" ", 2);
 		if (bits.length == 2)
 			return formatParamName(bits[0]) + " " + formatGeneral(bits[1]);
 		return formatParamName(bits[0]);
 	}
 
 	// "<Name>"
-	private String formatParamName(String text)
+	private String formatParamName(final String text)
 	{
 		return Colors.UNDERLINE + text + Colors.NORMAL;
 	}
@@ -832,17 +836,17 @@ public class Help
 	// These do the dirty work of actually pulling up help on stuff.
 
 	// 0 = commands, 1 = topics
-	private String[] _getPluginHelpLines( String plugin, String type, String topicParams )
+	private String[] _getPluginHelpLines( final String plugin, final String type, final String topicParams )
 	{
 		// TODO: Put description etc in here too.
-		String[] returnArr = new String[2];
+		final String[] returnArr = new String[2];
 
 		String[] commands;
 		try
 		{
 			commands = mods.plugin.getPluginCommands(plugin);
 		}
-		catch (ChoobNoSuchPluginException e)
+		catch (final ChoobNoSuchPluginException e)
 		{
 			return null;
 		}
@@ -866,7 +870,7 @@ public class Help
 			else
 				ret = callMethod(plugin, type + "topics", topicParams);
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			ret = null;
 		}
@@ -877,7 +881,7 @@ public class Help
 		}
 		else if (ret instanceof String[])
 		{
-			String[] topics = (String[])ret;
+			final String[] topics = (String[])ret;
 			buf = new StringBuilder();
 			for(int i=0; i<topics.length; i++)
 			{
@@ -897,11 +901,11 @@ public class Help
 		return returnArr;
 	}
 
-	private String[] _getBasicHelpLines( String plugin, String topic, String topicParams )
+	private String[] _getBasicHelpLines( final String plugin, final String topic, final String topicParams )
 	{
 		try
 		{
-			Object ret = callMethod(plugin, topic, topicParams);
+			final Object ret = callMethod(plugin, topic, topicParams);
 
 			if (ret instanceof String)
 				return new String[] { (String)ret };
@@ -910,13 +914,13 @@ public class Help
 			else
 				return new String[] { "Help for " + topic + " was of an unknown format." };
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			return null;
 		}
 	}
 
-	private String[] _getCallHelpLines( String plugin, String type, String topic, String topicParams )
+	private String[] _getCallHelpLines( final String plugin, String type, final String topic, final String topicParams )
 	{
 		try
 		{
@@ -929,24 +933,24 @@ public class Help
 
 			if (ret instanceof String[] && ((String[])ret).length > 0)
 			{
-				String[] helpArr = (String[])ret;
+				final String[] helpArr = (String[])ret;
 				return helpArr;
 			}
 			return new String[] { "Help for " + topic + " was of an unknown format." };
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			return null;
 		}
 	}
 
-	private Object callMethod(String plugin, String topic, String param) throws ChoobNoSuchCallException
+	private Object callMethod(final String plugin, final String topic, final String param) throws ChoobNoSuchCallException
 	{
 		try
 		{
 			return mods.plugin.callGeneric(plugin, "help", topic, param);
 		}
-		catch (ChoobNoSuchCallException e)
+		catch (final ChoobNoSuchCallException e)
 		{
 			return mods.plugin.callGeneric(plugin, "help", topic);
 		}

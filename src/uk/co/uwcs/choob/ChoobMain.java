@@ -11,13 +11,13 @@ package uk.co.uwcs.choob;
  */
 public final class ChoobMain
 {
-	public static void main(String[] args)
+	public static void main(final String[] args)
 	{
 		try
 		{
 			new Choob();
 		}
-		catch (Throwable t)
+		catch (final Throwable t)
 		{
 			System.err.println("Fatal error in Choob, exiting.");
 			t.printStackTrace();
