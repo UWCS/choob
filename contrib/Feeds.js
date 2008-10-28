@@ -974,6 +974,7 @@ Feed.prototype.getNewItems = function() {
 	}
 	
 	var newItems = new Array();
+	var newUniques = new Object();
 	
 	// Only keep new or updated items in the list.
 	for (var i = 0; i < feedParser.items.length; i++) {
@@ -982,6 +983,13 @@ Feed.prototype.getNewItems = function() {
 		// Prefer, in order: GUID, link, date, title.
 		var unique = (item.guid ? item.guid : (item.link ? item.link : (item.date != "?" ? item.date : item.title)));
 		var date = unique + ":" + item.date;
+		
+		if (unique in newUniques) {
+			// Skip repeated unique items. Broken feed!
+			continue;
+		}
+		newUniques[unique] = true;
+		
 		if (unique in this._lastSeen) {
 			// Seen this item before. Has it changed?
 			if (date in this._lastSeenPub) {
@@ -993,6 +1001,7 @@ Feed.prototype.getNewItems = function() {
 			// Items changed.
 			item.updated = true;
 		}
+		
 		// New item.
 		item.uniqueKey = unique;
 		newItems.push(item);
@@ -1004,7 +1013,7 @@ Feed.prototype.getNewItems = function() {
 			for (var i = 0; i < this._items.length; i++) {
 				if (this._items[i].uniqueKey == item.uniqueKey) {
 					if (this._parent._debug_store) {
-						log("Feed Store: " + this.name + ": DEL " + item.uniqueKey);
+						log("Feed Store: " + this.name + ": DEL <" + this._items[i].uniqueKey + "><" + this._items[i].date + ">");
 					}
 					this._items.splice(i, 1);
 					break;
@@ -1012,10 +1021,9 @@ Feed.prototype.getNewItems = function() {
 			}
 		}
 		if (this._parent._debug_store) {
-			log("Feed Store: " + this.name + ": ADD " + item.uniqueKey);
+			log("Feed Store: " + this.name + ": ADD <" + item.uniqueKey + "><" + item.date + ">");
 		}
 		this._items.push(item);
-		//log("New item : [" + date + "]:" + (item.updated ? "updated" : "new"));
 	}
 	
 	for (var d in this._lastSeen) {
@@ -1024,19 +1032,17 @@ Feed.prototype.getNewItems = function() {
 			for (var i = 0; i < this._items.length; i++) {
 				if (this._items[i].uniqueKey == d) {
 					if (this._parent._debug_store) {
-						log("Feed Store: " + this.name + ": DEL " + d);
+						log("Feed Store: " + this.name + ": DEL <" + this._items[i].uniqueKey + "><" + this._items[i].date + ">");
 					}
 					this._items.splice(i, 1);
 					break;
 				}
 			}
-			//log("Lost item: [" + d + "]:_lastSeen");
 		}
 	}
 	for (var d in this._lastSeenPub) {
 		if (!this._lastSeenPub[d]) {
 			delete this._lastSeenPub[d];
-			//log("Lost item: [" + d + "]:_lastSeenPub");
 		}
 	}
 	
@@ -1155,7 +1161,7 @@ function _decodeAtomText(element) {
 function _decodeAtomDate(element) {
 	var ary = element.contents().match(/^(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)(?:.(\d+))?(Z|([+-])(\d+):(\d+))$/);
 	if (ary) {
-		var d = new Date(ary[1], ary[2], ary[3], ary[4], ary[5], ary[6]);
+		var d = new Date(ary[1], ary[2] - 1, ary[3], ary[4], ary[5], ary[6]);
 		// 8 = Z/zone
 		// 9 = +/-
 		// 10/11 = zone offset
