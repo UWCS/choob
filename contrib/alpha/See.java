@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.TreeSet;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;

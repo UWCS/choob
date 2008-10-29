@@ -2,6 +2,7 @@ import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +17,7 @@ import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobError;
+import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.IRCInterface;
