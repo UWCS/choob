@@ -501,6 +501,7 @@ public class ObjectDBTransaction // Needs to be non-final
 			throw new ObjectDBError("Could not instanciate object of type: " + storedClass.getName());
 		}
 		String select;
+		int idFieldIndex = 0;
 		if (USEMANYTABLES)
 		{
 			StringBuilder fieldNames = new StringBuilder();
@@ -509,6 +510,8 @@ public class ObjectDBTransaction // Needs to be non-final
 				fieldNames.append("`" + clean("`", fields[i]) + "`");
 				if (i != fields.length - 1)
 					fieldNames.append(", ");
+				if (fields[i].equals("id"))
+					idFieldIndex = i;
 			}
 			select = fieldNames.toString();
 		}
@@ -547,6 +550,7 @@ public class ObjectDBTransaction // Needs to be non-final
 			try
 			{
 				final List<Object> objects = new ArrayList<Object>();
+				final Set<Integer> objectIds = new HashSet<Integer>();
 
 				objStat = dbConn.createStatement();
 				retrieveStat = dbConn.createStatement();
@@ -559,6 +563,11 @@ public class ObjectDBTransaction // Needs to be non-final
 				{
 					do // Loop over all objects
 					{
+						// Ensure we never include an object more than once.
+						int objectId = (int)allObjects.getLong(idFieldIndex + 1);
+						if (objectIds.contains(objectId))
+							continue;
+						
 						Object newObject = storedClass.newInstance(); // This will be set immediately, because 0 is not a valid ID.
 						ObjectDBObject tempObject = NewObjectWrapper(newObject);
 
@@ -599,6 +608,7 @@ public class ObjectDBTransaction // Needs to be non-final
 							}
 						}
 						objects.add(newObject);
+						objectIds.add((Integer)tempObject.getId());
 					}
 					while ( allObjects.next() ); // Looping over blocks of IDs
 				}
@@ -638,6 +648,7 @@ public class ObjectDBTransaction // Needs to be non-final
 			try
 			{
 				final List<Object> objects = new ArrayList<Object>();
+				final Set<Integer> objectIds = new HashSet<Integer>();
 
 				objStat = dbConn.createStatement();
 				retrieveStat = dbConn.createStatement();
@@ -671,11 +682,16 @@ public class ObjectDBTransaction // Needs to be non-final
 						do
 						{
 							int thisId = allObjects.getInt(1);
+							// Ensure we never include an object more than once.
+							if (objectIds.contains(thisId))
+								continue;
+							
 							ids[count] = thisId;
 							idMap.put(thisId, blockOffset + count);
 							count++;
 							allObjsNext = allObjects.next();
 							objects.add(null);
+							objectIds.add((Integer)thisId);
 						} while (allObjsNext && count < MAXOR - 1);
 						blockOffset += count;
 
