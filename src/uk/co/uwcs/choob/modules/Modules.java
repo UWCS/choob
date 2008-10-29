@@ -97,7 +97,7 @@ public final class Modules
 		}
 		catch (final ChoobException e)
 		{
-			throw new RuntimeException("Could not instantiate modules: " + e);
+			throw new RuntimeException("Unable to construct all required modules", e);
 		}
 	}
 }
