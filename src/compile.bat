@@ -35,7 +35,7 @@ lib/msnm.jar;^
 lib/jcfd.jar;^
 lib/jazzy-core.jar;^
 lib/bsh-2.0b4.jar;^
-mysql-connector-java-5.1.5-bin.jar;^
+lib/mysql-connector-java-5.1.5-bin.jar;^
 lib/pircbot.jar;^
 lib/js-rhino-1.6r2.jar^
  ^

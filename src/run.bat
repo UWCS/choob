@@ -12,7 +12,7 @@ lib/msnm.jar;^
 lib/jcfd.jar;^
 lib/jazzy-core.jar;^
 lib/bsh-2.0b4.jar;^
-mysql-connector-java-5.1.5-bin.jar;^
+lib/mysql-connector-java-5.1.5-bin.jar;^
 lib/pircbot.jar;^
 lib/js-rhino-1.6r2.jar;^
 lib/jersey.jar;^
@@ -20,7 +20,11 @@ lib/jsr311-api.jar;^
 lib/asm-3.1.jar;^
  ^
 uk.co.uwcs.choob.ChoobMain
-IF "%ERRORLEVEL%"=="0" GOTO :EOF
+REM 0 = clean, normal exit. Die.
+REM 1 = restart.
+REM 2 = connection timed out.
 IF "%1"=="once" GOTO :EOF
-SLEEP 15
+IF "%ERRORLEVEL%"=="0" GOTO :EOF
+IF "%ERRORLEVEL%"=="2" EXIT /B 2
+TIMEOUT /T 15 >nul
 GOTO :top
