@@ -79,7 +79,7 @@ public class Concurrency {
 
 	public String[] helpCommandSetThreadLimit = {
 			"Sets the thread limit for a plugin.",
-			"<Plugin> [<ThreadLimit>]",
+			"<Plugin> <ThreadLimit>",
 			"<Plugin> is the name of the plugin to look up.",
 			"<ThreadLimit> is the maximum number of concurrent threads to allow. Set tot 0 to remove the specific setting and revert to the default."
 		};
