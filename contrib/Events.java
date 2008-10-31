@@ -622,7 +622,7 @@ public class Events
 	{
 		final StringBuilder namelistb = new StringBuilder();
 		int i=0;
-		for (final String name : names)
+		for(String name : names)
 		{
 			if (i++ == after && after != 0)
 				namelistb.append(message);
