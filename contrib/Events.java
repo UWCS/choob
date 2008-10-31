@@ -20,6 +20,7 @@ import uk.co.uwcs.choob.support.ChoobError;
 import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.PrivateEvent;
 
 public class Events
 {
@@ -627,7 +628,7 @@ public class Events
 			if (i++ == after && after != 0)
 				namelistb.append(message);
 
-			if( name.length() > 1 )
+			if( !(mes instanceof PrivateEvent) && name.length() > 1 )
 			{
 				name = name.substring(0,1) + "'" + name.substring(1);
 			}
