@@ -192,7 +192,7 @@ public class Events
 		}
 	}
 
-	public static final String announceChannel="#bots";
+	public static final String announceChannel="#compsoc";
 	private static final long checkInterval=60000; // The crond job is run every minute.
 
 	private final Modules mods;
@@ -626,6 +626,12 @@ public class Events
 		{
 			if (i++ == after && after != 0)
 				namelistb.append(message);
+
+			if( name.length() > 1 )
+			{
+				name = name.substring(0,1) + "'" + name.substring(1);
+			}
+
 			namelistb.append(name).append(", ");
 		}
 
