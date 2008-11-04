@@ -657,8 +657,7 @@ public class Karma
 				final int ret = (Integer)mods.plugin.callAPI("Flood", "IsFlooding", "Karma:" + normalise(karma.instanceName), FLOOD_RATE, 2);
 				if (ret != 0)
 				{
-					if (ret == 1)
-						karma.flood = true;
+					karma.flood = true;
 					continue;
 				}
 			}
