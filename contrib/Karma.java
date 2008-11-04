@@ -46,13 +46,14 @@ class KarmaReasonObject
 class KarmaChangeHolder
 {
 	KarmaObject karma;
-	KarmaReasonObject reason;
+	List<KarmaReasonObject> reasons;
 	int change;
 	boolean flood;
 	String instanceName;
 
 	KarmaChangeHolder(final String instanceName)
 	{
+		this.reasons = new ArrayList<KarmaReasonObject>();
 		this.instanceName = instanceName;
 	}
 }
@@ -268,7 +269,7 @@ public class Karma
 		return new String[] {
 			reason.string,
 			reason.reason,
-			reason.direction == 1 ? "gained" : "lost"
+			reason.direction == 1 ? "gained" : (reason.direction == -1 ? "lost" : "unchanged")
 		};
 	}
 
@@ -278,10 +279,10 @@ public class Karma
 		return apiReasonEnum(null);
 	}
 
-	public String[] apiReason(final boolean up)
+	public String[] apiReason(final int direction)
 	{
 		System.err.println("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
-		return apiReasonEnum(null, up);
+		return apiReasonEnum(null, direction);
 	}
 
 	public String[] apiReason(final String name)
@@ -290,10 +291,10 @@ public class Karma
 		return apiReasonEnum(null, name);
 	}
 
-	public String[] apiReason(final String name, final boolean up)
+	public String[] apiReason(final String name, final int direction)
 	{
 		System.err.println("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
-		return apiReasonEnum(null, name, up);
+		return apiReasonEnum(null, name, direction);
 	}
 
 	public String[] apiReasonEnum(final String enumSource)
@@ -302,10 +303,10 @@ public class Karma
 		return getReasonResult(results, enumSource);
 	}
 
-	public String[] apiReasonEnum(final String enumSource, final boolean up)
+	public String[] apiReasonEnum(final String enumSource, final int direction)
 	{
-		final List<KarmaReasonObject> results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE direction = '" + (up ? 1 : -1) + "'");
-		return getReasonResult(results, enumSource + ":" + (up ? "up" : "down"));
+		final List<KarmaReasonObject> results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE direction = " + direction);
+		return getReasonResult(results, enumSource + ":" + (direction == 1 ? "up" : (direction == -1 ? "down" : "unchanged")));
 	}
 
 	public String[] apiReasonEnum(final String enumSource, final String name)
@@ -314,10 +315,10 @@ public class Karma
 		return getReasonResult(results, enumSource + "::" + name);
 	}
 
-	public String[] apiReasonEnum(final String enumSource, final String name, final boolean up)
+	public String[] apiReasonEnum(final String enumSource, final String name, final int direction)
 	{
-		final List<KarmaReasonObject> results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\" AND direction = '" + (up ? 1 : -1) + "'");
-		return getReasonResult(results, enumSource + ":" + (up ? "up" : "down") + ":" + name);
+		final List<KarmaReasonObject> results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\" AND direction = " + direction);
+		return getReasonResult(results, enumSource + ":" + (direction == 1 ? "up" : (direction == -1 ? "down" : "unchanged")) + ":" + name);
 	}
 
 	public String[] helpCommandReason = {
@@ -372,7 +373,7 @@ public class Karma
 			irc.sendContextReply(mes, "Nobody has ever told me why " + formatKarmaNameForIRC(name) + " has changed karma. :(");
 	}
 
-	private void nullReason(final Message mes, final boolean direction)
+	private void nullReason(final Message mes, final int direction)
 	{
 		String[] reason;
 		String name;
@@ -385,7 +386,7 @@ public class Karma
 			return;
 		}
 
-		irc.sendContextReply(mes, formatKarmaNameForIRC(name) + " has " + (direction ? "gained" : "lost") + " karma " + reason[1]);
+		irc.sendContextReply(mes, formatKarmaNameForIRC(name) + " has " + (direction == 1 ? "gained" : (direction == -1 ? "lost" : "unchanged")) + " karma " + reason[1]);
 	}
 
 	public String[] helpCommandReasonUp = {
@@ -400,21 +401,24 @@ public class Karma
 		String[] reason;
 		if (name.equals(""))
 		{
-			nullReason(mes, true);
-			return;
-		}
-
-		final Matcher ma=karmaItemPattern.matcher(name);
-		if (ma.find())
-		{
-			reason = apiReasonEnum(mes.getContext(), getName(ma), true);
-			if (reason !=null)
+			reason = apiReasonEnum(mes.getContext(), 1);
+			if (reason != null)
 				name = reason[0];
 		}
 		else
 		{
-			nullReason(mes, true);
-			return;
+			final Matcher ma=karmaItemPattern.matcher(name);
+			if (ma.find())
+			{
+				reason = apiReasonEnum(mes.getContext(), getName(ma), 1);
+				if (reason !=null)
+					name = reason[0];
+			}
+			else
+			{
+				nullReason(mes, 1);
+				return;
+			}
 		}
 
 		if (reason != null)
@@ -435,7 +439,7 @@ public class Karma
 		String[] reason;
 		if (name.equals(""))
 		{
-			reason = apiReasonEnum(mes.getContext(), false);
+			reason = apiReasonEnum(mes.getContext(), -1);
 			if (reason != null)
 				name = reason[0];
 		}
@@ -444,17 +448,16 @@ public class Karma
 			final Matcher ma=karmaItemPattern.matcher(name);
 			if (ma.find())
 			{
-				reason = apiReasonEnum(mes.getContext(), getName(ma), false);
+				reason = apiReasonEnum(mes.getContext(), getName(ma), -1);
 				if (reason != null)
 					name = reason[0];
 			}
 			else
 			{
-				nullReason(mes, false);
+				nullReason(mes, -1);
 				return;
 			}
 		}
-
 
 		if (reason != null)
 			irc.sendContextReply(mes, formatKarmaNameForIRC(name) + " has lost karma " + reason[1]);
@@ -477,8 +480,8 @@ public class Karma
 	// picks up anything that /could/ be karma (though not necessarily only
 	// karma)
 
-	// ++ or --:
-	final private static String plusplus_or_minusminus = "(\\+\\+|\\-\\-)";
+	// ++, --, +- or -+:
+	final private static String plusplus_or_minusminus = "([\\+\\-]{2})";
 
 	// Quoted string:
 	final private static String c_style_quoted_string = "(?:"
@@ -511,23 +514,24 @@ public class Karma
 	);
 
 	// If you change the first part of this, change karmaPattern too.
-	final private static Pattern reasonPattern = Pattern.compile(
+	final private static Pattern karmaPatternWithReason = Pattern.compile(
 		"(?x:"
-		+ "^" // Anchor at start of string...
+		+ "^" // Anchor at start of string.
 		+ karma_item
 		+ plusplus_or_minusminus
 		+ "\\s+"
 		+ "("
 			// A "natural English" reason
 			+ "(?i: because | for)\\s" // Must start sensibly
-			+ ".+?"                    // Rest of reason
+			+ ".+"                     // Rest of reason
 		+ "|"
 			// A bracketted reason
 			+ "\\("
 			+ ".+?" // Contains any text.
 			+ "\\)"
 		+ ")"
-		+ "\\s*$" // Chew up all trailing whitespace.
+		+ ".*?" // Keep this trailing part as small as possible.
+		+ "$" // Anchor at the end of string.
 		+ ")"
 	);
 
@@ -539,35 +543,39 @@ public class Karma
 		if (mes.getFlags().containsKey("command"))
 			return;
 
-		final List<List<String>> matches = new ArrayList<List<String>>();
+		final String message = mes.getMessage();
 		final String nick = mods.nick.getBestPrimaryNick(mes.getNick());
 
-		// Find out if we've got a reason going on.
-		final Matcher reasonMatch = reasonPattern.matcher(mes.getMessage());
-		if (reasonMatch.matches())
-		{
-			final List<String> groups = new ArrayList<String>();
-			matches.add(groups);
-			for (int i = 0; i <= 4; i++)
-				groups.add(reasonMatch.group(i));
-		}
+		System.err.println("LINE       : <" + message + ">");
+		final List<Integer> matchStarts = new ArrayList<Integer>();
+		final Matcher karmaScan = karmaPattern.matcher(message);
+		while (karmaScan.find())
+			matchStarts.add(karmaScan.start());
+		matchStarts.add(message.length());
 
-		// Find all karma changes now we've covered the reason.
-		final Matcher karmaMatch = karmaPattern.matcher(mes.getMessage());
-		while (karmaMatch.find())
+		final List<List<String>> matches = new ArrayList<List<String>>();
+		for (int matchIndex = 1; matchIndex < matchStarts.size(); matchIndex++)
 		{
-			final List<String> groups = new ArrayList<String>();
-			matches.add(groups);
-			for (int i = 0; i <= 3; i++)
+			System.err.println("");
+			final String submessage = message.substring(matchStarts.get(matchIndex - 1), matchStarts.get(matchIndex)).replaceAll("[^\\+\\-\\)\\w]+$", "");
+			System.err.println("  SEGMENT  : <" + submessage + ">");
+			
+			Matcher karmaMatch = karmaPatternWithReason.matcher(submessage);
+			if (!karmaMatch.find())
+			{
+				karmaMatch = karmaPattern.matcher(submessage);
+				karmaMatch.find();
+			}
+			
+			System.err.println("  MATCH    : <" + karmaMatch.group() + ">");
+			for (int i = 1; i <= karmaMatch.groupCount(); i++)
+				System.err.println("    GROUP " + i + ": <" + karmaMatch.group(i) + ">");
+			
+			List<String> groups = new ArrayList<String>();
+			for (int i = 0; i <= karmaMatch.groupCount(); i++)
 				groups.add(karmaMatch.group(i));
+			matches.add(groups);
 		}
-
-		// If we got multiple matches, and the first one is the reason match,
-		// we need to discard the first non-reason match (always index 1 while
-		// we only support one reasoned item/line) as it's the same as the
-		// reason match.
-		if (matches.size() > 1 && matches.get(0).size() == 5)
-			matches.remove(1);
 
 		// List of all karma changes that will be applied and hash of them
 		// so we can handle duplicates sanely.
@@ -607,7 +615,7 @@ public class Karma
 			{
 				karma.change++;
 			}
-			else
+			else if (match.get(3).equals("--"))
 			{
 				karma.change--;
 			}
@@ -615,17 +623,16 @@ public class Karma
 			// Get the reason, if it's not excluded!
 			if (match.size() > 4 && !reasonExceptions.contains(match.get(4)))
 			{
-				karma.reason = new KarmaReasonObject();
-				karma.reason.reason = match.get(4);
-				karma.reason.direction = match.get(3).equals("++") ? 1 : -1;
+				KarmaReasonObject reason = new KarmaReasonObject();
+				reason.reason = match.get(4);
+				reason.direction = match.get(3).equals("++") ? 1 : (match.get(3).equals("--") ? -1 : 0);
+				karma.reasons.add(reason);
 			}
 
 			if (!karmaMap.containsKey(name.toLowerCase()))
 			{
 				karmas.add(karma);
 				karmaMap.put(karma.instanceName.toLowerCase(), karma);
-				if (karmas.size() >= 5)
-					break;
 			}
 		}
 
@@ -688,12 +695,12 @@ public class Karma
 			// Save the new karma data.
 			mods.odb.update(karma.karma);
 
-			// Now add the reason, if there is one. Note that there's nothing
-			// to retrieve here so we can save the local object directly.
-			if (karma.reason != null)
+			// Now add the reason(s). Note that there's nothing to retrieve
+			// here so we can save the local object directly.
+			for (KarmaReasonObject reason : karma.reasons)
 			{
-				karma.reason.string = karma.karma.string;
-				mods.odb.save(karma.reason);
+				reason.string = karma.karma.string;
+				mods.odb.save(reason);
 			}
 		}
 
@@ -708,7 +715,7 @@ public class Karma
 				// This doesn't mention if there was a reason.
 				irc.sendContextReply(mes, "Fool, that's less karma to you! That leaves you with " + karma.karma.value + ".");
 			else
-				irc.sendContextReply(mes, (karma.change > 0 ? "Given more karma" : karma.change < 0 ? "Given less karma" : "No change") + " to " + formatKarmaNameForIRC(karma.instanceName) + (karma.reason != null ? " and understood your reasons" : "") + ". " + (karma.change == 0 ? "Karma remains at " : "New karma is ") + karma.karma.value + ".");
+				irc.sendContextReply(mes, (karma.change > 0 ? "Given more karma" : karma.change < 0 ? "Given less karma" : "No change") + " to " + formatKarmaNameForIRC(karma.instanceName) + (karma.reasons.size() == 1 ? " and understood your reason" : (karma.reasons.size() > 1 ? " and understood your reasons" : "")) + ". " + (karma.change == 0 ? "Karma remains at " : "New karma is ") + karma.karma.value + ".");
 		}
 		else
 		{
@@ -729,7 +736,9 @@ public class Karma
 						output.append(" down");
 					else
 						output.append(" unchanged");
-					if (karma.reason != null)
+					if (karma.reasons.size() > 1)
+						output.append(" with reasons");
+					else if (karma.reasons.size() == 1)
 						output.append(" with reason");
 					if (karma.change == 0)
 						output.append(" (remains " + karma.karma.value + ")");
@@ -1288,17 +1297,21 @@ public class Karma
 
 			out.println("  <TABLE>");
 			boolean inUp = false;
+			boolean inUnchanged = false;
 			boolean inDown = false;
 			final List<KarmaReasonObject> reasons = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + mods.odb.escapeString(karmaObject.string) + "\" SORT INTEGER direction");
 			for (final KarmaReasonObject reason : reasons) {
 				if (!inUp && reason.direction == 1) {
 					//out.println("  <TR><TH>Reasons for gaining karma</TH></TR>");
 					inUp = true;
+				} else if (!inUnchanged && reason.direction == 0) {
+					//out.println("  <TR><TH>Reasons for unchanged karma</TH></TR>");
+					inUnchanged = true;
 				} else if (!inDown && reason.direction == -1) {
 					//out.println("  <TR><TH>Reasons for losing karma</TH></TR>");
 					inDown = true;
 				}
-				out.println("  <TR><TD>" + mods.scrape.escapeForHTML(karmaObject.string + " has " + (reason.direction > 0 ? "gained" : "lost") + " karma " + reason.reason) + "</TD></TR>");
+				out.println("  <TR><TD>" + mods.scrape.escapeForHTML(karmaObject.string + " has " + (reason.direction > 0 ? "gained" : (reason.direction < 0 ? "lost" : "unchanged")) + " karma " + reason.reason) + "</TD></TR>");
 			}
 			out.println("  </TABLE>");
 		} else {
