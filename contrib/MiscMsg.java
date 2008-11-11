@@ -99,12 +99,17 @@ public class MiscMsg
 		{
 			// Assume 1.
 		}
-		irc.sendContextReply(mes, "Random number between 0 and " + max + " is " + new Random().nextDouble()*max + ".");
+		irc.sendContextReply(mes, "Random number between 0 and " + max + " is " + Math.random()*max + ".");
 	}
 
-	private void randomReply(final Message mes, final String[] replies )
+	private void randomReply(final Message mes, final String[] replies)
 	{
-		irc.sendContextReply(mes, replies[new Random().nextInt(replies.length)]);
+		randomReply(mes, replies, "", "");
+	}
+
+	private void randomReply(final Message mes, final String[] replies, String prefix, String suffix)
+	{
+		irc.sendContextReply(mes, prefix + replies[new Random().nextInt(replies.length)] + suffix);
 	}
 
 	public String[] helpCommandFeatureRequest = { "Provides the URL from where feature requests can be made." };
@@ -205,11 +210,29 @@ public class MiscMsg
 		"<Question>",
 		"<Question> is some a question for the 8 ball the think over."
 	};
-	public void command8Ball( final Message mes )
+	public void command8Ball(final Message mes)
 	{
 		// http://r.wesley.edwards.net/writes/JavaScript/magic8ball.js
-		randomReply(mes, new String[] {"Signs point to yes.", "Yes.", "Reply hazy, try again.", "Without a doubt.", "My sources say no.", "As I see it, yes.", "You may rely on it.", "Concentrate and ask again.", "Outlook not so good.", "It is decidedly so.", "Better not tell you now.", "Very doubtful.", "Yes - definitely.", "It is certain.", "Cannot predict now.", "Most likely.", "Ask again later.", "My reply is no.", "Outlook good.", "Don't count on it." });
+		randomReply(mes, new String[] { "Signs point to yes.", "Yes.", "Reply hazy, try again.",
+				"Without a doubt.", "My sources say no.", "As I see it, yes.",
+				"You may rely on it.", "Concentrate and ask again.", "Outlook not so good.",
+				"It is decidedly so.", "Better not tell you now.", "Very doubtful.",
+				"Yes - definitely.", "It is certain.", "Cannot predict now.", "Most likely.",
+				"Ask again later.", "My reply is no.", "Outlook good.", "Don't count on it." });
 	}
+
+	public String[] helpCommandTarot = { "Draw a card from the tarot pack.", };
+
+	public void commandTarot(final Message mes)
+	{
+		// http://en.wikipedia.org/wiki/Major_Arcana
+		randomReply(mes, new String[] { "The Fool", "The Magician", "The High Priestess",
+				"The Empress", "The Emperor", "The Hierophant or The Pope", "The Lovers",
+				"The Chariot", "Strength", "The Hermit", "Wheel of Fortune", "Justice",
+				"The Hanged Man", "Death", "Temperance", "The Devil", "The Tower", "The Star",
+				"The Moon", "The Sun", "Judgment", "The World" }, "You drew ", ".");
+	}
+
 
 	public void commandDiscordianDate(final Message mes)
 	{
