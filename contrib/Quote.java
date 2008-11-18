@@ -1734,6 +1734,21 @@ public class Quote
 
 		try
 		{
+			final int ret = ((Integer)mods.plugin.callAPI("Flood", "IsFlooding", ev.getChannel(), Integer.valueOf(2000), Integer.valueOf(4))).intValue();
+			if (ret != 0)
+				return;
+		}
+		catch (final ChoobNoSuchCallException e)
+		{
+			// ignore
+		}
+		catch (final Throwable e)
+		{
+			System.err.println("Couldn't do antiflood call: " + e);
+		}
+			
+		try
+		{
 			final StringBuilder greetingBuilder = new StringBuilder();
 			greetingBuilder.append(getGreetingForUserJoinEvent(ev));
 
