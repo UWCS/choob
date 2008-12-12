@@ -82,7 +82,8 @@ public class MiscUtils
 				final String thisLine = sb.toString();
 				final Matcher matt = makeLineMatcher(case_ins, original, thisLine);
 				if (matt.find())
-					processReplacement(mes, original, replacement, ", in sed, in twenty mintues,", case_ins, global, matt);
+					processReplacement(mes, original, replacement, ", in sed, in twenty mintues,",
+							case_ins, global, matt, null);
 				else if (warn)
 					irc.sendContextReply(mes, "Didn't match.");
 				return;
@@ -95,7 +96,8 @@ public class MiscUtils
 				if (thisLine.getNick().equals(mes.getNick())
 						&& qualifies(mes, trigger, original, thisLine, matt))
 				{
-					processReplacement(mes, original, replacement, "", case_ins, global, matt);
+					processReplacement(mes, original, replacement, "", case_ins, global, matt,
+							isActionOrNull(thisLine));
 					return;
 				}
 
@@ -108,7 +110,7 @@ public class MiscUtils
 				if (qualifies(mes, trigger, original, thisLine, matt))
 				{
 					processReplacement(mes, original, replacement, " thinks " + thisLine.getNick(),
-							case_ins, global, matt);
+							case_ins, global, matt, isActionOrNull(thisLine));
 					return;
 				}
 			}
@@ -123,11 +125,21 @@ public class MiscUtils
 		}
 	}
 
+	private String isActionOrNull(final Message thisLine)
+	{
+		return isAction(thisLine) ? thisLine.getNick() : null;
+	}
+
 	private String stringize(Message m)
 	{
-		if (m instanceof ChannelAction || m instanceof PrivateAction)
+		if (isAction(m))
 			return " * " + m.getNick() + " " + m.getMessage();
 		return "< " + m.getNick() + "> " + m.getMessage();
+	}
+
+	private boolean isAction(Message m)
+	{
+		return m instanceof ChannelAction || m instanceof PrivateAction;
 	}
 
 	private Matcher makeLineMatcher(boolean case_ins, final String original, final String str)
@@ -137,7 +149,7 @@ public class MiscUtils
 
 	private void processReplacement(final Message mes, final String original,
 			final String replacement, String additional, boolean case_ins, boolean global,
-			Matcher matt)
+			Matcher matt, String action_style)
 	{
 		String newLine;
 
@@ -149,7 +161,9 @@ public class MiscUtils
 		if (newLine.length() > MAXLENGTH)
 			newLine = newLine.substring(0, MAXLENGTH);
 
-		irc.sendContextMessage(mes, mes.getNick() + additional + " meant: " + newLine.replaceAll("\n", "; "));
+		irc.sendContextMessage(mes, mes.getNick() + additional + " meant: "
+				+ (action_style != null ? "* " + action_style + " " : "")
+				+ newLine.replaceAll("\n", "; "));
 	}
 
 	private boolean qualifies(final Message mes, final Pattern trigger, final String original,
