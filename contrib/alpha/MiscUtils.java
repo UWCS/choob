@@ -2,9 +2,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import uk.co.uwcs.choob.support.events.ChannelAction;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.PrivateAction;
 
 public class MiscUtils
 {
@@ -48,9 +50,9 @@ public class MiscUtils
 				final String args = matcher.group(3);
 				// on by default
 				case_ins = args.indexOf('I') == -1;
+				warn = args.indexOf('W') == -1;
 
 				// off by default
-				warn = args.indexOf('w') != -1;
 				global = args.indexOf('g') != -1;
 				treat_single = args.indexOf('s') != -1;
 			}
@@ -71,52 +73,71 @@ public class MiscUtils
 
 			final List<Message> history = mods.history.getLastMessages(mes, 10);
 			final Pattern trigger = Pattern.compile(irc.getTriggerRegex());
-			System.out.println("four");
-			for (int i = 0; i < history.size(); i++)
+
+			if (treat_single)
+			{
+				StringBuilder sb = new StringBuilder();
+				for (int i = history.size() - 1; i >= 0; --i)
+					sb.append(stringize(history.get(i))).append("\n");
+				final String thisLine = sb.toString();
+				final Matcher matt = makeLineMatcher(case_ins, original, thisLine);
+				if (matt.find())
+					processReplacement(mes, original, replacement, ", in sed, in twenty mintues,", case_ins, global, matt);
+				else if (warn)
+					irc.sendContextReply(mes, "Didn't match.");
+				return;
+			}
+
+			for (int i = 0; i < history.size(); ++i)
 			{
 				final Message thisLine = history.get(i);
-				final Matcher matt = makeLineMatcher(case_ins, original, thisLine);
+				final Matcher matt = makeLineMatcher(case_ins, original, thisLine.getMessage());
 				if (thisLine.getNick().equals(mes.getNick())
 						&& qualifies(mes, trigger, original, thisLine, matt))
 				{
-					processReplacement(mes, original, replacement, thisLine, "", case_ins, global,
-							matt);
+					processReplacement(mes, original, replacement, "", case_ins, global, matt);
 					return;
 				}
 
 			}
 
-			for (int i = 0; i < history.size(); i++)
+			for (int i = 0; i < history.size(); ++i)
 			{
 				final Message thisLine = history.get(i);
-				final Matcher matt = makeLineMatcher(case_ins, original, thisLine);
+				final Matcher matt = makeLineMatcher(case_ins, original, thisLine.getMessage());
 				if (qualifies(mes, trigger, original, thisLine, matt))
 				{
-					processReplacement(mes, original, replacement, thisLine, " thinks "
-							+ thisLine.getNick(), case_ins, global, matt);
+					processReplacement(mes, original, replacement, " thinks " + thisLine.getNick(),
+							case_ins, global, matt);
 					return;
 				}
 			}
-			System.out.println("five");
+			if (warn)
+				irc.sendContextReply(mes, "Nothing matched.");
 		}
 		catch (final Exception e)
 		{
 			if (warn)
 				irc.sendContextReply(mes, e.toString());
 			e.printStackTrace();
-			System.out.println("six");
 		}
 	}
 
-	private Matcher makeLineMatcher(boolean case_ins, final String original, final Message thisLine)
+	private String stringize(Message m)
 	{
-		return Pattern.compile(original, case_ins ? Pattern.CASE_INSENSITIVE : 0).matcher(
-				thisLine.getMessage());
+		if (m instanceof ChannelAction || m instanceof PrivateAction)
+			return " * " + m.getNick() + " " + m.getMessage();
+		return "< " + m.getNick() + "> " + m.getMessage();
+	}
+
+	private Matcher makeLineMatcher(boolean case_ins, final String original, final String str)
+	{
+		return Pattern.compile(original, case_ins ? Pattern.CASE_INSENSITIVE : 0).matcher(str);
 	}
 
 	private void processReplacement(final Message mes, final String original,
-			final String replacement, final Message thisLine, String additional, boolean case_ins,
-			boolean global, Matcher matt)
+			final String replacement, String additional, boolean case_ins, boolean global,
+			Matcher matt)
 	{
 		String newLine;
 
@@ -128,7 +149,7 @@ public class MiscUtils
 		if (newLine.length() > MAXLENGTH)
 			newLine = newLine.substring(0, MAXLENGTH);
 
-		irc.sendContextMessage(mes, mes.getNick() + additional + " meant: " + newLine);
+		irc.sendContextMessage(mes, mes.getNick() + additional + " meant: " + newLine.replaceAll("\n", "; "));
 	}
 
 	private boolean qualifies(final Message mes, final Pattern trigger, final String original,
