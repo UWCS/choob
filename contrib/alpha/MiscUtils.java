@@ -23,17 +23,21 @@ public class MiscUtils
 				"$Rev$$Date$" };
 	}
 
-	public final String filterReplaceRegex = "s(.)(.*\\1.*\\1)([wW]?)(?:(?:\\s+)|$)";
+	public final String filterReplaceRegex = "s(.)(.*\\1.*\\1)((?i)[wigs]{0,4})(?:(?:\\s+)|$)";
 	private final int MAXLENGTH = 300;
 
 	public void filterReplace(final Message mes)
 	{
-		boolean warn = false;
+		boolean warn = true; // show errors that occurred
+		boolean case_ins; // regex i: case insensitive
+		boolean global; // regex g: replace all
+		boolean treat_single; // regex s: treat input as single line
+
 		try
 		{
 			// Run the filter regex with the trigger.
-			Matcher matcher = Pattern.compile(irc.getTriggerRegex() + filterReplaceRegex,
-					Pattern.CASE_INSENSITIVE).matcher(mes.getMessage());
+			Matcher matcher = Pattern.compile(irc.getTriggerRegex() + filterReplaceRegex).matcher(
+					mes.getMessage());
 			if (!matcher.find())
 				return;
 
@@ -42,12 +46,20 @@ public class MiscUtils
 			final String body = matcher.group(2);
 			{
 				final String args = matcher.group(3);
-				warn = args.indexOf('w') != -1 || args.indexOf('W') != -1;
+				// on by default
+				case_ins = args.indexOf('I') == -1;
+
+				// off by default
+				warn = args.indexOf('w') != -1;
+				global = args.indexOf('g') != -1;
+				treat_single = args.indexOf('s') != -1;
 			}
 
-			// This 'pattern' is the body of the regex, including support for escaped seperators.
+			// This 'pattern' is the body of the regex, including support for
+			// escaped seperators.
 			final String unescapedseps = "(?:\\\\.|[^" + inSquaresEscape(sep) + "\\\\])";
-			final String pattern = "(" + unescapedseps + "+)" + Pattern.quote(sep) + "(" + unescapedseps + "*)"+ Pattern.quote(sep);
+			final String pattern = "(" + unescapedseps + "+)" + Pattern.quote(sep) + "("
+					+ unescapedseps + "*)" + Pattern.quote(sep);
 
 			// Pull out the "from" and the "to".
 			matcher = Pattern.compile(pattern).matcher(body);
@@ -58,51 +70,73 @@ public class MiscUtils
 			final String replacement = matcher.group(2);
 
 			final List<Message> history = mods.history.getLastMessages(mes, 10);
+			final Pattern trigger = Pattern.compile(irc.getTriggerRegex());
+			System.out.println("four");
 			for (int i = 0; i < history.size(); i++)
 			{
 				final Message thisLine = history.get(i);
-				matcher = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE).matcher(
-						thisLine.getMessage());
+				final Matcher matt = makeLineMatcher(case_ins, original, thisLine);
 				if (thisLine.getNick().equals(mes.getNick())
-						&& thisLine.getContext().equals(mes.getContext())
-						&& thisLine.getMessage().matches(".*" + original + ".*")
-						&& !thisLine.getMessage().matches(filterReplaceRegex)
-						&& !matcher.find())
+						&& qualifies(mes, trigger, original, thisLine, matt))
 				{
-					String newLine = thisLine.getMessage().replaceAll(original, replacement);
-					if (newLine.length() > MAXLENGTH)
-						newLine = newLine.substring(0, MAXLENGTH);
-					irc.sendContextMessage(mes, mes.getNick() + " meant: " + newLine);
+					processReplacement(mes, original, replacement, thisLine, "", case_ins, global,
+							matt);
 					return;
 				}
 
 			}
+
 			for (int i = 0; i < history.size(); i++)
 			{
 				final Message thisLine = history.get(i);
-				matcher = Pattern.compile(irc.getTriggerRegex(), Pattern.CASE_INSENSITIVE).matcher(
-						thisLine.getMessage());
-				if (thisLine.getContext().equals(mes.getContext())
-						&& thisLine.getMessage().matches(".*" + original + ".*")
-						&& !thisLine.getMessage().matches(filterReplaceRegex)
-						&& !matcher.find())
+				final Matcher matt = makeLineMatcher(case_ins, original, thisLine);
+				if (qualifies(mes, trigger, original, thisLine, matt))
 				{
-					String newLine = thisLine.getMessage().replaceAll(original, replacement);
-					if (newLine.length() > MAXLENGTH)
-						newLine = newLine.substring(0, MAXLENGTH);
-					irc.sendContextMessage(mes, mes.getNick() + " thinks " + thisLine.getNick()
-							+ " meant: " + newLine);
+					processReplacement(mes, original, replacement, thisLine, " thinks "
+							+ thisLine.getNick(), case_ins, global, matt);
 					return;
 				}
 			}
-
+			System.out.println("five");
 		}
 		catch (final Exception e)
 		{
 			if (warn)
 				irc.sendContextReply(mes, e.toString());
 			e.printStackTrace();
+			System.out.println("six");
 		}
+	}
+
+	private Matcher makeLineMatcher(boolean case_ins, final String original, final Message thisLine)
+	{
+		return Pattern.compile(original, case_ins ? Pattern.CASE_INSENSITIVE : 0).matcher(
+				thisLine.getMessage());
+	}
+
+	private void processReplacement(final Message mes, final String original,
+			final String replacement, final Message thisLine, String additional, boolean case_ins,
+			boolean global, Matcher matt)
+	{
+		String newLine;
+
+		if (global)
+			newLine = matt.replaceAll(replacement);
+		else
+			newLine = matt.replaceFirst(replacement);
+
+		if (newLine.length() > MAXLENGTH)
+			newLine = newLine.substring(0, MAXLENGTH);
+
+		irc.sendContextMessage(mes, mes.getNick() + additional + " meant: " + newLine);
+	}
+
+	private boolean qualifies(final Message mes, final Pattern trigger, final String original,
+			final Message thisLine, Matcher matt)
+	{
+		final String message = thisLine.getMessage();
+		return thisLine.getContext().equals(mes.getContext()) && matt.find()
+				&& !message.matches(filterReplaceRegex) && !trigger.matcher(message).find();
 	}
 
 	private static String inSquaresEscape(final String sep)
