@@ -550,7 +550,7 @@ public class MiscMsg
 		URL url;
 		try
 		{
-			url = new URL("http://finance.yahoo.com/currency/convert?amt=" + URLEncoder.encode(command[2], "UTF-8") + "&from=" + URLEncoder.encode(command[0], "UTF-8") + "&to=" + URLEncoder.encode(command[1], "UTF-8") + "&submit=Convert");
+			url = new URL("http://finance.google.com/finance/converter?a=" + URLEncoder.encode(command[2], "UTF-8") + "&from=" + URLEncoder.encode(command[0], "UTF-8") + "&to=" + URLEncoder.encode(command[1], "UTF-8"));
 		}
 		catch (final UnsupportedEncodingException e)
 		{
@@ -573,14 +573,15 @@ public class MiscMsg
 			irc.sendContextReply(mes, "Failed to read site.");
 			return;
 		}
-		final Matcher fromFull = Pattern.compile("(?s)<td class=\"yfnc_tablehead1\"><b>Symbol</b></td>\\s*<td class=\"yfnc_tablehead1\"><b>([^\n]+?)</b></td>").matcher(s);
-		final Matcher toFull = Pattern.compile("(?s)Rate</b></td>\\s*<td class=\"yfnc_tablehead1\"><b>([^\n]+?)</b></td>").matcher(s);
-		final Matcher converted = Pattern.compile("(?s)[0-9]</td>\\s*<td class=\"yfnc_tabledata1\"><b>([^\n]+?)</b></td>").matcher(s);
+
+		final Matcher fromFull = Pattern.compile("<option.*value=\"" + command[0] + "\">(.*) \\(" + command[0] + "\\)").matcher(s);
+		final Matcher toFull = Pattern.compile("<option.*value=\"" + command[1] + "\">(.*) \\(" + command[1] + "\\)").matcher(s);
+		final Matcher converted = Pattern.compile("(?s)currency_converter.*bld>(.*)&nbsp;" + command[1]).matcher(s);
 
 		if (fromFull.find() && toFull.find() && converted.find())
 			irc.sendContextReply(mes, command[2] + " " + command[0] + " (" + fromFull.group(1) + ") is " + converted.group(1) + " " + command[1] + " (" + toFull.group(1) + ").");
 		else
-			irc.sendContextReply(mes, "Failed to parse reply, unsupported currency? (http://finance.yahoo.com/currency for a list)");
+			irc.sendContextReply(mes, "Failed to parse reply, unsupported currency? (http://finance.google.com/finance/converter for a list)");
 
 
 	}
