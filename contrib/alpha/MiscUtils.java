@@ -25,7 +25,7 @@ public class MiscUtils
 				"$Rev$$Date$" };
 	}
 
-	public final String filterReplaceRegex = "s(.)(.*\\1.*\\1)((?i)[wigs]{0,4})(?:(?:\\s+)|$)";
+	public final String filterReplaceRegex = "s(.)(.*\\1.*\\1)((?i)[wpigs]{0,5})(?:(?:\\s+)|$)";
 	private final int MAXLENGTH = 300;
 
 	public void filterReplace(final Message mes)
@@ -34,6 +34,7 @@ public class MiscUtils
 		boolean case_ins; // regex i: case insensitive
 		boolean global; // regex g: replace all
 		boolean treat_single; // regex s: treat input as single line
+		boolean prefer; // p: prefer my lines
 
 		try
 		{
@@ -51,6 +52,7 @@ public class MiscUtils
 				// on by default
 				case_ins = args.indexOf('I') == -1;
 				warn = args.indexOf('W') == -1;
+				prefer = args.indexOf('P') == -1;
 
 				// off by default
 				global = args.indexOf('g') != -1;
@@ -89,19 +91,19 @@ public class MiscUtils
 				return;
 			}
 
-			for (int i = 0; i < history.size(); ++i)
-			{
-				final Message thisLine = history.get(i);
-				final Matcher matt = makeLineMatcher(case_ins, original, thisLine.getMessage());
-				if (thisLine.getNick().equals(mes.getNick())
-						&& qualifies(mes, trigger, original, thisLine, matt))
+			if (prefer)
+				for (int i = 0; i < history.size(); ++i)
 				{
-					processReplacement(mes, original, replacement, "", case_ins, global, matt,
-							isActionOrNull(thisLine));
-					return;
+					final Message thisLine = history.get(i);
+					final Matcher matt = makeLineMatcher(case_ins, original, thisLine.getMessage());
+					if (thisLine.getNick().equals(mes.getNick())
+							&& qualifies(mes, trigger, original, thisLine, matt))
+					{
+						processReplacement(mes, original, replacement, "", case_ins, global, matt,
+								isActionOrNull(thisLine));
+						return;
+					}
 				}
-
-			}
 
 			for (int i = 0; i < history.size(); ++i)
 			{
