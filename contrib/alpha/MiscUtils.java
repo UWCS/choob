@@ -2,14 +2,16 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import uk.co.uwcs.choob.support.events.ChannelAction;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.ChannelAction;
+import uk.co.uwcs.choob.support.events.ChannelMessage;
 import uk.co.uwcs.choob.support.events.Message;
 import uk.co.uwcs.choob.support.events.PrivateAction;
 
 public class MiscUtils
 {
+	private static final int DOT_CODE_POINT = ".".codePointAt(0);
 	Modules mods;
 	private final IRCInterface irc;
 
@@ -36,12 +38,22 @@ public class MiscUtils
 		boolean treat_single; // regex s: treat input as single line
 		boolean prefer; // p: prefer my lines
 
+		if (!(mes instanceof ChannelMessage))
+		{
+			irc.sendContextReply(mes, "!s currently must be used in channels, sorry.");
+			return;
+		}
+
 		try
 		{
 			// Run the filter regex with the trigger.
 			Matcher matcher = Pattern.compile(irc.getTriggerRegex() + filterReplaceRegex).matcher(
 					mes.getMessage());
 			if (!matcher.find())
+				return;
+
+			final String command = mods.util.getParamArray(mes, 1)[0];
+			if (isCommand(command))
 				return;
 
 			// Get the separator, the main body and process the arguments.
@@ -125,6 +137,22 @@ public class MiscUtils
 				irc.sendContextReply(mes, e.toString());
 			e.printStackTrace();
 		}
+	}
+
+	/** Check if the string is potentially a valid command */
+	private boolean isCommand(final String command)
+	{
+		boolean seen_dot = false;
+		for (int i = 1; i < command.codePointCount(1, command.length()); ++i)
+			if (command.codePointAt(i) == DOT_CODE_POINT)
+				if (seen_dot)
+					return false;
+				else
+					seen_dot = true;
+			else
+				if (!Character.isJavaIdentifierPart(command.codePointAt(i)))
+					return false;
+		return mods.plugin.validCommand(command);
 	}
 
 	private String isActionOrNull(final Message thisLine)
