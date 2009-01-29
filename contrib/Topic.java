@@ -104,8 +104,8 @@ public class Topic
 			irc.sendContextReply(mes, "Sorry, haven't seen the topic change!");
 			return;
 		}
-		final String oldTopic = topic.oldTopic;
-		final String newTopic = topic.newTopic;
+		final String oldTopic = topic.oldTopic.trim();
+		final String newTopic = topic.newTopic.trim();
 
 		System.out.println("New topic: " + newTopic);
 		System.out.println("Old topic: " + oldTopic);
