@@ -38,12 +38,6 @@ public class MiscUtils
 		boolean treat_single; // regex s: treat input as single line
 		boolean prefer; // p: prefer my lines
 
-		if (!(mes instanceof ChannelMessage))
-		{
-			irc.sendContextReply(mes, "!s currently must be used in channels, sorry.");
-			return;
-		}
-
 		try
 		{
 			// Run the filter regex with the trigger.
@@ -80,6 +74,9 @@ public class MiscUtils
 			// Pull out the "from" and the "to".
 			matcher = Pattern.compile(pattern).matcher(body);
 			if (!matcher.matches())
+				return;
+
+			if (!(mes instanceof ChannelMessage))
 				return;
 
 			final String original = matcher.group(1);
