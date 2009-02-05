@@ -17,8 +17,8 @@ public final class DateModule {
 	 * Units of time used in these functions.
 	 */
 	public static enum TimeUnit {
-		YEAR("y", 365l * 7 * 24 * 60 * 60 * 1000),
-		MONTH("m", 31l * 7 * 24 * 60 * 60 * 1000),
+		YEAR("y", 365l * 24 * 60 * 60 * 1000),
+		MONTH("m", 4l * 7 * 24 * 60 * 60 * 1000),
 		WEEK("w", 7 * 24 * 60 * 60 * 1000),
 		DAY("d", 24 * 60 * 60 * 1000),
 		HOUR("h", 60 * 60 * 1000),
