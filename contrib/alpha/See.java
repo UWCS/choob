@@ -38,19 +38,18 @@ public class See
 
 	String timeStamp(final Timestamp d)
 	{
-		return mods.date.timeStamp(new java.util.Date().getTime()
-				- d.getTime(), false, 3,
+		return mods.date.timeStamp(new java.util.Date().getTime() - d.getTime(), false, 3,
 				uk.co.uwcs.choob.modules.DateModule.TimeUnit.MINUTE);
 	}
 
-	private final synchronized ResultSet getDataFor(final String nick,
-			final Connection conn) throws SQLException
+	private final synchronized ResultSet getDataFor(final String nick, final Connection conn)
+			throws SQLException
 	{
 		return getDataFor(nick, conn, 5);
 	}
 
-	private final synchronized ResultSet getDataFor(final String nick,
-			final Connection conn, final int days) throws SQLException
+	private final synchronized ResultSet getDataFor(final String nick, final Connection conn,
+			final int days) throws SQLException
 	{
 		final Statement stat = conn.createStatement();
 
@@ -68,8 +67,7 @@ public class See
 		stat
 				.execute("ALTER TABLE `tempt1` ADD `index` INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST; ");
 
-		stat
-				.execute("CREATE TEMPORARY TABLE `tempt2` as SELECT * from `tempt1`; ");
+		stat.execute("CREATE TEMPORARY TABLE `tempt2` as SELECT * from `tempt1`; ");
 		stat.execute("UPDATE `tempt2` SET `index`:=`index`+1; ");
 		stat.execute("ALTER TABLE `tempt2` ADD PRIMARY KEY ( `index` ); ");
 
@@ -79,8 +77,7 @@ public class See
 				.executeQuery();
 	}
 
-	public final synchronized void commandBodyClock(final Message mes)
-			throws SQLException
+	public final synchronized void commandBodyClock(final Message mes) throws SQLException
 	{
 		String nick = mods.util.getParamString(mes).trim();
 
@@ -97,19 +94,16 @@ public class See
 
 		if (!rs.last())
 			irc.sendContextReply(mes,
-					"I don't have enough information to work out the bodyclock for "
-							+ nick + ".");
+					"I don't have enough information to work out the bodyclock for " + nick + ".");
 		else
 		{
 			final Timestamp gotup = rs.getTimestamp("end");
-			final long diff = rs.getTimestamp("end").getTime()
-					- rs.getTimestamp("start").getTime();
+			final long diff = rs.getTimestamp("end").getTime() - rs.getTimestamp("start").getTime();
 
-			float bodyclock = 8.0f + (new java.util.Date().getTime() - gotup
-					.getTime()) / (1000.0f * 60.0f * 60.0f);
+			float bodyclock = 8.0f + (new java.util.Date().getTime() - gotup.getTime())
+					/ (1000.0f * 60.0f * 60.0f);
 
-			long minutes = Math
-					.round((bodyclock - Math.floor(bodyclock)) * 60.0f);
+			long minutes = Math.round((bodyclock - Math.floor(bodyclock)) * 60.0f);
 
 			if (minutes == 60)
 			{
@@ -119,18 +113,15 @@ public class See
 
 			final int cur_hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
 			final int hour = (int) Math.floor(bodyclock) % 24;
-			final String[] candidateZones = TimeZone.getAvailableIDs((cur_hour
-					- hour + 24) % 24
+			final String[] candidateZones = TimeZone.getAvailableIDs((cur_hour - hour + 24) % 24
 					* -3600000);
 			String following = "";
 			if (candidateZones.length > 0)
 			{
 				following = " and implies that he or she is following "
-						+ TimeZone.getTimeZone(candidateZones[0])
-								.getDisplayName()
+						+ TimeZone.getTimeZone(candidateZones[0]).getDisplayName()
 						+ " and may be located in "
-						+ candidateZones[new Random()
-								.nextInt(candidateZones.length)];
+						+ candidateZones[new Random().nextInt(candidateZones.length)];
 			}
 			ret += nick
 					+ " probably got up "
@@ -138,9 +129,8 @@ public class See
 					+ " ago after "
 					+ mods.date.timeStamp(diff, false, 2,
 							uk.co.uwcs.choob.modules.DateModule.TimeUnit.HOUR)
-					+ " of sleep, making his or her body-clock time about "
-					+ hour + ":" + (minutes < 10 ? "0" : "") + minutes
-					+ following;
+					+ " of sleep, making his or her body-clock time about " + hour + ":"
+					+ (minutes < 10 ? "0" : "") + minutes + following;
 
 			irc.sendContextReply(mes, ret + ".");
 		}
@@ -150,13 +140,14 @@ public class See
 
 	private Date firstSeen(Connection conn, String what) throws SQLException
 	{
-		final PreparedStatement s = conn.prepareStatement("select Time from History where Nick like ? order by Time asc limit 1");
+		final PreparedStatement s = conn
+				.prepareStatement("select Time from History where Nick like ? order by Time asc limit 1");
 		try
 		{
 			s.setString(1, what);
 			ResultSet r = s.executeQuery();
 			if (!r.next())
-				return new Date(0);
+				return null;
 			try
 			{
 				return new Date(r.getLong(1));
@@ -175,17 +166,23 @@ public class See
 
 	private String format(Date d)
 	{
-		return java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.FULL, java.text.DateFormat.FULL).format(d);
+		return java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.FULL,
+				java.text.DateFormat.FULL).format(d);
 	}
 
 	public void commandFirstSeen(Message mes) throws SQLException
 	{
-		String nick=mods.util.getParamString(mes).trim();
-		final Connection conn=mods.odb.getConnection();
+		String nick = mods.util.getParamString(mes).trim();
+		final Connection conn = mods.odb.getConnection();
 		try
 		{
 			final Date rel = firstSeen(conn, nick);
-			irc.sendContextReply(mes, nick + " was first seen on " + format(rel) + ", " + mods.date.timeLongStamp(-rel.getTime() + new java.util.Date().getTime(), 2) + " ago.");
+			if (rel == null)
+				irc.sendContextReply(mes, "Never seen " + nick + ".");
+			else
+				irc.sendContextReply(mes, nick + " was first seen on " + format(rel) + ", "
+					+ mods.date.timeLongStamp(new java.util.Date().getTime() - rel.getTime(), 2)
+					+ " ago.");
 		}
 		finally
 		{
@@ -193,8 +190,8 @@ public class See
 		}
 	}
 
-/* This Whores like hell, fix plx */
-//*
+	/* This Whores like hell, fix plx */
+	// *
 	public void commandFreshers(Message mes) throws SQLException
 	{
 		String nick = mods.util.getParamString(mes).trim();
@@ -202,21 +199,22 @@ public class See
 		Set<String> people = new TreeSet<String>();
 		Calendar testdate = Calendar.getInstance();
 
-		if(testdate.get(Calendar.MONTH) < 7)
+		if (testdate.get(Calendar.MONTH) < 7)
 			testdate.set(testdate.get(Calendar.YEAR) - 1, 7, 1);
 		else
 			testdate.set(testdate.get(Calendar.YEAR), 7, 1);
 
 		try
 		{
-			final PreparedStatement s = conn.prepareStatement("select distinct Nick from History where Time > ? group by Nick having count(Time) > 50");
+			final PreparedStatement s = conn
+					.prepareStatement("select distinct Nick from History where Time > ? group by Nick having count(Time) > 50");
 			try
 			{
 				s.setLong(1, testdate.getTime().getTime());
 				ResultSet r = s.executeQuery();
 				try
 				{
-					while(r.next())
+					while (r.next())
 					{
 						people.add(mods.nick.getBestPrimaryNick(r.getString(1)));
 					}
@@ -233,9 +231,12 @@ public class See
 
 			// people is now a list of people who spoke this academic year
 			String res = "Freshers: ";
-			for(String pe : people)
-				if (firstSeen(conn, pe + "%").after(testdate.getTime()))
+			for (String pe : people)
+			{
+				final Date firstSeen = firstSeen(conn, pe + "%");
+				if (firstSeen != null && firstSeen.after(testdate.getTime()))
 					res += pe + " ";
+			}
 			irc.sendContextReply(mes, res);
 		}
 		finally
@@ -243,14 +244,14 @@ public class See
 			mods.odb.freeConnection(conn);
 		}
 	}
-//*/
+
+	// */
 	private final String datelet(final Date d)
 	{
 		return sdfa.format(d).toLowerCase() + sdfb.format(d);
 	}
 
-	public final synchronized void commandPattern(final Message mes)
-			throws SQLException
+	public final synchronized void commandPattern(final Message mes) throws SQLException
 	{
 		String nick = mods.util.getParamString(mes).trim();
 
@@ -264,8 +265,7 @@ public class See
 		final ResultSet rs = getDataFor(nick, conn);
 
 		if (!rs.first())
-			irc.sendContextReply(mes, "I don't have enough information about "
-					+ nick + ".");
+			irc.sendContextReply(mes, "I don't have enough information about " + nick + ".");
 		else
 		{
 			rs.beforeFirst();
@@ -307,8 +307,7 @@ public class See
 
 				while (rs.next())
 				{
-					final Date start = new Date(rs.getTimestamp("start")
-							.getTime());
+					final Date start = new Date(rs.getTimestamp("start").getTime());
 					final Date end = new Date(rs.getTimestamp("end").getTime());
 					out.println(start.getTime() + " " + end.getTime());
 				}
@@ -360,12 +359,10 @@ public class See
 
 				if (succ < 2)
 				{
-					irc.sendContextReply(mes, "Not enough users in "
-							+ mes.getContext() + ".");
+					irc.sendContextReply(mes, "Not enough users in " + mes.getContext() + ".");
 					return;
 				}
-				message = "From " + succ + " users in " + mes.getContext()
-						+ ", the average";
+				message = "From " + succ + " users in " + mes.getContext() + ", the average";
 
 				t = rt / succ;
 			}
@@ -385,8 +382,7 @@ public class See
 
 	}
 
-	private float midday(String nick, final Connection conn)
-			throws SQLException
+	private float midday(String nick, final Connection conn) throws SQLException
 	{
 		// if they wern't awake this long, it doesn't count.
 		final int minday = 7 * 60 * 60 * 1000;
@@ -399,11 +395,9 @@ public class See
 		float midday = 0;
 
 		if (!rs.first())
-			throw new RuntimeException("No data for " + nick
-					+ ". Cannot continue.");
+			throw new RuntimeException("No data for " + nick + ". Cannot continue.");
 		rs.beforeFirst();
 		Date lastEnd = null;
-
 
 		while (rs.next())
 		{
@@ -416,10 +410,8 @@ public class See
 				if (foo > minday)
 				{
 					final Calendar cal = new GregorianCalendar();
-					cal.setTime(new Date(end.getTime() + foo * (12 - 8)
-							/ (24 - 8)));
-					midday += cal.get(Calendar.HOUR_OF_DAY)
-							+ cal.get(Calendar.MINUTE) / 60.0;
+					cal.setTime(new Date(end.getTime() + foo * (12 - 8) / (24 - 8)));
+					midday += cal.get(Calendar.HOUR_OF_DAY) + cal.get(Calendar.MINUTE) / 60.0;
 					c++;
 				}
 			}

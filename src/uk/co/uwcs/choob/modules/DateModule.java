@@ -17,6 +17,8 @@ public final class DateModule {
 	 * Units of time used in these functions.
 	 */
 	public static enum TimeUnit {
+		YEAR("y", 365l * 7 * 24 * 60 * 60 * 1000),
+		MONTH("m", 31l * 7 * 24 * 60 * 60 * 1000),
 		WEEK("w", 7 * 24 * 60 * 60 * 1000),
 		DAY("d", 24 * 60 * 60 * 1000),
 		HOUR("h", 60 * 60 * 1000),
@@ -26,9 +28,9 @@ public final class DateModule {
 
 		private final String longToken;
 		private final String shortToken;
-		private final int duration;
+		private final long duration;
 
-		TimeUnit(final String shortToken, final int duration) {
+		TimeUnit(final String shortToken, final long duration) {
 			this.longToken = this.toString().toLowerCase();
 			this.shortToken = shortToken;
 			this.duration = duration;
@@ -49,7 +51,7 @@ public final class DateModule {
 					+ longToken;
 		}
 
-		public int duration() {
+		public long duration() {
 			return duration;
 		}
 	}
