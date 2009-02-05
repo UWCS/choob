@@ -148,6 +148,102 @@ public class See
 		mods.odb.freeConnection(conn);
 	}
 
+	private Date firstSeen(Connection conn, String what) throws SQLException
+	{
+		final PreparedStatement s = conn.prepareStatement("select Time from History where Nick like ? order by Time asc limit 1");
+		try
+		{
+			s.setString(1, what);
+			ResultSet r = s.executeQuery();
+			if (!r.next())
+				return new Date(0);
+			try
+			{
+				return new Date(r.getLong(1));
+			}
+			finally
+			{
+				r.close();
+			}
+		}
+		finally
+		{
+			s.close();
+		}
+
+	}
+
+	private String format(Date d)
+	{
+		return java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.FULL, java.text.DateFormat.FULL).format(d);
+	}
+
+	public void commandFirstSeen(Message mes) throws SQLException
+	{
+		String nick=mods.util.getParamString(mes).trim();
+		final Connection conn=mods.odb.getConnection();
+		try
+		{
+			final Date rel = firstSeen(conn, nick);
+			irc.sendContextReply(mes, nick + " was first seen on " + format(rel) + ", " + mods.date.timeLongStamp(-rel.getTime() + new java.util.Date().getTime(), 2) + " ago.");
+		}
+		finally
+		{
+			mods.odb.freeConnection(conn);
+		}
+	}
+
+/* This Whores like hell, fix plx */
+//*
+	public void commandFreshers(Message mes) throws SQLException
+	{
+		String nick = mods.util.getParamString(mes).trim();
+		final Connection conn = mods.odb.getConnection();
+		Set<String> people = new TreeSet<String>();
+		Calendar testdate = Calendar.getInstance();
+
+		if(testdate.get(Calendar.MONTH) < 7)
+			testdate.set(testdate.get(Calendar.YEAR) - 1, 7, 1);
+		else
+			testdate.set(testdate.get(Calendar.YEAR), 7, 1);
+
+		try
+		{
+			final PreparedStatement s = conn.prepareStatement("select distinct Nick from History where Time > ? group by Nick having count(Time) > 50");
+			try
+			{
+				s.setLong(1, testdate.getTime().getTime());
+				ResultSet r = s.executeQuery();
+				try
+				{
+					while(r.next())
+					{
+						people.add(mods.nick.getBestPrimaryNick(r.getString(1)));
+					}
+				}
+				finally
+				{
+					r.close();
+				}
+			}
+			finally
+			{
+				s.close();
+			}
+
+			// people is now a list of people who spoke this academic year
+			String res = "Freshers: ";
+			for(String pe : people)
+				if (firstSeen(conn, pe + "%").after(testdate.getTime()))
+					res += pe + " ";
+			irc.sendContextReply(mes, res);
+		}
+		finally
+		{
+			mods.odb.freeConnection(conn);
+		}
+	}
+//*/
 	private final String datelet(final Date d)
 	{
 		return sdfa.format(d).toLowerCase() + sdfb.format(d);
