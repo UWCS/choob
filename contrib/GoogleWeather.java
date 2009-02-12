@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -46,7 +47,7 @@ public class GoogleWeather
 			"Plugin to get weather forecasts from http://www.google.com/ig",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			"0.1"
+			"0.2"
 		};
 	}
 
@@ -57,6 +58,7 @@ public class GoogleWeather
 	{
 		put("Cloudy","☁");
 		put("Rain","☂");
+		put("Light Rain","☂");
 	}};
 
 	public <T> T getXmlFromHTTP(final String url, final Class... dataTypes) throws IOException, JAXBException
@@ -67,6 +69,7 @@ public class GoogleWeather
 		final Dispatch<Source> dispatcher =  service.createDispatch(qname, Source.class, Service.Mode.PAYLOAD);
 		final Map<String, Object> requestContext = dispatcher.getRequestContext();
 		requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "GET");
+		requestContext.put(MessageContext.HTTP_REQUEST_HEADERS,new HashMap<String,List<String>>(){{put("User-Agent",Arrays.asList("Opera/8.51 (X11; Linux x86_64; U; en)"));}});
 		requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
 		final Source got = dispatcher.invoke(null);
 		final JAXBContext context = JAXBContext.newInstance(dataTypes);
