@@ -1,4 +1,7 @@
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -146,9 +149,8 @@ public class MiscUtils
 					return false;
 				else
 					seen_dot = true;
-			else
-				if (!Character.isJavaIdentifierPart(command.codePointAt(i)))
-					return false;
+			else if (!Character.isJavaIdentifierPart(command.codePointAt(i)))
+				return false;
 		return mods.plugin.validCommand(command);
 	}
 
@@ -306,4 +308,94 @@ public class MiscUtils
 		irc.sendContextMessage(mes, returnedString);
 	}
 
+	final private static Pattern trans_args = Pattern
+			.compile("((?:\\\\.|[^\\s\\\\])+)(?:\\s+((?:\\\\.|[^\\s\\\\])+))?(?:\\s+(.)(.*?)\\3)?.*");
+
+	public void commandTrans(final Message mes)
+	{
+		Matcher ma = trans_args.matcher(mods.util.getParamString(mes));
+		if (!ma.matches())
+		{
+			irc.sendContextReply(mes, "Couldn't undertand arguments, expected: expr [expr] [/regex/]");
+			return;
+		}
+
+
+		final List<Message> history = mods.history.getLastMessages(mes, 10);
+		String regexp = ma.group(4);
+		if (regexp == null)
+			regexp = "";
+		for (Message m : history)
+			if (m.getMessage().matches(regexp + ".*"))
+			{
+				String working = m.getMessage();
+				final List<Integer> firstExpr = processExp(ma.group(1));
+				final String second = ma.group(2);
+
+				if (second != null && !second.isEmpty())
+				{
+					final List<Integer> secondExpr = processExp(ma.group(2));
+					if (secondExpr.size() != firstExpr.size())
+					{
+						irc.sendContextReply(mes, "Expecting sets of equal size.  "
+								+ firstExpr.size() + " and " + secondExpr.size() + " recieved.");
+						return;
+					}
+
+					Set<Integer> trans = new HashSet<Integer>();
+					for (int i = 0; i < firstExpr.size(); ++i)
+					{
+						Integer first = firstExpr.get(i);
+						if (trans.contains(first))
+						{
+							irc.sendContextReply(mes,
+									"First set illegally contains two (or more) references to '"
+											+ toString(first) + "'.");
+							return;
+						}
+						trans.add(first);
+						working = working.replaceAll(toString(first), toString(secondExpr.get(i)));
+					}
+					irc.sendContextReply(mes, working);
+					return;
+				}
+
+				for (Integer i : firstExpr)
+					working = working.replaceAll(toString(i), "");
+
+				irc.sendContextReply(mes, working);
+				return;
+			}
+		irc.sendContextReply(mes, "Didn't match any messages with: /" + regexp + ".*/");
+
+	}
+
+	private String toString(Integer first)
+	{
+		return new String(new int[] { first.intValue() }, 0, 1);
+	}
+
+	private List<Integer> processExp(String group)
+	{
+		List<Integer> ret = new ArrayList<Integer>(group.length());
+		int prev = 0;
+		for (int i = 0; i < group.length(); ++i)
+		{
+			int curr = group.codePointAt(i);
+			if (curr == '-')
+			{
+				int next = group.codePointAt(i + 1);
+				if (next > prev)
+					for (int j = prev + 1; j < next; ++j)
+						ret.add(Integer.valueOf(j));
+				else
+					for (int j = next + 1; j < prev; --j)
+						ret.add(Integer.valueOf(j));
+			}
+			else
+				ret.add(Integer.valueOf(curr));
+		}
+
+		return ret;
+	}
 }
