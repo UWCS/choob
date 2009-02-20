@@ -354,14 +354,14 @@ public class MiscUtils
 							return;
 						}
 						trans.add(first);
-						working = working.replaceAll(toString(first), toString(secondExpr.get(i)));
+						working = working.replaceAll(Pattern.quote(toString(first)), toString(secondExpr.get(i)));
 					}
 					irc.sendContextReply(mes, working);
 					return;
 				}
 
 				for (Integer i : firstExpr)
-					working = working.replaceAll(toString(i), "");
+					working = working.replaceAll(Pattern.quote(toString(i)), "");
 
 				irc.sendContextReply(mes, working);
 				return;
@@ -394,7 +394,9 @@ public class MiscUtils
 			}
 			else
 				ret.add(Integer.valueOf(curr));
+			prev = curr;
 		}
+
 
 		return ret;
 	}
