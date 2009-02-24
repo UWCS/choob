@@ -383,28 +383,28 @@ public class Alias
 			irc.sendContextReply(mes, "Alias not found.");
 	}
 
+
+	//final static Pattern listArgs = Pattern.compile("(?:\\s+(.)(.*?)\\1(?:\\s+(?:\\s+(.)(.*?)\\3))?)?.*");
+	final static Pattern listArgs = Pattern.compile("/(.*?)/(?:\\s+/(.*?)/)?");
+
 	public String[] helpCommandList = {
 		"List all aliases.",
-		"[<Which>]",
-		"<Which> is either 'locked', or 'unlocked' or 'all' (default: 'locked')"
+		"[/Name/ [/Body/]]",
+		"<Which> and <Body> are regexs specifying aliases to return."
 	};
 	public void commandList( final Message mes )
 	{
-		final String params[] = mods.util.getParamArray(mes);
+		final Matcher params = listArgs.matcher(mods.util.getParamString(mes));
 
-		String clause = "locked = 1";
-		if (params.length > 2)
-			throw new ChoobBadSyntaxError();
-		else if (params.length == 2)
+		String clause = "1";
+		if (params.find())
 		{
-			if (params[1].equals("locked"))
-				clause = "locked = 1";
-			else if (params[1].equals("unlocked"))
-				clause = "locked = 0";
-			else if (params[1].equals("all"))
-				clause = "1";
-			else
-				throw new ChoobBadSyntaxError();
+			if (params.group(1) != null)
+			{
+				clause = "name RLIKE \"" + mods.odb.escapeForRLike(params.group(2)) + "\"";
+				if (params.group(2) != null)
+					clause += " AND converted RLIKE \"" + mods.odb.escapeForRLike(params.group(2)) + "\"";
+			}
 		}
 
 		final List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE " + clause );

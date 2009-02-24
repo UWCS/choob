@@ -325,8 +325,10 @@ public class MiscUtils
 		String regexp = ma.group(4);
 		if (regexp == null)
 			regexp = "";
+
+		final Pattern reg = Pattern.compile(regexp, Pattern.CASE_INSENSITIVE);
 		for (Message m : history)
-			if (m.getMessage().matches(regexp + ".*"))
+			if (reg.matcher(m.getMessage()).find())
 			{
 				String working = m.getMessage();
 				final List<Integer> firstExpr = processExp(ma.group(1));
