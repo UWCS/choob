@@ -401,7 +401,7 @@ public class Alias
 		{
 			if (params.group(1) != null)
 			{
-				clause = "name RLIKE \"" + mods.odb.escapeForRLike(params.group(2)) + "\"";
+				clause = "name RLIKE \"" + mods.odb.escapeForRLike(params.group(1)) + "\"";
 				if (params.group(2) != null)
 					clause += " AND converted RLIKE \"" + mods.odb.escapeForRLike(params.group(2)) + "\"";
 			}
