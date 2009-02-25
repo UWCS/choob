@@ -282,7 +282,7 @@ JSExample.prototype._tracSvnInterval = function(param, mods, irc) {
 			var itemObj = new Object();
 			itemObj.name = /<em>(.*?)<\/em>/i.exec(item)[1];
 			itemObj.percent = 1 * /class="percent">(.*?)\%</i.exec(item)[1];
-			itemObj.ticketsOpen = 1 * /\?status=new[^"]+">(.*?)</i.exec(item)[1];
+			itemObj.ticketsOpen = 1 * /\?status=assigned[^"]+">(.*?)</i.exec(item)[1];
 			itemObj.ticketsClosed = 1 * /\?status=closed[^"]+">(.*?)</i.exec(item)[1];
 			itemObj.ticketsTotal = itemObj.ticketsOpen + itemObj.ticketsClosed;
 			itemObj.all = [
@@ -336,10 +336,11 @@ JSExample.prototype._tracSvnInterval = function(param, mods, irc) {
 			}
 			this._tracRoadmapLastData[itemObj.name] = itemObj;
 		}
+		mods.interval.callBack(param, 30000 /* 30 seconds */, 2);
 	} catch (ex) {
 		irc.sendMessage(this._debugChannel, "_tracSvnInterval exception: line " + ex.lineNumber + ", " + ex);
+		mods.interval.callBack(param, 300000 /* 5 minutes */, 2);
 	}
-	mods.interval.callBack(param, 30000, 2);
 }
 
 
