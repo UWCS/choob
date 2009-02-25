@@ -1208,16 +1208,11 @@ public class Quote
 		int quoteID = -1;
 		boolean up = true;
 		final List<String> params =  mods.util.getParams(mes);
-		if (params.size() == 1 || params.size() > 3)
-		{
-			irc.sendContextReply( mes, "Syntax: quote.KarmaMod {up|down} [number]" );
-			return;
-		}
 
 		// Check input
 		try
 		{
-			if ( params.size() == 3 )
+			if ( params.size() > 2 )
 				quoteID = Integer.parseInt( params.get(2) );
 		}
 		catch ( final NumberFormatException e )
@@ -1691,12 +1686,12 @@ public class Quote
 		nick_r.append("(?i)\\b(?:");
 		nick_r.append(nicklist.remove(0));
 
-		for (final String nick : nicklist)
+		for (String nick : nicklist)
 		{
 			if ( nick.equals( ev.getNick() ) )
 				continue;
 
-			nick.replaceAll("([^a-zA-Z0-9_])", "\\\\$1");
+			nick = nick.replaceAll("([^a-zA-Z0-9_])", "\\\\$1");
 
 			nick_r.append("|");
 			nick_r.append(nick);
@@ -1746,7 +1741,7 @@ public class Quote
 		{
 			System.err.println("Couldn't do antiflood call: " + e);
 		}
-			
+
 		try
 		{
 			final StringBuilder greetingBuilder = new StringBuilder();
