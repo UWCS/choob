@@ -546,7 +546,7 @@ public class Karma
 		final String message = mes.getMessage();
 		final String nick = mods.nick.getBestPrimaryNick(mes.getNick());
 
-		System.err.println("LINE       : <" + message + ">");
+		//System.err.println("LINE       : <" + message + ">");
 		final List<Integer> matchStarts = new ArrayList<Integer>();
 		final Matcher karmaScan = karmaPattern.matcher(message);
 		while (karmaScan.find())
@@ -556,9 +556,9 @@ public class Karma
 		final List<List<String>> matches = new ArrayList<List<String>>();
 		for (int matchIndex = 1; matchIndex < matchStarts.size(); matchIndex++)
 		{
-			System.err.println("");
+			//System.err.println("");
 			final String submessage = message.substring(matchStarts.get(matchIndex - 1), matchStarts.get(matchIndex)).replaceAll("[^\\+\\-\\)\\w]+$", "");
-			System.err.println("  SEGMENT  : <" + submessage + ">");
+			//System.err.println("  SEGMENT  : <" + submessage + ">");
 			
 			Matcher karmaMatch = karmaPatternWithReason.matcher(submessage);
 			if (!karmaMatch.find())
@@ -567,9 +567,9 @@ public class Karma
 				karmaMatch.find();
 			}
 			
-			System.err.println("  MATCH    : <" + karmaMatch.group() + ">");
-			for (int i = 1; i <= karmaMatch.groupCount(); i++)
-				System.err.println("    GROUP " + i + ": <" + karmaMatch.group(i) + ">");
+			//System.err.println("  MATCH    : <" + karmaMatch.group() + ">");
+			//for (int i = 1; i <= karmaMatch.groupCount(); i++)
+			//	System.err.println("    GROUP " + i + ": <" + karmaMatch.group(i) + ">");
 			
 			List<String> groups = new ArrayList<String>();
 			for (int i = 0; i <= karmaMatch.groupCount(); i++)
