@@ -391,7 +391,7 @@ public class MiscUtils
 					for (int j = prev + 1; j < next; ++j)
 						ret.add(Integer.valueOf(j));
 				else
-					for (int j = next + 1; j < prev; --j)
+					for (int j = prev - 1; j > next; --j)
 						ret.add(Integer.valueOf(j));
 			}
 			else
