@@ -1,7 +1,7 @@
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -316,10 +316,10 @@ public class MiscUtils
 		Matcher ma = trans_args.matcher(mods.util.getParamString(mes));
 		if (!ma.matches())
 		{
-			irc.sendContextReply(mes, "Couldn't undertand arguments, expected: expr [expr] [/regex/]");
+			irc.sendContextReply(mes,
+					"Couldn't undertand arguments, expected: expr [expr] [/regex/]");
 			return;
 		}
-
 
 		final List<Message> history = mods.history.getLastMessages(mes, 10);
 		String regexp = ma.group(4);
@@ -330,7 +330,6 @@ public class MiscUtils
 		for (Message m : history)
 			if (reg.matcher(m.getMessage()).find())
 			{
-				String working = m.getMessage();
 				final List<Integer> firstExpr = processExp(ma.group(1));
 				final String second = ma.group(2);
 
@@ -344,39 +343,53 @@ public class MiscUtils
 						return;
 					}
 
-					Set<Integer> trans = new HashSet<Integer>();
+					Map<Integer, Integer> trans = new HashMap<Integer, Integer>();
 					for (int i = 0; i < firstExpr.size(); ++i)
 					{
 						Integer first = firstExpr.get(i);
-						if (trans.contains(first))
+						if (trans.put(first, secondExpr.get(i)) != null)
 						{
 							irc.sendContextReply(mes,
 									"First set illegally contains two (or more) references to '"
-											+ toString(first) + "'.");
+											+ toString(first.intValue()) + "'.");
 							return;
 						}
-						trans.add(first);
-						working = working.replaceAll(Pattern.quote(toString(first)), toString(secondExpr.get(i)));
 					}
-					irc.sendContextReply(mes, working);
+					final StringBuilder sb = new StringBuilder();
+					final String message = m.getMessage();
+
+					for (int i = 0; i < message.length(); ++i)
+					{
+						final int cp = message.codePointAt(i);
+						final Integer transed = trans.get(Integer.valueOf(cp));
+						if (transed != null)
+							sb.append(toString(transed.intValue()));
+						else
+							sb.append(toString(cp));
+					}
+					irc.sendContextReply(mes, sb.toString());
 					return;
 				}
 
+				String working = m.getMessage();
 				for (Integer i : firstExpr)
-					working = working.replaceAll(Pattern.quote(toString(i)), "");
+					working = working.replaceAll(Pattern.quote(toString(i.intValue())), "");
 
 				irc.sendContextReply(mes, working);
 				return;
 			}
-		irc.sendContextReply(mes, "Didn't match any messages with: /" + regexp + ".*/");
-
+		irc.sendContextReply(mes, "Didn't match any messages with: /" + regexp + "/");
 	}
 
-	private String toString(Integer first)
+	private String toString(int first)
 	{
-		return new String(new int[] { first.intValue() }, 0, 1);
+		return new String(new int[] { first }, 0, 1);
 	}
 
+	/**
+	 * Process a tr group to a list of code points. e.g. ab -> ['a','b'] a-c ->
+	 * ['a','b','c'] c-a -> ['c','b','a'] qc-a -> ['q','c','b','a']
+	 */
 	private List<Integer> processExp(String group)
 	{
 		List<Integer> ret = new ArrayList<Integer>(group.length());
@@ -398,7 +411,6 @@ public class MiscUtils
 				ret.add(Integer.valueOf(curr));
 			prev = curr;
 		}
-
 
 		return ret;
 	}
