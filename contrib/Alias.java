@@ -3,6 +3,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jibble.pircbot.Colors;
+
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobBadSyntaxError;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
@@ -385,7 +387,7 @@ public class Alias
 
 
 	//final static Pattern listArgs = Pattern.compile("(?:\\s+(.)(.*?)\\1(?:\\s+(?:\\s+(.)(.*?)\\3))?)?.*");
-	final static Pattern listArgs = Pattern.compile("/(.*?)/(?:\\s+/(.*?)/)?");
+	final static Pattern listArgs = Pattern.compile("/(.+?)/(?:\\s+/(.+?)/)?");
 
 	public String[] helpCommandList = {
 		"List all aliases.",
@@ -397,40 +399,58 @@ public class Alias
 		final Matcher params = listArgs.matcher(mods.util.getParamString(mes));
 
 		String clause = "1";
+		String namereg = null;
+		String bodyreg = null;
+
 		if (params.find())
 		{
-			if (params.group(1) != null)
+			namereg = params.group(1);
+			bodyreg = params.group(2);
+
+			if (namereg != null)
 			{
-				clause = "name RLIKE \"" + mods.odb.escapeForRLike(params.group(1)) + "\"";
-				if (params.group(2) != null)
-					clause += " AND converted RLIKE \"" + mods.odb.escapeForRLike(params.group(2)) + "\"";
+				clause = "name RLIKE \"" + mods.odb.escapeForRLike(namereg) + "\"";
+				if (bodyreg != null)
+					clause += " AND converted RLIKE \"" + mods.odb.escapeForRLike(bodyreg) + "\"";
 			}
 		}
 
 		final List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE " + clause );
 
 		if (results.size() == 0)
-			irc.sendContextReply(mes, "No aliases.");
+			irc.sendContextReply(mes, "No aliases match.");
 		else
 		{
-			String list = "Alias list: ";
-			for (int i=0; i < results.size(); i++)
+			StringBuilder list = new StringBuilder("Aliases");
+			if (namereg != null)
 			{
-				list += results.get(i).name;
-				if (results.get(i).locked)
-					list += "*";
-				if (i < results.size() - 2)
-					list += ", ";
-				else if (i == results.size() - 2)
-				{
-					if (i == 0)
-						list += " and ";
-					else
-						list += ", and ";
-				}
+				list.append(" matching /" + namereg + "/");
+				if (bodyreg != null)
+					list.append(" (name) and /" + bodyreg + "/ (body)");
 			}
-			list += ".";
-			irc.sendContextReply(mes, list);
+			list.append(": ");
+			boolean cutOff = false;
+			for (int j = 0; j < results.size(); j++) {
+				final AliasObject ko = results.get(j);
+				if (list.length() + ko.name.length() > IRCInterface.MAX_MESSAGE_LENGTH - 50) {
+					cutOff = true;
+					break;
+				}
+				if (j > 0) {
+					list.append(", ");
+				}
+				list.append("\"").append(ko.name).append(Colors.NORMAL).append("\"");
+			}
+			if (cutOff) {
+				list.append(", ...");
+			} else {
+				list.append(".");
+			}
+			list.append(" (").append(results.size()).append(" result");
+			if (results.size() != 1)
+				list.append("s");
+			list.append(")");
+			irc.sendContextReply(mes, list.toString());
 		}
 	}
 
