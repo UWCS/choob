@@ -48,9 +48,9 @@ public class Talk
 		"<Text>",
 		"<Text> is the text to say"
 	};
-	public void commandSay( final Message mes )
+	public String commandSay( final String mes )
 	{
-		irc.sendContextMessage(mes, mods.util.getParamString(mes));
+		return mes;
 	}
 
 	public String[] helpCommandReply = {

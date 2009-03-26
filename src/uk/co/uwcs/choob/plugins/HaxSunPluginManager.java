@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -50,7 +51,6 @@ import uk.co.uwcs.choob.support.ChoobInvocationError;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
 import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.ContextEvent;
 import uk.co.uwcs.choob.support.events.Event;
 import uk.co.uwcs.choob.support.events.Message;
 
@@ -553,6 +553,17 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return doGeneric(pluginName, "api", APIName, params);
 	}
 
+	public List<String> getSimpleCommands()
+	{
+		return allPlugins.getAllSimpleCommands();
+	}
+
+
+	public String callSimpleCommand(String cmd, String arg) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException
+	{
+		return allPlugins.callSimpleCommand(cmd, arg);
+	}
+
 	// Helper methods for the class below.
 	static boolean checkCommandSignature(final Method meth)
 	{
@@ -658,6 +669,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 		return buf.toString();
 	}
+
 }
 
 /**
@@ -1040,5 +1052,22 @@ final class ChoobPluginMap
 	synchronized Method getInterval(final String pluginName)
 	{
 		return pluginInterval.get(pluginName.toLowerCase());
+	}
+
+	synchronized List<String> getAllSimpleCommands()
+	{
+		List<String> ret = new ArrayList<String>();
+		for (Entry<String, Method> cmdref : commands.entrySet())
+			if (HaxSunPluginManager.isSimpleCommand(cmdref.getValue()))
+				ret.add(cmdref.getKey());
+		return ret;
+	}
+
+	String callSimpleCommand(String command, String arg) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException
+	{
+		Method m = commands.get(command.trim());
+		if (null == m)
+			throw new IllegalArgumentException("No such command " + command);
+		return (String) m.invoke(getPluginObj(m), arg);
 	}
 }

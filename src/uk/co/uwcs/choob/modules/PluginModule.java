@@ -6,6 +6,7 @@
 
 package uk.co.uwcs.choob.modules;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.AccessControlException;
@@ -364,6 +365,20 @@ public final class PluginModule
 		if (commands == null)
 			throw new ChoobNoSuchPluginException(pluginName);
 		return commands;
+	}
+
+	/**
+	 * Get a list of simplecommands.
+	 * @return Names of all commands.
+	 */
+	public List<String> getSimpleCommands()
+	{
+		return ((HaxSunPluginManager)hsPlugMan).getSimpleCommands();
+	}
+
+	public String callSimpleCommand(String cmd, String arg) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException
+	{
+		return ((HaxSunPluginManager)hsPlugMan).callSimpleCommand(cmd, arg);
 	}
 
 	/**

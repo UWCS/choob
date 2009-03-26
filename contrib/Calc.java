@@ -27,16 +27,16 @@ public class Calc
 		"<Expression>",
 		"<Expression> is some lovely mathematical expression"
 	};
-	public void commandCalc( final Message mes )
+
+	public String commandCalc( final String expr )
 	{
-		final String expr = mods.util.getParamString(mes);
 		try
 		{
-			irc.sendContextReply(mes, expr + " = " + apiEval(expr));
+			return expr + " = " + apiEval(expr);
 		}
 		catch (final BadMathException e)
 		{
-			irc.sendContextReply(mes, "Urgh; could not parse! Error: " + e.getMessage());
+			return "Urgh; could not parse! Error: " + e.getMessage();
 		}
 	}
 
