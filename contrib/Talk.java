@@ -92,6 +92,47 @@ public class Talk
 		irc.sendContextAction(mes, mods.util.getParamString(mes));
 	}
 
+
+	public String[] helpCommandPrivMe = {
+		"Get the bot to send an action to people [RETRICTED].",
+		"<Target> <Text>",
+		"<Target> is the destination",
+		"<Text> is the message to send as an action"
+	};
+	public void commandPrivMe(Message mes)
+	{
+		mods.security.checkNickPerm(new ChoobPermission("plugins.talk.privaction"), mes);
+		List<String> params = mods.util.getParams(mes,2);
+
+		if (params.size() != 3)
+		{
+			irc.sendContextReply(mes,"Usage: <nick> <message>");
+			return;
+		}
+		
+		irc.sendAction(params.get(1),params.get(2));
+	}
+
+	public String[] helpCommandPrivMsg = {
+		"Get the bot to send a message to people [RETRICTED].",
+		"<Target> <Text>",
+		"<Target> is the destination",
+		"<Text> is the message to send"
+	};
+	public void commandPrivMsg(Message mes)
+	{
+		mods.security.checkNickPerm(new ChoobPermission("plugins.talk.privmes"), mes);
+		List<String> params = mods.util.getParams(mes,2);
+
+		if (params.size() != 3)
+		{
+			irc.sendContextReply(mes,"Usage: <nick> <message>");
+			return;
+		}
+		
+		irc.sendMessage(params.get(1),params.get(2));
+	}
+
 	public String[] helpCommandDescribe = {
 		"Get the bot to do things to people.",
 		"<Target> <Text>",
