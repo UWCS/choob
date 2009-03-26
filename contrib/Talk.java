@@ -3,6 +3,8 @@ import org.jibble.pircbot.Colors;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.ChoobPermission;
+import java.util.List;
 
 /**
  * Choob talky talky plugin
