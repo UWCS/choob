@@ -24,7 +24,7 @@ public class Pogo
 	public Modules mods;
 	IRCInterface irc;
 
-	static ServerThread servthread;
+	private ServerThread servthread;
 
 	public Map <String, ClientHandler> commands;
 	public HashMap<Message,Stack<String>> pipecommands;

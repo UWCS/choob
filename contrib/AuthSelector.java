@@ -62,7 +62,7 @@ public class AuthSelector {
 			return;
 		}
 
-		final String authType = mods.util.getParamString(mes);
+		final String authType = mods.util.getParamString(mes).toLowerCase();;
 		if (authType.length() == 0) {
 			irc.sendContextReply(mes, "Please provide an authentication method to use.");
 		}
@@ -78,7 +78,6 @@ public class AuthSelector {
 			authMethod = results.get(0);
 		}
 
-		authType.toLowerCase();
 		if (authType.equals("nickserv")) {
 			authMethod.method = authType;
 			mods.odb.update(authMethod);

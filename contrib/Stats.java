@@ -47,12 +47,12 @@ class StatSortByValue implements Comparator<EntityStat>
 
 public class Stats
 {
-	final int HISTORY = 1000;
-	final double NICK_LENGTH = 100; // "Significant" lines in WMA calculations.
-	final double CHAN_LENGTH = 1000;
-	final double THRESHOLD = 0.005; // val * THRESHOLD is considered too small to be a part of WMA.
-	final double NICK_ALPHA = Math.exp(Math.log(THRESHOLD) / NICK_LENGTH);
-	final double CHAN_ALPHA = Math.exp(Math.log(THRESHOLD) / CHAN_LENGTH);
+	final static int HISTORY = 1000;
+	final static double NICK_LENGTH = 100; // "Significant" lines in WMA calculations.
+	final static double CHAN_LENGTH = 1000;
+	final static double THRESHOLD = 0.005; // val * THRESHOLD is considered too small to be a part of WMA.
+	final static double NICK_ALPHA = Math.exp(Math.log(THRESHOLD) / NICK_LENGTH);
+	final static double CHAN_ALPHA = Math.exp(Math.log(THRESHOLD) / CHAN_LENGTH);
 
 	public String[] info()
 	{

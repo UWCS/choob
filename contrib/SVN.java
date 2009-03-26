@@ -46,8 +46,14 @@ public class SVN
 		try
 		{
 			final BufferedReader svnPage = new BufferedReader( new InputStreamReader( svnURL.openStream() ) );
-
-			revString = svnPage.readLine();
+			try
+			{
+				revString = svnPage.readLine();
+			}
+			finally
+			{
+				svnPage.close();
+			}
 		}
 		catch (final IOException e)
 		{
