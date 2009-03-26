@@ -51,9 +51,9 @@ public class MiscMsg
 	public String[] helpCommandCT = {
 		"Replies indicating whether the bot suspects your connection is up the spout."
 	};
-	public void commandCT( final Message mes )
+	public String commandCT( final String mes )
 	{
-		randomReply(mes, new String[] { "Yes, your connection is working fine.", "No, your connection seems really broken." });
+		return randomReply(new String[] { "Yes, your connection is working fine.", "No, your connection seems really broken." });
 	}
 
 	/**
@@ -70,17 +70,17 @@ public class MiscMsg
 	public String[] helpCommandTime = {
 		"Replies with the current time."
 	};
-	public void commandTime( final Message mes )
+	public String commandTime( final String mes )
 	{
-		irc.sendContextReply(mes, new SimpleDateFormat("'The time is 'HH:mm:ss'.'").format(new Date()));
+		return new SimpleDateFormat("'The time is 'HH:mm:ss'.'").format(new Date());
 	}
 
 	public String[] helpCommandDate = {
 		"Replies with the current date."
 	};
-	public void commandDate( final Message mes )
+	public String commandDate( final String mes )
 	{
-		irc.sendContextReply(mes, new SimpleDateFormat("'The date is 'd MMM yyyy'.'").format(new Date()));
+		return new SimpleDateFormat("'The date is 'd MMM yyyy'.'").format(new Date());
 	}
 
 	public String[] helpCommandRandom = {
@@ -88,28 +88,28 @@ public class MiscMsg
 		"[<Max>]",
 		"<Max> is the optional maximum to return"
 	};
-	public void commandRandom( final Message mes )
+	public String commandRandom( final String mes )
 	{
 		double max = 1;
 		try
 		{
-			max = Double.parseDouble(mods.util.getParamString(mes));
+			max = Double.parseDouble(mes);
 		}
 		catch (final NumberFormatException e)
 		{
 			// Assume 1.
 		}
-		irc.sendContextReply(mes, "Random number between 0 and " + max + " is " + Math.random()*max + ".");
+		return "Random number between 0 and " + max + " is " + Math.random()*max + ".";
 	}
 
-	private void randomReply(final Message mes, final String[] replies)
+	private String randomReply(final String[] replies)
 	{
-		randomReply(mes, replies, "", "");
+		return randomReply(replies, "", "");
 	}
 
-	private void randomReply(final Message mes, final String[] replies, String prefix, String suffix)
+	private String randomReply(final String[] replies, String prefix, String suffix)
 	{
-		irc.sendContextReply(mes, prefix + replies[new Random().nextInt(replies.length)] + suffix);
+		return prefix + replies[new Random().nextInt(replies.length)] + suffix;
 	}
 
 	public String[] helpCommandFeatureRequest = { "Provides the URL from where feature requests can be made." };
@@ -133,31 +133,26 @@ public class MiscMsg
 		"<Reply> is some reply to write on one of the sides of the coin (coins can have more than 2 sides!)"
 	};
 
-	public void commandFlipACoin( final Message mes )
+	public String commandFlipACoin( final String mes )
 	{
 		if (!hascoin)
-		{
-			irc.sendContextReply(mes, "I've lost my coin. :-(");
-			return;
-		}
+			return "I've lost my coin. :-(";
 
-		String params = mods.util.getParamString(mes);
+		String params = mes;
 
 		if (params.length() == 0)
 		{
 			// http://sln.fi.edu/fellows/fellow7/mar99/probability/gold_coin_flip.shtml
 			if (rand.nextDouble()==0)
 			{
-				irc.sendContextReply(mes, "Shit, I flicked it too hard, it's gone into orbit.");
 				hascoin = false;
+				return "Shit, I flicked it too hard, it's gone into orbit.";
 			}
 			// Wikipedia++ http://en.wikipedia.org/wiki/Coin_tossing#Physics_of_coin_flipping
 			else if (rand.nextInt(6000) == 0)
-				irc.sendContextReply(mes, "Edge!");
+				return "Edge!";
 			else
-				irc.sendContextReply(mes, (rand.nextBoolean() ? "Heads" : "Tails" ) + "!");
-
-			return;
+				return (rand.nextBoolean() ? "Heads" : "Tails" ) + "!";
 		}
 
 		// Cut off a question mark, if any.
@@ -167,10 +162,7 @@ public class MiscMsg
 		// Pre: String contains " or ", split on " or " or ", ";
 		final String[] tokens = params.split("(?:^|\\s*,\\s*|\\s+)or(?:\\s*,\\s*|\\s+|$)");
 		if (tokens.length <= 1)
-		{
-			irc.sendContextReply(mes, "My answer is " + (rand.nextBoolean() ? "yes" : "no" ) + ".");
-			return;
-		}
+			return "My answer is " + (rand.nextBoolean() ? "yes" : "no" ) + ".";
 
 		// Then split the first group on ","
 		final String[] tokens2 = tokens[0].split("\\s*,\\s*");
@@ -183,10 +175,7 @@ public class MiscMsg
 		for(int i=0; i<tokens2.length; i++)
 		{
 			if (tokens2[i].equals(""))
-			{
-				irc.sendContextReply(mes, "Reply number " + (i + 1) + " is empty!");
-				return;
-			}
+				return "Reply number " + (i + 1) + " is empty!";
 			if (i == choice)
 				output = tokens2[i];
 		}
@@ -194,15 +183,12 @@ public class MiscMsg
 		for(int i=1; i<tokens.length; i++)
 		{
 			if (tokens[i].equals(""))
-			{
-				irc.sendContextReply(mes, "Reply number " + (tokens2.length + i) + " is empty!");
-				return;
-			}
+				return "Reply number " + (tokens2.length + i) + " is empty!";
 			if (tokens2.length + i - 1 == choice)
 				output = tokens[i];
 		}
 
-		irc.sendContextReply(mes, "My answer is " + output + ".");
+		return "My answer is " + output + ".";
 	}
 
 	public String[] helpCommand8Ball = {
@@ -210,10 +196,10 @@ public class MiscMsg
 		"<Question>",
 		"<Question> is some a question for the 8 ball the think over."
 	};
-	public void command8Ball(final Message mes)
+	public String command8Ball(final String mes)
 	{
 		// http://r.wesley.edwards.net/writes/JavaScript/magic8ball.js
-		randomReply(mes, new String[] { "Signs point to yes.", "Yes.", "Reply hazy, try again.",
+		return randomReply(new String[] { "Signs point to yes.", "Yes.", "Reply hazy, try again.",
 				"Without a doubt.", "My sources say no.", "As I see it, yes.",
 				"You may rely on it.", "Concentrate and ask again.", "Outlook not so good.",
 				"It is decidedly so.", "Better not tell you now.", "Very doubtful.",
@@ -223,28 +209,28 @@ public class MiscMsg
 
 	public String[] helpCommandTarot = { "Draw a card from the tarot pack.", };
 
-	public void commandTarot(final Message mes)
+	public String commandTarot(final String mes)
 	{
 		// http://en.wikipedia.org/wiki/Major_Arcana
-		randomReply(mes, new String[] { "The Fool", "The Magician", "The High Priestess",
-				"The Empress", "The Emperor", "The Hierophant or The Pope", "The Lovers",
+		return randomReply(new String[] { "The Fool", "The Magician", "The High Priestess",
+				"The Empress", "The Emperor", "The Hierophant", "The Pope", "The Lovers",
 				"The Chariot", "Strength", "The Hermit", "Wheel of Fortune", "Justice",
 				"The Hanged Man", "Death", "Temperance", "The Devil", "The Tower", "The Star",
 				"The Moon", "The Sun", "Judgment", "The World" }, "You drew ", ".");
 	}
 
 
-	public void commandDiscordianDate(final Message mes)
+	public String commandDiscordianDate(final String mes)
 	{
-		shellExec(mes, "ddate");
+		return shellExec("ddate");
 	}
 
-	public void commandServerUptime(final Message mes)
+	public String commandServerUptime(final String mes)
 	{
-		shellExec(mes, "uptime");
+		return shellExec("uptime");
 	}
 
-	private void shellExec(final Message mes, final String command)
+	private String shellExec(final String command)
 	{
 		final StringBuilder rep=new StringBuilder();
 
@@ -278,16 +264,16 @@ public class MiscMsg
 			rep.append("IOException (2). ").append(e);
 		}
 
-		irc.sendContextReply(mes, rep.toString());
+		return rep.toString();
 	}
 
 	public String[] helpCommandUptime = {
 		"Find out how long the bot has been running for.",
 	};
 
-	public void commandUptime( final Message mes )
+	public String commandUptime( final String mes )
 	{
-		irc.sendContextReply(mes, "I have been up " + mods.date.timeLongStamp(new Date().getTime() - mods.util.getStartTime(), 3) + ".");
+		return "I have been up " + mods.date.timeLongStamp(new Date().getTime() - mods.util.getStartTime(), 3) + ".";
 	}
 
 	public String[] helpCommandWeek = {
@@ -315,10 +301,10 @@ public class MiscMsg
 		};
 
 	@SuppressWarnings("null")
-	public void commandWeek(final Message mes)
+	public String commandWeek(final String mes)
 	{
 		final List<String> params = mods.util.getParams(mes);
-		final String message = mods.util.getParamString(mes);
+		final String message = mes;
 
 		Matcher dateMatcher = null;
 		if (params.size() >= 2) {
@@ -336,10 +322,9 @@ public class MiscMsg
 			final String week = diffToTermWeek(diff);
 
 			if (week.indexOf("week") != -1) {
-				irc.sendContextReply(mes, "It's " + day + ", " + diffToTermWeek(diff) + ".");
-			} else {
-				irc.sendContextReply(mes, "It's " + diffToTermWeek(diff) + ".");
+				return "It's " + day + ", " + diffToTermWeek(diff) + ".";
 			}
+			return "It's " + diffToTermWeek(diff) + ".";
 		} else if (params.size() >= 2 && dateMatcher.matches()) {
 			Date now = new Date();
 			final DateFormat dayFmt = new SimpleDateFormat("EEE, d MMM yyyy");
@@ -357,8 +342,7 @@ public class MiscMsg
 			} else if (dateMatcher.group(7) != null) {
 				final int month = nameToMonth(dateMatcher.group(8));
 				if (month == -1) {
-					irc.sendContextReply(mes, "Sorry, I can't parse that date. Please use yyyy-mm-dd, dd/mm/yyyy or dd mmm yyyy.");
-					return;
+					return "Sorry, I can't parse that date. Please use yyyy-mm-dd, dd/mm/yyyy or dd mmm yyyy.";
 				}
 
 				int year = Integer.parseInt(dateMatcher.group(9));
@@ -369,14 +353,13 @@ public class MiscMsg
 
 				now = new GregorianCalendar(year, month, Integer.parseInt(dateMatcher.group(7)), 12, 0, 0).getTime();
 			} else {
-				irc.sendContextReply(mes, "Sorry, I can't parse that date. Please use yyyy-mm-dd, dd/mm/yyyy or dd mmm yyyy.");
-				return;
+				return "Sorry, I can't parse that date. Please use yyyy-mm-dd, dd/mm/yyyy or dd mmm yyyy.";
 			}
 
 			final int diff = (int)Math.floor(getTimeRelativeToTerm((int)(now.getTime() / 1000)) / 86400);
 			final String day = dayFmt.format(now);
 
-			irc.sendContextReply(mes, day + " is " + diffToTermWeek(diff) + ".");
+			return day + " is " + diffToTermWeek(diff) + ".";
 		} else if (isNumber(params.get(1)) && (
 					params.size() == 2 ||
 					params.size() == 4 && params.get(2).equals("term") && isNumber(params.get(3)) ||
@@ -392,26 +375,22 @@ public class MiscMsg
 				weekNum = Integer.parseInt(params.get(2));
 				num = weekNum;
 				if (weekNum < 1 || weekNum > 39) {
-					irc.sendContextReply(mes, weekNum + " isn't a valid Room Booking week number. It must be between 1 and 39, inclusive.");
-					return;
+					return weekNum + " isn't a valid Room Booking week number. It must be between 1 and 39, inclusive.";
 				}
 			} else {
 				weekNum = Integer.parseInt(params.get(1));
 				if (params.size() > 3) {
 					if (weekNum < 1 || weekNum > 10) {
-						irc.sendContextReply(mes, weekNum + " isn't a valid week number. It must be between 1 and 10, inclusive.");
-						return;
+						return weekNum + " isn't a valid week number. It must be between 1 and 10, inclusive.";
 					}
 					final int term = Integer.parseInt(params.get(params.size() - 1));
 					if (term < 1 || term > 3) {
-						irc.sendContextReply(mes, term + " isn't a valid term. It must be between 1 and 3, inclusive.");
-						return;
+						return term + " isn't a valid term. It must be between 1 and 3, inclusive.";
 					}
 					weekNum += 10 * (term - 1);
 				}
 				if (weekNum < 1 || weekNum > 30) {
-					irc.sendContextReply(mes, weekNum + " isn't a valid week number. It must be between 1 and 30, inclusive.");
-					return;
+					return weekNum + " isn't a valid week number. It must be between 1 and 30, inclusive.";
 				}
 				num = weekNum;
 				if (weekNum > 20) weekNum += 5;
@@ -430,9 +409,9 @@ public class MiscMsg
 			final String dateStS = weekFmt.format(new Date((long)dateSt * 1000));
 			final String dateEnS = weekFmt.format(new Date((long)dateEn * 1000));
 
-			irc.sendContextReply(mes, (rbw ? "Room Booking week " : "Week ") + num + " is from " + dateStS + " to " + dateEnS + ".");
+			return (rbw ? "Room Booking week " : "Week ") + num + " is from " + dateStS + " to " + dateEnS + ".";
 		} else {
-			irc.sendContextReply(mes, "Sorry, I don't know what you mean.");
+			return "Sorry, I don't know what you mean.";
 		}
 	}
 
@@ -533,16 +512,13 @@ public class MiscMsg
 		"[amount] is the amount to convert (defaults to 1).",
 	};
 
-	public void commandExchange(final Message mes)
+	public String commandExchange(final String mes)
 	{
-		String[] command = mods.util.getParamString(mes).replaceAll("[\\(\\),]+", " ").trim().split(" +");
+		String[] command = mes.replaceAll("[\\(\\),]+", " ").trim().split(" +");
 		if (command.length == 2)
 			command = new String[] { command[0], command[1], "1" };
 		if (command.length != 3)
-		{
-			irc.sendContextReply(mes, "Incorrect number of arguments specified.");
-			return;
-		}
+			return "Incorrect number of arguments specified.";
 
 		command[0]=command[0].toUpperCase();
 		command[1]=command[1].toUpperCase();
@@ -554,13 +530,11 @@ public class MiscMsg
 		}
 		catch (final UnsupportedEncodingException e)
 		{
-			irc.sendContextReply(mes, "Unexpected exception generating url.");
-			return;
+			return "Unexpected exception generating url.";
 		}
 		catch (final MalformedURLException e)
 		{
-			irc.sendContextReply(mes, "Error, malformed url generated.");
-			return;
+			return "Error, malformed url generated.";
 		}
 
 		String s;
@@ -570,8 +544,7 @@ public class MiscMsg
 		}
 		catch (final IOException e)
 		{
-			irc.sendContextReply(mes, "Failed to read site.");
-			return;
+			return "Failed to read site.";
 		}
 
 		final Matcher fromFull = Pattern.compile("<option.*value=\"" + command[0] + "\">(.*) \\(" + command[0] + "\\)").matcher(s);
@@ -579,9 +552,9 @@ public class MiscMsg
 		final Matcher converted = Pattern.compile("(?s)currency_converter.*bld>(.*)&nbsp;" + command[1]).matcher(s);
 
 		if (fromFull.find() && toFull.find() && converted.find())
-			irc.sendContextReply(mes, command[2] + " " + command[0] + " (" + fromFull.group(1) + ") is " + converted.group(1) + " " + command[1] + " (" + toFull.group(1) + ").");
+			return command[2] + " " + command[0] + " (" + fromFull.group(1) + ") is " + converted.group(1) + " " + command[1] + " (" + toFull.group(1) + ").";
 		else
-			irc.sendContextReply(mes, "Failed to parse reply, unsupported currency? (http://finance.google.com/finance/converter for a list)");
+			return "Failed to parse reply, unsupported currency? (http://finance.google.com/finance/converter for a list)";
 
 
 	}

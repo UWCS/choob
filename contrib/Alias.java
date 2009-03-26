@@ -394,9 +394,9 @@ public class Alias
 		"[/Name/ [/Body/]]",
 		"<Which> and <Body> are regexs specifying aliases to return."
 	};
-	public void commandList( final Message mes )
+	public String commandList( final String mes )
 	{
-		final Matcher params = listArgs.matcher(mods.util.getParamString(mes));
+		final Matcher params = listArgs.matcher(mes);
 
 		String clause = "1";
 		String namereg = null;
@@ -418,40 +418,37 @@ public class Alias
 		final List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE " + clause );
 
 		if (results.size() == 0)
-			irc.sendContextReply(mes, "No aliases match.");
-		else
+			return "No aliases match.";
+		StringBuilder list = new StringBuilder("Aliases");
+		if (namereg != null)
 		{
-			StringBuilder list = new StringBuilder("Aliases");
-			if (namereg != null)
-			{
-				list.append(" matching /" + namereg + "/");
-				if (bodyreg != null)
-					list.append(" (name) and /" + bodyreg + "/ (body)");
-			}
-			list.append(": ");
-			boolean cutOff = false;
-			for (int j = 0; j < results.size(); j++) {
-				final AliasObject ko = results.get(j);
-				if (list.length() + ko.name.length() > IRCInterface.MAX_MESSAGE_LENGTH - 50) {
-					cutOff = true;
-					break;
-				}
-				if (j > 0) {
-					list.append(", ");
-				}
-				list.append("\"").append(ko.name).append(Colors.NORMAL).append("\"");
-			}
-			if (cutOff) {
-				list.append(", ...");
-			} else {
-				list.append(".");
-			}
-			list.append(" (").append(results.size()).append(" result");
-			if (results.size() != 1)
-				list.append("s");
-			list.append(")");
-			irc.sendContextReply(mes, list.toString());
+			list.append(" matching /" + namereg + "/");
+			if (bodyreg != null)
+				list.append(" (name) and /" + bodyreg + "/ (body)");
 		}
+		list.append(": ");
+		boolean cutOff = false;
+		for (int j = 0; j < results.size(); j++) {
+			final AliasObject ko = results.get(j);
+			if (list.length() + ko.name.length() > IRCInterface.MAX_MESSAGE_LENGTH - 50) {
+				cutOff = true;
+				break;
+			}
+			if (j > 0) {
+				list.append(", ");
+			}
+			list.append("\"").append(ko.name).append(Colors.NORMAL).append("\"");
+		}
+		if (cutOff) {
+			list.append(", ...");
+		} else {
+			list.append(".");
+		}
+		list.append(" (").append(results.size()).append(" result");
+		if (results.size() != 1)
+			list.append("s");
+		list.append(")");
+		return list.toString();
 	}
 
 	public String apiGet( final String name )

@@ -7,6 +7,7 @@
 package uk.co.uwcs.choob.modules;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -73,18 +74,24 @@ public final class UtilModule
 	public String[] getParamArray( final Message mes )
 	{
 		final String text = mes.getMessage();
-		final int offset = getTriggerOffset(text);
+		return getParamArray(text);
+	}
 
-		return text.substring(offset).split("\\s+");
+	public String[] getParamArray(final String str)
+	{
+		final int offset = getTriggerOffset(str);
+
+		return str.substring(offset).split("\\s+");
+	}
+
+	public List<String> getParams( final String str )
+	{
+		return Arrays.asList(getParamArray(str));
 	}
 
 	public List<String> getParams( final Message mes )
 	{
-		final String[] params = getParamArray( mes );
-		final List<String> temp = new ArrayList<String>(params.length);
-		for(final String param: params)
-			temp.add(param);
-		return temp;
+		return Arrays.asList(getParamArray( mes ));
 	}
 
 	/**

@@ -124,7 +124,7 @@ public class Where
 		return Collections.synchronizedMap(new HashMap<String, Queue<Details>>());
 	}
 
-	public synchronized void commandReset(final Message mes)
+	public synchronized String commandReset(final String mes)
 	{
 		int failed = 0;
 		for (final Entry<String, Queue<Details>> ent : outst.entrySet())
@@ -134,7 +134,7 @@ public class Where
 				++failed;
 			}
 		outst = makeMap();
-		irc.sendContextReply(mes, "Okay, purged " + failed + " item" + (failed == 1 ? "" : "s") + ".");
+		return "Okay, purged " + failed + " item" + (failed == 1 ? "" : "s") + ".";
 	}
 
 	public Where(final Modules mods, final IRCInterface irc)

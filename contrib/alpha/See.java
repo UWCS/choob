@@ -77,26 +77,20 @@ public class See
 				.executeQuery();
 	}
 
-	public final synchronized void commandBodyClock(final Message mes) throws SQLException
+	public final synchronized String commandBodyClock(final String mes) throws SQLException
 	{
-		String nick = mods.util.getParamString(mes).trim();
-
-		if (nick.equals(""))
-			nick = mes.getNick();
-
-		nick = mods.nick.getBestPrimaryNick(nick);
+		final String nick = mods.nick.getBestPrimaryNick(mes.trim());
 
 		final Connection conn = mods.odb.getConnection();
 
-		final ResultSet rs = getDataFor(nick, conn);
-
-		String ret = "";
-
-		if (!rs.last())
-			irc.sendContextReply(mes,
-					"I don't have enough information to work out the bodyclock for " + nick + ".");
-		else
+		try
 		{
+			final ResultSet rs = getDataFor(nick, conn);
+
+			String ret = "";
+
+			if (!rs.last())
+				return "I don't have enough information to work out the bodyclock for " + nick + ".";
 			final Timestamp gotup = rs.getTimestamp("end");
 			final long diff = rs.getTimestamp("end").getTime() - rs.getTimestamp("start").getTime();
 
@@ -132,10 +126,12 @@ public class See
 					+ " of sleep, making his or her body-clock time about " + hour + ":"
 					+ (minutes < 10 ? "0" : "") + minutes + following;
 
-			irc.sendContextReply(mes, ret + ".");
+			return ret + ".";
 		}
-
-		mods.odb.freeConnection(conn);
+		finally
+		{
+			mods.odb.freeConnection(conn);
+		}
 	}
 
 	private Date firstSeen(Connection conn, String what) throws SQLException
@@ -170,19 +166,18 @@ public class See
 				java.text.DateFormat.FULL).format(d);
 	}
 
-	public void commandFirstSeen(Message mes) throws SQLException
+	public String commandFirstSeen(final String mes) throws SQLException
 	{
-		String nick = mods.util.getParamString(mes).trim();
+		final String nick = mes.trim();
 		final Connection conn = mods.odb.getConnection();
 		try
 		{
 			final Date rel = firstSeen(conn, nick);
 			if (rel == null)
-				irc.sendContextReply(mes, "Never seen " + nick + ".");
-			else
-				irc.sendContextReply(mes, nick + " was first seen on " + format(rel) + ", "
-					+ mods.date.timeLongStamp(new java.util.Date().getTime() - rel.getTime(), 2)
-					+ " ago.");
+				return "Never seen " + nick + ".";
+			return nick + " was first seen on " + format(rel) + ", "
+				+ mods.date.timeLongStamp(new java.util.Date().getTime() - rel.getTime(), 2)
+				+ " ago.";
 		}
 		finally
 		{
@@ -192,9 +187,8 @@ public class See
 
 	/* This Whores like hell, fix plx */
 	// *
-	public void commandFreshers(Message mes) throws SQLException
+	public String commandFreshers(String mes) throws SQLException
 	{
-		String nick = mods.util.getParamString(mes).trim();
 		final Connection conn = mods.odb.getConnection();
 		Set<String> people = new TreeSet<String>();
 		Calendar testdate = Calendar.getInstance();
@@ -237,7 +231,7 @@ public class See
 				if (firstSeen != null && firstSeen.after(testdate.getTime()))
 					res += pe + " ";
 			}
-			irc.sendContextReply(mes, res);
+			return res;
 		}
 		finally
 		{
@@ -251,23 +245,19 @@ public class See
 		return sdfa.format(d).toLowerCase() + sdfb.format(d);
 	}
 
-	public final synchronized void commandPattern(final Message mes) throws SQLException
+	public final synchronized String commandPattern(final String mes) throws SQLException
 	{
-		String nick = mods.util.getParamString(mes).trim();
-
-		if (nick.equals(""))
-			nick = mes.getNick();
-
-		nick = mods.nick.getBestPrimaryNick(nick);
+		final String nick = mods.nick.getBestPrimaryNick(mes.trim());
 
 		final Connection conn = mods.odb.getConnection();
 
-		final ResultSet rs = getDataFor(nick, conn);
-
-		if (!rs.first())
-			irc.sendContextReply(mes, "I don't have enough information about " + nick + ".");
-		else
+		try
 		{
+			final ResultSet rs = getDataFor(nick, conn);
+
+			if (!rs.first())
+				return "I don't have enough information about " + nick + ".";
+
 			rs.beforeFirst();
 
 			String ret = nick + " was sleeping: ";
@@ -280,10 +270,12 @@ public class See
 
 			if (ret.length() > 2)
 				ret = ret.substring(0, ret.length() - 2);
-			irc.sendContextReply(mes, ret + ".");
+			return ret + ".";
 		}
-
-		mods.odb.freeConnection(conn);
+		finally
+		{
+			mods.odb.freeConnection(conn);
+		}
 	}
 
 	public synchronized void webDump(final PrintWriter out, final String args, final String[] from)

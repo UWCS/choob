@@ -216,7 +216,7 @@ public class MiscUtils
 			"Replace <ORIGINAL CHARS> with <REPLACEMENT CHARS> in <MESSAGE>",
 			"<ORIGINAL CHARS> <REPLACEMENT CHARS> <MESSAGE>." };
 
-	public void commandFilter(final Message mes)
+	public String commandFilter(final String mes)
 	{
 		final List<String> parm = mods.util.getParams(mes);
 
@@ -228,7 +228,7 @@ public class MiscUtils
 		final char[] oldChars = oldString.toCharArray();
 		final char[] replacementChars = replacementString.toCharArray();
 
-		String returnedString = mods.util.getParamString(mes);
+		String returnedString = mes;
 		returnedString = returnedString.substring(returnedString.indexOf(" ") + 1);
 		returnedString = returnedString.substring(returnedString.indexOf(" ") + 1);
 		final String originalString = returnedString;
@@ -248,14 +248,14 @@ public class MiscUtils
 			}
 		}
 
-		irc.sendContextMessage(mes, returnedString);
+		return returnedString;
 	}
 
 	public String[] helpCommandReplaceAll = {
 			"Replace all instances of <; Separated list of regexes> with <; Separated list of strings>, NB: each replacement is performed successively, so replaceAll a;b b;a will not change anything",
 			"<ORIGINAL REGEX(s)> <REPLACEMENT STRING(s)> <MESSAGE>." };
 
-	public void commandReplaceAll(final Message mes)
+	public String commandReplaceAll(final String mes)
 	{
 		final List<String> parms = mods.util.getParams(mes);
 
@@ -286,10 +286,7 @@ public class MiscUtils
 		}
 
 		if (oldStrings.length != replacementStrings.length)
-		{
-			irc.sendContextMessage(mes, "Error, old and replacement parameters do not match");
-			return;
-		}
+			return "Error, old and replacement parameters do not match";
 
 		for (int i = 0; i < oldStrings.length; i++)
 		{
@@ -298,28 +295,23 @@ public class MiscUtils
 					.replaceAll("\\[:INSERTCOLON:\\]", "\\\\;");
 		}
 
-		String returnedString = mods.util.getParamString(mes);
+		String returnedString = mes;
 		returnedString = returnedString.substring(returnedString.indexOf(" ") + 1);
 		returnedString = returnedString.substring(returnedString.indexOf(" ") + 1);
 		for (int i = 0; i < oldStrings.length; i++)
-		{
 			returnedString = returnedString.replaceAll(oldStrings[i], replacementStrings[i]);
-		}
-		irc.sendContextMessage(mes, returnedString);
+
+		return returnedString;
 	}
 
 	final private static Pattern trans_args = Pattern
 			.compile("((?:\\\\.|[^\\s\\\\])+)(?:\\s+((?:\\\\.|[^\\s\\\\])+))?(?:\\s+(.)(.*?)\\3)?.*");
 
-	public void commandTrans(final Message mes)
+	public String commandTrans(final String mes)
 	{
-		Matcher ma = trans_args.matcher(mods.util.getParamString(mes));
+		Matcher ma = trans_args.matcher(mes);
 		if (!ma.matches())
-		{
-			irc.sendContextReply(mes,
-					"Couldn't undertand arguments, expected: expr [expr] [/regex/]");
-			return;
-		}
+			return "Couldn't undertand arguments, expected: expr [expr] [/regex/]";
 
 		final List<Message> history = mods.history.getLastMessages(mes, 10);
 		String regexp = ma.group(4);
@@ -337,23 +329,16 @@ public class MiscUtils
 				{
 					final List<Integer> secondExpr = processExp(ma.group(2));
 					if (secondExpr.size() != firstExpr.size())
-					{
-						irc.sendContextReply(mes, "Expecting sets of equal size.  "
-								+ firstExpr.size() + " and " + secondExpr.size() + " recieved.");
-						return;
-					}
+						return "Expecting sets of equal size.  "
+								+ firstExpr.size() + " and " + secondExpr.size() + " recieved.";
 
 					Map<Integer, Integer> trans = new HashMap<Integer, Integer>();
 					for (int i = 0; i < firstExpr.size(); ++i)
 					{
 						Integer first = firstExpr.get(i);
 						if (trans.put(first, secondExpr.get(i)) != null)
-						{
-							irc.sendContextReply(mes,
-									"First set illegally contains two (or more) references to '"
-											+ toString(first.intValue()) + "'.");
-							return;
-						}
+							return "First set illegally contains two (or more) references to '"
+											+ toString(first.intValue()) + "'.";
 					}
 					final StringBuilder sb = new StringBuilder();
 					final String message = m.getMessage();
@@ -367,18 +352,16 @@ public class MiscUtils
 						else
 							sb.append(toString(cp));
 					}
-					irc.sendContextReply(mes, sb.toString());
-					return;
+					return sb.toString();
 				}
 
 				String working = m.getMessage();
 				for (Integer i : firstExpr)
 					working = working.replaceAll(Pattern.quote(toString(i.intValue())), "");
 
-				irc.sendContextReply(mes, working);
-				return;
+				return working;
 			}
-		irc.sendContextReply(mes, "Didn't match any messages with: /" + regexp + "/");
+		return "Didn't match any messages with: /" + regexp + "/";
 	}
 
 	private String toString(int first)

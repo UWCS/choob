@@ -50,6 +50,7 @@ import uk.co.uwcs.choob.support.ChoobInvocationError;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
 import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.ContextEvent;
 import uk.co.uwcs.choob.support.events.Event;
 import uk.co.uwcs.choob.support.events.Message;
 
@@ -420,7 +421,15 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			public void run() {
 				try
 				{
-					meth.invoke(plugin, params);
+					if (isSimpleCommand(meth))
+					{
+						// intentional throw of ClassCastException.
+						Message m = (Message) param;
+						String res = (String)meth.invoke(plugin, mods.util.getParamString(m));
+						irc.sendContextReply(m, res);
+					}
+					else
+						meth.invoke(plugin, params);
 				}
 				catch (final InvocationTargetException e)
 				{
@@ -550,6 +559,9 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		final Class<?>[] params = meth.getParameterTypes();
 		if (params.length == 1)
 		{
+			if (isSimpleCommand(meth, params))
+				return true;
+
 			if (!Message.class.isAssignableFrom(params[0]))
 				return false;
 		}
@@ -566,6 +578,18 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			return false;
 
 		return true;
+	}
+
+	static boolean isSimpleCommand(final Method meth)
+	{
+		final Class<?>[] parameterTypes = meth.getParameterTypes();
+		return parameterTypes.length == 1 && isSimpleCommand(meth, parameterTypes);
+	}
+
+	private static boolean isSimpleCommand(final Method meth, final Class<?>[] params)
+	{
+		return String.class.isAssignableFrom(params[0]) &&
+				String.class.isAssignableFrom(meth.getReturnType());
 	}
 
 	static boolean checkEventSignature(final Method meth)

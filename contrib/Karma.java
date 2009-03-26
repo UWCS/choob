@@ -559,18 +559,18 @@ public class Karma
 			//System.err.println("");
 			final String submessage = message.substring(matchStarts.get(matchIndex - 1), matchStarts.get(matchIndex)).replaceAll("[^\\+\\-\\)\\w]+$", "");
 			//System.err.println("  SEGMENT  : <" + submessage + ">");
-			
+
 			Matcher karmaMatch = karmaPatternWithReason.matcher(submessage);
 			if (!karmaMatch.find())
 			{
 				karmaMatch = karmaPattern.matcher(submessage);
 				karmaMatch.find();
 			}
-			
+
 			//System.err.println("  MATCH    : <" + karmaMatch.group() + ">");
 			//for (int i = 1; i <= karmaMatch.groupCount(); i++)
 			//	System.err.println("    GROUP " + i + ": <" + karmaMatch.group(i) + ">");
-			
+
 			List<String> groups = new ArrayList<String>();
 			for (int i = 0; i <= karmaMatch.groupCount(); i++)
 				groups.add(karmaMatch.group(i));
@@ -960,11 +960,11 @@ public class Karma
 		"<Object> is the name of something to get the karma of"
 	};
 
-	public void commandGet (final Message mes)
+	public String commandGet (final String mes)
 	{
 		final List<String> params = new ArrayList<String>();
 
-		final Matcher ma=karmaItemPattern.matcher(mods.util.getParamString(mes));
+		final Matcher ma = karmaItemPattern.matcher(mes);
 
 		while (ma.find())
 			params.add(getName(ma));
@@ -983,10 +983,7 @@ public class Karma
 			}
 
 		if (karmaObjs.size() == 1)
-		{
-				irc.sendContextReply(mes, formatKarmaNameForIRC(karmaObjs.get(0).instName) + " has a karma of " + karmaObjs.get(0).value + " (" + karmaObjs.get(0).up + " up, " + karmaObjs.get(0).down + " down).");
-			return;
-		}
+			return formatKarmaNameForIRC(karmaObjs.get(0).instName) + " has a karma of " + karmaObjs.get(0).value + " (" + karmaObjs.get(0).up + " up, " + karmaObjs.get(0).down + " down).";
 
 		final StringBuffer output = new StringBuffer("Karmas: ");
 
@@ -1005,10 +1002,9 @@ public class Karma
 				}
 			}
 			output.append(".");
-			irc.sendContextReply( mes, output.toString());
+			return output.toString();
 		}
-		else
-			irc.sendContextReply( mes, "Check the karma of what?");
+		return "Check the karma of what?";
 	}
 
 	public String[] helpCommandSet = {
@@ -1190,9 +1186,9 @@ public class Karma
 	public String[] helpCommandList = {
 		"Get a list of all karma objects.",
 	};
-	public void commandList (final Message mes)
+	public String commandList (final String mes)
 	{
-		irc.sendContextReply(mes, "No chance, matey.");
+		return "No chance, matey.";
 	}
 
 	public void webList(final PrintWriter out, final String params, final String[] user)

@@ -19,8 +19,6 @@ import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobError;
 import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.Message;
-import uk.co.uwcs.choob.support.events.PrivateEvent;
 
 public class Events
 {
@@ -84,7 +82,6 @@ public class Events
 				descParts = new String[] {"", ""}; // split acts unexpectedly with just "|", deal with it.
 
 			shortdesc     = descParts[0];
-			longdesc      = descParts[1];
 			location      = slocation;
 
 			// The names come in in csv, break them up.
@@ -103,7 +100,6 @@ public class Events
 		public int signupCurrent;
 		public ArrayList<String> signupNames;
 		public String shortdesc;
-		public String longdesc;
 		public String location;
 
 		private Date convertTimestamp(final String timestamp)
@@ -370,24 +366,21 @@ public class Events
 		"<Key>",
 		"<Key> is a key to use for event searching"
 	};
-	public void commandInfo(final Message mes) throws ChoobException
+	public String commandInfo(final String mes) throws ChoobException
 	{
-		infoOn(mes);
+		return infoOn(mes);
 	}
 
-	private void infoOn(final Message mes) throws ChoobException
+	private String infoOn(final String mes) throws ChoobException
 	{
-		final String comp=mods.util.getParamString(mes).toLowerCase();
+		final String comp = mes.toLowerCase();
 		if (comp.equals(""))
 		{
 			final ArrayList<EventItem> events=readEventsData();
 			int c=events.size();
 
 			if (events.isEmpty())
-			{
-				irc.sendContextReply(mes, "There are no events! :'(");
-				return;
-			}
+				return "There are no events! :'(";
 
 			final StringBuilder rep = new StringBuilder();
 			for (final EventItem ev : events)
@@ -401,8 +394,7 @@ public class Events
 					.append(ev.shortSignups())
 					.append(--c != 0 ? ", " : ".");
 			}
-			irc.sendContextReply(mes, "Events: " + rep.toString());
-			return;
+			return "Events: " + rep.toString();
 		}
 
 		final int eid=parseId(comp);
@@ -430,7 +422,7 @@ public class Events
 					else
 						signup="";
 
-					irc.sendContextReply(mes,
+					return
 						ev.boldName() +
 						" at " + ev.location +
 						( !"".equals(ev.shortdesc) ? " (" + ev.shortdesc + ")" : "") +
@@ -440,11 +432,10 @@ public class Events
 						        "from " + DateModule.absoluteDateFormat(ev.start) + " to " + DateModule.absoluteDateFormat(ev.end)) +
 						"." +
 						signup
-					);
-					return;
+					;
 				}
 
-		irc.sendContextReply(mes, "Event not found.");
+		return "Event not found.";
 	}
 
 	public String[] helpCommandSignup = {
@@ -452,14 +443,11 @@ public class Events
 		"<Key>",
 		"<Key> is a key to use for event searching"
 	};
-	public void commandSignup(final Message mes) throws ChoobException
+	public String commandSignup(final String mes) throws ChoobException
 	{
-		final String comp=mods.util.getParamString(mes).toLowerCase();
+		final String comp = mes.toLowerCase();
 		if (comp.equals(""))
-		{
-			irc.sendContextReply(mes, "Please name the event you want info on.");
-			return;
-		}
+			return "Please name the event you want info on.";
 
 		final int eid=parseId(comp);
 
@@ -472,20 +460,12 @@ public class Events
 				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
 				{
 					if (ev.acceptsSignups())
-						irc.sendContextReply(mes,
-							"Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev.id + "&action=signup to sign-up for " +
-							ev.boldNameShortDetails() +
-							"."
-						);
-					else
-					{
-						rep.append(ev.boldNameShortDetails()).append(" matched, but is not currently accepting sign-ups... ");
-						continue;
-					}
-					return;
+						return "Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev.id
+							+ "&action=signup to sign-up for " + ev.boldNameShortDetails() + ".";
+					rep.append(ev.boldNameShortDetails()).append(" matched, but is not currently accepting sign-ups... ");
 				}
 
-		irc.sendContextReply(mes, rep.toString() + "Event not found.");
+		return rep.toString() + "Event not found.";
 	}
 
 	public String[] helpCommandLink = {
@@ -493,14 +473,11 @@ public class Events
 		"<Key>",
 		"<Key> is a key to use for event searching"
 	};
-	public void commandLink(final Message mes) throws ChoobException
+	public String commandLink(final String mes) throws ChoobException
 	{
-		final String comp=mods.util.getParamString(mes).toLowerCase();
+		final String comp = mes.toLowerCase();
 		if (comp.equals(""))
-		{
-			irc.sendContextReply(mes, "Please name the event you want info on.");
-			return;
-		}
+			return "Please name the event you want info on.";
 
 		final int eid=parseId(comp);
 
@@ -509,12 +486,9 @@ public class Events
 		for (final EventItem ev : events)
 			if (!ev.finished())
 				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
-				{
-					irc.sendContextReply(mes, "http://uwcs.co.uk/society/events/details/" + ev.id + ".");
-					return;
-				}
+					return "http://uwcs.co.uk/society/events/details/" + ev.id + ".";
 
-		irc.sendContextReply(mes, "Event not found.");
+		return "Event not found.";
 	}
 
 	public String[] helpCommandSignups = {
@@ -522,9 +496,9 @@ public class Events
 		"<Key>",
 		"<Key> is a key to use for event searching"
 	};
-	public void commandSignups(final Message mes) throws ChoobException
+	public String commandSignups(final String mes) throws ChoobException
 	{
-		String eventName = mods.util.getParamString(mes).toLowerCase();
+		String eventName = mes.toLowerCase();
 		String signupRegexp = ""; // You suck, Java.
 
 		// If there is a "/" in the string, we split it up into the event
@@ -545,10 +519,7 @@ public class Events
 		}
 
 		if (eventName.equals(""))
-		{
-			irc.sendContextReply(mes, "Please name the event you want info on.");
-			return;
-		}
+			return "Please name the event you want info on.";
 
 		final int eid = parseId(eventName);
 		final ArrayList<EventItem> events = readEventsData();
@@ -559,67 +530,57 @@ public class Events
 				{
 					if (ev.signupCurrent == 0)
 					{
-						irc.sendContextReply(mes,
+						return
 							"No signups for " + ev.boldNameShortDetails() +
 							" at " + ev.location +
 							(ev.acceptsSignups() ?
 								" even though signups are open." :
 								", probably because signups aren't open yet!"
 							)
-						);
+						;
 					}
-					else
+					if (searching)
 					{
-						if (searching)
-						{
-							final List<String> names = new ArrayList<String>();
-							final Pattern p = Pattern.compile(signupRegexp, Pattern.CASE_INSENSITIVE);
-							for (final String n : ev.signupNames)
-								if (p.matcher(n).find())
-									names.add(n);
-							if (names.size() > 0) {
-								irc.sendContextReply(mes,
-									"Signups matching /" + signupRegexp + "/i for " + ev.boldNameShortDetails() +
-									" at " + ev.location +
-									ev.shortSignups() + ": " +
-									nameList(names, mes, 0, "") +
-									"."
-								);
-							}
-							else
-							{
-								irc.sendContextReply(mes,
-									"No signups matched /" + signupRegexp + "/i for " + ev.boldNameShortDetails() +
-									" at " + ev.location +
-									ev.shortSignups() + "."
-								);
-							}
-						}
-						else
-						{
-							irc.sendContextReply(mes,
-								"Signups for " + ev.boldNameShortDetails() +
+						final List<String> names = new ArrayList<String>();
+						final Pattern p = Pattern.compile(signupRegexp, Pattern.CASE_INSENSITIVE);
+						for (final String n : ev.signupNames)
+							if (p.matcher(n).find())
+								names.add(n);
+						if (names.size() > 0) {
+							return
+								"Signups matching /" + signupRegexp + "/i for " + ev.boldNameShortDetails() +
 								" at " + ev.location +
 								ev.shortSignups() + ": " +
-								nameList(ev.signupNames, mes, ev.signupMax, Colors.BOLD + "Reserves: " + Colors.NORMAL) +
+								nameList(names, mes, 0, "") +
 								"."
-							);
+							;
 						}
+						return
+							"No signups matched /" + signupRegexp + "/i for " + ev.boldNameShortDetails() +
+							" at " + ev.location +
+							ev.shortSignups() + "."
+						;
 					}
-					return;
+					return
+						"Signups for " + ev.boldNameShortDetails() +
+						" at " + ev.location +
+						ev.shortSignups() + ": " +
+						nameList(ev.signupNames, mes, ev.signupMax, Colors.BOLD + "Reserves: " + Colors.NORMAL) +
+						"."
+					;
 				}
-		irc.sendContextReply(mes, "Event not found.");
+		return "Event not found.";
 	}
 
 	public String[] helpCommandList = {
 		"Get a list of events.",
 	};
-	public void commandList(final Message mes) throws ChoobException
+	public String commandList(final String mes) throws ChoobException
 	{
-		infoOn(mes);
+		return infoOn(mes);
 	}
 
-	private static String nameList(final List<String> names, final Message mes, final int after, final String message)
+	private static String nameList(final List<String> names, final String mes, final int after, final String message)
 	{
 		final StringBuilder namelistb = new StringBuilder();
 		int i=0;
@@ -628,10 +589,8 @@ public class Events
 			if (i++ == after && after != 0)
 				namelistb.append(message);
 
-			if( !(mes instanceof PrivateEvent) && name.length() > 1 )
-			{
+			if( name.length() > 1 )
 				name = name.substring(0,1) + "'" + name.substring(1);
-			}
 
 			namelistb.append(name).append(", ");
 		}

@@ -19,6 +19,8 @@ import uk.co.uwcs.choob.support.events.Message;
 
 public class MFJ
 {
+	private static final String INVALID_ARG = "Invalid argument, expecting: [#]rrggbb, rgb(255,255,255) or a named colour.";
+
 	final static Map<Color, String> colours;
 
 	private final Modules mods;
@@ -217,12 +219,6 @@ public class MFJ
 		return col[type];
 	}
 
-
-	private void /*inline*/ invalidArgument(final Message mes)
-	{
-		irc.sendContextMessage(mes, "Invalid argument, expecting: [#]rrggbb, rgb(255,255,255) or a named colour.");
-	}
-
 	// http://mindprod.com/jgloss/hex.html
 	public static String /*inline*/ byteToHex(final int b)
 	{
@@ -234,21 +230,17 @@ public class MFJ
 	 * Implements JB's !colour command
 	 */
 	public String[] helpCommandColour = { "Lets you know what today's colour is. Optionally, given a css colour, it will attempt to guess what it looks like." };
-	public void commandColour(final Message con)
+	public String commandColour(final String con)
 	{
-		String parm = mods.util.getParamString(con);
+		String parm = con;
 		if (parm.length() < 3)
 		{
-			irc.sendContextMessage( con, "Today's colour is " + colourForToday() + ".");
-			return;
+			return "Today's colour is " + colourForToday() + ".";
 		}
 
 		for (final Color c : colours.keySet())
 			if (colours.get(c).equalsIgnoreCase(parm))
-			{
-				irc.sendContextReply(con, "'" + parm + "' is #" + byteToHex(c.getRed()) + byteToHex(c.getGreen()) + byteToHex(c.getBlue()) + ".");
-				return;
-			}
+				return "'" + parm + "' is #" + byteToHex(c.getRed()) + byteToHex(c.getGreen()) + byteToHex(c.getBlue()) + ".";
 
 		Color toFind;
 		final String number = "((?:2[0-5][0-9])|(?:1?[0-9]?[0-9]))";
@@ -275,11 +267,7 @@ public class MFJ
 						   parm.substring(2,3) + parm.substring(2,3);
 
 				if (parm.length() != 6)
-				{
-					invalidArgument(con);
-					return;
-				}
-
+					return INVALID_ARG;
 
 				toFind = new Color(	Integer.parseInt(parm.substring(0, 1), 16) * 16 + Integer.parseInt(parm.substring(1, 2), 16),
 									Integer.parseInt(parm.substring(2, 3), 16) * 16 + Integer.parseInt(parm.substring(3, 4), 16),
@@ -290,13 +278,11 @@ public class MFJ
 		catch (final NumberFormatException e)
 		{
 			e.printStackTrace();
-			invalidArgument(con);
-			return;
+			return INVALID_ARG;
 		}
 		catch (final IllegalArgumentException e)
 		{
-			invalidArgument(con);
-			return;
+			return INVALID_ARG;
 		}
 
 
@@ -318,47 +304,46 @@ public class MFJ
 		}
 
 		if (closest != null)
-			irc.sendContextReply(con, "That looks " + (bestMatch != 0 ? "roughly (" + Math.round((1-bestMatch)*100000.0)/1000.0 + "%)" : "exactly") + " like " + colours.get(closest) + " to me.");
-		else
-			irc.sendContextReply(con, "No match.");
+			return "That looks " + (bestMatch != 0 ? "roughly (" + Math.round((1-bestMatch)*100000.0)/1000.0 + "%)" : "exactly") + " like " + colours.get(closest) + " to me.";
+		return "No match.";
 	}
 
 	/**
 	 * Implement JB's !year command
 	 */
 	public String[] helpCommandYear = { "Outputs the current year." };
-	public void commandYear(final Message con)
+	public String commandYear(final String con)
 	{
 		final GregorianCalendar cal = new GregorianCalendar();
 
-		irc.sendContextMessage( con, "It is the year " + cal.get(Calendar.YEAR) + ".");
+		return "It is the year " + cal.get(Calendar.YEAR) + ".";
 	}
 
 	/**
 	 * Implement JB's !month command
 	 */
 	public String[] helpCommandMonth = { "Outputs the current month." };
-	public void commandMonth(final Message con)
+	public String commandMonth(final String con)
 	{
 		final GregorianCalendar cal = new GregorianCalendar();
 		final DateFormatSymbols dfc = new DateFormatSymbols();
 
 		final String[] months = dfc.getMonths();
 
-		irc.sendContextMessage( con, "It is " + months[cal.get(Calendar.MONTH)] + ".");
+		return "It is " + months[cal.get(Calendar.MONTH)] + ".";
 	}
 
 	/**
 	 * Implement JB's !day command
 	 */
 	public String[] helpCommandDay = { "Outputs the current day." };
-	public void commandDay(final Message con)
+	public String commandDay(final String con)
 	{
 		final GregorianCalendar cal = new GregorianCalendar();
 		final DateFormatSymbols dfc = new DateFormatSymbols();
 
 		final String[] days = dfc.getWeekdays();
 
-		irc.sendContextMessage( con, "It is " + days[cal.get(Calendar.DAY_OF_WEEK)] + ".");
+		return "It is " + days[cal.get(Calendar.DAY_OF_WEEK)] + ".";
 	}
 }
