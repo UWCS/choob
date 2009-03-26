@@ -307,11 +307,15 @@ public class MiscUtils
 	final private static Pattern trans_args = Pattern
 			.compile("((?:\\\\.|[^\\s\\\\])+)(?:\\s+((?:\\\\.|[^\\s\\\\])+))?(?:\\s+(.)(.*?)\\3)?.*");
 
-	public String commandTrans(final String mes)
+	public void commandTrans(final Message mes)
 	{
-		Matcher ma = trans_args.matcher(mes);
+		Matcher ma = trans_args.matcher(mods.util.getParamString(mes));
 		if (!ma.matches())
-			return "Couldn't undertand arguments, expected: expr [expr] [/regex/]";
+		{
+			irc.sendContextReply(mes,
+					"Couldn't undertand arguments, expected: expr [expr] [/regex/]");
+			return;
+		}
 
 		final List<Message> history = mods.history.getLastMessages(mes, 10);
 		String regexp = ma.group(4);
@@ -329,16 +333,23 @@ public class MiscUtils
 				{
 					final List<Integer> secondExpr = processExp(ma.group(2));
 					if (secondExpr.size() != firstExpr.size())
-						return "Expecting sets of equal size.  "
-								+ firstExpr.size() + " and " + secondExpr.size() + " recieved.";
+					{
+						irc.sendContextReply(mes, "Expecting sets of equal size.  "
+								+ firstExpr.size() + " and " + secondExpr.size() + " recieved.");
+						return;
+					}
 
 					Map<Integer, Integer> trans = new HashMap<Integer, Integer>();
 					for (int i = 0; i < firstExpr.size(); ++i)
 					{
 						Integer first = firstExpr.get(i);
 						if (trans.put(first, secondExpr.get(i)) != null)
-							return "First set illegally contains two (or more) references to '"
-											+ toString(first.intValue()) + "'.";
+						{
+							irc.sendContextReply(mes,
+									"First set illegally contains two (or more) references to '"
+											+ toString(first.intValue()) + "'.");
+							return;
+						}
 					}
 					final StringBuilder sb = new StringBuilder();
 					final String message = m.getMessage();
@@ -352,16 +363,18 @@ public class MiscUtils
 						else
 							sb.append(toString(cp));
 					}
-					return sb.toString();
+					irc.sendContextReply(mes, sb.toString());
+					return;
 				}
 
 				String working = m.getMessage();
 				for (Integer i : firstExpr)
 					working = working.replaceAll(Pattern.quote(toString(i.intValue())), "");
 
-				return working;
+				irc.sendContextReply(mes, working);
+				return;
 			}
-		return "Didn't match any messages with: /" + regexp + "/";
+		irc.sendContextReply(mes, "Didn't match any messages with: /" + regexp + "/");
 	}
 
 	private String toString(int first)
