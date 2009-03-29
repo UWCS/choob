@@ -598,7 +598,7 @@ public class SUSEFactoids
 
 		final String item = params.get(1).replaceAll("\\?", "");
 
-		final List<Fact> facts = mods.odb.retrieve(Fact.class, "WHERE subject REGEXP'.*" + item.toLowerCase() + ".*' AND lang = \"" + getChannelLanguage(mes.getContext()) + "\"");
+		final List<Fact> facts = mods.odb.retrieve(Fact.class, "WHERE subject REGEXP'.*" + item.toLowerCase() + ".*' AND (lang = \"" + getChannelLanguage(mes.getContext()) + "\" OR lang = \"en_GB\")");
 
 		if (facts.size() == 0)
 		{
