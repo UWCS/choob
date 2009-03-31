@@ -7,6 +7,7 @@ REM #####
 :top
 java -cp ^
 .;^
+lib/junit-4.5.jar;^
 lib/c3p0-0.9.1.2.jar;^
 lib/msnm.jar;^
 lib/jcfd.jar;^
