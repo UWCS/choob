@@ -18,15 +18,35 @@ class Pipes
 		this.irc = irc;
 	}
 
+	static String firstToken(String s)
+	{
+		final int ind = s.indexOf(' ');
+		if (ind == -1)
+			return s;
+		return s.substring(0, ind); 
+	}
+	
 	public void commandEval(final Message mes) throws Exception
 	{
 		irc.sendContextReply(mes, eval(mods.util.getParamString(mes), new Execulator()
 				{
 					@Override
-					public String exec(String s) throws Exception
+					public String exec(String s, String stdin) throws Exception
 					{
-						final String[] qq = s.split(" ", 2);
-						return mods.plugin.callSimpleCommand(qq[0], qq.length > 1 ? qq[1] : "");
+						final String[] qq = s.trim().split(" ", 2);
+						String cmd = qq[0].trim();
+						String arg = qq.length > 1 ? qq[1] : "";
+
+						if ("sed".equals(cmd))
+							return (String)mods.plugin.callAPI("MiscUtils", "Sed", arg, stdin);
+
+						if ("xargs".equals(cmd))
+						{
+							final String[] rr = arg.split(" ", 2);
+							cmd = rr[0];
+							arg = (rr.length > 1 ? rr[1] : "") + stdin;
+						}
+						return mods.plugin.callSimpleCommand(cmd, arg);
 					}
 				}
 			)
@@ -100,6 +120,7 @@ class Pipes
 	{
 		StringBuilder sb = new StringBuilder(si.length());
 		boolean dquote = false, squote = false, bslash = false;
+		String stdin = "";
 
 		while (si.hasMore())
 		{
@@ -113,7 +134,7 @@ class Pipes
 			{
 				if (bslash || dquote || squote)
 					throw new ParseException("Unexpected end of expression", si);
-				return e.exec(sb.toString());
+				return e.exec(sb.toString(), stdin);
 			}
 			else if ('"' == c)
 				if (squote || bslash)
@@ -141,6 +162,14 @@ class Pipes
 					sb.append(c);
 				else
 					bslash = true;
+			else if ('|' == c)
+			{
+				if (!squote && !dquote && !bslash)
+				{
+					stdin = e.exec(sb.toString(), stdin);
+					sb.setLength(0);
+				}
+			}
 			else
 			{
 				if (bslash)
@@ -168,16 +197,16 @@ class Pipes
 	
 	static interface Execulator
 	{
-		String exec(String s) throws Exception;
+		String exec(String s, String stdin) throws Exception;
 	}
 	
 	private final static Execulator SysoExeculator = new Execulator()
 	{
 
 		@Override
-		public String exec(String s) 
+		public String exec(String s, String stdin) 
 		{
-			System.out.println(s);
+			System.out.println(s + " with stdin of: " + stdin);
 			return s;
 		}
 	};
@@ -191,8 +220,8 @@ public class PipesTest
 		assertEquals("NOOOMaNOOOM789MOOONbMOOON", Pipes.eval("a$(789)b", new Pipes.Execulator()
 		{
 				@Override
-				public String exec(String s) {
-					return "NOOOM" + s + "MOOON"; 
+				public String exec(String s, String stdin) {
+					return "NOOOM" + s + stdin + "MOOON"; 
 				}
 		}));
 	}

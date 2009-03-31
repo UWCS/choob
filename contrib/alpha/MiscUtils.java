@@ -14,10 +14,21 @@ import uk.co.uwcs.choob.support.events.PrivateAction;
 
 public class MiscUtils
 {
+
 	private static final int DOT_CODE_POINT = ".".codePointAt(0);
 	Modules mods;
 	private final IRCInterface irc;
 
+	static class SedArgs
+	{
+		boolean warn = true; // show errors that occurred
+		boolean case_ins; // regex i: case insensitive
+		boolean global; // regex g: replace all
+		boolean treat_single; // regex s: treat input as single line
+		boolean prefer; // p: prefer my lines
+	}
+
+	
 	public MiscUtils(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
@@ -33,53 +44,53 @@ public class MiscUtils
 	public final String filterReplaceRegex = "s(.)(.*\\1.*\\1)((?i)[wpigs]{0,5})(?:(?:\\s+)|$)";
 	private final int MAXLENGTH = 300;
 
+	
+	private final Pattern compiledFilterReplaceRegex = Pattern.compile(filterReplaceRegex);
+	public String apiSed(final String params, final String stdin)
+	{
+		System.out.println("Sed " + params + " - " + stdin);
+		final Matcher matcher = compiledFilterReplaceRegex.matcher(params);
+		if (!matcher.find())
+			throw new RuntimeException("Couldn't read sed line 1");
+
+		final SedArgs args = processArgs(matcher.group(3));
+		final Matcher fromTo = getFromTo(matcher);
+
+		if (!fromTo.matches())
+			throw new RuntimeException("Couldn't read sed line 2");
+	
+		final Matcher lm = makeLineMatcher(args.case_ins, fromTo.group(1), stdin);
+		if (!lm.find())
+		{
+			System.out.println("no line matcher for " + fromTo.group(1));
+			return stdin;
+		}
+		return doReplace(fromTo.group(2), args.global, lm);
+	}
+	
 	public void filterReplace(final Message mes)
 	{
-		boolean warn = true; // show errors that occurred
-		boolean case_ins; // regex i: case insensitive
-		boolean global; // regex g: replace all
-		boolean treat_single; // regex s: treat input as single line
-		boolean prefer; // p: prefer my lines
+		if (!(mes instanceof ChannelMessage))
+			return;
 
+		final String command = mods.util.getParamArray(mes, 1)[0];
+		if (isCommand(command))
+			return;
+		
+		final String message = mes.getMessage();
+		
+		SedArgs args = null;
 		try
 		{
 			// Run the filter regex with the trigger.
-			Matcher matcher = Pattern.compile(irc.getTriggerRegex() + filterReplaceRegex).matcher(
-					mes.getMessage());
+			Matcher matcher = Pattern.compile(irc.getTriggerRegex() + filterReplaceRegex).matcher(message);
 			if (!matcher.find())
 				return;
 
-			final String command = mods.util.getParamArray(mes, 1)[0];
-			if (isCommand(command))
-				return;
+			args = processArgs(matcher.group(3));
+			matcher = getFromTo(matcher);
 
-			// Get the separator, the main body and process the arguments.
-			final String sep = matcher.group(1);
-			final String body = matcher.group(2);
-			{
-				final String args = matcher.group(3);
-				// on by default
-				case_ins = args.indexOf('I') == -1;
-				warn = args.indexOf('W') == -1;
-				prefer = args.indexOf('P') == -1;
-
-				// off by default
-				global = args.indexOf('g') != -1;
-				treat_single = args.indexOf('s') != -1;
-			}
-
-			// This 'pattern' is the body of the regex, including support for
-			// escaped seperators.
-			final String unescapedseps = "(?:\\\\.|[^" + inSquaresEscape(sep) + "\\\\])";
-			final String pattern = "(" + unescapedseps + "+)" + Pattern.quote(sep) + "("
-					+ unescapedseps + "*)" + Pattern.quote(sep);
-
-			// Pull out the "from" and the "to".
-			matcher = Pattern.compile(pattern).matcher(body);
 			if (!matcher.matches())
-				return;
-
-			if (!(mes instanceof ChannelMessage))
 				return;
 
 			final String original = matcher.group(1);
@@ -88,31 +99,30 @@ public class MiscUtils
 			final List<Message> history = mods.history.getLastMessages(mes, 10);
 			final Pattern trigger = Pattern.compile(irc.getTriggerRegex());
 
-			if (treat_single)
+			if (args.treat_single)
 			{
 				StringBuilder sb = new StringBuilder();
 				for (int i = history.size() - 1; i >= 0; --i)
 					sb.append(stringize(history.get(i))).append("\n");
 				final String thisLine = sb.toString();
-				final Matcher matt = makeLineMatcher(case_ins, original, thisLine);
+				final Matcher matt = makeLineMatcher(args.case_ins, original, thisLine);
 				if (matt.find())
-					processReplacement(mes, original, replacement, ", in sed, in twenty mintues,",
-							case_ins, global, matt, null);
-				else if (warn)
+					processReplacement(mes, replacement, ", in sed, in twenty mintues,", args.global,
+							matt, null);
+				else if (args.warn)
 					irc.sendContextReply(mes, "Didn't match.");
 				return;
 			}
 
-			if (prefer)
+			if (args.prefer)
 				for (int i = 0; i < history.size(); ++i)
 				{
 					final Message thisLine = history.get(i);
-					final Matcher matt = makeLineMatcher(case_ins, original, thisLine.getMessage());
+					final Matcher matt = makeLineMatcher(args.case_ins, original, thisLine.getMessage());
 					if (thisLine.getNick().equals(mes.getNick())
-							&& qualifies(mes, trigger, original, thisLine, matt))
+							&& qualifies(mes, trigger, thisLine, matt))
 					{
-						processReplacement(mes, original, replacement, "", case_ins, global, matt,
-								isActionOrNull(thisLine));
+						processReplacement(mes, replacement, "", args.global, matt, isActionOrNull(thisLine));
 						return;
 					}
 				}
@@ -120,23 +130,54 @@ public class MiscUtils
 			for (int i = 0; i < history.size(); ++i)
 			{
 				final Message thisLine = history.get(i);
-				final Matcher matt = makeLineMatcher(case_ins, original, thisLine.getMessage());
-				if (qualifies(mes, trigger, original, thisLine, matt))
+				final Matcher matt = makeLineMatcher(args.case_ins, original, thisLine.getMessage());
+				if (qualifies(mes, trigger, thisLine, matt))
 				{
-					processReplacement(mes, original, replacement, " thinks " + thisLine.getNick(),
-							case_ins, global, matt, isActionOrNull(thisLine));
+					processReplacement(mes, replacement, " thinks " + thisLine.getNick(), args.global,
+							matt, isActionOrNull(thisLine));
 					return;
 				}
 			}
-			if (warn)
+			if (args.warn)
 				irc.sendContextReply(mes, "Nothing matched.");
 		}
 		catch (final Exception e)
 		{
-			if (warn)
+			if (args.warn)
 				irc.sendContextReply(mes, e.toString());
 			e.printStackTrace();
 		}
+	}
+
+	private Matcher getFromTo(Matcher matcher) {
+		// Get the separator, the main body and process the arguments.
+		final String sep = matcher.group(1);
+		final String body = matcher.group(2);
+		
+
+		// This 'pattern' is the body of the regex, including support for
+		// escaped seperators.
+		final String unescapedseps = "(?:\\\\.|[^" + inSquaresEscape(sep) + "\\\\])";
+		final String pattern = "(" + unescapedseps + "+)" + Pattern.quote(sep) + "("
+				+ unescapedseps + "*)" + Pattern.quote(sep);
+
+		// Pull out the "from" and the "to".
+		matcher = Pattern.compile(pattern).matcher(body);
+		return matcher;
+	}
+
+	private SedArgs processArgs(final String args) {
+		SedArgs sargs;
+		sargs = new SedArgs();
+		// on by default
+		sargs.case_ins = args.indexOf('I') == -1;
+		sargs.warn = args.indexOf('W') == -1;
+		sargs.prefer = args.indexOf('P') == -1;
+
+		// off by default
+		sargs.global = args.indexOf('g') != -1;
+		sargs.treat_single = args.indexOf('s') != -1;
+		return sargs;
 	}
 
 	/** Check if the string is potentially a valid command */
@@ -176,16 +217,10 @@ public class MiscUtils
 		return Pattern.compile(original, case_ins ? Pattern.CASE_INSENSITIVE : 0).matcher(str);
 	}
 
-	private void processReplacement(final Message mes, final String original,
-			final String replacement, String additional, boolean case_ins, boolean global,
-			Matcher matt, String action_style)
+	private void processReplacement(final Message mes, final String replacement,
+			String additional, boolean global, Matcher matt, String action_style)
 	{
-		String newLine;
-
-		if (global)
-			newLine = matt.replaceAll(replacement);
-		else
-			newLine = matt.replaceFirst(replacement);
+		String newLine = doReplace(replacement, global, matt);
 
 		if (newLine.length() > MAXLENGTH)
 			newLine = newLine.substring(0, MAXLENGTH);
@@ -195,8 +230,17 @@ public class MiscUtils
 				+ newLine.replaceAll("\n", "; "));
 	}
 
-	private boolean qualifies(final Message mes, final Pattern trigger, final String original,
-			final Message thisLine, Matcher matt)
+	private String doReplace(final String replacement, boolean global, Matcher matt) {
+		String newLine;
+		if (global)
+			newLine = matt.replaceAll(replacement);
+		else
+			newLine = matt.replaceFirst(replacement);
+		return newLine;
+	}
+
+	private boolean qualifies(final Message mes, final Pattern trigger, final Message thisLine,
+			Matcher matt)
 	{
 		final String message = thisLine.getMessage();
 		return thisLine.getContext().equals(mes.getContext()) && matt.find()
