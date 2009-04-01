@@ -183,6 +183,8 @@ public class MiscUtils
 	/** Check if the string is potentially a valid command */
 	private boolean isCommand(final String command)
 	{
+		if (command.length() <= 4) // !a.b
+			return false;
 		boolean seen_dot = false;
 		for (int i = 1; i < command.codePointCount(1, command.length()); ++i)
 			if (command.codePointAt(i) == DOT_CODE_POINT)
