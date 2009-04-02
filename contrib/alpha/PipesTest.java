@@ -46,7 +46,9 @@ class Pipes
 							cmd = rr[0];
 							arg = (rr.length > 1 ? rr[1] : "") + stdin;
 						}
-						return mods.plugin.callSimpleCommand(cmd, arg);
+						String[] cmds = cmd.split("\\.", 2);
+
+						return (String) mods.plugin.callGeneric(cmds[0], "command", cmds[1], arg);
 					}
 				}
 			)

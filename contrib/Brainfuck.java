@@ -5,7 +5,6 @@ import java.util.Stack;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Brainfuck interpreter.
@@ -37,29 +36,20 @@ public class Brainfuck
 	private static int MAX_INSTRUCTIONS = 9000;
 	private static int MAX_OUTPUT = 70;
 
-	private final IRCInterface irc;
-	private final Modules mods;
-
-	public Brainfuck(final Modules mods, final IRCInterface irc)
-	{
-		this.mods = mods;
-		this.irc = irc;
-	}
-
 	public String[] helpCommandCalc = {
 		"Evaluates a Brainfuck program.",
 		"<expr>",
 		"<expr> is a Brainfuck program"
 	};
 
-	public void commandEval( final Message mes )
+	public String commandEval( final String mes )
 	{
 		String reply;
 
 		try
 		{
 			final String[] tokens = {"<", ">", "+", "-", ".", "[", "]"};
-			reply = eval(mods.util.getParamString(mes), tokens);
+			reply = eval(mes, tokens);
 
 			if (reply.length() == 0)
 			{
@@ -79,7 +69,7 @@ public class Brainfuck
 			reply = "Parse error at position " + e.getOffset() + ": " + e.getMessage();
 		}
 
-		irc.sendContextReply(mes, reply);
+		return reply;
 	}
 
 	public String eval(final String expr, final String[] tokens) throws BrainfuckException
