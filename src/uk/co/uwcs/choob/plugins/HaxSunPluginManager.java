@@ -558,12 +558,6 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		return allPlugins.getAllSimpleCommands();
 	}
 
-
-	public String callSimpleCommand(String cmd, String arg) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException
-	{
-		return allPlugins.callSimpleCommand(cmd, arg);
-	}
-
 	// Helper methods for the class below.
 	static boolean checkCommandSignature(final Method meth)
 	{
@@ -805,12 +799,22 @@ final class ChoobPluginMap
 			final String name = meth.getName();
 			if (name.startsWith("command"))
 			{
-				final String commandName = lname + "." + name.substring(7).toLowerCase();
+				final String actualName = name.substring(7).toLowerCase();
+				final String commandName = lname + "." + actualName;
 				// Command
 				if (HaxSunPluginManager.checkCommandSignature(meth))
 				{
 					coms.add(commandName);
 					commands.put(commandName, meth);
+
+					if (HaxSunPluginManager.isSimpleCommand(meth))
+					{
+						final String fullName = lname + ".command:" + actualName;
+						gens.add(fullName);
+						if (genCalls.get(fullName) == null)
+							genCalls.put(fullName, new LinkedList<Member>());
+						genCalls.get(fullName).add(meth);
+					}
 				}
 				else
 				{
@@ -1061,13 +1065,5 @@ final class ChoobPluginMap
 			if (HaxSunPluginManager.isSimpleCommand(cmdref.getValue()))
 				ret.add(cmdref.getKey());
 		return ret;
-	}
-
-	String callSimpleCommand(String command, String arg) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException
-	{
-		Method m = commands.get(command.trim());
-		if (null == m)
-			throw new IllegalArgumentException("No such command " + command);
-		return (String) m.invoke(getPluginObj(m), arg);
 	}
 }

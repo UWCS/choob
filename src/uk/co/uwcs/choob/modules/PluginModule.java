@@ -267,7 +267,7 @@ public final class PluginModule
 			});
 		}
 	}
-
+	
 	/**
 	 * Cause a command of plugin pluginName to be queued for execution.
 	 * @param pluginName The name of the plugin to call.
@@ -374,11 +374,6 @@ public final class PluginModule
 	public List<String> getSimpleCommands()
 	{
 		return ((HaxSunPluginManager)hsPlugMan).getSimpleCommands();
-	}
-
-	public String callSimpleCommand(String cmd, String arg) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException
-	{
-		return ((HaxSunPluginManager)hsPlugMan).callSimpleCommand(cmd, arg);
 	}
 
 	/**
