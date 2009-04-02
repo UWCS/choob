@@ -4,6 +4,7 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 
 import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
@@ -46,7 +47,27 @@ class Pipes
 							cmd = rr[0];
 							arg = (rr.length > 1 ? rr[1] : "") + stdin;
 						}
-						String[] cmds = cmd.split("\\.", 2);
+
+						try
+						{
+							Object res = mods.plugin.callAPI("alias", "get", cmd);
+							if (null != res)
+								cmd = (String)res;
+						} 
+						catch (ChoobNoSuchCallException e)
+						{
+							// Whatever, no alias support.
+						}
+
+						String[] alis = cmd.split(" ", 2);
+						String[] cmds = alis[0].split("\\.", 2);
+
+						if (cmds.length != 2)
+							throw new IllegalArgumentException("Tried to exec '" + alis[0]
+                                    	+ "', which doesn't even have a dot in it!");
+						
+						if (alis.length > 1 && alis[1].length() > 0)
+							arg = alis[1] + arg;
 
 						return (String) mods.plugin.callGeneric(cmds[0], "command", cmds[1], arg);
 					}
