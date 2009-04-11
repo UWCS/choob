@@ -10,6 +10,7 @@ import java.util.List;
 
 import uk.co.uwcs.choob.Choob;
 import uk.co.uwcs.choob.support.ChoobException;
+import uk.co.uwcs.choob.support.ChoobInternalError;
 import uk.co.uwcs.choob.support.DbConnectionBroker;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.Interval;
@@ -97,7 +98,7 @@ public final class Modules
 		}
 		catch (final ChoobException e)
 		{
-			throw new RuntimeException("Unable to construct all required modules", e);
+			throw new ChoobInternalError("Unable to construct all required modules", e);
 		}
 	}
 }

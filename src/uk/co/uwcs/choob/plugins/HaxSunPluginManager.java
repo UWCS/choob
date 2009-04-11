@@ -90,7 +90,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		try {
 			fileManager.setLocation(StandardLocation.CLASS_OUTPUT, outputLocationList);
 		} catch (final IOException e) {
-			throw (ChoobException) e.getCause();
+			throw new ChoobException(e);
 		}
 		final Iterable<? extends JavaFileObject> compilationUnit = fileManager
 			.getJavaFileObjectsFromStrings(Arrays.asList(fileNames));
@@ -105,13 +105,13 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 						}
 					});
 		} catch (final PrivilegedActionException e) {
-			throw (ChoobException) e.getCause();
+			throw new ChoobException(e);
 		}
 
 		try {
 			fileManager.close();
 		} catch (final IOException e) {
-			throw (ChoobException) e.getCause();
+			throw new ChoobException(e);
 		}
 
 		final String baosts = baos.toString();
