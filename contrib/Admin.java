@@ -56,7 +56,10 @@ public class Admin
 	public void commandRaw( final Message mes )
 	{
 		if ( mods.security.hasNickPerm( new ChoobPermission("admin.raw"), mes ) )
+		{
 			irc.sendRawLine(mods.util.getParamString(mes));
+			irc.sendContextReply(mes, "Done.");
+		}
 		else
 			irc.sendContextReply(mes, "Don't do that.");
 	}
