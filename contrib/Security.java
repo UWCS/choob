@@ -229,18 +229,18 @@ public class Security
 				return;
 			}
 		}
-		else if (params.size() > 3)
-		{
-			irc.sendContextReply( mes, "Syntax: Security.Link <ROOT> [<LEAF>] - to link <LEAF> (or your current nick) to <ROOT>." );
-			return;
-		}
-		else
+		else if (params.size() == 3)
 		{
 			// Must check permission!
 			rootName = params.get(1);
 			leafName = mods.security.getUserAuthName(params.get(2));
 			// Sure, this will be checked for us. But what about the user who called us?
 			mods.security.checkNickPerm( new ChoobPermission("user.link") , mes);
+		}
+		else
+		{
+			irc.sendContextReply( mes, "Syntax: Security.Link <ROOT> [<LEAF>] - to link <LEAF> (or your current nick) to <ROOT>." );
+			return;
 		}
 
 		// Can add the user...
