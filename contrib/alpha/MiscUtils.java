@@ -374,53 +374,67 @@ public class MiscUtils
 			{
 				final List<Integer> firstExpr = processExp(ma.group(1));
 				final String second = ma.group(2);
+				final String message = m.getMessage();
 
-				if (second != null && !second.isEmpty())
-				{
-					final List<Integer> secondExpr = processExp(ma.group(2));
-					if (secondExpr.size() != firstExpr.size())
-					{
-						irc.sendContextReply(mes, "Expecting sets of equal size.  "
-								+ firstExpr.size() + " and " + secondExpr.size() + " recieved.");
-						return;
-					}
-
-					Map<Integer, Integer> trans = new HashMap<Integer, Integer>();
-					for (int i = 0; i < firstExpr.size(); ++i)
-					{
-						Integer first = firstExpr.get(i);
-						if (trans.put(first, secondExpr.get(i)) != null)
-						{
-							irc.sendContextReply(mes,
-									"First set illegally contains two (or more) references to '"
-											+ toString(first.intValue()) + "'.");
-							return;
-						}
-					}
-					final StringBuilder sb = new StringBuilder();
-					final String message = m.getMessage();
-
-					for (int i = 0; i < message.length(); ++i)
-					{
-						final int cp = message.codePointAt(i);
-						final Integer transed = trans.get(Integer.valueOf(cp));
-						if (transed != null)
-							sb.append(toString(transed.intValue()));
-						else
-							sb.append(toString(cp));
-					}
-					irc.sendContextReply(mes, sb.toString());
-					return;
-				}
-
-				String working = m.getMessage();
-				for (Integer i : firstExpr)
-					working = working.replaceAll(Pattern.quote(toString(i.intValue())), "");
-
-				irc.sendContextReply(mes, working);
+				irc.sendContextReply(mes, doTrans(firstExpr, second, message));
 				return;
 			}
 		irc.sendContextReply(mes, "Didn't match any messages with: /" + regexp + "/");
+	}
+
+	final private static Pattern api_trans_args = Pattern
+			.compile("((?:\\\\.|[^\\s\\\\])+)(?:\\s+((?:\\\\.|[^\\s\\\\])+))?");
+	
+	public String apiTrans(final String args, final String input)
+	{
+		Matcher ma = api_trans_args.matcher(args);
+		if (!ma.matches())
+			return "Couldn't undertand arguments, expected: expr [expr]";
+		
+		return doTrans(processExp(ma.group(1)), ma.group(2), input);
+	}
+	
+	private String doTrans(final List<Integer> firstExpr,
+			final String second, final String message) {
+
+		if (second != null && !second.isEmpty())
+		{
+			final List<Integer> secondExpr = processExp(second);
+			if (secondExpr.size() != firstExpr.size())
+			{
+				return "Expecting sets of equal size.  "
+						+ firstExpr.size() + " and " + secondExpr.size() + " recieved.";
+			}
+
+			Map<Integer, Integer> trans = new HashMap<Integer, Integer>();
+			for (int i = 0; i < firstExpr.size(); ++i)
+			{
+				Integer first = firstExpr.get(i);
+				if (trans.put(first, secondExpr.get(i)) != null)
+				{
+					return "First set illegally contains two (or more) references to '"
+									+ toString(first.intValue()) + "'.";
+				}
+			}
+			final StringBuilder sb = new StringBuilder();
+
+			for (int i = 0; i < message.length(); ++i)
+			{
+				final int cp = message.codePointAt(i);
+				final Integer transed = trans.get(Integer.valueOf(cp));
+				if (transed != null)
+					sb.append(toString(transed.intValue()));
+				else
+					sb.append(toString(cp));
+			}
+			return sb.toString();
+		}
+
+		String working = message;
+		for (Integer i : firstExpr)
+			working = working.replaceAll(Pattern.quote(toString(i.intValue())), "");
+
+		return working;
 	}
 
 	private String toString(int first)

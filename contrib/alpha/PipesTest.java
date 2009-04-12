@@ -41,6 +41,9 @@ class Pipes
 						if ("sed".equals(cmd))
 							return (String)mods.plugin.callAPI("MiscUtils", "Sed", arg, stdin);
 
+						if ("tr".equals(cmd))
+							return (String)mods.plugin.callAPI("MiscUtils", "Trans", arg, stdin);							
+
 						if ("xargs".equals(cmd))
 						{
 							final String[] rr = arg.split(" ", 2);
