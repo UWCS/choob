@@ -952,6 +952,7 @@ public class Alias
 							end++;
 						}
 
+						boolean fiddledLastParam = false;
 						// Sort out undefined length ranges
 						if (firstParam == -2)
 						{
@@ -964,6 +965,7 @@ public class Alias
 						else if (lastParam == -1)
 						{
 							lastParam = params.length - 1;
+							fiddledLastParam = true;
 						}
 
 						// Process output now.
@@ -974,15 +976,19 @@ public class Alias
 						}
 						else
 						{
-							final int direction = lastParam > firstParam ? 1 : -1;
-							lastParam += direction; // For simpler termination of loop.
-							for(int i = firstParam; i != lastParam; i += direction)
+							if (!(params.length == 1 && lastParam == 0 && fiddledLastParam))
 							{
-								if (i < params.length)
+
+								final int direction = lastParam > firstParam ? 1 : -1;
+								lastParam += direction; // For simpler termination of loop.
+								for(int i = firstParam; i != lastParam; i += direction)
 								{
-									newCom.append(params[i]);
-									if (i != lastParam - direction)
-										newCom.append(" ");
+									if (i < params.length)
+									{
+										newCom.append(params[i]);
+										if (i != lastParam - direction)
+											newCom.append(" ");
+									}
 								}
 							}
 							pos = end + 1;
