@@ -57,6 +57,9 @@ class Pipes
 							throw new IllegalArgumentException("Couldn't pick anything with " + arg);
 						}
 
+						if ("nick".equals(cmd))
+							return mes.getNick();
+
 						if ("xargs".equals(cmd))
 						{
 							final String[] rr = arg.split(" ", 2);
