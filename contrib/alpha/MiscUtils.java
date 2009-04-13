@@ -15,6 +15,7 @@ import uk.co.uwcs.choob.support.events.PrivateAction;
 public class MiscUtils
 {
 
+
 	private static final int DOT_CODE_POINT = ".".codePointAt(0);
 	Modules mods;
 	private final IRCInterface irc;
@@ -28,7 +29,7 @@ public class MiscUtils
 		boolean prefer; // p: prefer my lines
 	}
 
-	
+
 	public MiscUtils(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
@@ -41,10 +42,20 @@ public class MiscUtils
 				"$Rev$$Date$" };
 	}
 
-	public final String filterReplaceRegex = "s(.)(.*\\1.*\\1)((?i)[wpigs]{0,5})(?:(?:\\s+)|$)";
+	private static final String REGEX_ARGS = "((?i)[wpigs]{0,5})";
+	private static final Pattern LINE_PICK_REGEX = Pattern.compile("(.)(.*)\\1" + REGEX_ARGS);
+	public final String filterReplaceRegex = "s(.)(.*\\1.*\\1)" + REGEX_ARGS + "(?:(?:\\s+)|$)";
 	private final int MAXLENGTH = 300;
 
-	
+	// I'm sorry.
+	public Pattern apiLinePicker(String regex)
+	{
+		Matcher matcher = LINE_PICK_REGEX.matcher(regex);
+		if (!matcher.find())
+			throw new IllegalArgumentException("Can't process " + regex + " as regex 1");
+		return Pattern.compile(matcher.group(2), processArgs(matcher.group(3)).case_ins ? Pattern.CASE_INSENSITIVE : 0);
+	}
+
 	private final Pattern compiledFilterReplaceRegex = Pattern.compile(filterReplaceRegex);
 	public String apiSed(final String params, final String stdin)
 	{
@@ -58,7 +69,7 @@ public class MiscUtils
 
 		if (!fromTo.matches())
 			throw new RuntimeException("Couldn't read sed line 2");
-	
+
 		final Matcher lm = makeLineMatcher(args.case_ins, fromTo.group(1), stdin);
 		if (!lm.find())
 		{
@@ -67,7 +78,7 @@ public class MiscUtils
 		}
 		return doReplace(fromTo.group(2), args.global, lm);
 	}
-	
+
 	public void filterReplace(final Message mes)
 	{
 		if (!(mes instanceof ChannelMessage))
@@ -76,9 +87,9 @@ public class MiscUtils
 		final String command = mods.util.getParamArray(mes, 1)[0];
 		if (isCommand(command))
 			return;
-		
+
 		final String message = mes.getMessage();
-		
+
 		SedArgs args = null;
 		try
 		{
@@ -153,7 +164,7 @@ public class MiscUtils
 		// Get the separator, the main body and process the arguments.
 		final String sep = matcher.group(1);
 		final String body = matcher.group(2);
-		
+
 
 		// This 'pattern' is the body of the regex, including support for
 		// escaped seperators.
@@ -162,8 +173,24 @@ public class MiscUtils
 				+ unescapedseps + "*)" + Pattern.quote(sep);
 
 		// Pull out the "from" and the "to".
-		matcher = Pattern.compile(pattern).matcher(body);
-		return matcher;
+		return Pattern.compile(pattern).matcher(body);
+	}
+
+	/** {@link #getFromTo(Matcher)} but with /a/ instead of /a/b/ */
+	private Matcher getFromOnly(Matcher matcher) {
+		// Get the separator, the main body and process the arguments.
+		final String sep = matcher.group(1);
+		final String body = matcher.group(2);
+
+
+		// This 'pattern' is the body of the regex, including support for
+		// escaped seperators.
+		final String unescapedseps = "(?:\\\\.|[^" + inSquaresEscape(sep) + "\\\\])";
+		final String pattern = "(" + unescapedseps + "+)" + Pattern.quote(sep);
+
+		System.out.println(pattern + " // " + body);
+		// Pull out the "from" and the "to".
+		return Pattern.compile(pattern).matcher(body);
 	}
 
 	private SedArgs processArgs(final String args) {
@@ -384,16 +411,16 @@ public class MiscUtils
 
 	final private static Pattern api_trans_args = Pattern
 			.compile("((?:\\\\.|[^\\s\\\\])+)(?:\\s+((?:\\\\.|[^\\s\\\\])+))?");
-	
+
 	public String apiTrans(final String args, final String input)
 	{
 		Matcher ma = api_trans_args.matcher(args);
 		if (!ma.matches())
 			return "Couldn't undertand arguments, expected: expr [expr]";
-		
+
 		return doTrans(processExp(ma.group(1)), ma.group(2), input);
 	}
-	
+
 	private String doTrans(final List<Integer> firstExpr,
 			final String second, final String message) {
 

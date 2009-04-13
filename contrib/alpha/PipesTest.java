@@ -1,6 +1,9 @@
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
 import org.junit.Test;
 
 import uk.co.uwcs.choob.modules.Modules;
@@ -24,9 +27,9 @@ class Pipes
 		final int ind = s.indexOf(' ');
 		if (ind == -1)
 			return s;
-		return s.substring(0, ind); 
+		return s.substring(0, ind);
 	}
-	
+
 	public void commandEval(final Message mes) throws Exception
 	{
 		irc.sendContextReply(mes, eval(mods.util.getParamString(mes), new Execulator()
@@ -42,7 +45,17 @@ class Pipes
 							return (String)mods.plugin.callAPI("MiscUtils", "Sed", arg, stdin);
 
 						if ("tr".equals(cmd))
-							return (String)mods.plugin.callAPI("MiscUtils", "Trans", arg, stdin);							
+							return (String)mods.plugin.callAPI("MiscUtils", "Trans", arg, stdin);
+
+						if ("pick".equals(cmd))
+						{
+							final List<Message> history = mods.history.getLastMessages(mes, 20);
+							final Pattern picker = (Pattern)mods.plugin.callAPI("MiscUtils", "LinePicker", arg);
+							for (Message m : history)
+								if (picker.matcher(m.getMessage()).find())
+									return m.getMessage();
+							throw new IllegalArgumentException("Couldn't pick anything with " + arg);
+						}
 
 						if ("xargs".equals(cmd))
 						{
@@ -56,7 +69,7 @@ class Pipes
 							Object res = mods.plugin.callAPI("alias", "get", cmd);
 							if (null != res)
 								cmd = (String)res;
-						} 
+						}
 						catch (ChoobNoSuchCallException e)
 						{
 							// Whatever, no alias support.
@@ -68,7 +81,7 @@ class Pipes
 						if (cmds.length != 2)
 							throw new IllegalArgumentException("Tried to exec '" + alis[0]
                                     	+ "', which doesn't even have a dot in it!");
-						
+
 						if (alis.length > 1 && alis[1].length() > 0)
 							arg = alis[1] + arg;
 
@@ -81,7 +94,7 @@ class Pipes
 
 	static class ParseException extends Exception
 	{
-		private StringIterator pos;
+		private final StringIterator pos;
 
 		/**
 		 * @param pos Location the error occoured.
@@ -91,7 +104,7 @@ class Pipes
 			super(string);
 			this.pos = pos;
 		}
-		
+
 		@Override
 		public String toString() {
 			return super.toString() + " before " + pos + "$$";
@@ -108,39 +121,39 @@ class Pipes
 		{
 			c = s.toCharArray();
 		}
-		
+
 		char get() throws ParseException
 		{
 			if (i < c.length)
 				return c[i++];
 			throw new ParseException("Unexpected end", this);
 		}
-		
+
 		char peek() throws ParseException
 		{
 			if (i < c.length)
 				return c[i];
 			throw new ParseException("Peek past end", this);
 		}
-		
+
 		boolean hasMore()
 		{
 			return i < c.length;
 		}
-		
+
 		@Override
 		public String toString()
 		{
 			return new String(c, i, c.length - i);
 		}
-		
+
 		public int length()
 		{
 			return c.length - i;
 		}
 	}
 
-	/** @param si Positioned just after the ( in a valid $(; will terminate just after the ). 
+	/** @param si Positioned just after the ( in a valid $(; will terminate just after the ).
 	 * @throws Exception iff comes from Execulator.  */
 	private static String eval(final StringIterator si, Execulator e) throws Exception
 	{
@@ -205,7 +218,7 @@ class Pipes
 		}
 		throw new ParseException("Expected )", si);
 	}
-	
+
 	static String eval(String s, Execulator e) throws Exception
 	{
 		final StringIterator si = new StringIterator(s + ")");
@@ -215,22 +228,22 @@ class Pipes
 			throw new ParseException("Trailing characters", si);
 		return res;
 	}
-	
+
 	static String eval(String s) throws Exception
 	{
 		return eval(s, SysoExeculator);
 	}
-	
+
 	static interface Execulator
 	{
 		String exec(String s, String stdin) throws Exception;
 	}
-	
+
 	private final static Execulator SysoExeculator = new Execulator()
 	{
 
 		@Override
-		public String exec(String s, String stdin) 
+		public String exec(String s, String stdin)
 		{
 			System.out.println(s + " with stdin of: " + stdin);
 			return s;
@@ -247,7 +260,7 @@ public class PipesTest
 		{
 				@Override
 				public String exec(String s, String stdin) {
-					return "NOOOM" + s + stdin + "MOOON"; 
+					return "NOOOM" + s + stdin + "MOOON";
 				}
 		}));
 	}
@@ -260,7 +273,7 @@ public class PipesTest
 		assertEquals("67", Pipes.eval("$(6)7"));
 		assertEquals("567", Pipes.eval("5$(6)7"));
 	}
-	
+
 	@Test(expected = Pipes.ParseException.class)
 	public void testStart() throws Exception
 	{
@@ -273,7 +286,7 @@ public class PipesTest
 	{
 		Pipes.eval(")");
 	}
-	
+
 	private static final String DQUOTED = "\"pony\"";
 
 	@Test
