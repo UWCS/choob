@@ -77,16 +77,22 @@ public final class UtilModule
 		return getParamArray(text);
 	}
 
-	public String[] getParamArray(final String str)
+	private String[] getParamArray(final String str)
 	{
 		final int offset = getTriggerOffset(str);
 
 		return str.substring(offset).split("\\s+");
 	}
 
+	/** 1-indexed list of params, like {@link #getParams(Message)}.
+	 * argv[0] is "", not command name */
 	public List<String> getParams( final String str )
 	{
-		return Arrays.asList(getParamArray(str));
+		String[] params = getParamArray(str);
+		List<String> ret = new ArrayList<String>(params.length + 1);
+		ret.add("");
+		ret.addAll(Arrays.asList(params));
+		return ret;
 	}
 
 	public List<String> getParams( final Message mes )
