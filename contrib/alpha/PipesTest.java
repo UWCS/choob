@@ -32,67 +32,70 @@ class Pipes
 
 	public void commandEval(final Message mes) throws Exception
 	{
-		irc.sendContextReply(mes, eval(mods.util.getParamString(mes), new Execulator()
+		String eval = eval(mods.util.getParamString(mes), new Execulator()
+		{
+			@Override
+			public String exec(String s, String stdin) throws Exception
+			{
+				final String[] qq = s.trim().split(" ", 2);
+				String cmd = qq[0].trim();
+				String arg = qq.length > 1 ? qq[1] : "";
+
+				if ("sed".equals(cmd))
+					return (String)mods.plugin.callAPI("MiscUtils", "Sed", arg, stdin);
+
+				if ("tr".equals(cmd))
+					return (String)mods.plugin.callAPI("MiscUtils", "Trans", arg, stdin);
+
+				if ("pick".equals(cmd))
 				{
-					@Override
-					public String exec(String s, String stdin) throws Exception
-					{
-						final String[] qq = s.trim().split(" ", 2);
-						String cmd = qq[0].trim();
-						String arg = qq.length > 1 ? qq[1] : "";
-
-						if ("sed".equals(cmd))
-							return (String)mods.plugin.callAPI("MiscUtils", "Sed", arg, stdin);
-
-						if ("tr".equals(cmd))
-							return (String)mods.plugin.callAPI("MiscUtils", "Trans", arg, stdin);
-
-						if ("pick".equals(cmd))
-						{
-							final List<Message> history = mods.history.getLastMessages(mes, 20);
-							final Pattern picker = (Pattern)mods.plugin.callAPI("MiscUtils", "LinePicker", arg);
-							for (Message m : history)
-								if (picker.matcher(m.getMessage()).find())
-									return m.getMessage();
-							throw new IllegalArgumentException("Couldn't pick anything with " + arg);
-						}
-
-						if ("nick".equals(cmd))
-							return mes.getNick();
-
-						if ("xargs".equals(cmd))
-						{
-							final String[] rr = arg.split(" ", 2);
-							cmd = rr[0];
-							arg = (rr.length > 1 ? rr[1] : "") + stdin;
-						}
-
-						try
-						{
-							Object res = mods.plugin.callAPI("alias", "get", cmd);
-							if (null != res)
-								cmd = (String)res;
-						}
-						catch (ChoobNoSuchCallException e)
-						{
-							// Whatever, no alias support.
-						}
-
-						String[] alis = cmd.split(" ", 2);
-						String[] cmds = alis[0].split("\\.", 2);
-
-						if (cmds.length != 2)
-							throw new IllegalArgumentException("Tried to exec '" + alis[0]
-                                    	+ "', which doesn't even have a dot in it!");
-
-						if (alis.length > 1 && alis[1].length() > 0)
-							arg = alis[1] + arg;
-
-						return (String) mods.plugin.callGeneric(cmds[0], "command", cmds[1], arg);
-					}
+					final List<Message> history = mods.history.getLastMessages(mes, 20);
+					final Pattern picker = (Pattern)mods.plugin.callAPI("MiscUtils", "LinePicker", arg);
+					for (Message m : history)
+						if (picker.matcher(m.getMessage()).find())
+							return m.getMessage();
+					throw new IllegalArgumentException("Couldn't pick anything with " + arg);
 				}
-			)
-		);
+
+				if ("nick".equals(cmd))
+					return mes.getNick();
+
+				if ("xargs".equals(cmd))
+				{
+					final String[] rr = arg.split(" ", 2);
+					cmd = rr[0];
+					arg = (rr.length > 1 ? rr[1] : "") + stdin;
+				}
+
+				try
+				{
+					Object res = mods.plugin.callAPI("alias", "get", cmd);
+					if (null != res)
+						cmd = (String)res;
+				}
+				catch (ChoobNoSuchCallException e)
+				{
+					// Whatever, no alias support.
+				}
+
+				String[] alis = cmd.split(" ", 2);
+				String[] cmds = alis[0].split("\\.", 2);
+
+				if (cmds.length != 2)
+					throw new IllegalArgumentException("Tried to exec '" + alis[0]
+                            	+ "', which doesn't even have a dot in it!");
+
+				if (alis.length > 1 && alis[1].length() > 0)
+					arg = alis[1] + arg;
+
+				return (String) mods.plugin.callGeneric(cmds[0], "command", cmds[1], arg);
+			}
+		});
+
+		List<String> messes = irc.cutString(eval, mes.getNick().length() + 2 + 19);
+		irc.sendContextReply(mes, messes.get(0) + (messes.size() > 1 ?
+			" (" + (messes.size() - 1) + " more message" + (messes.size() == 2 ? "" : "s") + ")" :
+			""));
 	}
 
 	static class ParseException extends Exception
