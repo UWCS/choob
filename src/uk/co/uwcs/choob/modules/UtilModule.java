@@ -91,7 +91,9 @@ public final class UtilModule
 		String[] params = getParamArray(str);
 		List<String> ret = new ArrayList<String>(params.length + 1);
 		ret.add("");
-		ret.addAll(Arrays.asList(params));
+		// Don't add params if it's just [""].
+		if (!(params.length == 1 && "".equals(params[0])))
+			ret.addAll(Arrays.asList(params));
 		return ret;
 	}
 
