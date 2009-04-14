@@ -469,6 +469,30 @@ public class MiscUtils
 		return new String(new int[] { first }, 0, 1);
 	}
 
+	final Pattern SEQARGS = Pattern.compile("(-?\\d+)( -?\\d+)?");
+	public String commandSeq(String arg)
+	{
+		Matcher ma = SEQARGS.matcher(arg);
+		if (!ma.matches())
+			throw new IllegalArgumentException("seq accepts one or two integer arguments");
+
+		int one = Integer.parseInt(ma.group(1)),
+			two = ma.group(2) != null ? Integer.parseInt(ma.group(2).trim()) : 0;
+
+		StringBuilder sb = new StringBuilder();
+
+		if (two == 0)
+		{
+			two = one;
+			one = 1;
+		}
+
+		while (one <= two && sb.length() < IRCInterface.MAX_MESSAGE_LENGTH - 30)
+			sb.append(one++).append(" ");
+
+		return sb.toString();
+	}
+
 	/**
 	 * Process a tr group to a list of code points. e.g. ab -> ['a','b'] a-c ->
 	 * ['a','b','c'] c-a -> ['c','b','a'] qc-a -> ['q','c','b','a']
