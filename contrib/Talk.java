@@ -1,10 +1,11 @@
+import java.util.List;
+
 import org.jibble.pircbot.Colors;
 
 import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
-import uk.co.uwcs.choob.support.ChoobPermission;
-import java.util.List;
 
 /**
  * Choob talky talky plugin
@@ -50,9 +51,9 @@ public class Talk
 		"<Text>",
 		"<Text> is the text to say"
 	};
-	public String commandSay( final String mes )
+	public void commandSay( final Message mes )
 	{
-		return mes;
+		irc.sendContextMessage(mes, mods.util.getParamString(mes));
 	}
 
 	public String[] helpCommandReply = {
@@ -60,9 +61,9 @@ public class Talk
 		"<Text>",
 		"<Text> is the text with which to reply"
 	};
-	public void commandReply( final Message mes )
+	public String commandReply( final String mes )
 	{
-		irc.sendContextReply(mes, mods.util.getParamString(mes));
+		return mes;
 	}
 
 	public String[] helpCommandMsg = {
@@ -111,7 +112,7 @@ public class Talk
 			irc.sendContextReply(mes,"Usage: <nick> <message>");
 			return;
 		}
-		
+
 		irc.sendAction(params.get(1),params.get(2));
 	}
 
@@ -131,7 +132,7 @@ public class Talk
 			irc.sendContextReply(mes,"Usage: <nick> <message>");
 			return;
 		}
-		
+
 		irc.sendMessage(params.get(1),params.get(2));
 	}
 
