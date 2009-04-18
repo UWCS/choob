@@ -22,7 +22,18 @@ public final class HaxSunPluginClassLoader extends ClassLoader
 		this.path = path;
 		this.domain = domain;
 //		super.definePackage("plugins", "", "", "", "", "", "", null);
-		definePackage("plugins." + pluginName, "", "", "", "", "", "", null);
+		try
+		{
+			definePackage("plugins." + pluginName, "", "", "", "", "", "", null);
+		}
+		catch (IllegalArgumentException e)
+		{
+			e.printStackTrace();
+			System.err.println();
+			System.err.println("Couldn't create plugins package.  " +
+					"This is probably because your debugger is interfering.  Your plugin probably hasn't been reloaded.");
+			System.err.println();
+		}
 	}
 
 	@Override
