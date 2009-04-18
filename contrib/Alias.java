@@ -153,7 +153,7 @@ public class Alias
 			for(int i=2; i<params.length; i++)
 				aliasParams[i-2] = params[i];
 
-			final String newText = applyAlias(subAlias, alias.converted, aliasParams, actualParams, mes);
+			final String newText = applyAlias(alias.converted, aliasParams, actualParams, mes);
 			if (newText == null)
 			{
 				irc.sendContextReply(mes, "Sorry, you tried to use a recursive alias to '" + subAlias + "' - but the alias text ('" + alias.converted + "') is invalid!");
@@ -197,6 +197,14 @@ public class Alias
 			mods.odb.save(new AliasObject(name, conv, nick));
 
 		irc.sendContextReply(mes, "Aliased '" + name + "' to '" + conv + "'" + oldAlias + ".");
+	}
+
+	public String commandShowAlias(String alias)
+	{
+		AliasObject o = getAlias(alias);
+		if (null == o)
+			throw new IllegalArgumentException("No alias found for: " + alias);
+		return o.converted;
 	}
 
 	public String[] helpCommandSetCoreAlias = {
@@ -674,7 +682,7 @@ public class Alias
 		final List<String> paramList = mods.util.getParams(mes);
 		params = paramList.toArray(params);
 
-		String newText = applyAlias(aliasName, aliasText, params, cmdParams, mes);
+		String newText = applyAlias(aliasText, params, cmdParams, mes);
 
 		if (newText == null)
 		{
@@ -719,13 +727,22 @@ public class Alias
 		}
 	}
 
-	private String applyAlias(final String name, final String alias, final String[] params, final String origParams, final Message mes)
+	private static String applyAlias(final String alias, final String[] params, final String origParams, final Message mes)
 	{
-		// Make sure command name is valid...
-		final Pattern validconv=Pattern.compile("^[a-zA-Z0-9]+\\.[a-zA-Z0-9]+.*");
-		if (!validconv.matcher(alias).matches())
-			return null;
+		return apiApplyAlias(alias, params, origParams, mes.getNick(), mes.getContext());
+	}
 
+	/** Do argument processing for an Alias.
+	 *
+	 * @param alias The "converted" value for the alias (i.e. what's in the db / what showalias shows)
+	 * @param params The array of parameters.
+	 * @param origParams The parameters as a string (e.g. probably the same as the contents of the array)
+	 * @param nick The nick of the caller (used for $[nick]).
+	 * @param context The context of the caller (used for $[chan]).
+	 * @return
+	 */
+	public static String apiApplyAlias(final String alias, final String[] params, final String origParams, final String nick, final String context)
+	{
 		if (alias.indexOf("$") == -1)
 		{
 			if (origParams != null && origParams.length() > 0)
@@ -1000,12 +1017,12 @@ public class Alias
 						if (pos + 6 <= convEnd && alias.substring(pos + 2, pos + 7).equalsIgnoreCase("nick]"))
 						{
 							pos += 7;
-							newCom.append(mes.getNick());
+							newCom.append(nick);
 						}
 						else if (pos + 6 <= convEnd && alias.substring(pos + 2, pos + 7).equalsIgnoreCase("chan]"))
 						{
 							pos += 7;
-							newCom.append(mes.getContext());
+							newCom.append(context);
 						}
 						else
 						{

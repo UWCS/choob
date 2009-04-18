@@ -69,9 +69,14 @@ class Pipes
 
 				try
 				{
+					final String alcmd = cmd + " " + arg;
+
 					Object res = mods.plugin.callAPI("alias", "get", cmd);
 					if (null != res)
 						cmd = (String)res;
+
+					cmd = (String) mods.plugin.callAPI("alias", "applyalias", cmd, alcmd.split(" "), alcmd, mes.getNick(), mes.getContext());
+					arg = "";
 				}
 				catch (ChoobNoSuchCallException e)
 				{
@@ -85,6 +90,10 @@ class Pipes
 					throw new IllegalArgumentException("Tried to exec '" + alis[0]
                             	+ "', which doesn't even have a dot in it!");
 
+				// Fiddle talk.say -> talk.reply, which is pipable and does the same thing (well, close enough)
+				if ("talk".equalsIgnoreCase(cmds[0]) && "say".equalsIgnoreCase(cmds[1]))
+					cmds[1] = "reply";
+
 				if (alis.length > 1 && alis[1].length() > 0)
 					arg = alis[1] + arg;
 
@@ -92,7 +101,7 @@ class Pipes
 			}
 		});
 
-		List<String> messes = irc.cutString(eval, mes.getNick().length() + 2 + 19);
+		List<String> messes = irc.cutString(eval, mes.getNick().length() + 2 + 25);
 		irc.sendContextReply(mes, messes.get(0) + (messes.size() > 1 ?
 			" (" + (messes.size() - 1) + " more message" + (messes.size() == 2 ? "" : "s") + ")" :
 			""));
