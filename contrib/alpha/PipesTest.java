@@ -73,10 +73,10 @@ class Pipes
 
 					Object res = mods.plugin.callAPI("alias", "get", cmd);
 					if (null != res)
-						cmd = (String)res;
-
-					cmd = (String) mods.plugin.callAPI("alias", "applyalias", cmd, alcmd.split(" "), alcmd, mes.getNick(), mes.getContext());
-					arg = "";
+					{
+						cmd = (String) mods.plugin.callAPI("alias", "applyalias", res, alcmd.split(" "), alcmd, mes.getNick(), mes.getContext());
+						arg = "";
+					}
 				}
 				catch (ChoobNoSuchCallException e)
 				{
