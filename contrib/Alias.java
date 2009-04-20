@@ -735,8 +735,8 @@ public class Alias
 	/** Do argument processing for an Alias.
 	 *
 	 * @param alias The "converted" value for the alias (i.e. what's in the db / what showalias shows)
-	 * @param params The array of parameters.
-	 * @param origParams The parameters as a string (e.g. probably the same as the contents of the array)
+	 * @param params The array of parameters, including argv[0].  e.g. ["echo", "ponies", "rock"]
+	 * @param origParams The parameters as a string.  e.g. "ponies rock"
 	 * @param nick The nick of the caller (used for $[nick]).
 	 * @param context The context of the caller (used for $[chan]).
 	 * @return

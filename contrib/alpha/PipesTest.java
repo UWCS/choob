@@ -74,7 +74,7 @@ class Pipes
 					Object res = mods.plugin.callAPI("alias", "get", cmd);
 					if (null != res)
 					{
-						cmd = (String) mods.plugin.callAPI("alias", "applyalias", res, alcmd.split(" "), alcmd, mes.getNick(), mes.getContext());
+						cmd = (String) mods.plugin.callAPI("alias", "applyalias", res, alcmd.split(" "), arg, mes.getNick(), mes.getContext());
 						arg = "";
 					}
 				}
