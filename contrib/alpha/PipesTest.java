@@ -223,6 +223,8 @@ class Pipes
 					stdin = e.exec(sb.toString(), stdin);
 					sb.setLength(0);
 				}
+				else
+					sb.append(c);
 			}
 			else
 			{
@@ -335,6 +337,13 @@ public class PipesTest
 		assertThrowsParse("\\");
 		assertThrowsParse("\\q");
 	}
+
+	@Test
+	public void testPipeQuotes() throws Exception
+	{
+		assertEquals("a|b", Pipes.eval("'a|b'"));
+	}
+
 
 	@Test
 	public void testEvalDollars() throws Exception
