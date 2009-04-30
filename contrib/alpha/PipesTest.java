@@ -97,6 +97,12 @@ class Pipes
 				if (alis.length > 1 && alis[1].length() > 0)
 					arg = alis[1] + arg;
 
+				if ("pipes".equalsIgnoreCase(cmds[0]) && "eval".equalsIgnoreCase(cmds[1]))
+					if ("".equals(stdin))
+						return eval(arg, this);
+					else
+						return eval(stdin, this);
+
 				return (String) mods.plugin.callGeneric(cmds[0], "command", cmds[1], arg);
 			}
 		});
@@ -229,7 +235,10 @@ class Pipes
 			else
 			{
 				if (bslash)
-					throw new ParseException("illegal escape sequence: " + c, si);
+					if (dquote)
+						bslash = false;
+					else
+						throw new ParseException("illegal escape sequence: " + c, si);
 				sb.append(c);
 			}
 		}
@@ -327,6 +336,12 @@ public class PipesTest
 		assertEquals("'", Pipes.eval("\\'"));
 		assertEquals("pony'pony", Pipes.eval("'pony'\\''pony'"));
 		assertEquals("pony\\pony", Pipes.eval("\"pony\\\\pony\""));
+	}
+
+	@Test
+	public void testEscapes() throws Exception
+	{
+		assertEquals("$hi", Pipes.eval("\"\\$hi\""));
 	}
 
 	@Test
