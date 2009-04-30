@@ -151,11 +151,12 @@ public class Plugin
 			return;
 		}
 
-		final String pluginName = params.get(1);
-
-		mods.security.checkNickPerm(new ChoobPermission("plugin.load." + pluginName.toLowerCase()), mes);
-
-		loadOrReloadPlugin(mes, pluginName, null, true);
+		for (int i = 1; i < params.size(); ++i)
+		{
+			final String pluginName = params.get(i);
+			mods.security.checkNickPerm(new ChoobPermission("plugin.load." + pluginName.toLowerCase()), mes);
+			loadOrReloadPlugin(mes, pluginName, null, true);
+		}
 	}
 
 	public String[] helpCommandDetach = {
