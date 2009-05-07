@@ -1,16 +1,12 @@
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import uk.co.uwcs.choob.*;
+import uk.co.uwcs.choob.modules.*;
+import uk.co.uwcs.choob.support.*;
+import uk.co.uwcs.choob.support.events.*;
 
-import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.ChoobBadSyntaxError;
-import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.ActionEvent;
-import uk.co.uwcs.choob.support.events.ChannelEvent;
-import uk.co.uwcs.choob.support.events.Message;
+import java.util.*;
+import java.util.regex.*;
+
+import org.jibble.pircbot.Colors;
 
 /**
  * Fun (live) stats for all the family.
@@ -18,7 +14,7 @@ import uk.co.uwcs.choob.support.events.Message;
  * @author Faux
  */
 
-class EntityStat
+public class EntityStat
 {
 	public int id;
 	public String statName;
@@ -27,32 +23,14 @@ class EntityStat
 	public double value; // WMA; over 100 lines for people, 1000 lines for channels
 }
 
-class StatSortByValue implements Comparator<EntityStat>
-{
-	public int compare(final EntityStat o1, final EntityStat o2) {
-		if (o1.value > o2.value) {
-			return -1;
-		}
-		if (o1.value < o2.value) {
-			return 1;
-		}
-		return 0;
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		return false;
-	}
-}
-
 public class Stats
 {
-	final static int HISTORY = 1000;
-	final static double NICK_LENGTH = 100; // "Significant" lines in WMA calculations.
-	final static double CHAN_LENGTH = 1000;
-	final static double THRESHOLD = 0.005; // val * THRESHOLD is considered too small to be a part of WMA.
-	final static double NICK_ALPHA = Math.exp(Math.log(THRESHOLD) / NICK_LENGTH);
-	final static double CHAN_ALPHA = Math.exp(Math.log(THRESHOLD) / CHAN_LENGTH);
+	final int HISTORY = 1000;
+	final double NICK_LENGTH = 100; // "Significant" lines in WMA calculations.
+	final double CHAN_LENGTH = 1000;
+	final double THRESHOLD = 0.005; // val * THRESHOLD is considered too small to be a part of WMA.
+	final double NICK_ALPHA = Math.exp(Math.log(THRESHOLD) / (double)NICK_LENGTH);
+	final double CHAN_ALPHA = Math.exp(Math.log(THRESHOLD) / (double)CHAN_LENGTH);
 
 	public String[] info()
 	{
@@ -60,13 +38,13 @@ public class Stats
 			"Plugin for analysing speech.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			"$Rev$$Date$"
+			"$Rev$$Date: 2008-08-18$"
 		};
 	}
 
-	private final Modules mods;
-	private final IRCInterface irc;
-	public Stats(final Modules mods, final IRCInterface irc)
+	private Modules mods;
+	private IRCInterface irc;
+	public Stats(Modules mods, IRCInterface irc)
 	{
 		this.mods = mods;
 		this.irc = irc;
@@ -145,17 +123,17 @@ public class Stats
 		}
 	}
 */
-	private void update( final String thing, final Message mes, final double thisVal )
+	private void update( String thing, Message mes, double thisVal )
 	{
 		if ( mes instanceof ChannelEvent )
 			updateObj( thing, mes.getContext(), thisVal, CHAN_ALPHA );
 		updateObj( thing, mods.nick.getBestPrimaryNick( mes.getNick() ), thisVal, NICK_ALPHA );
 	}
 
-	private void updateObj ( final String thing, final String name, final double thisVal, final double alpha )
+	private void updateObj ( String thing, String name, double thisVal, double alpha )
 	{
 		// I assume thing is safe. ^.^
-		final List<EntityStat> ret = mods.odb.retrieve( EntityStat.class, "WHERE entityName = \"" + mods.odb.escapeString(name) + "\" && statName = \"" + thing + "\"");
+		List<EntityStat> ret = mods.odb.retrieve( EntityStat.class, "WHERE entityName = \"" + mods.odb.escapeString(name) + "\" && statName = \"" + thing + "\"");
 		EntityStat obj;
 		if (ret.size() == 0) {
 			obj = new EntityStat();
@@ -170,7 +148,7 @@ public class Stats
 		}
 	}
 
-	public void onMessage( final Message mes )
+	public void onMessage( Message mes )
 	{
 		if (Pattern.compile(irc.getTriggerRegex()).matcher(mes.getMessage()).find()) {
 			// Ignore commands.
@@ -178,7 +156,7 @@ public class Stats
 		}
 
 		String content = mes.getMessage().replaceAll("^[a-zA-Z0-9`_|]+:\\s+", "");
-		final boolean referred = !content.equals(mes.getMessage());
+		boolean referred = !content.equals(mes.getMessage());
 
 		if (mes instanceof ActionEvent) {
 			content = "*" + mes.getNick() + " " + content; // bizarrely, this is proper captuation grammar.
@@ -189,17 +167,13 @@ public class Stats
 			return;
 		}
 
-		try {
-			update( "captuation", mes, apiCaptuation( content ) );
-			final int wc = apiWordCount( content );
-			update( "wordcount", mes, wc );
-			update( "characters", mes, apiLength( content ) );
-			if (wc > 0)
-				update( "wordlength", mes, apiWordLength( content ) );
-			update( "referred", mes, referred ? 1.0 : 0.0 );
-		} catch (final Exception e) {
-			// FAIL!
-		}
+		update( "captuation", mes, (double)apiCaptuation( content ) );
+		int wc = apiWordCount( content );
+		update( "wordcount", mes, (double)wc );
+		update( "characters", mes, (double)apiLength( content ) );
+		if (wc > 0)
+			update( "wordlength", mes, apiWordLength( content ) );
+		update( "referred", mes, referred ? 1.0 : 0.0 );
 	}
 
 	public String[] helpCommandGet = {
@@ -208,29 +182,29 @@ public class Stats
 		"<Entity> is the name of the channel or person to get stats for",
 		"<Stat> is the optional name of a specific statistic to get (omit it to get all of them)"
 	};
-	public void commandGet( final Message mes )
+	public void commandGet( Message mes )
 	{
-		final String[] params = mods.util.getParamArray(mes);
+		String[] params = mods.util.getParamArray(mes);
 		if (params.length == 3) {
-			final String nick = mods.nick.getBestPrimaryNick( params[1] );
-			final String thing = params[2].toLowerCase();
-			final List<EntityStat> ret = mods.odb.retrieve( EntityStat.class, "WHERE entityName = \"" + mods.odb.escapeString(nick) + "\" && statName = \"" + mods.odb.escapeString(thing) + "\"");
+			String nick = mods.nick.getBestPrimaryNick( params[1] );
+			String thing = params[2].toLowerCase();
+			List<EntityStat> ret = mods.odb.retrieve( EntityStat.class, "WHERE entityName = \"" + mods.odb.escapeString(nick) + "\" && statName = \"" + mods.odb.escapeString(thing) + "\"");
 			EntityStat obj;
 			if (ret.size() == 0) {
 				irc.sendContextReply( mes, "Sorry, cannae find datta one." );
 			} else {
 				obj = ret.get(0);
-				irc.sendContextReply( mes, "They be 'avin a score of " + Math.round(obj.value * 100) / 100.0 );
+				irc.sendContextReply( mes, "They be 'avin a score of " + (double)Math.round(obj.value * 100) / 100.0 + ".");
 			}
 		} else if (params.length == 2) {
-			final String nick = mods.nick.getBestPrimaryNick( params[1] );
-			final List<EntityStat> ret = mods.odb.retrieve( EntityStat.class, "WHERE entityName = \"" + mods.odb.escapeString(nick) + "\"");
+			String nick = mods.nick.getBestPrimaryNick( params[1] );
+			List<EntityStat> ret = mods.odb.retrieve( EntityStat.class, "WHERE entityName = \"" + mods.odb.escapeString(nick) + "\"");
 			if (ret.size() == 0) {
 				irc.sendContextReply( mes, "Sorry, cannae find datta one." );
 			} else {
-				final StringBuilder results = new StringBuilder( "Stats:" );
-				for (final EntityStat obj: ret) {
-					results.append( " " + obj.statName + " = " + Math.round(obj.value * 100) / 100.0 + ";" );
+				StringBuilder results = new StringBuilder( "Stats:" );
+				for (EntityStat obj: ret) {
+					results.append( " " + obj.statName + " = " + (double)Math.round(obj.value * 100) / 100.0 + ";" );
 				}
 				irc.sendContextReply( mes, results.toString() );
 			}
@@ -239,78 +213,12 @@ public class Stats
 		}
 	}
 
-	public String[] helpCommandList = {
-		"Gets statistics about an entire channel.",
-		"<Channel> <Stat>",
-		"<Channel> is the name of the channel get statistics for",
-		"<Stat> is the optional name of a specific statistic to get (omit it to get all of them)"
-	};
-	public void commandList(final Message mes)
-	{
-		final String[] params = mods.util.getParamArray(mes);
-		if (params.length < 3 || params.length > 3) {
-			throw new ChoobBadSyntaxError();
-		}
-
-		final String channel = params[1];
-		final String stat = params[2].toLowerCase();
-
-		final List<String> channelMembers = irc.getUsersList(channel);
-		final List<EntityStat> stats = new ArrayList<EntityStat>();
-		for (int i = 0; i < channelMembers.size(); i++) {
-			final List<EntityStat> datas = mods.odb.retrieve(EntityStat.class, "WHERE entityName = \"" + mods.odb.escapeString(channelMembers.get(i)) + "\" && statName = \"" + mods.odb.escapeString(stat) + "\"");
-			if (datas.size() == 0) continue;
-			stats.add(datas.get(0));
-		}
-
-		if (stats.size() == 0) {
-			irc.sendContextReply(mes, "No data found for \"" + stat + "\" in \"" + channel + "\".");
-			return;
-		}
-
-		Collections.sort(stats, new StatSortByValue());
-		final int space = 350;
-		final StringBuffer text1 = new StringBuffer();
-		final StringBuffer text2 = new StringBuffer();
-		boolean addToStart = true;
-
-		text1.append("\"");
-		text1.append(stat);
-		text1.append("\" in \"");
-		text1.append(channel);
-		text1.append("\": ");
-		while (stats.size() > 0) {
-			final EntityStat data = addToStart ? stats.get(0) : stats.get(stats.size() - 1);
-			stats.remove(data);
-			final StringBuffer text = new StringBuffer();
-			text.append(data.entityName);
-			text.append(" (");
-			text.append(Math.round(data.value * 100) / 100.0);
-			text.append(")");
-			if (text1.length() + text2.length() + text.length() > space) {
-				text1.append("...");
-				break;
-			}
-			if (addToStart) {
-				text1.append(text);
-				if (stats.size() > 0) text1.append(", ");
-			} else {
-				text2.insert(0, text);
-				if (stats.size() > 0) text2.insert(0, ", ");
-			}
-			addToStart = !addToStart;
-		}
-		text1.append(text2);
-		text1.append(".");
-		irc.sendContextReply(mes, text1.toString());
-	}
-
 	public int apiCaptuation( String str )
 	{
 		int score = 0;
 
 		// remove smilies and trailing whitespace.
-		str = str.replaceAll("(?:^|\\s+)[:pP)/;\\\\o()^><.ï¿½ _-]{2,4}(\\s+|$)", "$1");
+		str = str.replaceAll("(?:^|\\s+)[:pP)/;\\\\o()^.¬ -]{2,4}(\\s+|$)", "$1");
 
 		// remove URLs
 		str = str.replaceAll("[a-z0-9]+:/\\S+", "");
@@ -344,7 +252,7 @@ public class Stats
 		//  Leetspeak. Unfortunately, C0FF33 is still valid, as it's also hex.
 		//   Also, words with trailing numbers are fine, since some nicknames
 		//   etc. are like this.
-		ma = Pattern.compile("\\b(?:im|Im|i'm|i'd|i|i'll|b|u2?|(?i:s?hes|they(?:ve|re|ll)|there(?:s|re|ll)|(?:has|was|sha|have)nt|(?:could|would)(?:ve|nt)|k?thz|pl[xz]|zomg|\\w+xor|sidewalk|color)|(?=[A-Z]*[a-z][A-Za-z]*\\b)(?i:bbq|lol|rofl|i?irc|afaik|hth|imh?o|fy|https?|ft[lw])|[a-z]+[A-Z][a-zA-Z]*|(?!(?:[il]1[08]n))(?:\\w*[g-zG-Z]\\w*[0-9]\\w*[a-zA-Z]|\\w*[0-9]\\w*[g-zG-Z]\\w*[a-zA-Z])|american|british|english|european)\\b").matcher(str);
+		ma = Pattern.compile("(?:\\s|^)(?:[iI]m|i'm|i'?d|i'll|i|b|2b|u(?:2|r|t)?|cs:s|css|ui|zeus|dota|codd|backus|wtb|tsr|xml|ooo|lan|compsoc|cryfield|rootes|westwood|warwick|hurst|heronbank|earlsdon|cov(?:entry)?|leam(?:ington)?|claycroft|lakeside|zeeman|dcs|ramphal|(?!OOo)\\w*(.)\\1\\1\\w*|(?i:s?hes|they(?:ve|re|ll)|there(?:s|re|ll)|(?:has|was|sha|have|is|wo|ca)nt|(?:could|would|should)(?:ve|nt)|k?thz|pl[xz]|zomg|\\w+[xz]or|dee|tonite|sidewalk|captuation|moar|color|cud|yer|noes)|(?=[A-Z]*[a-z][A-Za-z]*\\b)(?i:bbq|l(?:ol)+|(?:rof)lmao|rofl|i?irc|afaik|hth|imh?o|fy|https?|ft[lwsp]|l4d|tf2)|[a-z]+[A-Z][a-zA-Z]*|(?!(?:[il]1[08]n))(?:\\w*[g-zG-Z]\\w*[0-9]\\w*[a-zA-Z]|\\w*[0-9]\\w*[g-zG-Z]\\w*[a-zA-Z])|american|british|english|european|gud|gra(?:m?me|ma)r)\\b").matcher(str);
 		while (ma.find())
 			score += 1;
 
@@ -352,15 +260,15 @@ public class Stats
 	}
 
 	// http://schmidt.devlib.org/java/word-count.html#source
-	public int apiWordCount(final String str)
+	public int apiWordCount(String str)
 	{
 		int numWords = 0;
 		int index = 0;
 		boolean prevWhitespace = true;
 		while (index < str.length())
 		{
-			final char c = str.charAt(index++);
-			final boolean currWhitespace = Character.isWhitespace(c);
+			char c = str.charAt(index++);
+			boolean currWhitespace = Character.isWhitespace(c);
 			if (prevWhitespace && !currWhitespace)
 				numWords++;
 			prevWhitespace = currWhitespace;
@@ -368,14 +276,25 @@ public class Stats
 		return numWords;
 	}
 
-	public int apiLength(final String str)
+	public int apiLength(String str)
 	{
 		return str.replaceAll("\\s+", "").length();
 	}
 
-	public double apiWordLength(final String str)
+	public double apiWordLength(String str)
 	{
 		return (double)apiLength(str) / (double)apiWordCount(str);
+	}
+
+	public void commandCheck( Message mes ) {
+		String content = mods.util.getParamString(mes);
+		double captuation = apiCaptuation( content );
+		int wc = apiWordCount( content );
+		double leng = apiLength( content );
+		double wordl = apiWordLength( content );
+		boolean referred = !content.equals(mes.getMessage());
+
+		irc.sendContextReply(mes, "Your message has: captuation = " + captuation + "; word count = " + wc + "; length = " + leng + "; word length = " + wordl + "; referred = " + referred + ";");
 	}
 
 
