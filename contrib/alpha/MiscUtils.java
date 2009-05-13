@@ -469,26 +469,40 @@ public class MiscUtils
 		return new String(new int[] { first }, 0, 1);
 	}
 
-	final Pattern SEQARGS = Pattern.compile("(-?\\d+)( -?\\d+)?");
+	final Pattern SEQARGS = Pattern.compile("(-?\\d+)( -?\\d+)?( -?\\d+)?");
 	public String commandSeq(String arg)
 	{
 		Matcher ma = SEQARGS.matcher(arg);
 		if (!ma.matches())
-			throw new IllegalArgumentException("seq accepts one or two integer arguments");
+			throw new IllegalArgumentException("seq accepts between one and three integer arguments");
 
 		int one = Integer.parseInt(ma.group(1)),
-			two = ma.group(2) != null ? Integer.parseInt(ma.group(2).trim()) : 0;
+	two, three;
 
 		StringBuilder sb = new StringBuilder();
 
-		if (two == 0)
+		if (ma.group(2) == null)
 		{
 			two = one;
 			one = 1;
 		}
+		else
+			two = Integer.parseInt(ma.group(2).trim());
 
-		while (one <= two && sb.length() < IRCInterface.MAX_MESSAGE_LENGTH - 30)
-			sb.append(one++).append(" ");
+		if (ma.group(3) == null)
+			three = 1;
+		else
+		{
+			three = two;
+			two = Integer.parseInt(ma.group(3).trim());
+		}
+
+
+		while ((three > 0 ? one <= two : one >= two) && sb.length() < IRCInterface.MAX_MESSAGE_LENGTH - 30)
+		{
+			sb.append(one).append(" ");
+			one += three;
+		}
 
 		return sb.toString();
 	}
