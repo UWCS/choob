@@ -207,9 +207,13 @@ class Pipes
 			else if ('\'' == c)
 				if (bslash)
 				{
+					if (dquote)
+						sb.append("\\");
 					sb.append(c);
 					bslash = false;
 				}
+				else if (dquote)
+					sb.append(c);
 				else
 					squote = !squote;
 			else if ('\\' == c)
@@ -359,6 +363,18 @@ public class PipesTest
 		assertEquals("a|b", Pipes.eval("'a|b'"));
 	}
 
+	@Test
+	public void testDoubleSingle() throws Exception
+	{
+		assertEquals("'", Pipes.eval("\"'\""));
+		assertEquals("'pony'", Pipes.eval("\"'pony'\""));
+	}
+
+	@Test public void testBackSlashes() throws Exception
+	{
+		assertEquals("\\\'", Pipes.eval("\"\\\'\""));
+		assertEquals("\\", Pipes.eval("\"\\\\\""));
+	}
 
 	@Test
 	public void testEvalDollars() throws Exception
