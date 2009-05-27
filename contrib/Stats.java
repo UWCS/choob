@@ -1,12 +1,13 @@
-import uk.co.uwcs.choob.*;
-import uk.co.uwcs.choob.modules.*;
-import uk.co.uwcs.choob.support.*;
-import uk.co.uwcs.choob.support.events.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import java.util.*;
-import java.util.regex.*;
-
-import org.jibble.pircbot.Colors;
+import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobBadSyntaxError;
+import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.ActionEvent;
+import uk.co.uwcs.choob.support.events.ChannelEvent;
+import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Fun (live) stats for all the family.
@@ -14,7 +15,7 @@ import org.jibble.pircbot.Colors;
  * @author Faux
  */
 
-public class EntityStat
+class EntityStat
 {
 	public int id;
 	public String statName;
@@ -29,8 +30,8 @@ public class Stats
 	final double NICK_LENGTH = 100; // "Significant" lines in WMA calculations.
 	final double CHAN_LENGTH = 1000;
 	final double THRESHOLD = 0.005; // val * THRESHOLD is considered too small to be a part of WMA.
-	final double NICK_ALPHA = Math.exp(Math.log(THRESHOLD) / (double)NICK_LENGTH);
-	final double CHAN_ALPHA = Math.exp(Math.log(THRESHOLD) / (double)CHAN_LENGTH);
+	final double NICK_ALPHA = Math.exp(Math.log(THRESHOLD) / NICK_LENGTH);
+	final double CHAN_ALPHA = Math.exp(Math.log(THRESHOLD) / CHAN_LENGTH);
 
 	public String[] info()
 	{
@@ -167,10 +168,10 @@ public class Stats
 			return;
 		}
 
-		update( "captuation", mes, (double)apiCaptuation( content ) );
+		update( "captuation", mes, apiCaptuation( content ) );
 		int wc = apiWordCount( content );
-		update( "wordcount", mes, (double)wc );
-		update( "characters", mes, (double)apiLength( content ) );
+		update( "wordcount", mes, wc );
+		update( "characters", mes, apiLength( content ) );
 		if (wc > 0)
 			update( "wordlength", mes, apiWordLength( content ) );
 		update( "referred", mes, referred ? 1.0 : 0.0 );
@@ -194,7 +195,7 @@ public class Stats
 				irc.sendContextReply( mes, "Sorry, cannae find datta one." );
 			} else {
 				obj = ret.get(0);
-				irc.sendContextReply( mes, "They be 'avin a score of " + (double)Math.round(obj.value * 100) / 100.0 + ".");
+				irc.sendContextReply( mes, "They be 'avin a score of " + Math.round(obj.value * 100) / 100.0 + ".");
 			}
 		} else if (params.length == 2) {
 			String nick = mods.nick.getBestPrimaryNick( params[1] );
@@ -204,7 +205,7 @@ public class Stats
 			} else {
 				StringBuilder results = new StringBuilder( "Stats:" );
 				for (EntityStat obj: ret) {
-					results.append( " " + obj.statName + " = " + (double)Math.round(obj.value * 100) / 100.0 + ";" );
+					results.append( " " + obj.statName + " = " + Math.round(obj.value * 100) / 100.0 + ";" );
 				}
 				irc.sendContextReply( mes, results.toString() );
 			}
@@ -218,7 +219,7 @@ public class Stats
 		int score = 0;
 
 		// remove smilies and trailing whitespace.
-		str = str.replaceAll("(?:^|\\s+)[:pP)/;\\\\o()^.¬ -]{2,4}(\\s+|$)", "$1");
+		str = str.replaceAll("(?:^|\\s+)[:pP)/;\\\\o()^.ï¿½ -]{2,4}(\\s+|$)", "$1");
 
 		// remove URLs
 		str = str.replaceAll("[a-z0-9]+:/\\S+", "");
