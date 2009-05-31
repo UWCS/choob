@@ -1,4 +1,7 @@
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,6 +25,24 @@ class EntityStat
 	public String entityName;
 	//String chan; // ???
 	public double value; // WMA; over 100 lines for people, 1000 lines for channels
+}
+
+class StatSortByValue implements Comparator<EntityStat>
+{
+	public int compare(EntityStat o1, EntityStat o2) {
+		if (o1.value > o2.value) {
+			return -1;
+		}
+		if (o1.value < o2.value) {
+			return 1;
+		}
+		return 0;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return false;
+	}
 }
 
 public class Stats
@@ -212,6 +233,72 @@ public class Stats
 		} else {
 			throw new ChoobBadSyntaxError();
 		}
+	}
+
+	public String[] helpCommandList = {
+		"Gets statistics about an entire channel.",
+		"<Channel> <Stat>",
+		"<Channel> is the name of the channel get statistics for",
+		"<Stat> is the optional name of a specific statistic to get (omit it to get all of them)"
+	};
+	public void commandList(Message mes)
+	{
+		String[] params = mods.util.getParamArray(mes);
+		if ((params.length < 3) || (params.length > 3)) {
+			throw new ChoobBadSyntaxError();
+		}
+		
+		String channel = params[1];
+		String stat = params[2].toLowerCase();
+		
+		List<String> channelMembers = irc.getUsersList(channel);
+		List<EntityStat> stats = new ArrayList<EntityStat>();
+		for (int i = 0; i < channelMembers.size(); i++) {
+			List<EntityStat> datas = mods.odb.retrieve(EntityStat.class, "WHERE entityName = \"" + mods.odb.escapeString(channelMembers.get(i)) + "\" && statName = \"" + mods.odb.escapeString(stat) + "\"");
+			if (datas.size() == 0) continue;
+			stats.add(datas.get(0));
+		}
+		
+		if (stats.size() == 0) {
+			irc.sendContextReply(mes, "No data found for \"" + stat + "\" in \"" + channel + "\".");
+			return;
+		}
+		
+		Collections.sort(stats, new StatSortByValue());
+		final int space = 400;
+		StringBuffer text1 = new StringBuffer();
+		StringBuffer text2 = new StringBuffer();
+		boolean addToStart = true;
+		
+		text1.append("\"");
+		text1.append(stat);
+		text1.append("\" in \"");
+		text1.append(channel);
+		text1.append("\": ");
+		while (stats.size() > 0) {
+			EntityStat data = (addToStart ? stats.get(0) : stats.get(stats.size() - 1));
+			stats.remove(data);
+			StringBuffer text = new StringBuffer();
+			text.append(data.entityName);
+			text.append(" (");
+			text.append(Math.round(data.value * 100) / 100.0);
+			text.append(")");
+			if (text1.length() + text2.length() + text.length() > space) {
+				text1.append("...");
+				break;
+			}
+			if (addToStart) {
+				text1.append(text);
+				if (stats.size() > 0) text1.append(", ");
+			} else {
+				text2.insert(0, text);
+				if (stats.size() > 0) text2.insert(0, ", ");
+			}
+			addToStart = !addToStart;
+		}
+		text1.append(text2);
+		text1.append(".");
+		irc.sendContextReply(mes, text1.toString());
 	}
 
 	public int apiCaptuation( String str )
