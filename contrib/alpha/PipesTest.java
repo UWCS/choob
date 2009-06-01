@@ -49,6 +49,11 @@ class Pipes
 
 				if ("pick".equals(cmd))
 				{
+					// If something's been provided on stdin, we'll use it instead of the history.
+					// This allows piping into commands that are rooted in !pick.
+					if (!"".equals(stdin))
+						return stdin;
+
 					final List<Message> history = mods.history.getLastMessages(mes, 20);
 					final Pattern picker = (Pattern)mods.plugin.callAPI("MiscUtils", "LinePicker", arg);
 					for (Message m : history)
