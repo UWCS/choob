@@ -65,9 +65,29 @@ public final class UtilModule
 		final int offset = getTriggerOffset(text);
 		final int spacePos = text.indexOf(' ', offset);
 		if (spacePos != -1)
-			return text.substring(spacePos + 1).trim();
+		{
+			String subs = text.substring(spacePos + 1);
+			return nihtrim(subs);
+		}
 
 		return "";
+	}
+
+	/** Java's {@link String#trim()} removes control characters like bold, too, donotwant.
+	 *
+	 *  Completely original implementation, not based on Sun's at all, in any way. */
+	private static String nihtrim(String subs)
+	{
+		char[] val = subs.toCharArray();
+		int st = 0, len = subs.length();
+
+		while (st < len && val[st] == ' ') {
+		    st++;
+		}
+		while (st < len && val[len - 1] == ' ') {
+		    len--;
+		}
+		return subs.substring(st, len);
 	}
 
 	/** Split the parameters of a Message event into a List of Strings */
