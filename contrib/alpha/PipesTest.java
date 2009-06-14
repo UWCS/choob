@@ -32,90 +32,119 @@ class Pipes
 
 	public void commandEval(final Message mes) throws Exception
 	{
-		String eval = eval(mods.util.getParamString(mes), new Execulator()
-		{
-			@Override
-			public String exec(String s, String stdin) throws Exception
-			{
-				final String[] qq = s.trim().split(" ", 2);
-				String cmd = qq[0].trim();
-				String arg = qq.length > 1 ? qq[1] : "";
-
-				if ("sed".equals(cmd))
-					return (String)mods.plugin.callAPI("MiscUtils", "Sed", arg, stdin);
-
-				if ("tr".equals(cmd))
-					return (String)mods.plugin.callAPI("MiscUtils", "Trans", arg, stdin);
-
-				if ("pick".equals(cmd))
-				{
-					// If something's been provided on stdin, we'll use it instead of the history.
-					// This allows piping into commands that are rooted in !pick.
-					if (!"".equals(stdin))
-						return stdin;
-
-					final List<Message> history = mods.history.getLastMessages(mes, 20);
-					final Pattern picker = (Pattern)mods.plugin.callAPI("MiscUtils", "LinePicker", arg);
-					for (Message m : history)
-						if (picker.matcher(m.getMessage()).find())
-							return m.getMessage();
-					throw new IllegalArgumentException("Couldn't pick anything with " + arg);
-				}
-
-				if ("nick".equals(cmd))
-					return mes.getNick();
-
-				if ("xargs".equals(cmd))
-				{
-					final String[] rr = arg.split(" ", 2);
-					cmd = rr[0];
-					arg = (rr.length > 1 ? rr[1] : "") + stdin;
-				}
-
-				try
-				{
-					final String alcmd = cmd + " " + arg;
-
-					Object res = mods.plugin.callAPI("alias", "get", cmd);
-					if (null != res)
-					{
-						cmd = (String) mods.plugin.callAPI("alias", "applyalias", res, alcmd.split(" "), arg, mes.getNick(), mes.getContext());
-						arg = "";
-					}
-				}
-				catch (ChoobNoSuchCallException e)
-				{
-					// Whatever, no alias support.
-				}
-
-				String[] alis = cmd.split(" ", 2);
-				String[] cmds = alis[0].split("\\.", 2);
-
-				if (cmds.length != 2)
-					throw new IllegalArgumentException("Tried to exec '" + alis[0]
-                            	+ "', which doesn't even have a dot in it!");
-
-				// Fiddle talk.say -> talk.reply, which is pipable and does the same thing (well, close enough)
-				if ("talk".equalsIgnoreCase(cmds[0]) && "say".equalsIgnoreCase(cmds[1]))
-					cmds[1] = "reply";
-
-				if (alis.length > 1 && alis[1].length() > 0)
-					arg = alis[1] + arg;
-
-				if ("pipes".equalsIgnoreCase(cmds[0]) && "eval".equalsIgnoreCase(cmds[1]))
-					if ("".equals(stdin))
-						return eval(arg, this);
-					else
-						return eval(stdin, this);
-
-				return (String) mods.plugin.callGeneric(cmds[0], "command", cmds[1], arg);
-			}
-		});
+		String eval = eval(mods.util.getParamString(mes), new LoopbackExeculator(mes));
 
 		List<String> messes = irc.cutString(eval, mes.getNick().length() + 2 + 25);
 		irc.sendContextReply(mes, messes.get(0) + (messes.size() > 1 ?
 			" (" + (messes.size() - 1) + " more message" + (messes.size() == 2 ? "" : "s") + ")" :
 			""));
+	}
+
+	private final class LoopbackExeculator implements Execulator
+	{
+		// XXX mes can be NULL. D:
+		private final Message mes;
+		private final String nick;
+		private final String target;
+
+		LoopbackExeculator(final Message mes)
+		{
+			this(mes, mes.getNick(), mes.getTarget());
+		}
+
+		LoopbackExeculator(final String nick, final String target)
+		{
+			this(null, nick, target);
+		}
+
+		public LoopbackExeculator(final Message mes, final String nick, final String target)
+		{
+			this.mes = mes;
+			this.nick = nick;
+			this.target = target;
+		}
+
+		@Override
+		public String exec(String s, String stdin) throws Exception
+		{
+			final String[] qq = s.trim().split(" ", 2);
+			String cmd = qq[0].trim();
+			String arg = qq.length > 1 ? qq[1] : "";
+
+			if ("sed".equals(cmd))
+				return (String)mods.plugin.callAPI("MiscUtils", "Sed", arg, stdin);
+
+			if ("tr".equals(cmd))
+				return (String)mods.plugin.callAPI("MiscUtils", "Trans", arg, stdin);
+
+			if ("pick".equals(cmd))
+			{
+				// If something's been provided on stdin, we'll use it instead of the history.
+				// This allows piping into commands that are rooted in !pick.
+				if (!"".equals(stdin))
+					return stdin;
+
+				// Let's just pray this won't be reached with a null mes! \o/
+				final List<Message> history = mods.history.getLastMessages(mes, 20);
+				final Pattern picker = (Pattern)mods.plugin.callAPI("MiscUtils", "LinePicker", arg);
+				for (Message m : history)
+					if (picker.matcher(m.getMessage()).find())
+						return m.getMessage();
+				throw new IllegalArgumentException("Couldn't pick anything with " + arg);
+			}
+
+			if ("nick".equals(cmd))
+				return nick;
+
+			if ("export".equals(cmd))
+				// mes
+				return (String)mods.plugin.callAPI("Alias", "CreateAlias", mes, nick, target, "fakelias "+ arg);
+
+			if ("xargs".equals(cmd))
+			{
+				final String[] rr = arg.split(" ", 2);
+				cmd = rr[0];
+				arg = (rr.length > 1 ? rr[1] : "") + stdin;
+			}
+
+			try
+			{
+				final String alcmd = cmd + " " + arg;
+
+				Object res = mods.plugin.callAPI("alias", "get", cmd);
+				if (null != res)
+				{
+					cmd = (String) mods.plugin.callAPI("alias", "applyalias", res, alcmd.split(" "), arg, nick, target);
+					arg = "";
+				}
+			}
+			catch (ChoobNoSuchCallException e)
+			{
+				// Whatever, no alias support.
+			}
+
+			String[] alis = cmd.split(" ", 2);
+			String[] cmds = alis[0].split("\\.", 2);
+
+			if (cmds.length != 2)
+				throw new IllegalArgumentException("Tried to exec '" + alis[0]
+		                	+ "', which doesn't even have a dot in it!");
+
+			// Fiddle talk.say -> talk.reply, which is pipable and does the same thing (well, close enough)
+			if ("talk".equalsIgnoreCase(cmds[0]) && "say".equalsIgnoreCase(cmds[1]))
+				cmds[1] = "reply";
+
+			if (alis.length > 1 && alis[1].length() > 0)
+				arg = alis[1] + arg;
+
+			if ("pipes".equalsIgnoreCase(cmds[0]) && "eval".equalsIgnoreCase(cmds[1]))
+				if ("".equals(stdin))
+					return eval(arg, this);
+				else
+					return eval(stdin, this);
+
+			return (String) mods.plugin.callGeneric(cmds[0], "command", cmds[1], arg);
+		}
 	}
 
 	static class ParseException extends Exception
@@ -181,11 +210,10 @@ class Pipes
 
 	/** @param si Positioned just after the ( in a valid $(; will terminate just after the ).
 	 * @throws Exception iff comes from Execulator.  */
-	private static String eval(final StringIterator si, Execulator e) throws Exception
+	private static String eval(final StringIterator si, Execulator e, String stdin) throws Exception
 	{
 		StringBuilder sb = new StringBuilder(si.length());
 		boolean dquote = false, squote = false, bslash = false;
-		String stdin = "";
 
 		while (si.hasMore())
 		{
@@ -193,7 +221,7 @@ class Pipes
 			if (!squote && !dquote && !bslash && '$' == c && '(' == si.peek())
 			{
 				si.get();
-				sb.append(eval(si, e));
+				sb.append(eval(si, e, ""));
 			}
 			else if (!squote && !dquote && !bslash && ')' == c)
 			{
@@ -256,8 +284,13 @@ class Pipes
 
 	static String eval(String s, Execulator e) throws Exception
 	{
+		return eval(s, e, "");
+	}
+
+	static String eval(String s, Execulator e, String stdin) throws Exception
+	{
 		final StringIterator si = new StringIterator(s + ")");
-		final String res = eval(si, e);
+		final String res = eval(si, e, stdin);
 		// XXX #testEnd
 		if (si.hasMore() && (si.get() != ')' || si.hasMore()))
 			throw new ParseException("Trailing characters", si);
@@ -267,6 +300,11 @@ class Pipes
 	static String eval(String s) throws Exception
 	{
 		return eval(s, SysoExeculator);
+	}
+
+	public String apiEval(String s, String nick, String context, String stdin) throws Exception
+	{
+		return eval(s, new LoopbackExeculator(nick, context), stdin);
 	}
 
 	static interface Execulator

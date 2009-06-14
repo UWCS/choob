@@ -208,7 +208,7 @@ public final class IRCInterface
 		}
 		else if ( lines.size() > MAX_MESSAGES )
 		{
-			privateSendMessage(context.getContext(), nick + ": Sorry, the output is too long! Private messaging it to you!");
+			privateSendMessage(context.getContext(), nick, nick + ": Sorry, the output is too long! Private messaging it to you!");
 			target = nick;
 			thePrefix = "";
 		}
@@ -224,7 +224,7 @@ public final class IRCInterface
 		}
 
 		for(final String line: lines)
-			privateSendMessage(target, thePrefix + line);
+			privateSendMessage(target, nick, thePrefix + line);
 	}
 
 	/**
@@ -325,14 +325,25 @@ public final class IRCInterface
 		final List<String> lines = cutString(cleanse(message), 0);
 
 		for (final String line: lines)
-			privateSendMessage(target, line);
+			privateSendMessage(target, "", line);
 	}
 
-	private void privateSendMessage(final String target, final String message)
+	private void privateSendMessage(final String target, final String nick, final String message)
 	{
 		if (target.trim().equalsIgnoreCase(bot.getName()))
 			return;
-		bot.sendMessage(target, message);
+
+		String toSend;
+		try
+		{
+			toSend = (String) mods.plugin.callAPI("OutputFilter", "Apply", target, nick, message);
+		}
+		catch (Throwable e)
+		{
+			// Discard the exception entirely, go team.
+			toSend = message;
+		}
+		bot.sendMessage(target, toSend);
 	}
 
 	/**

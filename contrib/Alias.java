@@ -7,6 +7,7 @@ import org.jibble.pircbot.Colors;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobBadSyntaxError;
+import uk.co.uwcs.choob.support.ChoobGeneralAuthError;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.IRCInterface;
@@ -102,16 +103,22 @@ public class Alias
 			throw new ChoobBadSyntaxError();
 		}
 
+		irc.sendContextReply(mes, apiCreateAlias(mes, mes.getNick(), mes.getContext(), mes.getMessage()));
+	}
+
+	/** Fake API returning String message result for pipes
+	 * @param mes MAY BE NULL, access checks will be skipped
+	 */
+	public String apiCreateAlias(final Message mes, final String innick, String context, String param)
+	{
+		String[] params = mods.util.getParamArray(param, 2);
 		final String name = params[1];
 		String conv = params[2];
 
 		// Validate name against unprintable characters.
 		for (int i = 0; i < name.length(); i++)
 			if (name.charAt(i) < 32)
-			{
-				irc.sendContextReply(mes, "Alias name contains disallowed characters. Try again!");
-				return;
-			}
+				return "Alias name contains disallowed characters. Try again!";
 
 
 		int spacePos = conv.indexOf(' ');
@@ -128,10 +135,7 @@ public class Alias
 
 		// This is slightly inefficient as it'll recall the alias twice if it's recursive. Bah.
 		if (!mods.plugin.validCommand(subAlias))
-		{
-			irc.sendContextReply(mes, "Sorry, you tried to create an alias to '" + subAlias + "', but it doesn't exist!");
-			return;
-		}
+			return "Sorry, you tried to create an alias to '" + subAlias + "', but it doesn't exist!";
 
 
 		// It doesn't have a dot in it, or (it has a space in it, and the dot is after the space).
@@ -142,44 +146,38 @@ public class Alias
 			final AliasObject alias = getAlias(subAlias);
 
 			if (alias == null)
-			{
-				irc.sendContextReply(mes, "Sorry, you tried to use a recursive alias to '" + subAlias + "' - but '" + subAlias + "' doesn't exist!");
-				return;
-			}
+				return "Sorry, you tried to use a recursive alias to '" + subAlias + "' - but '" + subAlias + "' doesn't exist!";
 
 			// Rebuild params with no upper limit.
-			params = mods.util.getParamArray(mes);
+			params = mods.util.getParamArray(param);
 			final String[] aliasParams = new String[params.length - 2];
 			for(int i=2; i<params.length; i++)
 				aliasParams[i-2] = params[i];
 
-			final String newText = applyAlias(alias.converted, aliasParams, actualParams, mes);
+			final String newText = applyAlias(alias.converted, aliasParams, actualParams, innick, context);
 			if (newText == null)
-			{
-				irc.sendContextReply(mes, "Sorry, you tried to use a recursive alias to '" + subAlias + "' - but the alias text ('" + alias.converted + "') is invalid!");
-				return;
-			}
+				return "Sorry, you tried to use a recursive alias to '" + subAlias + "' - but the alias text ('" + alias.converted + "') is invalid!";
 			conv = newText;
 		}
 
 		if (name.equals(""))
-		{
-			irc.sendContextReply(mes, "Syntax: Alias.Add <Name> <Alias>");
-			return;
-		}
+			return "Syntax: Alias.Add <Name> <Alias>";
 
 		final AliasObject alias = getAlias(name);
 
-		String nick = mods.security.getUserAuthName(mes.getNick());
+		String nick = mods.security.getUserAuthName(innick);
 		nick = mods.security.getRootUser(nick);
 		if (nick == null)
-			nick = mods.security.getUserAuthName(mes.getNick());
+			nick = mods.security.getUserAuthName(innick);
 
 		String oldAlias = ""; // Set to content of old alias, if there was one.
 		if (alias != null)
 		{
 			if (alias.locked)
 			{
+				if (null == mes)
+					throw new ChoobGeneralAuthError();
+
 				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
 					mods.security.checkAuth(mes);
 				else
@@ -196,7 +194,7 @@ public class Alias
 		else
 			mods.odb.save(new AliasObject(name, conv, nick));
 
-		irc.sendContextReply(mes, "Aliased '" + name + "' to '" + conv + "'" + oldAlias + ".");
+		return "Aliased '" + name + "' to '" + conv + "'" + oldAlias + ".";
 	}
 
 	public String commandShowAlias(String alias)
@@ -682,7 +680,7 @@ public class Alias
 		final List<String> paramList = mods.util.getParams(mes);
 		params = paramList.toArray(params);
 
-		String newText = applyAlias(aliasText, params, cmdParams, mes);
+		String newText = applyAlias(aliasText, params, cmdParams, mes.getNick(), mes.getContext());
 
 		if (newText == null)
 		{
@@ -729,7 +727,12 @@ public class Alias
 
 	private static String applyAlias(final String alias, final String[] params, final String origParams, final Message mes)
 	{
-		return apiApplyAlias(alias, params, origParams, mes.getNick(), mes.getContext());
+		return applyAlias(alias, params, origParams, mes.getNick(), mes.getContext());
+	}
+
+	private static String applyAlias(final String alias, final String[] params, final String origParams, final String nick, final String context)
+	{
+		return apiApplyAlias(alias, params, origParams, nick, context);
 	}
 
 	/** Do argument processing for an Alias.

@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
+import uk.co.uwcs.choob.support.events.MessageEvent;
 
 /**
  * Set of general functions that tend to be frequently used in plugins.
@@ -91,13 +92,13 @@ public final class UtilModule
 	}
 
 	/** Split the parameters of a Message event into a List of Strings */
-	public String[] getParamArray( final Message mes )
+	public String[] getParamArray( final MessageEvent mes )
 	{
 		final String text = mes.getMessage();
 		return getParamArray(text);
 	}
 
-	private String[] getParamArray(final String str)
+	public String[] getParamArray(final String str)
 	{
 		final int offset = getTriggerOffset(str);
 
@@ -117,7 +118,7 @@ public final class UtilModule
 		return ret;
 	}
 
-	public List<String> getParams( final Message mes )
+	public List<String> getParams( final MessageEvent mes )
 	{
 		return Arrays.asList(getParamArray( mes ));
 	}
@@ -130,7 +131,11 @@ public final class UtilModule
 	 */
 	public String[] getParamArray( final Message mes, final int count )
 	{
-		final String text = mes.getMessage();
+		return getParamArray(mes.getMessage(), count);
+	}
+
+	public String[] getParamArray(final String text, final int count)
+	{
 		final int offset = getTriggerOffset(text);
 
 		return text.substring(offset).split("\\s+", count + 1);

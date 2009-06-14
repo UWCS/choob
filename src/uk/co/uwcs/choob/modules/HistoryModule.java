@@ -24,6 +24,7 @@ import uk.co.uwcs.choob.support.events.ChannelEvent;
 import uk.co.uwcs.choob.support.events.ChannelKick;
 import uk.co.uwcs.choob.support.events.ChannelMessage;
 import uk.co.uwcs.choob.support.events.Event;
+import uk.co.uwcs.choob.support.events.IRCRootEvent;
 import uk.co.uwcs.choob.support.events.Message;
 import uk.co.uwcs.choob.support.events.PrivateAction;
 import uk.co.uwcs.choob.support.events.PrivateMessage;
@@ -337,7 +338,7 @@ public final class HistoryModule
 	 * @param count The maximal number of messages to return.
 	 * @return A list of message objects, the first being the most recent.
 	 */
-	public List<Message> getLastMessages( final String channel, final Message cause, final int count )
+	public List<Message> getLastMessages( final String channel, final IRCRootEvent cause, final int count )
 	{
 		Connection dbCon = null;
 		PreparedStatement stat = null;

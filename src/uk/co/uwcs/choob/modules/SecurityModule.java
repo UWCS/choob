@@ -36,6 +36,7 @@ import uk.co.uwcs.choob.support.ChoobEventExpired;
 import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.ChoobFakeProtectionDomain;
 import uk.co.uwcs.choob.support.ChoobGeneralAuthError;
+import uk.co.uwcs.choob.support.ChoobInternalError;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
 import uk.co.uwcs.choob.support.ChoobPermission;
@@ -1316,6 +1317,10 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		if (group.getType() == 2) // plugins can poke their own groups!
 		{
 			final String pluginName = getPluginName(0);
+			if (null == pluginName) {
+				throw new ChoobInternalError("There's no plugin on the stack, addGroup(" + groupName + ") can't work");
+			}
+
 			if (!(group.getRootName().compareToIgnoreCase(pluginName)==0))
 				AccessController.checkPermission(new ChoobPermission("group.add."+groupName));
 		}

@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.ChannelAction;
+import uk.co.uwcs.choob.support.events.ChannelEvent;
 import uk.co.uwcs.choob.support.events.ChannelMessage;
 import uk.co.uwcs.choob.support.events.Message;
 import uk.co.uwcs.choob.support.events.PrivateAction;
@@ -107,6 +108,8 @@ public class MiscUtils
 			final String original = matcher.group(1);
 			final String replacement = matcher.group(2);
 
+			if (!(mes instanceof ChannelEvent))
+				return;
 			final List<Message> history = mods.history.getLastMessages(mes, 10);
 			final Pattern trigger = Pattern.compile(irc.getTriggerRegex());
 
