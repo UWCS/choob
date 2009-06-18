@@ -141,10 +141,7 @@ class Pipes
 				arg = alis[1] + arg;
 
 			if ("pipes".equalsIgnoreCase(cmds[0]) && "eval".equalsIgnoreCase(cmds[1]))
-				if ("".equals(stdin))
-					return eval(arg, this);
-				else
-					return eval(stdin, this);
+				return eval(arg, this, stdin);
 
 			return (String) mods.plugin.callGeneric(cmds[0], "command", cmds[1], arg);
 		}
