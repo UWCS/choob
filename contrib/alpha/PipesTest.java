@@ -114,12 +114,15 @@ class Pipes
 				Object res = mods.plugin.callAPI("alias", "get", cmd);
 				if (null != res)
 				{
-					cmd = (String) mods.plugin.callAPI("alias", "applyalias", res, alcmd.split(" "), arg, nick, target);
+					cmd = (String) mods.plugin.callAPI("alias", "applyalias", res, alcmd.split(" "), arg,
+							nick == null ? "" : nick,
+							target == null ? "" : target);
 					arg = "";
 				}
 			}
 			catch (ChoobNoSuchCallException e)
 			{
+				e.printStackTrace();
 				// Whatever, no alias support.
 			}
 
