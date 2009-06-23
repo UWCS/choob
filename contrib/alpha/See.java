@@ -11,7 +11,9 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TimeZone;
@@ -366,6 +368,50 @@ public class See
 			final int qnr = (int) ((t - (int) t) * 60);
 			irc.sendContextReply(mes, message + " midday is " + (int) t + ":"
 					+ (qnr < 10 ? "0" : "") + qnr + ".");
+		}
+		finally
+		{
+			mods.odb.freeConnection(conn);
+		}
+
+	}
+	
+	// Similar Sleeping patterns
+	public void commandBang(final Message mes) throws SQLException
+	{
+		final float diff = 1f;
+		
+		final Connection conn = mods.odb.getConnection();
+		try
+		{
+			String nick = mods.util.getParamString(mes).trim();
+
+			float midday;
+			int fail = 0;
+			if (nick.equals(""))
+			{
+				irc.sendContextReply(mes, "You must specify a nick to bang" + mes.getContext() + ".");
+			}
+			else
+			{
+				midday = midday(nick = mods.nick.getBestPrimaryNick(nick), conn);
+				final Set<String> nicks = new HashSet<String>();
+				for (final String n: irc.getUsers(mes.getContext())) {
+					final String userNick = mods.nick.getBestPrimaryNick(n);
+					try {
+						if(Math.abs(midday(userNick, conn)-midday) < diff) {
+							nicks.add(userNick);
+						}
+					} catch (RuntimeException e) {
+						fail++;
+					}
+				}
+				String acc = "";
+				for(String n: nicks)
+					acc += ", "+n;
+				irc.sendContextReply(mes, acc.substring(2));
+				irc.sendContextReply(mes, fail+" people are too unreliable to bang");
+			}
 		}
 		finally
 		{
