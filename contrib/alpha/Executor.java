@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PipedReader;
 import java.io.PipedWriter;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -24,8 +25,17 @@ import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
 public class Executor {
+	
+	private int interrupts = 10000;
+	
+	private final Modules mods;
+	private final IRCInterface irc;
 
-	private int interrupts = 10;
+	public Executor(final Modules mods, final IRCInterface irc)
+	{
+		this.mods = mods;
+		this.irc = irc;
+	}
 	
 	public String[] optionsGeneral = { "Interrupts" };
 	public String[] optionsGeneralDefaults = { "10" };
@@ -72,7 +82,7 @@ public class Executor {
 	public static void main(String[] args) {
 		// test it
 		try {
-			new Executor().generateAndRun("new java.util.concurrent.Callable<String>() { public String call() { while(true) {}; return \"badgers\"; } }.call()");
+			System.out.println(new Executor(null,null).generateAndRun("1+2+System.currentTimeMillis()"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.err.println("some fail");
@@ -85,10 +95,15 @@ public class Executor {
 		synchronized (this) {
 			localCounter = counter++;
 		}
+		
 		cls = "public class UniqueClass"+localCounter+
 		" implements java.util.concurrent.Callable<String> { public String call() {return String.valueOf("
 		+ expression + ");}}";
-		return compile("UniqueClass"+localCounter,cls,localCounter);
+		final String result = compile("UniqueClass"+localCounter,cls,localCounter);
+		if(mods != null) {
+			mods.odb.save(new Execution(expression,result));
+		}
+		return result;
 	}
 
 	/**
@@ -135,7 +150,53 @@ public class Executor {
 			throw new CompileException(errors);
 		}
 	}
+	//-----------------------------------------------
+	
+	public void webList(final PrintWriter out, final String params, final String[] user) {
+		out.println("HTTP/1.0 200 OK");
+		out.println("Content-Type: text/html");
+		out.println();
+		out.println("<html><body>");
+		try {
+			int id = Integer.parseInt(params);
+			final List<Execution> exec = mods.odb.retrieve(Execution.class, "WHERE id = "+id);
+			if(exec.size() > 0) {
+				final Execution res = exec.get(0);
+				out.println(res.content);
+				out.println("--------------------");
+				out.println("Resulted in:");
+				out.println("--------------------");
+				out.println(res.result);
+			} else {
+				out.println("PEEEEEEEEEEEEEEEEEEEEEEEEEEEEDO");
+			}
+		} catch (NumberFormatException e) {
+			out.println("Pass me a fucking integer");
+		}
+		out.println("</body></html>");
+	}
+	
 }
+
+class Execution
+{
+	public int id;
+
+	public String content;
+	public String result;
+
+	public Execution()
+	{
+		// Unhide
+	}
+
+	public Execution(final String content, final String result)
+	{
+		this.content = content;
+		this.result = result;
+	}
+}
+
 
 class CompileException extends Exception {
 	
