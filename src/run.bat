@@ -18,7 +18,11 @@ lib/pircbot.jar;^
 lib/js-rhino-1.6r2.jar;^
 lib/jersey.jar;^
 lib/jsr311-api.jar;^
-lib/asm-3.1.jar;^
+lib/asm-3.2.jar;^
+lib/asm-analysis-3.2.jar;^
+lib/asm-commons-3.2.jar;^
+lib/asm-tree-3.2.jar;^
+lib/asm-util-3.2.jar;^
  ^
 uk.co.uwcs.choob.ChoobMain
 REM 0 = clean, normal exit. Die.

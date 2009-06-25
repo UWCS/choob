@@ -99,7 +99,7 @@ FOR /D %%P IN ("%JavaHome%\*") DO (
 	SET Ok=0
 	IF "!Folder:~0,3!"=="jdk" (
 		IF "!Folder:~3,1!" GTR "1" SET Ok=1
-		IF "!Folder:~3,1!" EQU "1" IF "!Folder:~4,1!"=="." IF "!Folder:~5,1!" GEQ "5" SET Ok=1
+		IF "!Folder:~3,1!" EQU "1" IF "!Folder:~4,1!"=="." IF "!Folder:~5,1!" GEQ "6" SET Ok=1
 		IF "!Ok!"=="1" (
 			SET JavaHome=!FullPath!
 			GOTO :do-setup-java-found
@@ -123,10 +123,18 @@ SET PATH=%JavaHome%;%PATH%
 REM Must find MySQL install location!
 IF DEFINED MysqlHome GOTO :do-setup-mysql-set
 SET MysqlHome=
-FOR /R "%ProgFiles32%\MySQL" %%D IN (*.exe) DO (
+FOR /R "%ProgFiles64%\MySQL" %%D IN (*.exe) DO (
 	SET File=%%~nxD
 	IF "!File!"=="mysql.exe" (
 		SET MysqlHome=%%~dpD
+	)
+)
+IF NOT EXIST "%MysqlHome%\mysql.exe" (
+	FOR /R "%ProgFiles32%\MySQL" %%D IN (*.exe) DO (
+		SET File=%%~nxD
+		IF "!File!"=="mysql.exe" (
+			SET MysqlHome=%%~dpD
+		)
 	)
 )
 :do-setup-mysql-set
@@ -140,32 +148,32 @@ IF NOT EXIST "%MysqlHome%\mysql.exe" (
 ECHO Mysql folder       : %MysqlHome%
 
 REM Find Cygwin install.
-IF DEFINED CygwinHome GOTO :do-setup-cygwin-set
-SET CygwinHome=
-FOR /R "%ProgFiles32%\Cygwin" %%D IN (*.exe) DO (
-	SET File=%%~nxD
-	IF "!File!"=="bash.exe" (
-		SET CygwinHome=%%~dpD
-		GOTO :do-setup-cygwin-set
-	)
-)
-FOR /R "%SystemDrive%\Cygwin" %%D IN (*.exe) DO (
-	SET File=%%~nxD
-	IF "!File!"=="bash.exe" (
-		SET CygwinHome=%%~dpD
-		GOTO :do-setup-cygwin-set
-	)
-)
-:do-setup-cygwin-set
-IF NOT EXIST "%CygwinHome%\bash.exe" (
-	ECHO FATAL ERROR: Cannot find Cygwin bin folder.
-	ECHO              You can specify this using the "CygwinHome" environment
-	ECHO              variable. The folder specified must contain "bash.exe".
-	ECHO FATAL ERROR: Cannot find "bash.exe".
-	GOTO :EOF
-)
-ECHO Cygwin folder      : %CygwinHome%
-SET PATH=%PATH%;%CygwinHome%
+REM IF DEFINED CygwinHome GOTO :do-setup-cygwin-set
+REM SET CygwinHome=
+REM FOR /R "%ProgFiles32%\Cygwin" %%D IN (*.exe) DO (
+REM 	SET File=%%~nxD
+REM 	IF "!File!"=="bash.exe" (
+REM 		SET CygwinHome=%%~dpD
+REM 		GOTO :do-setup-cygwin-set
+REM 	)
+REM )
+REM FOR /R "%SystemDrive%\Cygwin" %%D IN (*.exe) DO (
+REM 	SET File=%%~nxD
+REM 	IF "!File!"=="bash.exe" (
+REM 		SET CygwinHome=%%~dpD
+REM 		GOTO :do-setup-cygwin-set
+REM 	)
+REM )
+REM :do-setup-cygwin-set
+REM IF NOT EXIST "%CygwinHome%\bash.exe" (
+REM 	ECHO FATAL ERROR: Cannot find Cygwin bin folder.
+REM 	ECHO              You can specify this using the "CygwinHome" environment
+REM 	ECHO              variable. The folder specified must contain "bash.exe".
+REM 	ECHO FATAL ERROR: Cannot find "bash.exe".
+REM 	GOTO :EOF
+REM )
+REM ECHO Cygwin folder      : %CygwinHome%
+REM SET PATH=%PATH%;%CygwinHome%
 GOTO :EOF
 
 
@@ -189,18 +197,18 @@ IF %JavaC% LSS 4 (
 ECHO OK: 'javac' found in path.
 
 REM Check for bash in path.
-SET Bash=0
-FOR /F "usebackq tokens=1 delims=" %%f IN (`bash --help 2^>^&1`) DO (
-	SET /A Bash=Bash + 1
-)
-IF %Bash% LSS 10 (
-	ECHO FATAL ERROR: Bash is not in the path.
-	ECHO              You can fix this by correcting the PATH environment
-	ECHO              variable manually, or by running the SETUP mode of GO
-	ECHO              as well ^("go setup test"^).
-	GOTO :EOF
-)
-ECHO OK: 'bash' found in path.
+REM SET Bash=0
+REM FOR /F "usebackq tokens=1 delims=" %%f IN (`bash --help 2^>^&1`) DO (
+REM 	SET /A Bash=Bash + 1
+REM )
+REM IF %Bash% LSS 10 (
+REM 	ECHO FATAL ERROR: Bash is not in the path.
+REM 	ECHO              You can fix this by correcting the PATH environment
+REM 	ECHO              variable manually, or by running the SETUP mode of GO
+REM 	ECHO              as well ^("go setup test"^).
+REM 	GOTO :EOF
+REM )
+REM ECHO OK: 'bash' found in path.
 
 REM Check bot.conf.
 IF NOT EXIST "bot.conf" (
@@ -340,13 +348,21 @@ ECHO ==== Compiling... ====
 CALL compile
 IF ERRORLEVEL 1 GOTO :do-run-compile-error
 COPY ..\.svn\dir-wcprops svn.data >nul
+:do-run-again
 ECHO ==== Running... ====
 CALL run once
 IF "%ERRORLEVEL%"=="0" GOTO :EOF
+IF "%ERRORLEVEL%"=="2" (
+	ECHO ==== Sleeping... ====
+	REM SLEEP 15
+	WAITFOR NothingChoob /T 15
+	GOTO :do-run-again
+)
 :do-run-compile-error
 
 ECHO ==== Sleeping... ====
-SLEEP 15
+REM SLEEP 15
+WAITFOR NothingChoob /T 15
 GOTO :do-run-top
 
 GOTO :EOF

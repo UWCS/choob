@@ -71,7 +71,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		this.allPlugins = new ChoobPluginMap();
 		this.compiler = ToolProvider.getSystemJavaCompiler();
 		if (compiler == null) {
-			throw new ChoobException("Compiler class not found.");
+			throw new ChoobException("Compiler class was not found");
 		}
 	}
 
