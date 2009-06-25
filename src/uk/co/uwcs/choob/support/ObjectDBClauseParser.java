@@ -135,7 +135,7 @@
                                 {
                                         String classN = (String)classList.get(i);
                                         joinText.append("ObjectStore s"+i);
-                                        whereText.append(" AND s"+i+".ClassName = \"" + classN + "\"");
+                                        whereText.append(" AND s"+i+".ClassName = \u005c"" + classN + "\u005c"");
                                         if (i < classList.size() - 1)
                                                 joinText.append(" INNER JOIN ");
                                 }
@@ -145,7 +145,7 @@
                                         String fullName = (String)joinList.get(i);
                                         int pos = fullName.lastIndexOf('.');
                                         String fieldName = fullName.substring(pos + 1);
-                                        joinText.append("ObjectStoreData o" + i + " ON s"+fieldClass.get(fullName)+".ObjectID = o" + i + ".ObjectID AND o" + i + ".FieldName = \"" + fieldName + "\"");
+                                        joinText.append("ObjectStoreData o" + i + " ON s"+fieldClass.get(fullName)+".ObjectID = o" + i + ".ObjectID AND o" + i + ".FieldName = \u005c"" + fieldName + "\u005c"");
                                 }
                                 whereText.append(")");
                                 joinWhere = whereText.toString();
@@ -155,7 +155,7 @@
 
                 private final String getTableName(String cls)
                 {
-                        return "_objectdb_" + cls.toLowerCase().replaceAll("\\.", "_");
+                        return "_objectdb_" + cls.toLowerCase().replaceAll("\u005c\u005c.", "_");
                 }
 
                 public String getFieldName(String name) throws ParseException
@@ -538,7 +538,7 @@
                                 if (i != 0)
                                         update.append(", ");
                                 String name = getFieldName(col.getName());
-                                inserts.append("INSERT IGNORE INTO ObjectStoreData SELECT ObjectID, \"" + col.getName() + "\", NULL, NULL, NULL FROM ObjectStore WHERE ClassName = \"" + cls + "\";\n");
+                                inserts.append("INSERT IGNORE INTO ObjectStoreData SELECT ObjectID, \u005c"" + col.getName() + "\u005c", NULL, NULL, NULL FROM ObjectStore WHERE ClassName = \u005c"" + cls + "\u005c";\u005cn");
 
                                 // Parse once for strings
                                 int hint = getHint((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN, false);
@@ -592,7 +592,7 @@
                                         idClause = parseExpression((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN);
                         }
 
-                        StringBuffer query = new StringBuffer("INSERT INTO ObjectStore VALUES(DEFAULT, '" + cls + "', " + idClause + ");\n");
+                        StringBuffer query = new StringBuffer("INSERT INTO ObjectStore VALUES(DEFAULT, '" + cls + "', " + idClause + ");\u005cn");
                         for(int i=0; i<cols.jjtGetNumChildren(); i++)
                         {
                                 SimpleNode col = (SimpleNode)cols.jjtGetChild(i);
@@ -601,7 +601,7 @@
                                         continue;
 
                                 String value = parseExpression((SimpleNode)col.jjtGetChild(0), HINT_UNKNOWN);
-                                query.append("INSERT INTO ObjectStoreData VALUES(LAST_INSERT_ID(), \"" + col.getName() + "\", " + value + ", " + value + ", " + value + ");\n");
+                                query.append("INSERT INTO ObjectStoreData VALUES(LAST_INSERT_ID(), \u005c"" + col.getName() + "\u005c", " + value + ", " + value + ", " + value + ");\u005cn");
                         }
                         {if (true) return query.toString();}
     throw new Error("Missing return statement in function");
@@ -1534,28 +1534,34 @@
     throw new Error("Missing return statement in function");
   }
 
+  /** Generated Token Manager. */
   public ObjectDBClauseParserTokenManager token_source;
   JavaCharStream jj_input_stream;
-  public Token token, jj_nt;
+  /** Current token. */
+  public Token token;
+  /** Next token. */
+  public Token jj_nt;
   private int jj_ntk;
   private int jj_gen;
   final private int[] jj_la1 = new int[36];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static {
-      jj_la1_0();
-      jj_la1_1();
+      jj_la1_init_0();
+      jj_la1_init_1();
    }
-   private static void jj_la1_0() {
+   private static void jj_la1_init_0() {
       jj_la1_0 = new int[] {0x8000,0x0,0x1e0000,0x3e00,0x3e00,0x200,0x10000,0x2000,0x200,0x2000000,0x1000000,0x80a00000,0x0,0x0,0x0,0x0,0x0,0x0,0x80200000,0x0,0x0,0x0,0x40000000,0x0,0x40000000,0x0,0x0,0x0,0x0,0x0,0x0,0xc000000,0xc000000,0x10000000,0x3c000000,0x400000,};
    }
-   private static void jj_la1_1() {
+   private static void jj_la1_init_1() {
       jj_la1_1 = new int[] {0x0,0x300000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1ffc007,0x1f8,0x1f8,0x600,0x600,0x1800,0x1800,0x1ffc007,0x1c00000,0x3c0000,0x300000,0x0,0x300000,0x300000,0x2000,0x2000,0x3c0000,0x2000,0x300000,0x2000,0x0,0x0,0x0,0x100000,0x2000,};
    }
 
+  /** Constructor with InputStream. */
   public ObjectDBClauseParser(java.io.InputStream stream) {
      this(stream, null);
   }
+  /** Constructor with InputStream and supplied encoding */
   public ObjectDBClauseParser(java.io.InputStream stream, String encoding) {
     try { jj_input_stream = new JavaCharStream(stream, encoding, 1, 1); } catch(java.io.UnsupportedEncodingException e) { throw new RuntimeException(e); }
     token_source = new ObjectDBClauseParserTokenManager(jj_input_stream);
@@ -1565,9 +1571,11 @@
     for (int i = 0; i < 36; i++) jj_la1[i] = -1;
   }
 
+  /** Reinitialise. */
   public void ReInit(java.io.InputStream stream) {
      ReInit(stream, null);
   }
+  /** Reinitialise. */
   public void ReInit(java.io.InputStream stream, String encoding) {
     try { jj_input_stream.ReInit(stream, encoding, 1, 1); } catch(java.io.UnsupportedEncodingException e) { throw new RuntimeException(e); }
     token_source.ReInit(jj_input_stream);
@@ -1578,6 +1586,7 @@
     for (int i = 0; i < 36; i++) jj_la1[i] = -1;
   }
 
+  /** Constructor. */
   public ObjectDBClauseParser(java.io.Reader stream) {
     jj_input_stream = new JavaCharStream(stream, 1, 1);
     token_source = new ObjectDBClauseParserTokenManager(jj_input_stream);
@@ -1587,6 +1596,7 @@
     for (int i = 0; i < 36; i++) jj_la1[i] = -1;
   }
 
+  /** Reinitialise. */
   public void ReInit(java.io.Reader stream) {
     jj_input_stream.ReInit(stream, 1, 1);
     token_source.ReInit(jj_input_stream);
@@ -1597,6 +1607,7 @@
     for (int i = 0; i < 36; i++) jj_la1[i] = -1;
   }
 
+  /** Constructor with generated Token Manager. */
   public ObjectDBClauseParser(ObjectDBClauseParserTokenManager tm) {
     token_source = tm;
     token = new Token();
@@ -1605,6 +1616,7 @@
     for (int i = 0; i < 36; i++) jj_la1[i] = -1;
   }
 
+  /** Reinitialise. */
   public void ReInit(ObjectDBClauseParserTokenManager tm) {
     token_source = tm;
     token = new Token();
@@ -1614,7 +1626,7 @@
     for (int i = 0; i < 36; i++) jj_la1[i] = -1;
   }
 
-  final private Token jj_consume_token(int kind) throws ParseException {
+  private Token jj_consume_token(int kind) throws ParseException {
     Token oldToken;
     if ((oldToken = token).next != null) token = token.next;
     else token = token.next = token_source.getNextToken();
@@ -1628,6 +1640,8 @@
     throw generateParseException();
   }
 
+
+/** Get the next Token. */
   final public Token getNextToken() {
     if (token.next != null) token = token.next;
     else token = token.next = token_source.getNextToken();
@@ -1636,6 +1650,7 @@
     return token;
   }
 
+/** Get the specific Token. */
   final public Token getToken(int index) {
     Token t = token;
     for (int i = 0; i < index; i++) {
@@ -1645,23 +1660,21 @@
     return t;
   }
 
-  final private int jj_ntk() {
+  private int jj_ntk() {
     if ((jj_nt=token.next) == null)
       return (jj_ntk = (token.next=token_source.getNextToken()).kind);
     else
       return (jj_ntk = jj_nt.kind);
   }
 
-  private java.util.Vector jj_expentries = new java.util.Vector();
+  private java.util.List<int[]> jj_expentries = new java.util.ArrayList<int[]>();
   private int[] jj_expentry;
   private int jj_kind = -1;
 
+  /** Generate ParseException. */
   public ParseException generateParseException() {
-    jj_expentries.removeAllElements();
+    jj_expentries.clear();
     boolean[] la1tokens = new boolean[57];
-    for (int i = 0; i < 57; i++) {
-      la1tokens[i] = false;
-    }
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
@@ -1682,19 +1695,21 @@
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;
-        jj_expentries.addElement(jj_expentry);
+        jj_expentries.add(jj_expentry);
       }
     }
     int[][] exptokseq = new int[jj_expentries.size()][];
     for (int i = 0; i < jj_expentries.size(); i++) {
-      exptokseq[i] = (int[])jj_expentries.elementAt(i);
+      exptokseq[i] = jj_expentries.get(i);
     }
     return new ParseException(token, exptokseq, tokenImage);
   }
 
+  /** Enable tracing. */
   final public void enable_tracing() {
   }
 
+  /** Disable tracing. */
   final public void disable_tracing() {
   }
 
