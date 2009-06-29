@@ -150,7 +150,10 @@ public class OutputFilter
 				j++;
 			}
 			if(toolong)
-				irc.sendContextReply(mes, "    -> " + j + " more items..");
+			{
+				irc.sendContextReply(mes, "    -> " + (j-1) +
+					" more items..");
+			}
 		}
 	}
 
