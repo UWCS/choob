@@ -605,7 +605,7 @@ public class Karma
 				karma = new KarmaChangeHolder(name);
 
 			// If it's "me", replace with user's nickname and force to down.
-			if (karma.instanceName.equals/*NOT IgnoreCase*/("me") || karma.instanceName.equalsIgnoreCase(nick))
+			if (karma.instanceName.equals/*NOT IgnoreCase*/("me") || karma.instanceName.equals/*NOT IgnoreCase*/("Me") || karma.instanceName.equalsIgnoreCase(nick))
 			{
 				karma.instanceName = nick;
 				karma.change--;
