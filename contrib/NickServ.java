@@ -1,19 +1,22 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.jibble.pircbot.Colors;
-
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.ChannelJoin;
@@ -25,508 +28,999 @@ import uk.co.uwcs.choob.support.events.PrivateNotice;
 import uk.co.uwcs.choob.support.events.QuitEvent;
 import uk.co.uwcs.choob.support.events.ServerResponse;
 
-
 /**
- * Choob nickserv checker
+ * Provides authentication for users based on their nickname.
  *
- * @author bucko
+ * A configurable authentication mechanism is available.
+ * UWCS NickServ and File based authentication are currently supported.
  *
- * Anyone who needs further docs for this module has some serious Java issues.
- * :)
+ * @author benji
  */
-
-// Holds the NickServ result
-class ResultObj
-{
-	int result;
-	long time;
-}
-
 public class NickServ
 {
+	private final Modules mods;
+	private final IRCInterface irc;
+
+	private static final int TIMEOUT_SECONDS = 20;
+	private static final int CACHE_TIMEOUT_SECONDS = 600;
+
 	public String[] info()
 	{
 		return new String[] {
-			"NickServ checker plugin.",
+			"Authentication checker plugin.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			"$Rev$$Date$"
+			"0.2"
 		};
 	}
 
-	private boolean ip_overrides=false; // If this is enabled, all nickserv checks will also be validates against a /USERIP. This can be poked on, but will be automatically disabled if a nickserv check succeeds or the file fails to read.
-
-	private static int TIMEOUT = 10000; // Timeout on nick checks.
-//	private static int CACHE_TIMEOUT = 3600000; // Timeout on nick check cache (1 hour).
-	// ^^ Can only be used once we can verify a user is in a channel and thus trust their online-ness.
-
-	private final Map<String,ResultObj> nickChecks;
-	Modules mods;
-	IRCInterface irc;
-
-	/** Enable horrible hacks. If you know which network you're going to be using the bot on, finalize this, and all of the other code will get removed by the compiler. */
-	boolean infooverride=false;
-
-	final Pattern validInfoReply=Pattern.compile("^(?:\\s*Nickname: ([^\\s]+) ?(<< ONLINE >>)?)|(?:The nickname \\[([^\\s]+)\\] is not registered)$");
-	final Pattern athemeNotRegistered=Pattern.compile("^([^\\s]+?) is not registered.$");
-	final Pattern athemeCurrentlyOnline=Pattern.compile("^Last seen.*?: now$");
-	final Pattern athemeCurrentlyOffline=Pattern.compile("^Last seen.*?:.*");
-	final Pattern athemeCurrentNickInfo=Pattern.compile("^Information on ([^\\s]+) ?.*");
-
-	private String nickCheck;
-	private String nickNeedCheck;
-
+	//List of providers that can be configured to provider authentication
+	private Map<String, CanProvideAuth> authProviders = new HashMap<String, CanProvideAuth>();
+	
 	public NickServ(final Modules mods, final IRCInterface irc)
 	{
-		nickChecks = new HashMap<String,ResultObj>();
-		this.irc = irc;
 		this.mods = mods;
-		if (infooverride==false)
-			// Check ensure that our NickServ is sane, and, if not, enable workarounds.
-			mods.interval.callBack(null, 100);
+		this.irc = irc;
+		authProviders.put("UWCS", new UWCSNickServInterpreter(mods, irc));
+		authProviders.put("FILE", new UserFileAuthProvider(mods, irc));
 	}
 
-	// This is triggered by the constructor.
-	public synchronized void interval( final Object parameter )
+	/**
+	 * Check the authentication status for a user.
+	 * @param nick	The nick of the user to check
+	 * @return	-1 if unknown, 0 if not registered, 1 if not identified, 3 if identified
+	 */
+	public int apiStatus(final String nick)
 	{
-		final String nick = "ignore-me"; // It's completely irrelevant what this nick is.
-		getNewNickCheck( nick );
+		return checkCached(nick).getId();
 	}
 
-	public void destroy()
-	{
-		synchronized(nickChecks)
-		{
-			final Iterator<String> nicks = nickChecks.keySet().iterator();
-			while(nicks.hasNext()) {
-				final ResultObj result = getNickCheck(nicks.next());
-				synchronized(result)
-				{
-					result.notifyAll();
-				}
-			}
-		}
-	}
-
-	public String[] helpApi = {
-		  "NickServ allows your plugin to poke NickServ and get auth status on"
-		+ " nicknames. It gives you two API methods: Check and Status. Both"
-		+ " take a single String parameter and Check returns a Boolean, Status"
-		+ " an Integer. If the status is 3, the nick is considered authed,"
-		+ " anything lower is not."
-	};
-
-	public String[] helpCommandCheck = {
-		"Check if someone's authed with NickServ.",
-		"[<NickName>]",
-		"<NickName> is an optional nick to check"
-	};
-	public void commandCheck( final Message mes ) throws ChoobException
-	{
-		String nick = mods.util.getParamString( mes );
-		if (nick.length() == 0)
-			nick = mes.getNick();
-
-		final int check1 = ((Integer)mods.plugin.callAPI("NickServ", "Status", nick)).intValue();
-		if ( check1 == 3 )
-		{
-			irc.sendContextReply(mes, nick + " is authed (" + check1 + ")!");
-		}
-		else if ( check1 == 1 )
-		{
-			irc.sendContextReply(mes, nick + " is not identified (" + check1 + ")!");
-		}
-		else
-		{
-			irc.sendContextReply(mes, nick + " is not registered (" + check1 + ")!");
-		}
-	}
-
-	public int apiStatus( final String nick )
-	{
-		ResultObj result = getCachedNickCheck( nick.toLowerCase() );
-		if (result != null)
-		{
-			return result.result;
-		}
-
-		result = getNewNickCheck( nick.toLowerCase() );
-
-		synchronized(result)
-		{
-			try
-			{
-				result.wait(30000); // Make sure if NickServ breaks we're not screwed
-			}
-			catch (final InterruptedException e)
-			{
-				// Ooops, timeout
-				ip_overrides=true;
-				return -1;
-			}
-		}
-		final int status = result.result;
-		return status;
-	}
-
+	/**
+	 * Check the authentication status for a user.
+	 * @param nick	The nick of the user to check
+	 * @return	true if authenticated, false otherwise.
+	 */
 	public boolean apiCheck( final String nick )
 	{
 		return apiCheck( nick, false );
 	}
 
-	public boolean apiCheck( final String nick, final boolean assumption )
+	/**
+	 * Check the authentication status for a user.
+	 * @param nick	The nick of the user to check
+	 * @param assumption The authentication status to assume
+	 * @return	true if authenticated, assumption otherwise
+	 */
+	public boolean apiCheck(final String nick, boolean assumption)
 	{
-		final int stat = apiStatus( nick );
-		if (stat == -1)
+		AuthStatus status = checkCached(nick);
+		if (status.getId() == -1)
 			return assumption;
-		return stat >= 3;
+		
+		return status.getId() >= 3;
 	}
 
-	private ResultObj getNewNickCheck( final String nick )
+	/**
+	 * Check the authentication status for either the user specified or the requestor.
+	 * @param mes	The request message
+	 */
+	public void commandCheck(final Message mes)
 	{
-		ResultObj result;
-		synchronized(nickChecks)
+		final String nick = getNick(mes);
+		final AuthStatus status = checkCached(nick);
+		irc.sendContextReply(mes, nick + " " + status.getExplanation());
+	}
+
+	/**
+	 * Clear the authentication cache for either the user specified or the requestor.
+	 * @param mes The request message.
+	 */
+	public void commandClearCache(final Message mes)
+	{
+		String nick = getNick(mes);
+		cache.remove(nick);
+		irc.sendContextReply(mes, "Ok, cleared cache for " + nick);
+	}
+
+	/**
+	 * Obtains the nick to check from a message.
+	 * @param mes	The message requesting a check
+	 * @return	Either the paramstring, or the requestor's nick if no parameters were supplied.
+	 */
+	private final String getNick(Message mes)
+	{
+		final String nick = mods.util.getParamString( mes );
+		if (nick.length() == 0)
+			return mes.getNick();
+		else
+			return nick;
+	}
+
+	/**
+	 * Perform a check for the authentication status of a particular user.
+	 * Utilising the cache.
+	 * @param nick	The nick to check the authentication status of
+	 * @return
+	 */
+	private AuthStatus checkCached(final String nick)
+	{
+		//First check the cache
+		return cache.get(nick, new Invokable<AuthStatus>()
 		{
-			result = nickChecks.get( nick );
-			if ( result == null )
+			//If we missed te cache we'll...
+			public AuthStatus invoke()
 			{
-				// Not already waiting on this one
-				result = new ResultObj();
-				result.result = -1;
-				this.nickNeedCheck = nick;
-				AccessController.doPrivileged( new PrivilegedAction<Object>() {
-					public Object run()
+				//Update the cache with the directly retrieved result
+				return cache.put(nick,checkDirectly(nick), new InvokableI<AuthStatus, Boolean>()
+				{
+					//Except where the result is unknown
+					public Boolean invoke(AuthStatus t)
 					{
-						irc.sendMessage("NickServ", (infooverride ? "INFO " : "STATUS ") + nick);
-						if (ip_overrides)
-						{
-							irc.sendRawLine("USERIP " + nick);
-							irc.sendRawLine("USERHOST " + nick);
-						}
-						return null;
-					}
+						return t instanceof UnknownStatus;
+					}	
 				});
-				nickChecks.put( nick, result );
 			}
-		}
-		return result;
+		});
 	}
 
-	private ResultObj getNickCheck( final String nick )
+
+	// Options - Allow the authentication provider to be changed at runtime
+	// to switch to userip list if nickserv is not available
+	// or to switch to another provider on another network
+	public String[] optionsGeneral = { "AuthProvider" };
+	public String[] optionsGeneralDefaults = { "UWCS" };
+	/**
+	 * Ensure the new option is a valid configured provider
+	 * @param optionValue	The option value to check
+	 * @return	true if it is a valid value, false otherwise
+	 */
+	public boolean optionCheckGeneralAuthProvider( final String optionValue ) { return authProviders.containsKey(optionValue); }
+
+	/**
+	 * Looks up the currently configured authentication provider via the options plugin
+	 * @return
+	 */
+	private CanProvideAuth getCurrentAuthProvider()
 	{
-		synchronized(nickChecks)
+		try
 		{
-			return nickChecks.get( nick );
+			CanProvideAuth configured = authProviders.get(mods.plugin.callAPI("Options", "GetGeneralOption", optionsGeneral[0], optionsGeneralDefaults[0]).toString());
+			if (configured == null)
+				return authProviders.get(optionsGeneralDefaults[0]);
+
+			return configured;
+		} catch (ChoobNoSuchCallException e)
+		{
+			return authProviders.get(optionsGeneralDefaults[0]);
 		}
 	}
 
-	private ResultObj getCachedNickCheck( final String nick )
+	/**
+	 * A queue for pending nick checks. If we only allow one concurrent check then we avoid the problem of
+	 * matching up replies with requests with insufficient state information.
+	 *
+	 * [Authentication Request]   [Multiple server responses]
+	 *         ^  |                            |
+	 *         |  |                            v
+	 *         |  +----------------> [Request Queue]-[Result or Timeout]--+
+	 *         |                                                          |
+	 *         +-----------------------[Response]-------------------------+
+	 */
+	private final ChoobSucksScope.SingleBlockingQueueWithTimeOut<AbstractReplyHandler> commands = new ChoobSucksScope().new SingleBlockingQueueWithTimeOut<AbstractReplyHandler>(TIMEOUT_SECONDS);
+
+	/**
+	 * A cache with fixed timeout to cache authentication results in.
+	 */
+	private final ChoobSucksScope.CacheWithTimeout<AuthStatus> cache = new ChoobSucksScope().new CacheWithTimeout<AuthStatus>(CACHE_TIMEOUT_SECONDS);
+
+
+	/**
+	 * Check the authentication status of a user directly, without going through the cache
+	 * @param nick	The nick to check the status of
+	 * @return	The determined authentication status
+	 */
+	private AuthStatus checkDirectly(final String nick)
 	{
-		ResultObj result;
-		synchronized(nickChecks)
+		final CanProvideAuth nickserv = getCurrentAuthProvider();
+
+		try
 		{
-			result = nickChecks.get( nick );
-			if ( result == null )
-				// !!! This should never really happen
-				return null;
-
-			if (result.result == -1)
-				return null;
-
-			if ( result.time + TIMEOUT < System.currentTimeMillis() )
+			return commands.put(new CanProvideAuthReplyHandler(nickserv)).doThis(new Action<Void>()
 			{
-				// expired!
-				// TODO - do this in an interval...
-				nickChecks.remove( nick );
-				return null;
-			}
-		}
-		return result;
-	}
-
-	public String[] optionsGeneral = { "Password" };
-	public boolean optionCheckGeneralPassword( final String value ) { return true; }
-	public String[] helpOptionPassword = {
-		"Set this to the bot's NickServ password to make it identify with NickServ."
-	};
-
-	public String[] helpCommandEnableOverride = {
-		"Private use only, mmkay?"
-	};
-	public void commandEnableOverride(final Message mes)
-	{
-		ip_overrides=true;
-		irc.sendContextReply(mes, "Kay.");
-	}
-
-	public void onServerResponse(final ServerResponse resp)
-	{
-		if (resp.getCode() == 401) // 401 Nick Not Found.
-		{
-			final Matcher ma = Pattern.compile("^[^ ]+ ([^ ]+) ").matcher(resp.getResponse().trim());
-			if (ma.find() && ma.group(1).trim().toLowerCase().equals("nickserv"))
-				ip_overrides=true;
-		}
-
-		if (ip_overrides && resp.getCode()==340 || resp.getCode()==302) // USERIP (and USERHOST) response, not avaliable through PircBOT, gogo magic numbers.
-		{
-			/*
-			 * General response ([]s as quotes):
-			 * [Botnick] :[Nick]=+[User]@[ip, or, more likely, hash]
-			 *
-			 * for (a terrible) example:
-			 * Choobie| :Faux=+Faux@87029A85.60BE439B.C4C3F075.IP
-			 */
-
-			final Matcher ma=Pattern.compile("^[^ ]+ :([^=]+)=(.*)").matcher(resp.getResponse().trim());
-			if (!ma.find())
-			{
-				System.err.println("Unexpected non-match.");
-				return;
-			}
-			final ResultObj result = getNickCheck( ma.group(1).trim().toLowerCase() );
-			if ( result == null )
-			{
-				System.out.println("Something else handled it (" + ma.group(1).trim().toLowerCase() + "), we shouldn't be here.");
-				ip_overrides=false;
-				return;
-			}
-
-			System.out.println("Checking the file for \"" + ma.group(2) + "\".");
-
-			synchronized(result)
-			{
-				String line;
-
-				result.result = 0;
-
-				try
+				public void doWith(Void t)
 				{
-					final BufferedReader allowed = new BufferedReader(new FileReader("userip.list"));
-
-					while((line=allowed.readLine())!=null)
-						if (ma.group(2).equals(line))
-						{
-							result.result=3;
-							break;
-						}
+					nickserv.sendRequest(nick);
+					System.out.println("Sent request to auth handler");
 				}
-				catch (final IOException e)
-				{
-					// e.printStackTrace();
-					ip_overrides=false;
-					System.err.println("Error reading userip.list, disabling overrides.");
-				}
+			}).get(TIMEOUT_SECONDS, TimeUnit.SECONDS, new UnknownStatus());
 
-				result.time = System.currentTimeMillis();
-
-				result.notifyAll();
-			}
+		} catch (InterruptedException e)
+		{
+			return new UnknownStatus();
+		} catch (ExecutionException e)
+		{
+			throw new RuntimeException(e);
+		} catch (TimeoutException e)
+		{
+			return new UnknownStatus();
 		}
+		
 	}
 
 
+	/**
+	 * When we recieve a private notice from the bot we want to pass it off to any pending authentication requests.
+	 * @param mes	The notice we recieved
+	 */
 	public void onPrivateNotice( final Message mes )
 	{
-		if ( ! (mes instanceof PrivateNotice) )
-			return; // Only interested in private notices
-
-		if ( ! mes.getNick().toLowerCase().equals( "nickserv" ) )
-			return; // Not from NickServ --> also don't care
-
-		if (!infooverride && (mes.getMessage().trim().toLowerCase().equals("unknown command [status]") || mes.getMessage().trim().equals("You are not logged in.")))
+		AbstractReplyHandler handler = commands.peek();
+		if (handler != null)
 		{
-			// Ohes nose, horribly broken network! Let's pretend that it didn't just slap us in the face with a glove.
-			System.err.println("Reverting to badly broken NickServ handling.");
-
-			infooverride = true;
-
-			synchronized (nickChecks)
+			try
 			{
-				nickChecks.clear(); // <-- Ooh, lets break things.
-			}
-
-			// Any pending nick checks will fail, but.. well, bah.
-			return;
-		}
-
-		final List<String> params = mods.util.getParams( mes );
-
-		String nick;
-		int status = 0;
-		if (infooverride)
-		{
-			// Atheme:
-			final Matcher anr = athemeNotRegistered.matcher(mes.getMessage());
-			final Matcher aon = athemeCurrentlyOnline.matcher(mes.getMessage());
-			final Matcher aoff = athemeCurrentlyOffline.matcher(mes.getMessage());
-			final Matcher acni = athemeCurrentNickInfo.matcher(mes.getMessage());
-
-			if(acni.matches())
+				handler.handle(mes);
+				commands.remove(handler);
+			} catch (NotInterestedInReplyException e)
 			{
-				nick = acni.group(1);
-				if(Colors.removeFormattingAndColors(nick).equalsIgnoreCase(this.nickNeedCheck))
-				{
-					this.nickCheck = Colors.removeFormattingAndColors(nick);
-					this.nickNeedCheck = null;
-				}
-				return;
-			}
-
-			if (anr.matches())
-			{
-				nick = Colors.removeFormattingAndColors(anr.group(1));
-				if(Colors.removeFormattingAndColors(nick).equalsIgnoreCase(this.nickCheck))
-				{
-					status = 0;
-					this.nickCheck = null;
-				}
-			}
-			else if (aon.matches())
-			{
-				nick = this.nickCheck;
-				this.nickCheck = null;
-				status = 3;
-			}
-			else if (aoff.matches())
-			{
-				nick = this.nickCheck;
-				this.nickCheck = null;
-				status = 1;
-			}
-			else
-			{
-				if (mes.getMessage().indexOf("Nickname: ") == -1 && mes.getMessage().indexOf("The nickname [") == -1)
-					return; // Wrong type of message!
-
-				final Matcher ma = validInfoReply.matcher(Colors.removeFormattingAndColors(mes.getMessage()));
-
-				if (!ma.matches())
-					return;
-
-				nick = ma.group(1);
-
-				if (nick == null)
-				{
-					// Unregistered
-					nick = ma.group(3);
-					status = 0;
-				}
-				else
-					// Registered
-					status = ma.group(2) == null || ma.group(2).equals("") ? 1 : 3;
+				//wait for next private notice.
 			}
 		}
-		else
-		{
-			if ( mes.getMessage().matches(".*(?i:/msg NickServ IDENTIFY).*") )
-			{
-				// must identify
-				String pass = null;
-				try
-				{
-					pass = (String)mods.plugin.callAPI("Options", "GetGeneralOption", "password");
-				}
-				catch (final ChoobNoSuchCallException e)
-				{
-					System.err.println("Options plugin not loaded; can't get NickServ password.");
-					return;
-				}
-
-				if (pass != null)
-				{
-					System.err.println("Sending NickServ password!");
-					irc.sendContextMessage(mes, "IDENTIFY " + pass);
-				}
-				else
-					System.err.println("Password option for plugin NickServ not set...");
-				return;
-			}
-			else if ( params.size() > 2 && params.get(1).equalsIgnoreCase("is") )
-			{
-				// Online! But not registered (I'd hope)
-				nick = params.get(0);
-				status = 1;
-			}
-			else if ( params.size() == 4 && params.get(0).equalsIgnoreCase("nickname") && params.get(2).equalsIgnoreCase("isn't") && params.get(3).equalsIgnoreCase("registered.") )
-			{
-				// Registered but offline.
-				nick = Colors.removeFormattingAndColors(params.get(1));
-				status = 0;
-			}
-			else if ( params.get(0).equalsIgnoreCase("status") )
-			{
-				nick = params.get(1);
-				status = Integer.valueOf(params.get(2)).intValue();
-
-				if (status == 0)
-				{
-					// We'd like 0 = not registered, 1 = offline/not identified.
-					// As such we need to check existence too. now.
-					irc.sendContextMessage(mes, "INFO " + nick);
-					return;
-				}
-			}
-			else
-				return; // Wrong type of message!
-		}
-
-		final ResultObj result = getNickCheck( nick.toLowerCase() );
-		if ( result == null )
-			return; // XXX
-
-		synchronized(result)
-		{
-			result.result = status;
-			result.time = System.currentTimeMillis();
-
-			result.notifyAll();
-		}
-
-		ip_overrides=false;
-
 	}
 
-	// Expire old checks when appropriate...
+	/**
+	 * When we recieve a server response from the bot we want to pass it off to any pending authentication requests.
+	 * @param resp	The response we recieved
+	 */
+	public void onServerResponse(final ServerResponse resp)
+	{
+		AbstractReplyHandler handler = commands.peek();
+		if (handler != null)
+		{
+			try
+			{
+				handler.handle(resp);
+				commands.remove(handler);
+			} catch (NotInterestedInReplyException e)
+			{
+				//wait for next private notice.
+			}
+		}
+	}
 
+	// Expire old cache when appropriate...
 	public void onNickChange( final NickChange nc )
 	{
-		synchronized(nickChecks)
-		{
-			nickChecks.remove(nc.getNick());
-			nickChecks.remove(nc.getNewNick());
-		}
+		cache.remove(nc.getNick());
+		cache.remove(nc.getNewNick());
 	}
 
 	public void onJoin( final ChannelJoin cj )
 	{
-		synchronized(nickChecks)
-		{
-			nickChecks.remove(cj.getNick());
-		}
+		cache.remove(cj.getNick());
 	}
 
 	public void onKick( final ChannelKick ck )
 	{
-		synchronized(nickChecks)
-		{
-			nickChecks.remove(ck.getTarget());
-		}
+		cache.remove(ck.getTarget());
 	}
 
 	public void onPart( final ChannelPart cp )
 	{
-		synchronized(nickChecks)
-		{
-			nickChecks.remove(cp.getNick());
-		}
+		cache.remove(cp.getNick());
 	}
 
 	public void onQuit( final QuitEvent qe )
 	{
-		synchronized(nickChecks)
+		cache.remove(qe.getNick());
+	}
+}
+
+/**
+ * Interface auth providers need to implement.
+ * sendRequest will be called to send message off to nickserv/userip/whatever
+ * recieveReply overloads will be called with responses.
+ * 
+ * @author benji
+ */
+interface CanProvideAuth
+{
+	/**
+	 * Sends a request to whatever providers your authentication on the IRC server
+	 * @param nick
+	 */
+	public void sendRequest(String nick);
+
+	/**
+	 * Recieve a private message reply
+	 * @param mes	The message recieved
+	 * @return	The authstatus if we could determine it.
+	 * @throws NotInterestedInReplyException	If this reply does not allow us to determine the authstatus of the user.
+	 */
+	public AuthStatus receiveReply(Message mes) throws NotInterestedInReplyException;
+
+	/**
+	 * Recieve a server-response reply
+	 * @param resp	The response recieved
+	 * @return	The authstatus if we could determine it.
+	 * @throws NotInterestedInReplyException	If this reply does not allow us to determine the authstatus of the user.
+	 */
+	public AuthStatus receiveReply(ServerResponse resp) throws NotInterestedInReplyException;
+}
+
+/**
+ * An exception to indicate that we're not interested
+ * in a particular server reply or message. So our handler
+ * should stay in the queue
+ * 
+ * @author benji
+ */
+class NotInterestedInReplyException extends Exception
+{
+	
+}
+
+
+/**
+ * Choob appears to dislike enums.
+ *
+ * An authentication status type.
+ *
+ * We need integer ids for backwards compatibility.
+ * We also need a human readable description.
+ */
+abstract class AuthStatus
+{
+	private final int id;
+	private final String name;
+
+	protected AuthStatus(int id, String name)
+	{
+		this.id = id;
+		this.name = name;
+	}
+
+	public int getId()
+	{
+		return id;
+	}
+
+	public String getExplanation()
+	{
+		return "is " + name + " (" + id + ")!";
+	}
+
+}
+
+
+class UnknownStatus extends AuthStatus
+{
+	public UnknownStatus()
+	{
+		super(-1,"unknown");
+	}
+}
+
+class NotRegisteredStatus extends AuthStatus
+{
+	public NotRegisteredStatus()
+	{
+		super(0, "not registered");
+	}
+}
+
+class NotIdentifiedStatus extends AuthStatus
+{
+	public NotIdentifiedStatus()
+	{
+		super(1,"not identified");
+	}
+}
+
+class AuthenticatedStatus extends AuthStatus
+{
+	public AuthenticatedStatus()
+	{
+		super(3,"authed");
+	}
+}
+
+
+interface Action<T>
+{
+	public void doWith(T t);
+}
+
+interface Invokable<T>
+{
+	public T invoke();
+}
+
+interface InvokableI<T,R>
+{
+	public R invoke(T t);
+}
+
+interface ReplyHandler extends DefaultFuture<AuthStatus>
+{
+	public void handle(Message reply) throws NotInterestedInReplyException;
+}
+
+interface CanGetStatus
+{
+	public AuthStatus replyToStatus(Message reply) throws NotInterestedInReplyException;
+}
+
+/**
+ * A Future that allows us to specify a default value instead of null when the timeout expires.
+ * @author benji
+ */
+interface DefaultFuture<T> extends Future<T>
+{
+	public T get(long timeout, TimeUnit unit, T defaultValue) throws InterruptedException, ExecutionException, TimeoutException;
+}
+
+/**
+ * Handle replies from the server, delegating to abstract methods.
+ *
+ * Implements Future so that we can retreive the result of the authentication.
+ * 
+ * @author benji
+ */
+abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
+{
+	private boolean canceled = false;
+	private final Object cancelledLock = new Object();
+
+	//We can only have one Future result
+	private final BlockingQueue<AuthStatus> queue = new ArrayBlockingQueue<AuthStatus>(1);
+
+	public abstract AuthStatus replyToStatus(Message reply) throws NotInterestedInReplyException;
+	public abstract AuthStatus replyToStatus(ServerResponse response) throws NotInterestedInReplyException;
+
+	/**
+	 * Handles a message reply, converting the implemented handler to a Future result.
+	 * @param reply	The reply to handle
+	 * @throws NotInterestedInReplyException	If the implementation is not interested in this reply.
+	 */
+	public void handle(Message reply) throws NotInterestedInReplyException
+	{
+		try
 		{
-			nickChecks.remove(qe.getNick());
+			queue.put(replyToStatus(reply));
+		} catch (InterruptedException e)
+		{
+			//meh
+		}
+	}
+	
+	/**
+	 * Handles a message reply, converting the implemented handler to a Future result.
+	 * @param resp	The reply to handle
+	 * @throws NotInterestedInReplyException	If the implementation is not interested in this reply.
+	 */
+	public void handle(ServerResponse resp) throws NotInterestedInReplyException
+	{
+		try
+		{
+			queue.put(replyToStatus(resp));
+		} catch (InterruptedException e)
+		{
+			//meh
+		}
+	}
+
+	/**
+	 * @{@inheritDoc}
+	 */
+	public boolean cancel(boolean mayInterrupt)
+	{
+		if (this.isDone())
+			return false;
+
+		synchronized(cancelledLock)
+		{
+			return this.canceled = true;
+		}
+	}
+
+	/**
+	 * @{@inheritDoc}
+	 */
+	public boolean isCancelled()
+	{
+		synchronized(cancelledLock)
+		{
+			return this.canceled;
+		}
+	}
+
+	/**
+	 * @{@inheritDoc}
+	 */
+	public boolean isDone()
+	{
+		return queue.peek() != null;
+	}
+
+	/**
+	 * @{@inheritDoc}
+	 */
+	public AuthStatus get() throws InterruptedException, ExecutionException
+	{
+		return queue.poll();
+	}
+
+	/**
+	 * @{@inheritDoc}
+	 */
+	public AuthStatus get(long timeout , TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException
+	{
+		return queue.poll(timeout, unit);
+	}
+	
+	/**
+	 * @{@inheritDoc}
+	 */
+	public AuthStatus get(long timeout, TimeUnit unit, AuthStatus defaultStatus) throws InterruptedException, ExecutionException, TimeoutException
+	{
+		AuthStatus status = get(timeout,unit);
+		if (status != null)
+			return status;
+
+		return defaultStatus;
+	}
+
+}
+
+
+/**
+ * Implementation of AbstractReplyHandler that delegates
+ * authentication to an auth provider
+ * 
+ * @author benji
+ */
+class CanProvideAuthReplyHandler extends AbstractReplyHandler
+{
+	private final CanProvideAuth nickserv;
+
+	public CanProvideAuthReplyHandler(CanProvideAuth nickserv)
+	{
+		this.nickserv = nickserv;
+	}
+
+	@Override
+	public AuthStatus replyToStatus(Message reply) throws NotInterestedInReplyException
+	{
+		return nickserv.receiveReply(reply);
+	}
+
+	@Override
+	public AuthStatus replyToStatus(ServerResponse reply) throws NotInterestedInReplyException
+	{
+		return nickserv.receiveReply(reply);
+	}
+}
+
+/**
+ * Default implementation of CanProvideAuth.
+ *
+ * Talks to UWCS Nickserv or Freenode Nickserv
+ * 
+ * @author benji
+ */
+class UWCSNickServInterpreter implements CanProvideAuth
+{
+	private final Modules mods;
+	private final IRCInterface irc;
+
+	class PatternStatusPair
+	{
+		private final Pattern pattern;
+		private final AuthStatus status;
+
+		public PatternStatusPair(String pattern, AuthStatus status)
+		{
+			this.pattern = Pattern.compile(pattern);
+			this.status = status;
+		}
+
+		public Pattern getPattern()
+		{
+			return pattern;
+		}
+
+		public AuthStatus getStatus()
+		{
+			return status;
+		}
+	}
+
+	/**
+	 * Mappings of replies to statuses
+	 */
+	private final List<PatternStatusPair> statuses = Arrays.asList
+	(
+		new PatternStatusPair("^([^\\s]+?) is not registered.$", new NotRegisteredStatus()),
+		new PatternStatusPair("^Last seen.*?: now$", new AuthenticatedStatus()),
+		new PatternStatusPair("^Last seen.*?:.*", new NotIdentifiedStatus()),
+		new PatternStatusPair("^\\*\\*\\* End of Info \\*\\*\\*$", new UnknownStatus())
+	);
+
+	public UWCSNickServInterpreter(final Modules mods, final IRCInterface irc)
+	{
+		this.mods = mods;
+		this.irc = irc;
+	}
+
+	/**
+	 * Ask Nickserv for info on a user.
+	 * @param nick	The user to request info for
+	 */
+	public void sendRequest(final String nick)
+	{
+		irc.sendMessage("NickServ", "INFO " + nick);
+	}
+
+	/**
+	 * Tries to convert nickserv replies to an Authentication Status
+	 * @param mes	The message recieved back from the server
+	 * @return	The determined authentication status
+	 * @throws NotInterestedInReplyException	If we couldn't determine the authentication status from this message.
+	 */
+	public AuthStatus receiveReply(final Message mes) throws NotInterestedInReplyException
+	{
+		if ( ! (mes instanceof PrivateNotice) )
+			throw new NotInterestedInReplyException(); // Only interested in private notices
+
+		if ( ! mes.getNick().toLowerCase().equals( "nickserv" ) )
+			throw new NotInterestedInReplyException(); // Not from NickServ --> also don't care
+
+		final String reply = mes.getMessage();
+
+		System.out.println("receiveReply " + reply);
+
+		for (PatternStatusPair status : statuses)
+		{
+			System.out.println("Checking " + status.getPattern().pattern());
+			if (status.getPattern().matcher(reply).matches())
+			{	
+				System.out.println("Matched! returning " + status.getStatus().getId());
+				return status.getStatus();
+			}
+		}
+
+		System.out.println("None matched, ignoring");
+		throw new NotInterestedInReplyException();
+	}
+
+	/**
+	 * For Nickserv we're not interested in server responses
+	 * @param resp	The response from the server
+	 * @return	Never
+	 * @throws NotInterestedInReplyException	Always
+	 */
+	public AuthStatus receiveReply(ServerResponse resp) throws NotInterestedInReplyException
+	{
+		throw new NotInterestedInReplyException();
+	}
+}
+
+/**
+ * Implementation of authentication provider backed onto a userip.list file.
+ *
+ * Useful when Nickserv is unavailable.
+ * 
+ * @author benji
+ */
+class UserFileAuthProvider implements CanProvideAuth
+{
+	private final Modules mods;
+	private final IRCInterface irc;
+
+	public UserFileAuthProvider(final Modules mods, final IRCInterface irc)
+	{
+		this.mods = mods;
+		this.irc = irc;
+	}
+
+	/**
+	 * Request both the USERIP and USERHOST of the user
+	 * @param nick	The user to request details for
+	 */
+	public void sendRequest(final String nick)
+	{
+		irc.sendRawLine("USERIP " + nick);
+		irc.sendRawLine("USERHOST " + nick);
+	}
+
+	/**
+	 * We're not interested in message replies
+	 * @param mes	The message recieved
+	 * @return	Never
+	 * @throws NotInterestedInReplyException	Always
+	 */
+	public AuthStatus receiveReply(final Message mes) throws NotInterestedInReplyException
+	{
+		throw new NotInterestedInReplyException();
+	}
+
+	/**
+	 * Converts a server response into an Authentication Status
+	 * @param resp	The response from the server
+	 * @return	The determined authentication status
+	 * @throws NotInterestedInReplyException	If this server response does not allow us to determine the authentication status
+	 */
+	public AuthStatus receiveReply(ServerResponse resp) throws NotInterestedInReplyException
+	{
+		if (!(resp.getCode()==340 || resp.getCode()==302)) // USERIP (and USERHOST) response, not avaliable through PircBOT, gogo magic numbers.
+			throw new NotInterestedInReplyException();
+
+		/*
+		 * General response ([]s as quotes):
+		 * [Botnick] :[Nick]=+[User]@[ip, or, more likely, hash]
+		 *
+		 * for (a terrible) example:
+		 * Choobie| :Faux=+Faux@87029A85.60BE439B.C4C3F075.IP
+		 */
+
+		final Matcher ma=Pattern.compile("^[^ ]+ :([^=]+)=(.*)").matcher(resp.getResponse().trim());
+		if (!ma.find())
+			throw new NotInterestedInReplyException();
+
+		System.out.println("Checking the file for \"" + ma.group(2) + "\".");
+
+		try
+		{
+			String line;
+			// Looks in src/ directory for file called userip.list with lines in form +<hostmask> e.g. +~benji@benjiweber.co.uk
+			final BufferedReader allowed = new BufferedReader(new FileReader("userip.list"));
+
+			while((line=allowed.readLine())!=null)
+			{
+				if (ma.group(2).equals(line))
+				{
+					return new AuthenticatedStatus();
+				}
+			}
+
+			return new UnknownStatus();
+		}
+		catch (final IOException e)
+		{
+			throw new NotInterestedInReplyException();
 		}
 	}
 }
+
+/***
+ * Interface to perform an action while still waiting on a blocking method.
+ *
+ * @author benji
+ */
+interface AndThen<T>
+{
+	public T doThis(Action<Void> action);
+	public T value();
+}
+
+/**
+ * Can't have top level generic types in choob
+ * @author benji
+ */
+class ChoobSucksScope
+{
+	/**
+	 * A blocking queue with a capacity of 1
+	 * Items in the queue time out and are removed after the specified timeout.
+	 * 
+	 * @param <T>
+	 */
+	class SingleBlockingQueueWithTimeOut<T>
+	{
+		private final ArrayBlockingQueue<T> queue = new ArrayBlockingQueue<T>(1);
+
+		private final int timeout;
+
+		public SingleBlockingQueueWithTimeOut(int timeoutInSeconds)
+		{
+			this.timeout = timeoutInSeconds;
+		}
+
+		public AndThen<T> put(final T t) throws InterruptedException
+		{
+
+			queue.put(t);
+			new Timer().schedule(new TimerTask()
+			{
+				@Override
+				public void run()
+				{
+					//Remove this object, if it still exists in the queue.
+					queue.remove(t);
+				}
+			}, timeout * 1000);
+
+			return new AndThen<T>()
+			{
+
+				public T doThis(Action<Void> action)
+				{
+					action.doWith(null);
+					return t;
+				}
+
+				public T value()
+				{
+					return t;
+				}
+
+			};
+		}
+
+		public T peek()
+		{
+			return queue.peek();
+		}
+
+		public T poll()
+		{
+			return queue.poll();
+		}
+
+		public boolean remove(T o)
+		{
+			return queue.remove(o);
+		}
+	}
+
+	/**
+	 * Exception thrown when the specified item is not in the cache.
+	 */
+	class ItemNotCachedException extends Exception
+	{
+
+	}
+
+	/**
+	 * A cache that caches items for the fixed time, with no sliding window.
+	 * 
+	 */
+	class CacheWithTimeout<T>
+	{
+		private ConcurrentHashMap<String,T> map = new ConcurrentHashMap<String, T>();
+
+		private int timeout;
+
+		public CacheWithTimeout(int timeoutInSeconds)
+		{
+			this.timeout = timeoutInSeconds;
+		}
+
+		/**
+		 * remove the item with specified key from the cache
+		 * @param key	The key of the item to remove
+		 * @return	The removed item.
+		 */
+		public T remove(final String key)
+		{
+			return map.remove(key);
+		}
+
+		/**
+		 * Put the specified key/value pair into the cache
+		 * @param key	The key
+		 * @param t	The value
+		 * @return	The added value, for method chaining
+		 */
+		public T put(final String key, final T t)
+		{
+			map.put(key, t);
+			new Timer().schedule(new TimerTask()
+			{
+				@Override
+				public void run()
+				{
+					//Remove this object, if it still exists in the cache.
+					map.remove(key,t);
+				}
+			}, timeout * 1000);
+			return t;
+		}
+
+		/**
+		 * Put the specified key/value pair in the cache, except when the supplied condition returns true.
+		 * @param key	The key
+		 * @param t	The value
+		 * @param exceptWhen	A condition to check on the added item. If this returns true it will NOT add it to the cache.
+		 * @return	The possibly-added item for method chaining.
+		 */
+		public T put(final String key, final T t, final InvokableI<T,Boolean> exceptWhen)
+		{
+			if (!(exceptWhen.invoke(t)))
+				return put(key,t);
+
+			return t;
+		}
+
+		/**
+		 * Put the specified key/value pair into the cache.
+		 * @param key	The key to add
+		 * @param t	An invokable that when evaluated will yeild an item to add to the cache.
+		 * @return	The added item
+		 */
+		public T put(final String key, final Invokable<T> t)
+		{
+			return put(key,t.invoke());
+		}
+
+		/**
+		 * Put the specified key/value pair in the cache, except when the supplied condition returns true.
+		 * @param key	The key
+		 * @param t	An invokable that when evaluated will yeild an item to add to the cache.
+		 * @param exceptWhen	A condition to check on the added item. If this returns true it will NOT add it to the cache.
+		 * @return	The possibly-added item for method chaining.
+		 */
+		public T put(final String key, final Invokable<T> t, final InvokableI<T,Boolean> exceptWhen)
+		{
+			T value = t.invoke();
+			if (!(exceptWhen.invoke(value)))
+				return put(key,t.invoke());
+
+			return value;
+		}
+
+		/**
+		 * Get the item with the specified key from the cache
+		 * @param key	The key to look up
+		 * @return	The cached item
+		 * @throws ChoobSucksScope.ItemNotCachedException if there is no item with this key in the cache.
+		 */
+		public T get(final String key) throws ItemNotCachedException
+		{
+			T value = map.get(key);
+			if (value == null)
+				throw new ItemNotCachedException();
+
+			return value;
+		}
+
+		/**
+		 * Get the item with the specified key from the cache
+		 * @param key	The key to look up
+		 * @param defaultValue The value to return if the item is not in the cache.
+		 * @return	The cached item
+		 * @throws ChoobSucksScope.ItemNotCachedException if there is no item with this key in the cache.
+		 */
+		public T get(final String key, T defaultValue)
+		{
+			try
+			{
+				return get(key);
+			} catch (ItemNotCachedException e)
+			{
+				return defaultValue;
+			}
+		}
+
+		/**
+		 * Get the item with the specified key from the cache
+		 * @param key	The key to look up
+		 * @param defaultValueObtainer The invokable to obtain the default value to return if the item is not in the cache.
+		 * @return	The cached item
+		 * @throws ChoobSucksScope.ItemNotCachedException if there is no item with this key in the cache.
+		 */
+		public T get(final String key, Invokable<T> defaultValueObtainer)
+		{
+			try
+			{
+				return get(key);
+			} catch (ItemNotCachedException e)
+			{
+				return defaultValueObtainer.invoke();
+			}
+		}
+	}
+}
+
+
