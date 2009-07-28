@@ -106,7 +106,11 @@ public class NickServ
 	 */
 	public void commandCheck(final Message mes)
 	{
+		// Clear the cache, makes the command appear to behave as expected
+		// and the side effects will be hillarious when people try and debug.
+		// ¬_¬
 		final String nick = getNick(mes);
+		clearCache(nick);
 		final AuthStatus status = checkCached(nick);
 		irc.sendContextReply(mes, nick + " " + status.getExplanation());
 	}
@@ -118,10 +122,14 @@ public class NickServ
 	public void commandClearCache(final Message mes)
 	{
 		String nick = getNick(mes);
-		cache.remove(nick);
+		clearCache(nick);
 		irc.sendContextReply(mes, "Ok, cleared cache for " + nick);
 	}
 
+	private void clearCache(final String nick)
+	{
+		cache.remove(nick);
+	}
 	/**
 	 * Obtains the nick to check from a message.
 	 * @param mes	The message requesting a check
