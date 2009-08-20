@@ -1,11 +1,17 @@
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -14,9 +20,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,11 +34,6 @@ import uk.co.uwcs.choob.support.events.ServerResponse;
 
 public class Where
 {
-	private static final int EXECUTOR_SERVICES_TIMEOUT = 4; // seconds
-	private static final Pattern PATTERN_DCS = Pattern.compile("/137\\.205\\.11");
-	private static final Pattern PATTERN_RESNET = Pattern.compile(".*\\.res\\.warwick\\.ac\\.uk/.*");
-	private static final Pattern PATTERN_CAMPUS = Pattern.compile("/137.205");
-
 	public String[] info()
 	{
 		return new String[] {
@@ -46,12 +44,14 @@ public class Where
 		};
 	}
 
-	final Modules mods;
-	final IRCInterface irc;
+	final SimpleDateFormat sdf = new SimpleDateFormat("MM-dd HH:mm:ss.SSS");
+	Modules mods;
+	IRCInterface irc;
+	private PrintStream logFile;
 
-	private static void minilog(final String s)
+	private void minilog(final String s)
 	{
-		System.out.println("[where] " + s);
+		logFile.println(sdf.format(new Date()) + " - " + Integer.toHexString(hashCode()) + ": " + s);
 	}
 
 	//ignore hosts people screen from that we can't finger.
@@ -74,7 +74,7 @@ public class Where
 
 		final ContextEvent target;
 
-		abstract void complete(Details d, boolean cleanshutdown);
+		abstract void complete(Details d);
 
 		void fail()
 		{
@@ -88,7 +88,7 @@ public class Where
 		return new Callback(con)
 		{
 			@Override
-			void complete(final Details d, boolean cleanshutdown)
+			void complete(final Details d)
 			{
 				final List<String> hitted = new ArrayList<String>();
 				for (final Entry<String, Set<InetAddress>> entr : d.users.entrySet())
@@ -97,14 +97,7 @@ public class Where
 							hitted.add(entr.getKey());
 
 				Collections.sort(hitted);
-				irc.sendContextReply(target,
-						hitted.size() + " "
-						+ (hitted.size() == 1 ? "person" : "people")
-						+ " (" + hrList(hitted) + ") "
-						+ (hitted.size() == 1 ? "is" : "are")
-						+ " " + msg
-						+ (!cleanshutdown ? "*" : "")
-						 + ".");
+				irc.sendContextReply(target, hitted.size() + " " + (hitted.size() == 1 ? "person" : "people") + " (" + hrList(hitted) + ") " + (hitted.size() == 1 ? "is" : "are") + " " + msg + ".");
 			}
 		};
 	}
@@ -118,18 +111,17 @@ public class Where
 	{
 		Details(final Callback c)
 		{
+			users = new HashMap<String, Set<InetAddress>>();
 			callback = c;
+			localmap = buildLocalMap();
 		}
 
 		Callback callback;
+		// Username -> addresses
+		Map<String, Set<InetAddress>> localmap;
 
-		ExecutorService ex = Executors.newCachedThreadPool();
-
-		/** Username -> addresses */
-		Map<String, Set<InetAddress>> localmap = buildLocalMap();
-
-		/** Nick -> hosts. */
-		Map<String, Set<InetAddress>> users = new HashMap<String, Set<InetAddress>>();
+		// Nick -> host.
+		Map<String, Set<InetAddress>> users;
 	}
 
 	// (Target) channel -> Outstanding queries in it.
@@ -140,7 +132,7 @@ public class Where
 		return Collections.synchronizedMap(new HashMap<String, Queue<Details>>());
 	}
 
-	public synchronized String commandReset()
+	public synchronized void commandReset(final Message mes)
 	{
 		int failed = 0;
 		for (final Entry<String, Queue<Details>> ent : outst.entrySet())
@@ -150,14 +142,18 @@ public class Where
 				++failed;
 			}
 		outst = makeMap();
-		return "Okay, purged " + failed + " item" + (failed == 1 ? "" : "s") + ".";
+		irc.sendContextReply(mes, "Okay, purged " + failed + " item" + (failed == 1 ? "" : "s") + ".");
 	}
 
-	public Where(final Modules mods, final IRCInterface irc)
+	public Where(final Modules mods, final IRCInterface irc) throws IOException
 	{
 		this.irc = irc;
 		this.mods = mods;
-		whatExtract = Pattern.compile("^" + irc.getNickname() + " ([^ ]+) (.*)$");
+		final String whatRegex = "^BadgerBOT ([^ ]+) (.*)$";
+		logFile = new PrintStream(new FileOutputStream(new File("/home/choob/where.log"), true));
+		minilog("whatRegex: " + whatRegex);
+		whatExtract = Pattern.compile(whatRegex);
+
 	}
 
 	final Pattern whatExtract;
@@ -167,10 +163,16 @@ public class Where
 		return p.matcher(o.toString()).find();
 	}
 
-	InetAddress getByName(final String name) throws UnknownHostException
+	// InetAddress.getByName doesn't resolve textual ips (to addresses) by default, trigger it (and discard the result) such that toString() returns the hostname.
+	// Note that the reverse lookups are cached (indefinitely) by Java, so that's not duplicated here.
+	private InetAddress getByName(final String name) throws UnknownHostException
 	{
+		minilog("getByName: enter: " + name);
 		final InetAddress temp = InetAddress.getByName(name);
 		temp.getHostName();
+
+		// above not part of logging
+		minilog("getByName: exit: " + temp.getHostName());
 		return temp;
 	}
 
@@ -190,6 +192,7 @@ public class Where
 	final Pattern splitUp = Pattern.compile("^~?([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) .*");
 	public synchronized void onServerResponse(final ServerResponse resp)
 	{
+		minilog("onServerResponse: enter: " + resp.getCode());
 		// Ensure resp is related to WHO, and remember if we're at the end. I'm sure there's a sane way to write this.
 		final boolean atend = resp.getCode() == ReplyConstants.RPL_ENDOFWHO;
 		if (!(atend || resp.getCode() == ReplyConstants.RPL_WHOREPLY))
@@ -214,7 +217,13 @@ public class Where
 			// Ignoring when it hates us, and we're hitting a RAAAAAAACE CONDITIONS..
 			// it does this when we asked for a WHO nick. Assume that this is the only one we're going to get.
 			minilog("Looks like a line for an individual: " + resp.getResponse());
-			if (!(ma = splitUp.matcher(tail)).matches() || (detst = outst.get(ma.group(4))) == null) // Read the nick.
+			if (!(ma = splitUp.matcher(tail)).matches())
+			{
+				minilog("splitUp 1 didn't match >>" + encode(tail) + "<<");
+				return;
+			}
+
+			if ((detst = outst.get(ma.group(4))) == null) // Read the nick.
 			{
 				minilog("...which we wern't expecting. BAIL.");
 				return; // If we wern't looking for this either, just bail.
@@ -233,74 +242,53 @@ public class Where
 		if (atend)
 		{
 			minilog("..and it was the end, so notify them.");
-			d.ex.shutdown();
-			boolean cleanshutdown;
-			try
-			{
-				cleanshutdown = d.ex.awaitTermination(EXECUTOR_SERVICES_TIMEOUT, TimeUnit.SECONDS);
-			}
-			catch (InterruptedException e)
-			{
-				cleanshutdown = false;
-			}
-
-			d.callback.complete(d, cleanshutdown);
+			d.callback.complete(d);
 			detst.remove();
+			minilog("done notifying");
 		}
 		else
 		{
 			minilog("..which is not at the end, continuing: ");
 			if (!(ma = splitUp.matcher(tail)).matches())
 			{
-				minilog("Wtf? Wasn't matchable: " + tail);
+				minilog("splitUp 2 didn't match >>" + encode(tail) + "<<");
 				return; // Lol whut.
 			}
 
-			// D.users is Nick -> Ip.
-			// If the user is local, attempt to hax their real ip.
-			final String nick = ma.group(4);
-
-			// Work out where we're going to add the nick.
-			Set<InetAddress> addto;
-
-			if ((addto = d.users.get(nick)) == null)
-				d.users.put(nick, addto = new HashSet<InetAddress>());
-
-			lookupAndExpand(ma.group(2), addto, ma.group(1), d.localmap, d.ex);
-		}
-	}
-
-	/** Process a hostname into the target, looking up the username in the localmap to expand it,
-	 * via. an executor service */
-	private void lookupAndExpand(final String hostname, final Set<InetAddress> target,
-			final String username, final Map<String, Set<InetAddress>> localmap,
-			final ExecutorService ex)
-	{
-		ex.submit(new Runnable()
-		{
-			@Override public void run()
+			try
 			{
-				try
+				// D.users is Nick -> Ip.
+				// If the user is local, attempt to hax their real ip.
+				final InetAddress toStore = getByName(ma.group(2));
+				final String nick = ma.group(4);
+
+				// Work out where we're going to add the nick.
+				Set<InetAddress> addto;
+
+				if ((addto = d.users.get(nick)) == null)
+					d.users.put(nick, addto = new HashSet<InetAddress>());
+
+				//ignore hosts we can't/don't want to check.
+				if (shouldIgnore(toStore))
 				{
-					final InetAddress toStore = getByName(hostname);
-
-					//ignore hosts we can't/don't want to check.
-					if (shouldIgnore(toStore))
-						return;
-
-					Set<InetAddress> newones;
-
-					if (!isLocal(toStore) || (newones = localmap.get(username)) == null)
-						target.add(toStore);
-					else
-						target.addAll(newones);
+					minilog("Ignore a host and don't store it.");
+					return;
 				}
-				catch (UnknownHostException e)
-				{
-					// Ignore, abort the put.
-				}
+
+				Set<InetAddress> newones;
+
+				if (!isLocal(toStore) || (newones = d.localmap.get(ma.group(1))) == null)
+					addto.add(toStore);
+				else
+					addto.addAll(newones);
+
 			}
-		});
+			catch (final UnknownHostException e)
+			{
+				minilog("Warning: Couldn't resolve real ip for " + ma.group(4) + ", not a problem: " + ma.group(2));
+				// Ignore, abort the put.
+			}
+		}
 	}
 
 	boolean isLocal(final InetAddress add)
@@ -323,24 +311,25 @@ public class Where
 
 	boolean isCampus(final InetAddress add)
 	{
-		return !isLocal(add) && matches(PATTERN_CAMPUS, add);
+		return !isLocal(add) && matches(Pattern.compile("/137\\.205"), add);
 	}
 
 	boolean isResnet(final InetAddress add)
 	{
 		return !isLocal(add) &&
-			matches(PATTERN_RESNET, add);
+			(matches(Pattern.compile("\\.res\\.warwick\\.ac\\.uk/"), add)
+					|| matches(Pattern.compile("/137\\.205\\.32\\."), add));
 	}
 
 	boolean isDCS(final InetAddress add)
 	{
-		return matches(PATTERN_DCS, add);
+		return matches(Pattern.compile("/137\\.205\\.11"), add);
 	}
 
 	// Username -> set of addresses.
 	Map<String, Set<InetAddress>> buildLocalMap()
 	{
-		final ExecutorService ex = Executors.newCachedThreadPool();
+		minilog("buildLocalMap: enter");
 		final Map<String, Set<InetAddress>> ret = new HashMap<String, Set<InetAddress>>();
 		try
 		{
@@ -348,48 +337,32 @@ public class Where
 
 			// There's a nefarious reason why this is here.
 			if (proc.waitFor() != 0)
-				return Collections.emptyMap();
+				return ret;
 
 			final BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 			br.readLine(); // Discard header.
 			String s;
-
-
+			Matcher ma;
 			while ((s = br.readLine()) != null)
 			{
 				// faux       Christopher West    pts/16         Feb 11 16:25 (82.16.66.10:S.0)
 				// account-name SPACE some crap SPACE terminal SPACE date (ip:junk)$
-				final Matcher ma;
 				if ((ma = Pattern.compile("^([^ ]+) .* \\((.*?)(?::S\\.[0-9]+)?\\)$").matcher(s)).matches())
 				{
 					final String un = ma.group(1);
 					if (ret.get(un) == null)
 						ret.put(un, new HashSet<InetAddress>());
-					ex.submit(new Runnable()
-					{
-						@Override public void run()
-						{
-							try
-							{
-								ret.get(un).add(getByName(ma.group(2)));
-							}
-							catch (UnknownHostException e)
-							{
-								// Ignore, abort the put
-							}
-						}
-					});
+					ret.get(un).add(getByName(ma.group(2)));
 				}
 			}
-
-			ex.shutdown();
-			ex.awaitTermination(EXECUTOR_SERVICES_TIMEOUT, TimeUnit.SECONDS);
 		}
 		catch (final Throwable t)
 		{
+			minilog("buildLocalMap: exception:" + t);
 			// Discard:
 		}
-		return Collections.unmodifiableMap(ret); // Don't care about part results.
+		minilog("buildLocalMap: exit");
+		return ret; // Don't care about part results.
 	}
 
 	<T> String hrList(final List<T> el)
@@ -477,7 +450,7 @@ public class Where
 			new Callback(mes)
 			{
 				@Override
-				public void complete(final Details d, boolean cleanshutdown)
+				public void complete(final Details d)
 				{
 					final List<String> unres = new ArrayList<String>(), wcampus = new ArrayList<String>();
 					for (final Entry<String, Set<InetAddress>> entr : d.users.entrySet())
@@ -488,10 +461,7 @@ public class Where
 								unres.add(entr.getKey());
 							else
 								System.out.println(add.toString());
-					irc.sendContextReply(target, "Found " + d.users.size() + " people, "
-							+ wcampus.size() + " are on campus (" + hrList(wcampus) + "), "
-							+ hrList(unres) + " are unresolvable."
-							+ (!cleanshutdown ? " Some DNS failure occoured." : ""));
+					irc.sendContextReply(target, "Found " + d.users.size() + " people, " + wcampus.size() + " are on campus (" + hrList(wcampus) + "), " + hrList(unres) + " are unresolvable.");
 				}
 			}
 		);
@@ -591,7 +561,7 @@ public class Where
 
 	public void commandHostname(final Message mes) throws UnknownHostException
 	{
-		final List<String> params = mods.util.getParams(mes);
+		final List<String> params = new ArrayList<String>(mods.util.getParams(mes));
 		String context = mes.getContext();
 
 		if (params.size() < 2)
@@ -636,7 +606,7 @@ public class Where
 				new Callback(mes)
 				{
 					@Override
-					public void complete(final Details d, boolean cleanshutdown)
+					public void complete(final Details d)
 					{
 						for (final Entry<String, Set<InetAddress>> entr : d.users.entrySet())
 						{
