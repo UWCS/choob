@@ -61,7 +61,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.6.2"
+		"1.6.3"
 	];
 
 
@@ -154,7 +154,7 @@ Feeds.prototype.commandRemove = function(mes, mods, irc) {
 	}
 	
 	this._removeFeed(feed);
-	irc.sendContextReply(mes, "Feed '" + feed.displayName + "' removed.");
+	irc.sendContextReply(mes, "Feed " + feed.getDisplayName() + " removed.");
 }
 Feeds.prototype.commandRemove.help = [
 		"Removes an feed entirely.",
@@ -173,9 +173,8 @@ Feeds.prototype.commandList = function(mes, mods, irc) {
 	function displayFeedItemLine(i, feed) {
 		var dests = feed._outputTo.join(", ");
 		var error = feed.getError();
-		irc.sendContextReply(mes, "Feed " + feed.name + ": "
-				+ "'\x02" + feed.displayName + "\x02', "
-				+ "owned by " + (feed.owner ? feed.owner : "<unknown>")
+		irc.sendContextReply(mes, "Feed " + feed.getDisplayName()
+				+ " owned by " + (feed.owner ? feed.owner : "<unknown>")
 				+ (feed.isPrivate ? " (\x02private\x02)" : "") + ", "
 				+ (error ?
 					(error) :
@@ -186,11 +185,11 @@ Feeds.prototype.commandList = function(mes, mods, irc) {
 	};
 	
 	function getFeedItemString(feed) {
-		return feed.name + " (" + feed._lastItemCount + (feed.isPrivate ? ", \x02private\x02" : "") + ")";
+		return feed.getDisplayName() + " (" + feed._lastItemCount + (feed.isPrivate ? ", \x02private\x02" : "") + ")";
 	};
 	
 	function getFeedErrorLine(feed) {
-		return "Feed " + feed.name + ": " + feed.getError() + ".";
+		return "Feed " + feed.getDisplayName() + ": " + feed.getError() + ".";
 	};
 	
 	var params = mods.util.getParams(mes, 1);
@@ -298,9 +297,9 @@ Feeds.prototype.commandAddOutput = function(mes, mods, irc) {
 	var feedDest = String(params.get(2)).trim();
 	
 	if (feed.addOutputTo(feedDest)) {
-		irc.sendContextReply(mes, "Feed '" + feed.displayName + "' will now output to '" + feedDest + "'.");
+		irc.sendContextReply(mes, "Feed " + feed.getDisplayName() + " will now output to '" + feedDest + "'.");
 	} else {
-		irc.sendContextReply(mes, "Feed '" + feed.displayName + "' already outputs to '" + feedDest + "'.");
+		irc.sendContextReply(mes, "Feed " + feed.getDisplayName() + " already outputs to '" + feedDest + "'.");
 	}
 }
 Feeds.prototype.commandAddOutput.help = [
@@ -332,9 +331,9 @@ Feeds.prototype.commandRemoveOutput = function(mes, mods, irc) {
 	var feedDest = String(params.get(2)).trim();
 	
 	if (feed.removeOutputTo(feedDest)) {
-		irc.sendContextReply(mes, "Feed '" + feed.displayName + "' will no longer output to '" + feedDest + "'.");
+		irc.sendContextReply(mes, "Feed " + feed.getDisplayName() + " will no longer output to '" + feedDest + "'.");
 	} else {
-		irc.sendContextReply(mes, "Feed '" + feed.displayName + "' doesn't output to '" + feedDest + "'.");
+		irc.sendContextReply(mes, "Feed " + feed.getDisplayName() + " doesn't output to '" + feedDest + "'.");
 	}
 }
 Feeds.prototype.commandRemoveOutput.help = [
@@ -421,7 +420,7 @@ Feeds.prototype.commandSetOwner = function(mes, mods, irc) {
 	var owner = this._getOwnerFrom(String(params.get(2)).trim());
 	
 	feed.owner = owner;
-	irc.sendContextReply(mes, "Feed '" + feed.displayName + "' now has an owner of " + owner + ".");
+	irc.sendContextReply(mes, "Feed " + feed.getDisplayName() + " now has an owner of " + owner + ".");
 	mods.odb.update(feed);
 }
 Feeds.prototype.commandSetOwner.help = [
@@ -455,9 +454,9 @@ Feeds.prototype.commandSetPrivate = function(mes, mods, irc) {
 	
 	feed.isPrivate = isPrivate;
 	if (isPrivate) {
-		irc.sendContextReply(mes, "Feed '" + feed.displayName + "' is now private.");
+		irc.sendContextReply(mes, "Feed " + feed.getDisplayName() + " is now private.");
 	} else {
-		irc.sendContextReply(mes, "Feed '" + feed.displayName + "' is no longer private.");
+		irc.sendContextReply(mes, "Feed " + feed.getDisplayName() + " is no longer private.");
 	}
 	mods.odb.update(feed);
 }
@@ -495,7 +494,7 @@ Feeds.prototype.commandSetTTL = function(mes, mods, irc) {
 	}
 	
 	feed.ttl = feedTTL;
-	irc.sendContextReply(mes, "Feed '" + feed.displayName + "' now has a TTL of " + feedTTL + ".");
+	irc.sendContextReply(mes, "Feed " + feed.getDisplayName() + " now has a TTL of " + feedTTL + ".");
 	mods.odb.update(feed);
 }
 Feeds.prototype.commandSetTTL.help = [
@@ -653,7 +652,7 @@ Feeds.prototype._feedCheckInterval = function(param, mods, irc) {
 		if (this._debug_interval) {
 			log("Interval:   checking " + feed.name + " (" + -this._feedList[i].getNextCheck() + "ms late)");
 		}
-		this._setStatus("Checking feed " + feed.name + "...");
+		this._setStatus("Checking feed " + feed.getDisplayName() + "...");
 		if (this._debug_profile) {
 			profile.start();
 		}
@@ -661,7 +660,7 @@ Feeds.prototype._feedCheckInterval = function(param, mods, irc) {
 		if (this._debug_profile) {
 			profile.stop(feed.name);
 		}
-		this._setStatus("Last checked feed " + feed.name + ".");
+		this._setStatus("Last checked feed " + feed.getDisplayName() + ".");
 	}
 	
 	var nextCheck = 60 * 60 * 1000; // 1 hour
@@ -714,6 +713,12 @@ Feed.prototype._ctor = function(parent, name, url, loadContext) {
 	this.displayName = name;
 	this.url = url;
 	this.init(parent, loadContext)
+}
+
+Feed.prototype.getDisplayName = function() {
+	if (this.displayName)
+		return "'" + this.displayName + "' (" + this.name + ")";
+	return this.name;
 }
 
 Feed.prototype.init = function(parent, loadContext) {
@@ -817,7 +822,7 @@ Feed.prototype.getNextCheck = function() {
 
 Feed.prototype.showRecent = function(target, offset, count) {
 	if (this.getError()) {
-		this._sendTo(target, "'" + this.displayName + "': \x02ERROR\x02: " + this.getError());
+		this._sendTo(target, this.getDisplayName() + ": \x02ERROR\x02: " + this.getError());
 		return;
 	}
 	
@@ -825,9 +830,9 @@ Feed.prototype.showRecent = function(target, offset, count) {
 	
 	if (items.length == 0) {
 		if (this._lastCheck == 0) {
-			this._sendTo(target, "'" + this.displayName + "' has not loaded yet.");
+			this._sendTo(target, this.getDisplayName() + " has not loaded yet.");
 		} else {
-			this._sendTo(target, "'" + this.displayName + "' has no recent items.");
+			this._sendTo(target, this.getDisplayName() + " has no recent items.");
 		}
 		return;
 	}
@@ -859,16 +864,16 @@ Feed.prototype.checkForNewItems = function() {
 	if (this.getError()) {
 		if (firstRun && this._loadContext) {
 			// We're trying to load the feed, and it failed. Oh the humanity.
-			this._parent._irc.sendMessage(this._loadContext, "'" + this.displayName + "' failed to load, incurring the error: " + this.getError());
+			this._parent._irc.sendMessage(this._loadContext, this.getDisplayName() + " failed to load, incurring the error: " + this.getError());
 		}
-		//this._sendToAll("'" + this.displayName + "': \x02ERROR\x02: " + this.getError());
+		//this._sendToAll(this.getDisplayName() + ": \x02ERROR\x02: " + this.getError());
 		profile.leaveFn("checkForNewItems");
 		return;
 	}
 	this._lastLoaded = new Date();
 	
 	if (firstRun && this._loadContext) {
-		this._parent._irc.sendMessage(this._loadContext, "'" + this.displayName + "' loaded with " + this._lastItemCount + " items.");
+		this._parent._irc.sendMessage(this._loadContext, this.getDisplayName() + " loaded with " + this._lastItemCount + " items.");
 	}
 	
 	// If there are more than 3 items, and it's more than 20% of the feed's
@@ -877,7 +882,7 @@ Feed.prototype.checkForNewItems = function() {
 	// showing all it's items if it just added them all.
 	// Never bother with more than 10 items, whatever.
 	if ((newItems.length > 10) || ((newItems.length > 3) && (newItems.length > 0.20 * this._lastItemCount))) {
-		this._sendToAll("'" + this.displayName + "' has too many (" + newItems.length + ") new items to display.");
+		this._sendToAll(this.getDisplayName() + " has too many (" + newItems.length + ") new items to display.");
 	} else {
 		for (var i = newItems.length - 1; i >= 0; i--) {
 			if (newItems[i].updated) {
@@ -1127,13 +1132,61 @@ function _decodeEntities(data) {
 	return data;
 }
 
+var htmlInlineTags = {
+	"A": true,
+	"ABBR": true,
+	"ACRONYM": true,
+	"AREA": true,
+	"B": true,
+	"BASE": true,
+	"BASEFONT": true,
+	"BDO": true,
+	"BIG": true,
+	"BUTTON": true,
+	"CITE": true,
+	"CODE": true,
+	"DEL": true,
+	"DFN": true,
+	"EM": true,
+	"FONT": true,
+	"I": true,
+	"INS": true,
+	"ISINDEX": true,
+	"KBD": true,
+	"LABEL": true,
+	"LEGEND": true,
+	"LINK": true,
+	"MAP": true,
+	"META": true,
+	"NOSCRIPT": true,
+	"OPTGROUP": true,
+	"OPTION": true,
+	"PARAM": true,
+	"Q": true,
+	"S": true,
+	"SAMP": true,
+	"SCRIPT": true,
+	"SELECT": true,
+	"SMALL": true,
+	"SPAN": true,
+	"STRIKE": true,
+	"STRONG": true,
+	"STYLE": true,
+	"SUB": true,
+	"SUP": true,
+	"TEXTAREA": true,
+	"TT": true,
+	"U": true,
+	"VAR": true,
+};
+
 function _decodeRSSHTML(data) {
 	profile.enterFn("", "_decodeRSSHTML");
 	
 	// Decode XML into HTML...
 	data = _decodeEntities(data);
 	// Remove all tags.
-	data = data.replace(/<[^>]+>/g, " ");
+	data = data.replace(/<\/?(\w+)[^>]*>/g, function (text, tag) { return tag.toUpperCase() in htmlInlineTags ? "" : " " });
 	// Decode HTML into text...
 	data = _decodeEntities(data);
 	// Remove all entities.
@@ -1231,11 +1284,11 @@ FeedParser.prototype._parse = function(feedsOwner) {
 			// RSS 0.91 or 2.0 code.
 			var channel = this._xmlData.rootElement.childByName("channel");
 			
-			this.title       = getChildContents(channel, "title");
-			this.link        = getChildContents(channel, "link");
-			this.description = getChildContents(channel, "description");
-			this.language    = getChildContents(channel, "language");
-			this.ttl         = getChildContents(channel, "ttl");
+			this.title       = getChildContents(channel, "title").trim();
+			this.link        = getChildContents(channel, "link").trim();
+			this.description = getChildContents(channel, "description").trim();
+			this.language    = getChildContents(channel, "language").trim();
+			this.ttl         = getChildContents(channel, "ttl").trim();
 			
 			var items = channel.childrenByName("item");
 			
@@ -1270,11 +1323,11 @@ FeedParser.prototype._parse = function(feedsOwner) {
 				}
 				
 				this.items.push({
-						date:    pubDate,
-						guid:    guid,
-						title:   _decodeRSSHTML(title),
-						link:    _decodeEntities(link),
-						desc:    _decodeRSSHTML(desc),
+						date:    pubDate.trim(),
+						guid:    guid.trim(),
+						title:   _decodeRSSHTML(title).trim(),
+						link:    _decodeEntities(link).trim(),
+						desc:    _decodeRSSHTML(desc).trim(),
 						updated: false
 					});
 			}
@@ -1292,11 +1345,11 @@ FeedParser.prototype._parse = function(feedsOwner) {
 			
 			var channel = this._xmlData.rootElement.childByName("channel", "http://purl.org/rss/1.0/");
 			
-			this.title       = getChildContents(channel, "title",       "http://purl.org/rss/1.0/");
-			this.link        = getChildContents(channel, "link",        "http://purl.org/rss/1.0/");
-			this.description = getChildContents(channel, "description", "http://purl.org/rss/1.0/");
-			this.language    = getChildContents(channel, "language",    "http://purl.org/rss/1.0/");
-			this.ttl         = getChildContents(channel, "ttl",         "http://purl.org/rss/1.0/");
+			this.title       = getChildContents(channel, "title",       "http://purl.org/rss/1.0/").trim();
+			this.link        = getChildContents(channel, "link",        "http://purl.org/rss/1.0/").trim();
+			this.description = getChildContents(channel, "description", "http://purl.org/rss/1.0/").trim();
+			this.language    = getChildContents(channel, "language",    "http://purl.org/rss/1.0/").trim();
+			this.ttl         = getChildContents(channel, "ttl",         "http://purl.org/rss/1.0/").trim();
 			
 			var items = this._xmlData.rootElement.childrenByName("item", "http://purl.org/rss/1.0/");
 			
@@ -1326,10 +1379,10 @@ FeedParser.prototype._parse = function(feedsOwner) {
 				}
 				
 				this.items.push({
-						date:    pubDate,
-						title:   _decodeRSSHTML(title),
-						link:    _decodeEntities(link),
-						desc:    _decodeRSSHTML(desc),
+						date:    pubDate.trim(),
+						title:   _decodeRSSHTML(title).trim(),
+						link:    _decodeEntities(link).trim(),
+						desc:    _decodeRSSHTML(desc).trim(),
 						updated: false
 					});
 			}
@@ -1346,7 +1399,7 @@ FeedParser.prototype._parse = function(feedsOwner) {
 		// Date decoder: _decodeAtomDate(element);
 		
 		var feed = this._xmlData.rootElement;
-		this.title = _decodeAtomText(feed.childByName("title", ATOM_1_0_NS));
+		this.title = _decodeAtomText(feed.childByName("title", ATOM_1_0_NS)).trim();
 		
 		var items = feed.childrenByName("entry", ATOM_1_0_NS);
 		
@@ -1368,10 +1421,10 @@ FeedParser.prototype._parse = function(feedsOwner) {
 			var desc  = _decodeAtomText(item.childByName("content", ATOM_1_0_NS));
 			
 			this.items.push({
-					date:    date,
-					title:   title,
-					link:    link,
-					desc:    desc,
+					date:    date.trim(),
+					title:   title.trim(),
+					link:    link.trim(),
+					desc:    desc.trim(),
 					updated: false
 				});
 		}
@@ -1392,6 +1445,7 @@ FeedParser.prototype._parse = function(feedsOwner) {
 
 
 
+// #include JavaScriptXML.jsi
 // General XML parser, win!
 function XMLParser(data) {
 	this.data = data;
@@ -2053,6 +2107,7 @@ XMLComment.prototype.toString = function() {
 XMLComment.prototype.contents = function() {
 	return this.toString();
 }
+// #includeend
 
 
 
