@@ -61,7 +61,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.6.3"
+		"1.6.4"
 	];
 
 
@@ -1227,9 +1227,9 @@ function _decodeAtomDate(element) {
 		if (ary[9] == "-") {
 			d = new Date(Number(d) - ((ary[10] * 60) + ary[11]) * 60 * 1000);
 		}
-		return d;
+		return String(d);
 	}
-	return 0;
+	return "?";
 }
 
 
@@ -1415,7 +1415,11 @@ FeedParser.prototype._parse = function(feedsOwner) {
 				link = link.attribute("href");
 				if (link) {
 					link = link.value;
+				} else {
+					link = "";
 				}
+			} else {
+				link = "";
 			}
 			
 			var desc  = _decodeAtomText(item.childByName("content", ATOM_1_0_NS));
