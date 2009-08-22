@@ -61,8 +61,10 @@ public class NickServ
 	{
 		this.mods = mods;
 		this.irc = irc;
+		authProviders.put("ALL", new AllAuthMethods(mods,irc));
 		authProviders.put("UWCS", new UWCSNickServInterpreter(mods, irc));
 		authProviders.put("FILE", new UserFileAuthProvider(mods, irc));
+		authProviders.put("MOZNET", new MoznetNickServInterpreter(mods, irc));
 	}
 
 	/**
@@ -176,7 +178,7 @@ public class NickServ
 	// to switch to userip list if nickserv is not available
 	// or to switch to another provider on another network
 	public String[] optionsGeneral = { "AuthProvider" };
-	public String[] optionsGeneralDefaults = { "UWCS" };
+	public String[] optionsGeneralDefaults = { "ALL" };
 	/**
 	 * Ensure the new option is a valid configured provider
 	 * @param optionValue	The option value to check
@@ -610,6 +612,28 @@ class CanProvideAuthReplyHandler extends AbstractReplyHandler
 	}
 }
 
+class PatternStatusPair
+{
+	private final Pattern pattern;
+	private final AuthStatus status;
+
+	public PatternStatusPair(String pattern, AuthStatus status)
+	{
+		this.pattern = Pattern.compile(pattern);
+		this.status = status;
+	}
+
+	public Pattern getPattern()
+	{
+		return pattern;
+	}
+
+	public AuthStatus getStatus()
+	{
+		return status;
+	}
+}
+
 /**
  * Default implementation of CanProvideAuth.
  *
@@ -621,28 +645,6 @@ class UWCSNickServInterpreter implements CanProvideAuth
 {
 	private final Modules mods;
 	private final IRCInterface irc;
-
-	class PatternStatusPair
-	{
-		private final Pattern pattern;
-		private final AuthStatus status;
-
-		public PatternStatusPair(String pattern, AuthStatus status)
-		{
-			this.pattern = Pattern.compile(pattern);
-			this.status = status;
-		}
-
-		public Pattern getPattern()
-		{
-			return pattern;
-		}
-
-		public AuthStatus getStatus()
-		{
-			return status;
-		}
-	}
 
 	/**
 	 * Mappings of replies to statuses
@@ -668,6 +670,172 @@ class UWCSNickServInterpreter implements CanProvideAuth
 	public void sendRequest(final String nick)
 	{
 		irc.sendMessage("NickServ", "INFO " + nick);
+	}
+
+	/**
+	 * Tries to convert nickserv replies to an Authentication Status
+	 * @param mes	The message recieved back from the server
+	 * @return	The determined authentication status
+	 * @throws NotInterestedInReplyException	If we couldn't determine the authentication status from this message.
+	 */
+	public AuthStatus receiveReply(final Message mes) throws NotInterestedInReplyException
+	{
+		if ( ! (mes instanceof PrivateNotice) )
+			throw new NotInterestedInReplyException(); // Only interested in private notices
+
+		if ( ! mes.getNick().toLowerCase().equals( "nickserv" ) )
+			throw new NotInterestedInReplyException(); // Not from NickServ --> also don't care
+
+		final String reply = mes.getMessage();
+
+		System.out.println("receiveReply " + reply);
+
+		for (PatternStatusPair status : statuses)
+		{
+			System.out.println("Checking " + status.getPattern().pattern());
+			if (status.getPattern().matcher(reply).matches())
+			{	
+				System.out.println("Matched! returning " + status.getStatus().getId());
+				return status.getStatus();
+			}
+		}
+
+		System.out.println("None matched, ignoring");
+		throw new NotInterestedInReplyException();
+	}
+
+	/**
+	 * For Nickserv we're not interested in server responses
+	 * @param resp	The response from the server
+	 * @return	Never
+	 * @throws NotInterestedInReplyException	Always
+	 */
+	public AuthStatus receiveReply(ServerResponse resp) throws NotInterestedInReplyException
+	{
+		throw new NotInterestedInReplyException();
+	}
+}
+
+/**
+ * Tries all authentication methods, to allow you to choose the one that works.
+ */
+class AllAuthMethods implements CanProvideAuth
+{
+	private final Modules mods;
+	private final IRCInterface irc;
+
+	public AllAuthMethods(final Modules mods, final IRCInterface irc)
+	{
+		this.mods = mods;
+		this.irc = irc;
+		this.authMethods = Arrays.asList
+		(
+			new UWCSNickServInterpreter(mods,irc),
+			new MoznetNickServInterpreter(mods,irc),
+			new UserFileAuthProvider(mods,irc)
+		);
+	}
+
+	private final List<CanProvideAuth> authMethods;
+
+	public void sendRequest(final String nick)
+	{
+		for (CanProvideAuth auth : authMethods)
+			auth.sendRequest(nick);
+	}
+
+	public AuthStatus receiveReply(final Message mes) throws NotInterestedInReplyException
+	{
+		return new WithMultipleAuthProviders(authMethods)
+		{
+			@Override protected AuthStatus checkEach(CanProvideAuth auth) throws NotInterestedInReplyException
+			{
+				return auth.receiveReply(mes);
+			}
+		}.getResult();
+	}
+
+	public AuthStatus receiveReply(final ServerResponse resp) throws NotInterestedInReplyException
+	{
+		return new WithMultipleAuthProviders(authMethods)
+		{
+			@Override protected AuthStatus checkEach(CanProvideAuth auth) throws NotInterestedInReplyException
+			{
+				return auth.receiveReply(resp);
+			}
+		}.getResult();
+	}
+
+	abstract class WithMultipleAuthProviders
+	{
+		private final List<CanProvideAuth> authProviders;
+		private AuthStatus result = null;
+
+		public WithMultipleAuthProviders(List<CanProvideAuth> authProviders)
+		{
+			this.authProviders = authProviders;
+			for (CanProvideAuth auth : authMethods)
+			{
+				try
+				{
+					// continue until one provider claims it knows the status.
+					if (!((result = checkEach(auth)) instanceof UnknownStatus))
+						break;
+				} catch (NotInterestedInReplyException ex)
+				{
+					// ignore
+				}
+			}
+		}
+
+		public AuthStatus getResult() throws NotInterestedInReplyException
+		{
+			if (result == null)
+				throw new NotInterestedInReplyException();
+
+			return result;
+		}
+
+		protected abstract AuthStatus checkEach(CanProvideAuth auth) throws NotInterestedInReplyException;
+	}
+}
+
+/**
+ * Mozilla implementation of CanProvideAuth.
+ *
+ * Talks to Mozilla Nickserv
+ * 
+ * @author benji
+ */
+class MoznetNickServInterpreter implements CanProvideAuth
+{
+	private final Modules mods;
+	private final IRCInterface irc;
+
+	public MoznetNickServInterpreter(final Modules mods, final IRCInterface irc)
+	{
+		this.mods = mods;
+		this.irc = irc;
+	}
+
+	/**
+	 * Mappings of replies to statuses
+	 */
+	private final List<PatternStatusPair> statuses = Arrays.asList
+	(
+		new PatternStatusPair("^STATUS.*0$", new NotRegisteredStatus()),
+		new PatternStatusPair("^STATUS.*3$", new AuthenticatedStatus()),
+		new PatternStatusPair("^STATUS.*2$", new NotIdentifiedStatus()),
+		new PatternStatusPair("^STATUS.*1$", new UnknownStatus())
+	);
+
+	/**
+	 * Ask Nickserv for info on a user.
+	 * @param nick	The user to request info for
+	 */
+	public void sendRequest(final String nick)
+	{
+		irc.sendMessage("NickServ", "STATUS " + nick);
 	}
 
 	/**
