@@ -549,7 +549,7 @@ public class MiscMsg
 
 		final Matcher fromFull = Pattern.compile("<option.*value=\"" + command[0] + "\">(.*) \\(" + command[0] + "\\)").matcher(s);
 		final Matcher toFull = Pattern.compile("<option.*value=\"" + command[1] + "\">(.*) \\(" + command[1] + "\\)").matcher(s);
-		final Matcher converted = Pattern.compile("(?s)currency_converter.*bld>(.*)&nbsp;" + command[1]).matcher(s);
+		final Matcher converted = Pattern.compile("(?s)currency_converter.*bld>(.*) " + command[1]).matcher(s);
 
 		if (fromFull.find() && toFull.find() && converted.find())
 			return command[2] + " " + command[0] + " (" + fromFull.group(1) + ") is " + converted.group(1) + " " + command[1] + " (" + toFull.group(1) + ").";
