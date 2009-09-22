@@ -1,19 +1,24 @@
 // JavaScript plugin for BugzillaBugmail bugmail reporting.
 // 
-// Copyright 2006 - 2008, James G. Ross
+// Copyright 2006, 2007, 2008, 2009, James G. Ross
 // 
 
 var BufferedReader    = Packages.java.io.BufferedReader;
+var BufferedWriter    = Packages.java.io.BufferedWriter;
 var InputStreamReader = Packages.java.io.InputStreamReader;
 var DataOutputStream  = Packages.java.io.DataOutputStream;
+var File              = Packages.java.io.File;
+var FileReader        = Packages.java.io.FileReader;
+var FileWriter        = Packages.java.io.FileWriter;
 var URL               = Packages.java.net.URL;
 var Socket            = Packages.java.net.Socket;
+var GetContentsCached = Packages.uk.co.uwcs.choob.support.GetContentsCached;
 
 
 function log(msg) {
 	var date = String(new Date());
 	date = date.substr(4, 20);
-	dumpln("BUGZILLA [" + date + "] " + msg);
+	dumpln("BugzillaBugmail [" + date + "] " + msg);
 }
 
 function sleep(ms) {
@@ -29,20 +34,30 @@ function _trim() {
 	return this.replace(/^\s+/, "").replace(/\s+$/, "");
 }
 
+Array.prototype.indexOf =
+function _indexof(item) {
+	for (var i = 0; i < this.length; i++) {
+		if (this[i] == item) return i;
+	}
+	return -1;
+}
+
 
 // Constructor: BugzillaBugmail
 function BugzillaBugmail(mods, irc) {
 	this._mods = mods;
 	this._irc = irc;
-	this._debugChannel = "#testing42";
-	this._debugSpew = "";
 	
-	this._targetList = new Object();
-	this._seenMsgs = new Object();
-	this._firstTime = true;
-	this._rebuilding = false;
-	this._updateSpeed      =     60 * 1000; // 1 minute
-	this._updateSpeedError = 5 * 60 * 1000; // 5 minutes
+	this._debugChannel     = "";
+	this._debugSpew        = "";
+	this._mailStore        = "C:\\Users\\James\\Documents\\Mozilla.org\\IRC Bot\\data\\bugzillabugmail\\";
+	// Debug: 0 => nothing, 1 => changes, 2 => parsed info, 3 => e-mail source, 4 => raw lines.
+	BugmailParser.debug    = 0;
+	this._targetList       = new Object();
+	this._seenFileNames    = new Object();
+	this._rebuilding       = false;
+	this._updateSpeed      = 10 * 1000; // 10 seconds
+	this._updateMax        = 1;
 	
 	var targets = this._mods.odb.retrieve(BugmailTarget, "");
 	for (var i = 0; i < targets.size(); i++) {
@@ -54,6 +69,11 @@ function BugzillaBugmail(mods, irc) {
 		
 		target.init(this);
 		this._targetList[target.target] = target;
+	}
+	
+	var bugmails = this._mods.odb.retrieve(BugzillaActivityGroup, "");
+	for (var i = 0; i < bugmails.size(); i++) {
+		this._seenFileNames[bugmails.get(i).fileName()] = true;
 	}
 	
 	this._mods.interval.callBack("bugmail-check", 10000 /* 10s */, 1);
@@ -85,53 +105,117 @@ BugzillaBugmail.prototype.interval = function(param, mods, irc) {
 				this[name](param, mods, irc);
 			} catch(ex) {
 				log("Exception in " + name + ": " + ex + (ex.fileName ? " at <" + ex.fileName + ":" + ex.lineNumber + ">":""));
-				irc.sendMessage(this._debugChannel, "Exception in " + name + ": " + ex + (ex.fileName ? " at <" + ex.fileName + ":" + ex.lineNumber + ">":""));
+				if (this._debugChannel) irc.sendMessage(this._debugChannel, "Exception in " + name + ": " + ex + (ex.fileName ? " at <" + ex.fileName + ":" + ex.lineNumber + ">":""));
 			}
 		} else {
-			irc.sendMessage(this._debugChannel, "Interval code missing: " + name);
+			if (this._debugChannel) irc.sendMessage(this._debugChannel, "Interval code missing: " + name);
 		}
 		
 	} else {
-		irc.sendMessage(this._debugChannel, "Unnamed interval attempted!");
+		if (this._debugChannel) irc.sendMessage(this._debugChannel, "Unnamed interval attempted!");
 	}
 }
 
 
 // Interval: bugmail-check
 BugzillaBugmail.prototype._bugmailCheckInterval = function(param, mods, irc) {
-	var changesList = new Array();
+	var bugmailList = new Array();
 	
-	try {
-		if (this._rebuilding) {
-			throw new Error("Rebuilding, can't check mail.");
+	if (this._rebuilding) {
+		throw new Error("Rebuilding, can't check mail.");
+	}
+	
+	var count = 0;
+	var store = new File(this._mailStore);
+	var files = store.listFiles();
+	for (var i = 0; i < files.length; i++) {
+		if (!files[i].getName().endsWith(".eml")) continue;
+		if (files[i].getName() in this._seenFileNames) continue;
+		
+		try {
+			var changes = this._processMessageFile(files[i]);
+		} catch(ex) {
+			log("Exception parsing bugmail: " + ex);
+			break;
 		}
+		
+		var q = "WHERE `msgid` = \"" + this._mods.odb.escapeString(changes.changeGroup.msgid) + "\"";
+		var bugs = this._mods.odb.retrieve(BugzillaActivityGroup, q);
+		if (bugs.size() > 0) {
+			this._seenFileNames[changes.changeGroup.fileName()] = true;
+			continue;
+		}
+		
+		bugmailList.push(changes);
+		this._seenFileNames[changes.changeGroup.fileName()] = true;
+		count++;
+		if (count >= this._updateMax) break;
+	}
+	if (count > 0) {
+		log("Bugmail Check: " + count + " old e-mails parsed.");
+	}
+	
+	if (count == 0) {
 		var self = this;
-		this._checkMail(function(pop3, messageID) {
-			if (!(messageID in self._seenMsgs)) {
-				if (!self._firstTime) {
-					var changes = new BugmailParser(pop3.getMessage(messageID));
-					changesList.push(changes);
+		this._checkMail(function(pop3, messageNumber, messageId) {
+			try {
+				var changes = self._downloadMessage(pop3, messageNumber, messageId);
+				
+				var q = "WHERE `msgid` = \"" + self._mods.odb.escapeString(changes.changeGroup.msgid) + "\"";
+				var bugs = self._mods.odb.retrieve(BugzillaActivityGroup, q);
+				if (bugs.size() > 0) {
+					self._seenFileNames[changes.changeGroup.fileName()] = true;
+					return true;
 				}
-				self._seenMsgs[messageID] = true;
+				
+				bugmailList.push(changes);
+				self._seenFileNames[changes.changeGroup.fileName()] = true;
+			} catch(ex) {
+				log("Exception downloading bugmail: " + ex);
+				return false;
 			}
+			count++;
+			if (count >= self._updateMax) return false;
 			return true;
 		});
-	} catch(ex) {
-		log("Error checking bugmail: " + ex);
-		this._mods.interval.callBack("bugmail-check", this._updateSpeedError, 1);
-		return;
+		if (count > 0) {
+			log("Bugmail Check: " + count + " new e-mails downloaded and parsed.");
+		}
 	}
 	
 	this._mods.interval.callBack("bugmail-check", this._updateSpeed, 1);
+	this._spam(bugmailList);
+	this._updateActivityDB(bugmailList);
+}
+
+
+// Command: ListComponents
+BugzillaBugmail.prototype.commandListComponents = function(mes, mods, irc) {
+	var params = mods.util.getParams(mes, 1);
+	if (params.size() <= 1) {
+		irc.sendContextReply(mes, "Syntax: BugzillaBugmail.ListComponents <channel>");
+		return;
+	}
+	var channel = String(params.get(1)).trim();
 	
-	if ((changesList.length == 0) || this._firstTime) {
-		this._firstTime = false;
-	} else {
-		this._spam(changesList);
+	var components = new Array();
+	
+	var target = this._targetList[channel];
+	if (target) {
+		components = target.listComponents();
 	}
 	
-	this._updateActivityDB(changesList);
+	if (components.length == 0) {
+		irc.sendContextReply(mes, "Channel '" + channel + "' doesn't receive any bugmail.");
+	} else {
+		irc.sendContextReply(mes, "Channel '" + channel + "' receives bugmail for '" + components.join("', '") + "'.");
+	}
 }
+BugzillaBugmail.prototype.commandListComponents.help = [
+		"Lists the components for a channel.",
+		"<channel>",
+		"<channel> is the name of the channel to list"
+	];
 
 
 // Command: AddComponent
@@ -211,7 +295,7 @@ BugzillaBugmail.prototype.commandLog = function(mes, mods, irc) {
 	
 	var bugs = this._mods.odb.retrieve(BugzillaActivityGroup, "WHERE bug = " + Number(bugNum));
 	
-	if (bugs.length == 0) {
+	if (bugs.size() == 0) {
 		irc.sendContextReply(mes, "Nothing found in log for bug " + bugNum);
 		return;
 	}
@@ -239,68 +323,175 @@ BugzillaBugmail.prototype.commandLog.help = [
 
 // Command: Search
 BugzillaBugmail.prototype.commandSearch = function(mes, mods, irc) {
+	var syntax = "Syntax: BugzillaBugmail.Search [<channel>] [-open || -closed || -enh || -bug] [-recent[=<period>]] [<terms>]";
 	var params = mods.util.getParams(mes);
 	if (params.size() <= 1) {
-		irc.sendContextReply(mes, "Syntax: BugzillaBugmail.Search <terms>");
+		irc.sendContextReply(mes, syntax);
 		return;
 	}
 	
-	var terms = new Array();
+	var channel = String(mes.getContext());
+	if (channel.substr(0, 1) != "#") {
+		channel = "";
+	}
+	
+	var paramMap = {
+		"open":   { field: "bug_status",   items: ["UNCONFIRMED", "NEW", "ASSIGNED", "REOPENED"] },
+		"closed": { field: "bug_status",   items: ["RESOLVED", "VERIFIED", "CLOSED"] },
+		"enh":    { field: "bug_severity", items: ["enhancement"] },
+		"bug":    { field: "bug_severity", items: ["blocker", "critical", "major", "normal", "minor", "trivial"] },
+	};
+	
+	var search = {
+		component: [],
+		bug_status: [],
+		bug_severity: [],
+		short_desc: []
+	};
+	search.short_desc.joinString = " ";
+	
+	var gotArgument = false;
 	for (var i = 1; i < params.size(); i++) {
-		terms.push({ field: "summary", word: String(params.get(i)) });
+		var param = params.get(i);
+		if (param.substr(0, 1) == "#") {
+			channel = param;
+		} else if (param == "-recent") {
+			search.chfieldfrom = "1w";
+			search.chfieldto = "Now";
+			gotArgument = true;
+		} else if (param.substr(0, 8) == "-recent=") {
+			search.chfieldfrom = param.substr(8);
+			search.chfieldto = "Now";
+			gotArgument = true;
+		} else if (param.substr(0, 1) == "-") {
+			if (param.substr(1) in paramMap) {
+				var options = paramMap[param.substr(1)];
+				for (var j = 0; j < options.items.length; j++) {
+					search[options.field].push(options.items[j]);
+				}
+			} else {
+				irc.sendContextReply(mes, syntax);
+				return;
+			}
+		} else {
+			search.short_desc.push(param);
+			gotArgument = true;
+		}
 	}
-	
-	for (var i = 0; i < terms.length; i++) {
-		terms[i] = terms[i].field + " LIKE \"%" + this._mods.odb.escapeForLike(terms[i].word) + "%\"";
-	}
-	var qs = "WHERE " + terms.join(" OR ") + " SORT DESC time";
-	
-	var bugs = this._mods.odb.retrieve(BugzillaActivityGroup, qs);
-	
-	if (bugs.size() == 0) {
-		irc.sendContextReply(mes, "No bugs matched search terms.");
+	if (!channel || !gotArgument) {
+		irc.sendContextReply(mes, syntax);
 		return;
 	}
-	
-	var results = new Array();
-	var resultsHash = new Object();
-	for (var i = 0; i < bugs.size(); i++) {
-		var bugId = bugs.get(i).bug;
-		if (!(bugId in resultsHash)) {
-			results.push("bug " + bugId);
-			resultsHash[bugId] = true;
+	if (search.bug_status.length == 0) {
+		for (var i = 0; i < paramMap["open"].items.length; i++) {
+			search.bug_status.push(paramMap["open"].items[i]);
+		}
+	}
+	if (channel in this._targetList) {
+		var comps = this._targetList[channel].listComponents();
+		for (var i = 0; i < comps.length; i++) {
+			var procomp = comps[i];
+			if (procomp.indexOf(":") != -1) {
+				procomp = procomp.substr(procomp.indexOf(":") + 1);
+			}
+			search.component.push(procomp);
 		}
 	}
 	
-	var space = 380 - 16 - results.join(", ").length;
-	space = Math.floor(space / results.length) - 3;
-	if (space < 10) {
-		space = 0;
-	}
-	
-	results = new Array();
-	resultsHash = new Object();
-	for (var i = 0; i < bugs.size(); i++) {
-		var bug = bugs.get(i);
-		var bugId = bug.bug;
-		if (!(bugId in resultsHash)) {
-			var summ = "";
-			if (space > 0) {
-				if (bug.summary.length > space) {
-					summ = " [" + bug.summary.substr(0, space - 3) + "...]";
-				} else {
-					summ = " [" + bug.summary + "]";
+	var url = "https://bugzilla.mozilla.org/buglist.cgi?query_format=advanced&short_desc_type=allwordssubstr";
+	for (var field in search) {
+		if (search[field] instanceof Array) {
+			if (search[field].joinString) {
+				url += "&" + field + "=" + escape(search[field].join(search[field].joinString));
+			} else {
+				for (var i = 0; i < search[field].length; i++) {
+					url += "&" + field + "=" + escape(search[field][i]);
 				}
 			}
-			results.push("bug " + bugId + summ);
-			resultsHash[bugId] = true;
+		} else {
+			url += "&" + field + "=" + escape(search[field]);
 		}
 	}
-	irc.sendContextReply(mes, "Bugs matching: " + results.join(", ") + ".");
+	url += "&cmdtype=doit&ctype=rdf&order=Last+Changed";
+	
+	var urlObj = new URL(url);
+	var cachedContents = new GetContentsCached(urlObj, 60000);
+	var bugListXML = String(cachedContents.getContents());
+	
+	var XMLNS_RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+	var XMLNS_BUGZILLA = "http://www.bugzilla.org/rdf#";
+	
+	try {
+		var xmlParser = new XMLParser(bugListXML);
+	} catch(ex) {
+		irc.sendContextReply(mes, "XML Parser: " + ex);
+		return;
+	}
+	var rootElement = xmlParser.rootElement;
+	var bugsArray = new Array();
+	var more = false;
+	try {
+		if (!rootElement.is("RDF", XMLNS_RDF)) {
+			throw new Error("Root is not RDF");
+		}
+		
+		var result = rootElement.childByName("result", XMLNS_BUGZILLA);
+		if (!result) {
+			throw new Error("Root doesn't contain <bz:result>");
+		}
+		
+		var bugs = result.childByName("bugs", XMLNS_BUGZILLA);
+		if (!bugs) {
+			throw new Error("<bz:result> doesn't contain <bz:bugs>");
+		}
+		
+		var seq = bugs.childByName("Seq", XMLNS_RDF);
+		if (!seq) {
+			throw new Error("<bz:bugs> doesn't contain <rdf:Seq>");
+		}
+		
+		var lis = seq.childrenByName("li", XMLNS_RDF);
+		for (var i = 0; i < lis.length; i++) {
+			var bug = lis[i].childByName("bug", XMLNS_BUGZILLA);
+			if (!bug) {
+				throw new Error("<rdf:li> doesn't contain <bz:bug>");
+			}
+			
+			var id = bug.childByName("id", XMLNS_BUGZILLA);
+			if (!id) {
+				throw new Error("<bz:bug> doesn't contain <bz:id>");
+			}
+			id = id.contents();
+			
+			var summary = bug.childByName("short_desc", XMLNS_BUGZILLA);
+			if (!summary) {
+				throw new Error("<bz:bug> doesn't contain <bz:short_desc>");
+			}
+			summary = _decodeEntities(summary.contents());
+			
+			if (bugsArray.length >= 20) {
+				more = true;
+				break;
+			}
+			bugsArray.push({ bug: id, summary: summary });
+		}
+	} catch(ex) {
+		irc.sendContextReply(mes, "Processing: " + ex);
+	}
+	
+	if (bugsArray.length == 0) {
+		irc.sendContextReply(mes, "No bugs matched.");
+	} else {
+		irc.sendContextReply(mes, "Bugs matching: " + this.apiFormatBugList(bugsArray, 360) + (more ? ", and more..." : "."));
+	}
 }
 BugzillaBugmail.prototype.commandSearch.help = [
 		"Searches known bugs by summary.",
-		"<terms>",
+		"[<channel>] [-open || -closed || -enh || -bug] [-recent[=<period>]] [<terms>]",
+		"<channel> specifies which channel to act as; required for private queries",
+		"-closed,-open,-enh,-bug select bug statuses/types (defaults to open enh+bugs)",
+		"-recent limits the bugs to those changed recently (default of 1 week)",
+		"<period> sets the recent period (e.g. '3d', '1w')",
 		"<terms> is one or more words to look for in the summary"
 	];
 
@@ -318,7 +509,9 @@ BugzillaBugmail.prototype.commandQueue = function(mes, mods, irc) {
 	if (/\s/.test(email) || (email.indexOf("@") == -1)) {
 		// Real name, not e-mail.
 		var uq = "WHERE name = \"" + this._mods.odb.escapeString(email) + "\"";
+		//log("commandQueue: " + uq);
 		var users = this._mods.odb.retrieve(BugzillaUser, uq);
+		//log("commandQueue: " + users.size());
 		if (users.size() > 0) {
 			email = users.get(0).email;
 		}
@@ -330,7 +523,9 @@ BugzillaBugmail.prototype.commandQueue = function(mes, mods, irc) {
 			+ " AND field = \"Flag\?\""
 			+ " AND newValue = \"" + this._mods.odb.escapeString(email) + "\""
 	;
+	//log("commandQueue: " + q);
 	var flags = this._mods.odb.retrieve(BugzillaActivity, q);
+	//log("commandQueue: " + flags.size());
 	
 	for (var i = 0; i < flags.size(); i++) {
 		var flag = flags.get(i);
@@ -345,7 +540,9 @@ BugzillaBugmail.prototype.commandQueue = function(mes, mods, irc) {
 				+ " OR field = \"Flag\""
 			+ ")"
 		;
+		//log("commandQueue: " + q);
 		var flagRVs = this._mods.odb.retrieve(BugzillaActivity, q);
+		//log("commandQueue: " + flagRVs.size());
 		
 		if (flagRVs.size() == 0) {
 			queue.push(flag);
@@ -406,38 +603,56 @@ BugzillaBugmail.prototype.commandRebuildDB = function(mes, mods, irc) {
 		for (var i = 0; i < flags.size(); i++)
 			this._mods.odb["delete"](flags.get(i));
 		
+		this._seenFileNames = new Object();
+		
 		irc.sendContextReply(mes, "Removed existing data.");
 	}
 	
-	if (!cmd || (cmd == "build")) {
-		var changesList = new Array();
+	if (!cmd || (cmd == "build") || (cmd == "build-once")) {
+		var bugmailList = new Array();
 		try {
-			var self = this;
-			var shown = false;
-			this._checkMail(function(pop3, messageID) {
-				if (!shown) {
-					irc.sendContextReply(mes, "Rebuilding database from bugmail, this may take a few minutes...");
-					shown = true;
+			var currentFile = "";
+			var store = new File(this._mailStore);
+			var files = store.listFiles();
+			for (var i = 0; i < files.length; i++) {
+				if (!files[i].getName().endsWith(".eml")) continue;
+				if (files[i].getName() in this._seenFileNames) continue;
+				currentFile = files[i].getName();
+				
+				var changes = this._processMessageFile(files[i]);
+				
+				var q = "WHERE `msgid` = \"" + this._mods.odb.escapeString(changes.changeGroup.msgid) + "\"";
+				var bugs = this._mods.odb.retrieve(BugzillaActivityGroup, q);
+				if (bugs.size() > 0) {
+					this._seenFileNames[changes.changeGroup.fileName()] = true;
+					continue;
 				}
-				var changes = new BugmailParser(pop3.getMessage(messageID));
-				changesList.push(changes);
-				return true;
-			});
+				
+				bugmailList.push(changes);
+				this._seenFileNames[changes.changeGroup.fileName()] = true;
+				currentFile = "";
+				if (cmd == "build-once") break;
+			}
 		} catch(ex) {
-			irc.sendContextReply(mes, "Error rebuilding from bugmail: " + ex);
+			irc.sendContextReply(mes, "Error rebuilding from bugmail: " + ex + (currentFile ? " <" + currentFile + ">" : ""));
 			this._rebuilding = false;
 			return;
 		}
 		
-		this._updateActivityDB(changesList);
-		irc.sendContextReply(mes, "Rebuilt database from bugmail.");
+		this._updateActivityDB(bugmailList);
+		if (cmd == "build-once") {
+			irc.sendContextReply(mes, "Updated database from one bugmail." + (bugmailList.length > 0 ? " (" + bugmailList[0].changeGroup.fileName() + ")" : ""));
+		} else {
+			irc.sendContextReply(mes, "Rebuilt database from bugmail.");
+		}
 	}
 	
 	this._rebuilding = false;
 }
 BugzillaBugmail.prototype.commandRebuildDB.help = [
 		"Rebuilds the activity log from currently-stored bugmails.",
-		""
+		"[<command>]",
+		"<command> can be 'clear' (to empty database) or 'build' (to fill database)"
 	];
 
 
@@ -499,6 +714,57 @@ BugzillaBugmail.prototype.commandRemoveUser.help = [
 	];
 
 
+// API: GetBugSummary
+BugzillaBugmail.prototype.apiGetBugSummary = function(bugNumber) {
+	var qs = "WHERE bug = " + Number(bugNumber) + " SORT DESC time";
+	var bugs = this._mods.odb.retrieve(BugzillaActivityGroup, qs);
+	if (bugs.size() > 0) {
+		return bugs.get(0).summary;
+	}
+	return "";
+}
+
+
+// API: FormatBugList
+BugzillaBugmail.prototype.apiFormatBugList = function(bugs, space) {
+	var results = new Array();
+	var resultsHash = new Object();
+	for (var i = 0; i < bugs.length; i++) {
+		var bugId = bugs[i].bug;
+		if (!(bugId in resultsHash)) {
+			results.push("bug " + bugId);
+			resultsHash[bugId] = true;
+		}
+	}
+	
+	space -= results.join(", ").length;
+	space = Math.floor(space / results.length) - 13;
+	if (space < 10) {
+		space = 0;
+	}
+	
+	results = new Array();
+	resultsHash = new Object();
+	for (var i = 0; i < bugs.length; i++) {
+		var bug = bugs[i];
+		var bugId = bug.bug;
+		if (!(bugId in resultsHash)) {
+			var summ = "";
+			if (space > 0) {
+				if (bug.summary.length > space) {
+					summ = " [" + bug.summary.substr(0, space - 2) + "»]";
+				} else {
+					summ = " [" + bug.summary + "]";
+				}
+			}
+			results.push("bug " + bugId + summ);
+			resultsHash[bugId] = true;
+		}
+	}
+	return results.join(", ");
+}
+
+
 // Internal: calls back for each message.
 BugzillaBugmail.prototype._checkMail = function(callbackFn) {
 	var pop3host     = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Server",   ""]);
@@ -507,13 +773,58 @@ BugzillaBugmail.prototype._checkMail = function(callbackFn) {
 	var pop3password = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Password", ""]);
 	
 	var pop3 = new POP3Server(pop3host, pop3port, pop3account, pop3password);
-	var messageIDList = pop3.getMessageList();
-	for (var i = 0; i < messageIDList.length; i++) {
-		if (!callbackFn(pop3, messageIDList[i])) {
+	var messageList = pop3.getMessageIdList();
+	for (var i = 0; i < messageList.length; i++) {
+		if (!callbackFn(pop3, messageList[i].number, messageList[i].id)) {
 			break;
 		}
 	}
 	pop3.close();
+}
+
+
+// Internal: downloads and parses a single message.
+BugzillaBugmail.prototype._downloadMessage = function(pop3, messageNumber, messageId) {
+	// Get the message.
+	var lines = pop3.getMessage(messageNumber);
+	
+	// Parse the message into changes.
+	var changes = new BugmailParser(lines.concat());
+	
+	// Write out the message to a file.
+	var messageFile = new File(this._mailStore + changes.changeGroup.fileName());
+	var messageFileOutput = new BufferedWriter(new FileWriter(messageFile));
+	for (var i = 0; i < lines.length; i++) {
+		messageFileOutput.write(lines[i] + "\n");
+	}
+	messageFileOutput.close();
+	
+	log("DWNLD " + messageId + " --> " + changes.changeGroup.fileName());
+	log("PARSE " + changes.changeGroup.fileName() + " --> [" + new Date(changes.changeGroup.time) + "] Bug " + changes.changeGroup.bug + " [" + changes.changeGroup.product + ": " + changes.changeGroup.component + "] (format " + changes.bugmailFormat + ")");
+	
+	pop3.deleteMessage(messageNumber);
+	
+	return changes;
+}
+
+
+// Internal: process a single file as a message.
+BugzillaBugmail.prototype._processMessageFile = function(messageFile) {
+	// Write out the message to a file.
+	var line;
+	var lines = new Array();
+	var messageFileOutput = new BufferedReader(new FileReader(messageFile));
+	while ((line = messageFileOutput.readLine()) != null) {
+		lines.push(String(line));
+	}
+	messageFileOutput.close();
+	
+	// Parse the message into changes.
+	var changes = new BugmailParser(lines);
+	
+	log("PARSE " + changes.changeGroup.fileName() + " --> [" + new Date(changes.changeGroup.time) + "] Bug " + changes.changeGroup.bug + " [" + changes.changeGroup.product + ": " + changes.changeGroup.component + "] (format " + changes.bugmailFormat + ")");
+	
+	return changes;
 }
 
 
@@ -528,6 +839,7 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 		var things = new Array();
 		var isNew = false;
 		var comment = "";
+		var productComponent = g.product + ":" + g.component;
 		
 		for (var j = 0; j < s.length; j++) {
 			if (s[j].field == "NEW") {
@@ -547,6 +859,19 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 				comment = s[j].newValue;
 				s[j].done = true;
 				
+			}
+		}
+		
+		// Some fields are ignored for spamming of new bugs, to keep the line shorter.
+		if (isNew) {
+			var ignoreOnNew = ["Summary", "Assigned To", "QA Contact", "Priority"];
+			for (var j = 0; j < s.length; j++) {
+				for (var k = 0; k < ignoreOnNew.length; k++) {
+					if (s[j].field == ignoreOnNew[k]) {
+						s[j].done = true;
+						break;
+					}
+				}
 			}
 		}
 		
@@ -575,13 +900,16 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 						+ " AND BugzillaActivity.oldValue = \"" + odb.escapeString(flag.oldValue) + "\""
 				;
 				
-				var flags = odb.retrieve(BugzillaActivityGroup, q);
-				log(q);
-				log("CHECKING FOR FLAG: bug " + g.bug + ", " + flag.field + ", attachment " + flag.attachment + " = " + flags.size());
-				
-				if (flags.size() == 1) {
-					str += " to " + self._fmtUser(flags.get(0).user);
-				}
+				try {
+					//log("fmtFlag: " + q);
+					var flags = odb.retrieve(BugzillaActivityGroup, q);
+					//log("fmtFlag: " + flags.size());
+					//log("CHECKING FOR FLAG: bug " + g.bug + ", " + flag.field + ", attachment " + flag.attachment + " = " + flags.size());
+					
+					if (flags.size() == 1) {
+						str += " to " + self._fmtUser(flags.get(0).user);
+					}
+				} catch(ex) {}
 			}
 			if (flag.attachment != 0) {
 				str += " for attachment " + flag.attachment;
@@ -658,7 +986,11 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 			s[j].done = true;
 		}
 		if (list.length > 0) {
-			things.push("added " + list.join(", "));
+			if (isNew) {
+				things.push(list.join(", "));
+			} else {
+				things.push("added " + list.join(", "));
+			}
 		}
 		
 		// Flags: cleared
@@ -730,25 +1062,69 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 		}
 		
 		msg = prefix + msg;
-		log(msg);
+		log("SPAM  " + msg);
 		
 		if (msg.length > 400) {
-			msg = msg.substr(0, 395) + (comment ? "...\"." : "...");
+			msg = msg.substr(0, 395) + (comment ? "»\"." : "»");
 		}
 		
 		if (mes) {
 			this._irc.sendContextReply(mes, msg);
 		} else if (this._debugSpew) {
-			this._irc.sendMessage(this._debugSpew, msg);
+			if (this._debugSpew != "-") {
+				this._irc.sendMessage(this._debugSpew, msg);
+			}
 		} else {
-			var comp = g.product + ":" + g.component;
 			for (var t in this._targetList) {
-				if (this._targetList[t].hasComponent(comp)) {
+				if (this._targetList[t].hasComponent(productComponent)) {
 					this._irc.sendMessage(this._targetList[t].target, msg);
 				}
 			}
 		}
 	}
+}
+
+var entityMap = {
+	"lt":      "<", "#60":     "<",
+	"gt":      ">", "#62":     ">",
+	"quot":    '"', "#34":     '"',
+	"ldquo":   '"', "#8220":   '"',
+	"rdquo":   '"', "#8221":   '"',
+	"apos":    "'", "#39":     "'",
+	"lsquo":   "'", "#8216":   "'",
+	"rsquo":   "'", "#8217":   "'",
+	"nbsp":    " ", "#160":    " ",
+	"ndash":   "-", "#8211":   "-",
+	"mdash":   "-", "#8212":   "-",
+	"lsaquo": "<<", "#8249":  "<<",
+	"rsaquo": ">>", "#8250":  ">>",
+	"times":   "x",
+	"#163":    "£",
+	"#8230":   "...",
+	"dummy":   ""
+};
+
+function _decodeEntities(data) {
+	// Decode XML into HTML...
+	data = data.replace(/&(?:(\w+)|#(\d+)|#x([0-9a-f]{2}));/gi,
+	function _decodeEntity(match, name, decnum, hexnum) {
+		if (name && (name in entityMap)) {
+			return entityMap[name];
+		}
+		if (decnum && (String("#" + parseInt(decnum, 10)) in entityMap)) {
+			return entityMap[String("#" + parseInt(decnum, 10))];
+		}
+		if (hexnum && (String("#" + parseInt(hexnum, 16)) in entityMap)) {
+			return entityMap[String("#" + parseInt(hexnum, 16))];
+		}
+		return match; //"[unknown entity '" + (name || decnum || hexnum) + "']";
+	});
+	
+	// Done as a special-case, last, so that it doesn't bugger up
+	// doubly-escaped things.
+	data = data.replace(/&(amp|#0*38|#x0*26);/g, "&");
+	
+	return data;
 }
 
 function _dummy2() {
@@ -839,9 +1215,9 @@ function _dummy2() {
 		// Shows the same as makeFlag, but additionally includes who requested the flag - if possible.
 		function makeFlagDone(bug, flag) {
 			var q = "WHERE `bug` = " + Number(bug.bugNumber) + " AND `name` = \"" + odb.escapeString(flag.name) + "\"";
-			//log("MAKEFLAGDONE: " + q);
+			//log("makeFlagDone: " + q);
 			var flags = odb.retrieve(BugzillaSavedFlagRequest, q);
-			//log("MAKEFLAGDONE: = " + flags.size());
+			//log("makeFlagDone: " + flags.size());
 			if (flags.size() == 1) {
 				return flag.name + " to " + self._fmtUser(flags.get(0).by) + makeFlagAttributeSuffix(bug, flag);
 			}
@@ -930,59 +1306,24 @@ function _dummy2() {
 BugzillaBugmail.prototype._updateActivityDB = function(changesList) {
 	var odb = this._mods.odb;
 	
-	function changeGroup(time, user, bug, summary, product, component) {
-		var ary;
-		log("ACTIVITY LOG (GROUP): '" + [time, user, bug, summary, product, component].join("', '") + "'");
-		
-		var q = "WHERE `time` = " + Number(time)
-				+ " AND `user` = \"" + odb.escapeString(user) + "\""
-				+ " AND `bug` = " + Number(bug)
-			;
-		
-		var activityList = odb.retrieve(BugzillaActivityGroup, q);
-		var activity;
-		if (activityList.size() > 0) {
-			activity = activityList.get(0);
-			activity.summary = summary;
-			activity.product = product;
-			activity.component = component;
-			odb.update(activity);
-		} else {
-			activity = new BugzillaActivityGroup(time, user, bug, summary, product, component);
-			odb.save(activity);
-		}
+	function changeGroup(activity) {
+		log("ACTIVITY LOG (GROUP): '" + [activity.msgid, activity.time, activity.user, activity.bug, activity.summary, activity.product, activity.component].join("', '") + "'");
+		odb.save(activity);
 		return activity.id;
 	};
 	
-	function change(group, field, attachment, oldValue, newValue) {
-		log("ACTIVITY LOG (SET  ): '" + [group, field, attachment, oldValue, newValue].join("', '") + "'");
-		
-		var q = "WHERE `group` = " + Number(group)
-				+ " AND `field` = \"" + odb.escapeString(field) + "\""
-				+ " AND `attachment` = " + Number(attachment)
-			;
-		
-		var activityList = odb.retrieve(BugzillaActivity, q);
-		var activity;
-		if (activityList.size() > 0) {
-			activity = activityList.get(0);
-			activity.oldValue = oldValue;
-			activity.newValue = newValue;
-			odb.update(activity);
-		} else {
-			activity = new BugzillaActivity(group, field, attachment, oldValue, newValue);
-			odb.save(activity);
-		}
+	function change(activity) {
+		log("ACTIVITY LOG (SET  ): '" + [activity.group, activity.field, activity.attachment, activity.oldValue, activity.newValue].join("', '") + "'");
+		odb.save(activity);
 	};
 	
 	for (var i = 0; i < changesList.length; i++) {
-		var g = changesList[i].changeGroup;
-		if (!g.user || !g.bug) continue;
-		var gid = changeGroup(g.time, g.user, g.bug, g.summary, g.product, g.component);
+		if (!changesList[i].changeGroup.user || !changesList[i].changeGroup.bug) continue;
+		var gid = changeGroup(changesList[i].changeGroup);
 		
 		for (var j = 0; j < changesList[i].changeSet.length; j++) {
-			var s = changesList[i].changeSet[j];
-			change(gid, s.field, s.attachment, s.oldValue, s.newValue);
+			changesList[i].changeSet[j].group = gid;
+			change(changesList[i].changeSet[j]);
 		}
 	}
 }
@@ -1048,7 +1389,13 @@ function _dummy(bugs) {
 
 // Internal: updates the database of currently requested flags.
 BugzillaBugmail.prototype._fmtUser = function(user) {
-	var users = this._mods.odb.retrieve(BugzillaUser, "WHERE email = \"" + this._mods.odb.escapeString(user) + "\"");
+	if (String(user).indexOf("@") == -1) {
+		return user;
+	}
+	var q = "WHERE email = \"" + this._mods.odb.escapeString(user) + "\"";
+	//log("_fmtUser: " + q);
+	var users = this._mods.odb.retrieve(BugzillaUser, q);
+	//log("_fmtUser: " + users.size());
 	if (users.size() == 1) {
 		return users.get(0).name;
 	}
@@ -1127,10 +1474,15 @@ BugmailTarget.prototype.hasComponent = function(component) {
 	return false;
 }
 
+BugmailTarget.prototype.listComponents = function() {
+	return this._components;
+}
+
 
 
 function BugzillaActivityGroup() {
 	this.id         = 0;
+	this.msgid      = "";
 	this.time       = 0;
 	this.user       = "";
 	this.bug        = 0;
@@ -1139,21 +1491,26 @@ function BugzillaActivityGroup() {
 	this.component  = "";
 	
 	if (arguments.length > 0) {
-		this._ctor(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]);
+		this._ctor(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5], arguments[6]);
 	}
 }
 
-BugzillaActivityGroup.prototype._ctor = function(time, user, bug, summary, product, component) {
-	this.time       = time;
-	this.user       = user;
-	this.bug        = bug;
-	this.summary    = summary;
-	this.product    = product;
-	this.component  = component;
+BugzillaActivityGroup.prototype._ctor = function(msgid, time, user, bug, summary, product, component) {
+	this.msgid      = String(msgid);
+	this.time       = Number(time);
+	this.user       = String(user);
+	this.bug        = Number(bug);
+	this.summary    = String(summary);
+	this.product    = String(product);
+	this.component  = String(component);
 	this.init();
 }
 
 BugzillaActivityGroup.prototype.init = function() {
+}
+
+BugzillaActivityGroup.prototype.fileName = function() {
+	return this.time + "-" + this.msgid.replace(/[^0-9a-z\.@]/gi, "_") + ".eml";
 }
 
 
@@ -1172,11 +1529,11 @@ function BugzillaActivity() {
 }
 
 BugzillaActivity.prototype._ctor = function(group, field, attachment, oldValue, newValue) {
-	this.group      = group;
-	this.field      = field;
-	this.attachment = attachment;
-	this.oldValue   = oldValue;
-	this.newValue   = newValue;
+	this.group      = Number(group);
+	this.field      = String(field);
+	this.attachment = Number(attachment);
+	this.oldValue   = String(oldValue);
+	this.newValue   = String(newValue);
 	this.init();
 }
 
@@ -1235,15 +1592,43 @@ POP3Server.prototype.getMessageList = function() {
 	return list;
 }
 
+POP3Server.prototype.getMessageIdList = function() {
+	this._sendLine("UIDL");
+	this._getLineOK();
+	
+	var list = new Array();
+	var line = "";
+	while ((line = this._getLine()) != ".") {
+		list.push({ number: line.split(/\s+/)[0], id: line.split(/\s+/)[1] });
+	}
+	return list;
+}
+
+POP3Server.prototype.getMessageHeaders = function(id) {
+	this._sendLine("TOP " + id + " 0");
+	this._getLineOK();
+	
+	var msg = new Array();
+	while ((line = this._getLine()) != ".") {
+		msg.push(line.replace(/^\./, ""));
+	}
+	return msg;
+}
+
 POP3Server.prototype.getMessage = function(id) {
 	this._sendLine("RETR " + id);
 	this._getLineOK();
 	
 	var msg = new Array();
 	while ((line = this._getLine()) != ".") {
-		msg.push(line);
+		msg.push(line.replace(/^\./, ""));
 	}
 	return msg;
+}
+
+POP3Server.prototype.deleteMessage = function(id) {
+	this._sendLine("DELE " + id);
+	this._getLineOK();
 }
 
 POP3Server.prototype.close = function() {
@@ -1259,7 +1644,8 @@ POP3Server.prototype.close = function() {
 
 // Converts an array of lines from a single bugmail into an array of changes.
 function BugmailParser(lines) {
-	this.changeGroup = { time: 0, user: "", bug: 0, summary: "", product: "", component: "" };
+	this.bugmailFormat = -1;
+	this.changeGroup = new BugzillaActivityGroup();
 	this.changeSet = [];
 	this._parse(lines);
 }
@@ -1271,86 +1657,174 @@ BugmailParser.fields = [
 	{ name: "Group",                    list: true },
 	{ name: "Keywords",                 list: true },
 	{ name: "BugsThisDependsOn",        list: true, rename: "dependent bug" },
+	{ name: "Depends on",               list: true, rename: "dependent bug" },
 	{ name: "OtherBugsDependingOnThis", list: true, rename: "blocked bug" },
+	{ name: "Blocks",                   list: true, rename: "blocked bug" },
 	{ name: "Flag",                     flag: true },
 	{ name: /Attachment #\d+ Flag/,     flag: true },
+	{ name: "ReportedBy",               ignore: true },
 	{ name: "Ever Confirmed",           ignore: true }
 ];
 
+BugmailParser.wrappedFieldNames = [
+	{ name: /Attachment #\d+/ }
+];
+
+BugmailParser.debug = 0;
+
 BugmailParser.prototype._parse = function(lines) {
-	// Debug: 0 => nothing, 1 => parsed info, 2 => source + parsed info.
-	var debug = 0;
+	var debug = BugmailParser.debug;
 	var ary;
 	
 	function _quote_printable_escape(match, code) {
-		//log("CODE: " + code + " ==> " + (eval("0x" + code)) + " ==> " + String.fromCharCode(eval("0x" + code)));
 		return String.fromCharCode(eval("0x" + code));
 	}
 	
-	var useQuotePrintable = false;
-	var bodyLine = 0;
+	function _header_charset_encoding(match, charset, type, text) {
+		log("_charset_encoding: '" + [charset, type, text].join("', '") + "'.");
+		if (type == "Q") {
+			text = text.replace(/=([0-9A-F][0-9A-F])/g, _quote_printable_escape);
+		}
+		if (charset.toLowerCase() == "utf-8") {
+			// Output is actually a UTF-8 stream anyway, so don't convert to Unicode.
+		}
+		return text;
+	};
 	
-	var changes = new Array();
-	var linePartLengths = [19, 28, 28];
-	var changeTable = new Array();
-	var haveUser = false;
+	if (debug > 0) log("");
+	if (debug > 3) {
+		log("RAW MESSAGE:");
+		for (var i = 0; i < lines.length; i++) {
+			log("    " + lines[i]);
+		}
+		log("");
+	}
 	
-	// Process headers.
+	var headers = new Array();
 	for (var i = 0; i < lines.length; i++) {
-		if (debug > 1) log("PARSE HEAD: " + lines[i]);
-		var line = lines[i].trim();
-		
-		if (line == "") {
-			bodyLine = i + 1;
+		if (lines[i] == "") {
+			lines.splice(0, i + 1);
 			break;
 		}
-		
-		while ((i < lines.length - 1) && (lines[i + 1].substr(0, 1) == " ")) {
-			i++;
-			if (debug > 1) log("PARSE HEAD: " + lines[i]);
-			line += " " + lines[i].trim();
+		if ((lines[i].substr(0, 1) == " ") || (lines[i].substr(0, 1) == "\t")) {
+			if (lines[i].trim().substr(0, 2) == "=?") {
+				headers[headers.length - 1] += lines[i].trim();
+			} else {
+				headers[headers.length - 1] += " " + lines[i].trim();
+			}
+		} else {
+			headers.push(lines[i].trim());
 		}
+	}
+	
+	for (var i = 0; i < headers.length; i++) {
+		headers[i] = headers[i].replace(/\u201c|u201d/g, '"');
+		headers[i] = headers[i].replace(/=\?([-a-zA-Z0-9]+)\?([BQ])\?(.*?)\?=/g, _header_charset_encoding);
+	}
+	
+	var haveUser = false;
+	var useQuotePrintable = false;
+	var linePartLengths = [19, 28, 28];
+	var changes = new Array();
+	var changeTable = new Array();
+	var newBug = false;
+	var hasFields = false;
+	
+	if (debug > 2) {
+		log("MESSAGE HEADERS:");
+		for (var i = 0; i < headers.length; i++) {
+			log("    " + headers[i]);
+		}
+		log("");
+	}
+	
+	var bugmailFormats = [
+		"date from message-id received return-path subject to x-bugzilla-component x-bugzilla-product x-bugzilla-reason x-originalarrivaltime",
+		"content-type date from message-id received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime",
+		"content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime",
+		"content-type date from message-id mime-version received return-path subject to x-authentication-warning x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime",
+		"content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime",
+		"content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-classification x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime",
+		"auto-submitted content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-classification x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime",
+		"auto-submitted content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-classification x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime x-virus-scanned",
+	];
+	var bugmailNewWrapFormat = 5;
+	
+	var headerHash = new Object();
+	for (var i = 0; i < headers.length; i++) {
+		ary = headers[i].split(":");
+		if (ary[0].toLowerCase() == "content-transfer-encoding") continue;
+		if (ary[0].toLowerCase() == "in-reply-to") continue;
+		if (ary[0].toLowerCase() == "references") continue;
+		headerHash[ary[0].toLowerCase()] = true;
+	}
+	var headerList = new Array();
+	for (var p in headerHash) {
+		headerList.push(p);
+	}
+	headerList = headerList.sort().join(" ");
+	if (debug > 1) {
+		log("HEADERS   : " + headerList);
+	}
+	this.bugmailFormat = bugmailFormats.indexOf(headerList);
+	if (this.bugmailFormat == -1) {
+		log("HEADERS   : " + headerList);
+		throw new Error("Bugmail format is unknown!");
+	}
+	if (this.bugmailFormat >= bugmailNewWrapFormat) {
+		linePartLengths = [19, 27, 27];
+	}
+	
+	for (var i = 0; i < headers.length; i++) {
+		var header = headers[i]
+		var headerLC = header.toLowerCase();
 		
-		if ((line.substr(0, 8) == "Subject:") && (ary = line.match(/^Subject:\s*\[Bug (\d+)\]\s+(new:\s+)?(.*?)\s*$/i))) {
-			if (debug > 0) log("BUG ID    : " + ary[1] + " --- " + ary[3]);
+		if ((headerLC.substr(0, 11) == "message-id:") && (ary = header.match(/^Message-Id:\s*<(.*?)>\s*$/i))) {
+			if (debug > 1) log("MSGID     : " + ary[1]);
+			this.changeGroup.msgid = ary[1];
+			
+		} else if ((headerLC.substr(0, 8) == "subject:") && (ary = header.match(/^Subject:\s*\[Bug (\d+)\]\s+(new:\s+)?(.*?)\s*$/i))) {
+			if (debug > 1) log("BUG       : " + ary[1] + " --- " + ary[3]);
 			this.changeGroup.bug = Number(ary[1]);
 			this.changeGroup.summary = ary[3];
 			if (Boolean(ary[2])) {
-				this.changeSet.push({ field: "NEW", attachment: 0, oldValue: "", newValue: "" });
-				if (debug > 0) log("NEW BUG!");
+				this.changeSet.push(new BugzillaActivity(0, "NEW", 0, "", ""));
+				newBug = true;
+				if (debug > 1) log("NEW BUG!");
 			}
 			
-		} else if ((line.substr(0, 5) == "Date:") && (ary = line.match(/^Date:\s*(.*?)\s*$/i))) {
-			if (debug > 0) log("DATE      : " + ary[1]);
+		} else if ((headerLC.substr(0, 5) == "date:") && (ary = header.match(/^Date:\s*(.*?)\s*$/i))) {
+			if (debug > 1) log("DATE      : " + ary[1]);
 			this.changeGroup.time = Number(new Date(ary[1]));
 			
-		} else if ((line.substr(0, 11) == "X-BugzillaBugmail-") && (ary = line.match(/^X-BugzillaBugmail-(Product|Component):\s*(.*?)\s*$/i))) {
-			if (debug > 0) log((ary[1].toUpperCase() + "          ").substr(0, 10) + ": " + ary[2]);
+		} else if ((headerLC.substr(0, 11) == "x-bugzilla-") && (ary = header.match(/^X-Bugzilla-(Product|Component):\s*(.*?)\s*$/i))) {
+			if (debug > 1) log((ary[1].toUpperCase() + "          ").substr(0, 10) + ": " + ary[2]);
 			this.changeGroup[ary[1].toLowerCase()] = ary[2];
 			
-		} else if (!haveUser && (line.substr(0, 15) == "X-BugzillaBugmail-Who:") && (ary = line.match(/^X-BugzillaBugmail-Who:\s*(.*?)\s*$/i))) {
-			if (debug > 0) log("USER      : " + ary[1]);
+		} else if (!haveUser && (headerLC.substr(0, 15) == "x-bugzilla-who:") && (ary = header.match(/^X-Bugzilla-Who:\s*(\S+)\s*$/i))) {
 			this.changeGroup.user = ary[1];
+			if (debug > 1) log("USER      : " + this.changeGroup.user);
 			haveUser = true;
 			
-		} else if ((line.substr(0, 26) == "Content-Transfer-Encoding:") && (ary = line.match(/^Content-Transfer-Encoding:\s+quoted-printable\s*$/i))) {
+		} else if ((headerLC.substr(0, 26) == "content-transfer-encoding:") && (ary = header.match(/^Content-Transfer-Encoding:\s+quoted-printable\s*$/i))) {
+			if (debug > 1) log("CTE       : quoted-printable");
 			useQuotePrintable = true;
 			
 		}
 	}
 	
+	if (!this.changeGroup.msgid) {
+		throw new Error("Message doesn't have a Message-Id!");
+	}
+	
 	if (useQuotePrintable) {
-		// Process Quote Printable encoding.
-		if (debug > 0) log("QUOTE PRINTABLE");
+		if (debug > 1) log("QUOTE PRINTABLE");
 		
 		var bufferLines = lines;
 		lines = new Array();
-		for (var i = 0; i < bodyLine; i++) {
-			lines.push(bufferLines[i]);
-		}
 		
 		var lineBuffer = "";
-		for (var i = bodyLine; i < bufferLines.length; i++) {
+		for (var i = 0; i < bufferLines.length; i++) {
 			var softWrap = (bufferLines[i][bufferLines[i].length - 1] == "=");
 			
 			lineBuffer += bufferLines[i].replace(/=([0-9A-F][0-9A-F])/g, _quote_printable_escape);
@@ -1368,41 +1842,75 @@ BugmailParser.prototype._parse = function(lines) {
 		bufferLines = null;
 	}
 	
-	// Process body.
-	for (var i = bodyLine; i < lines.length; i++) {
-		if (debug > 1) log("PARSE BODY: " + lines[i]);
-		var line = lines[i].trim();
+	if (debug > 2) {
+		log("");
+		log("MESSAGE BODY:");
+		for (var i = 0; i < lines.length; i++) {
+			log("    " + lines[i]);
+		}
+		log("");
+	}
+	
+	for (var i = 0; i < lines.length; i++) {
+		var line = lines[i].replace(/\u201c|u201d/g, '"');
 		
 		if (!haveUser && (line.substr(0, 11) == "ReportedBy:") && (ary = line.match(/^ReportedBy:\s+(\S+)$/))) {
-			if (debug > 0) log("USER      : " + ary[1]);
 			this.changeGroup.user = ary[1];
+			if (debug > 1) log("USER      : " + this.changeGroup.user);
 			haveUser = true;
 			
-		} else if (!haveUser && (ary = line.match(/^(\S+) changed:$/))) {
-			if (debug > 0) log("USER      : " + ary[1]);
-			this.changeGroup.user = ary[1];
+		} else if (!haveUser && (ary = line.match(/(?:^(\S+)|\s<(\S+)>) changed:$/))) {
+			this.changeGroup.user = ary[1] || ary[2];
+			if (debug > 1) log("USER      : " + this.changeGroup.user);
 			haveUser = true;
 			
 		} else if ((ary = line.match(/Bug \d+ depends on bug \d+, which changed state./))) {
 			// Crap, this bug is about changes in a dependant bug!
+			if (!haveUser) {
+				this.changeGroup.user = "fake-user-bugzillabugmail@example.com";
+				if (debug > 1) log("USER      : " + this.changeGroup.user);
+			}
 			break;
 			
 		} else if ((ary = lines[i].match(/^([^|]+)\|([^|]+)\|([^|]*)$/))) {
 			var lineParts = ["", "", ""];
+			if (this.bugmailFormat >= bugmailNewWrapFormat) {
+				ary[2] = ary[2].replace(/ $/, "");
+			}
 			if ((ary[1].length != linePartLengths[0]) || (ary[2].length != linePartLengths[1])) {
 				continue;
 			}
 			for (var j = 0; j <= 2; j++) {
 				lineParts[j] = ary[j + 1].trim();
 			}
-			if (lineParts[0] == "What")
+			if (lineParts[0] == "What") {
 				continue;
+			}
 			
 			changeTable.push([lineParts[0], lineParts[1], lineParts[2]]);
 			
+		} else if ((lines[i].substr(0, 4) == "    ") && (lines[i].substr(18, 2) == ": ") && (ary = lines[i].match(/^\s*(\S+):\s*(.*)\s*$/))) {
+			var value = ary[2];
+			while ((i < lines.length - 1) && (lines[i + 1].substr(0, 20) == "                    ")) {
+				i++;
+				if (!value.match(/[-.,]$/)) value += " ";
+				value += lines[i].trim();
+			}
+			changes.push({ name: ary[1].trim(), oldValue: "", newValue: value });
+			
+			if (!haveUser && (ary[1].trim() == "ReportedBy")) {
+				this.changeGroup.user = ary[2];
+				if (debug > 1) log("USER      : " + this.changeGroup.user);
+				haveUser = true;
+			}
+			if (newBug && !hasFields && (i < lines.length - 1) && (lines[i + 1] == "")) {
+				hasFields = true;
+			}
+			
 		} else if (ary = lines[i].match(/^-+\s+Comment #\d+ from (\S+)\s+/)) {
-			if (!haveUser) {
+			if (!haveUser && (ary[1].indexOf("@") != -1)) {
 				this.changeGroup.user = ary[1];
+				if (debug > 1) log("USER      : " + this.changeGroup.user);
 				haveUser = true;
 			}
 			
@@ -1421,63 +1929,99 @@ BugmailParser.prototype._parse = function(lines) {
 			comment = comment.replace(/^\(From update of attachment \d+\)\s*/, "");
 			//comment = comment.replace(/\(In reply to comment #\d+\)\s*/, "");
 			
-			this.changeSet.push({ field: "COMMENT", attachment: 0, oldValue: "", newValue: comment });
-			if (debug > 0) log("COMMENT   : " + comment);
+			this.changeSet.push(new BugzillaActivity(0, "COMMENT", 0, "", comment));
+			if (debug > 1) log("COMMENT   : " + comment);
 			
 		} else if ((ary = lines[i].match(/^Created an attachment \(id=(\d+)\)$/))) {
-			if (debug > 0) log("ATTACHMENT: " + ary[1]);
+			if (debug > 1) log("ATTACHMENT: " + ary[1]);
 			
 			if ((i < lines.length - 2) && lines[i + 1].match(/^ --> \(/)) {
-				this.changeSet.push({ field: "NEW", attachment: Number(ary[1]), oldValue: "", newValue: lines[i + 2] });
+				this.changeSet.push(new BugzillaActivity(0, "NEW", Number(ary[1]), "", lines[i + 2]));
 			} else {
-				this.changeSet.push({ field: "NEW", attachment: Number(ary[1]), oldValue: "", newValue: "" });
+				this.changeSet.push(new BugzillaActivity(0, "NEW", Number(ary[1]), "", ""));
 			}
 			
+			i += 2;
+			
+			if (haveUser && newBug) {
+				var comment = "";
+				for (var j = i + 1; j < lines.length; j++) {
+					if (lines[j] == "-- ") break;
+					
+					if (lines[j][0] == ">") continue;
+					comment += " " + lines[j].trim();
+				}
+				comment = comment.replace(/ +/g, " ").trim();
+				comment = comment.replace(/^\(From update of attachment \d+\)\s*/, "");
+				//comment = comment.replace(/\(In reply to comment #\d+\)\s*/, "");
+				
+				this.changeSet.push(new BugzillaActivity(0, "COMMENT", 0, "", comment));
+				if (debug > 1) log("COMMENT   : " + comment);
+				break;
+			}
+			
+		} else if (haveUser && newBug && hasFields && lines[i].match(/^[^\s]/)) {
+			var comment = "";
+			for (var j = i; j < lines.length; j++) {
+				if (lines[j] == "-- ") break;
+				
+				if (lines[j][0] == ">") continue;
+				comment += " " + lines[j].trim();
+			}
+			comment = comment.replace(/ +/g, " ").trim();
+			comment = comment.replace(/^\(From update of attachment \d+\)\s*/, "");
+			//comment = comment.replace(/\(In reply to comment #\d+\)\s*/, "");
+			
+			this.changeSet.push(new BugzillaActivity(0, "COMMENT", 0, "", comment));
+			if (debug > 1) log("COMMENT   : " + comment);
+			break;
 		}
 	}
 	
-	var lineContParts = ["", "", ""];
+	var lineTableParts = ["", "", ""];
+	var lineTableNames = new Array();
+	var blank = "                                                                                ";
 	for (var i = 0; i < changeTable.length; i++) {
-		var lineParts = changeTable[i];
-		var forcedWrap = [false, false, false];
-		var nonForcedWrap = false;
-		
-		// If any item is the entire width of that column, it is continued.
-		for (var j = 0; j <= 2; j++) {
-			forcedWrap[j] = (lineParts[j].length == linePartLengths[j]) || (lineParts[j].substr(-1) == "-") || (lineParts[j].substr(-1) == ",");
-		}
-		
-		// First part of next line is empty ==> continuation.
-		if ((i < changeTable.length - 1) && (changeTable[i + 1][0].length == 0)) {
-			forcedWrap[0] = true;
-		}
-		
-		// Fields with this as the first line are always 2+ lines.
-		if (lineParts[0].match(/^Attachment #\d+$/)) {
-			nonForcedWrap = true;
-		}
-		
-		// If any items looks wrapped, and we're not at the end of the table, do a continuation.
-		if ((nonForcedWrap || forcedWrap[0] || forcedWrap[1] || forcedWrap[2]) && (i < changeTable.length - 1)) {
-			// Wrapped. Keep contents, and continue.
-			for (var j = 0; j <= 2; j++) {
-				lineContParts[j] += lineParts[j] + (forcedWrap[j] ? "" : " ");
+		for (var j = 0; j < 3; j++) {
+			lineTableParts[j] += changeTable[i][j];
+			if ((changeTable[i][j].length > 0) && (changeTable[i][j].length < linePartLengths[j]) && !changeTable[i][j].match(/[-.,]$/)) {
+				lineTableParts[j] += " ";
 			}
-			continue;
 		}
 		
-		// We're the only, or last, line of this change.
-		for (var j = 0; j <= 2; j++) {
-			lineContParts[j] += lineParts[j];
+		// If we've got a repeated name, ignore it.
+		if (changeTable[i][0] && (changeTable[i][0].indexOf("Attachment #") == -1)) {
+			lineTableNames.push(changeTable[i][0]);
 		}
-		for (var j = 0; j <= 2; j++) {
-			lineContParts[j] = lineContParts[j].trim();
+		if (i < changeTable.length - 1) {
+			for (var j = 0; j < lineTableNames.length; j++) {
+				if (changeTable[i + 1][0] == lineTableNames[j]) {
+					changeTable[i + 1][0] = "";
+				}
+			}
 		}
 		
-		if (debug > 0) log("CHANGE    : " + lineContParts[0] + "|" + lineContParts[1] + "|" + lineContParts[2]);
-		changes.push({ name: lineContParts[0], oldValue: lineContParts[1], newValue: lineContParts[2] });
-		lineContParts = ["", "", ""];
+		var wrapped = (changeTable[i][0].length == linePartLengths[0]);
+		for (var j = 0; j < BugmailParser.wrappedFieldNames.length; j++) {
+			if ((BugmailParser.wrappedFieldNames[j].name == changeTable[i][0]) || changeTable[i][0].match(BugmailParser.wrappedFieldNames[j].name)) {
+				wrapped = true;
+			}
+		}
+		
+		if (((i < changeTable.length - 1) && (changeTable[i + 1][0] != "") && !wrapped) || (i == changeTable.length - 1)) {
+			for (var j = 0; j < 3; j++) {
+				lineTableParts[j] = lineTableParts[j].trim();
+			}
+			if (debug > 1) log("CHANGE    : "
+					+ (lineTableParts[0] + blank).substr(0, 50) + "  "
+					+ (lineTableParts[1] + blank).substr(0, 50) + "  "
+					+ (lineTableParts[2] + blank).substr(0, 50));
+			changes.push({ name: lineTableParts[0], oldValue: lineTableParts[1], newValue: lineTableParts[2] });
+			lineTableParts = ["", "", ""];
+			lineTableNames = new Array();
+		}
 	}
+	if (debug > 1) log("");
 	
 	for (var i = 0; i < changes.length; i++) {
 		var skip = false;
@@ -1554,37 +2098,35 @@ BugmailParser.prototype._parse = function(lines) {
 			
 			for (var j = 0; j < oldFlags.length; j++) {
 				if (debug > 0) log("FLAG CLEARED  : " + oldFlags[j].name);
-				this.changeSet.push({ field: "Flag", attachment: oldFlags[j].attachment || 0, oldValue: oldFlags[j].name, newValue: oldFlags[j].user || "" });
+				this.changeSet.push(new BugzillaActivity(0, "Flag", oldFlags[j].attachment || 0, oldFlags[j].name, oldFlags[j].user || ""));
 			}
 			for (var j = 0; j < newFlags.length; j++) {
 				if (newFlags[j].state == "?") {
 					if (debug > 0) log("FLAG REQUESTED: " + newFlags[j].name + " --- " + newFlags[j].user);
-					this.changeSet.push({ field: "Flag?", attachment: newFlags[j].attachment || 0, oldValue: newFlags[j].name, newValue: newFlags[j].user || "" });
+					this.changeSet.push(new BugzillaActivity(0, "Flag?", newFlags[j].attachment || 0, newFlags[j].name, newFlags[j].user || ""));
 				} else if (newFlags[j].state == "+") {
 					if (debug > 0) log("FLAG GRANTED  : " + newFlags[j].name);
-					this.changeSet.push({ field: "Flag+", attachment: newFlags[j].attachment || 0, oldValue: newFlags[j].name, newValue: newFlags[j].user || "" });
+					this.changeSet.push(new BugzillaActivity(0, "Flag+", newFlags[j].attachment || 0, newFlags[j].name, newFlags[j].user || ""));
 				} else if (newFlags[j].state == "-") {
 					if (debug > 0) log("FLAG DENIED   : " + newFlags[j].name);
-					this.changeSet.push({ field: "Flag-", attachment: newFlags[j].attachment || 0, oldValue: newFlags[j].name, newValue: newFlags[j].user || "" });
+					this.changeSet.push(new BugzillaActivity(0, "Flag-", newFlags[j].attachment || 0, newFlags[j].name, newFlags[j].user || ""));
 				}
 			}
 			
 		} else if (list) {
 			if (changes[i].oldValue) {
-				if (debug > 0) log("REMOVED   : " + changes[i].name + " --- " + changes[i].oldValue);
-				this.changeSet.push({ field: changes[i].name, attachment: changes[i].attachment, oldValue: changes[i].oldValue, newValue: "" });
+				if (debug > 0) log("REMOVED       : " + changes[i].name + " --- " + changes[i].oldValue);
+				this.changeSet.push(new BugzillaActivity(0, changes[i].name, changes[i].attachment, changes[i].oldValue, ""));
 			}
 			if (changes[i].newValue) {
-				if (debug > 0) log("ADDED     : " + changes[i].name + " --- " + changes[i].newValue);
-				this.changeSet.push({ field: changes[i].name, attachment: changes[i].attachment, oldValue: "", newValue: changes[i].newValue });
+				if (debug > 0) log("ADDED         : " + changes[i].name + " --- " + changes[i].newValue);
+				this.changeSet.push(new BugzillaActivity(0, changes[i].name, changes[i].attachment, "", changes[i].newValue));
 			}
 		} else {
-			if (debug > 0) log("CHANGED   : " + changes[i].name + " --- " + changes[i].oldValue + " --- " + changes[i].newValue);
-			this.changeSet.push({ field: changes[i].name, attachment: changes[i].attachment, oldValue: changes[i].oldValue, newValue: changes[i].newValue });
+			if (debug > 0) log("CHANGED       : " + changes[i].name + " --- " + changes[i].oldValue + " --- " + changes[i].newValue);
+			this.changeSet.push(new BugzillaActivity(0, changes[i].name, changes[i].attachment, changes[i].oldValue, changes[i].newValue));
 		}
 	}
-	
-	log("PARSED bugmail for bug " + this.changeGroup.bug + " [" + this.changeGroup.product + ": " + this.changeGroup.component + "]");
 }
 
 
@@ -1592,7 +2134,7 @@ BugmailParser.prototype._parse = function(lines) {
 // Converts an array of changes into nice information for display, for one change only.
 function BugmailChanges(changes, timestamp) {
 	this.isNew = false;
-	this.time      = timestamp;
+	this.time      = Number(timestamp);
 	this.user      = "unknown";
 	this.bugNumber = 0;
 	this.summary   = "";
@@ -1632,3 +2174,575 @@ BugmailChanges.prototype._parse = function(changes) {
 		}
 	}
 }
+
+
+
+// #include JavaScriptXML.jsi
+// General XML parser, win!
+function XMLParser(data) {
+	this.data = data;
+	this.root = [];
+	this._state = [];
+	this._parse();
+}
+
+XMLParser.prototype._dumpln = function(line, limit) {
+	limit.value--;
+	if (limit.value == 0) {
+		dumpln("*** TRUNCATED ***");
+	}
+	if (limit.value <= 0) {
+		return;
+	}
+	dumpln(line);
+}
+
+XMLParser.prototype._dump = function(list, indent, limit) {
+	for (var i = 0; i < list.length; i++) {
+		this._dumpElement(list[i], indent, limit);
+	}
+}
+
+XMLParser.prototype._dumpElement = function(elt, indent, limit) {
+	if (elt._content) {
+		this._dumpln(indent + elt + elt._content + "</" + elt.name + ">", limit);
+	} else if (elt._children && (elt._children.length > 0)) {
+		this._dumpln(indent + elt, limit);
+		this._dump(elt._children, indent + "  ", limit);
+		this._dumpln(indent + "</" + elt.name + ">", limit);
+	} else {
+		this._dumpln(indent + elt, limit);
+	}
+}
+
+XMLParser.prototype._parse = function() {
+	// Hack off the Unicode DOM if it exists.
+	if (this.data.substr(0, 3) == "\xEF\xBB\xBF") {
+		this.data = this.data.substr(3);
+	}
+	
+	// Process all entities here.
+	this._processEntities();
+	
+	// Head off for the <?xml PI.
+	while (this.data.length > 0) {
+		this._eatWhitespace();
+		
+		if (this.data.substr(0, 4) == "<!--") {
+			// Comment.
+			this.root.push(this._eatComment());
+			
+		} else if (this.data.substr(0, 2) == "<!") {
+			// SGML element.
+			this.root.push(this._eatSGMLElement());
+			
+		} else if (this.data.substr(0, 2) == "<?") {
+			var e = this._eatElement(null);
+			if (e.name != "xml") {
+				throw new Error("Expected <?xml?>, found <?" + e.name + "?>");
+			}
+			this.xmlPI = e;
+			this.root.push(e);
+			break;
+			
+		} else {
+			break;
+			//throw new Error("Expected <?xml?>, found " + this.data.substr(0, 10) + "...");
+		}
+	}
+	
+	// OK, onto the root element...
+	while (this.data.length > 0) {
+		this._eatWhitespace();
+		
+		if (this.data.substr(0, 4) == "<!--") {
+			// Comment.
+			this.root.push(this._eatComment());
+			
+		} else if (this.data.substr(0, 2) == "<!") {
+			// SGML element.
+			this.root.push(this._eatSGMLElement());
+			
+		} else if (this.data.substr(0, 2) == "<?") {
+			var e = this._eatElement(null);
+			this.root.push(e);
+			
+		} else if (this.data.substr(0, 1) == "<") {
+			var e = this._eatElement(null);
+			if (e.start == false) {
+				throw new Error("Expected start element, found end element");
+			}
+			this.rootElement = e;
+			this.root.push(e);
+			this._state.unshift(e);
+			break;
+			
+		} else {
+			throw new Error("Expected root element, found " + this.data.substr(0, 10) + "...");
+		}
+	}
+	
+	// Now the contents.
+	while (this.data.length > 0) {
+		this._eatWhitespace();
+		
+		if (this.data.substr(0, 4) == "<!--") {
+			// Comment.
+			this._state[0]._children.push(this._eatComment());
+			
+		} else if (this.data.substr(0, 2) == "<!") {
+			// SGML element.
+			this._state[0]._children.push(this._eatSGMLElement());
+			
+		} else if (this.data[0] == "<") {
+			var e = this._eatElement(this._state[0]);
+			if (e.empty) {
+				this._state[0]._children.push(e);
+			} else if (e.start) {
+				this._state[0]._children.push(e);
+				this._state.unshift(e);
+			} else {
+				if (e.name != this._state[0].name) {
+					throw new Error("Expected </" + this._state[0].name + ">, found </" + e.name + ">");
+				}
+				this._state.shift();
+				if (this._state.length == 0) {
+					// We've ended the root element, that's it folks!
+					break;
+				}
+			}
+			
+		} else {
+			var pos = this.data.indexOf("<");
+			if (pos < 0) {
+				this._state[0]._content = this.data;
+				this.data = "";
+			} else {
+				this._state[0]._content = this.data.substr(0, pos);
+				this.data = this.data.substr(pos);
+			}
+		}
+	}
+	
+	this._eatWhitespace();
+	if (this._state.length > 0) {
+		throw new Error("Expected </" + this._state[0].name + ">, found EOF.");
+	}
+	if (this.data.length > 0) {
+		throw new Error("Expected EOF, found " + this.data.substr(0, 10) + "...");
+	}
+}
+
+XMLParser.prototype._processEntities = function() {}
+XMLParser.prototype._processEntities_TODO = function(string) {
+	var i = 0;
+	while (i < string.length) {
+		// Find next &...
+		i = string.indexOf("&", i);
+		
+		//if (string.substr(i, 4) == "&lt;") {
+		//	this.data = string.substr(0, i - 1) + "<" + 
+		
+		// Make sure we skip over the character we just inserted.
+		i++;
+	}
+	
+	return string;
+}
+
+XMLParser.prototype._eatWhitespace = function() {
+	var len = this._countWhitespace();
+	if (len > 0) {
+		this.data = this.data.substr(len);
+	}
+}
+
+XMLParser.prototype._countWhitespace = function() {
+	// Optimise by checking only first character first.
+	if (this.data.length <= 0) {
+		return 0;
+	}
+	var ws = this.data[0].match(/^\s+/);
+	if (ws) {
+		// Now check first 256 characters.
+		ws = this.data.substr(0, 256).match(/^\s+/);
+		
+		if (ws[0].length == 256) {
+			// Ok, check it all.
+			ws = this.data.match(/^\s+/);
+			return ws[0].length;
+		}
+		return ws[0].length;
+	}
+	return 0;
+}
+
+XMLParser.prototype._eatComment = function() {
+	if (this.data.substr(0, 4) != "<!--") {
+		throw new Error("Expected <!--, found " + this.data.substr(0, 10) + "...");
+	}
+	var i = 4;
+	while (i < this.data.length) {
+		if (this.data.substr(i, 3) == "-->") {
+			// Done.
+			var c = new XMLComment(this.data.substr(4, i - 4));
+			this.data = this.data.substr(i + 3);
+			return c;
+		}
+		i++;
+	}
+	throw new Error("Expected -->, found EOF.");
+}
+
+XMLParser.prototype._eatSGMLElement = function() {
+	if (this.data.substr(0, 2) != "<!") {
+		throw new Error("Expected <!, found " + this.data.substr(0, 10) + "...");
+	}
+	
+	// CDATA chunk?
+	if (this.data.substr(0, 9) == "<![CDATA[") {
+		return this._eatCDATAElement();
+	}
+	
+	var i = 2;
+	var inQuote = "";
+	while (i < this.data.length) {
+		if (inQuote == this.data[i]) {
+			inQuote = "";
+			
+		} else if ((this.data[i] == "'") || (this.data[i] == '"')) {
+			inQuote = this.data[i];
+			
+		} else if (this.data[i] == ">") {
+			// Done.
+			var c = new XMLComment(this.data.substr(2, i - 1));
+			this.data = this.data.substr(i + 1);
+			return c;
+		}
+		i++;
+	}
+	throw new Error("Expected >, found EOF.");
+}
+
+XMLParser.prototype._eatCDATAElement = function() {
+	if (this.data.substr(0, 9) != "<![CDATA[") {
+		throw new Error("Expected <![CDATA[, found " + this.data.substr(0, 20) + "...");
+	}
+	
+	var i = 9;
+	while (i < this.data.length) {
+		if ((this.data[i] == "]") && (this.data.substr(i, 3) == "]]>")) {
+			// Done.
+			var e = new XMLCData(this.data.substr(9, i - 9));
+			this.data = this.data.substr(i + 3);
+			return e;
+		}
+		i++;
+	}
+	throw new Error("Expected ]]>, found EOF.");
+}
+
+XMLParser.prototype._eatElement = function(parent) {
+	if (this.data[0] != "<") {
+		throw new Error("Expected <, found " + this.data.substr(0, 10) + "...");
+	}
+	
+	var whitespace = /\s/i;
+	var e;
+	var name = "";
+	var start = true;
+	var pi = false;
+	var i = 1;
+	if (this.data[i] == "?") {
+		pi = true;
+		i++;
+	}
+	if (!pi && (this.data[i] == "/")) {
+		start = false;
+		i++;
+	}
+	
+	while (i < this.data.length) {
+		if (!pi && (this.data[i] == ">")) {
+			e = new XMLElement(parent, name, start, pi, false);
+			this.data = this.data.substr(i + 1);
+			e.resolveNamespaces();
+			return e;
+			
+		} else if (start && (this.data.substr(i, 2) == "/>")) {
+			e = new XMLElement(parent, name, start, pi, true);
+			this.data = this.data.substr(i + 2);
+			e.resolveNamespaces();
+			return e;
+			
+		} else if (pi && (this.data.substr(i, 2) == "?>")) {
+			e = new XMLElement(parent, name, start, pi, false);
+			this.data = this.data.substr(i + 2);
+			e.resolveNamespaces();
+			return e;
+			
+		} else if (whitespace.test(this.data[i])) {
+			// End of name.
+			e = new XMLElement(parent, name, start, pi, false);
+			i++;
+			break;
+			
+		} else {
+			name += this.data[i];
+		}
+		i++;
+	}
+	
+	// On to attributes.
+	name = "";
+	var a = "";
+	var inName = false;
+	var inEQ = false;
+	var inVal = false;
+	var inQuote = "";
+	while (i < this.data.length) {
+		if (!pi && !inName && !inEQ && !inVal && (this.data[i] == ">")) {
+			this.data = this.data.substr(i + 1);
+			e.resolveNamespaces();
+			return e;
+			
+		} else if (!pi && !inName && !inEQ && !inVal && (this.data.substr(i, 2) == "/>")) {
+			if (!e.start) {
+				throw new Error("Invalid end tag, found " + this.data.substr(0, i + 10) + "...");
+			}
+			e.empty = true;
+			this.data = this.data.substr(i + 2);
+			e.resolveNamespaces();
+			return e;
+			
+		} else if (pi && !inName && !inEQ && !inVal && (this.data.substr(i, 2) == "?>")) {
+			this.data = this.data.substr(i + 2);
+			e.resolveNamespaces();
+			return e;
+			
+		} else if (inName && (this.data[i] == "=")) {
+			inName = false;
+			inEQ = true;
+			
+		} else if (inEQ && ((this.data[i] == '"') || (this.data[i] == "'"))) {
+			inEQ = false;
+			inVal = true;
+			inQuote = this.data[i];
+			
+		} else if (inQuote && ((this.data[i] == '"') || (this.data[i] == "'"))) {
+			if (inQuote == this.data[i]) {
+				inQuote = "";
+				inVal = false;
+				e._attributes.push(new XMLAttribute(e, name, a));
+				name = "";
+				a = "";
+			}
+			
+		} else if (whitespace.test(this.data[i])) {
+			if (inVal && !inQuote) {
+				inVal = false;
+				e._attributes.push(new XMLAttribute(e, name, a));
+				name = "";
+				a = "";
+			}
+			
+		} else if (inEQ || inVal) {
+			if (inEQ) {
+				inEQ = false;
+				inVal = true;
+				a = "";
+			}
+			a += this.data[i];
+			
+		} else {
+			if (!inName) {
+				inName = true;
+			}
+			name += this.data[i];
+		}
+		i++;
+	}
+	
+	//this.data = this.data.substr(i);
+	
+	//e.resolveNamespaces();
+	//return e;
+	throw new Error("Expected >, found EOF.");
+}
+
+
+
+function XMLElement(parent, name, start, pi, empty) {
+	this.type = "XMLElement";
+	this.parent = parent;
+	this.name = name;
+	this.start = start;
+	this.pi = pi;
+	this.empty = empty;
+	this.namespace = "";
+	
+	var ary = this.name.match(/^(.*?):(.*)$/);
+	if (ary) {
+		this.prefix = ary[1];
+		this.localName = ary[2];
+	} else {
+		this.prefix = null;
+		this.localName = this.name;
+	}
+	
+	this._attributes = [];
+	this._content = "";
+	this._children = [];
+}
+
+XMLElement.prototype.toString = function() {
+	var str = "<";
+	if (this.pi) {
+		str += "?";
+	} else if (!this.start) {
+		str += "/";
+	}
+	if (this.prefix != null) {
+		str += this.prefix + ":";
+	}
+	str += this.localName;
+	if (this.namespace) {
+		str += "[[" + this.namespace + "]]";
+	}
+	for (var a in this._attributes) {
+		str += " " + this._attributes[a];
+	}
+	if (this.pi) {
+		str += "?";
+	}
+	if (this.empty || ((this._content == "") && (this._children.length == 0))) {
+		str += "/";
+	}
+	str += ">";
+	
+	return str;
+}
+
+XMLElement.prototype.resolveNamespaces = function() {
+	function getNameSpaceFromPrefix(base, pfx) {
+		var attrName = "xmlns";
+		if (pfx) {
+			attrName = "xmlns:" + pfx;
+		}
+		
+		var element = base;
+		while (element) {
+			var attr = element.attribute(attrName);
+			if (attr) {
+				return attr.value;
+			}
+			element = element.parent;
+		}
+		return "";
+	};
+	
+	this.namespace = getNameSpaceFromPrefix(this, this.prefix);
+	
+	for (var i = 0; i < this._attributes.length; i++) {
+		if (/^xmlns(?:$|:)/.test(this._attributes[i].name)) {
+			continue;
+		}
+		this._attributes[i].namespace = getNameSpaceFromPrefix(this, this._attributes[i].prefix);
+	}
+}
+
+XMLElement.prototype.is = function(localName, namespace) {
+	return (this.localName == localName) && (this.namespace == namespace);
+}
+
+XMLElement.prototype.contents = function() {
+	var str = this._content;
+	if ((this._content == "") && (this._children.length > 0)) {
+		str = "";
+		for (var i = 0; i < this._children.length; i++) {
+			str += this._children[i].contents();
+		}
+	}
+	return str;
+}
+
+XMLElement.prototype.attribute = function(name, namespace) {
+	for (var i = 0; i < this._attributes.length; i++) {
+		if ((typeof namespace != "undefined") && (this._attributes[i].namespace != namespace)) {
+			continue;
+		}
+		if (this._attributes[i].name == name) {
+			return this._attributes[i];
+		}
+	}
+	return null;
+}
+
+XMLElement.prototype.childrenByName = function(localName, namespace) {
+	var rv = [];
+	for (var i = 0; i < this._children.length; i++) {
+		if ((typeof namespace != "undefined") && (this._children[i].namespace != namespace)) {
+			continue;
+		}
+		if (this._children[i].localName == localName) {
+			rv.push(this._children[i]);
+		}
+	}
+	return rv;
+}
+
+XMLElement.prototype.childByName = function(localName, namespace) {
+	var l = this.childrenByName(localName, namespace);
+	if (l.length != 1) {
+		return null;
+	}
+	return l[0];
+}
+
+
+
+function XMLAttribute(parent, name, value) {
+	this.type = "XMLAttribute";
+	this.parent = parent;
+	this.name = name;
+	this.value = value;
+	this.namespace = "";
+	
+	var ary = this.name.match(/^(.*?):(.*)$/);
+	if (ary) {
+		this.prefix = ary[1];
+		this.localName = ary[2];
+	} else {
+		this.prefix = null;
+		this.localName = this.name;
+	}
+}
+
+XMLAttribute.prototype.toString = function() {
+	var str = "";
+	if (this.prefix != null) {
+		str += this.prefix + ":";
+	}
+	str += this.localName;
+	if (this.namespace) {
+		str += "[[" + this.namespace + "]]";
+	}
+	str += "='" + this.value + "'";
+	return str;
+}
+
+
+
+function XMLCData(value) {
+	this.type = "XMLCData";
+	this.value = value;
+}
+
+XMLCData.prototype.toString = function() {
+	return "<![CDATA[" + this.value + "]]>";
+}
+
+XMLCData.prototype.contents = function() {
+	return this.value;
+}
+// #includeend

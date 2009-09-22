@@ -1,0 +1,567 @@
+// General XML parser, win!
+function XMLParser(data) {
+	this.data = data;
+	this.root = [];
+	this._state = [];
+	this._parse();
+}
+
+XMLParser.prototype._dumpln = function(line, limit) {
+	limit.value--;
+	if (limit.value == 0) {
+		dumpln("*** TRUNCATED ***");
+	}
+	if (limit.value <= 0) {
+		return;
+	}
+	dumpln(line);
+}
+
+XMLParser.prototype._dump = function(list, indent, limit) {
+	for (var i = 0; i < list.length; i++) {
+		this._dumpElement(list[i], indent, limit);
+	}
+}
+
+XMLParser.prototype._dumpElement = function(elt, indent, limit) {
+	if (elt._content) {
+		this._dumpln(indent + elt + elt._content + "</" + elt.name + ">", limit);
+	} else if (elt._children && (elt._children.length > 0)) {
+		this._dumpln(indent + elt, limit);
+		this._dump(elt._children, indent + "  ", limit);
+		this._dumpln(indent + "</" + elt.name + ">", limit);
+	} else {
+		this._dumpln(indent + elt, limit);
+	}
+}
+
+XMLParser.prototype._parse = function() {
+	// Hack off the Unicode DOM if it exists.
+	if (this.data.substr(0, 3) == "\xEF\xBB\xBF") {
+		this.data = this.data.substr(3);
+	}
+	
+	// Process all entities here.
+	this._processEntities();
+	
+	// Head off for the <?xml PI.
+	while (this.data.length > 0) {
+		this._eatWhitespace();
+		
+		if (this.data.substr(0, 4) == "<!--") {
+			// Comment.
+			this.root.push(this._eatComment());
+			
+		} else if (this.data.substr(0, 2) == "<!") {
+			// SGML element.
+			this.root.push(this._eatSGMLElement());
+			
+		} else if (this.data.substr(0, 2) == "<?") {
+			var e = this._eatElement(null);
+			if (e.name != "xml") {
+				throw new Error("Expected <?xml?>, found <?" + e.name + "?>");
+			}
+			this.xmlPI = e;
+			this.root.push(e);
+			break;
+			
+		} else {
+			break;
+			//throw new Error("Expected <?xml?>, found " + this.data.substr(0, 10) + "...");
+		}
+	}
+	
+	// OK, onto the root element...
+	while (this.data.length > 0) {
+		this._eatWhitespace();
+		
+		if (this.data.substr(0, 4) == "<!--") {
+			// Comment.
+			this.root.push(this._eatComment());
+			
+		} else if (this.data.substr(0, 2) == "<!") {
+			// SGML element.
+			this.root.push(this._eatSGMLElement());
+			
+		} else if (this.data.substr(0, 2) == "<?") {
+			var e = this._eatElement(null);
+			this.root.push(e);
+			
+		} else if (this.data.substr(0, 1) == "<") {
+			var e = this._eatElement(null);
+			if (e.start == false) {
+				throw new Error("Expected start element, found end element");
+			}
+			this.rootElement = e;
+			this.root.push(e);
+			this._state.unshift(e);
+			break;
+			
+		} else {
+			throw new Error("Expected root element, found " + this.data.substr(0, 10) + "...");
+		}
+	}
+	
+	// Now the contents.
+	while (this.data.length > 0) {
+		this._eatWhitespace();
+		
+		if (this.data.substr(0, 4) == "<!--") {
+			// Comment.
+			this._state[0]._children.push(this._eatComment());
+			
+		} else if (this.data.substr(0, 2) == "<!") {
+			// SGML element.
+			this._state[0]._children.push(this._eatSGMLElement());
+			
+		} else if (this.data[0] == "<") {
+			var e = this._eatElement(this._state[0]);
+			if (e.empty) {
+				this._state[0]._children.push(e);
+			} else if (e.start) {
+				this._state[0]._children.push(e);
+				this._state.unshift(e);
+			} else {
+				if (e.name != this._state[0].name) {
+					throw new Error("Expected </" + this._state[0].name + ">, found </" + e.name + ">");
+				}
+				this._state.shift();
+				if (this._state.length == 0) {
+					// We've ended the root element, that's it folks!
+					break;
+				}
+			}
+			
+		} else {
+			var pos = this.data.indexOf("<");
+			if (pos < 0) {
+				this._state[0]._content = this.data;
+				this.data = "";
+			} else {
+				this._state[0]._content = this.data.substr(0, pos);
+				this.data = this.data.substr(pos);
+			}
+		}
+	}
+	
+	this._eatWhitespace();
+	if (this._state.length > 0) {
+		throw new Error("Expected </" + this._state[0].name + ">, found EOF.");
+	}
+	if (this.data.length > 0) {
+		throw new Error("Expected EOF, found " + this.data.substr(0, 10) + "...");
+	}
+}
+
+XMLParser.prototype._processEntities = function() {}
+XMLParser.prototype._processEntities_TODO = function(string) {
+	var i = 0;
+	while (i < string.length) {
+		// Find next &...
+		i = string.indexOf("&", i);
+		
+		//if (string.substr(i, 4) == "&lt;") {
+		//	this.data = string.substr(0, i - 1) + "<" + 
+		
+		// Make sure we skip over the character we just inserted.
+		i++;
+	}
+	
+	return string;
+}
+
+XMLParser.prototype._eatWhitespace = function() {
+	var len = this._countWhitespace();
+	if (len > 0) {
+		this.data = this.data.substr(len);
+	}
+}
+
+XMLParser.prototype._countWhitespace = function() {
+	// Optimise by checking only first character first.
+	if (this.data.length <= 0) {
+		return 0;
+	}
+	var ws = this.data[0].match(/^\s+/);
+	if (ws) {
+		// Now check first 256 characters.
+		ws = this.data.substr(0, 256).match(/^\s+/);
+		
+		if (ws[0].length == 256) {
+			// Ok, check it all.
+			ws = this.data.match(/^\s+/);
+			return ws[0].length;
+		}
+		return ws[0].length;
+	}
+	return 0;
+}
+
+XMLParser.prototype._eatComment = function() {
+	if (this.data.substr(0, 4) != "<!--") {
+		throw new Error("Expected <!--, found " + this.data.substr(0, 10) + "...");
+	}
+	var i = 4;
+	while (i < this.data.length) {
+		if (this.data.substr(i, 3) == "-->") {
+			// Done.
+			var c = new XMLComment(this.data.substr(4, i - 4));
+			this.data = this.data.substr(i + 3);
+			return c;
+		}
+		i++;
+	}
+	throw new Error("Expected -->, found EOF.");
+}
+
+XMLParser.prototype._eatSGMLElement = function() {
+	if (this.data.substr(0, 2) != "<!") {
+		throw new Error("Expected <!, found " + this.data.substr(0, 10) + "...");
+	}
+	
+	// CDATA chunk?
+	if (this.data.substr(0, 9) == "<![CDATA[") {
+		return this._eatCDATAElement();
+	}
+	
+	var i = 2;
+	var inQuote = "";
+	while (i < this.data.length) {
+		if (inQuote == this.data[i]) {
+			inQuote = "";
+			
+		} else if ((this.data[i] == "'") || (this.data[i] == '"')) {
+			inQuote = this.data[i];
+			
+		} else if (this.data[i] == ">") {
+			// Done.
+			var c = new XMLComment(this.data.substr(2, i - 1));
+			this.data = this.data.substr(i + 1);
+			return c;
+		}
+		i++;
+	}
+	throw new Error("Expected >, found EOF.");
+}
+
+XMLParser.prototype._eatCDATAElement = function() {
+	if (this.data.substr(0, 9) != "<![CDATA[") {
+		throw new Error("Expected <![CDATA[, found " + this.data.substr(0, 20) + "...");
+	}
+	
+	var i = 9;
+	while (i < this.data.length) {
+		if ((this.data[i] == "]") && (this.data.substr(i, 3) == "]]>")) {
+			// Done.
+			var e = new XMLCData(this.data.substr(9, i - 9));
+			this.data = this.data.substr(i + 3);
+			return e;
+		}
+		i++;
+	}
+	throw new Error("Expected ]]>, found EOF.");
+}
+
+XMLParser.prototype._eatElement = function(parent) {
+	if (this.data[0] != "<") {
+		throw new Error("Expected <, found " + this.data.substr(0, 10) + "...");
+	}
+	
+	var whitespace = /\s/i;
+	var e;
+	var name = "";
+	var start = true;
+	var pi = false;
+	var i = 1;
+	if (this.data[i] == "?") {
+		pi = true;
+		i++;
+	}
+	if (!pi && (this.data[i] == "/")) {
+		start = false;
+		i++;
+	}
+	
+	while (i < this.data.length) {
+		if (!pi && (this.data[i] == ">")) {
+			e = new XMLElement(parent, name, start, pi, false);
+			this.data = this.data.substr(i + 1);
+			e.resolveNamespaces();
+			return e;
+			
+		} else if (start && (this.data.substr(i, 2) == "/>")) {
+			e = new XMLElement(parent, name, start, pi, true);
+			this.data = this.data.substr(i + 2);
+			e.resolveNamespaces();
+			return e;
+			
+		} else if (pi && (this.data.substr(i, 2) == "?>")) {
+			e = new XMLElement(parent, name, start, pi, false);
+			this.data = this.data.substr(i + 2);
+			e.resolveNamespaces();
+			return e;
+			
+		} else if (whitespace.test(this.data[i])) {
+			// End of name.
+			e = new XMLElement(parent, name, start, pi, false);
+			i++;
+			break;
+			
+		} else {
+			name += this.data[i];
+		}
+		i++;
+	}
+	
+	// On to attributes.
+	name = "";
+	var a = "";
+	var inName = false;
+	var inEQ = false;
+	var inVal = false;
+	var inQuote = "";
+	while (i < this.data.length) {
+		if (!pi && !inName && !inEQ && !inVal && (this.data[i] == ">")) {
+			this.data = this.data.substr(i + 1);
+			e.resolveNamespaces();
+			return e;
+			
+		} else if (!pi && !inName && !inEQ && !inVal && (this.data.substr(i, 2) == "/>")) {
+			if (!e.start) {
+				throw new Error("Invalid end tag, found " + this.data.substr(0, i + 10) + "...");
+			}
+			e.empty = true;
+			this.data = this.data.substr(i + 2);
+			e.resolveNamespaces();
+			return e;
+			
+		} else if (pi && !inName && !inEQ && !inVal && (this.data.substr(i, 2) == "?>")) {
+			this.data = this.data.substr(i + 2);
+			e.resolveNamespaces();
+			return e;
+			
+		} else if (inName && (this.data[i] == "=")) {
+			inName = false;
+			inEQ = true;
+			
+		} else if (inEQ && ((this.data[i] == '"') || (this.data[i] == "'"))) {
+			inEQ = false;
+			inVal = true;
+			inQuote = this.data[i];
+			
+		} else if (inQuote && ((this.data[i] == '"') || (this.data[i] == "'"))) {
+			if (inQuote == this.data[i]) {
+				inQuote = "";
+				inVal = false;
+				e._attributes.push(new XMLAttribute(e, name, a));
+				name = "";
+				a = "";
+			}
+			
+		} else if (whitespace.test(this.data[i])) {
+			if (inVal && !inQuote) {
+				inVal = false;
+				e._attributes.push(new XMLAttribute(e, name, a));
+				name = "";
+				a = "";
+			}
+			
+		} else if (inEQ || inVal) {
+			if (inEQ) {
+				inEQ = false;
+				inVal = true;
+				a = "";
+			}
+			a += this.data[i];
+			
+		} else {
+			if (!inName) {
+				inName = true;
+			}
+			name += this.data[i];
+		}
+		i++;
+	}
+	
+	//this.data = this.data.substr(i);
+	
+	//e.resolveNamespaces();
+	//return e;
+	throw new Error("Expected >, found EOF.");
+}
+
+
+
+function XMLElement(parent, name, start, pi, empty) {
+	this.type = "XMLElement";
+	this.parent = parent;
+	this.name = name;
+	this.start = start;
+	this.pi = pi;
+	this.empty = empty;
+	this.namespace = "";
+	
+	var ary = this.name.match(/^(.*?):(.*)$/);
+	if (ary) {
+		this.prefix = ary[1];
+		this.localName = ary[2];
+	} else {
+		this.prefix = null;
+		this.localName = this.name;
+	}
+	
+	this._attributes = [];
+	this._content = "";
+	this._children = [];
+}
+
+XMLElement.prototype.toString = function() {
+	var str = "<";
+	if (this.pi) {
+		str += "?";
+	} else if (!this.start) {
+		str += "/";
+	}
+	if (this.prefix != null) {
+		str += this.prefix + ":";
+	}
+	str += this.localName;
+	if (this.namespace) {
+		str += "[[" + this.namespace + "]]";
+	}
+	for (var a in this._attributes) {
+		str += " " + this._attributes[a];
+	}
+	if (this.pi) {
+		str += "?";
+	}
+	if (this.empty || ((this._content == "") && (this._children.length == 0))) {
+		str += "/";
+	}
+	str += ">";
+	
+	return str;
+}
+
+XMLElement.prototype.resolveNamespaces = function() {
+	function getNameSpaceFromPrefix(base, pfx) {
+		var attrName = "xmlns";
+		if (pfx) {
+			attrName = "xmlns:" + pfx;
+		}
+		
+		var element = base;
+		while (element) {
+			var attr = element.attribute(attrName);
+			if (attr) {
+				return attr.value;
+			}
+			element = element.parent;
+		}
+		return "";
+	};
+	
+	this.namespace = getNameSpaceFromPrefix(this, this.prefix);
+	
+	for (var i = 0; i < this._attributes.length; i++) {
+		if (/^xmlns(?:$|:)/.test(this._attributes[i].name)) {
+			continue;
+		}
+		this._attributes[i].namespace = getNameSpaceFromPrefix(this, this._attributes[i].prefix);
+	}
+}
+
+XMLElement.prototype.is = function(localName, namespace) {
+	return (this.localName == localName) && (this.namespace == namespace);
+}
+
+XMLElement.prototype.contents = function() {
+	var str = this._content;
+	if ((this._content == "") && (this._children.length > 0)) {
+		str = "";
+		for (var i = 0; i < this._children.length; i++) {
+			str += this._children[i].contents();
+		}
+	}
+	return str;
+}
+
+XMLElement.prototype.attribute = function(name, namespace) {
+	for (var i = 0; i < this._attributes.length; i++) {
+		if ((typeof namespace != "undefined") && (this._attributes[i].namespace != namespace)) {
+			continue;
+		}
+		if (this._attributes[i].name == name) {
+			return this._attributes[i];
+		}
+	}
+	return null;
+}
+
+XMLElement.prototype.childrenByName = function(localName, namespace) {
+	var rv = [];
+	for (var i = 0; i < this._children.length; i++) {
+		if ((typeof namespace != "undefined") && (this._children[i].namespace != namespace)) {
+			continue;
+		}
+		if (this._children[i].localName == localName) {
+			rv.push(this._children[i]);
+		}
+	}
+	return rv;
+}
+
+XMLElement.prototype.childByName = function(localName, namespace) {
+	var l = this.childrenByName(localName, namespace);
+	if (l.length != 1) {
+		return null;
+	}
+	return l[0];
+}
+
+
+
+function XMLAttribute(parent, name, value) {
+	this.type = "XMLAttribute";
+	this.parent = parent;
+	this.name = name;
+	this.value = value;
+	this.namespace = "";
+	
+	var ary = this.name.match(/^(.*?):(.*)$/);
+	if (ary) {
+		this.prefix = ary[1];
+		this.localName = ary[2];
+	} else {
+		this.prefix = null;
+		this.localName = this.name;
+	}
+}
+
+XMLAttribute.prototype.toString = function() {
+	var str = "";
+	if (this.prefix != null) {
+		str += this.prefix + ":";
+	}
+	str += this.localName;
+	if (this.namespace) {
+		str += "[[" + this.namespace + "]]";
+	}
+	str += "='" + this.value + "'";
+	return str;
+}
+
+
+
+function XMLCData(value) {
+	this.type = "XMLCData";
+	this.value = value;
+}
+
+XMLCData.prototype.toString = function() {
+	return "<![CDATA[" + this.value + "]]>";
+}
+
+XMLCData.prototype.contents = function() {
+	return this.value;
+}
