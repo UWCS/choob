@@ -24,13 +24,13 @@ public final class UtilModule
 	private final IRCInterface irc;
 	private Pattern triggerPattern;
 
-	long starttime;
+	long startTime;
 
 	/** Creates a new instance of UtilModule */
-	UtilModule( final IRCInterface irc ) {
+	UtilModule(final IRCInterface irc) {
 		this.irc = irc;
 		updateTrigger();
-		starttime=new java.util.Date().getTime();
+		startTime = new java.util.Date().getTime();
 	}
 
 	public void updateTrigger()
@@ -45,12 +45,11 @@ public final class UtilModule
 	}
 
 	/** Get the offset of the trigger in the list of arguments */
-	private int getTriggerOffset( final String text )
+	private int getTriggerOffset(final String str)
 	{
-		final Matcher ma = triggerPattern.matcher(text);
+		final Matcher ma = triggerPattern.matcher(str);
 		if (ma.find())
 			return ma.end();
-
 		return 0;
 	}
 
@@ -59,55 +58,51 @@ public final class UtilModule
 		return "$Date$$Rev$";
 	}
 
-	/** Get the parameter string (ie. message without the command) from a Message object */
-	public String getParamString( final Message mes )
-	{
-		final String text = mes.getMessage();
-		final int offset = getTriggerOffset(text);
-		final int spacePos = text.indexOf(' ', offset);
-		if (spacePos != -1)
-		{
-			String subs = text.substring(spacePos + 1);
-			return nihtrim(subs);
-		}
-
-		return "";
-	}
-
 	/** Java's {@link String#trim()} removes control characters like bold, too, donotwant.
 	 *
 	 *  Completely original implementation, not based on Sun's at all, in any way. */
-	private static String nihtrim(String subs)
+	private static String trimSpaces(String subs)
 	{
 		char[] val = subs.toCharArray();
 		int st = 0, len = subs.length();
-
-		while (st < len && val[st] == ' ') {
+		while (st < len && val[st] == ' ')
 		    st++;
-		}
-		while (st < len && val[len - 1] == ' ') {
+		while (st < len && val[len - 1] == ' ')
 		    len--;
-		}
 		return subs.substring(st, len);
 	}
 
-	/** Split the parameters of a Message event into a List of Strings */
-	public String[] getParamArray( final MessageEvent mes )
+	/** Get the parameter string (ie. message without the command) from a Message object */
+	public String getParamString(final Message mes)
 	{
-		final String text = mes.getMessage();
-		return getParamArray(text);
+		final String str = trimSpaces(mes.getMessage());
+		final int offset = getTriggerOffset(str);
+		final int spacePos = str.indexOf(' ', offset);
+		if (spacePos != -1)
+			return str.substring(spacePos + 1);
+		return "";
+	}
+
+	/** Split the parameters of a Message event into a List of Strings */
+	public String[] getParamArray(final MessageEvent mes)
+	{
+		return getParamArray(trimSpaces(mes.getMessage()));
 	}
 
 	public String[] getParamArray(final String str)
 	{
 		final int offset = getTriggerOffset(str);
-
 		return str.substring(offset).split("\\s+");
+	}
+
+	public List<String> getParams(final MessageEvent mes)
+	{
+		return Arrays.asList(getParamArray(mes));
 	}
 
 	/** 1-indexed list of params, like {@link #getParams(Message)}.
 	 * argv[0] is "", not command name */
-	public List<String> getParams( final String str )
+	public List<String> getParams(final String str)
 	{
 		String[] params = getParamArray(str);
 		List<String> ret = new ArrayList<String>(params.length + 1);
@@ -118,32 +113,26 @@ public final class UtilModule
 		return ret;
 	}
 
-	public List<String> getParams( final MessageEvent mes )
-	{
-		return Arrays.asList(getParamArray( mes ));
-	}
-
 	/**
 	 * Get the first count parameters, then slurp any remaining into the
 	 * count+1th.
 	 *
 	 * Note that the command token is /NOT/ included in the count!
 	 */
-	public String[] getParamArray( final Message mes, final int count )
+	public String[] getParamArray(final Message mes, final int count)
 	{
-		return getParamArray(mes.getMessage(), count);
+		return getParamArray(trimSpaces(mes.getMessage()), count);
 	}
 
-	public String[] getParamArray(final String text, final int count)
+	public String[] getParamArray(final String str, final int count)
 	{
-		final int offset = getTriggerOffset(text);
-
-		return text.substring(offset).split("\\s+", count + 1);
+		final int offset = getTriggerOffset(str);
+		return str.substring(offset).split("\\s+", count + 1);
 	}
 
-	public List<String> getParams( final Message mes, final int count )
+	public List<String> getParams(final Message mes, final int count)
 	{
-		final String[] params = getParamArray( mes, count );
+		final String[] params = getParamArray(mes, count);
 		final List<String> temp = new ArrayList<String>(params.length);
 		for(final String param: params)
 			temp.add(param);
@@ -152,6 +141,6 @@ public final class UtilModule
 
 	public long getStartTime()
 	{
-		return starttime;
+		return startTime;
 	}
 }
