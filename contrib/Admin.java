@@ -28,6 +28,11 @@ public class Admin
 		this.irc = irc;
 	}
 
+	public String[] helpCommandJoin = {
+		"Makes the bot join a specific channel.",
+		"<Channel>",
+		"<Channel> is the channel to join"
+	};
 	public void commandJoin( final Message mes )
 	{
 		if ( mods.security.hasNickPerm( new ChoobPermission("state.join"), mes ) )
@@ -40,6 +45,58 @@ public class Admin
 			{
 				irc.sendContextReply(mes, "Couldn't join :/");
 			}
+	}
+
+	public String[] helpCommandExit = {
+		"Makes the bot disconnect and not come back.",
+		"[<Message>]",
+		"<Message> is message to use when disconnecting"
+	};
+	public void commandExit(final Message mes)
+	{
+		if (!mods.security.hasPerm(new ChoobPermission("exit"), mes)) {
+			irc.sendContextReply(mes, "You don't have permission to do that!");
+			return;
+		}
+		final List<String> params = mods.util.getParams(mes, 1);
+		try
+		{
+			if (params.size() <= 1) {
+				irc.quit("Bye bye!");
+			} else {
+				irc.quit(params.get(1));
+			}
+		}
+		catch (final ChoobException e)
+		{
+			irc.sendContextReply(mes, "Unable to quit: " + e);
+		}
+	}
+
+	public String[] helpCommandRestart = {
+		"Makes the bot disconnect and restart.",
+		"[<Message>]",
+		"<Message> is message to use when disconnecting"
+	};
+	public void commandRestart(final Message mes)
+	{
+		if (!mods.security.hasPerm(new ChoobPermission("exit"), mes)) {
+			irc.sendContextReply(mes, "You don't have permission to do that!");
+			return;
+		}
+		final List<String> params = mods.util.getParams(mes, 1);
+		try
+		{
+			if (params.size() <= 1) {
+				irc.restart("Restarting...");
+			} else {
+				irc.restart(params.get(1));
+			}
+		}
+		catch (final ChoobException e)
+		{
+			irc.sendContextReply(mes, "Unable to restart: " + e);
+		}
 	}
 
 	public void commandGc( final Message mes )
