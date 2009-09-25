@@ -557,7 +557,7 @@ public class Karma
 		for (int matchIndex = 1; matchIndex < matchStarts.size(); matchIndex++)
 		{
 			//System.err.println("");
-			final String submessage = message.substring(matchStarts.get(matchIndex - 1), matchStarts.get(matchIndex)).replaceAll("[^\\+\\-\\)\\w]+$", "");
+			final String submessage = message.substring(matchStarts.get(matchIndex - 1), matchStarts.get(matchIndex));
 			//System.err.println("  SEGMENT  : <" + submessage + ">");
 
 			Matcher karmaMatch = karmaPatternWithReason.matcher(submessage);
