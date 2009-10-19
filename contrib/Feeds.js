@@ -61,7 +61,7 @@ Feeds.prototype.info = [
 		"Generic feed reader with notification.",
 		"James Ross",
 		"silver@warwickcompsoc.co.uk",
-		"1.6.4"
+		"$Rev$$Date$"
 	];
 
 
@@ -1470,15 +1470,12 @@ XMLParser.prototype._dumpln = function(line, limit) {
 }
 
 XMLParser.prototype._dump = function(list, indent, limit) {
-	profile.enterFn("XMLParser", "_dumpElement");
 	for (var i = 0; i < list.length; i++) {
 		this._dumpElement(list[i], indent, limit);
 	}
-	profile.leaveFn("_dumpElement");
 }
 
 XMLParser.prototype._dumpElement = function(elt, indent, limit) {
-	profile.enterFn("XMLParser", "_dumpElement");
 	if (elt._content) {
 		this._dumpln(indent + elt + elt._content + "</" + elt.name + ">", limit);
 	} else if (elt._children && (elt._children.length > 0)) {
@@ -1488,11 +1485,9 @@ XMLParser.prototype._dumpElement = function(elt, indent, limit) {
 	} else {
 		this._dumpln(indent + elt, limit);
 	}
-	profile.leaveFn("_dumpElement");
 }
 
 XMLParser.prototype._parse = function() {
-	profile.enterFn("XMLParser", "_parse");
 	// Hack off the Unicode DOM if it exists.
 	if (this.data.substr(0, 3) == "\xEF\xBB\xBF") {
 		this.data = this.data.substr(3);
@@ -1516,7 +1511,6 @@ XMLParser.prototype._parse = function() {
 		} else if (this.data.substr(0, 2) == "<?") {
 			var e = this._eatElement(null);
 			if (e.name != "xml") {
-				profile.leaveFn("_parse");
 				throw new Error("Expected <?xml?>, found <?" + e.name + "?>");
 			}
 			this.xmlPI = e;
@@ -1525,7 +1519,6 @@ XMLParser.prototype._parse = function() {
 			
 		} else {
 			break;
-			//profile.leaveFn("_parse");
 			//throw new Error("Expected <?xml?>, found " + this.data.substr(0, 10) + "...");
 		}
 	}
@@ -1549,7 +1542,6 @@ XMLParser.prototype._parse = function() {
 		} else if (this.data.substr(0, 1) == "<") {
 			var e = this._eatElement(null);
 			if (e.start == false) {
-				profile.leaveFn("_parse");
 				throw new Error("Expected start element, found end element");
 			}
 			this.rootElement = e;
@@ -1558,7 +1550,6 @@ XMLParser.prototype._parse = function() {
 			break;
 			
 		} else {
-			profile.leaveFn("_parse");
 			throw new Error("Expected root element, found " + this.data.substr(0, 10) + "...");
 		}
 	}
@@ -1584,7 +1575,6 @@ XMLParser.prototype._parse = function() {
 				this._state.unshift(e);
 			} else {
 				if (e.name != this._state[0].name) {
-					profile.leaveFn("_parse");
 					throw new Error("Expected </" + this._state[0].name + ">, found </" + e.name + ">");
 				}
 				this._state.shift();
@@ -1606,22 +1596,29 @@ XMLParser.prototype._parse = function() {
 		}
 	}
 	
-	this._eatWhitespace();
+	// Eat any trailing spaces and comments.
+	while (this.data.length > 0) {
+		this._eatWhitespace();
+		
+		if (this.data.substr(0, 4) == "<!--") {
+			// Comment.
+			this.root.push(this._eatComment());
+			
+		} else if (this.data.length > 0) {
+			throw new Error("Expected EOF or comment, found " + this.data.substr(0, 10) + "...");
+		}
+	}
+	
 	if (this._state.length > 0) {
-		profile.leaveFn("_parse");
 		throw new Error("Expected </" + this._state[0].name + ">, found EOF.");
 	}
 	if (this.data.length > 0) {
-		profile.leaveFn("_parse");
 		throw new Error("Expected EOF, found " + this.data.substr(0, 10) + "...");
 	}
-	profile.leaveFn("_parse");
 }
 
 XMLParser.prototype._processEntities = function() {}
 XMLParser.prototype._processEntities_TODO = function(string) {
-	profile.enterFn("XMLParser", "_processEntities");
-	
 	var i = 0;
 	while (i < string.length) {
 		// Find next &...
@@ -1634,25 +1631,19 @@ XMLParser.prototype._processEntities_TODO = function(string) {
 		i++;
 	}
 	
-	profile.leaveFn("_processEntities");
 	return string;
 }
 
 XMLParser.prototype._eatWhitespace = function() {
-	profile.enterFn("XMLParser", "_eatWhitespace");
 	var len = this._countWhitespace();
 	if (len > 0) {
 		this.data = this.data.substr(len);
 	}
-	profile.leaveFn("_eatWhitespace");
 }
 
 XMLParser.prototype._countWhitespace = function() {
-	profile.enterFn("XMLParser", "_countWhitespace");
-	
 	// Optimise by checking only first character first.
 	if (this.data.length <= 0) {
-		profile.leaveFn("_countWhitespace");
 		return 0;
 	}
 	var ws = this.data[0].match(/^\s+/);
@@ -1663,20 +1654,15 @@ XMLParser.prototype._countWhitespace = function() {
 		if (ws[0].length == 256) {
 			// Ok, check it all.
 			ws = this.data.match(/^\s+/);
-			profile.leaveFn("_countWhitespace");
 			return ws[0].length;
 		}
-		profile.leaveFn("_countWhitespace");
 		return ws[0].length;
 	}
-	profile.leaveFn("_countWhitespace");
 	return 0;
 }
 
 XMLParser.prototype._eatComment = function() {
-	profile.enterFn("XMLParser", "_eatComment");
 	if (this.data.substr(0, 4) != "<!--") {
-		profile.leaveFn("_eatComment");
 		throw new Error("Expected <!--, found " + this.data.substr(0, 10) + "...");
 	}
 	var i = 4;
@@ -1685,25 +1671,20 @@ XMLParser.prototype._eatComment = function() {
 			// Done.
 			var c = new XMLComment(this.data.substr(4, i - 4));
 			this.data = this.data.substr(i + 3);
-			profile.leaveFn("_eatComment");
 			return c;
 		}
 		i++;
 	}
-	profile.leaveFn("_eatComment");
 	throw new Error("Expected -->, found EOF.");
 }
 
 XMLParser.prototype._eatSGMLElement = function() {
-	profile.enterFn("XMLParser", "_eatSGMLElement");
 	if (this.data.substr(0, 2) != "<!") {
-		profile.leaveFn("_eatSGMLElement");
 		throw new Error("Expected <!, found " + this.data.substr(0, 10) + "...");
 	}
 	
 	// CDATA chunk?
 	if (this.data.substr(0, 9) == "<![CDATA[") {
-		profile.leaveFn("_eatSGMLElement");
 		return this._eatCDATAElement();
 	}
 	
@@ -1720,19 +1701,15 @@ XMLParser.prototype._eatSGMLElement = function() {
 			// Done.
 			var c = new XMLComment(this.data.substr(2, i - 1));
 			this.data = this.data.substr(i + 1);
-			profile.leaveFn("_eatSGMLElement");
 			return c;
 		}
 		i++;
 	}
-	profile.leaveFn("_eatSGMLElement");
 	throw new Error("Expected >, found EOF.");
 }
 
 XMLParser.prototype._eatCDATAElement = function() {
-	profile.enterFn("XMLParser", "_eatCDATAElement");
 	if (this.data.substr(0, 9) != "<![CDATA[") {
-		profile.leaveFn("_eatCDATAElement");
 		throw new Error("Expected <![CDATA[, found " + this.data.substr(0, 20) + "...");
 	}
 	
@@ -1742,19 +1719,15 @@ XMLParser.prototype._eatCDATAElement = function() {
 			// Done.
 			var e = new XMLCData(this.data.substr(9, i - 9));
 			this.data = this.data.substr(i + 3);
-			profile.leaveFn("_eatCDATAElement");
 			return e;
 		}
 		i++;
 	}
-	profile.leaveFn("_eatCDATAElement");
 	throw new Error("Expected ]]>, found EOF.");
 }
 
 XMLParser.prototype._eatElement = function(parent) {
-	profile.enterFn("XMLParser", "_eatElement");
 	if (this.data[0] != "<") {
-		profile.leaveFn("_eatElement");
 		throw new Error("Expected <, found " + this.data.substr(0, 10) + "...");
 	}
 	
@@ -1778,21 +1751,18 @@ XMLParser.prototype._eatElement = function(parent) {
 			e = new XMLElement(parent, name, start, pi, false);
 			this.data = this.data.substr(i + 1);
 			e.resolveNamespaces();
-			profile.leaveFn("_eatElement");
 			return e;
 			
 		} else if (start && (this.data.substr(i, 2) == "/>")) {
 			e = new XMLElement(parent, name, start, pi, true);
 			this.data = this.data.substr(i + 2);
 			e.resolveNamespaces();
-			profile.leaveFn("_eatElement");
 			return e;
 			
 		} else if (pi && (this.data.substr(i, 2) == "?>")) {
 			e = new XMLElement(parent, name, start, pi, false);
 			this.data = this.data.substr(i + 2);
 			e.resolveNamespaces();
-			profile.leaveFn("_eatElement");
 			return e;
 			
 		} else if (whitespace.test(this.data[i])) {
@@ -1818,24 +1788,20 @@ XMLParser.prototype._eatElement = function(parent) {
 		if (!pi && !inName && !inEQ && !inVal && (this.data[i] == ">")) {
 			this.data = this.data.substr(i + 1);
 			e.resolveNamespaces();
-			profile.leaveFn("_eatElement");
 			return e;
 			
 		} else if (!pi && !inName && !inEQ && !inVal && (this.data.substr(i, 2) == "/>")) {
 			if (!e.start) {
-				profile.leaveFn("_eatElement");
 				throw new Error("Invalid end tag, found " + this.data.substr(0, i + 10) + "...");
 			}
 			e.empty = true;
 			this.data = this.data.substr(i + 2);
 			e.resolveNamespaces();
-			profile.leaveFn("_eatElement");
 			return e;
 			
 		} else if (pi && !inName && !inEQ && !inVal && (this.data.substr(i, 2) == "?>")) {
 			this.data = this.data.substr(i + 2);
 			e.resolveNamespaces();
-			profile.leaveFn("_eatElement");
 			return e;
 			
 		} else if (inName && (this.data[i] == "=")) {
@@ -1884,7 +1850,6 @@ XMLParser.prototype._eatElement = function(parent) {
 	//this.data = this.data.substr(i);
 	
 	//e.resolveNamespaces();
-	profile.leaveFn("_eatElement");
 	//return e;
 	throw new Error("Expected >, found EOF.");
 }
@@ -1915,8 +1880,6 @@ function XMLElement(parent, name, start, pi, empty) {
 }
 
 XMLElement.prototype.toString = function() {
-	profile.enterFn("XMLElement", "toString");
-	
 	var str = "<";
 	if (this.pi) {
 		str += "?";
@@ -1941,15 +1904,11 @@ XMLElement.prototype.toString = function() {
 	}
 	str += ">";
 	
-	profile.leaveFn("toString");
 	return str;
 }
 
 XMLElement.prototype.resolveNamespaces = function() {
-	profile.enterFn("XMLElement", "resolveNamespaces");
-	
 	function getNameSpaceFromPrefix(base, pfx) {
-		profile.enterFn("XMLElement", "resolveNamespaces.getNameSpaceFromPrefix");
 		var attrName = "xmlns";
 		if (pfx) {
 			attrName = "xmlns:" + pfx;
@@ -1959,12 +1918,10 @@ XMLElement.prototype.resolveNamespaces = function() {
 		while (element) {
 			var attr = element.attribute(attrName);
 			if (attr) {
-				profile.leaveFn("resolveNamespaces.getNameSpaceFromPrefix");
 				return attr.value;
 			}
 			element = element.parent;
 		}
-		profile.leaveFn("resolveNamespaces.getNameSpaceFromPrefix");
 		return "";
 	};
 	
@@ -1976,7 +1933,6 @@ XMLElement.prototype.resolveNamespaces = function() {
 		}
 		this._attributes[i].namespace = getNameSpaceFromPrefix(this, this._attributes[i].prefix);
 	}
-	profile.leaveFn("resolveNamespaces");
 }
 
 XMLElement.prototype.is = function(localName, namespace) {
@@ -1984,7 +1940,6 @@ XMLElement.prototype.is = function(localName, namespace) {
 }
 
 XMLElement.prototype.contents = function() {
-	profile.enterFn("XMLElement", "contents");
 	var str = this._content;
 	if ((this._content == "") && (this._children.length > 0)) {
 		str = "";
@@ -1992,51 +1947,39 @@ XMLElement.prototype.contents = function() {
 			str += this._children[i].contents();
 		}
 	}
-	profile.leaveFn("contents");
 	return str;
 }
 
 XMLElement.prototype.attribute = function(name, namespace) {
-	profile.enterFn("XMLElement", "attribute");
-	
 	for (var i = 0; i < this._attributes.length; i++) {
 		if ((typeof namespace != "undefined") && (this._attributes[i].namespace != namespace)) {
 			continue;
 		}
 		if (this._attributes[i].name == name) {
-			profile.leaveFn("attribute");
 			return this._attributes[i];
 		}
 	}
-	profile.leaveFn("attribute");
 	return null;
 }
 
-XMLElement.prototype.childrenByName = function(name, namespace) {
-	profile.enterFn("XMLElement", "childrenByName");
-	
+XMLElement.prototype.childrenByName = function(localName, namespace) {
 	var rv = [];
 	for (var i = 0; i < this._children.length; i++) {
 		if ((typeof namespace != "undefined") && (this._children[i].namespace != namespace)) {
 			continue;
 		}
-		if (this._children[i].name == name) {
+		if (this._children[i].localName == localName) {
 			rv.push(this._children[i]);
 		}
 	}
-	profile.leaveFn("childrenByName");
 	return rv;
 }
 
-XMLElement.prototype.childByName = function(name, namespace) {
-	profile.enterFn("XMLElement", "childByName");
-	
-	var l = this.childrenByName(name);
+XMLElement.prototype.childByName = function(localName, namespace) {
+	var l = this.childrenByName(localName, namespace);
 	if (l.length != 1) {
-		profile.leaveFn("childByName");
 		return null;
 	}
-	profile.leaveFn("childByName");
 	return l[0];
 }
 
@@ -2060,8 +2003,6 @@ function XMLAttribute(parent, name, value) {
 }
 
 XMLAttribute.prototype.toString = function() {
-	profile.enterFn("XMLAttribute", "toString");
-	
 	var str = "";
 	if (this.prefix != null) {
 		str += this.prefix + ":";
@@ -2071,8 +2012,6 @@ XMLAttribute.prototype.toString = function() {
 		str += "[[" + this.namespace + "]]";
 	}
 	str += "='" + this.value + "'";
-	
-	profile.leaveFn("toString");
 	return str;
 }
 
@@ -2084,10 +2023,7 @@ function XMLCData(value) {
 }
 
 XMLCData.prototype.toString = function() {
-	profile.enterFn("XMLCData", "toString");
-	var str = "<![CDATA[" + this.value + "]]>";
-	profile.leaveFn("toString");
-	return str;
+	return "<![CDATA[" + this.value + "]]>";
 }
 
 XMLCData.prototype.contents = function() {
@@ -2102,14 +2038,11 @@ function XMLComment(value) {
 }
 
 XMLComment.prototype.toString = function() {
-	profile.enterFn("XMLComment", "toString");
-	var str = "<!" + this.value + ">";
-	profile.leaveFn("toString");
-	return str;
+	return "<!--" + this.value + "-->";
 }
 
 XMLComment.prototype.contents = function() {
-	return this.toString();
+	return this.value;
 }
 // #includeend
 

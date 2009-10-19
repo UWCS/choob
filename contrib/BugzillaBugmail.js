@@ -2324,7 +2324,19 @@ XMLParser.prototype._parse = function() {
 		}
 	}
 	
-	this._eatWhitespace();
+	// Eat any trailing spaces and comments.
+	while (this.data.length > 0) {
+		this._eatWhitespace();
+		
+		if (this.data.substr(0, 4) == "<!--") {
+			// Comment.
+			this.root.push(this._eatComment());
+			
+		} else if (this.data.length > 0) {
+			throw new Error("Expected EOF or comment, found " + this.data.substr(0, 10) + "...");
+		}
+	}
+	
 	if (this._state.length > 0) {
 		throw new Error("Expected </" + this._state[0].name + ">, found EOF.");
 	}
@@ -2743,6 +2755,21 @@ XMLCData.prototype.toString = function() {
 }
 
 XMLCData.prototype.contents = function() {
+	return this.value;
+}
+
+
+
+function XMLComment(value) {
+	this.type = "XMLComment";
+	this.value = value;
+}
+
+XMLComment.prototype.toString = function() {
+	return "<!--" + this.value + "-->";
+}
+
+XMLComment.prototype.contents = function() {
 	return this.value;
 }
 // #includeend
