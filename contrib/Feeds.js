@@ -846,7 +846,7 @@ Feed.prototype.showRecent = function(target, offset, count) {
 		start = items.length - 1;
 	}
 	for (var i = start; i >= offset; i--) {
-		this._sendTo(target, "[" + items[i].date + "] \x1F" + items[i].title + "\x1F " + items[i].desc,
+		this._sendTo(target, "[" + new Date(items[i].date) + "] \x1F" + items[i].title + "\x1F " + items[i].desc,
 		             (items[i].link ? " <" + items[i].link + ">" : ""));
 	}
 }
@@ -986,7 +986,7 @@ Feed.prototype.getNewItems = function() {
 		var item = feedParser.items[i];
 		
 		// Prefer, in order: GUID, link, date, title.
-		var unique = (item.guid ? item.guid : (item.link ? item.link : (item.date != "?" ? item.date : item.title)));
+		var unique = (item.guid ? item.guid : (item.link ? item.link : (item.date ? item.date : item.title)));
 		var date = unique + ":" + item.date;
 		
 		if (unique in newUniques) {
@@ -1197,6 +1197,16 @@ function _decodeRSSHTML(data) {
 	return data;
 }
 
+function _decodeRSSDate(element) {
+	if (element.contents()) {
+		try {
+			return Number(new Date(element.contents()));
+		} catch(ex) {
+		}
+	}
+	return 0;
+}
+
 function _decodeAtomText(element) {
 	if (!element)
 		return "";
@@ -1227,9 +1237,9 @@ function _decodeAtomDate(element) {
 		if (ary[9] == "-") {
 			d = new Date(Number(d) - ((ary[10] * 60) + ary[11]) * 60 * 1000);
 		}
-		return String(d);
+		return Number(d);
 	}
-	return "?";
+	return 0;
 }
 
 
@@ -1295,12 +1305,7 @@ FeedParser.prototype._parse = function(feedsOwner) {
 			for (var i = 0; i < items.length; i++) {
 				var item = items[i];
 				
-				var pubDate = item.childByName("pubDate");
-				if (pubDate) {
-					pubDate = pubDate.contents();
-				} else {
-					pubDate = "?";
-				}
+				var pubDate = _decodeRSSDate(item.childByName("pubDate"));
 				
 				var guid  = item.childByName("guid") || "";
 				if (guid) {
@@ -1323,7 +1328,7 @@ FeedParser.prototype._parse = function(feedsOwner) {
 				}
 				
 				this.items.push({
-						date:    pubDate.trim(),
+						date:    pubDate,
 						guid:    guid.trim(),
 						title:   _decodeRSSHTML(title).trim(),
 						link:    _decodeEntities(link).trim(),
@@ -1356,12 +1361,7 @@ FeedParser.prototype._parse = function(feedsOwner) {
 			for (var i = 0; i < items.length; i++) {
 				var item = items[i];
 				
-				var pubDate = item.childByName("pubDate", "http://purl.org/rss/1.0/");
-				if (pubDate) {
-					pubDate = pubDate.contents();
-				} else {
-					pubDate = "?";
-				}
+				var pubDate = _decodeRSSDate(item.childByName("pubDate", "http://purl.org/rss/1.0/"));
 				
 				var title = item.childByName("title", "http://purl.org/rss/1.0/") || "";
 				if (title) {
@@ -1379,7 +1379,7 @@ FeedParser.prototype._parse = function(feedsOwner) {
 				}
 				
 				this.items.push({
-						date:    pubDate.trim(),
+						date:    pubDate,
 						title:   _decodeRSSHTML(title).trim(),
 						link:    _decodeEntities(link).trim(),
 						desc:    _decodeRSSHTML(desc).trim(),
@@ -1406,7 +1406,7 @@ FeedParser.prototype._parse = function(feedsOwner) {
 		for (var i = 0; i < items.length; i++) {
 			var item = items[i];
 			
-			var date  = _decodeAtomDate(item.childByName("updated", ATOM_1_0_NS));
+			var updated = _decodeAtomDate(item.childByName("updated", ATOM_1_0_NS));
 			
 			var title = _decodeAtomText(item.childByName("title", ATOM_1_0_NS));
 			
@@ -1425,7 +1425,7 @@ FeedParser.prototype._parse = function(feedsOwner) {
 			var desc  = _decodeAtomText(item.childByName("content", ATOM_1_0_NS));
 			
 			this.items.push({
-					date:    date.trim(),
+					date:    updated,
 					title:   title.trim(),
 					link:    link.trim(),
 					desc:    desc.trim(),
