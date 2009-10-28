@@ -375,8 +375,13 @@ public class See
 		}
 
 	}
-	
-	// Similar Sleeping patterns
+
+	public String[] helpCommandBang = {
+		"Finds other people in the channel with similar sleeping patterns.",
+		"<Nick>",
+		"<Nick> is the person to compare with"
+	};
+
 	public void commandBang(final Message mes) throws SQLException
 	{
 		final float diff = 1f;
