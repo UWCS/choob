@@ -18,7 +18,7 @@ public class ChoobNoSuchCallException extends ChoobException
 	}
 	public ChoobNoSuchCallException(final String pluginName, final String call)
 	{
-		super("Tried to call " + call + " in plugin " + pluginName + ", but the the call didn't exist!");
+		super("Tried to call " + call + " in plugin " + pluginName + ", but the call didn't exist!");
 		this.call = call;
 		this.plugin = pluginName;
 	}

@@ -211,7 +211,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			}
 			if (sourceConn.getLastModified() > javaFile.lastModified() || sourceConn.getLastModified() == 0)
 			{
-				// needs updating
+				// needs
 				InputStream in = null;
 				boolean success = false;
 				try
