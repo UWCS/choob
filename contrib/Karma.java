@@ -1,5 +1,12 @@
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -7,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -192,7 +200,7 @@ public class Karma
 		};
 	}
 
-	private final Modules mods;
+	final Modules mods;
 	private final IRCInterface irc;
 	public Karma (final Modules mods, final IRCInterface irc)
 	{
@@ -1333,4 +1341,154 @@ public class Karma
 			return ma.group(1).replaceAll("\\\\(.)", "$1");
 		return ma.group(2);
 	}
+
+	class DKarmaCache
+	{
+		final static String CACHE_TABLE = "_dkarma_cache";
+		final Connection connection;
+
+		DKarmaCache() throws SQLException
+		{
+			connection = mods.odb.getConnection();
+			final Statement statement = connection.createStatement();
+			try
+			{
+				final ResultSet rs = statement.executeQuery("SHOW TABLE STATUS FROM choob LIKE \"" + CACHE_TABLE + "\"");
+				try
+				{
+					if (rs.next())
+						genIfNeeded(rs.getDate("Create_time"));
+				}
+				finally
+				{
+					rs.close();
+				}
+			}
+			finally
+			{
+				statement.close();
+			}
+
+		}
+
+		private void genIfNeeded(final Date tableDate) throws SQLException {
+			final Calendar c = Calendar.getInstance();
+			c.set(Calendar.HOUR_OF_DAY, 0);
+			c.set(Calendar.MINUTE, 0);
+			c.set(Calendar.SECOND, 0);
+			System.out.println(c.getTime() + " -- " + tableDate);
+			if (tableDate.before(c.getTime()))
+				genCache();
+		}
+
+		private void genCache() throws SQLException
+		{
+			final Statement statement = connection.createStatement();
+			statement.execute("DROP TABLE IF EXISTS " + CACHE_TABLE);
+			statement.execute("CREATE TABLE " + CACHE_TABLE
+							+ " AS SELECT `Nick`,`Text`,`Time` from `History` where `Text` LIKE \"%++%\" OR `Text` LIKE \"%--%\"");
+		}
+
+		void close() {
+			mods.odb.freeConnection(connection);
+		}
+	}
+
+	private static final int minumumscore = 10;
+
+	public String commandSimpleDivide(final String arg) throws SQLException
+	{
+		final String likeClause = "%" + arg
+			.trim()
+			.replaceAll("%", "\\%")
+			.replaceAll(" ", "_")
+			+ "%";
+
+		final DKarmaCache c = new DKarmaCache();
+
+		try
+		{
+			final Map<String, AtomicInteger> sc = getNickSpaminess(c.connection, likeClause);
+			final PreparedStatement ps = c.connection.prepareStatement("select Nick,Text from _dkarma_cache where Text like ?");
+			try
+			{
+				ps.setString(1, likeClause);
+				final ResultSet rs = ps.executeQuery();
+				try
+				{
+					double score = 0.0;
+					while (rs.next())
+					{
+						final AtomicInteger mod = sc.get(mods.nick.getBestPrimaryNick(rs.getString(1)).toLowerCase());
+						if (null != mod)
+						{
+							final Matcher ma = karmaPattern.matcher(rs.getString(2));
+							while (ma.find())
+							{
+								final String item = null == ma.group(1) ? ma.group(2) : ma.group(1);
+								final int up = ma.group(3).equals("++") ? 1 : -1;
+								if (item.replaceAll("_", " ").equalsIgnoreCase(arg))
+									score += up / (double)mod.get();
+							}
+						}
+					}
+					for (Map.Entry<String, AtomicInteger> e : sc.entrySet())
+						System.out.println(e);
+
+					return String.valueOf(score);
+				}
+				finally
+				{
+					rs.close();
+				}
+			}
+			finally
+			{
+				ps.close();
+			}
+		}
+		finally
+		{
+			c.close();
+		}
+	}
+
+	private Map<String, AtomicInteger> getNickSpaminess(final Connection connection, String likeClause) throws SQLException {
+
+		final Map<String, AtomicInteger> sc = new HashMap<String, AtomicInteger>();
+
+		final PreparedStatement ps = connection.prepareStatement(
+				"select Nick,count(*) as cnt " +
+				"from _dkarma_cache " +
+				"where Text like ? " +
+				"group by nick " +
+				"having cnt > " + minumumscore);
+		try
+		{
+			ps.setString(1, likeClause);
+			final ResultSet rs = ps.executeQuery();
+			try
+			{
+				while (rs.next()) {
+					final String nick = mods.nick.getBestPrimaryNick(rs.getString(1)).toLowerCase();
+
+					AtomicInteger i = sc.get(nick);
+					if (null == i)
+						sc.put(nick, i = new AtomicInteger());
+
+					i.addAndGet(rs.getInt(2));
+				}
+			}
+			finally
+			{
+				rs.close();
+			}
+		}
+		finally
+		{
+			ps.close();
+		}
+		return sc;
+	}
+
 }
