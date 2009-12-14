@@ -51,8 +51,14 @@ public class Mood
 			midnight = new java.util.Date().getTime() - period;
 		}
 
+		final String cond;
+		if (what.startsWith("#"))
+			cond = "Channel like ?";
+		else
+			cond = "Nick like ?";
+
 		final PreparedStatement s = conn
-				.prepareStatement("select count(*) from History where Nick like ? and Time > ? and Text like ?");
+				.prepareStatement("select count(*) from History where " + cond + " and Time > ? and Text like ?");
 		try
 		{
 			s.setString(1, what);
