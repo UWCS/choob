@@ -551,7 +551,9 @@ public class Karma
 		if (mes.getFlags().containsKey("command"))
 			return;
 
-		final String message = mes.getMessage();
+		final String message = Normalizer.normalize(mes.getMessage(), Normalizer.Form.NFD)
+			.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+
 		final String nick = mods.nick.getBestPrimaryNick(mes.getNick());
 
 		//System.err.println("LINE       : <" + message + ">");
