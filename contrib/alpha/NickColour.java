@@ -60,7 +60,7 @@ public class NickColour
 	public String[] helpTopics = { "Using" };
 
 	public String[] helpUsing = {
-		  "!. On Codd: curl http://irc.uwcs.co.uk/rpc/nickcolour.list > $HOME/.irssi/saved_colors",
+		  "!. On Codd: curl http://bot.uwcs.co.uk/rpc/nickcolour.list > $HOME/.irssi/saved_colors",
 		  "2: In irssi: /color load",
 	};
 	
