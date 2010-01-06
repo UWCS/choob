@@ -127,7 +127,7 @@ public class NickColour
 			}
 			
 		} catch (SQLException e) {
-			e.printStackTrace();
+			e.printStackTrace(out);
 		} finally {
 			if (conn != null) {
 				mods.odb.freeConnection(conn);
