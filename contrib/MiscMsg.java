@@ -498,6 +498,7 @@ public class MiscMsg
 	String getYearWeek(final Date date) {
 		final Calendar cal = new GregorianCalendar();
 		cal.setTime(date);
+		cal.add(Calendar.DAY_OF_MONTH, -((cal.get(Calendar.DAY_OF_WEEK) + 7 - Calendar.MONDAY) % 7));
 		return "week " + cal.get(Calendar.WEEK_OF_YEAR) + " of " + cal.get(Calendar.YEAR);
 	}
 
