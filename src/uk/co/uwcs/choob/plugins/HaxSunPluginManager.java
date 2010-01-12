@@ -240,14 +240,19 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				}
 			}
 		}
-		final ClassLoader loader = new HaxSunPluginClassLoader(pluginName, classPath, getProtectionDomain(pluginName));
+
+		final HaxSunPluginClassLoader loader = new HaxSunPluginClassLoader(pluginName, classPath, getProtectionDomain(pluginName));
 		try
 		{
-			return instantiatePlugin(loader.loadClass("plugins." + pluginName + "." + pluginName), pluginName);
+			final String className = "plugins." + pluginName + "." + pluginName;
+			final Class<?> clazz;
+			clazz = loader.findClass(className);
+//			clazz = Class.forName(className);
+			return instantiatePlugin(clazz, pluginName);
 		}
 		catch (final ClassNotFoundException e)
 		{
-			throw new ChoobException("Could not find plugin class for " + pluginName + ": " + e);
+			throw new ChoobException("Could not find plugin class for " + pluginName + ": " + e, e);
 		}
 	}
 
