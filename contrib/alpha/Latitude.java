@@ -80,7 +80,7 @@ public class Latitude {
 		} else {
 			final Badge badge = values.get(0);
 			badge.badge_id = id;
-			mods.odb.save(badge);
+			mods.odb.update(badge);
 		}
 		irc.sendContextReply(mes, "Saved "+nick+"'s badge as "+id);
 	}
