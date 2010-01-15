@@ -2,6 +2,7 @@
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.SocketPermission;
 import java.net.URL;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.plugins.RequiresPermission;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 
@@ -23,6 +25,7 @@ import uk.co.uwcs.choob.support.events.Message;
  * @author rlmw
  * @see http://www.google.com/latitude/apps/badge
  */
+@RequiresPermission(value=SocketPermission.class,permission="www.google.com",action="connect,resolve")
 public class Latitude {
 
 	public String[] info()

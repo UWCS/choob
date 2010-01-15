@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -22,6 +23,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.AccessController;
+import java.security.Permission;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -259,7 +261,6 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	protected Object instantiatePlugin(final Class<?> newClass, final String pluginName) throws ChoobException
 	{
 		Object pluginObj=null;
-
 		// Squiggly brackets are for the weak.
 
 		final Constructor<?> c[] = newClass.getConstructors();
@@ -334,8 +335,50 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			removeCommand(oldCommand);
 		for (final String newCommand : newCommands)
 			addCommand(newCommand);
+		
+		// Grant permissions to the plugin
+		RequiresPermission perm = newClass.getAnnotation(RequiresPermission.class);
+		if(perm != null) {
+			grantPermission(perm,newClass);
+		}
+		RequiresPermissions perms = newClass.getAnnotation(RequiresPermissions.class);
+		if(perms != null) {
+			for (RequiresPermission permission : perms.value()) {
+				grantPermission(permission,newClass);
+			}
+		}
 
 		return pluginObj;
+	}
+
+	/**
+	 * RAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGE
+	 * @param perm
+	 * @param newClass
+	 */
+	private void grantPermission(RequiresPermission perm, Class<?> newClass) {
+		final String name = perm.permission();
+		final String action = perm.action();
+		final String group = "plugin." + newClass.getSimpleName();
+		final Class<? extends Permission> pClass = perm.value();
+		try {
+			if(name.equals("")) {
+				// empty constructor
+				
+			} else if (action.equals("")) {
+				// has a permission, but no action
+				Constructor<? extends Permission> cons = pClass.getConstructor(String.class);
+				mods.security.grantPermission(group, cons.newInstance(name));
+			} else {
+				// Has everything - ie the 2 Strings that choob accepts
+				Constructor<? extends Permission> cons = pClass.getConstructor(String.class,String.class);
+				mods.security.grantPermission(group, cons.newInstance(name,action));
+			}
+		} catch (Exception e) {
+			//e.printStackTrace();
+			// EAT THAT PAEDOS
+			throw new Error(e);
+		}
 	}
 
 	@Override
