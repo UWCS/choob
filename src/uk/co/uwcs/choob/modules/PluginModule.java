@@ -25,6 +25,7 @@ import uk.co.uwcs.choob.ChoobPluginManager;
 import uk.co.uwcs.choob.ChoobTask;
 import uk.co.uwcs.choob.ChoobThread;
 import uk.co.uwcs.choob.ChoobThreadManager;
+import uk.co.uwcs.choob.plugins.AnnotatedJavaPluginManager;
 import uk.co.uwcs.choob.plugins.HaxSunPluginManager;
 import uk.co.uwcs.choob.plugins.JavaScriptPluginManager;
 import uk.co.uwcs.choob.support.CallAPIResult;
@@ -39,6 +40,8 @@ import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
 import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.DbConnectionBroker;
 import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.NoSuchCommandException;
+import uk.co.uwcs.choob.support.NoSuchPluginException;
 import uk.co.uwcs.choob.support.events.Message;
 
 /**
@@ -50,6 +53,7 @@ public final class PluginModule
 	private final DbConnectionBroker broker;
 	private final Modules mods;
 	private final ChoobPluginManager hsPlugMan;
+	private final ChoobPluginManager annotatedPlugMan;
 	private final ChoobPluginManager dPlugMan;
 	private final ChoobPluginManager jsPlugMan;
 	private final Choob bot;
@@ -64,6 +68,7 @@ public final class PluginModule
 		this.broker = broker;
 		this.mods = mods;
 		this.hsPlugMan = new HaxSunPluginManager(mods, irc);
+		this.annotatedPlugMan = new AnnotatedJavaPluginManager(mods, irc);
 		this.dPlugMan = new ChoobDistributingPluginManager();
 		this.jsPlugMan = new JavaScriptPluginManager(mods, irc);
 		this.bot = bot;
@@ -105,8 +110,11 @@ public final class PluginModule
 			@Override
 			public void run() {
 				try {
-					if (srcURL.getFile().endsWith(".js"))
+					String file = srcURL.getFile();
+					if (file.endsWith(".js"))
 						existed[0] = jsPlugMan.loadPlugin(pluginName, srcURL);
+					else if(file.contains("Annotated"))
+						existed[0] = annotatedPlugMan.loadPlugin(pluginName, srcURL);
 					else
 						existed[0] = hsPlugMan.loadPlugin(pluginName, srcURL);
 				} catch (final ChoobException e) {
@@ -233,7 +241,17 @@ public final class PluginModule
 
 		return rvList;
 	}
+	
+	public String[] getHelp(String pluginName, String commandName) throws NoSuchCommandException
+	{
+		return hsPlugMan.getHelp(pluginName, commandName);
+	}
 
+	public String[] getInfo(String pluginName) throws NoSuchPluginException
+	{
+		return hsPlugMan.getInfo(pluginName);
+	}
+	
 	/**
 	 * Call the generic subroutine of type type and name name on plugin pluginName and return the result.
 	 * @param pluginName The name of the plugin to call.

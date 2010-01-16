@@ -25,7 +25,10 @@ import uk.co.uwcs.choob.support.ChoobInvocationError;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
 import uk.co.uwcs.choob.support.ChoobPermission;
+import uk.co.uwcs.choob.support.HelpNotSpecifiedException;
 import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.NoSuchCommandException;
+import uk.co.uwcs.choob.support.NoSuchPluginException;
 import uk.co.uwcs.choob.support.events.Event;
 import uk.co.uwcs.choob.support.events.Message;
 
@@ -76,6 +79,17 @@ public abstract class ChoobPluginManager
 	protected abstract Object createPlugin(String pluginName, URL fromLocation) throws ChoobException;
 	protected abstract void destroyPlugin(String pluginName);
 
+	
+	public String[] getHelp(String pluginName, String commandName) throws NoSuchCommandException
+	{
+		throw new NoSuchCommandException(commandName);
+	}
+	
+	public String[] getInfo(String pluginName) throws NoSuchPluginException
+	{
+		throw new NoSuchPluginException(pluginName);
+	}
+	
 	/**
 	 * (Re)loads a plugin from an URL and a plugin name. Note that in the case
 	 * of reloading, the old plugin will be disposed of AFTER the new one is
@@ -279,5 +293,43 @@ public abstract class ChoobPluginManager
 	 * @throws ChoobInvocationError when the call threw an exception.
 	 */
 	abstract public Object doGeneric(String pluginName, String prefix, String genericName, Object... params) throws ChoobNoSuchCallException;
+
+	/**
+	 * Get the description of a command specified in an annotation
+	 * @param pluginName	The plugin name the command is in.
+	 * @param commandName	The command name.
+	 * @return	The description.
+	 * @throws uk.co.uwcs.choob.support.HelpNotSpecifiedException	If the command was not annotated with help.
+	 */
+	public String getCommandDescription(String pluginName, String commandName) throws HelpNotSpecifiedException
+	{
+		throw new HelpNotSpecifiedException();
+	}	
+	
+		
+	/**
+	 * Get the parameters of a command specified in an annotation
+	 * @param pluginName	The plugin name the command is in.
+	 * @param commandName	The command name.
+	 * @return	The parameters.
+	 * @throws uk.co.uwcs.choob.support.HelpNotSpecifiedException	If the command was not annotated with help.
+	 */
+	public String getCommandParameters(String pluginName, String commandName) throws HelpNotSpecifiedException
+	{
+		throw new HelpNotSpecifiedException();
+	}
+	
+	/**
+	 * Get the parameter descriptions of a command specified in an annotation
+	 * @param pluginName	The plugin name the command is in.
+	 * @param commandName	The command name.
+	 * @return	The usage.
+	 * @throws uk.co.uwcs.choob.support.HelpNotSpecifiedException	If the command was not annotated with help.
+	 */
+	public String[] getCommandParameterDescriptions(String pluginName, String commandName) throws HelpNotSpecifiedException
+	{
+		throw new HelpNotSpecifiedException();
+	}	
+	
 }
 

@@ -267,7 +267,7 @@ public class Plugin
 
 	private String[] getInfo(final String pluginName) throws ChoobNoSuchCallException, ClassCastException
 	{
-		return (String[])mods.plugin.callGeneric(pluginName, "Info", "");
+		return new String[]{}; //(String[])mods.plugin.callGeneric(pluginName, "Info", "");
 	}
 
 	public String[] helpCommandInfo = {
