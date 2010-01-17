@@ -14,7 +14,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -29,10 +28,12 @@ import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,6 +44,18 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
+
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.IExtendedModifier;
+import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.Modifier.ModifierKeyword;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.Document;
 
 import uk.co.uwcs.choob.ChoobPluginManager;
 import uk.co.uwcs.choob.ChoobTask;
@@ -133,65 +146,156 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		throw new ChoobException(excep);
 	}
 
+	/** Entire contents in a String */
+	private static String consume(final InputStream in) throws IOException
+	{
+		final int block = 1024 * 10;
+		final StringBuilder data = new StringBuilder(block);
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+		try
+		{
+			char[] buf = new char[block];
+			int numRead = 0;
+			while ((numRead = reader.read(buf)) != -1)
+				data.append(buf, 0, numRead);
+		}
+		finally
+		{
+			reader.close();
+		}
+		return data.toString();
+	}
+
+	/** Return the Java 5 CU for the string. */
+	public static CompilationUnit asAST(final String c)
+	{
+		final ASTParser parser = ASTParser.newParser(AST.JLS3);
+		parser.setSource(c.toCharArray());
+		return (CompilationUnit) parser.createAST(null);
+	}
+
 	private String[] makeJavaFiles(final String pluginName, final String outDir, final InputStream in) throws IOException
 	{
-		final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-		String line;
-		final StringBuffer imps = new StringBuffer();
-		StringBuffer ants = new StringBuffer();
-		PrintStream classOut = null;
-		final List<String> fileNames = new ArrayList<String>();
-		int skipLines = 0;
-		while((line = reader.readLine()) != null)
-		{
-			if (line.startsWith("class "))
-				line = "public " + line;
+		final Document doc;
+		CompilationUnit cu;
 
-			if (line.startsWith("import "))
-			{
-				skipLines--; // imports get added anyway...
-				imps.append(line + "\n");
-			}
-			else if (line.startsWith("@"))
-			{
-				ants.append(line + "\n");
-				continue;
-			}
-			else if (line.startsWith("package "))
-			{
-				// Squelch
-			}
-			else if (line.startsWith("public class "))
-			{
-				final String[] bits = line.split(" ");
-				final String className = bits[2];
-				final String fileName = outDir + className + ".java";
-				fileNames.add(fileName);
-				final File javaFile = new File(fileName);
-				if (classOut != null)
-				{
-					classOut.flush();
-					classOut.close();
-				}
-				classOut = new PrintStream(new FileOutputStream(javaFile));
-				classOut.print("package plugins." + pluginName + ";");
-				classOut.print(imps);
-				for(int i=0; i<skipLines; i++)
-					classOut.print("\n");
-				classOut.print(ants);
-				ants = new StringBuffer();
-			}
-			skipLines++;
-			if (classOut != null)
-				classOut.println(line);
-		}
-		if (classOut != null)
+		// create an initial doc / cu pair from the inputstream
 		{
-			classOut.flush();
-			classOut.close();
+			final String cus = consume(in);
+			cu = asAST(cus);
+			cu.recordModifications();
+			doc = new Document(cus);
 		}
+
+		// Check all the top-level types are public:
+		for (final TypeDeclaration type : types(cu))
+			if (Modifier.PUBLIC != (type.getModifiers() & Modifier.PUBLIC))
+			{
+				// it's not public, the only other valid top-level modifier is default,
+				// i.e. no modifier, so we can just add the public modifier.
+				final Modifier publicModifier = type.getAST().newModifier(ModifierKeyword.PUBLIC_KEYWORD);
+				modifiers(type).add(publicModifier);
+			}
+
+		// Rewrite the doc and the cu with the changes
+		try {
+			cu.rewrite(doc, null).apply(doc);
+			cu = asAST(doc.get());
+		} catch (BadLocationException e) {
+			throw new RuntimeException(e);
+		}
+
+		// get the imports, and the line number on which they finish
+		final String imps;
+		final int importsEndLineNumber;
+		{
+			final List<ImportDeclaration> importList = imports(cu);
+			if (importList.isEmpty())
+			{
+				imps = "";
+				importsEndLineNumber = 0;
+			}
+			else
+			{
+				final ImportDeclaration lastImport = last(importList);
+				final int startPosition = importList.get(0).getStartPosition();
+				final int endPosition = endPosition(lastImport);
+				imps = get(doc, startPosition, endPosition - startPosition);
+				importsEndLineNumber = cu.getLineNumber(endPosition); // could be <0.
+			}
+		}
+
+		// generate the files
+		final String packageLine = "package plugins." + pluginName + ";";
+		final Set<String> fileNames = new HashSet<String>();
+
+		for (final TypeDeclaration type : types(cu))
+		{
+
+			final int typeStart = cu.getExtendedStartPosition(type);
+			final int typeLen = cu.getExtendedLength(type);
+			final int startLineNumber = cu.getLineNumber(typeStart);
+			final String className = type.getName().getIdentifier();
+			final String fileName = outDir + className + ".java";
+			fileNames.add(fileName);
+
+			final PrintStream classOut = new PrintStream(new FileOutputStream(fileName));
+			try
+			{
+				classOut.print(packageLine);
+				classOut.print(imps);
+				addSkippedLines(classOut, importsEndLineNumber, startLineNumber);
+
+				classOut.print(get(doc, typeStart, typeLen));
+			}
+			finally
+			{
+				classOut.close();
+			}
+		}
+
 		return fileNames.toArray(new String[fileNames.size()]);
 	}
+
+	private void addSkippedLines(final PrintStream classOut, final int importsEndLineNumber, final int startLineNumber) {
+		if (startLineNumber > importsEndLineNumber)
+			for(int i=0; i < startLineNumber - importsEndLineNumber; i++)
+				classOut.print("\n");
+	}
+
+	private String get(final Document doc, final int startPosition, final int length) {
+		try {
+			return doc.get(startPosition, length);
+		} catch (BadLocationException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private int endPosition(final ASTNode node) {
+		return node.getStartPosition() + node.getLength();
+	}
+
+	private static <T> T last(final List<T> list) {
+		return list.get(list.size() - 1);
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<IExtendedModifier> modifiers(final TypeDeclaration type) {
+		return type.modifiers();
+	}
+
+	@SuppressWarnings("unchecked")
+	private Iterable<TypeDeclaration> types(final CompilationUnit cu)
+	{
+		return cu.types();
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<ImportDeclaration> imports(final CompilationUnit cu)
+	{
+		return cu.imports();
+	}
+
 
 	@Override
 	protected Object createPlugin(final String pluginName, final URL source) throws ChoobException
@@ -335,7 +439,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			removeCommand(oldCommand);
 		for (final String newCommand : newCommands)
 			addCommand(newCommand);
-		
+
 		// Grant permissions to the plugin
 		RequiresPermission perm = newClass.getAnnotation(RequiresPermission.class);
 		if(perm != null) {
@@ -356,7 +460,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	 * @param perm
 	 * @param newClass
 	 */
-	private void grantPermission(RequiresPermission perm, Class<?> newClass) {
+	private void grantPermission(final RequiresPermission perm, final Class<?> newClass) {
 		final String name = perm.permission();
 		final String action = perm.action();
 		final String group = "plugin." + newClass.getSimpleName();
@@ -364,7 +468,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		try {
 			if(name.equals("")) {
 				// empty constructor
-				
+
 			} else if (action.equals("")) {
 				// has a permission, but no action
 				Constructor<? extends Permission> cons = pClass.getConstructor(String.class);
