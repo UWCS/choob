@@ -18,9 +18,9 @@ import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Uses google latitude api to obtain locations for people
- * 
+ *
  * Uses the JSON api
- * 
+ *
  * Requires permission: "security.grant plugin.Latitude Socket www.google.com connect,resolve"
  * @author rlmw
  * @see http://www.google.com/latitude/apps/badge
@@ -37,7 +37,7 @@ public class Latitude {
 			"<3",
 		};
 	}
-	
+
 	public String[] helpTopics = { "Using" };
 
 	public String[] helpUsing = {
@@ -45,7 +45,7 @@ public class Latitude {
 		  "(see http://www.google.com/latitude/apps/badge)",
 		  "Usage: !Latitude.location [<nick>] when you want to see nick's location - defaults to your own",
 	};
-	
+
 	private final JSONParser parser = new JSONParser();
 
 	/**
@@ -53,7 +53,7 @@ public class Latitude {
 	 * @param id the User's badge id
 	 * @return the location the user is at.
 	 */
-	private Location getLocation(String id) throws IOException, ParseException {
+	private Location getLocation(final String id) throws IOException, ParseException {
 		URL url = new URL("http://www.google.com/latitude/apps/badge/api?user="
 				+ id + "&type=json");
 		// Wtb less casts
@@ -74,7 +74,7 @@ public class Latitude {
 	 */
 	public void commandSave(final Message mes, final Modules mods,
 			final IRCInterface irc) throws Exception {
-		
+
 		final String id = mods.util.getParamString(mes);
 		final String nick = mes.getNick();
 		final List<Badge> values = mods.odb.retrieve(Badge.class, "where nick = '"+nick+"'");
@@ -87,13 +87,13 @@ public class Latitude {
 		}
 		irc.sendContextReply(mes, "Saved "+nick+"'s badge as "+id);
 	}
-	
+
 	/**
 	 * Returns the user's last known location
 	 */
 	public void commandLocation(final Message mes, final Modules mods,
 			final IRCInterface irc) throws Exception {
-		
+
 		String nick = mods.util.getParamString(mes);
 		nick = (nick.length() > 0)?nick:mes.getNick();
 		final List<Badge> values = mods.odb.retrieve(Badge.class, "where nick = '"+nick+"'");
@@ -107,14 +107,14 @@ public class Latitude {
 
 /**
  * Maybe Store these in a database in future?
- * 
+ *
  * @author rlmw
  */
 class Location {
 	public String geocode;
 	public Number x, y;
 
-	public Location(String geocode, Number x, Number y) {
+	public Location(final String geocode, final Number x, final Number y) {
 		super();
 		this.geocode = geocode;
 		this.x = x;
@@ -123,13 +123,13 @@ class Location {
 
 	@Override
 	public String toString() {
-		return geocode + " at (" + x + "," + y + ")";
+		return geocode + " at (" + y + "," + x + ")";
 	}
 }
 
 /**
  * Stores the google location badge entries for people
- * 
+ *
  * @see http://www.google.com/latitude/apps/badge
  * @author rlmw
  */
@@ -138,14 +138,14 @@ class Badge {
 	public int id;
 	public String nick;
 	public String badge_id;
-	
+
 	public Badge() {
 	}
 
-	public Badge(String nick, String badgeId) {
+	public Badge(final String nick, final String badgeId) {
 		super();
 		this.nick = nick;
 		badge_id = badgeId;
 	}
-	
+
 }
