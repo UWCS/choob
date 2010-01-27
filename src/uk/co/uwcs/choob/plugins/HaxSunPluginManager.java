@@ -465,11 +465,12 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		final String action = perm.action();
 		final String group = "plugin." + newClass.getSimpleName();
 		final Class<? extends Permission> pClass = perm.value();
+		System.out.println(name+"+"+action);
 		try {
-			if(name.equals("")) {
+			if("".equals(name)) {
 				// empty constructor
 
-			} else if (action.equals("")) {
+			} else if ("".equals(action)) {
 				// has a permission, but no action
 				Constructor<? extends Permission> cons = pClass.getConstructor(String.class);
 				mods.security.grantPermission(group, cons.newInstance(name));
@@ -478,9 +479,12 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				Constructor<? extends Permission> cons = pClass.getConstructor(String.class,String.class);
 				mods.security.grantPermission(group, cons.newInstance(name,action));
 			}
+		// EAT THAT PAEDOS
+		} catch (ChoobException e) {
+			if(!e.getMessage().contains("already has permission")) {
+				throw new Error(e);
+			}
 		} catch (Exception e) {
-			//e.printStackTrace();
-			// EAT THAT PAEDOS
 			throw new Error(e);
 		}
 	}
