@@ -267,7 +267,7 @@ public class Plugin
 
 	private String[] getInfo(final String pluginName) throws ChoobNoSuchCallException, ClassCastException
 	{
-		return new String[]{}; //(String[])mods.plugin.callGeneric(pluginName, "Info", "");
+		return (String[])mods.plugin.callGeneric(pluginName, "Info", "");
 	}
 
 	public String[] helpCommandInfo = {
@@ -300,8 +300,13 @@ public class Plugin
 			irc.sendContextReply(mes, "Plugin " + pluginName + " had invalid info!");
 			return;
 		}
-
-		irc.sendContextReply(mes, pluginName + ": " + info[0] + " By " + info[1] + " <" + info[2] + ">; version is " + info[3] + ".");
+		
+		if(info.length == 0) {
+			irc.sendContextReply(mes, pluginName + " has no information available");
+		} else {
+			irc.sendContextReply(mes, pluginName + ": " + info[0] + " By " + info[1] + " <" + info[2] + ">; version is " + info[3] + ".");			
+		}
+		
 	}
 
 	public String[] helpCommandSource = {
