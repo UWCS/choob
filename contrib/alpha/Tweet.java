@@ -1,11 +1,15 @@
 /** @author rlmw */
 
 import java.security.AllPermission;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import twitter4j.Paging;
+import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -50,7 +54,8 @@ public class Tweet {
 	private final IRCInterface irc;
 	private final Map<String,Twitter> loginCache;
 
-	private final int MINUTE = 5000; //60*1000;
+	// 150 requests per hour MAX
+	private final int _5_MINUTES = 5*60*1000;
 	
 	public Tweet(final Modules mods, final IRCInterface irc) throws TwitterException {
 		super();
@@ -58,7 +63,7 @@ public class Tweet {
 		this.irc = irc;
 		this.loginCache = new HashMap<String, Twitter>();
 		
-		mods.interval.callBack(null, MINUTE);
+		mods.interval.callBack(null, _5_MINUTES);
 	}
 	
 	private void tell(final String nick, final String msg) {
@@ -80,7 +85,13 @@ public class Tweet {
 			final String username = entry.getKey();
 			final boolean known = irc.isKnownUser(username);
 			try {
-				for(Status status:twitter.getHomeTimeline(p)) {
+				final ResponseList<Status> timeline = twitter.getHomeTimeline(p);
+				Collections.sort(timeline, new Comparator<Status>() {
+					public int compare(Status o1, Status o2) {
+						return o1.getCreatedAt().compareTo(o2.getCreatedAt());
+					}
+				});
+				for(Status status:timeline) {
 					id = Math.max(status.getId(),id);
 					final String from = status.getUser().getName();
 					if(known) {
@@ -94,7 +105,7 @@ public class Tweet {
 			}
 		}
 		
-		mods.interval.callBack(new Long(id), MINUTE);
+		mods.interval.callBack(new Long(id), _5_MINUTES);
 	}
 	
 	/**
