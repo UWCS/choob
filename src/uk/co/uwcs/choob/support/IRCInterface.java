@@ -8,7 +8,9 @@ package uk.co.uwcs.choob.support;
 
 import java.security.AccessController;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import uk.co.uwcs.choob.Choob;
 import uk.co.uwcs.choob.modules.Modules;
@@ -463,4 +465,21 @@ public final class IRCInterface
 			nicks.add(u.getNick());
 		return nicks;
 	}
+
+	public String[] getChannels() {
+		return bot.getChannels();
+	}
+	
+	public Set<String> getAllKnownUsers() {
+		final Set<String> users = new HashSet<String>();
+		for(String channel : getChannels()) {
+			users.addAll(getUsersList(channel));
+		}
+		return users;
+	}
+	
+	public boolean isKnownUser(String name) {
+		return getAllKnownUsers().contains(name);
+	}
+	
 }
