@@ -4,10 +4,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +27,8 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.security.auth.callback.Callback;
 
 import org.jibble.pircbot.ReplyConstants;
 
@@ -150,10 +157,10 @@ public class Where
 		this.irc = irc;
 		this.mods = mods;
 		final String whatRegex = "^BadgerBOT ([^ ]+) (.*)$";
-		logFile = new PrintStream(new FileOutputStream(new File("/home/choob/where.log"), true));
+		
+		logFile = new PrintStream(new FileOutputStream(new File(System.getProperty("user.home")+"/where.log"), true));
 		minilog("whatRegex: " + whatRegex);
 		whatExtract = Pattern.compile(whatRegex);
-
 	}
 
 	final Pattern whatExtract;
@@ -325,6 +332,21 @@ public class Where
 	{
 		return matches(Pattern.compile("/137\\.205\\.11"), add);
 	}
+	
+	Map<String, Set<InetAddress>> lastLoginMap(Map<String, Set<InetAddress>> localMap) {
+		for (Map.Entry<String, Set<InetAddress>> user : localMap.entrySet()) {
+			if(user.getValue().size() > 1) {
+				try {
+					final Process proc = Runtime.getRuntime().exec("finger mulletron | grep 'Last login' | cut -d ' ' -f 12");
+					final BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+					user.setValue(Collections.singleton(InetAddress.getByName(in.readLine())));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return localMap;
+	}
 
 	// Username -> set of addresses.
 	Map<String, Set<InetAddress>> buildLocalMap()
@@ -362,7 +384,7 @@ public class Where
 			// Discard:
 		}
 		minilog("buildLocalMap: exit");
-		return ret; // Don't care about part results.
+		return lastLoginMap(ret); // Don't care about part results.
 	}
 
 	<T> String hrList(final List<T> el)
@@ -645,5 +667,84 @@ public class Where
 				}
 			);
 		}
+	}
+	
+	private ContextEvent context(final String channel) {
+		return new ContextEvent() {
+			@Override public String getContext() {
+				return "#compsoc";
+			}
+		};
+	}
+	
+	/**
+	 * TODO: allow user settable hostnames
+	 * Assumes 1..5,6..10,11..15 ...
+	 * @return
+	 */
+	private InetAddress[][] buildCache(final String prefix, final PrintWriter err) {
+		final InetAddress[][] cache = new InetAddress[5][5];
+		for (int row = 0; row < 5; row++) {
+			for (int index = 1; index < 6; index++) {
+				final int n = row*5 + index;
+				try {
+					cache[row][index-1] = InetAddress.getByName(prefix+"-"+n+".dcs.warwick.ac.uk");
+				} catch (UnknownHostException e) {
+					err.write("Couldn't lookup "+prefix+"-"+n);
+					cache[row][index-1] = null;
+				}
+			}
+		}
+		return cache;
+	}
+	
+	/**
+	 * 
+	 * @param out
+	 * @param params
+	 * @param user
+	 */
+	public void webStalker(final PrintWriter out, final String params, final String[] user) {
+		out.println("HTTP/1.0 200 OK");
+		out.println("Content-Type: text/html");
+		out.println();
+		out.println("<html><body><table>");
+		
+		final InetAddress[][] cache = buildCache("viglab", out);
+		
+		// this internal api really wants closures
+		goDo("#compsoc", new Callback(context("#compsoc")) {
+			@Override
+			void complete(Details d) {
+				// Calculate inverse
+				final Map<InetAddress,Set<String>> inverse = new HashMap<InetAddress, Set<String>>();
+				for (Map.Entry<String, Set<InetAddress>> person : d.localmap.entrySet()) {
+					for (InetAddress addr : person.getValue()) {
+						Set<String> people = inverse.get(addr);
+						if(people == null) {
+							people = new HashSet<String>();
+							inverse.put(addr, people);
+						}
+						people.add(person.getKey());
+					}
+				}
+				
+				for (final InetAddress[] row : cache) {
+					out.println("<tr>");
+					for (final InetAddress pc: row) {
+						out.println("<td>");
+						final Set<String> people = inverse.get(pc);
+						for (String name : people) {
+							out.println("<p>"+name+"</p>");
+						}
+						out.println("</td>");
+					}
+					out.println("</tr>");
+				}
+				
+				//d.localmap
+				out.println("</table></body></html>");
+			}
+		});
 	}
 }
