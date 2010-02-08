@@ -1,7 +1,6 @@
 /** @author rlmw */
 
 import java.security.AllPermission;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -13,6 +12,7 @@ import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
+import twitter4j.User;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.plugins.RequiresPermission;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
@@ -93,9 +93,10 @@ public class Tweet {
 				});
 				for(Status status:timeline) {
 					id = Math.max(status.getId(),id);
-					final String from = status.getUser().getName();
+					final User user = status.getUser();
+					final String from = user.getName();
 					if(known) {
-						irc.sendMessage(username,  from + ": "+status.getText());
+						irc.sendMessage(username,  from + " ("+ user.getScreenName() + ") : "+status.getText());
 					} else {
 						tell(username,status.getText());
 					}
