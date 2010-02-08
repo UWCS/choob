@@ -102,20 +102,21 @@ public class NickColour
 			}
 
 			final int d = adjacentLines.size();
-			final int[][] buffer = new int[d][d];
+			final double[][] buffer = new double[d][d];
 
 			// find max
 			final List<Integer> distances = new ArrayList<Integer>();
 			for(Map<String,Integer> entry:adjacentLines.values()) {
 				distances.addAll(entry.values());
 			}
-			final int max = Collections.max(distances);
+			final double max = Collections.max(distances);
 			final List<String> names = new ArrayList<String>(adjacentLines.keySet());
 
 			for(Map.Entry<String, Map<String,Integer>> e :adjacentLines.entrySet()) {
-				final int[] row = buffer[names.indexOf(e.getKey())];
+				final double[] row = buffer[names.indexOf(e.getKey())];
 				for (Map.Entry<String, Integer> inner : e.getValue().entrySet()) {
-					row[names.indexOf(inner.getKey())] = max - inner.getValue();
+					// fix
+					row[names.indexOf(inner.getKey())] = ((double)inner.getValue())/max;
 				}
 			}
 
@@ -156,22 +157,22 @@ public class NickColour
 	 * precondition: k <= data.length
 	 *
 	 * @param k - the number of sets
-	 * @param data - matrix of data representation, distance vectors from each other, ie index (i,j) is the distance of i from j.
+	 * @param buffer - matrix of data representation, distance vectors from each other, ie index (i,j) is the distance of i from j.
 	 * @return a list of sets of data points, each set is a cluster.
 	 */
-	private List<Integer>[] clusterFuck(final int k, final int[][] data) {
-		final int d = data.length;
+	private List<Integer>[] clusterFuck(final int k, final double[][] buffer) {
+		final int d = buffer.length;
 		if(d < k) {
 			throw new RuntimeException("error: d < k");
 		}
 		for (int i = 0; i < d; i++) {
-			if(data[i].length != d) {
+			if(buffer[i].length != d) {
 				throw new RuntimeException("Invalid Input data set: matrix must be square");
 			}
 		}
 
 		// Step 1: Assign initial 'means' by randomly picking points from input set
-		float[][] means = new float[k][d];
+		double[][] means = new double[k][d];
 		final Random r = new Random();
 		// to avoid duplicates
 		List<Integer> indices = new ArrayList<Integer>();
@@ -179,7 +180,7 @@ public class NickColour
 			indices.add(i);
 		}
 		for (int i = 0; i < k; i++) {
-			final int[] vals = data[indices.remove(r.nextInt(indices.size()-1))];
+			final double[] vals = buffer[indices.remove(r.nextInt(indices.size()-1))];
 			for (int j = 0; j < d; j++) {
 				means[i][j] = vals[j];
 			}
@@ -200,16 +201,16 @@ public class NickColour
 			for (int i = 0; i < d; i++) {
 				float[] distances = new float[k];
 				for (int j = 0; j < k; j++) {
-					distances[j] = euclidean(means[j], data[i], d);
+					distances[j] = euclidean(means[j], buffer[i], d);
 				}
 				clusters[min(distances)].add(i);
 			}
 
 			// Step 3: calculate new centoids
 			for (int i = 0; i < k; i++) {
-				final float[] center = new float[d];
+				final double[] center = new double[d];
 				for (int j : clusters[i]) {
-					final int[] element = data[j];
+					final double[] element = buffer[j];
 					for(int l = 0; l < d; l++) {
 						center[l] += element[l];
 					}
@@ -250,7 +251,7 @@ public class NickColour
 	 * @param d the dimensionality
 	 * @return
 	 */
-	private float euclidean(float[] mean,int[] point, int d) {
+	private float euclidean(double[] mean,double[] point, int d) {
 		float f = 0f;
 		for(int i = 0; i < d; i++) {
 			f += Math.pow(mean[i] - point[i], 2);
