@@ -116,7 +116,7 @@ public class NickColour
 				final double[] row = buffer[names.indexOf(e.getKey())];
 				for (Map.Entry<String, Integer> inner : e.getValue().entrySet()) {
 					// fix
-					row[names.indexOf(inner.getKey())] = ((double)inner.getValue())/max;
+					row[names.indexOf(inner.getKey())] = 1d - ((double)inner.getValue())/max;
 				}
 			}
 
