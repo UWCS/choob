@@ -337,7 +337,7 @@ public class Where
 		for (Map.Entry<String, Set<InetAddress>> user : localMap.entrySet()) {
 			if(user.getValue().size() > 1) {
 				try {
-					final Process proc = Runtime.getRuntime().exec("finger mulletron | grep 'Last login' | cut -d ' ' -f 12");
+					final Process proc = Runtime.getRuntime().exec("finger "+user.getKey()+"| grep 'Last login' | cut -d ' ' -f 12");
 					final BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 					user.setValue(Collections.singleton(InetAddress.getByName(in.readLine())));
 				} catch (Exception e) {
