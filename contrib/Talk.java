@@ -1,3 +1,5 @@
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 
 import org.jibble.pircbot.Colors;
@@ -16,7 +18,7 @@ import uk.co.uwcs.choob.support.events.Message;
  * :)
  */
 
-public class Talk
+class Talk
 {
 	public String[] info()
 	{
@@ -153,5 +155,41 @@ public class Talk
 			final String message = params.substring(spacePos + 1);
 			irc.sendAction(target, message + " (From " + mes.getNick() + ".)");
 		}
+	}
+
+	public static String commandReverse(String sarg) {
+		final StringBuilder sb = new StringBuilder();
+
+		final Deque<Integer> combiningStack = new ArrayDeque<Integer>();
+
+		final String s = sarg;
+		for (int i = s.length() - 1; i >= 0; --i) {
+			final int currentPoint = s.codePointAt(i);
+
+			if (i > 0) {
+				final int nextPoint = s.codePointAt(i - 1);
+				if (Character.isSupplementaryCodePoint(nextPoint))
+					continue;
+
+				if (isCombiningCharacter(currentPoint)) {
+					combiningStack.push(currentPoint);
+					continue;
+				}
+			}
+
+			sb.appendCodePoint(currentPoint);
+
+			if (!combiningStack.isEmpty()) {
+				for (int j : combiningStack)
+					sb.appendCodePoint(j);
+				combiningStack.clear();
+			}
+		}
+
+		return sb.toString();
+	}
+
+	private static boolean isCombiningCharacter(final int currentPoint) {
+		return Character.NON_SPACING_MARK == Character.getType(currentPoint);
 	}
 }
