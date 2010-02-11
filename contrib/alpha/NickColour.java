@@ -415,6 +415,7 @@ public class NickColour
 			while (rs.next())
 				nicks.add(rs.getString("Nick"));
 
+			html(out);
 			for (Entry<String, String> a : WordShapeImpl.main(nicks).entrySet())
 				out.println(a.getKey() + ":" + a.getValue());
 
