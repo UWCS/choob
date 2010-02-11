@@ -147,6 +147,7 @@ public class NickColour
 		out.println("HTTP/1.0 200 OK");
 		out.println("Content-Type: text/html");
 		out.println();
+		out.println();
 	}
 
 	/**
