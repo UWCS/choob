@@ -98,7 +98,7 @@ public class Latitude {
 		nick = (nick.length() > 0)?nick:mes.getNick();
 		final List<Badge> values = mods.odb.retrieve(Badge.class, "where nick = '"+nick+"'");
 		if(values.size() == 0) {
-			irc.sendContextReply(mes, nick+" has no saved google latitude badge");
+			irc.sendContextReply(mes, nick+" has no saved Google Latitude badge");
 		} else {
 			irc.sendContextReply(mes, nick+" is believed to be located in "+getLocation(values.get(0).badge_id));
 		}
