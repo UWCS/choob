@@ -849,11 +849,11 @@ public class Karma
 		"<Object 1> <Object 2>",
 	};
 
-	public void commandFight (final Message mes)
+	public String commandFight(String msg)
 	{
 		final List<String> params = new ArrayList<String>();
 
-		final Matcher ma=karmaItemPattern.matcher(mods.util.getParamString(mes));
+		final Matcher ma=karmaItemPattern.matcher(msg);
 		while (ma.find())
 			params.add(getName(ma));
 
@@ -877,7 +877,7 @@ public class Karma
 			//Check that they aint the same thing!
 			if (karmaObjs.get(0).equals(karmaObjs.get(1)))
 			{
-				irc.sendContextReply(mes, "Fighters must be unique!");
+				return "Fighters must be unique!";
 			}
 			else
 			{
@@ -885,17 +885,17 @@ public class Karma
 				if (result == -1)
 				{
 					//Winner is Object 0
-					irc.sendContextReply(mes, formatKarmaNameForIRC(karmaObjs.get(0).instName) + " was victorious over " + formatKarmaNameForIRC(karmaObjs.get(1).instName) + "! (" + karmaObjs.get(0).value + " vs " + karmaObjs.get(1).value + ")");
+					return formatKarmaNameForIRC(karmaObjs.get(0).instName) + " was victorious over " + formatKarmaNameForIRC(karmaObjs.get(1).instName) + "! (" + karmaObjs.get(0).value + " vs " + karmaObjs.get(1).value + ")";
 				}
 				else if (result == 1)
 				{
 					//Winner is Object 1
-					irc.sendContextReply(mes, formatKarmaNameForIRC(karmaObjs.get(1).instName) + " was victorious over " + formatKarmaNameForIRC(karmaObjs.get(0).instName) + "! (" + karmaObjs.get(1).value + " vs " + karmaObjs.get(0).value + ")");
+					return formatKarmaNameForIRC(karmaObjs.get(1).instName) + " was victorious over " + formatKarmaNameForIRC(karmaObjs.get(0).instName) + "! (" + karmaObjs.get(1).value + " vs " + karmaObjs.get(0).value + ")";
 				}
 				else
 				{
 					//Should only be a draw
-					irc.sendContextReply(mes, "The battle between " + formatKarmaNameForIRC(karmaObjs.get(0).instName) + " and " + formatKarmaNameForIRC(karmaObjs.get(1).instName) + " was a draw! (" + karmaObjs.get(0).value + " vs " + karmaObjs.get(1).value + ")");
+					return "The battle between " + formatKarmaNameForIRC(karmaObjs.get(0).instName) + " and " + formatKarmaNameForIRC(karmaObjs.get(1).instName) + " was a draw! (" + karmaObjs.get(0).value + " vs " + karmaObjs.get(1).value + ")";
 				}
 
 			}
@@ -904,7 +904,7 @@ public class Karma
 		else
 		{
 			//Too many, or perhaps too few, things
-			irc.sendContextReply(mes, "You must supply exactly two objects to fight!");
+			return "You must supply exactly two objects to fight!";
 		}
 
 	}
