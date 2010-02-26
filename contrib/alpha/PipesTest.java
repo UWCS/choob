@@ -71,8 +71,8 @@ class Pipes
 			String cmd = qq[0].trim();
 			String arg = qq.length > 1 ? qq[1] : "";
 
-			// Restrict size of input to all commands to stop baby Faux crying
-			arg = arg.substring(0, 1024);
+			// Restrict size of input to all commands.
+			arg = arg.substring(0, Math.min(arg.length(), 1024));
 
 			if ("sed".equals(cmd))
 				return (String)mods.plugin.callAPI("MiscUtils", "Sed", arg, stdin);
