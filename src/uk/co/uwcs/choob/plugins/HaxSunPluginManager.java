@@ -33,8 +33,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -52,8 +52,8 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IExtendedModifier;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.Modifier.ModifierKeyword;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 
@@ -218,7 +218,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			else
 			{
 				final ImportDeclaration lastImport = last(importList);
-				final int startPosition = importList.get(0).getStartPosition();
+				final int startPosition = 0;
 				final int endPosition = endPosition(lastImport);
 				imps = get(doc, startPosition, endPosition - startPosition);
 				importsEndLineNumber = cu.getLineNumber(endPosition); // could be <0.
