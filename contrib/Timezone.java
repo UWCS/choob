@@ -61,9 +61,9 @@ public class Timezone
 		"<Original TimeZone> is the timezone to convert from.",
 		"<Target TimeZone> is the TimeZone to convert to."
 	};
-	public void commandWhenIs(final Message mes)
+	public String commandWhenIs(final String mes)
 	{
-		final List<String> params = mods.util.getParams(mes,5);
+		final List<String> params = mods.util.getParams(mes);
 		TimeZone targetTimeZone = TimeZone.getTimeZone("Europe/London");
 		if (params.size() == 5 && params.get(3).equals("in"))
 		{
@@ -71,8 +71,7 @@ public class Timezone
 			targetTimeZone = TimeZone.getTimeZone(input);
 		} else if (params.size() != 3)
 		{
-			irc.sendContextReply(mes,"Usage whenis <time> <timezone> [in <timezone>]");
-			return;
+			return "Usage whenis <time> <timezone> [in <timezone>]";
 		}
 
 		try
@@ -122,12 +121,11 @@ public class Timezone
 			response.append(" (");
 			response.append(targetTimeZone.getDisplayName(targetInDst,TimeZone.LONG));
 			response.append(")");
-			irc.sendContextReply(mes,response.toString());
+			return response.toString();
 
 		} catch (final ParseException e)
 		{
-			irc.sendContextReply(mes,"Error parsing input time, should be in format: " + PATTERN);
-			return;
+			return "Error parsing input time, should be in format: " + PATTERN;
 		}
 	}
 
