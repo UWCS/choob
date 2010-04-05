@@ -97,7 +97,7 @@ public class ChoobSetupCLI
 				);
 			cs.setupChoob(new ChoobSetup.ChoobSetupStatus()
 			{
-				public void onStatus(final int percent, final String message)
+				@Override public void onStatus(final int percent, final String message)
 				{
 					System.out.println(message);
 				}

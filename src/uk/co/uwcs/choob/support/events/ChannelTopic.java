@@ -16,7 +16,7 @@ public class ChannelTopic extends IRCEvent implements MessageEvent, ChannelEvent
 	 * Get the value of message
 	 * @return The value of message
 	 */
-	public String getMessage() {
+	@Override public String getMessage() {
 		 return message;
 	}
 
@@ -29,7 +29,7 @@ public class ChannelTopic extends IRCEvent implements MessageEvent, ChannelEvent
 	 * Get the value of channel
 	 * @return The value of channel
 	 */
-	public String getChannel() {
+	@Override public String getChannel() {
 		 return channel;
 	}
 
@@ -37,7 +37,7 @@ public class ChannelTopic extends IRCEvent implements MessageEvent, ChannelEvent
 	 * Get the reply context in which this event resides
 	 * @return The context
 	 */
-	public String getContext() {
+	@Override public String getContext() {
 		return getChannel();
 	}
 

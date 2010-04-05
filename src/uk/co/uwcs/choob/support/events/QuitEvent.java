@@ -16,7 +16,7 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 	 * Get the value of message
 	 * @return The value of message
 	 */
-	public String getMessage() {
+	@Override public String getMessage() {
 		 return message;
 	}
 
@@ -29,7 +29,7 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 	 * Get the value of nick
 	 * @return The value of nick
 	 */
-	public String getNick() {
+	@Override public String getNick() {
 		 return nick;
 	}
 
@@ -42,7 +42,7 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 	 * Get the value of login
 	 * @return The value of login
 	 */
-	public String getLogin() {
+	@Override public String getLogin() {
 		 return login;
 	}
 
@@ -55,7 +55,7 @@ public class QuitEvent extends IRCEvent implements MessageEvent, UserEvent
 	 * Get the value of hostname
 	 * @return The value of hostname
 	 */
-	public String getHostname() {
+	@Override public String getHostname() {
 		 return hostname;
 	}
 

@@ -16,7 +16,7 @@ public class ChannelUserMode extends ChannelMode implements AimedEvent
 	 * Get the value of target
 	 * @return The value of target
 	 */
-	public String getTarget() {
+	@Override public String getTarget() {
 		 return target;
 	}
 

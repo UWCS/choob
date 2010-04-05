@@ -16,7 +16,7 @@ public class ServerResponse extends IRCEvent implements ServerEvent
 	 * Get the value of code
 	 * @return The value of code
 	 */
-	public int getCode() {
+	@Override public int getCode() {
 		 return code;
 	}
 
@@ -29,7 +29,7 @@ public class ServerResponse extends IRCEvent implements ServerEvent
 	 * Get the value of response
 	 * @return The value of response
 	 */
-	public String getResponse() {
+	@Override public String getResponse() {
 		 return response;
 	}
 

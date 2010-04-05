@@ -58,7 +58,7 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	/**
 	 * Allocates a word in the dictionary
 	 */
-	public void addWord(final String word) {
+	@Override public void addWord(final String word) {
 		final String code = getCode(word);
 		List<String> list = mainDictionary.get(code);
 		if (list == null)

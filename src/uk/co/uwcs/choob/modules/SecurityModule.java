@@ -916,7 +916,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 		// Should prevent circular checks...
 		final boolean rv = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
-			public Boolean run() {
+			@Override public Boolean run() {
 				final int nodeID = getNodeIDFromPluginName( plugin );
 
 				// No such user!

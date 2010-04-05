@@ -16,7 +16,7 @@ public class ChannelParamMode extends ChannelMode implements ParamEvent
 	 * Get the value of param
 	 * @return The value of param
 	 */
-	public String getParam() {
+	@Override public String getParam() {
 		 return param;
 	}
 

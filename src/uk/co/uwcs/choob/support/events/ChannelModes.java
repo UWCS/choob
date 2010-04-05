@@ -16,7 +16,7 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 	 * Get the value of channel
 	 * @return The value of channel
 	 */
-	public String getChannel() {
+	@Override public String getChannel() {
 		 return channel;
 	}
 
@@ -29,7 +29,7 @@ public class ChannelModes extends IRCEvent implements ChannelEvent, MultiModeEve
 	 * Get the value of modes
 	 * @return The value of modes
 	 */
-	public String getModes() {
+	@Override public String getModes() {
 		 return modes;
 	}
 

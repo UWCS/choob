@@ -114,7 +114,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		try {
 			success = AccessController
 					.doPrivileged(new PrivilegedExceptionAction<Boolean>() {
-						public Boolean run() {
+						@Override public Boolean run() {
 							return compiler.getTask(output, fileManager, null,
 									null, null, compilationUnit).call();
 						}
@@ -679,7 +679,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		try
 		{
 			return AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-				public Object run() throws InvocationTargetException, IllegalAccessException {
+				@Override public Object run() throws InvocationTargetException, IllegalAccessException {
 					if (meth2 instanceof Method)
 						return ((Method)meth2).invoke(plugin, params);
 					return ((Field)meth2).get(plugin);

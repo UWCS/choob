@@ -16,7 +16,7 @@ public class ChannelNotice extends Message implements ChannelEvent
 	 * Get the value of channel
 	 * @return The value of channel
 	 */
-	public String getChannel() {
+	@Override public String getChannel() {
 		 return channel;
 	}
 

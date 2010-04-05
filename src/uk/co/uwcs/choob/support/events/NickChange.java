@@ -16,7 +16,7 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	 * Get the value of nick
 	 * @return The value of nick
 	 */
-	public String getNick() {
+	@Override public String getNick() {
 		 return nick;
 	}
 
@@ -29,7 +29,7 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	 * Get the value of login
 	 * @return The value of login
 	 */
-	public String getLogin() {
+	@Override public String getLogin() {
 		 return login;
 	}
 
@@ -42,7 +42,7 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	 * Get the value of hostname
 	 * @return The value of hostname
 	 */
-	public String getHostname() {
+	@Override public String getHostname() {
 		 return hostname;
 	}
 
@@ -55,7 +55,7 @@ public class NickChange extends IRCEvent implements UserEvent, NickChangeEvent
 	 * Get the value of newNick
 	 * @return The value of newNick
 	 */
-	public String getNewNick() {
+	@Override public String getNewNick() {
 		 return newNick;
 	}
 

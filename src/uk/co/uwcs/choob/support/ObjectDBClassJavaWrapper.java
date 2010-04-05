@@ -11,11 +11,11 @@ final class ObjectDBClassJavaWrapper implements ObjectDBClass {
 		this.cls = (Class<? extends ObjectDBClass>)obj;
 	}
 
-	public String getName() {
+	@Override public String getName() {
 		return cls.getName();
 	}
 
-	public Object newInstance() throws InstantiationException, IllegalAccessException {
+	@Override public Object newInstance() throws InstantiationException, IllegalAccessException {
 		return cls.newInstance();
 	}
 }

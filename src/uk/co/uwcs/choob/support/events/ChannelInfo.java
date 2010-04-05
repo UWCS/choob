@@ -16,7 +16,7 @@ public class ChannelInfo extends IRCEvent implements MessageEvent, ChannelEvent
 	 * Get the value of message
 	 * @return The value of message
 	 */
-	public String getMessage() {
+	@Override public String getMessage() {
 		 return message;
 	}
 
@@ -29,7 +29,7 @@ public class ChannelInfo extends IRCEvent implements MessageEvent, ChannelEvent
 	 * Get the value of channel
 	 * @return The value of channel
 	 */
-	public String getChannel() {
+	@Override public String getChannel() {
 		 return channel;
 	}
 

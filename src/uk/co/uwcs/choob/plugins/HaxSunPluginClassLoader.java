@@ -41,7 +41,7 @@ public final class HaxSunPluginClassLoader extends ClassLoader
 		try {
 			return AccessController
 					.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
-						public Class<?> run() throws ClassNotFoundException {
+						@Override public Class<?> run() throws ClassNotFoundException {
 							try {
 								final String fileName = path
 										+ name.replace('.', File.separatorChar)

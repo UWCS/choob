@@ -262,7 +262,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 			};
 		final AccessControlContext accessContext = new AccessControlContext(domain);
 		final PrivilegedExceptionAction<Object> action = new PrivilegedExceptionAction<Object>() {
-			public Object run() throws Exception {
+			@Override public Object run() throws Exception {
 				final Context cx = Context.enter();
 				try {
 					final Scriptable scope = plugin.getScope();
@@ -740,7 +740,7 @@ final class JavaScriptPlugin {
 			final AccessControlContext accessContext = new AccessControlContext(new ProtectionDomain[] { accessDomain });
 			try {
 				inst = AccessController.doPrivileged(new PrivilegedExceptionAction<Scriptable>() {
-						public Scriptable run() {
+						@Override public Scriptable run() {
 							return cxF.newObject(scopeF, pluginNameF, args);
 						}
 					}, accessContext);

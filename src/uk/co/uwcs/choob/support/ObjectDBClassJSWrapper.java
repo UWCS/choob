@@ -12,7 +12,7 @@ public final class ObjectDBClassJSWrapper implements ObjectDBClass {
 		this.cls = (Function)obj;
 	}
 	
-	public String getName() {
+	@Override public String getName() {
 		Context cx = Context.enter();
 		try {
 			try {
@@ -40,7 +40,7 @@ public final class ObjectDBClassJSWrapper implements ObjectDBClass {
 		return "";
 	}
 	
-	public Object newInstance() {
+	@Override public Object newInstance() {
 		Context cx = Context.enter();
 		try {
 			Scriptable scope = cls.getParentScope();

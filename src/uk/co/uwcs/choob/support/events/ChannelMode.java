@@ -16,7 +16,7 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 	 * Get the value of channel
 	 * @return The value of channel
 	 */
-	public String getChannel() {
+	@Override public String getChannel() {
 		 return channel;
 	}
 
@@ -29,7 +29,7 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 	 * Get the value of mode
 	 * @return The value of mode
 	 */
-	public String getMode() {
+	@Override public String getMode() {
 		 return mode;
 	}
 
@@ -42,7 +42,7 @@ public class ChannelMode extends IRCEvent implements ChannelEvent, ModeEvent
 	 * Get the value of set
 	 * @return The value of set
 	 */
-	public boolean isSet() {
+	@Override public boolean isSet() {
 		 return set;
 	}
 

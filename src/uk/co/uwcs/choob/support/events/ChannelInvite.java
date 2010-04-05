@@ -16,7 +16,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	 * Get the value of channel
 	 * @return The value of channel
 	 */
-	public String getChannel() {
+	@Override public String getChannel() {
 		 return channel;
 	}
 
@@ -29,7 +29,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	 * Get the value of nick
 	 * @return The value of nick
 	 */
-	public String getNick() {
+	@Override public String getNick() {
 		 return nick;
 	}
 
@@ -42,7 +42,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	 * Get the value of login
 	 * @return The value of login
 	 */
-	public String getLogin() {
+	@Override public String getLogin() {
 		 return login;
 	}
 
@@ -55,7 +55,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	 * Get the value of hostname
 	 * @return The value of hostname
 	 */
-	public String getHostname() {
+	@Override public String getHostname() {
 		 return hostname;
 	}
 
@@ -68,7 +68,7 @@ public class ChannelInvite extends IRCEvent implements ChannelEvent, UserEvent, 
 	 * Get the value of target
 	 * @return The value of target
 	 */
-	public String getTarget() {
+	@Override public String getTarget() {
 		 return target;
 	}
 

@@ -16,7 +16,7 @@ public class PluginLoaded extends InternalEvent implements PluginEvent
 	 * Get the value of pluginName
 	 * @return The value of pluginName
 	 */
-	public String getPluginName() {
+	@Override public String getPluginName() {
 		 return pluginName;
 	}
 
@@ -29,7 +29,7 @@ public class PluginLoaded extends InternalEvent implements PluginEvent
 	 * Get the value of pluginStatus
 	 * @return The value of pluginStatus
 	 */
-	public int getPluginStatus() {
+	@Override public int getPluginStatus() {
 		 return pluginStatus;
 	}
 

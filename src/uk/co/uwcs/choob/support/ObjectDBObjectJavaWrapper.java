@@ -14,19 +14,19 @@ public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 		getId();
 	}
 
-	public String getClassName() {
+	@Override public String getClassName() {
 		return obj.getClass().getName();
 	}
 
-	public ObjectDBClass getODBClass() {
+	@Override public ObjectDBClass getODBClass() {
 		return new ObjectDBClassJavaWrapper(getClass());
 	}
 
-	public int getId() {
+	@Override public int getId() {
 		try {
 			final Object obj2 = obj;
 			return AccessController.doPrivileged(new PrivilegedExceptionAction<Integer>() {
-					public Integer run() throws NoSuchFieldException, IllegalAccessException {
+					@Override public Integer run() throws NoSuchFieldException, IllegalAccessException {
 						Field f = obj2.getClass().getField("id");
 						return f.getInt(obj2);
 					}
@@ -37,12 +37,12 @@ public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 		}
 	}
 
-	public void setId(int id) {
+	@Override public void setId(int id) {
 		try {
 			final Object obj2 = obj;
 			final int val2 = id;
 			AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-					public Object run() throws NoSuchFieldException, IllegalAccessException {
+					@Override public Object run() throws NoSuchFieldException, IllegalAccessException {
 						Field f = obj2.getClass().getField("id");
 						f.setInt(obj2, val2);
 						return null;
@@ -54,7 +54,7 @@ public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 		}
 	}
 
-	public String[] getFields() {
+	@Override public String[] getFields() {
 		List<String> fields = new LinkedList<String>();
 		Field[] fieldObjs = obj.getClass().getFields();
 
@@ -66,15 +66,15 @@ public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 		return fields.toArray(sFields);
 	}
 
-	public Type getFieldType(String name) throws NoSuchFieldException {
+	@Override public Type getFieldType(String name) throws NoSuchFieldException {
 		return obj.getClass().getField(name).getType();
 	}
 
-	public Object getFieldValue(String name) throws NoSuchFieldException, IllegalAccessException {
+	@Override public Object getFieldValue(String name) throws NoSuchFieldException, IllegalAccessException {
 		return obj.getClass().getField(name).get(obj);
 	}
 
-	public void setFieldValue(String name, Object value) throws NoSuchFieldException, IllegalAccessException {
+	@Override public void setFieldValue(String name, Object value) throws NoSuchFieldException, IllegalAccessException {
 		obj.getClass().getField(name).set(obj, value);
 	}
 }

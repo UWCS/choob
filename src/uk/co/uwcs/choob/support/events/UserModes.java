@@ -16,7 +16,7 @@ public class UserModes extends IRCEvent implements MultiModeEvent
 	 * Get the value of modes
 	 * @return The value of modes
 	 */
-	public String getModes() {
+	@Override public String getModes() {
 		 return modes;
 	}
 

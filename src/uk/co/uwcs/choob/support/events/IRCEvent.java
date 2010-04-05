@@ -19,7 +19,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 	 * Get the value of millis
 	 * @return The value of millis
 	 */
-	public long getMillis() {
+	@Override public long getMillis() {
 		 return millis;
 	}
 
@@ -32,7 +32,7 @@ public class IRCEvent extends Event implements IRCRootEvent
 	 * Get the value of random
 	 * @return The value of random
 	 */
-	public int getRandom() {
+	@Override public int getRandom() {
 		 return random;
 	}
 

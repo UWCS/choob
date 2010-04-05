@@ -29,7 +29,7 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		getFieldValue("id");
 	}
 	
-	public String getClassName() {
+	@Override public String getClassName() {
 		try {
 			Object ctor = getFieldValue("constructor");
 			if (ctor instanceof Function) {
@@ -42,7 +42,7 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		return ""; // XXX ?!
 	}
 
-	public ObjectDBClass getODBClass() {
+	@Override public ObjectDBClass getODBClass() {
 		try {
 			Object ctor = getFieldValue("constructor");
 			if (ctor instanceof Function) {
@@ -55,7 +55,7 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		return null; // XXX ?!
 	}
 
-	public int getId() {
+	@Override public int getId() {
 		try {
 			return ((Number)getFieldValue("id")).intValue();
 		} catch (NoSuchFieldException e) {
@@ -64,7 +64,7 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		return 0; // XXX ?!
 	}
 	
-	public void setId(int id) {
+	@Override public void setId(int id) {
 		try {
 			setFieldValue("id", new Integer(id));
 		} catch (NoSuchFieldException e) {
@@ -72,7 +72,7 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		}
 	}
 	
-	public String[] getFields() {
+	@Override public String[] getFields() {
 		List<String> fields = new LinkedList<String>();
 		
 		Scriptable proto = obj;
@@ -108,7 +108,7 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		return fields.toArray(sFields);
 	}
 	
-	public Type getFieldType(String name) throws NoSuchFieldException {
+	@Override public Type getFieldType(String name) throws NoSuchFieldException {
 		Object val = getFieldValue(name);
 		if (val == null) {
 			return null;
@@ -137,11 +137,11 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		return null;
 	}
 	
-	public Object getFieldValue(String name) throws NoSuchFieldException {
+	@Override public Object getFieldValue(String name) throws NoSuchFieldException {
 		return JSUtils.mapJSToJava(JSUtils.getProperty(obj, name));
 	}
 	
-	public void setFieldValue(String name, Object value) throws NoSuchFieldException {
+	@Override public void setFieldValue(String name, Object value) throws NoSuchFieldException {
 		JSUtils.setProperty(obj, name, JSUtils.mapJavaToJS(value));
 	}
 }

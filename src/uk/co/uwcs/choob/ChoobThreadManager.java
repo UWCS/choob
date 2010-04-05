@@ -51,7 +51,7 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		super(5, 20, 60l, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 		setThreadFactory( new ThreadFactory() {
 			int count = 0;
-			public Thread newThread(final Runnable r) {
+			@Override public Thread newThread(final Runnable r) {
 				final ChoobThread thread = new ChoobThread(r, "choob-" + ++count);
 				return thread;
 			}
