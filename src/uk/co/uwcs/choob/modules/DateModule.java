@@ -185,7 +185,6 @@ public final class DateModule {
 	public final static String absoluteDateFormat(final Date da)
 	{
 		// Some definitions.
-			final SimpleDateFormat formatter = new SimpleDateFormat("EEEE d MMM h:mma");
 			final SimpleDateFormat dayNameFormatter = new SimpleDateFormat("EEEE");
 			final Calendar cda = new GregorianCalendar();
 				cda.setTime(da);
@@ -215,7 +214,7 @@ public final class DateModule {
 
 		}
 
-		return formatter.format(da);
+		return da.toString();
 	}
 
 	/** Convert a Calendar to "8pm", "7am", "7:30am" etc. */
