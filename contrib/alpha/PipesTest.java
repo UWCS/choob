@@ -76,7 +76,7 @@ class Pipes
 
 			if ("sed".equals(cmd))
 				return (String)mods.plugin.callAPI("MiscUtils", "Sed", arg, stdin);
-			
+
 			if ("java".equals(cmd))
 				return (String)mods.plugin.callAPI("Executor", "ran", stdin);
 
@@ -104,7 +104,7 @@ class Pipes
 
 			if ("export".equals(cmd))
 				// mes
-				return (String)mods.plugin.callAPI("Alias", "CreateAlias", mes, nick, target, "fakelias "+ arg);
+				return (String)mods.plugin.callAPI("Alias", "CreateAlias", mes, nick, nullToEmpty(target), "fakelias "+ arg);
 
 			if ("xargs".equals(cmd))
 			{
@@ -121,8 +121,7 @@ class Pipes
 				if (null != res)
 				{
 					cmd = (String) mods.plugin.callAPI("alias", "applyalias", res, alcmd.split(" "), arg,
-							nick == null ? "" : nick,
-							target == null ? "" : target);
+							nullToEmpty(nick), nullToEmpty(target));
 					arg = "";
 				}
 			}
@@ -151,6 +150,10 @@ class Pipes
 
 			return (String) mods.plugin.callGeneric(cmds[0], "command", cmds[1], arg);
 		}
+	}
+
+	static String nullToEmpty(String s) {
+		return s == null ? "" : s;
 	}
 
 	static class ParseException extends Exception
