@@ -31,6 +31,8 @@ import uk.co.uwcs.choob.support.events.Message;
 
 public class Help
 {
+	private static final String[] CANDLE_RAGE_RAAAAAAGEEEEEE = new String[] { "Candle is fixing this.  In the meantime, sorry for the inconvenience." };
+
 	public String[] info()
 	{
 		return new String[] {
@@ -215,11 +217,13 @@ public class Help
 			{
 				if (fullTopic.equalsIgnoreCase("plugins"))
 				{
-					return apiGetPluginList();
+					return CANDLE_RAGE_RAAAAAAGEEEEEE;
+//					return apiGetPluginList();
 				}
 				else if (fullTopic.equalsIgnoreCase("commands"))
 				{
-					return apiGetCommandList(isLong);
+					return CANDLE_RAGE_RAAAAAAGEEEEEE;
+//					return apiGetCommandList(isLong);
 				}
 			}
 
@@ -372,8 +376,9 @@ public class Help
 				return new String[] { "Sorry, can't find topic " + formatTopic(type + "." + topic) + " in plugin " + formatPlugin(plugin) + "." };
 		}
 
-		final String[] ret = new String[0];
-		return allHelp.toArray(ret);
+		if (allHelp.size() > 3)
+			return allHelp.subList(0, Math.min(3, allHelp.size())).toArray(new String[0]);
+		return allHelp.toArray(new String[0]);
 	}
 
 	/**    _    ____ ___
