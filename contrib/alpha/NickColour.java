@@ -8,14 +8,15 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
@@ -34,8 +35,11 @@ public class NickColour
 	};
 
 	private final Modules mods;
+	private final IRCInterface irc;
+
 	public NickColour(final IRCInterface irc, final Modules mods)
 	{
+		this.irc = irc;
 		this.mods = mods;
 	}
 
@@ -49,8 +53,7 @@ public class NickColour
 		};
 	}
 
-	public void commandTest(final Message mes, final Modules mods,
-			final IRCInterface irc) throws SQLException {
+	public void commandTest(final Message mes) throws SQLException {
 
 		irc.sendContextReply(mes, "Testing Database Connection:");
 
@@ -411,13 +414,18 @@ public class NickColour
 					"group by nick " +
 					"having cnt > 5 " +
 					"order by cnt desc").executeQuery();
-			List<String> nicks = new ArrayList<String>();
+			final List<String> nicks = new ArrayList<String>();
 			while (rs.next())
 				nicks.add(rs.getString("Nick"));
 
 			html(out);
-			for (Entry<String, String> a : WordShapeImpl.main(nicks).entrySet())
-				out.println(a.getKey() + ":" + a.getValue());
+			final Map<String, String> shape = WordShapeImpl.main(nicks);
+			if (params.equals("show")) {
+				printTable(out, shape);
+
+			} else
+				for (Entry<String, String> a : shape.entrySet())
+					out.println(a.getKey() + ":" + a.getValue());
 
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -426,4 +434,88 @@ public class NickColour
 		}
 	}
 
+	private void printTable(final PrintWriter out, final Map<String, String> shape) {
+		final Map<String, String> colours = new HashMap<String, String>() {{
+			put("14", "85,85,85");
+			put("13", "255,85,255");
+			put("12", "85,85,255");
+			put("11", "85,255,255");
+			put("10", "0,186,187");
+			put("9", "85,255,85");
+			put("8", "255,255,85");
+			put("7", "187,187,0");
+			put("6", "187,0,187");
+			put("5", "187,0,0");
+			put("4", "255,85,85");
+			put("3", "0,187,0");
+			put("2", "0,0,187");
+		}};
+
+		out.println("<style type='text/css'>\n" +
+				".m{color:rgb(187,187,187)}\n" +
+				"body{background-color: black;font-family: Consolas,Code2000,\"Lucida Console\",fixed}");
+		for (Entry<String, String> a : colours.entrySet())
+			out.println(".c" + a.getKey() + "{color:rgb(" + a.getValue() + ")}");
+		out.println("</style>");
+		Map<String, List<String>> flipped = new HashMap<String, List<String>>();
+		for (Entry<String, String> a : shape.entrySet()) {
+			final String v = a.getValue();
+			List<String> s = flipped.get(v);
+			if (null == s)
+				flipped.put(v, s = new ArrayList<String>());
+			s.add(a.getKey());
+		}
+		for (Entry<String, List<String>> a : flipped.entrySet()) {
+			out.println("<ul>");
+			final List<String> peeps = a.getValue();
+			Collections.sort(peeps, new Comparator<String>() {
+				@Override public int compare(String o1, String o2) {
+					return o1.length() - o2.length();
+				}
+			});
+
+			for (String b : peeps)
+				out.println("  <li><span class='c14'>&lt;</span>" +
+						"<span class='m'>" + op() + "</span>" +
+						"<span class='c" + a.getKey() + "'>" + mods.scrape.readyForHtml(b) + "</span>" +
+						"<span class='c14'>&gt;</span></li>");
+			out.println("</ul>");
+		}
+	}
+
+
+	private static final Random RAND = new Random();
+	private static String op() {
+		final int r = RAND.nextInt(50);
+		if (0 == r)
+			return "&";
+		if (1 == r)
+			return "~";
+		if (r < 6)
+			return "@";
+		if (r < 16)
+			return "+";
+		return " ";
+	}
+
+//	public static void main(String[] args) {
+//		final PrintWriter pw = new PrintWriter(System.out);
+//		printTable(pw, new HashMap<String, String>() {{
+//			put("b", "2");
+//			put("c", "3");
+//			put("d", "4");
+//			put("e", "5");
+//			put("f", "6");
+//			put("g", "7");
+//			put("h", "8");
+//			put("i", "9");
+//			put("j", "10");
+//			put("k", "11");
+//			put("l", "12");
+//			put("aeohn", "12");
+//			put("m", "13");
+//		}});
+//		pw.flush();
+//		pw.close();
+//	}
 }
