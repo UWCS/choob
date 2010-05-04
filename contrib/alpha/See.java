@@ -26,7 +26,7 @@ import uk.co.uwcs.choob.support.events.Message;
 public class See
 {
 
-	final SimpleDateFormat sdfa = new SimpleDateFormat("Kaa ");
+	final SimpleDateFormat sdfa = new SimpleDateFormat("haa ");
 	final SimpleDateFormat sdfb = new SimpleDateFormat("EEEE");
 
 	private final Modules mods;
