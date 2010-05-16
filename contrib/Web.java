@@ -36,7 +36,7 @@ public class Web
 			final StringBuilder result = new StringBuilder();
 
 			for (final String xpathOr : xpathIn.split("\\|")) {
-				result.append(xpath.evaluate(xpathOr.trim(), doc).toString());
+				result.append(xpath.evaluate(xpathOr.trim(), doc).toString().replaceAll("\\s+", " "));
 			}
 
 			return result.toString();
