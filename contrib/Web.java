@@ -17,10 +17,10 @@ public class Web
 	public String[] info()
 	{
 		return new String[] {
-			"Web browser for choob.",
+			"Plugin to fetch stuff from the web.",
 			"The Choob Team",
 			"choob@uwcs.co.uk",
-			"0.1"
+			"$Rev$$Date$"
 		};
 	}
 
