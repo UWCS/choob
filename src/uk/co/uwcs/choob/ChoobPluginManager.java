@@ -32,6 +32,7 @@ import uk.co.uwcs.choob.support.NoSuchPluginException;
 import uk.co.uwcs.choob.support.events.Event;
 import uk.co.uwcs.choob.support.events.Message;
 
+
 /**
  * Root class of a plugin manager
  * @author bucko
