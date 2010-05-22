@@ -13,7 +13,7 @@ if [ misc/HorriblePerlScript.java -nt uk/co/uwcs/choob/Choob.java ]; then
 		echo "Failed to compile events generator."
 		exit 1
 	fi
-	if ! java -Xmx64m -cp misc uk.co.uwcs.choob.misc.HorriblePerlScript; then
+	if ! java -Xmx64m -cp misc HorriblePerlScript; then
 		echo "Failed to run events generator."
 		exit 1
 	fi
