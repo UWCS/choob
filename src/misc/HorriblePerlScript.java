@@ -351,9 +351,9 @@ public final class HorriblePerlScript
 				if (paramValue[i] == null)
 				{
 					if (prototype != null)
-						prototype.append(", " + paramType[i] + " " + paramName[i]);
+						prototype.append(", final " + paramType[i] + " " + paramName[i]);
 					else
-						prototype = new StringBuffer(paramType[i] + " " + paramName[i]);
+						prototype = new StringBuffer("final " + paramType[i] + " " + paramName[i]);
 
 					paramValue[i] = paramName[i];
 				}
@@ -362,7 +362,7 @@ public final class HorriblePerlScript
 
 			StringBuffer eventHandler = new StringBuffer("\t");
 			if (!notprotected.contains(handler))
-				eventHandler.append("protected ");
+				eventHandler.append("@Override\n\tprotected ");
 			else
 				eventHandler.append("public ");
 			eventHandler.append("void " + evtName + "(" + prototype + ") {\n");
@@ -528,7 +528,7 @@ public final class HorriblePerlScript
 				if (!first)
 					classContent.append(", ");
 				first = false;
-				classContent.append(paramTypes.get(paramName) + " " + paramName);
+				classContent.append("final " + paramTypes.get(paramName) + " " + paramName);
 			}
 			classContent.append(")\n\t{\n");
 			// Call super if we're not the root.
@@ -569,7 +569,7 @@ public final class HorriblePerlScript
 			classContent.append("\t */\n\tpublic ");
 			classContent.append(className);
 			// Prototype.
-			classContent.append("(");
+			classContent.append("(final ");
 			classContent.append(className + " old");
 			for(String paramName: superOverrides)
 				classContent.append(", " + paramTypes.get(paramName) + " " + paramName);
@@ -621,14 +621,14 @@ public final class HorriblePerlScript
 				if (!first)
 					classContent.append(", ");
 				first = false;
-				classContent.append(paramTypes.get(paramName) + " " + paramName);
+				classContent.append("final " + paramTypes.get(paramName) + " " + paramName);
 			}
 			for(String paramName: myOverrides)
 			{
 				if (!first)
 					classContent.append(", ");
 				first = false;
-				classContent.append(paramTypes.get(paramName) + " " + paramName);
+				classContent.append("final " + paramTypes.get(paramName) + " " + paramName);
 			}
 			// Body.
 			classContent.append(")\n\t{\n\t\treturn new ");
@@ -641,7 +641,7 @@ public final class HorriblePerlScript
 			classContent.append(");\n\t}\n\n");
 
 			// equals
-			classContent.append("\tpublic boolean equals(Object obj)\n\t{\n\t\tif (obj == null || !(obj instanceof ");
+			classContent.append("\t@Override\n\tpublic boolean equals(final Object obj)\n\t{\n\t\tif (obj == null || !(obj instanceof ");
 			classContent.append(className);
 			classContent.append("))\n\t\t\treturn false;\n\t\t");
 			if (directInheritance != null)
@@ -650,7 +650,7 @@ public final class HorriblePerlScript
 				classContent.append("\treturn true;\n\t}\n\n");
 			else
 			{
-				classContent.append(className + " thing = (" + className + ")obj;\n\t\tif ( true");
+				classContent.append("final ").append(className + " thing = (" + className + ")obj;\n\t\tif ( true");
 				for(String fieldName: memberVariables)
 				{
 					if (paramTypes.get(fieldName).equals("String"))
@@ -662,7 +662,7 @@ public final class HorriblePerlScript
 			}
 
 			// toString
-			classContent.append("\tpublic String toString()\n\t{\n\t\tStringBuffer out = new StringBuffer(\"");
+			classContent.append("\t@Override\n\tpublic String toString()\n\t{\n\t\tfinal StringBuffer out = new StringBuffer(\"");
 			classContent.append(className + "(\");\n");
 			if (directInheritance != null)
 				classContent.append("\t\tout.append(super.toString());\n");
