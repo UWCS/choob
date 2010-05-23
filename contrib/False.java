@@ -150,13 +150,13 @@ class FalseInterpreter
 				stack.PushValue(-stack.PopValue().val);
 				break;
 			case And:
-				stack.PushValue(stack.PopValue().val == -1 && stack.PopValue().val == -1 ? -1 : 0);
+				stack.PushValue(stack.PopValue().val == 0 || stack.PopValue().val == 0 ? 0 : -1);
 				break;
 			case Or:
-				stack.PushValue(stack.PopValue().val == -1 || stack.PopValue().val == -1 ? -1 : 0);
+				stack.PushValue(stack.PopValue().val == 0 && stack.PopValue().val == 0 ? 0 : -1);
 				break;
 			case Not:
-				stack.PushValue(stack.PopValue().val == -1 ? 0 : -1);
+				stack.PushValue(stack.PopValue().val == 0 ? -1 : 0);
 				break;
 			case Equal:
 				stack.PushValue(stack.PopValue().val == stack.PopValue().val ? -1 : 0);
@@ -201,7 +201,7 @@ class FalseInterpreter
 				break;
 			case If:
 				func = stack.PopFunction().func;
-				if(stack.PopValue().val == -1)
+				if(stack.PopValue().val != 0)
 				{
 					eval(func);
 				}
@@ -211,7 +211,7 @@ class FalseInterpreter
 				cond = stack.PopFunction().func;
 				
 				eval(cond);
-				while(stack.PopValue().val == -1)
+				while(stack.PopValue().val != 0)
 				{
 					eval(func);
 					eval(cond);
