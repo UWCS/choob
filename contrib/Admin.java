@@ -135,7 +135,7 @@ public class Admin
 			bytesString(total) +
 			" of memory (which can scale up to " +
 			bytesString(Runtime.getRuntime().maxMemory()) +
-		").");
+		"). " + Runtime.getRuntime().availableProcessors() + " \"processors\".");
 	}
 
 	public void commandGCs( final Message mes )
