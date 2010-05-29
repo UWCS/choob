@@ -427,7 +427,7 @@ public class Karma {
 							@Override public int compare(Entry<String, Float> l, Entry<String, Float> r) {
 								return Float.compare(l.getValue(), r.getValue());
 							}
-						}, evaluated)).subList(0, 10)) {
+						}, evaluated)).subList(0, Math.min(10, evaluated.size()-1))) {
 							sb.append(eval.getKey());
 							sb.append(" => ");
 							sb.append(eval.getValue());
