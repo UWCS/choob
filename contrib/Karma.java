@@ -348,10 +348,15 @@ public class Karma {
 
 	public String[] helpCommandBuddy = { "", };
 
+	
+	private String normNick(String s) {
+		return mods.nick.getBestPrimaryNick(s).toLowerCase();
+	}
+	
 	public void commandBuddy(final Message mes) {
 		
 		final String paramString = mods.util.getParamString(mes);
-		final String userNick = (paramString.isEmpty()) ? mes.getNick() : paramString;
+		final String userNick = normNick((paramString.isEmpty()) ? mes.getNick() : paramString);
 		
 		irc.sendContextReply(mes, "WARMING CACHES!!!!!111111  Please await LAZOR EXPLOZIONNN");
 		try {
@@ -372,7 +377,7 @@ public class Karma {
 						// EXTRACT Karma information from DB
 						while (rs.next()) {
 							final Matcher ma = karmaPattern.matcher(rs.getString(2));
-							final String nick = mods.nick.getBestPrimaryNick(rs.getString(1)).toLowerCase();
+							final String nick = normNick(rs.getString(1));
 							while (ma.find()) {
 								final String karmaName = null == ma.group(1) ? ma.group(2) : ma.group(1);
 								final int up = ma.group(3).equals("++") ? 1 : -1;
@@ -391,49 +396,53 @@ public class Karma {
 						// calculate similarity
 						final Map<String, Entry<Integer, Integer>> finalScores = Maps.newHashMap();
 						final Map<String, Entry<Integer, Integer>> userKarma = buffer.remove(userNick);
-						for(Entry<String, Map<String, Entry<Integer, Integer>>> potentialBuddy :buffer.entrySet()) {
-							final String buddyName = potentialBuddy.getKey();
-							//System.out.println(buddyName);
-							final Map<String, Entry<Integer, Integer>> karmaValues = potentialBuddy.getValue();
-							for(Entry<String, Entry<Integer, Integer>> karma: userKarma.entrySet()) {
-								final Entry<Integer, Integer> thisValue = karma.getValue();
-								// ZERO IS BEST
-								final Entry<Integer, Integer> otherValue = karmaValues.get(karma.getKey());
-								if(otherValue != null) {
-									final int roundScore = Math.abs(thisValue.getKey() - otherValue.getKey());
-									final int roundSum = thisValue.getValue() + otherValue.getValue();
-									Entry<Integer, Integer> finalScore = finalScores.get(buddyName);
-									if(finalScore == null) {
-										finalScore = Maps.immutableEntry(0, 0);
+						if(userKarma != null) {
+							for(Entry<String, Map<String, Entry<Integer, Integer>>> potentialBuddy :buffer.entrySet()) {
+								final String buddyName = potentialBuddy.getKey();
+								//System.out.println(buddyName);
+								final Map<String, Entry<Integer, Integer>> karmaValues = potentialBuddy.getValue();
+								for(Entry<String, Entry<Integer, Integer>> karma: userKarma.entrySet()) {
+									final Entry<Integer, Integer> thisValue = karma.getValue();
+									// ZERO IS BEST
+									final Entry<Integer, Integer> otherValue = karmaValues.get(karma.getKey());
+									if(otherValue != null) {
+										final int roundScore = Math.abs(thisValue.getKey() - otherValue.getKey());
+										final int roundSum = thisValue.getValue() + otherValue.getValue();
+										Entry<Integer, Integer> finalScore = finalScores.get(buddyName);
+										if(finalScore == null) {
+											finalScore = Maps.immutableEntry(0, 0);
+										}
+										finalScores.put(buddyName, Maps.immutableEntry(finalScore.getKey() + roundScore, finalScore.getValue() + roundSum));
 									}
-									finalScores.put(buddyName, Maps.immutableEntry(finalScore.getKey() + roundScore, finalScore.getValue() + roundSum));
 								}
 							}
-						}
-						
-						//irc.sendContextReply(mes, finalScores.toString());
-						final Set<Entry<String, Float>> evaluated = Sets.newHashSet();
-						for(Entry<String, Entry<Integer, Integer>> e: finalScores.entrySet()) {
 							
-							final Entry<Integer, Integer> evalScore = e.getValue();
-							float total = (float) evalScore.getValue();
-							if(total > 1000f) {
-								evaluated.add(Maps.immutableEntry(e.getKey(), (float) evalScore.getKey()/total));
+							//irc.sendContextReply(mes, finalScores.toString());
+							final Set<Entry<String, Float>> evaluated = Sets.newHashSet();
+							for(Entry<String, Entry<Integer, Integer>> e: finalScores.entrySet()) {
+								
+								final Entry<Integer, Integer> evalScore = e.getValue();
+								float total = (float) evalScore.getValue();
+								if(total > 1000f) {
+									evaluated.add(Maps.immutableEntry(e.getKey(), (float) evalScore.getKey()/total));
+								}
 							}
-						}
-						
-						StringBuilder sb = new StringBuilder();
-						for(Entry<String, Float> eval: Lists.newArrayList(ImmutableSortedSet.copyOf(new Comparator<Entry<String, Float>>() {
-							@Override public int compare(Entry<String, Float> l, Entry<String, Float> r) {
-								return Float.compare(l.getValue(), r.getValue());
+							
+							StringBuilder sb = new StringBuilder();
+							for(Entry<String, Float> eval: Lists.newArrayList(ImmutableSortedSet.copyOf(new Comparator<Entry<String, Float>>() {
+								@Override public int compare(Entry<String, Float> l, Entry<String, Float> r) {
+									return Float.compare(l.getValue(), r.getValue());
+								}
+							}, evaluated)).subList(0, Math.min(10, evaluated.size()-1))) {
+								sb.append(eval.getKey());
+								sb.append(" => ");
+								sb.append(eval.getValue());
+								sb.append(",  ");
 							}
-						}, evaluated)).subList(0, Math.min(10, evaluated.size()-1))) {
-							sb.append(eval.getKey());
-							sb.append(" => ");
-							sb.append(eval.getValue());
-							sb.append(",  ");
+							irc.sendContextReply(mes, sb.toString());
+						} else {
+							irc.sendContextReply(mes, "Unable to find karma entries for user: " + userNick);
 						}
-						irc.sendContextReply(mes, sb.toString());
 						
 					} finally {
 						rs.close();
