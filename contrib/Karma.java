@@ -349,9 +349,10 @@ public class Karma {
 	public String[] helpCommandBuddy = { "", };
 
 	public void commandBuddy(final Message mes) {
+		
+		irc.sendContextReply(mes, "WARMING CACHES!!!!!111111  Please await LAZOR EXPLOZIONNN");
 		try {
 			final DKarmaCache c = new DKarmaCache();
-			System.out.println("M: CACHE WARMED");
 			try {
 
 				// NICK -> ITEM -> (SCORE,TOTAL) 
@@ -383,7 +384,6 @@ public class Karma {
 								inner.put(karmaName,Maps.immutableEntry(score.getKey() + up, score.getValue() + Math.abs(up)));
 							}
 						}
-						System.out.println("EXTRACTED DB");
 						
 						// calculate similarity
 						final Map<String, Entry<Integer, Integer>> finalScores = Maps.newHashMap();
@@ -416,13 +416,19 @@ public class Karma {
 								evaluated.add(Maps.immutableEntry(e.getKey(), (float) evalScore.getKey()/total));
 							}
 						}
+						
+						StringBuilder sb = new StringBuilder();
 						for(Entry<String, Float> eval: Lists.newArrayList(ImmutableSortedSet.copyOf(new Comparator<Entry<String, Float>>() {
 							@Override public int compare(Entry<String, Float> l, Entry<String, Float> r) {
 								return Float.compare(l.getValue(), r.getValue());
 							}
 						}, evaluated)).subList(0, 10)) {
-							System.out.println(eval.getKey() + " => " + eval.getValue());
+							sb.append(eval.getKey());
+							sb.append(" => ");
+							sb.append(eval.getValue());
+							sb.append(",  ");
 						}
+						irc.sendContextReply(mes, sb.toString());
 						
 					} finally {
 						rs.close();
