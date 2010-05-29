@@ -350,6 +350,9 @@ public class Karma {
 
 	public void commandBuddy(final Message mes) {
 		
+		final String paramString = mods.util.getParamString(mes);
+		final String userNick = (paramString.isEmpty()) ? mes.getNick() : paramString;
+		
 		irc.sendContextReply(mes, "WARMING CACHES!!!!!111111  Please await LAZOR EXPLOZIONNN");
 		try {
 			final DKarmaCache c = new DKarmaCache();
@@ -361,7 +364,7 @@ public class Karma {
 				// getNickSpaminess(c.connection, likeClause);
 				final PreparedStatement ps = c.connection.prepareStatement("select Nick,Text from _dkarma_cache");
 				try {
-					final String userNick = mes.getNick();
+					
 					//ps.setString(1, userNick);
 					final ResultSet rs = ps.executeQuery();
 					try {
@@ -390,19 +393,20 @@ public class Karma {
 						final Map<String, Entry<Integer, Integer>> userKarma = buffer.remove(userNick);
 						for(Entry<String, Map<String, Entry<Integer, Integer>>> potentialBuddy :buffer.entrySet()) {
 							final String buddyName = potentialBuddy.getKey();
+							//System.out.println(buddyName);
 							final Map<String, Entry<Integer, Integer>> karmaValues = potentialBuddy.getValue();
 							for(Entry<String, Entry<Integer, Integer>> karma: userKarma.entrySet()) {
 								final Entry<Integer, Integer> thisValue = karma.getValue();
 								// ZERO IS BEST
 								final Entry<Integer, Integer> otherValue = karmaValues.get(karma.getKey());
 								if(otherValue != null) {
-									final int val = Math.abs(thisValue.getKey() - otherValue.getKey());
-									final int sum = thisValue.getValue() + otherValue.getValue();
+									final int roundScore = Math.abs(thisValue.getKey() - otherValue.getKey());
+									final int roundSum = otherValue.getValue();
 									Entry<Integer, Integer> finalScore = finalScores.get(buddyName);
 									if(finalScore == null) {
 										finalScore = Maps.immutableEntry(0, 0);
 									}
-									finalScores.put(buddyName, Maps.immutableEntry(finalScore.getKey() + val, finalScore.getValue() + sum));
+									finalScores.put(buddyName, Maps.immutableEntry(finalScore.getKey() + roundScore, finalScore.getValue() + roundSum));
 								}
 							}
 						}
@@ -410,9 +414,10 @@ public class Karma {
 						//irc.sendContextReply(mes, finalScores.toString());
 						final Set<Entry<String, Float>> evaluated = Sets.newHashSet();
 						for(Entry<String, Entry<Integer, Integer>> e: finalScores.entrySet()) {
+							
 							final Entry<Integer, Integer> evalScore = e.getValue();
-							float total = evalScore.getValue();
-							if(total > 50f) {
+							float total = (float) evalScore.getValue();
+							if(total > 100f) {
 								evaluated.add(Maps.immutableEntry(e.getKey(), (float) evalScore.getKey()/total));
 							}
 						}
