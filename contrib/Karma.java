@@ -1320,20 +1320,24 @@ public class Karma {
 			} finally {
 				statement.close();
 			}
-
 		}
 
 		private void genIfNeeded(final Date tableDate) throws SQLException {
-			final Calendar c = Calendar.getInstance();
-			c.set(Calendar.HOUR_OF_DAY, 0);
-			c.set(Calendar.MINUTE, 0);
-			c.set(Calendar.SECOND, 0);
-			System.out.println(c.getTime() + " -- " + tableDate);
-			if (tableDate.before(c.getTime()))
+			final Calendar today = Calendar.getInstance();
+			today.set(Calendar.HOUR_OF_DAY, 0);
+			today.set(Calendar.MINUTE, 0);
+			today.set(Calendar.SECOND, 0);
+			today.set(Calendar.MILLISECOND, 0);
+			// c is beginning of current day
+			System.out.println(today.getTimeInMillis() + " -- " + tableDate.getTime());			
+			
+			// regenerate cache if its yesterday
+			if (tableDate.before(today.getTime()))
 				genCache();
 		}
 
 		private void genCache() throws SQLException {
+			System.out.println("genCache()");
 			final Statement statement = connection.createStatement();
 			statement.execute("DROP TABLE IF EXISTS " + CACHE_TABLE);
 			statement.execute("CREATE TABLE " + CACHE_TABLE
