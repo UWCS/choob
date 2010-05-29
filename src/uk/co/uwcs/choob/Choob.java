@@ -11,6 +11,7 @@
 
 package uk.co.uwcs.choob;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -106,7 +107,9 @@ public final class Choob extends PircBot
 		PrintWriter logFile;
 		try
 		{
-			logFile=new PrintWriter(new FileOutputStream("./tmp/db.log"));
+			final File logLocation = new File("./tmp/");
+			logLocation.mkdirs();
+			logFile=new PrintWriter(new FileOutputStream(logLocation.getPath() + "/db.log"));
 		}
 		catch (final IOException e)
 		{
