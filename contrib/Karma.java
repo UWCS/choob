@@ -401,7 +401,7 @@ public class Karma {
 								final Entry<Integer, Integer> otherValue = karmaValues.get(karma.getKey());
 								if(otherValue != null) {
 									final int roundScore = Math.abs(thisValue.getKey() - otherValue.getKey());
-									final int roundSum = otherValue.getValue();
+									final int roundSum = thisValue.getValue() + otherValue.getValue();
 									Entry<Integer, Integer> finalScore = finalScores.get(buddyName);
 									if(finalScore == null) {
 										finalScore = Maps.immutableEntry(0, 0);
@@ -417,7 +417,7 @@ public class Karma {
 							
 							final Entry<Integer, Integer> evalScore = e.getValue();
 							float total = (float) evalScore.getValue();
-							if(total > 100f) {
+							if(total > 1000f) {
 								evaluated.add(Maps.immutableEntry(e.getKey(), (float) evalScore.getKey()/total));
 							}
 						}
