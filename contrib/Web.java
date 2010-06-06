@@ -2,7 +2,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import org.lobobrowser.html.UserAgentContext;
 import org.lobobrowser.html.parser.DocumentBuilderImpl;

@@ -8,7 +8,6 @@ package uk.co.uwcs.choob.support;
 
 import java.security.AccessController;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +25,7 @@ public final class IRCInterface
 {
 	private final Choob bot;
 	private Modules mods;
+	private ChoobMessageQueue outQueue;
 
 	public final static int MAX_MESSAGE_LENGTH = 400; // Arbiatary hax!
 	public final static int MAX_MESSAGE_TRUNCATION = 100;
@@ -35,6 +35,7 @@ public final class IRCInterface
 	public IRCInterface(final Choob bot)
 	{
 		this.bot = bot;
+		this.outQueue = new ChoobMessageQueue(bot);
 		this.mods = null; // Fixes dependency problem
 	}
 
@@ -346,7 +347,9 @@ public final class IRCInterface
 			// Discard the exception entirely, go team.
 			toSend = message;
 		}
-		bot.sendMessage(target, toSend);
+
+		// stuff in here.
+		outQueue.postMessage(target, toSend);
 	}
 
 	/**

@@ -324,7 +324,7 @@ public final class HorriblePerlScript
 			{
 				paramName[(i - 2)/2] = vals[i];
 				paramValue[(i - 2)/2] = vals[i + 1];
-			};
+			}
 
 			// Common to all.
 			paramName[paramName.length - 3] = "methodName";

@@ -76,7 +76,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 	private final JavaCompiler compiler;
 
-	private final static String prefix = "pluginData";
+	private final static String prefix = "plugins";
 	private final ChoobPluginMap allPlugins;
 
 	public HaxSunPluginManager(final Modules mods, final IRCInterface irc)

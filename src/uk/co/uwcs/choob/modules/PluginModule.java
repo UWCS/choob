@@ -6,7 +6,6 @@
 
 package uk.co.uwcs.choob.modules;
 
-import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.AccessControlException;
