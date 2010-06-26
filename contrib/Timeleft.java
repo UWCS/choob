@@ -1,20 +1,42 @@
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Calendar;
+import static org.joda.time.DateTimeFieldType.dayOfMonth;
+import static org.joda.time.DateTimeFieldType.monthOfYear;
+import static org.joda.time.DateTimeZone.getAvailableIDs;
+import static org.junit.Assert.assertEquals;
+
 import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.TimeZone;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Days;
+import org.joda.time.Hours;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.LocalTime;
+import org.joda.time.Minutes;
+import org.joda.time.Months;
+import org.joda.time.Partial;
+import org.joda.time.ReadablePeriod;
+import org.joda.time.Seconds;
+import org.joda.time.Weeks;
+import org.joda.time.Years;
+import org.junit.Test;
+import org.parboiled.BaseParser;
+import org.parboiled.Parboiled;
+import org.parboiled.ReportingParseRunner;
+import org.parboiled.Rule;
+import org.parboiled.errors.ErrorUtils;
+import org.parboiled.support.ParsingResult;
 
 import uk.co.uwcs.choob.modules.DateModule;
 import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.IRCInterface;
 
 public class Timeleft
 {
 	private final Modules mods;
-	private final IRCInterface irc;
 
 	public String[] info()
 	{
@@ -22,815 +44,252 @@ public class Timeleft
 				"$Rev$$Date$" };
 	}
 
-	public Timeleft(final Modules mods, final IRCInterface irc)
+	public Timeleft(final Modules mods)
 	{
 		this.mods = mods;
-		this.irc = irc;
-
 	}
 
 	public String commandUntil(final String mes)
 	{
 		final String param = mes;
 		final Date d;
-		try
-		{
-			d = getDate(param);
-		}
-		catch (CalendarParserException e)
-		{
-			return "Couldn't understand date" + e;
-		}
+		Object o = go(param);
+		if (o instanceof DateTime)
+			d = ((DateTime) o).toDate();
+		else
+			return "What?! " + String.valueOf(o);
+
 		long diff = d.getTime() - new Date().getTime();
 		return (DateModule.absoluteDateFormat(d)
 				+ (diff <= 0 ? " was " : " is in ") + mods.date.timeLongStamp(diff, 3)
 				+ (diff <= 0 ? " ago" : "") + ".");
 	}
 
-	private Date getDate(String param) throws CalendarParserException
-	{
-		return CalendarParser.parse(param).getTime();
+	public String commandRaw(final String msg) {
+		return String.valueOf(go(msg));
+	}
+
+	static final DateTimeZone LONDON = DateTimeZone.forID("Europe/London");
+
+	@Test public void testTimeAdvance() {
+		assertEquals(new LocalTime(13, 38), go("1 minute after 13:37"));
+		assertEquals(new LocalTime(13, 39), go("2 minutes after 13:37"));
+		assertEquals(new LocalTime(13, 39, 23), go("2minutes after 13:37:23"));
+		assertEquals(new LocalTime(13, 37, 30), go("7 seconds after 13:37:23"));
+	}
+
+	@Test public void testTimeReverse() {
+		assertEquals(new LocalTime(13, 36), go("1 minute before 13:37"));
+		assertEquals(new LocalTime(13, 35), go("2 minutes before 13:37"));
+		assertEquals(new LocalTime(13, 35, 23), go("2minutes before 13:37:23"));
+		assertEquals(new LocalTime(13, 37, 16), go("7 seconds before 13:37:23"));
+	}
+
+	@Test public void testDateTimeAdvance() {
+		final DateTime expected = new DateTime(2001, 03, 27, 13, 21, 19, 0);
+
+		assertEquals(
+				expected,
+				go("2 years after 27th march 1999 13:21:19"));
+		assertEquals(
+				expected,
+				go("2 years after 13:21:19 27th march 1999"));
+	}
+
+	@Test public void testTimeFiddling() {
+		assertEquals(new LocalTime(13, 37), go("1 minute before 1 hour after 12:38"));
+	}
+
+	@Test public void testTimeTimezoneChanges() {
+		final String pref = (24 * 30) + " hours after 1 mar ";
+		// toString() as two TimeZones with the same offset aren't equal
+		assertEquals(new DateTime(2010,3,31,18,0,0,0,DateTimeZone.forOffsetHours(-6)).toString(),
+				go(pref + "2010 17:00 MDT").toString());
+		assertEquals(new DateTime(2005,3,31,17,0,0,0,DateTimeZone.forOffsetHours(-7)).toString(),
+				go(pref + "2005 17:00 MDT").toString());
+	}
+
+	@Test public void testTimeTimezone() {
+		assertEquals(new LocalTime().toDateTimeToday(LONDON)
+				.withTime(17, 0, 0, 0),
+				go("17:00 Europe/London in BST"));
+	}
+
+	@Test public void testAmPm() {
+		assertEquals(new DateTime(2006, 1, 1, 17, 0, 0, 0), go("1 jan 2006 5:00pm"));
+	}
+
+	// technically full of race conditions
+	@Test public void testNow() {
+		assertEquals(new LocalTime().withMillisOfSecond(0), go("now"));
+		assertEquals(new DateTime(LONDON).withMillisOfSecond(0), go("now in Europe/London"));
+	}
+
+	@Test public void testAt() {
+		// Is this portable?  I doubt it.
+		assertEquals(new DateTime(1970, 1, 1, 1, 0, 0, 1, LONDON), go("@1 in Europe/London"));
+	}
+
+	@Test public void testBFL() {
+		assertEquals(TimeParser.BFL, go("start of bfl"));
+	}
+
+	@Test(expected=RuntimeException.class)
+	public void testEndOfFail() {
+		go("end of fred's penis");
+	}
+
+	static Object go(final String input) {
+		final TimeParser parser = Parboiled.createParser(TimeParser.class);
+		final ParsingResult<?> pr = ReportingParseRunner.run(parser.Root(), input.toLowerCase());
+		if (!pr.matched) {
+			throw new RuntimeException(ErrorUtils.printParseErrors(pr.parseErrors, pr.inputBuffer));
+		}
+		return pr.parseTreeRoot.getValue();
 	}
 }
 
-/**
- * Date parser state.
- */
-class ParserState
-{
-	/** bit indicating that the year comes before the month. */
-	static final int YEAR_BEFORE_MONTH = 0x4;
-	/** bit indicating that the year comes before the day. */
-	static final int YEAR_BEFORE_DAY = 0x2;
-	/** bit indicating that the month comes before the day. */
-	static final int MONTH_BEFORE_DAY = 0x1;
 
-	/** bit indicating that the year comes after the month. */
-	static final int YEAR_AFTER_MONTH = 0x0;
-	/** bit indicating that the year comes after the day. */
-	static final int YEAR_AFTER_DAY = 0x0;
-	/** bit indicating that the month comes after the day. */
-	static final int MONTH_AFTER_DAY = 0x0;
-
-	/** value indicating an unset variable. */
-	static final int UNSET = Integer.MIN_VALUE;
-
-	/** <tt>true</tt> if year should appear before month. */
-	private boolean yearBeforeMonth;
-	/** <tt>true</tt> if year should appear before day. */
-	private boolean yearBeforeDay;
-	/** <tt>true</tt> if month should appear before day. */
-	private boolean monthBeforeDay;
-
-	/** year. */
-	private int year;
-	/** month (0-11). */
-	private int month;
-	/** day of month. */
-	private int day;
-	/** hour (0-23). */
-	private int hour;
-	/** minute (0-59). */
-	private int minute;
-	/** second (0-59). */
-	private int second;
-	/** millisecond (0-999). */
-	private int milli;
-
-	/** <tt>true</tt> if time is after noon. */
-	private boolean timePostMeridian;
-
-	/** time zone (use default time zone if this is <tt>null</tt>). */
-	private TimeZone timeZone;
-
-	/**
-	 * Create parser state for the specified order.
-	 *
-	 * @param order
-	 *            <tt>YY_MM_DD</tt>, <tt>MM_DD_YY</tt>, etc.
-	 */
-	ParserState(int order)
-	{
-		yearBeforeMonth = (order & YEAR_BEFORE_MONTH) == YEAR_BEFORE_MONTH;
-		yearBeforeDay = (order & YEAR_BEFORE_DAY) == YEAR_BEFORE_DAY;
-		monthBeforeDay = (order & MONTH_BEFORE_DAY) == MONTH_BEFORE_DAY;
-
-		year = UNSET;
-		month = UNSET;
-		day = UNSET;
-		hour = UNSET;
-		minute = UNSET;
-		second = UNSET;
-		timePostMeridian = false;
-	}
-
-	/**
-	 * Get day of month.
-	 *
-	 * @return day of month
-	 */
-	int getDate()
-	{
-		return day;
-	}
-
-	/**
-	 * Get hour.
-	 *
-	 * @return hour
-	 */
-	int getHour()
-	{
-		return hour;
-	}
-
-	/**
-	 * Get millisecond.
-	 *
-	 * @return millisecond
-	 */
-	int getMillisecond()
-	{
-		return milli;
-	}
-
-	/**
-	 * Get minute.
-	 *
-	 * @return minute
-	 */
-	int getMinute()
-	{
-		return minute;
-	}
-
-	/**
-	 * Get month.
-	 *
-	 * @return month
-	 */
-	int getMonth()
-	{
-		return month;
-	}
-
-	/**
-	 * Get second.
-	 *
-	 * @return second
-	 */
-	int getSecond()
-	{
-		return second;
-	}
-
-	/**
-	 * Get time zone.
-	 *
-	 * @return time zone (<tt>null</tt> if none was specified)
-	 */
-	TimeZone getTimeZone()
-	{
-		return timeZone;
-	}
-
-	/**
-	 * Get year.
-	 *
-	 * @return year
-	 */
-	int getYear()
-	{
-		return year;
-	}
-
-	/**
-	 * Is day of month value set?
-	 *
-	 * @return <tt>true</tt> if a value has been assigned
-	 */
-	boolean isDateSet()
-	{
-		return (day != UNSET);
-	}
-
-	/**
-	 * Is hour value set?
-	 *
-	 * @return <tt>true</tt> if a value has been assigned
-	 */
-	boolean isHourSet()
-	{
-		return (hour != UNSET);
-	}
-
-	/**
-	 * Is millisecond value set?
-	 *
-	 * @return <tt>true</tt> if a value has been assigned
-	 */
-	boolean isMillisecondSet()
-	{
-		return (milli != UNSET);
-	}
-
-	/**
-	 * Is minute value set?
-	 *
-	 * @return <tt>true</tt> if a value has been assigned
-	 */
-	boolean isMinuteSet()
-	{
-		return (minute != UNSET);
-	}
-
-	/**
-	 * Is a numeric month placed before a numeric day of month?
-	 *
-	 * @return <tt>true</tt> if month is before day of month
-	 */
-	boolean isMonthBeforeDay()
-	{
-		return monthBeforeDay;
-	}
-
-	/**
-	 * Is month value set?
-	 *
-	 * @return <tt>true</tt> if a value has been assigned
-	 */
-	boolean isMonthSet()
-	{
-		return (month != UNSET);
-	}
-
-	/**
-	 * Is second value set?
-	 *
-	 * @return <tt>true</tt> if a value has been assigned
-	 */
-	boolean isSecondSet()
-	{
-		return (second != UNSET);
-	}
-
-	/**
-	 * Is the time post-meridian (i.e. afternoon)?
-	 *
-	 * @return <tt>true</tt> if time is P.M.
-	 */
-	boolean isTimePostMeridian()
-	{
-		return (timePostMeridian || hour > 12);
-	}
-
-	/**
-	 * Is a numeric year placed before a numeric day of month?
-	 *
-	 * @return <tt>true</tt> if year is before day of month
-	 */
-	boolean isYearBeforeDay()
-	{
-		return yearBeforeDay;
-	}
-
-	/**
-	 * Is a numeric year placed before a numeric month?
-	 *
-	 * @return <tt>true</tt> if year is before month
-	 */
-	boolean isYearBeforeMonth()
-	{
-		return yearBeforeMonth;
-	}
-
-	/**
-	 * Is year value set?
-	 *
-	 * @return <tt>true</tt> if a value has been assigned
-	 */
-	boolean isYearSet()
-	{
-		return (year != UNSET);
-	}
-
-	/**
-	 * Fill the calendar with the parsed date.
-	 *
-	 * @param cal
-	 *            calendar to fill
-	 * @param ignoreChanges
-	 *            if <tt>true</tt>, throw an exception when a date like
-	 *            <tt>Sept 31</tt> is changed to <tt>Oct 1</tt>
-	 *
-	 * @throws CalendarParserException
-	 *             if the date cannot be set for some reason
-	 */
-	void setCalendar(GregorianCalendar cal, boolean ignoreChanges) throws CalendarParserException
-	{
-		cal.clear();
-		if (year != UNSET && month != UNSET && day != UNSET)
-		{
-			cal.set(Calendar.YEAR, year);
-			cal.set(Calendar.MONTH, month - 1);
-			cal.set(Calendar.DATE, day);
-
-			if (!ignoreChanges)
-			{
-				final int calYear = cal.get(Calendar.YEAR);
-				final int calMonth = cal.get(Calendar.MONTH);
-				final int calDay = cal.get(Calendar.DATE);
-
-				if (calYear != year || (calMonth + 1) != month || calDay != day)
-				{
-					throw new CalendarParserException("Date was set to " + calYear + "/"
-							+ (calMonth + 1) + "/" + calDay + " not requested " + year + "/"
-							+ month + "/" + day);
-				}
-			}
+enum PeriodMapper {
+	YEAR {
+		@Override ReadablePeriod asPeriod(int i) {
+			return Years.years(i);
 		}
-
-		cal.clear(Calendar.HOUR);
-		cal.clear(Calendar.MINUTE);
-		cal.clear(Calendar.SECOND);
-		cal.clear(Calendar.MILLISECOND);
-
-		if (hour != UNSET && minute != UNSET)
-		{
-			cal.set(Calendar.HOUR, hour);
-			cal.set(Calendar.MINUTE, minute);
-			if (second != UNSET)
-			{
-				cal.set(Calendar.SECOND, second);
-				if (milli != UNSET)
-				{
-					cal.set(Calendar.MILLISECOND, milli);
-				}
-			}
-
-			if (timeZone != null)
-			{
-				cal.setTimeZone(timeZone);
-			}
+	},
+	MONTH {
+		@Override ReadablePeriod asPeriod(int i) {
+			return Months.months(i);
 		}
-	}
-
-	/**
-	 * Set the day of month value.
-	 *
-	 * @param val
-	 *            day of month value
-	 *
-	 * @throws CalendarParserException
-	 *             if the value is not a valid day of month
-	 */
-	void setDate(int val) throws CalendarParserException
-	{
-		if (val < 1 || val > 31)
-		{
-			throw new CalendarParserException("Bad day " + val);
+	},
+	WEEK {
+		@Override ReadablePeriod asPeriod(int i) {
+			return Weeks.weeks(i);
 		}
-
-		day = val;
-	}
-
-	/**
-	 * Set the hour value.
-	 *
-	 * @param val
-	 *            hour value
-	 *
-	 * @throws CalendarParserException
-	 *             if the value is not a valid hour
-	 */
-	void setHour(int val) throws CalendarParserException
-	{
-		final int tmpHour;
-		if (timePostMeridian)
-		{
-			tmpHour = val + 12;
-			timePostMeridian = false;
+	},
+	DAY {
+		@Override ReadablePeriod asPeriod(int i) {
+			return Days.days(i);
 		}
-		else
-		{
-			tmpHour = val;
+	},
+	HOUR {
+		@Override ReadablePeriod asPeriod(int i) {
+			return Hours.hours(i);
 		}
-
-		if (tmpHour < 0 || tmpHour > 23)
-		{
-			throw new CalendarParserException("Bad hour " + val);
+	},
+	MINUTE {
+		@Override ReadablePeriod asPeriod(int i) {
+			return Minutes.minutes(i);
 		}
-
-		hour = tmpHour;
-	}
-
-	/**
-	 * Set the millisecond value.
-	 *
-	 * @param val
-	 *            millisecond value
-	 *
-	 * @throws CalendarParserException
-	 *             if the value is not a valid millisecond
-	 */
-	void setMillisecond(int val) throws CalendarParserException
-	{
-		if (val < 0 || val > 999)
-		{
-			throw new CalendarParserException("Bad millisecond " + val);
+	},
+	SECOND {
+		@Override ReadablePeriod asPeriod(int i) {
+			return Seconds.seconds(i);
 		}
+	};
 
-		milli = val;
-	}
+	abstract ReadablePeriod asPeriod(int i);
+}
 
-	/**
-	 * Set the minute value.
-	 *
-	 * @param val
-	 *            minute value
-	 *
-	 * @throws CalendarParserException
-	 *             if the value is not a valid minute
-	 */
-	void setMinute(int val) throws CalendarParserException
-	{
-		if (val < 0 || val > 59)
-		{
-			throw new CalendarParserException("Bad minute " + val);
-		}
+enum Month {
+	JANUARY, FEBRUARY, MARCH,
+	APRIL, MAY, JUNE,
+	JULY, AUGUST, SEPTEMBER,
+	OCTOBER, NOVEMBER, DECEMBER;
 
-		minute = val;
-	}
-
-	/**
-	 * Set the month value.
-	 *
-	 * @param val
-	 *            month value
-	 *
-	 * @throws CalendarParserException
-	 *             if the value is not a valid month
-	 */
-	void setMonth(int val) throws CalendarParserException
-	{
-		if (val < 1 || val > 12)
-		{
-			throw new CalendarParserException("Bad month " + val);
-		}
-
-		month = val;
-	}
-
-	/**
-	 * Set the second value.
-	 *
-	 * @param val
-	 *            second value
-	 *
-	 * @throws CalendarParserException
-	 *             if the value is not a valid second
-	 */
-	void setSecond(int val) throws CalendarParserException
-	{
-		if (val < 0 || val > 59)
-		{
-			throw new CalendarParserException("Bad second " + val);
-		}
-
-		second = val;
-	}
-
-	/**
-	 * Set the AM/PM indicator value.
-	 *
-	 * @param val
-	 *            <tt>true</tt> if time represented is after noon
-	 */
-	void setTimePostMeridian(boolean val)
-	{
-		timePostMeridian = val;
-	}
-
-	/**
-	 * Set the time zone.
-	 *
-	 * @param tz
-	 *            time zone
-	 */
-	void setTimeZone(TimeZone tz)
-	{
-		timeZone = tz;
-	}
-
-	/**
-	 * Set the year value.
-	 *
-	 * @param val
-	 *            year value
-	 *
-	 * @throws CalendarParserException
-	 *             if the value is not a valid year
-	 */
-	void setYear(int val) throws CalendarParserException
-	{
-		if (val < 0)
-		{
-			throw new CalendarParserException("Bad year " + val);
-		}
-
-		year = val;
+	public static Month of(String s) {
+		for (Month m : values())
+			if (m.name().toLowerCase().startsWith(s.toLowerCase()))
+				return m;
+		throw new IllegalArgumentException("Not a month: " + s);
 	}
 }
 
-/**
- * A parser for arbitrary date/time strings.
- */
-class CalendarParser
-{
-	/** bit indicating that the year comes before the month. */
-	public static final int YEAR_BEFORE_MONTH = ParserState.YEAR_BEFORE_MONTH;
-	/** bit indicating that the year comes before the day. */
-	public static final int YEAR_BEFORE_DAY = ParserState.YEAR_BEFORE_DAY;
-	/** bit indicating that the month comes before the day. */
-	public static final int MONTH_BEFORE_DAY = ParserState.MONTH_BEFORE_DAY;
+class TimeParser extends BaseParser<Object> {
 
-	/** bit indicating that the year comes after the month. */
-	public static final int YEAR_AFTER_MONTH = ParserState.YEAR_AFTER_MONTH;
-	/** bit indicating that the year comes after the day. */
-	public static final int YEAR_AFTER_DAY = ParserState.YEAR_AFTER_DAY;
-	/** bit indicating that the month comes after the day. */
-	public static final int MONTH_AFTER_DAY = ParserState.MONTH_AFTER_DAY;
+	static final Partial CHRISTMAS = new Partial().with(dayOfMonth(), 25).with(monthOfYear(), 12);
+	static final DateTime BFL = new DateTime(2010, 6, 28, 9, 0, 0, 0, Timeleft.LONDON);
+	public static final Map<String, DateTimeZone> SUPPORTABLE_TIME_ZONES = supportableTimezones();
 
-	/** day/month/year order. */
-	public static final int DD_MM_YY = YEAR_AFTER_MONTH | YEAR_AFTER_DAY | MONTH_AFTER_DAY;
-	/** month/day/year order. */
-	public static final int MM_DD_YY = YEAR_AFTER_MONTH | YEAR_AFTER_DAY | MONTH_BEFORE_DAY;
-	/** month/year/day order. */
-	public static final int MM_YY_DD = YEAR_AFTER_MONTH | YEAR_BEFORE_DAY | MONTH_BEFORE_DAY;
-	/** day/year/month order. */
-	public static final int DD_YY_MM = YEAR_BEFORE_MONTH | YEAR_AFTER_DAY | MONTH_AFTER_DAY;
-	/** year/day/month order. */
-	public static final int YY_DD_MM = YEAR_BEFORE_MONTH | YEAR_BEFORE_DAY | MONTH_AFTER_DAY;
-	/** year/month/day order. */
-	public static final int YY_MM_DD = YEAR_BEFORE_MONTH | YEAR_BEFORE_DAY | MONTH_BEFORE_DAY;
-
-	/** list of time zone names. */
-	private static final String[] zoneNames = loadTimeZoneNames();
-
-	/** Unknown place in time parsing. */
-	private static final int PLACE_UNKNOWN = 0;
-	/** Parsing hour value from time string. */
-	private static final int PLACE_HOUR = 1;
-	/** Parsing minute value from time string. */
-	private static final int PLACE_MINUTE = 2;
-	/** Parsing second value from time string. */
-	private static final int PLACE_SECOND = 3;
-	/** Parsing millisecond value from time string. */
-	private static final int PLACE_MILLI = 4;
-
-	/** Adjustment for two-digit years will break in 2050. */
-	private static final int CENTURY_OFFSET = 2000;
-
-	/** value indicating an unset variable. */
-	private static final int UNSET = ParserState.UNSET;
-
-	/** set to <tt>true</tt> to enable debugging. */
-	private static final boolean DEBUG = false;
-
-	/** list of weekday names. */
-	private static final String[] WEEKDAY_NAMES = { "sunday", "monday", "tuesday", "wednesday",
-			"thursday", "friday", "saturday", };
-
-	/** list of month abbreviations and names. */
-	private static final String[][] MONTHS = { { "jan", "January" }, { "feb", "February" },
-			{ "mar", "March" }, { "apr", "April" }, { "may", "May" }, { "jun", "June" },
-			{ "jul", "July" }, { "aug", "August" }, { "sep", "September" }, { "oct", "October" },
-			{ "nov", "November" }, { "dec", "December" }, };
-
-	/**
-	 * Append formatted time string to the string buffer.
-	 *
-	 * @param buf
-	 *            string buffer
-	 * @param cal
-	 *            object containing time
-	 * @param needSpace
-	 *            <tt>true</tt> if a space character should be inserted before
-	 *            any data
-	 */
-	private static final void appendTimeString(StringBuffer buf, Calendar cal, boolean needSpace)
-	{
-		final int hour = cal.get(Calendar.HOUR_OF_DAY);
-		final int minute = cal.get(Calendar.MINUTE);
-		final int second = cal.get(Calendar.SECOND);
-		final int milli = cal.get(Calendar.MILLISECOND);
-
-		if (hour != 0 || minute != 0 || second != 0 || milli != 0)
-		{
-			if (needSpace)
-			{
-				buf.append(' ');
-			}
-			if (hour < 10)
-			{
-				buf.append(' ');
-			}
-			buf.append(hour);
-
-			if (minute < 10)
-			{
-				buf.append(":0");
-			}
-			else
-			{
-				buf.append(':');
-			}
-			buf.append(minute);
-
-			if (second != 0 || milli != 0)
-			{
-				if (second < 10)
-				{
-					buf.append(":0");
-				}
-				else
-				{
-					buf.append(':');
-				}
-				buf.append(second);
-
-				if (milli != 0)
-				{
-					if (milli < 10)
-					{
-						buf.append(".00");
-					}
-					else if (milli < 100)
-					{
-						buf.append(".0");
-					}
-					else
-					{
-						buf.append('.');
-					}
-					buf.append(milli);
-				}
-			}
-		}
-
-		TimeZone tz = cal.getTimeZone();
-		if (tz.getRawOffset() == 0)
-		{
-			buf.append(" GMT");
-		}
-		else
-		{
-			buf.append(' ');
-
-			int offset = tz.getRawOffset() / (60 * 1000);
-			if (offset < 0)
-			{
-				buf.append('-');
-				offset = -offset;
-			}
-			else
-			{
-				buf.append('+');
-			}
-
-			int hrOff = offset / 60;
-			if (hrOff < 10)
-			{
-				buf.append('0');
-			}
-			buf.append(hrOff);
-			buf.append(':');
-
-			int minOff = offset % 60;
-			if (minOff < 10)
-			{
-				buf.append('0');
-			}
-			buf.append(minOff);
-		}
+	public Rule Root() {
+		return Sequence(
+				ZeroOrMore(Sequence(
+					Integer().label("num"), Optional(Space()),
+					PeriodUnit().label("per"), Space(),
+					Direction().label("dir"), Space(),
+					set(UP(set(addPeriods(
+							DOWN((Integer)value(nodeByLabel("num"))),
+							DOWN((String)value(nodeByLabel("per"))),
+							DOWN((String)value(nodeByLabel("dir"))),
+							value())))
+					))).label("flap"),
+				DateTime().label("time"),
+				Optional(Sequence(Space(), "in", Space(), TimeZone().label("cozone"))),
+				Eoi(),
+				set(coerce(advance(
+						value(nodeByLabel("flap")),
+						value(nodeByLabel("time"))
+						), (DateTimeZone)value(nodeByLabel("cozone")))));
 	}
 
-	/**
-	 * Return a string representation of the order value.
-	 *
-	 * @param order
-	 *            order
-	 *
-	 * @return order string
-	 */
-	public static final String getOrderString(int order)
-	{
-		switch (order)
-		{
-		case DD_MM_YY:
-			return "DD_MM_YY";
-		case MM_DD_YY:
-			return "MM_DD_YY";
-		case MM_YY_DD:
-			return "MM_YY_DD";
-		case DD_YY_MM:
-			return "DD_YY_MM";
-		case YY_DD_MM:
-			return "YY_DD_MM";
-		case YY_MM_DD:
-			return "YY_MM_DD";
-		default:
-			break;
-		}
-
-		return "??" + order + "??";
+	/** @return passthrough or DateTime of dt is set. */
+	protected Object coerce(Object datetime, DateTimeZone dt) {
+		if (null == dt)
+			return datetime;
+		if (datetime instanceof DateTime)
+			return ((DateTime) datetime).withZone(dt);
+		if (datetime instanceof LocalTime)
+			return ((LocalTime) datetime).toDateTimeToday(dt);
+		if (datetime instanceof LocalDate)
+			return ((LocalDate) datetime).toDateTimeAtCurrentTime(dt);
+		throw new IllegalArgumentException("Can't timezoneise " + datetime);
 	}
 
-	/**
-	 * Translate a string representation of an ordinal number to the appropriate
-	 * numeric value.<br>
-	 * For example, <tt>"1st"</tt> would return <tt>1</tt>, <tt>"23rd"</tt>
-	 * would return <tt>23</tt>, etc.
-	 *
-	 * @param str
-	 *            ordinal string
-	 *
-	 * @return the numeric value of the ordinal number, or
-	 *         <tt>CalendarParser.UNSET</tt> if the supplied string is not a
-	 *         valid ordinal number.
-	 */
-	private static final int getOrdinalNumber(String str)
-	{
-		final int len = (str == null ? 0 : str.length());
-		if (len >= 3)
-		{
-
-			String suffix = str.substring(len - 2);
-			if (suffix.equalsIgnoreCase("st") || suffix.equalsIgnoreCase("nd")
-					|| suffix.equalsIgnoreCase("rd") || suffix.equalsIgnoreCase("th"))
-			{
-				try
-				{
-					return Integer.parseInt(str.substring(0, len - 2));
-				}
-				catch (NumberFormatException nfe)
-				{
-					// fall through if number was not parsed
-				}
-			}
-		}
-
-		return UNSET;
+	public Rule TimeZone() {
+		return Sequence(
+				FirstOf(SUPPORTABLE_TIME_ZONES.keySet().toArray(new String[SUPPORTABLE_TIME_ZONES.size()])),
+				set(SUPPORTABLE_TIME_ZONES.get(lastText())));
 	}
 
-	/**
-	 * Get name of current place in time.
-	 *
-	 * @param place
-	 *            place ID
-	 *
-	 * @return place name (<tt>"hour"</tt>, <tt>"minute"</tt>, etc.
-	 */
-	private static final String getTimePlaceString(int place)
-	{
-		switch (place)
-		{
-		case PLACE_HOUR:
-			return "hour";
-		case PLACE_MINUTE:
-			return "minute";
-		case PLACE_SECOND:
-			return "second";
-		case PLACE_MILLI:
-			return "millisecond";
-		default:
-			break;
-		}
-
-		return "unknown";
+	public Rule DateTime() {
+		return FirstOf(
+			Sequence(
+				FirstOf(
+					Sequence(
+						LocalTime().label("tim"), Space(),
+						Date().label("dat"),
+						Optional(Sequence(Optional(Space()), TimeZone()).label("zone"))
+					),
+					Sequence(
+						Optional(Sequence(Date().label("dat"), Space())),
+						LocalTime().label("tim"),
+						Optional(Sequence(Optional(Space()), TimeZone()).label("zone"))
+					)
+				),
+				set(conglomerate(
+					(LocalDate)value(nodeByLabel("dat")),
+					(LocalTime)value(nodeByLabel("tim")),
+					(DateTimeZone) value(nodeByLabel("zone"))
+				))),
+			Sequence(
+				"@",
+				Long(),
+				set(new DateTime(Long.parseLong(lastText())))
+			),
+			Sequence(
+				Sequence(FirstOf("start", "end"), set(lastText())).label("type"),
+				Space(), "of", Space(),
+				Sequence(OneOrMore(Any()), set(lastText())).label("info"),
+				event(
+					(String)value(nodeByLabel("type")),
+					(String)value(nodeByLabel("info"))
+				)
+			));
 	}
 
-	/**
-	 * Determine is the supplied string is a value weekday name.
-	 *
-	 * @param str
-	 *            weekday name to check
-	 *
-	 * @return <tt>true</tt> if the supplied string is a weekday name.
-	 */
-	private static final boolean isWeekdayName(String str)
-	{
-		if (str == null || str.length() < 3)
-		{
-			return false;
-		}
-
-		String lstr = str.toLowerCase();
-		for (int i = 0; i < WEEKDAY_NAMES.length; i++)
-		{
-			if (lstr.startsWith(WEEKDAY_NAMES[i])
-					|| WEEKDAY_NAMES[i].toLowerCase().startsWith(lstr))
-			{
+	protected boolean event(String startOrEnd, String key) {
+		if (key.equals("bfl")) {
+			if (startOrEnd.equals("start")) {
+				getContext().setNodeValue(BFL);
 				return true;
 			}
 		}
@@ -838,1428 +297,196 @@ class CalendarParser
 		return false;
 	}
 
-	/**
-	 * Load list of time zones if sun.util.calendar.ZoneInfo exists.
-	 *
-	 * @return <tt>null</tt> if time zone list cannot be loaded.
-	 */
-	private static final String[] loadTimeZoneNames()
-	{
-		Class zoneInfo;
-		try
-		{
-			zoneInfo = Class.forName("sun.util.calendar.ZoneInfo");
-		}
-		catch (ClassNotFoundException cnfe)
-		{
-			return null;
-		}
-
-		Method method;
-		try
-		{
-			method = zoneInfo.getDeclaredMethod("getAvailableIDs", new Class[0]);
-		}
-		catch (NoSuchMethodException nsme)
-		{
-			return null;
-		}
-
-		Object result;
-		try
-		{
-			result = method.invoke(null, null);
-		}
-		catch (IllegalAccessException iae)
-		{
-			return null;
-		}
-		catch (InvocationTargetException ite)
-		{
-			return null;
-		}
-
-		String[] tmpList = (String[]) result;
-
-		int numSaved = 0;
-		String[] finalList = null;
-
-		for (int i = 0; i < 2; i++)
-		{
-			if (i > 0)
-			{
-				if (numSaved == 0)
-				{
-					return null;
-				}
-
-				finalList = new String[numSaved];
-				numSaved = 0;
-			}
-
-			for (int j = 0; j < tmpList.length; j++)
-			{
-				final int len = tmpList[j].length();
-				if ((len > 2 && Character.isUpperCase(tmpList[j].charAt(1)))
-						&& (len != 7 || !Character.isDigit(tmpList[j].charAt(3))))
-				{
-					if (finalList == null)
-					{
-						numSaved++;
-					}
-					else
-					{
-						finalList[numSaved++] = tmpList[j];
-					}
-
-					if (len == 3 && tmpList[j].charAt(1) == 'S' && tmpList[j].charAt(2) == 'T')
-					{
-						if (finalList == null)
-						{
-							numSaved++;
-						}
-						else
-						{
-							StringBuffer dst = new StringBuffer();
-							dst.append(tmpList[j].charAt(0));
-							dst.append("DT");
-							finalList[numSaved++] = dst.toString();
-						}
-					}
-				}
-			}
-		}
-
-		return finalList;
+	public Rule Long() {
+		return OneOrMore(Digit());
 	}
 
-	/**
-	 * Convert the supplied month name to its numeric representation. <br>
-	 * For example, <tt>"January"</tt> (or any substring) would return
-	 * <tt>1</tt> and <tt>"December"</tt> would return <tt>12</tt>.
-	 *
-	 * @param str
-	 *            month name
-	 *
-	 * @return the numeric month, or <tt>CalendarParser.UNSET</tt> if the
-	 *         supplied string is not a valid month name.
-	 */
-	public static int monthNameToNumber(String str)
-	{
-		if (str != null && str.length() >= 3)
-		{
-			String lstr = str.toLowerCase();
-			for (int i = 0; i < MONTHS.length; i++)
-			{
-				if (lstr.startsWith(MONTHS[i][0]) || MONTHS[i][1].toLowerCase().startsWith(lstr))
-				{
-					return i + 1;
-				}
-			}
-		}
-
-		return UNSET;
+	/** @return LocalTime or DateTime. */
+	protected Object conglomerate(LocalDate dat, LocalTime tim, DateTimeZone tz) {
+		return dat != null ? dat.toDateTime(tim, tz) :
+			tz == null ? tim : tim.toDateTimeToday(tz);
 	}
 
-	/**
-	 * Extract a date from a string, defaulting to YY-MM-DD order for
-	 * all-numeric strings.
-	 *
-	 * @param dateStr
-	 *            date string
-	 *
-	 * @return parsed date
-	 *
-	 * @throws CalendarParserException
-	 *             if there was a problem parsing the string.
-	 */
-	public static final Calendar parse(String dateStr) throws CalendarParserException
-	{
-		return parse(dateStr, YY_MM_DD);
+	public Rule PeriodUnit() {
+		return Sequence(
+				FirstOf("year", "month", "week", "day", "hour", "minute", "second"),
+				set(lastText()),
+				Optional("s")
+				);
 	}
 
-	/**
-	 * Extract a date from a string.
-	 *
-	 * @param dateStr
-	 *            date string
-	 * @param order
-	 *            order in which pieces of numeric strings are assigned (should
-	 *            be one of <tt>YY_MM_DD</tt>, <tt>MM_DD_YY</tt>, etc.)
-	 *
-	 * @return parsed date
-	 *
-	 * @throws CalendarParserException
-	 *             if there was a problem parsing the string.
-	 */
-	public static final Calendar parse(String dateStr, int order) throws CalendarParserException
-	{
-		return parse(dateStr, order, true);
+	public Rule Direction() {
+		return Sequence(FirstOf("after", "before"), set(lastText()));
 	}
 
-	/**
-	 * Extract a date from a string.
-	 *
-	 * @param dateStr
-	 *            date string
-	 * @param order
-	 *            order in which pieces of numeric strings are assigned (should
-	 *            be one of <tt>YY_MM_DD</tt>, <tt>MM_DD_YY</tt>, etc.)
-	 * @param ignoreChanges
-	 *            if <tt>true</tt>, ignore date changes such as <tt>Feb 31</tt>
-	 *            being changed to <tt>Mar 3</tt>.
-	 *
-	 * @return parsed date
-	 *
-	 * @throws CalendarParserException
-	 *             if there was a problem parsing the string.
-	 */
-	public static final Calendar parse(String dateStr, int order, boolean ignoreChanges)
-			throws CalendarParserException
-	{
-		if (dateStr == null)
-		{
-			return null;
-		}
-
-		return parseString(dateStr, order, ignoreChanges);
+	public Rule Integer() {
+		return Sequence(OneOrMore(Digit()), set(Integer.parseInt(lastText())));
 	}
 
-	/**
-	 * Parse a non-numeric token from the date string.
-	 *
-	 * @param dateStr
-	 *            full date string
-	 * @param state
-	 *            parser state
-	 * @param token
-	 *            string being parsed
-	 *
-	 * @throws CalendarParserException
-	 *             if there was a problem parsing the token
-	 */
-	private static final void parseNonNumericToken(String dateStr, ParserState state, String token)
-			throws CalendarParserException
-	{
-		// if it's a weekday name, ignore it
-		if (isWeekdayName(token))
-		{
-			if (DEBUG)
-			{
-				System.err.println("IGNORE \"" + token + "\" (weekday)");
-			}
-			return;
-		}
-
-		// if it looks like a time, deal with it
-		if (token.indexOf(':') > 0)
-		{
-			final char firstChar = token.charAt(0);
-			if (Character.isDigit(firstChar))
-			{
-				parseTime(dateStr, state, token);
-				return;
-			}
-			else if (firstChar == '+' || firstChar == '-')
-			{
-				parseTimeZoneOffset(dateStr, state, token);
-				return;
-			}
-			else
-			{
-				throw new CalendarParserException("Unrecognized time \"" + token + "\" in date \""
-						+ dateStr + "\"");
-			}
-		}
-
-		// try to parse month name
-		int tmpMon = monthNameToNumber(token);
-
-		// if token isn't a month name ... PUKE
-		if (tmpMon != UNSET)
-		{
-
-			// if month number is unset, set it and move on
-			if (!state.isMonthSet())
-			{
-				state.setMonth(tmpMon);
-				if (DEBUG)
-				{
-					System.err.println("MONTH=" + MONTHS[state.getMonth() - 1][0] + " (" + token
-							+ ") name");
-				}
-				return;
-			}
-
-			// try to move the current month value to the year or day
-			if (!state.isYearSet())
-			{
-				if (state.isDateSet() || state.isYearBeforeDay())
-				{
-					state.setYear(state.getMonth());
-					state.setMonth(tmpMon);
-					if (DEBUG)
-					{
-						System.err.println("MONTH=" + MONTHS[state.getMonth() - 1][0] + ", YEAR="
-								+ state.getYear() + " (" + token + ") name swap");
-					}
-				}
-				else
-				{
-					state.setDate(state.getMonth());
-					state.setMonth(tmpMon);
-					if (DEBUG)
-					{
-						System.err.println("MONTH=" + MONTHS[state.getMonth() - 1][0] + ", DAY="
-								+ state.getDate() + " (" + token + ") name swap");
-					}
-				}
-
-				return;
-			}
-
-			// year was already set, so try to move month value to day
-			if (!state.isDateSet())
-			{
-				state.setDate(state.getMonth());
-				state.setMonth(tmpMon);
-				if (DEBUG)
-				{
-					System.err.println("MONTH=" + MONTHS[state.getMonth() - 1][0] + ", DAY="
-							+ state.getDate() + " (" + token + ") name swap 2");
-				}
-
-				return;
-			}
-
-			// can't move month value to year or day ... PUKE
-			if (DEBUG)
-			{
-				System.err.println("*** Too many numbers in \"" + dateStr + "\"");
-			}
-			throw new CalendarParserException("Too many numbers in" + " date \"" + dateStr + "\"");
-		}
-
-		// maybe it's an ordinal number list "1st", "23rd", etc.
-		int val = getOrdinalNumber(token);
-		if (val == UNSET)
-		{
-			final String lToken = token.toLowerCase();
-
-			if (lToken.equals("am"))
-			{
-				// don't need to do anything
-				if (DEBUG)
-				{
-					System.err.println("TIME=AM (" + token + ")");
-				}
-				return;
-			}
-			else if (lToken.equals("pm"))
-			{
-				if (!state.isHourSet())
-				{
-					state.setTimePostMeridian(true);
-				}
-				else
-				{
-					state.setHour(state.getHour() + 12);
-				}
-
-				if (DEBUG)
-				{
-					System.err.println("TIME=PM (" + token + ")");
-				}
-				return;
-			}
-			else if (zoneNames != null)
-			{
-				// maybe it's a time zone name
-				for (int z = 0; z < zoneNames.length; z++)
-				{
-					if (token.equalsIgnoreCase(zoneNames[z]))
-					{
-						TimeZone tz = TimeZone.getTimeZone(token);
-						if (tz.getRawOffset() != 0 || lToken.equals("gmt"))
-						{
-							state.setTimeZone(tz);
-							return;
-						}
-					}
-				}
-			}
-
-			if (DEBUG)
-			{
-				System.err.println("*** Unknown string \"" + token + "\"");
-			}
-			throw new CalendarParserException("Unknown string \"" + token + "\" in date \""
-					+ dateStr + "\"");
-		}
-
-		// if no day yet, we're done
-		if (!state.isDateSet())
-		{
-			state.setDate(val);
-			if (DEBUG)
-			{
-				System.err.println("DAY=" + state.getDate() + " (" + token + ") ord");
-			}
-			return;
-		}
-
-		// if either year or month is unset...
-		if (!state.isYearSet() || !state.isMonthSet())
-		{
-
-			// if day can't be a month, shift it into year
-			if (state.getDate() > 12)
-			{
-				if (!state.isYearSet())
-				{
-					state.setYear(state.getDate());
-					state.setDate(val);
-					if (DEBUG)
-					{
-						System.err.println("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
-								+ " (" + token + ") ord>12 swap");
-					}
-					return;
-				}
-
-				// year was already set, maybe we can move it to month
-				if (state.getYear() <= 12)
-				{
-					state.setMonth(state.getYear());
-					state.setYear(state.getDate());
-					state.setDate(val);
-
-					if (DEBUG)
-					{
-						System.err.println("YEAR=" + state.getYear() + ", MONTH="
-								+ state.getMonth() + ", DAY=" + state.getDate() + " (" + token
-								+ ") ord megaswap");
-					}
-
-					return;
-				}
-
-				// try to shift day value to either year or month
-			}
-			else if (!state.isYearSet())
-			{
-				if (!state.isMonthSet() && !state.isYearBeforeMonth())
-				{
-					state.setMonth(state.getDate());
-					state.setDate(val);
-					if (DEBUG)
-					{
-						System.err.println("MONTH=" + state.getMonth() + ", DAY=" + state.getDate()
-								+ " (" + token + ") ord swap");
-					}
-					return;
-				}
-
-				state.setYear(state.getDate());
-				state.setDate(val);
-				if (DEBUG)
-				{
-					System.err.println("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
-							+ " (" + token + ") ord swap");
-				}
-				return;
-
-				// year was set, so we know month is unset
-			}
-			else
-			{
-
-				state.setMonth(state.getDate());
-				state.setDate(val);
-				if (DEBUG)
-				{
-					System.err.println("MONTH=" + state.getMonth() + ", DAY=" + state.getDate()
-							+ " (" + token + ") ord swap#2");
-				}
-				return;
-			}
-		}
-
-		if (DEBUG)
-		{
-			System.err.println("*** Extra number \"" + token + "\"");
-		}
-		throw new CalendarParserException("Cannot assign ordinal in \"" + dateStr + "\"");
+	public Rule Space() {
+		return OneOrMore(CharSet(" \t"));
 	}
 
-	/**
-	 * Split a large numeric value into a year/month/date values.
-	 *
-	 * @param dateStr
-	 *            full date string
-	 * @param state
-	 *            parser state
-	 * @param val
-	 *            numeric value to use
-	 *
-	 * @throws CalendarParserException
-	 *             if there was a problem splitting the value
-	 */
-	private static final void parseNumericBlob(String dateStr, ParserState state, int val)
-			throws CalendarParserException
-	{
-		if (state.isYearSet() || state.isMonthSet() || state.isDateSet())
-		{
-			throw new CalendarParserException("Unknown value " + val + " in date \"" + dateStr
-					+ "\"");
-		}
+	protected Object advance(Object per, Object abs) {
+		return plus(abs, (ReadablePeriod) per);
+	}
 
-		int tmpVal = val;
-		if (state.isYearBeforeMonth())
-		{
-			if (state.isYearBeforeDay())
-			{
-				final int last = tmpVal % 100;
-				tmpVal /= 100;
-
-				final int middle = tmpVal % 100;
-				tmpVal /= 100;
-
-				state.setYear(tmpVal);
-				if (state.isMonthBeforeDay())
-				{
-					// YYYYMMDD
-					state.setMonth(middle);
-					state.setDate(last);
-				}
-				else
-				{
-					// YYYYDDMM
-					state.setDate(middle);
-					state.setMonth(last);
-				}
-			}
-			else
-			{
-				// DDYYYYMM
-				state.setMonth(tmpVal % 100);
-				tmpVal /= 100;
-
-				state.setYear(tmpVal % 10000);
-				tmpVal /= 10000;
-
-				state.setDate(tmpVal);
-			}
-		}
-		else if (state.isYearBeforeDay())
-		{
-			// MMYYYYDD
-			state.setDate(tmpVal % 100);
-			tmpVal /= 100;
-
-			state.setYear(tmpVal % 10000);
-			tmpVal /= 10000;
-
-			state.setMonth(tmpVal);
-		}
+	/** @return :t orig or orig->plus(ReadablePeriod). */
+	protected Object addPeriods(Integer num, String per, String dir, Object orig) {
+		final int mul;
+		if ("after".equals(dir))
+			mul = 1;
+		else if ("before".equals(dir))
+			mul = -1;
 		else
-		{
-			state.setYear(tmpVal % 10000);
-			tmpVal /= 10000;
+			throw new IllegalArgumentException("dir can't be " + dir);
 
-			final int middle = tmpVal % 100;
-			tmpVal /= 100;
-			if (state.isMonthBeforeDay())
-			{
-				// MMDDYYYY
-				state.setDate(middle);
-				state.setMonth(tmpVal);
-			}
-			else
-			{
-				// DDMMYYYY
-				state.setDate(tmpVal);
-				state.setMonth(middle);
-			}
-		}
-
-		if (DEBUG)
-		{
-			System.err.println("YEAR=" + state.getYear() + " MONTH=" + state.getMonth() + " DAY="
-					+ state.getDate() + " (" + val + ") blob");
-		}
+		final ReadablePeriod period = PeriodMapper.valueOf(per.toUpperCase()).asPeriod(mul * nn(num));
+		if (null == orig)
+			return period;
+		return plus(orig, period);
 	}
 
-	/**
-	 * Use a numeric token from the date string.
-	 *
-	 * @param dateStr
-	 *            full date string
-	 * @param state
-	 *            parser state
-	 * @param val
-	 *            numeric value to use
-	 *
-	 * @throws CalendarParserException
-	 *             if there was a problem parsing the token
-	 */
-	private static final void parseNumericToken(String dateStr, ParserState state, int val)
-			throws CalendarParserException
-	{
-		// puke if we've already found 3 values
-		if (state.isYearSet() && state.isMonthSet() && state.isDateSet())
-		{
-			if (DEBUG)
-			{
-				System.err.println("*** Extra number " + val);
-			}
-			throw new CalendarParserException("Extra value \"" + val + "\" in date \"" + dateStr
-					+ "\"");
-		}
-
-		// puke up on negative numbers
-		if (val < 0)
-		{
-			if (DEBUG)
-			{
-				System.err.println("*** Negative number " + val);
-			}
-			throw new CalendarParserException("Found negative number in" + " date \"" + dateStr
-					+ "\"");
-		}
-
-		if (val > 9999)
-		{
-			parseNumericBlob(dateStr, state, val);
-			return;
-		}
-
-		// deal with obvious years first
-		if (val > 31)
-		{
-
-			// if no year yet, assign it and move on
-			if (!state.isYearSet())
-			{
-				state.setYear(val);
-				if (DEBUG)
-				{
-					System.err.println("YEAR=" + state.getYear() + " (" + val + ") >31");
-				}
-				return;
-			}
-
-			// puke if the year value can't possibly be a day or month
-			if (state.getYear() > 31)
-			{
-				if (DEBUG)
-				{
-					System.err.println("*** Ambiguous year " + state.getYear() + " vs. " + val);
-				}
-				String errMsg = "Couldn't decide on year number in date \"" + dateStr + "\"";
-				throw new CalendarParserException(errMsg);
-			}
-
-			// if the year value can't be a month...
-			if (state.getYear() > 12)
-			{
-
-				// if day isn't set, use old val as day and new val as year
-				if (!state.isDateSet())
-				{
-					state.setDate(state.getYear());
-					state.setYear(val);
-
-					if (DEBUG)
-					{
-						System.err.println("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
-								+ " (" + val + ") >31 swap");
-					}
-
-					return;
-				}
-
-				// NOTE: both day and year are set
-
-				// try using day value as month so we can move year
-				// value to day and use new value as year
-				if (state.getDate() <= 12)
-				{
-					state.setMonth(state.getDate());
-					state.setDate(state.getYear());
-					state.setYear(val);
-
-					if (DEBUG)
-					{
-						System.err.println("YEAR=" + state.getYear() + ", MONTH="
-								+ state.getMonth() + ", DAY=" + state.getDate() + " (" + val
-								+ ") >31 megaswap");
-					}
-
-					return;
-				}
-
-				if (DEBUG)
-				{
-					System.err.println("*** Unassignable year-like" + " number " + val);
-				}
-				throw new CalendarParserException("Bad number " + val + " found in date \""
-						+ dateStr + "\"");
-			}
-
-			// NOTE: year <= 12
-
-			if (!state.isDateSet() && !state.isMonthSet())
-			{
-				if (state.isMonthBeforeDay())
-				{
-					state.setMonth(state.getYear());
-					state.setYear(val);
-					if (DEBUG)
-					{
-						System.err.println("YEAR=" + state.getYear() + ", MONTH="
-								+ state.getMonth() + " (" + val + ") >31 swap");
-					}
-				}
-				else
-				{
-					state.setDate(state.getYear());
-					state.setYear(val);
-					if (DEBUG)
-					{
-						System.err.println("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
-								+ " (" + val + ") >31 swap#2");
-					}
-				}
-
-				return;
-			}
-
-			if (!state.isDateSet())
-			{
-				state.setDate(state.getYear());
-				state.setYear(val);
-				if (DEBUG)
-				{
-					System.err.println("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
-							+ " (" + val + ") >31 day swap");
-				}
-				return;
-			}
-
-			// assume this was a mishandled month
-			state.setMonth(state.getYear());
-			state.setYear(val);
-
-			if (DEBUG)
-			{
-				System.err.println("YEAR=" + state.getYear() + ", MONTH=" + state.getMonth() + " ("
-						+ val + ") >31 mon swap");
-			}
-
-			return;
-		}
-
-		// now deal with non-month values
-		if (val > 12)
-		{
-
-			// if no year value yet...
-			if (!state.isYearSet())
-			{
-
-				// if the day is set, or if we assign year before day...
-				if (state.isDateSet() || state.isYearBeforeDay())
-				{
-					state.setYear(val);
-					if (DEBUG)
-					{
-						System.err.println("YEAR=" + state.getYear() + " (" + val + ") >12");
-					}
-				}
-				else
-				{
-					state.setDate(val);
-					if (DEBUG)
-					{
-						System.err.println("DAY=" + state.getDate() + " (" + val + ") >12");
-					}
-				}
-
-				return;
-			}
-
-			// NOTE: year is set
-
-			// if no day value yet, assign it and move on
-			if (!state.isDateSet())
-			{
-				state.setDate(val);
-
-				if (DEBUG)
-				{
-					System.err.println("DAY=" + state.getDate() + " (" + val + ") >12 !yr");
-				}
-
-				return;
-			}
-
-			// NOTE: both year and day are set
-
-			// XXX see if we can shift things around
-
-			if (DEBUG)
-			{
-				System.err.println("*** Unassignable year/day number " + val);
-			}
-			throw new CalendarParserException("Bad number " + val + " found in date \"" + dateStr
-					+ "\"");
-		}
-
-		// NOTE: ambiguous value
-
-		// if year is set, this must be either the month or day
-		if (state.isYearSet())
-		{
-			if (state.isMonthSet() || (!state.isDateSet() && !state.isMonthBeforeDay()))
-			{
-				state.setDate(val);
-				if (DEBUG)
-				{
-					System.err.println("DAY=" + state.getDate() + " (" + val + ") ambig!yr");
-				}
-			}
-			else
-			{
-				state.setMonth(val);
-				if (DEBUG)
-				{
-					System.err.println("MONTH=" + state.getMonth() + " (" + val + ") ambig!yr");
-				}
-			}
-
-			return;
-		}
-
-		// NOTE: year not set
-
-		// if month is set, this must be either the year or day
-		if (state.isMonthSet())
-		{
-			if (state.isDateSet() || state.isYearBeforeDay())
-			{
-				state.setYear(val);
-				if (DEBUG)
-				{
-					System.err.println("YEAR=" + state.getYear() + " (" + val + ") ambig!mo");
-				}
-			}
-			else
-			{
-				state.setDate(val);
-				if (DEBUG)
-				{
-					System.err.println("DAY=" + state.getDate() + " (" + val + ") ambig!mo");
-				}
-			}
-
-			return;
-		}
-
-		// NOTE: neither year nor month is set
-
-		// if day is set, this must be either the year or month
-		if (state.isDateSet())
-		{
-			if (state.isYearBeforeMonth())
-			{
-				state.setYear(val);
-				if (DEBUG)
-				{
-					System.err.println("YEAR=" + state.getYear() + " (" + val + ") ambig!day");
-				}
-			}
-			else
-			{
-				state.setMonth(val);
-				if (DEBUG)
-				{
-					System.err.println("MONTH=" + state.getMonth() + " (" + val + ") ambig!day");
-				}
-			}
-
-			return;
-		}
-
-		// NOTE: no value set yet
-		if (state.isYearBeforeMonth())
-		{
-			if (state.isYearBeforeDay())
-			{
-				state.setYear(val);
-				if (DEBUG)
-				{
-					System.err.println("YEAR=" + state.getYear() + " (" + val + ") YM|YD");
-				}
-			}
-			else
-			{
-				state.setDate(val);
-				if (DEBUG)
-				{
-					System.err.println("DAY=" + state.getDate() + " (" + val + ") YM!YD");
-				}
-			}
-		}
-		else if (state.isMonthBeforeDay())
-		{
-			state.setMonth(val);
-			if (DEBUG)
-			{
-				System.err.println("MONTH=" + state.getMonth() + " (" + val + ") !YM|MD");
-			}
-		}
-		else
-		{
-			state.setDate(val);
-			if (DEBUG)
-			{
-				System.err.println("DAY=" + state.getDate() + " (" + val + ") !YM!MD");
-			}
-		}
+	protected Object plus(Object o, ReadablePeriod p) {
+		if (o instanceof LocalTime)
+			return ((LocalTime)o).plus(p);
+		if (o instanceof LocalDate)
+			return ((LocalDate)o).plus(p);
+		if (o instanceof LocalDateTime)
+			return ((LocalDateTime)o).plus(p);
+		if (o instanceof DateTime)
+			return ((DateTime)o).plus(p);
+		if (o instanceof ReadablePeriod)
+			return ((ReadablePeriod) o).toPeriod().plus(p);
+		if (o instanceof Partial)
+			return ((Partial) o).plus(p);
+		throw new IllegalArgumentException("Can't plus " + o + (o != null ? " of type " + o.getClass() : ""));
 	}
 
-	/**
-	 * Extract a date from the supplied string.
-	 *
-	 * @param dateStr
-	 *            string to parse
-	 * @param order
-	 *            year/month/day order (YY_MM_DD, MM_DD_YY, etc.)
-	 * @param ignoreChanges
-	 *            if <tt>true</tt>, ignore date changes such as <tt>Feb 31</tt>
-	 *            being changed to <tt>Mar 3</tt>.
-	 *
-	 * @return parsed date
-	 *
-	 * @throws CalendarParserException
-	 *             if no valid date was found.
-	 */
-	private static final Calendar parseString(String dateStr, int order, boolean ignoreChanges)
-			throws CalendarParserException
-	{
-		ParserState state = new ParserState(order);
+	public Rule LocalTime() {
+		return FirstOf(
+			Sequence(
+				Time_HH_MM_SS(),
+				Optional(Sequence(
+					Optional(Space()),
+					FirstOf("am", "pm"),
+					set(lastText())
+					)).label("meri"),
+				set(convertToTime(
+						(Integer) value(nodeByLabel("hours")),
+						(Integer) value(nodeByLabel("minutes")),
+						(Integer) value(nodeByLabel("seconds")),
+						(String) value(nodeByLabel("meri"))
+						)))
+			, Sequence(
+				"now",
+				set(new LocalTime().withMillisOfSecond(0))
+			)
+		);
 
-		Pattern pat = Pattern.compile("([\\s/,]+|(\\S)\\-)");
-		Matcher matcher = pat.matcher(dateStr);
+	}
 
-		int prevEnd = 0;
-		while (prevEnd < dateStr.length())
-		{
-			String token;
-			if (!matcher.find())
-			{
-				token = dateStr.substring(prevEnd);
-				prevEnd = dateStr.length();
-			}
+	public Rule Date() {
+		return Sequence(
+			OneOrTwoDigits().label("day"), Optional(Ordinal()), DateSep(),
+			Optional(Sequence("of", Space())),
+			FirstOf(
+				Sequence(TwoDigits(), set(Month.values()[Integer.valueOf(lastText())-1])),
+				MonthWord()).label("month"), DateSep(),
+			Integer().label("year"),
+			set(buildDate(
+				(Integer) value(nodeByLabel("day")),
+				(Month) value(nodeByLabel("month")),
+				(Integer) value(nodeByLabel("year"))
+				))
+		);
+	}
+
+	protected LocalDate buildDate(Integer day, Month month, Integer year) {
+		return new LocalDate(year, month.ordinal() + 1, day);
+	}
+
+	public Rule DateSep() {
+		return FirstOf("/", "-", Space());
+	}
+
+	public Rule MonthWord() {
+		return Sequence(FirstOf(
+				"january", "february", "march",
+				"april", "may", "june",
+				"july", "august", "september",
+				"october", "november", "december",
+				"jan", "feb", "mar",
+				"apr", "may", "jun",
+				"jul", "aug", "sep",
+				"oct", "nov", "dec"), set(Month.of(lastText())));
+	}
+
+	public Rule Ordinal() {
+		return FirstOf("st", "nd", "rd", "th");
+	}
+
+	/** hh:mm(:ss)? */
+	public Rule Time_HH_MM_SS() {
+		return Sequence(OneOrTwoDigits().label("hours"), ':', TwoDigits().label("minutes"),
+				Optional(Sequence(':', TwoDigits().label("seconds"))));
+	}
+
+	public Rule OneOrTwoDigits() {
+		return FirstOf(TwoDigits(), OneDigit());
+	}
+
+	public Rule OneDigit() {
+		return Sequence(Digit(), set(Integer.parseInt(lastText())));
+	}
+
+	public Rule TwoDigits() {
+		return Sequence(Sequence(Digit(), Digit()), set(Integer.parseInt(lastText())));
+	}
+
+	public Rule Digit() {
+		return CharRange('0', '9');
+	}
+
+	protected LocalTime convertToTime(Integer hours, Integer minutes, Integer seconds, String ampm) {
+		int h = nn(hours);
+		if ("pm".equals(ampm) && h < 12)
+			h += 12;
+		return new LocalTime(h, nn(minutes), nn(seconds));
+	}
+
+	private static int nn(Integer i) {
+		return i == null ? 0 : i;
+	}
+
+	private static Map<String, DateTimeZone> supportableTimezones() {
+		final Map<String, DateTimeZone> m = new HashMap<String, DateTimeZone>();
+		final Set<String> rejects = new HashSet<String>();
+		final long now = new Date().getTime();
+
+		for (String s : availableIds()) {
+			final DateTimeZone tz = DateTimeZone.forID(s);
+			final String sn = tz.getShortName(now).toLowerCase();
+			m.put(s.toLowerCase(), tz);
+			if (sn.matches("[+-]?\\d+:\\d+"))
+				continue;
+			final DateTimeZone ig = m.get(sn);
+			final int off = tz.getOffset(now);
+			if (null == ig)
+				m.put(sn, tz);
 			else
-			{
-				final boolean isMinus = (matcher.groupCount() == 2 && matcher.group(2) != null);
-
-				if (!isMinus)
-				{
-					token = dateStr.substring(prevEnd, matcher.start());
-				}
-				else
-				{
-					token = dateStr.substring(prevEnd, matcher.start()) + matcher.group(2);
-				}
-
-				prevEnd = matcher.end();
-			}
-
-			if (DEBUG)
-			{
-				System.err.println("YEAR "
-						+ (state.isYearSet() ? Integer.toString(state.getYear()) : "UNSET")
-						+ ", MONTH "
-						+ (state.isMonthSet() ? Integer.toString(state.getMonth()) : "UNSET")
-						+ ", DAY "
-						+ (state.isDateSet() ? Integer.toString(state.getDate()) : "UNSET")
-						+ ", TOKEN=\"" + token + "\"");
-			}
-
-			// try to decipher next token as a number
-			try
-			{
-				final int val = Integer.parseInt(token);
-				parseNumericToken(dateStr, state, val);
-			}
-			catch (NumberFormatException e)
-			{
-				parseNonNumericToken(dateStr, state, token);
-			}
+				if (ig.getOffset(now) != off)
+					rejects.add(sn);
 		}
 
-		// before checking for errors, check for missing year
-		if (!state.isDateSet() && state.getYear() <= 31)
-		{
-			int tmp = state.getDate();
-			state.setDate(state.getYear());
-			state.setYear(tmp);
-		}
-
-		if (!state.isDateSet())
-		{
-			if (!state.isMonthSet())
-			{
-				if (!state.isYearSet())
-				{
-					throw new CalendarParserException("No date found in \"" + dateStr + "\"");
-				}
-				else
-				{
-					throw new CalendarParserException("Day and month missing" + " from \""
-							+ dateStr + "\"");
-				}
-			}
-			else
-			{
-				throw new CalendarParserException("Day missing from \"" + dateStr + "\"");
-			}
-		}
-		else if (!state.isMonthSet())
-		{
-			if (!state.isYearSet())
-			{
-				throw new CalendarParserException("Year and month missing" + " from \"" + dateStr
-						+ "\"");
-			}
-			else
-			{
-				throw new CalendarParserException("Month missing from \"" + dateStr + "\"");
-			}
-		}
-		else if (!state.isYearSet())
-		{
-			throw new CalendarParserException("Year missing from \"" + dateStr + "\"");
-		}
-
-		final int tmpYear = state.getYear();
-		if (tmpYear < 50)
-		{
-			state.setYear(tmpYear + CENTURY_OFFSET);
-		}
-		else if (tmpYear < 100)
-		{
-			state.setYear(tmpYear + (CENTURY_OFFSET - 100));
-		}
-
-		GregorianCalendar cal = new GregorianCalendar();
-
-		state.setCalendar(cal, ignoreChanges);
-
-		if (DEBUG)
-		{
-			System.err.println("Y" + state.getYear() + " M" + state.getMonth() + " D"
-					+ state.getDate() + " H" + state.getHour() + " M" + state.getMinute() + " S"
-					+ state.getSecond() + " L" + state.getMillisecond() + " => " + toString(cal));
-		}
-
-		return cal;
+		for (String s : rejects)
+			m.remove(s);
+		return m;
 	}
 
-	/**
-	 * Parse a time string.
-	 *
-	 * @param dateStr
-	 *            full date string
-	 * @param state
-	 *            parser state
-	 * @param timeStr
-	 *            string containing colon-separated time
-	 *
-	 * @throws CalendarParserException
-	 *             if there is a problem with the time
-	 */
-	private static final void parseTime(String dateStr, ParserState state, String timeStr)
-			throws CalendarParserException
-	{
-		int place = PLACE_HOUR;
-
-		String tmpTime;
-
-		final char lastChar = timeStr.charAt(timeStr.length() - 1);
-		if (lastChar != 'm' && lastChar != 'M')
-		{
-			if (DEBUG)
-			{
-				System.err.println("No AM/PM in \"" + timeStr + "\" (time)");
-			}
-			tmpTime = timeStr;
-		}
-		else
-		{
-			final char preLast = timeStr.charAt(timeStr.length() - 2);
-			if (preLast == 'a' || preLast == 'A')
-			{
-				state.setTimePostMeridian(false);
-			}
-			else if (preLast == 'p' || preLast == 'P')
-			{
-				state.setTimePostMeridian(true);
-			}
-			else
-			{
-				throw new CalendarParserException("Bad time \"" + timeStr + "\" in date \""
-						+ dateStr + "\"");
-			}
-
-			tmpTime = timeStr.substring(0, timeStr.length() - 2);
-			if (DEBUG)
-			{
-				System.err.println("Found " + (state.isTimePostMeridian() ? "PM" : "AM")
-						+ ". now \"" + tmpTime + "\" (time)");
-			}
-		}
-
-		String[] tList = tmpTime.split("[:\\.]");
-		for (int i = 0; i < tList.length; i++)
-		{
-			String token = tList[i];
-
-			if (DEBUG)
-			{
-				System.err.println("HOUR "
-						+ (state.isHourSet() ? Integer.toString(state.getHour()) : "UNSET")
-						+ ", MINUTE "
-						+ (state.isMinuteSet() ? Integer.toString(state.getMinute()) : "UNSET")
-						+ ", SECOND "
-						+ (state.isSecondSet() ? Integer.toString(state.getSecond()) : "UNSET")
-						+ ", MILLISECOND "
-						+ (state.isMillisecondSet() ? Integer.toString(state.getMillisecond())
-								: "UNSET") + ", TOKEN=\"" + token + "\"");
-			}
-
-			final int val;
-			try
-			{
-				val = Integer.parseInt(token);
-			}
-			catch (NumberFormatException nfe)
-			{
-				throw new CalendarParserException("Bad " + getTimePlaceString(place) + " string \""
-						+ token + "\" in \"" + dateStr + "\"");
-			}
-
-			switch (place)
-			{
-			case PLACE_HOUR:
-				try
-				{
-					state.setHour(val);
-				}
-				catch (CalendarParserException dfe)
-				{
-					throw new CalendarParserException(dfe.getMessage() + " in \"" + dateStr + "\"");
-				}
-				if (DEBUG)
-				{
-					System.err.println("Set hour to " + val);
-				}
-				place = PLACE_MINUTE;
-				break;
-			case PLACE_MINUTE:
-				try
-				{
-					state.setMinute(val);
-				}
-				catch (CalendarParserException dfe)
-				{
-					throw new CalendarParserException(dfe.getMessage() + " in \"" + dateStr + "\"");
-				}
-				if (DEBUG)
-				{
-					System.err.println("Set minute to " + val);
-				}
-				place = PLACE_SECOND;
-				break;
-			case PLACE_SECOND:
-				try
-				{
-					state.setSecond(val);
-				}
-				catch (CalendarParserException dfe)
-				{
-					throw new CalendarParserException(dfe.getMessage() + " in \"" + dateStr + "\"");
-				}
-				if (DEBUG)
-				{
-					System.err.println("Set second to " + val);
-				}
-				place = PLACE_MILLI;
-				break;
-			case PLACE_MILLI:
-				try
-				{
-					state.setMillisecond(val);
-				}
-				catch (CalendarParserException dfe)
-				{
-					throw new CalendarParserException(dfe.getMessage() + " in \"" + dateStr + "\"");
-				}
-				if (DEBUG)
-				{
-					System.err.println("Set millisecond to " + val);
-				}
-				place = PLACE_UNKNOWN;
-				break;
-			default:
-				throw new CalendarParserException("Unexpected place value " + place);
-			}
-		}
-	}
-
-	/**
-	 * Parse a time zone offset string.
-	 *
-	 * @param dateStr
-	 *            full date string
-	 * @param state
-	 *            parser state
-	 * @param zoneStr
-	 *            string containing colon-separated time zone offset
-	 *
-	 * @throws CalendarParserException
-	 *             if there is a problem with the time
-	 */
-	private static final void parseTimeZoneOffset(String dateStr, ParserState state, String zoneStr)
-			throws CalendarParserException
-	{
-		int place = PLACE_HOUR;
-
-		final boolean isNegative = (zoneStr.charAt(0) == '-');
-		if (!isNegative && zoneStr.charAt(0) != '+')
-		{
-			throw new CalendarParserException("Bad time zone offset \"" + zoneStr + "\" in date \""
-					+ dateStr + "\"");
-		}
-
-		int hour = UNSET;
-		int minute = UNSET;
-
-		String[] tList = zoneStr.substring(1).split(":");
-		for (int i = 0; i < tList.length; i++)
-		{
-			String token = tList[i];
-
-			if (DEBUG)
-			{
-				System.err.println("TZ_HOUR " + (hour != UNSET ? Integer.toString(hour) : "UNSET")
-						+ ", TZ_MINUTE " + (minute != UNSET ? Integer.toString(minute) : "UNSET")
-						+ ", TOKEN=\"" + token + "\"");
-			}
-
-			final int val;
-			try
-			{
-				val = Integer.parseInt(token);
-			}
-			catch (NumberFormatException nfe)
-			{
-				throw new CalendarParserException("Bad time zone " + getTimePlaceString(place)
-						+ " offset \"" + token + "\" in \"" + dateStr + "\"");
-			}
-
-			switch (place)
-			{
-			case PLACE_HOUR:
-				hour = val;
-				if (DEBUG)
-				{
-					System.err.println("Set time zone offset hour to " + val);
-				}
-				place = PLACE_MINUTE;
-				break;
-			case PLACE_MINUTE:
-				minute = val;
-				if (DEBUG)
-				{
-					System.err.println("Set time zone offset minute to " + val);
-				}
-				place = PLACE_UNKNOWN;
-				break;
-			default:
-				throw new CalendarParserException("Unexpected place value " + place);
-			}
-		}
-
-		String customID = "GMT" + (isNegative ? "-" : "+") + hour + ":" + (minute < 10 ? "0" : "")
-				+ minute;
-
-		state.setTimeZone(TimeZone.getTimeZone(customID));
-	}
-
-	/**
-	 * Return a printable representation of the date.
-	 *
-	 * @param cal
-	 *            calendar to convert to a string
-	 *
-	 * @return a printable string.
-	 */
-	public static final String prettyString(Calendar cal)
-	{
-		if (cal == null)
-		{
-			return null;
-		}
-
-		final int calYear = cal.get(Calendar.YEAR);
-		final int calMonth = cal.get(Calendar.MONTH);
-		final int calDay = cal.get(Calendar.DATE);
-
-		boolean needSpace = false;
-		StringBuffer buf = new StringBuffer();
-
-		if (calMonth >= 0 && calMonth < MONTHS.length)
-		{
-			if (needSpace)
-			{
-				buf.append(' ');
-			}
-			buf.append(MONTHS[calMonth][1]);
-			needSpace = true;
-		}
-		if (calDay > 0)
-		{
-			if (needSpace)
-			{
-				buf.append(' ');
-			}
-			buf.append(calDay);
-			if (calYear > UNSET)
-			{
-				buf.append(',');
-			}
-			needSpace = true;
-		}
-		if (calYear > UNSET)
-		{
-			if (needSpace)
-			{
-				buf.append(' ');
-			}
-			buf.append(calYear);
-		}
-
-		appendTimeString(buf, cal, needSpace);
-
-		return buf.toString();
-	}
-
-	/**
-	 * Return a basic representation of the string.
-	 *
-	 * @param cal
-	 *            calendar to convert to a string
-	 *
-	 * @return the basic string.
-	 */
-	public static final String toString(Calendar cal)
-	{
-		if (cal == null)
-		{
-			return null;
-		}
-
-		final int calYear = cal.get(Calendar.YEAR);
-		final int calMonth = cal.get(Calendar.MONTH);
-		final int calDay = cal.get(Calendar.DATE);
-
-		boolean needSpace = false;
-		StringBuffer buf = new StringBuffer();
-
-		if (calDay > 0)
-		{
-			if (needSpace)
-			{
-				buf.append(' ');
-			}
-			buf.append(calDay);
-			needSpace = true;
-		}
-		if (calMonth >= 0 && calMonth < MONTHS.length)
-		{
-			if (needSpace)
-			{
-				buf.append(' ');
-			}
-			buf.append(MONTHS[calMonth][1].substring(0, 3));
-			needSpace = true;
-		}
-		if (calYear > UNSET)
-		{
-			if (needSpace)
-			{
-				buf.append(' ');
-			}
-			buf.append(calYear);
-		}
-
-		appendTimeString(buf, cal, needSpace);
-
-		return buf.toString();
-	}
-
-	/**
-	 * Return a string representation of the date suitable for use in an SQL
-	 * statement.
-	 *
-	 * @param cal
-	 *            calendar to convert to a string
-	 *
-	 * @return the SQL-friendly string.
-	 */
-	public static final String toSQLString(Calendar cal)
-	{
-		if (cal == null)
-		{
-			return null;
-		}
-
-		final int calYear = cal.get(Calendar.YEAR);
-		final int calMonth = cal.get(Calendar.MONTH);
-		final int calDay = cal.get(Calendar.DATE);
-
-		StringBuffer buf = new StringBuffer();
-
-		buf.append(calYear);
-		buf.append('-');
-		if ((calMonth + 1) < 10)
-		{
-			buf.append('0');
-		}
-		buf.append(calMonth + 1);
-		buf.append('-');
-		if (calDay < 10)
-		{
-			buf.append('0');
-		}
-		buf.append(calDay);
-
-		appendTimeString(buf, cal, true);
-
-		return buf.toString();
+	@SuppressWarnings("unchecked")
+	private static Set<String> availableIds() {
+		return getAvailableIDs();
 	}
 }
 
-class CalendarParserException extends Exception
-{
-
-	public CalendarParserException(String string)
-	{
-		// TODO Auto-generated constructor stub
-	}
-
-}
