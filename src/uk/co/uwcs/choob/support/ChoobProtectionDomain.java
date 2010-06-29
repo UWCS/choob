@@ -33,4 +33,8 @@ public final class ChoobProtectionDomain extends ProtectionDomain
 		}
 		return mod.hasPluginPerm( perm, pluginName );
 	}
+
+	@Override public String toString() {
+		return "ChoobProtectionDomain for " + pluginName + ".  " + super.toString();
+	}
 }

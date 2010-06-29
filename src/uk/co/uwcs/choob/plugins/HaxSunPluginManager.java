@@ -420,6 +420,15 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			throw new ChoobException("Plugin " + pluginName + "'s create() threw an exception: " + e.getCause(), e.getCause());
 		}
 
+		try
+		{
+			mods.security.addGroup("plugin." + pluginName.toLowerCase());
+		}
+		catch (final ChoobException e)
+		{
+			// TODO: Make a groupExists() or something so we don't need to squelch this
+		}
+
 		String[] newCommands = new String[0];
 		String[] oldCommands = new String[0];
 		synchronized(allPlugins)
@@ -443,23 +452,18 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		// Grant permissions to the plugin
 		RequiresPermission perm = newClass.getAnnotation(RequiresPermission.class);
 		if(perm != null) {
-			grantPermission(perm,newClass);
+			grantPermission(perm, newClass);
 		}
 		RequiresPermissions perms = newClass.getAnnotation(RequiresPermissions.class);
 		if(perms != null) {
 			for (RequiresPermission permission : perms.value()) {
-				grantPermission(permission,newClass);
+				grantPermission(permission, newClass);
 			}
 		}
 
 		return pluginObj;
 	}
 
-	/**
-	 * RAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGE
-	 * @param perm
-	 * @param newClass
-	 */
 	private void grantPermission(final RequiresPermission perm, final Class<?> newClass) {
 		final String name = perm.permission();
 		final String action = perm.action();
@@ -482,10 +486,10 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		// EAT THAT PAEDOS
 		} catch (ChoobException e) {
 			if(!e.getMessage().contains("already has permission")) {
-				throw new Error(e);
+				throw new RuntimeException(e);
 			}
 		} catch (Exception e) {
-			throw new Error(e);
+			throw new RuntimeException(e);
 		}
 	}
 
