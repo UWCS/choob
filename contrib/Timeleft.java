@@ -33,10 +33,11 @@ import org.parboiled.support.ParsingResult;
 
 import uk.co.uwcs.choob.modules.DateModule;
 import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 
 public class Timeleft
 {
-	private final Modules mods;
+	final Modules mods;
 
 	public String[] info()
 	{
@@ -139,8 +140,8 @@ public class Timeleft
 		go("end of fred's penis");
 	}
 
-	static Object go(final String input) {
-		final TimeParser parser = Parboiled.createParser(TimeParser.class);
+	Object go(final String input) {
+		final TimeParser parser = Parboiled.createParser(TimeParser.class, this);
 		final ParsingResult<?> pr = ReportingParseRunner.run(parser.Root(), input.toLowerCase());
 		if (!pr.matched) {
 			throw new RuntimeException(ErrorUtils.printParseErrors(pr.parseErrors, pr.inputBuffer));
@@ -209,6 +210,12 @@ class TimeParser extends BaseParser<Object> {
 	static final Partial CHRISTMAS = new Partial().with(dayOfMonth(), 25).with(monthOfYear(), 12);
 	static final DateTime BFL = new DateTime(2010, 6, 28, 9, 0, 0, 0, Timeleft.LONDON);
 	public static final Map<String, DateTimeZone> SUPPORTABLE_TIME_ZONES = supportableTimezones();
+
+	private final Timeleft plugin;
+
+	TimeParser(Timeleft plugin) {
+		this.plugin = plugin;
+	}
 
 	public Rule Root() {
 		return Sequence(
@@ -287,14 +294,17 @@ class TimeParser extends BaseParser<Object> {
 	}
 
 	protected boolean event(String startOrEnd, String key) {
-		if (key.equals("bfl")) {
-			if (startOrEnd.equals("start")) {
-				getContext().setNodeValue(BFL);
-				return true;
-			}
+		final Object dateRes;
+		try {
+			dateRes = plugin.mods.plugin.callAPI("Events", "dateOf", startOrEnd, key);
+		} catch (ChoobNoSuchCallException e) {
+			return false;
 		}
+		if (null == dateRes)
+			return false;
 
-		return false;
+		getContext().setNodeValue(dateRes);
+		return true;
 	}
 
 	public Rule Long() {

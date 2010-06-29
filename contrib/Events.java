@@ -13,6 +13,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jibble.pircbot.Colors;
+import org.joda.time.DateTime;
+import org.parboiled.google.collect.Lists;
 
 import uk.co.uwcs.choob.modules.DateModule;
 import uk.co.uwcs.choob.modules.Modules;
@@ -403,7 +405,7 @@ public class Events
 
 		for (final EventItem ev : events)
 			if (!ev.finished())
-				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
+				if (matches(ev, comp, eid))
 				{
 					final String signup;
 
@@ -438,6 +440,10 @@ public class Events
 		return "Event not found.";
 	}
 
+	private boolean matches(final EventItem ev, final String comp, final int compAsId) {
+		return ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == compAsId;
+	}
+
 	public String[] helpCommandSignup = {
 		"Get a signup link for a given event.",
 		"<Key>",
@@ -457,7 +463,7 @@ public class Events
 
 		for (final EventItem ev : events)
 			if (!ev.finished())
-				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
+				if (matches(ev, comp, eid))
 				{
 					if (ev.acceptsSignups())
 						return "Please use http://www.warwickcompsoc.co.uk/events/details/options?id=" + ev.id
@@ -485,7 +491,7 @@ public class Events
 
 		for (final EventItem ev : events)
 			if (!ev.finished())
-				if (ev.name.toLowerCase().indexOf(comp) != -1 || ev.id == eid)
+				if (matches(ev, comp, eid))
 					return "http://uwcs.co.uk/society/events/details/" + ev.id + ".";
 
 		return "Event not found.";
@@ -526,7 +532,7 @@ public class Events
 
 		for (final EventItem ev : events)
 			if (!ev.finished())
-				if (ev.name.toLowerCase().indexOf(eventName) != -1 || ev.id == eid)
+				if (matches(ev, eventName, eid))
 				{
 					if (ev.signupCurrent == 0)
 					{
@@ -614,5 +620,24 @@ public class Events
 		{
 			return 0;
 		}
+	}
+
+	/** @param positionIn e.g. "start" "end" */
+	public DateTime apiDateOf(String positionIn, String searchString) throws ChoobException {
+		final List<EventItem> ma = Lists.newArrayList();
+		for (EventItem ev : readEventsData())
+			if (matches(ev, searchString, parseId(searchString)))
+				ma.add(ev);
+
+		if (ma.isEmpty() || ma.size() > 1)
+			return null;
+
+		final EventItem ev = ma.get(0);
+		if ("start".equals(positionIn))
+			return new DateTime(ev.start);
+		if ("end".equals(positionIn))
+			return new DateTime(ev.end);
+
+		return null;
 	}
 }
