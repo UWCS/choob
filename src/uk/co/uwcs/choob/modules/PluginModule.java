@@ -240,7 +240,7 @@ public final class PluginModule
 
 		return rvList;
 	}
-	
+
 	public String[] getHelp(String pluginName, String commandName) throws NoSuchCommandException
 	{
 		return hsPlugMan.getHelp(pluginName, commandName);
@@ -250,7 +250,7 @@ public final class PluginModule
 	{
 		return hsPlugMan.getInfo(pluginName);
 	}
-	
+
 	/**
 	 * Call the generic subroutine of type type and name name on plugin pluginName and return the result.
 	 * @param pluginName The name of the plugin to call.
@@ -284,7 +284,7 @@ public final class PluginModule
 			});
 		}
 	}
-	
+
 	/**
 	 * Cause a command of plugin pluginName to be queued for execution.
 	 * @param pluginName The name of the plugin to call.
@@ -577,11 +577,8 @@ public final class PluginModule
 
 	public boolean validCommand(final String command)
 	{
-		if (validInternalCommand(command))
-			return true;
-		if (validAliasCommand(command))
-			return true;
-		return false;
+		return validInternalCommand(command) ||
+			validAliasCommand(command);
 	}
 
 	public boolean validAliasCommand(final String command)
