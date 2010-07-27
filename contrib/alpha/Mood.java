@@ -26,18 +26,24 @@ public class Mood
 
 	private int score(Connection conn, String what, long period) throws SQLException
 	{
-		final long midnight;
+		final long since;
+		final long exsince;
+		final int mul = 5;
+
 		if (0 == period)
 		{
 			final Calendar c = new GregorianCalendar();
 			c.set(Calendar.HOUR_OF_DAY, 0);
 			c.set(Calendar.MINUTE, 0);
 			c.set(Calendar.SECOND, 0);
-			midnight = c.getTimeInMillis();
+			since = c.getTimeInMillis();
+			c.add(Calendar.DAY_OF_YEAR, -mul);
+			exsince = c.getTimeInMillis();
 		}
 		else
 		{
-			midnight = new Date().getTime() - period;
+			since = new Date().getTime() - period;
+			exsince = period  * mul;
 		}
 
 		final String cond;
@@ -51,13 +57,18 @@ public class Mood
 		try
 		{
 			s.setString(1, what);
-			s.setLong(2, midnight);
-			return exec(s, "%++%") - exec(s, "%--%");
+			return run(s, since) - Math.round(run(s, exsince) / (float)mul);
 		}
 		finally
 		{
 			s.close();
 		}
+	}
+
+	private int run(final PreparedStatement s, final long period) throws SQLException
+	{
+		s.setLong(2, period);
+		return exec(s, "%++%") - exec(s, "%--%");
 	}
 
 	private int exec(final PreparedStatement s, final String textLike) throws SQLException
