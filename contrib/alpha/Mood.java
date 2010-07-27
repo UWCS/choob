@@ -24,11 +24,11 @@ public class Mood
 		this.mods = mods;
 	}
 
-	private int score(Connection conn, String what, long period) throws SQLException
+	private String score(Connection conn, String what, long period) throws SQLException
 	{
 		final long since;
 		final long exsince;
-		final int mul = 5;
+		final int mul = 7;
 
 		if (0 == period)
 		{
@@ -57,12 +57,25 @@ public class Mood
 		try
 		{
 			s.setString(1, what);
-			return run(s, since) - Math.round(run(s, exsince) / (float)mul);
+			final int act = run(s, since);
+			final int avg = Math.round(run(s, exsince) / (float)mul);
+			final int diff = act - avg;
+
+			String ret = very(diff) + (diff == 0 ? "boring" : (diff < 0 ? "bad" : "good")) + " day";
+			if (Math.abs(avg) > 5)
+				ret += ", and are generally " + very(avg) + (avg < 0 ? "depressed" : "happy");
+			ret += ".  (" + diff + ", today=" + act + ", avg=" + avg + ")";
+			return ret;
 		}
 		finally
 		{
 			s.close();
 		}
+	}
+
+	private String very(final int diff)
+	{
+		return (Math.abs(diff) > 5 ? "very " : "");
 	}
 
 	private int run(final PreparedStatement s, final long period) throws SQLException
@@ -95,9 +108,7 @@ public class Mood
 		final Connection conn = mods.odb.getConnection();
 		try
 		{
-			final int score = score(conn, nick, arg.size() > 2 ? Long.parseLong(arg.get(2)) : 0);
-			return nick + " is having a " + (Math.abs(score) > 5 ? "very " : "")
-					+ (score == 0 ? "boring" : (score < 0 ? "bad" : "good")) + " day (" + score + ").";
+			return nick + " is having a " + score(conn, nick, arg.size() > 2 ? Long.parseLong(arg.get(2)) : 0);
 		}
 		finally
 		{
