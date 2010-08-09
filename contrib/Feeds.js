@@ -1198,7 +1198,7 @@ function _decodeRSSHTML(data) {
 }
 
 function _decodeRSSDate(element) {
-	if (element.contents()) {
+	if (element && element.contents()) {
 		try {
 			return Number(new Date(element.contents()));
 		} catch(ex) {
@@ -1225,19 +1225,20 @@ function _decodeAtomDate(element) {
 	var ary = element.contents().match(/^(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)(?:.(\d+))?(Z|([+-])(\d+):(\d+))$/);
 	if (ary) {
 		var d = new Date(ary[1], ary[2] - 1, ary[3], ary[4], ary[5], ary[6]);
-		// 8 = Z/zone
-		// 9 = +/-
-		// 10/11 = zone offset
-		if (d.getTimezoneOffset() != 0) {
-			d = new Date(Number(d) - d.getTimezoneOffset() * 60 * 1000);
-		}
+		var ts = Number(d);
+		// Nullify any local timezone picked by new Date().
+		ts -= d.getTimezoneOffset() * 60 * 1000;
+		// [RFC3339]
+		// Numeric offsets are calculated as "local time minus UTC".  So the
+		// equivalent time in UTC can be determined by subtracting the offset
+		// from the local time.
 		if (ary[9] == "+") {
-			d = new Date(Number(d) + ((ary[10] * 60) + ary[11]) * 60 * 1000);
+			ts -= ary[10] * 60 * 60 * 1000 + ary[11] * 60 * 1000;
 		}
 		if (ary[9] == "-") {
-			d = new Date(Number(d) - ((ary[10] * 60) + ary[11]) * 60 * 1000);
+			ts += ary[10] * 60 * 60 * 1000 + ary[11] * 60 * 1000;
 		}
-		return Number(d);
+		return ts;
 	}
 	return 0;
 }
