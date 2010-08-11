@@ -123,8 +123,6 @@ public class Sentiment {
 		final String nick = (arg.size() > 1) ? arg.get(1) : mes.getNick();
 		final Connection conn = mods.odb.getConnection();
 		final String cond = (nick.startsWith("#")) ? "Channel like ?" : "Nick like ?";
-		System.out
-				.println("START SPAMMING NOW -------------------------------------------------------------------------------------------------------");
 		try {
 			final PreparedStatement s = conn.prepareStatement("select Text from History where " + cond + " and Time > ?");
 			try {
@@ -134,7 +132,7 @@ public class Sentiment {
 				float valence = 0, arousal = 0, dominance = 0, count = 0;
 				while (rs.next()) {
 					final String text = rs.getString(1);
-					System.out.println(text);
+					// System.out.println(text);
 					final Matcher matcher = wordPattern.matcher(text);
 					while (matcher.find()) {
 						final Anew score = cache.get(matcher.group().toLowerCase());
