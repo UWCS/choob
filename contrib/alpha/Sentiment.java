@@ -35,7 +35,7 @@ public class Sentiment {
 
 	private final Modules mods;
 	private final IRCInterface irc;
-	private final Map<String, Anew> cache;
+	private final Map<String, Map<String, Anew>> cache;
 
 	public String[] info() {
 		return new String[] { "", "mulletron", "ALPHA ALPHA", "<3", };
@@ -43,15 +43,22 @@ public class Sentiment {
 
 	public String[] helpTopics = { "Using" };
 
-	public String[] helpUsing = { "!Sentiment.day <nick>|<channel>|nothing prints sentiment stats from your last day",
+	public String[] helpUsing = { "!Sentiment.day <stat> <nick>|<channel> prints sentiment stats from your last day",
 			"Valence - 10 = pleasant, 0 = unpleasant ", "Arousal - 0 = calm, 10 = excited ", "Dominance - 10 = control, 0 = dominated " };
 
 	public Sentiment(final Modules mods, final IRCInterface irc) {
 		this.mods = mods;
 		this.irc = irc;
-		cache = new HashMap<String, Anew>();
+
+		// load up the cache
+		cache = new HashMap<String, Map<String, Anew>>();
 		for (Anew e : mods.odb.retrieve(Anew.class, "")) {
-			cache.put(e.word, e);
+			Map<String, Anew> map = cache.get(e.stat);
+			if (map == null) {
+				map = new HashMap<String, Anew>();
+				cache.put(e.stat, map);
+			}
+			map.put(e.word, e);
 		}
 	}
 
@@ -61,27 +68,36 @@ public class Sentiment {
 	 * @throws IOException
 	 */
 	public void commandImport(final Message mes) throws IOException {
-		final URL url = new URL(mods.util.getParamString(mes));
+		// This feels ridiculously messy, wtb simultaneous assignment,
+		// usingResource etc.
+		final List<String> arg = mods.util.getParams(mes);
+		final URL url = new URL(arg.get(2));
 		final BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
 		final List<String> errors = new ArrayList<String>();
+		final String statName = mods.odb.escapeString(arg.get(1));
+		Map<String, Anew> localCache = cache.get(statName);
+		if (localCache == null) {
+			localCache = new HashMap<String, Anew>();
+			cache.put(statName, localCache);
+		}
 		try {
 			String line;
 			int i = 1;
 			int count = 0;
 			while ((line = reader.readLine()) != null) {
 				final String[] split = line.split(",");
-				if (split.length != 4) {
+				if (split.length != 2) {
 					errors.add("warning: ignoring line " + i + " since it contains whitespace");
 				} else {
 					final String word = split[0].toLowerCase();
 					if (word.contains(" ")) {
-						errors.add("warning: ignoring line " + i + " since it contains whitespace");
+						errors.add("warning: ignoring line " + i + " since the name contains whitespace");
 					} else {
 						try {
-							final Anew anew = new Anew(word, parseFloat(split[1]), parseFloat(split[2]), parseFloat(split[3]));
+							final Anew anew = new Anew(word, statName, parseFloat(split[1]));
 							mods.odb.save(anew);
 							count++;
-							if (cache.put(word, anew) != null) {
+							if (localCache.put(word, anew) != null) {
 								errors.add("warning: line " + i + " has overwritten the value of " + word + " in the file");
 								count--;
 							}
@@ -93,7 +109,7 @@ public class Sentiment {
 				i++;
 			}
 
-			irc.sendContextReply(mes, "Imported " + count + " words");
+			irc.sendContextReply(mes, "Imported " + count + " words to " + statName);
 
 		} finally {
 			// TODO: stop flooding
@@ -113,6 +129,10 @@ public class Sentiment {
 		return c;
 	}
 
+	public void commandInfo(final Message mes) {
+		irc.sendContextReply(mes, "The word corpus currently incorporates the following statistics: " + cache.keySet());
+	}
+
 	/**
 	 * 
 	 * @param mes
@@ -121,36 +141,39 @@ public class Sentiment {
 	public void commandDay(final Message mes) throws SQLException {
 		final List<String> arg = mods.util.getParams(mes);
 		final String nick = (arg.size() > 1) ? arg.get(1) : mes.getNick();
-		final Connection conn = mods.odb.getConnection();
-		final String cond = (nick.startsWith("#")) ? "Channel like ?" : "Nick like ?";
-		try {
-			final PreparedStatement s = conn.prepareStatement("select Text from History where " + cond + " and Time > ?");
+		final String statName = arg.get(2);
+		final Map<String, Anew> localCache = cache.get(statName);
+		if (localCache == null) {
+			irc.sendContextReply(mes, "Unknown term, try using the sentiment.info command");
+		} else {
+			final Connection conn = mods.odb.getConnection();
+			final String cond = (nick.startsWith("#")) ? "Channel like ?" : "Nick like ?";
 			try {
-				s.setString(1, nick);
-				s.setObject(2, makeDay().getTimeInMillis());
-				final ResultSet rs = s.executeQuery();
-				float valence = 0, arousal = 0, dominance = 0, count = 0;
-				while (rs.next()) {
-					final String text = rs.getString(1);
-					// System.out.println(text);
-					final Matcher matcher = wordPattern.matcher(text);
-					while (matcher.find()) {
-						final Anew score = cache.get(matcher.group().toLowerCase());
-						if (score != null) {
-							valence += score.valence;
-							arousal += score.arousal;
-							dominance += score.dominance;
-							count++;
+				final PreparedStatement s = conn.prepareStatement("select Text from History where " + cond + " and Time > ?");
+				try {
+					s.setString(1, nick);
+					s.setObject(2, makeDay().getTimeInMillis());
+					final ResultSet rs = s.executeQuery();
+					float total = 0, count = 0;
+					while (rs.next()) {
+						final String text = rs.getString(1);
+						// System.out.println(text);
+						final Matcher matcher = wordPattern.matcher(text);
+						while (matcher.find()) {
+							final Anew score = localCache.get(matcher.group().toLowerCase());
+							if (score != null) {
+								total += score.value;
+								count++;
+							}
 						}
 					}
+					irc.sendContextReply(mes, statName + " = " + (total / count));
+				} finally {
+					s.close();
 				}
-				irc.sendContextReply(mes, "Valence = " + (valence / count) + " Arousal = " + (arousal / count) + " Dominance = "
-						+ (dominance / count));
 			} finally {
-				s.close();
+				mods.odb.freeConnection(conn);
 			}
-		} finally {
-			mods.odb.freeConnection(conn);
 		}
 	}
 }
@@ -166,16 +189,15 @@ class Anew {
 	public int id;
 
 	public String word;
-	public float valence;
-	public float arousal;
-	public float dominance;
+	// this was originally normalised, but choob touched me. No daddy No.
+	public String stat;
+	public float value;
 
-	protected Anew(final String word, final float f, final float g, final float h) {
+	protected Anew(String word, String stat, float value) {
 		super();
 		this.word = word;
-		this.valence = f;
-		this.arousal = g;
-		this.dominance = h;
+		this.stat = stat;
+		this.value = value;
 	}
 
 	public Anew() {
