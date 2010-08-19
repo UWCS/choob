@@ -28,6 +28,16 @@ import uk.co.uwcs.choob.support.events.Message;
  * 
  *         Calculates average ANEW scores for all words for a person/channel
  *         (suggested by whythehell).
+ * 
+ *         TODO:
+ * 
+ *         add gender values to choob'
+ * 
+ *         add more history/time options to search
+ * 
+ *         normalise a period over an extended period - eg a day or a year
+ * 
+ *         nick linking
  */
 public class Sentiment {
 
@@ -44,7 +54,7 @@ public class Sentiment {
 	public String[] helpTopics = { "Using" };
 
 	public String[] helpUsing = { "!Sentiment.day <stat> <nick>|<channel> prints sentiment stats from your last day",
-			"Valence - 10 = pleasant, 0 = unpleasant ", "Arousal - 0 = calm, 10 = excited ", "Dominance - 10 = control, 0 = dominated " };
+			"Scores are now between 100 and 0", "!Sentiment.info lists possible sentiment metrics" };
 
 	public Sentiment(final Modules mods, final IRCInterface irc) {
 		this.mods = mods;
@@ -154,12 +164,13 @@ public class Sentiment {
 					s.setString(1, nick);
 					s.setObject(2, makeDay().getTimeInMillis());
 					final ResultSet rs = s.executeQuery();
-					float total = 0, count = 0;
+					float total = 0, count = 0, reliability = 0;
 					while (rs.next()) {
 						final String text = rs.getString(1);
 						// System.out.println(text);
 						final Matcher matcher = wordPattern.matcher(text);
 						while (matcher.find()) {
+							reliability++;
 							final Anew score = localCache.get(matcher.group().toLowerCase());
 							if (score != null) {
 								total += score.value;
@@ -167,7 +178,8 @@ public class Sentiment {
 							}
 						}
 					}
-					irc.sendContextReply(mes, statName + " = " + (total / count));
+					irc.sendContextReply(mes,
+							statName + " = " + Math.round(total * 100 / count) + "%, reliability = " + Math.round(count * 100 / reliability) + "%");
 				} finally {
 					s.close();
 				}
