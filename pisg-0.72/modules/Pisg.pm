@@ -92,6 +92,7 @@ sub get_default_config_settings
 
     $self->{cfg} = {
         channel => '',
+        barwidth => 40,
         logtype => 'Logfile',
         logfile => [],
         format => '',

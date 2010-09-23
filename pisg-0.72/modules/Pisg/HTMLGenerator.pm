@@ -2203,7 +2203,7 @@ sub _user_times
     for (my $i = 0; $i <= 3; $i++) {
         my $l = $self->{stats}->{$timestat}{$nick}[$i];
         next if not defined $l;
-        my $w = int(($l / $self->{stats}->{$itemstat}{$nick}) * 40);
+        my $w = int(($l / $self->{stats}->{$itemstat}{$nick}) * $self->{cfg}->{barwidth});
         if ($w) {
             my $pic = 'pic_h_'.(6*$i);
             $bar .= "<img src=\"$self->{cfg}->{piclocation}/$self->{cfg}->{$pic}\" border=\"0\" width=\"$w\" height=\"15\" alt=\"$l\" title=\"$l\" />";
