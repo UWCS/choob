@@ -1,7 +1,16 @@
-SPEC=$1
+#!/bin/bash
+
+if [ -z "$1" ]; then
+	echo "Usage: $0 spec"
+	echo "$ ls *.spec"
+	ls *.spec
+	exit 1
+fi
+
+SPEC=$(basename $1 .spec)
 LOG=$(mktemp)
 
-. $(basename $SPEC .spec).spec
+. $SPEC.spec
 
 trap "rm $LOG" EXIT
 
