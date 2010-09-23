@@ -18,6 +18,10 @@ if [ -z "$CHANNEL" ]; then
 	CHANNEL='IS NOT NULL'
 fi
 
+if [ -z "$MSG" ]; then
+	MSG=unknown
+fi
+
 grep -m1 password ~/.my.cnf | \
 	cut -d= -f2- | \
 	nice perl loggen.pl "$CHANNEL" $TIME > $LOG
@@ -44,7 +48,7 @@ cd pisg-0.72
 	CFG=$(mktemp)
 	trap "rm $CFG" EXIT
 
-	sed "s,OUTFILE,$OUTPUT,;s,INFILE,$LOG," < ../config_base > $CFG
+	sed "s,OUTFILE,$OUTPUT,;s,INFILE,$LOG,;s,CHANNEL,$MSG," < ../config_base > $CFG
 	nice perl pisg --configfile=$CFG
 
 	cp gfx/*.png $BASE

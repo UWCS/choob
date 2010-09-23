@@ -1,0 +1,5 @@
+TIME= days to look at, backwards from now.  Default: All time.
+CHANNEL= SQL expression to select channel.  Default: All channels.
+ARCHIVE= Set to save the daily generate file.
+MSG= "Channel" name to use for titles etc.
+

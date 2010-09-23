@@ -1,3 +1,3 @@
 MSG='#work'
 CHANNEL="='#work'"
-ARCHIVE=1
+TIME=14

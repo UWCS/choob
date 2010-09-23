@@ -18,7 +18,7 @@
 # </channel>
 #
 
-<channel="#compsoc">
+<channel="CHANNEL">
   Logfile="INFILE"
   Format="irssi"
   Network="UWCS"
