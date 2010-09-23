@@ -1,0 +1,147 @@
+/* to obtain a better result, then set the these pisg options:
+ *  <set hicell="#607080">
+ *  <set hicell2="#8090a0">
+ *
+ * Theme by ICU (me at 1cu.de)
+ */
+   
+a
+{
+    text-decoration: none;
+}
+a:link
+{
+    color: #bdcddd;
+}
+a:visited
+{
+    color: #bdcddd;
+}
+a:hover
+{
+    color: #bdcddd;
+    text-decoration: underline;
+    font-weight: none;
+}
+a.background
+{
+    color: none;
+    text-decoration: none;
+}
+a.background:link
+{
+    color: #314151;
+}
+a.background:visited
+{
+    color: #415161;
+}
+a.background:hover
+{
+    color: #003c60;
+    text-decoration: underline;
+}
+body
+{
+    font-size: 13px;
+    color: white;
+    font-family: verdana, arial, sans-serif;
+    background-color: #647684;
+    scrollbar-face-color: #647684;
+    scrollbar-shadow-color: black;
+    scrollbar-highlight-color: #647684;
+    scrollbar-3dlight-color: black;
+    scrollbar-darkshadow-color: #647684;
+    scrollbar-track-color: #647684;
+    scrollbar-arrow-color: black;
+}
+td
+{
+    font-size: 13px;
+    color: white;
+    font-family: verdana, arial, sans-serif;
+    text-align: left;
+}
+.title
+{
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    font-family: tahoma, arial, sans-serif;
+}
+.headtext
+{
+    font-weight: bold;
+    color: white;
+    background-color: none;
+    text-align: center;
+}
+.headlinebg
+{
+    background-color: #344454;
+}
+.tdtop
+{
+    background-color: #445464;
+}
+.hicell
+{
+    background-color: #748494;
+}
+.hicell10
+{
+    font-size: 10px;
+    background-color: #94a4b4;
+}
+.rankc
+{
+    background-color: #748494;
+}
+.hirankc
+{
+    font-weight: bold;
+    background-color: #94a4b4;
+}
+.rankc10
+{
+    font-size: 10px;
+    background-color: #748494;
+}
+.rankc10center
+{
+    font-size: 10px;
+    background-color: #748494;
+    text-align: center;
+}
+.hirankc10center
+{
+    font-weight: bold;
+    font-size: 10px;
+    background-color: #94a4b4;
+    text-align: center;
+}
+.small
+{
+    font-size: 10px;
+    font-family: verdana, arial, sans-serif;
+}
+.asmall
+{
+    font-size: 10px;
+    color: white;
+    font-family: "arial narrow", arial, sans-serif;
+    text-align: center;
+}
+
+.male, .male a {
+    color: #0000c7;
+}
+
+.female, .female a {
+    color: #93006a;
+}
+
+.bot, .bot a {
+    color: black;
+}
+

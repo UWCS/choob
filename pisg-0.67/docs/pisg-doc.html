@@ -1,0 +1,6927 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>pisg 0.67 documentation</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"></HEAD
+><BODY
+CLASS="book"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="BOOK"
+><A
+NAME="pisg-documentation"
+></A
+><DIV
+CLASS="TITLEPAGE"
+><H1
+CLASS="title"
+><A
+NAME="AEN2"
+>pisg 0.67 documentation</A
+></H1
+><H2
+CLASS="subtitle"
+>How to install and configure pisg</H2
+><HR></DIV
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>1. <A
+HREF="#what-is-pisg"
+>What is pisg?</A
+></DT
+><DD
+><DL
+><DT
+>1.1. <A
+HREF="#requirements"
+>What are the requirements to run pisg?</A
+></DT
+></DL
+></DD
+><DT
+>2. <A
+HREF="#setting-up-pisg"
+>Setting up pisg for the first time</A
+></DT
+><DD
+><DL
+><DT
+>2.1. <A
+HREF="#setting-up-a-channel"
+>Setting up a channel</A
+></DT
+><DT
+>2.2. <A
+HREF="#user-options"
+>Specifying user options</A
+></DT
+><DT
+>2.3. <A
+HREF="#global-options"
+>Setting global options</A
+></DT
+><DT
+>2.4. <A
+HREF="#ignoring-links"
+>Ignoring links</A
+></DT
+><DT
+>2.5. <A
+HREF="#including-config"
+>Including common settings for various channels</A
+></DT
+><DT
+>2.6. <A
+HREF="#using-css"
+>Changing the layout of your stats page</A
+></DT
+><DT
+>2.7. <A
+HREF="#running-pisg"
+>Running pisg</A
+></DT
+><DT
+>2.8. <A
+HREF="#mailing-list-and-bugs"
+>Obtaining help and reporting bugs</A
+></DT
+></DL
+></DD
+><DT
+>3. <A
+HREF="#reference"
+>General pisg options</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#Channel"
+>Channel</A
+>&nbsp;--&nbsp;define channel name</DT
+><DT
+><A
+HREF="#Format"
+>Format</A
+>&nbsp;--&nbsp;the logfile format</DT
+><DT
+><A
+HREF="#Network"
+>Network</A
+>&nbsp;--&nbsp;the IRC network of the channel</DT
+><DT
+><A
+HREF="#OutputFile"
+>OutputFile</A
+>&nbsp;--&nbsp;name of the generated HTML page</DT
+><DT
+><A
+HREF="#OutputTag"
+>OutputTag</A
+>&nbsp;--&nbsp;tag to insert into OutputFile</DT
+><DT
+><A
+HREF="#Logfile"
+>Logfile</A
+>&nbsp;--&nbsp;name of logfile to parse</DT
+><DT
+><A
+HREF="#LogDir"
+>LogDir</A
+>&nbsp;--&nbsp;parse a directory full of logs</DT
+><DT
+><A
+HREF="#NFiles"
+>NFiles</A
+>&nbsp;--&nbsp;parse only the last files in <A
+HREF="#LogDir"
+>LogDir</A
+></DT
+><DT
+><A
+HREF="#Maintainer"
+>Maintainer</A
+>&nbsp;--&nbsp;name of the maintainer</DT
+><DT
+><A
+HREF="#ColorScheme"
+>ColorScheme</A
+>&nbsp;--&nbsp;use a different color scheme for stats page</DT
+><DT
+><A
+HREF="#AltColorScheme"
+>AltColorScheme</A
+>&nbsp;--&nbsp;alternate stylesheets for stats page</DT
+><DT
+><A
+HREF="#Lang"
+>Lang</A
+>&nbsp;--&nbsp;define the language / translation to use</DT
+><DT
+><A
+HREF="#PageHead"
+>PageHead</A
+>&nbsp;--&nbsp;define a file as page header</DT
+><DT
+><A
+HREF="#PageFoot"
+>PageFoot</A
+>&nbsp;--&nbsp;define a file as page footer</DT
+><DT
+><A
+HREF="#LogPrefix"
+>LogPrefix</A
+>&nbsp;--&nbsp;only parse logs LogPrefixed with a user defined string</DT
+><DT
+><A
+HREF="#LogSuffix"
+>LogSuffix</A
+>&nbsp;--&nbsp;Regexp to sort logfiles by format month||day||year</DT
+><DT
+><A
+HREF="#Silent"
+>Silent</A
+>&nbsp;--&nbsp;make pisg silent, suppress messages</DT
+><DT
+><A
+HREF="#CacheDir"
+>CacheDir</A
+>&nbsp;--&nbsp;use a cache to speed up log parsing</DT
+></DL
+></DD
+><DT
+>4. <A
+HREF="#reference-stats"
+>Options for various statistics features</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#DailyActivity"
+>DailyActivity</A
+>&nbsp;--&nbsp;number of days to show in "Daily Actitity"</DT
+><DT
+><A
+HREF="#ShowActiveTimes"
+>ShowActiveTimes</A
+>&nbsp;--&nbsp;enable/disable "Most Active Times"</DT
+><DT
+><A
+HREF="#ShowActiveNicks"
+>ShowActiveNicks</A
+>&nbsp;--&nbsp;enable/disable "Most Active Nicks"</DT
+><DT
+><A
+HREF="#ShowBigNumbers"
+>ShowBigNumbers</A
+>&nbsp;--&nbsp;enable/disable "Big Numbers" sections</DT
+><DT
+><A
+HREF="#ShowTopics"
+>ShowTopics</A
+>&nbsp;--&nbsp;enable/disable "Latest topics" sections</DT
+><DT
+><A
+HREF="#ShowLines"
+>ShowLines</A
+>&nbsp;--&nbsp;enable/disable "number of lines"</DT
+><DT
+><A
+HREF="#ShowWpl"
+>ShowWpl</A
+>&nbsp;--&nbsp;enable/disable "words per line"</DT
+><DT
+><A
+HREF="#ShowCpl"
+>ShowCpl</A
+>&nbsp;--&nbsp;enable/disable "characters per line"</DT
+><DT
+><A
+HREF="#ShowWords"
+>ShowWords</A
+>&nbsp;--&nbsp;enable/disable "number of words"</DT
+><DT
+><A
+HREF="#ShowLastSeen"
+>ShowLastSeen</A
+>&nbsp;--&nbsp;show when a user was last seen on a channel</DT
+><DT
+><A
+HREF="#ShowTime"
+>ShowTime</A
+>&nbsp;--&nbsp;show when a nick was active</DT
+><DT
+><A
+HREF="#ShowLineTime"
+>ShowLineTime</A
+>&nbsp;--&nbsp;mIRCStats like behaviour of time bar</DT
+><DT
+><A
+HREF="#ShowWordTime"
+>ShowWordTime</A
+>&nbsp;--&nbsp;ShowLineTime like behavior of words column</DT
+><DT
+><A
+HREF="#ShowRandQuote"
+>ShowRandQuote</A
+>&nbsp;--&nbsp;enable or disable the random quotes</DT
+><DT
+><A
+HREF="#ShowLegend"
+>ShowLegend</A
+>&nbsp;--&nbsp;enable or disable the legend of the time bars</DT
+><DT
+><A
+HREF="#ShowKickLine"
+>ShowKickLine</A
+>&nbsp;--&nbsp;enable or disable the kick line</DT
+><DT
+><A
+HREF="#ShowActionLine"
+>ShowActionLine</A
+>&nbsp;--&nbsp;enable or disable the action line</DT
+><DT
+><A
+HREF="#ShowShoutLine"
+>ShowShoutLine</A
+>&nbsp;--&nbsp;enable or disable the shout line</DT
+><DT
+><A
+HREF="#ShowFoulDecimals"
+>ShowFoulDecimals</A
+>&nbsp;--&nbsp;set how many decimals to show</DT
+><DT
+><A
+HREF="#ShowFoulLine"
+>ShowFoulLine</A
+>&nbsp;--&nbsp;enable or disable the foul line</DT
+><DT
+><A
+HREF="#ShowViolentLines"
+>ShowViolentLines</A
+>&nbsp;--&nbsp;enable or disable the violent lines</DT
+><DT
+><A
+HREF="#ShowMuw"
+>ShowMuw</A
+>&nbsp;--&nbsp;enable or disable "Most used words"</DT
+><DT
+><A
+HREF="#ShowMrn"
+>ShowMrn</A
+>&nbsp;--&nbsp;enable or disable "Most referenced nicks"</DT
+><DT
+><A
+HREF="#ShowMru"
+>ShowMru</A
+>&nbsp;--&nbsp;enable or disable "Most referenced URLs"</DT
+><DT
+><A
+HREF="#ShowCharts"
+>ShowCharts</A
+>&nbsp;--&nbsp;enable or disable channel music charts</DT
+><DT
+><A
+HREF="#ShowOps"
+>ShowOps</A
+>&nbsp;--&nbsp;enable or disable op statistics</DT
+><DT
+><A
+HREF="#ShowVoices"
+>ShowVoices</A
+>&nbsp;--&nbsp;enable or disable voice statistics</DT
+><DT
+><A
+HREF="#ShowHalfops"
+>ShowHalfops</A
+>&nbsp;--&nbsp;enable or disable halfop statistics</DT
+><DT
+><A
+HREF="#ShowMostNicks"
+>ShowMostNicks</A
+>&nbsp;--&nbsp;show who changed nick most often</DT
+><DT
+><A
+HREF="#ShowActiveGenders"
+>ShowActiveGenders</A
+>&nbsp;--&nbsp;show stats on which gender talked most</DT
+><DT
+><A
+HREF="#ShowSmileys"
+>ShowSmileys</A
+>&nbsp;--&nbsp;show most used smileys</DT
+><DT
+><A
+HREF="#ShowKarma"
+>ShowKarma</A
+>&nbsp;--&nbsp;show channel karma</DT
+><DT
+><A
+HREF="#ShowMostActiveByHour"
+>ShowMostActiveByHour</A
+>&nbsp;--&nbsp;show most active nicks by hour</DT
+><DT
+><A
+HREF="#ShowOnlyTop"
+>ShowOnlyTop</A
+>&nbsp;--&nbsp;only count stats for top talkers, ignore less-active users</DT
+><DT
+><A
+HREF="#ShowMostActiveByHourGraph"
+>ShowMostActiveByHourGraph</A
+>&nbsp;--&nbsp;show graphs in most active nicks by hour</DT
+><DT
+><A
+HREF="#IgnoreWords"
+>IgnoreWords</A
+>&nbsp;--&nbsp;ignore specified words</DT
+><DT
+><A
+HREF="#NoIgnoredQuotes"
+>NoIgnoredQuotes</A
+>&nbsp;--&nbsp;Control random quote output</DT
+><DT
+><A
+HREF="#FoulWords"
+>FoulWords</A
+>&nbsp;--&nbsp;specify words considered to be bad/FoulWords language</DT
+><DT
+><A
+HREF="#ViolentWords"
+>ViolentWords</A
+>&nbsp;--&nbsp;specify words considered to be aggressive/violent</DT
+><DT
+><A
+HREF="#MinQuote"
+>MinQuote</A
+>&nbsp;--&nbsp;minimum numbers of letters for a random quote</DT
+><DT
+><A
+HREF="#MaxQuote"
+>MaxQuote</A
+>&nbsp;--&nbsp;maximum numbers of letters for a random quote</DT
+><DT
+><A
+HREF="#WordLength"
+>WordLength</A
+>&nbsp;--&nbsp;minimum number of characters in an interesting word</DT
+><DT
+><A
+HREF="#QuoteWidth"
+>QuoteWidth</A
+>&nbsp;--&nbsp;maximum allowed length of a "word" with no spaces</DT
+><DT
+><A
+HREF="#BigNumbersThreshold"
+>BigNumbersThreshold</A
+>&nbsp;--&nbsp;Minimum number of lines per user for some "Big Numbers" statistics</DT
+><DT
+><A
+HREF="#ActiveNicks"
+>ActiveNicks</A
+>&nbsp;--&nbsp;nicks to show in "Most Active Nicks"</DT
+><DT
+><A
+HREF="#ActiveNicks2"
+>ActiveNicks2</A
+>&nbsp;--&nbsp;nicks to show in "These didn't make it.."</DT
+><DT
+><A
+HREF="#ActiveNicksByHour"
+>ActiveNicksByHour</A
+>&nbsp;--&nbsp;number of nicks to show in "Most Active Nicks By Hour"</DT
+><DT
+><A
+HREF="#MostNicksHistory"
+>MostNicksHistory</A
+>&nbsp;--&nbsp;maximum number of nicks to show in "users with most nicknames"</DT
+><DT
+><A
+HREF="#MostNicksVerbose"
+>MostNicksVerbose</A
+>&nbsp;--&nbsp;show nicks used in "most nicks"</DT
+><DT
+><A
+HREF="#TopicHistory"
+>TopicHistory</A
+>&nbsp;--&nbsp;maximum number of topics to show</DT
+><DT
+><A
+HREF="#UrlHistory"
+>UrlHistory</A
+>&nbsp;--&nbsp;maximum number of URLs to show</DT
+><DT
+><A
+HREF="#ChartsHistory"
+>ChartsHistory</A
+>&nbsp;--&nbsp;number of songs to show</DT
+><DT
+><A
+HREF="#ChartsRegexp"
+>ChartsRegexp</A
+>&nbsp;--&nbsp;how to recognize songs played</DT
+><DT
+><A
+HREF="#WordHistory"
+>WordHistory</A
+>&nbsp;--&nbsp;maximum number of words to show</DT
+><DT
+><A
+HREF="#NickHistory"
+>NickHistory</A
+>&nbsp;--&nbsp;maximum number of nicks to show in "Most referenced nicks"</DT
+><DT
+><A
+HREF="#SmileyHistory"
+>SmileyHistory</A
+>&nbsp;--&nbsp;maximum number of smileys to show in smiley stats</DT
+><DT
+><A
+HREF="#KarmaHistory"
+>KarmaHistory</A
+>&nbsp;--&nbsp;maximum number of nicks to show in "Karma"</DT
+><DT
+><A
+HREF="#NickTracking"
+>NickTracking</A
+>&nbsp;--&nbsp;track nick changes and create aliases</DT
+><DT
+><A
+HREF="#NickLimit"
+>NickLimit</A
+>&nbsp;--&nbsp;maximum number of nicks in lists</DT
+><DT
+><A
+HREF="#SortByWords"
+>SortByWords</A
+>&nbsp;--&nbsp;sort "most active nicks" by words</DT
+></DL
+></DD
+><DT
+>5. <A
+HREF="#reference-pictures"
+>Picture options</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#PicLocation"
+>PicLocation</A
+>&nbsp;--&nbsp;path to images on stats page</DT
+><DT
+><A
+HREF="#UserPics"
+>UserPics</A
+>&nbsp;--&nbsp;number of user pictures per row</DT
+><DT
+><A
+HREF="#ImagePath"
+>ImagePath</A
+>&nbsp;--&nbsp;path to user pictures (HTML page)</DT
+><DT
+><A
+HREF="#DefaultPic"
+>DefaultPic</A
+>&nbsp;--&nbsp;use a default user picture</DT
+><DT
+><A
+HREF="#ImageGlobPath"
+>ImageGlobPath</A
+>&nbsp;--&nbsp;path to user pictures (output generation)</DT
+><DT
+><A
+HREF="#PicWidth"
+>PicWidth</A
+>&nbsp;--&nbsp;define a standard width for user pictures</DT
+><DT
+><A
+HREF="#PicHeight"
+>PicHeight</A
+>&nbsp;--&nbsp;define a standard height for user pictures</DT
+></DL
+></DD
+><DT
+>6. <A
+HREF="#reference-misc"
+>Misc options</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#Charset"
+>Charset</A
+>&nbsp;--&nbsp;character set to use for stats page</DT
+><DT
+><A
+HREF="#LogCharset"
+>LogCharset</A
+>&nbsp;--&nbsp;character set for logfiles</DT
+><DT
+><A
+HREF="#LogCharsetFallback"
+>LogCharsetFallback</A
+>&nbsp;--&nbsp;fallback character set for logfiles</DT
+><DT
+><A
+HREF="#TimeOffset"
+>TimeOffset</A
+>&nbsp;--&nbsp;use a different time zone than the local machine</DT
+><DT
+><A
+HREF="#RegexpAliases"
+>RegexpAliases</A
+>&nbsp;--&nbsp;use regular expressions in user aliases</DT
+><DT
+><A
+HREF="#LangFile"
+>LangFile</A
+>&nbsp;--&nbsp;filename of language file</DT
+><DT
+><A
+HREF="#CssDir"
+>CssDir</A
+>&nbsp;--&nbsp;path to directory with CSS files</DT
+><DT
+><A
+HREF="#HiCell"
+>HiCell, HiCell2</A
+>&nbsp;--&nbsp;colors for color gradient in most active nicks section</DT
+><DT
+><A
+HREF="#LogType"
+>LogType</A
+>&nbsp;--&nbsp;type of log (not the format of the log)</DT
+><DT
+><A
+HREF="#StatsDump"
+>StatsDump</A
+>&nbsp;--&nbsp;dump raw statistics into file</DT
+></DL
+></DD
+><DT
+>7. <A
+HREF="#copyright"
+>Copyright and License</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="what-is-pisg"
+></A
+>Chapter 1. What is pisg?</H1
+><P
+>&#13;     pisg is an IRC statistics generator. It takes IRC logfiles and turns
+     them into nice looking stats.
+    </P
+><P
+>&#13;    In general, you would do something like this to get it running:
+
+    <P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>&#13;        Enable logging in an IRC bot, or in your IRC client. The log will be
+        outputted into a file.
+       </P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>&#13;        You set up pisg, you define the channel name, and the path to the
+        logfile you created.
+       </P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>&#13;        You run pisg, pisg runs the log through and create statistics, it
+        then creates an HTML page which you can upload to a webserver.
+       </P
+></LI
+></UL
+>
+
+    </P
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="requirements"
+>1.1. What are the requirements to run pisg?</A
+></H2
+><P
+>&#13;
+    <P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>&#13;        An IRC client or bot where pisg supports the output logfile.
+       </P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>&#13;        Any operating system which Perl runs on, this includes popular OSes
+        such as Linux, FreeBSD, Windows and Mac. You will have a hard time
+        finding an OS where Perl isn't supported. For Windows this means
+        that you need to download <A
+HREF="http://activestate.com/Products/ActivePerl/"
+TARGET="_top"
+>ActivePerl</A
+>.
+       </P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>&#13;       <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>Optional</I
+></SPAN
+> - a system to host the statistics page
+       24 hours a day, 7 days a week.
+       </P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>&#13;       <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>Optional</I
+></SPAN
+> - a system to log the channel, 24 hours
+       a day, 7 days a week.
+       </P
+></LI
+></UL
+>
+    </P
+></DIV
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="setting-up-pisg"
+></A
+>Chapter 2. Setting up pisg for the first time</H1
+><P
+>&#13;   Most configuration happens through the <TT
+CLASS="filename"
+>pisg.cfg</TT
+>
+   file, the file format is made to be easy to read, and easy to extend for
+   further use. It uses an XML-like format, with elements and attributes.
+   </P
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="setting-up-a-channel"
+>2.1. Setting up a channel</A
+></H2
+><P
+>&#13;   An element called <A
+HREF="#Channel"
+>Channel</A
+> is made for defining
+   channels, a quick example of a channel is here:
+
+   <PRE
+CLASS="programlisting"
+>&#13;   
+    &#60;channel="#channel"&#62;
+     Logfile = "channel.log"
+     Format = "mIRC"
+     Maintainer = "John"
+     OutputFile = "mychan.html"
+    &#60;/channel&#62;
+   
+   </PRE
+>
+
+   The above will define a <A
+HREF="#Channel"
+>Channel</A
+> called <B
+CLASS="command"
+>#channel</B
+>, the
+   logfile pisg will look for is called <B
+CLASS="command"
+>channel.log</B
+> and
+   the <A
+HREF="#Format"
+>Format</A
+> of the logfile will be <B
+CLASS="command"
+>mIRC</B
+>. The
+   <A
+HREF="#Maintainer"
+>Maintainer</A
+> (which will be stated on the output page) is
+   <B
+CLASS="command"
+>John</B
+>.
+   </P
+><P
+>&#13;   That is basically it! Now, there are a lot more options that you can use
+   for your channels, for this please refer to the reference documentation.
+   </P
+><P
+>&#13;   Also be-aware of the fact that pisg uses various images to show the
+   time-related bars. These images are placed in the
+   <TT
+CLASS="filename"
+>gfx/</TT
+> folder and should be placed into the same
+   directory as your outputted HTML file.
+   </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="user-options"
+>2.2. Specifying user options</A
+></H2
+><P
+>&#13;    User options are set with a simple XML-like syntax in the form:
+
+   <PRE
+CLASS="programlisting"
+>&#13;   &#60;user nick="NICK" option="VALUE"&#62;
+   </PRE
+>
+
+    Remember, the nick is always required.
+
+    For example to add aliases to a nick, then you could do this:
+    <PRE
+CLASS="programlisting"
+>&#13;    &#60;user nick="Joe" alias="Joe^*"&#62;
+    </PRE
+>
+
+    The asterisk (*) means that it will match all nicks starting with 'Joe^'. So
+    it will add all Joe^'s to 'Joe' in the stats.
+
+    Another thing you can do is to add a picture to a user:
+    <PRE
+CLASS="programlisting"
+>&#13;    &#60;user nick="Ben" pic="ben_holiday.jpg"&#62;
+    </PRE
+>
+
+    If you have a larger picture of the user as well, you can make the picture
+    on the stats page link to it:
+    <PRE
+CLASS="programlisting"
+>&#13;     &#60;user nick="Ben" pic="ben_holiday.jpg" bigpic="ben-big.jpg"&#62;
+    </PRE
+>
+
+    You can include * or ? to enable filename globbing to randomly choose one
+    from several pictures: (see documentation for the
+    <A
+HREF="#ImageGlobPath"
+>ImageGlobPath</A
+> option)
+    <PRE
+CLASS="programlisting"
+>&#13;    &#60;user nick="Ben" pic="ben_*.jpg"&#62;
+    </PRE
+>
+
+    You can also set a user's sex.
+    The sex setting can be "f"emale, "m"ale, or "b"ot:
+    <PRE
+CLASS="programlisting"
+>&#13;    &#60;user nick="Ben" sex="m"&#62;
+    </PRE
+>
+
+    Also you can add links to URLs and e-mails:
+    <PRE
+CLASS="programlisting"
+>&#13;    &#60;user nick="Christine" link="http://www.christine.com"&#62;
+    </PRE
+>
+
+        or
+
+    <PRE
+CLASS="programlisting"
+>&#13;    &#60;user nick="Chris" link="chris@host.com"&#62;
+    </PRE
+>
+
+    The last thing you can do is to ignore nicks (for example bots):
+    <PRE
+CLASS="programlisting"
+>&#13;    &#60;user nick="nameofbot" ignore="y"&#62;
+    </PRE
+>
+
+    You don't have to do all this in many lines, you could just as easily do:
+    <PRE
+CLASS="programlisting"
+>&#13;    &#60;user nick="Joe" alias="Joe^away Joe^work" pic="joe.jpg" link="joe@joe.com" sex="m"&#62;
+    </PRE
+>
+
+    (Here the aliases are a space separated list of nicks, that also works! But *
+    as a wildcard is smarter, although it is slower).
+    </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="global-options"
+>2.3. Setting global options</A
+></H2
+><P
+>&#13;     Many times, it will be useful to set up global options, global options
+     are set like this:
+
+     <PRE
+CLASS="programlisting"
+>&#13;     &#60;set option="VALUE"&#62;
+     </PRE
+>
+
+     Any global option will be overriden by anything defined within channel
+     elements (see <A
+HREF="#setting-up-a-channel"
+>Section 2.1</A
+>)
+     </P
+><P
+>&#13;     For example, to change the background color of the stats page, you
+     could do:
+
+     <PRE
+CLASS="programlisting"
+>&#13;     &#60;set bgcolor="black"&#62;
+     </PRE
+>
+
+     You can set many options in a single <B
+CLASS="command"
+>set</B
+>:
+
+     <PRE
+CLASS="programlisting"
+>&#13;     &#60;set lang="DE" timeoffset="+1"&#62;
+     </PRE
+>
+
+     The above will set the language on the statistics page to DE (Deutsch,
+     German) and set the time offset to +1.
+
+     All options available are mentioned in the reference documentation.
+    </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="ignoring-links"
+>2.4. Ignoring links</A
+></H2
+><P
+>&#13;    It's possible to ignore links in the "Most referenced URLs" section:
+
+
+    <PRE
+CLASS="programlisting"
+>&#13;    
+     &#60;link url="http://www.slashdot.org" ignore="y"&#62;
+    
+    </PRE
+>
+    </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="including-config"
+>2.5. Including common settings for various channels</A
+></H2
+><P
+>&#13;    If you have, for example, more than one channel, where the users are the
+    same, or you don't want to maintain more than one user file, you can use
+    the "include" setting in the main config file:
+
+    <PRE
+CLASS="programlisting"
+>&#13;    
+     &#60;include="/home/vetinari/pisg/users.cfg"&#62;
+    
+    </PRE
+>
+
+    This will include the file /home/vetinari/pisg/users.cfg in the config
+    at the place where the include statement is set.
+    </P
+><P
+>&#13;    Note, that you can NOT include a file from an included file!
+    </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="using-css"
+>2.6. Changing the layout of your stats page</A
+></H2
+><P
+>&#13;    The standard layout and colors in the outputted HTML page are made to be
+    somewhat clean and neutral. But you have the chance to change the layout
+    yourself.
+    </P
+><P
+>&#13;    There are a few predefined color schemes for you to use, use the
+    <A
+HREF="#ColorScheme"
+>ColorScheme</A
+> option when using them. The
+    colorschemes distributed with pisg are: default (which is the default),
+    darkgalaxy, darkred, justgrey, ocean, orange_grey, pisg, softgreen.
+    </P
+><P
+>&#13;    When changing it, you need a fair knowledge of CSS (Cascading Style
+    Sheets). CSS is what most of the web uses today to define styles and
+    layout on HTML pages.
+    With the pisg distribution, look in the <TT
+CLASS="filename"
+>layout</TT
+>
+    directory. In it resides <TT
+CLASS="filename"
+>default.css</TT
+> which is the
+    file being included onto the HTML page. Open it in a text editor like
+    vi or notepad. Then change it until you're happy with it. Be aware that
+    you might want to look at the <A
+HREF="#HiCell"
+>HiCell and HiCell2</A
+>
+    options through pisg.cfg for changing the last two colors.
+    </P
+><P
+>&#13;    If you have created a nice stylesheet which other can take advantage of,
+    you are encouraged to send it to the pisg mailing list so that it can be
+    distributed with the next version of pisg.
+    </P
+><P
+>&#13;    If you want to embed the statistics into another page, use the "none" color scheme.
+    Pisg will then omit the HTML header and write only the body part.
+    </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="running-pisg"
+>2.7. Running pisg</A
+></H2
+><P
+>&#13;    When everything is set up in the pisg configuration file (pisg.cfg),
+    then you simply run pisg on the command-line.
+
+    </P
+><P
+>&#13;    Using Linux, BSD or another UNIX-like system:
+
+    <PRE
+CLASS="screen"
+>&#13;    <SAMP
+CLASS="prompt"
+>user@host:pisg-0.37$</SAMP
+> <KBD
+CLASS="userinput"
+>./pisg</KBD
+>
+    </PRE
+>
+    </P
+><P
+>&#13;    Using Windows:
+    <PRE
+CLASS="screen"
+>&#13;    <SAMP
+CLASS="prompt"
+>c:\pisg&#62;</SAMP
+> <KBD
+CLASS="userinput"
+>perl pisg</KBD
+>
+    </PRE
+>
+    </P
+><P
+>&#13;    The program will run and parse the logfiles you specified in the
+    configuration file.
+    </P
+><P
+>&#13;    If you are using Linux, BSD or another UNIX-like system and want run
+    pisg automatically several times a day, then see the
+    <TT
+CLASS="filename"
+>crontab</TT
+> file in the <TT
+CLASS="filename"
+>scripts/</TT
+>
+    directory.
+    </P
+><P
+>&#13;    For Windows, see the <TT
+CLASS="filename"
+>windows-upload-ftp.txt</TT
+> file
+    with the pisg distribution, this file is also placed in the
+    <TT
+CLASS="filename"
+>scripts/</TT
+> directory.
+    </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="mailing-list-and-bugs"
+>2.8. Obtaining help and reporting bugs</A
+></H2
+><P
+>&#13;    If your problem could not be resolved through here, then you should send
+    an e-mail to the pisg mailing list. You can subscribe and see more info
+    at <A
+HREF="http://lists.sourceforge.net/lists/listinfo/pisg-general"
+TARGET="_top"
+>http://lists.sourceforge.net/lists/listinfo/pisg-general</A
+>.
+    </P
+><P
+>&#13;    If you believe that you have found a bug, you should use the SourceForge
+    <A
+HREF="http://sourceforge.net/tracker/?group_id=31862&atid=403711"
+TARGET="_top"
+>bug
+    tracking system.</A
+>
+    </P
+></DIV
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="reference"
+></A
+>Chapter 3. General pisg options</H1
+><H1
+><A
+NAME="Channel"
+></A
+>Channel</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN123"
+></A
+><H2
+>Name</H2
+>Channel&nbsp;--&nbsp;define channel name</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN126"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         Maintainer = "John"
+        &#60;/channel&#62;
+      
+     </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN128"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>Channel</B
+> is used in two contexts, globally when using
+    &#60;set&#62; and when defining new channels. It sets the name of the
+    channel.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN132"
+></A
+><H2
+>Default</H2
+><P
+> Unset </P
+></DIV
+><H1
+><A
+NAME="Format"
+></A
+>Format</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN138"
+></A
+><H2
+>Name</H2
+>Format&nbsp;--&nbsp;the logfile format</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN141"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "eggdrop"
+         Maintainer = "John"
+        &#60;/channel&#62;
+
+        &#60;set Format="mIRC"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN143"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>Format</B
+> is used to define the format of the logfile,
+    pisg supports a various number of different logfiles, see the FORMATS
+    file included with the pisg distribution.
+    See also <A
+HREF="#Maintainer"
+>Maintainer</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN148"
+></A
+><H2
+>Default</H2
+><P
+> Unset </P
+></DIV
+><H1
+><A
+NAME="Network"
+></A
+>Network</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN154"
+></A
+><H2
+>Name</H2
+>Network&nbsp;--&nbsp;the IRC network of the channel</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN157"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "eggdrop"
+         Network = "Undernet"
+        &#60;/channel&#62;
+
+        &#60;set Network="Quakenet"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN159"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>Network</B
+> is used to set the network which the channel
+    resides on, this name is displayed on the stats page.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN163"
+></A
+><H2
+>Default</H2
+><P
+> SomeIRCNetwork </P
+></DIV
+><H1
+><A
+NAME="OutputFile"
+></A
+>OutputFile</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN169"
+></A
+><H2
+>Name</H2
+>OutputFile&nbsp;--&nbsp;name of the generated HTML page</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN172"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "eggdrop"
+         OutputFile = "mychan.html"
+        &#60;/channel&#62;
+
+        &#60;set OutputFile="mychan.html"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN174"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>OutputFile</B
+> is used to define the name of the
+    generated statistics page.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN178"
+></A
+><H2
+>Default</H2
+><P
+> index.html </P
+></DIV
+><H1
+><A
+NAME="OutputTag"
+></A
+>OutputTag</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN184"
+></A
+><H2
+>Name</H2
+>OutputTag&nbsp;--&nbsp;tag to insert into OutputFile</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN187"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         LogDir = "logs/"
+         Format = "eggdrop"
+         OutputFile = "mychan%t.html"
+         OutputTag = "-week"
+        &#60;/channel&#62;
+
+        &#60;set OutputTag="-week"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN189"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>OutputTag</B
+> specifies a string that will replace
+    occurrences of "%t" in <A
+HREF="#OutputFile"
+>OutputFile</A
+>. This option is most
+    useful when used as a command line switch (-t) to pisg in conjunction with
+    <A
+HREF="#NFiles"
+>NFiles</A
+> (-nf). Example:
+
+    <PRE
+CLASS="programlisting"
+>&#13;      
+      $ pisg -co pisg.conf
+      $ pisg -co pisg.conf -nf 8 -t -week
+      
+    </PRE
+>
+
+    Leaving out the <B
+CLASS="command"
+>OutputTag</B
+> settings from the above
+    pisg.conf snippet, this writes both the full statistics (mychan.html) and
+    statistics for the last week (mychan-week.html) using the same pisg config
+    file. (Assuming that there are separate logfiles for each day.)
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN197"
+></A
+><H2
+>Default</H2
+><P
+> unset </P
+></DIV
+><H1
+><A
+NAME="Logfile"
+></A
+>Logfile</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN203"
+></A
+><H2
+>Name</H2
+>Logfile&nbsp;--&nbsp;name of logfile to parse</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN206"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile="/home/foo/eggdrop/logs/mylog.txt"
+         Format = "eggdrop"
+        &#60;/channel&#62;
+
+        &#60;set Logfile="foo.log"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN208"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    This defines the filename of the logfile to parse for the channel. If
+    you want to parse a directory full of logfiles, you should use the
+    <A
+HREF="#LogDir"
+>LogDir</A
+> option instead. Providing this option multiple
+    times will parse multiple files in the order the statements appear.
+    Wildcards (* ? []) will be expanded.
+    See also <A
+HREF="#LogDir"
+>LogDir</A
+> and <A
+HREF="#NFiles"
+>NFiles</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN214"
+></A
+><H2
+>Default</H2
+><P
+> unset </P
+></DIV
+><H1
+><A
+NAME="LogDir"
+></A
+>LogDir</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN220"
+></A
+><H2
+>Name</H2
+>LogDir&nbsp;--&nbsp;parse a directory full of logs</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN223"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         LogDir="/home/foo/eggdrop/logs/"
+         Format = "eggdrop"
+        &#60;/channel&#62;
+
+        &#60;set LogDir="dailylogs/"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN225"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    When <B
+CLASS="command"
+>LogDir</B
+> is defined to valid path to a directory,
+    then pisg will run through that directory, parse all logfiles in it and
+    create one HTML page from it. Useful with for example eggdrop logs. Providing
+    this option multiple times will parse all the files in multiple
+    directories in the order the statements appear.
+    See also <A
+HREF="#NFiles"
+>NFiles</A
+>, <A
+HREF="#LogPrefix"
+>LogPrefix</A
+>, and
+    <A
+HREF="#LogSuffix"
+>LogSuffix</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN232"
+></A
+><H2
+>Default</H2
+><P
+> unset </P
+></DIV
+><H1
+><A
+NAME="NFiles"
+></A
+>NFiles</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN238"
+></A
+><H2
+>Name</H2
+>NFiles&nbsp;--&nbsp;parse only the last files in <A
+HREF="#LogDir"
+>LogDir</A
+></DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN242"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         LogDir="/home/foo/eggdrop/logs/"
+         NFiles="8"
+         Format="eggdrop"
+        &#60;/channel&#62;
+
+        &#60;set NFiles="8"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN244"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    When <B
+CLASS="command"
+>NFiles</B
+> is set to a positive integer, pisg will
+    process only the last that much logfiles from <A
+HREF="#Logfile"
+>Logfile</A
+>
+    and <A
+HREF="#LogDir"
+>LogDir</A
+> options. Useful to create statistics that
+    cover the last week or month (assuming there are separate logfile per
+    day/week/etc.). </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN250"
+></A
+><H2
+>Default</H2
+><P
+> 0 (process all files) </P
+></DIV
+><H1
+><A
+NAME="Maintainer"
+></A
+>Maintainer</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN256"
+></A
+><H2
+>Name</H2
+>Maintainer&nbsp;--&nbsp;name of the maintainer</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN259"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         Maintainer = "Benny"
+        &#60;/channel&#62;
+
+        &#60;set Maintainer="Benny"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN261"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>Maintainer</B
+> is used to define the name of the
+    maintainer of the statistics page, this can be either the person
+    generating the stats or the bot/client doing the logging.
+    The maintainer is displayed in the outputted stats page.
+    This setting is also used by some log parsers where "You" is used
+    instead of the nick in the log (e.g. "You have been kicked").
+    See also <A
+HREF="#Format"
+>Format</A
+>, <A
+HREF="#NickTracking"
+>NickTracking</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN267"
+></A
+><H2
+>Default</H2
+><P
+> MAINTAINER </P
+></DIV
+><H1
+><A
+NAME="ColorScheme"
+></A
+>ColorScheme</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN273"
+></A
+><H2
+>Name</H2
+>ColorScheme&nbsp;--&nbsp;use a different color scheme for stats page</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN276"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         ColorScheme = "darkgalaxy"
+         Maintainer = "John"
+        &#60;/channel&#62;
+
+        &#60;set ColorScheme="default"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN278"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>ColorScheme</B
+> is used to define the color scheme used
+    for the statistics page. Actually it's the CSS file being included.
+    CSS files distributed with pisg are: darkgalaxy, darkred, default,
+    justgrey, ocean, orange_grey, pisg, softgreen (omit the .css). The file
+    will be included statically in the generated HTML page. If you give a file
+    name or URL (i.e. a color scheme name with .css or a path), the file will
+    be linked to instead. Using "none" will cause pisg to write only the body
+    of the page; use this to include the statistics into a custom page. See
+    also <A
+HREF="#CssDir"
+>CssDir</A
+>,
+    <A
+HREF="#HiCell"
+>HiCell/HiCell2</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN284"
+></A
+><H2
+>Default</H2
+><P
+> default </P
+></DIV
+><H1
+><A
+NAME="AltColorScheme"
+></A
+>AltColorScheme</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN290"
+></A
+><H2
+>Name</H2
+>AltColorScheme&nbsp;--&nbsp;alternate stylesheets for stats page</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN293"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         ColorScheme = "darkgalaxy"
+         AltColorScheme = "layout/ocean.css"
+         Maintainer = "John"
+        &#60;/channel&#62;
+
+        &#60;set AltColorScheme="layout/darkgalaxy.css layout/justgrey.css"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN295"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>AltColorScheme</B
+> defines an alternate CSS file to
+    be used for the statistics page. Multiple files can be given (space
+    separated.) Note that this is not supported by all browsers.
+    See also <A
+HREF="#ColorScheme"
+>ColorScheme</A
+> and <A
+HREF="#CssDir"
+>CssDir</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN301"
+></A
+><H2
+>Default</H2
+><P
+> default </P
+></DIV
+><H1
+><A
+NAME="Lang"
+></A
+>Lang</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN307"
+></A
+><H2
+>Name</H2
+>Lang&nbsp;--&nbsp;define the language / translation to use</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN310"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         Lang = "DE"
+        &#60;/channel&#62;
+
+        &#60;set Lang="FR"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN312"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>Lang</B
+> defines the language to use for the stats.
+    Currently, lang.txt includes:
+    EN    (English),
+    BG    (Bulgarian),
+    CA    (Catalan),
+    CZ    (Czech),
+    DA    (Danish),
+    DE    (German),
+    EE    (Estonian),
+    ES    (Spanish),
+    FI    (Finnish),
+    FR    (French),
+    GR    (Greek),
+    HE    (Hebrew),
+    HU    (Hungarian),
+    IS    (Icelandic),
+    IT    (Italian),
+    NL    (Dutch),
+    NL_BE (Flemish),
+    NO    (Norwegian),
+    PL    (Polish),
+    PT    (Portuguese),
+    PT_BR (Portuguese/Brazil),
+    RO    (Romanian),
+    RU    (Russian),
+    SE    (Swedish),
+    SI    (Slovenian),
+    SK    (Slovak),
+    SQ    (Albanian),
+    TR    (Turkish),
+    YU    (Serbian).
+    See also <A
+HREF="#LangFile"
+>LangFile</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN317"
+></A
+><H2
+>Default</H2
+><P
+> EN (English) </P
+></DIV
+><H1
+><A
+NAME="PageHead"
+></A
+>PageHead</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN323"
+></A
+><H2
+>Name</H2
+>PageHead&nbsp;--&nbsp;define a file as page header</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN326"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         OutputFile = "stats.html"
+         PageHead = "myheader.txt"
+        &#60;/channel&#62;
+
+        &#60;set PageHead="someheader.txt"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN328"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>PageHead</B
+> is used to include a file in the stats page,
+    for example an introduction text, a link to an image or a banner. The
+    file can hold anything, it will be included raw in the stats page -
+    so HTML should be preferred. The file will be included in the top of
+    the page. This option is the opposite of <A
+HREF="#PageFoot"
+>PageFoot</A
+>.
+
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN333"
+></A
+><H2
+>Default</H2
+><P
+> none </P
+></DIV
+><H1
+><A
+NAME="PageFoot"
+></A
+>PageFoot</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN339"
+></A
+><H2
+>Name</H2
+>PageFoot&nbsp;--&nbsp;define a file as page footer</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN342"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         outputfile = "stats.html"
+         PageFoot = "myfooter.txt"
+        &#60;/channel&#62;
+
+        &#60;set PageFoot="somefooter.txt"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN344"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>PageFoot</B
+> is used to include a file in the stats page,
+    for example an introduction text, a link to an image or a banner. The
+    file can hold anything, it will be included raw in the stats page -
+    so HTML should be preferred. The file will be included in the bottom of
+    the page. This option is the opposite of <A
+HREF="#PageHead"
+>PageHead</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN349"
+></A
+><H2
+>Default</H2
+><P
+> none </P
+></DIV
+><H1
+><A
+NAME="LogPrefix"
+></A
+>LogPrefix</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN355"
+></A
+><H2
+>Name</H2
+>LogPrefix&nbsp;--&nbsp;only parse logs LogPrefixed with a user defined string</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN358"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         LogDir="/home/foo/eggdrop/logs/"
+         Format = "eggdrop"
+         LogPrefix = "logjun"
+        &#60;/channel&#62;
+
+        &#60;set LogPrefix="logjanuary"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN360"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    When using the <A
+HREF="#LogDir"
+>LogDir</A
+> option and you only want to use
+    a slew of the files in it, you can have pisg choose only files which are
+    prefixed with a special string.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN364"
+></A
+><H2
+>Default</H2
+><P
+> unset </P
+></DIV
+><H1
+><A
+NAME="LogSuffix"
+></A
+>LogSuffix</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN370"
+></A
+><H2
+>Name</H2
+>LogSuffix&nbsp;--&nbsp;Regexp to sort logfiles by format month||day||year</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN373"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set LogSuffix="\.\d\d([A-Za-z]+)\d\d\d\d||\.(\d\d)[A-Za-z]+\d\d\d\d||\.\d\d[A-Za-z]+(\d\d\d\d)"&#62;
+      
+     </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN375"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>LogSuffix</B
+> is used to define the suffix of a logfile,
+    it only works when <A
+HREF="#LogDir"
+>LogDir</A
+> is defined. The example in
+    the synopsis is for the eggdrop bots default format.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN380"
+></A
+><H2
+>Default</H2
+><P
+> Unset </P
+></DIV
+><H1
+><A
+NAME="Silent"
+></A
+>Silent</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN386"
+></A
+><H2
+>Name</H2
+>Silent&nbsp;--&nbsp;make pisg silent, suppress messages</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN389"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set Silent="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN391"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    This option is useful mainly from command line when invoking pisg with
+    <B
+CLASS="command"
+>--silent 1</B
+>. But it can also used in the configuration
+    file. It will suppress all standard output from pisg. Error messages
+    will still be sent.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN395"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="CacheDir"
+></A
+>CacheDir</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN401"
+></A
+><H2
+>Name</H2
+>CacheDir&nbsp;--&nbsp;use a cache to speed up log parsing</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN404"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set CacheDir="pisg_cache"&#62;
+        &#60;set CacheDir="/path/to/pisg_cache"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN406"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    Setting this option makes pisg dump the results of log parsing into cache
+    files. The next time pisg is run, it compares the timestamp of the log(s)
+    with the timestamp stored in the cache file. When the log was not changed,
+    the cached data is used. (This means that it does not work if you only
+    have a single big logfile. Split the log at arbitrary points and use
+    <A
+HREF="#LogDir"
+>LogDir</A
+> or <A
+HREF="#Logfile"
+>Logfile</A
+>="dir/*".)
+    </P
+><P
+>&#13;    Note that the cache files should be deleted when the pisg config file is
+    changed since the cache data uses the old config settings.
+    <A
+HREF="#NickTracking"
+>NickTracking</A
+> does not work especially well with the
+    cache when using different <A
+HREF="#NFiles"
+>NFiles</A
+> settings.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN414"
+></A
+><H2
+>Default</H2
+><P
+> Unset </P
+></DIV
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="reference-stats"
+></A
+>Chapter 4. Options for various statistics features</H1
+><H1
+><A
+NAME="DailyActivity"
+></A
+>DailyActivity</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN422"
+></A
+><H2
+>Name</H2
+>DailyActivity&nbsp;--&nbsp;number of days to show in "Daily Actitity"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN425"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         DailyActivity = "0"
+        &#60;/channel&#62;
+
+        &#60;set DailyActivity="31"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN427"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    This option sets the number of days to show in the "Daily activity"
+    section. Pisg will generate a graph that shows the actitivy during
+    this timeframe. Setting the option to 0 disables the section.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN430"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowActiveTimes"
+></A
+>ShowActiveTimes</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN436"
+></A
+><H2
+>Name</H2
+>ShowActiveTimes&nbsp;--&nbsp;enable/disable "Most Active Times"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN439"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowActiveTimes = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowActiveTimes="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN441"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can disable the "Most Active Times" section on the
+    stats page. It will simply disappear when specifying 0.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN444"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowActiveNicks"
+></A
+>ShowActiveNicks</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN450"
+></A
+><H2
+>Name</H2
+>ShowActiveNicks&nbsp;--&nbsp;enable/disable "Most Active Nicks"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN453"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowActiveNicks = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowActiveNicks="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN455"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can disable the "Most Active Nicks" section on the
+    stats page.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN458"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowBigNumbers"
+></A
+>ShowBigNumbers</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN464"
+></A
+><H2
+>Name</H2
+>ShowBigNumbers&nbsp;--&nbsp;enable/disable "Big Numbers" sections</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN467"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowBigNumbers = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowBigNumbers="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN469"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can disable the "Big Numbers" and "Other
+    Interesting numbers" sections on the stats page. They will simply
+    disappear when specifying 0.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN472"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowTopics"
+></A
+>ShowTopics</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN478"
+></A
+><H2
+>Name</H2
+>ShowTopics&nbsp;--&nbsp;enable/disable "Latest topics" sections</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN481"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowTopics = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowTopics="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN483"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can disable the "Latest topics" section on the
+    stats page. It will simply disappear when specifying 0.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN486"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowLines"
+></A
+>ShowLines</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN492"
+></A
+><H2
+>Name</H2
+>ShowLines&nbsp;--&nbsp;enable/disable "number of lines"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN495"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowLines = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowLines="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN497"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The default behaviour is to add a column to the "Most Active Nicks"
+    section displaying the number of lines a user wrote. With this option it
+    can be disabled.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN500"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowWpl"
+></A
+>ShowWpl</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN506"
+></A
+><H2
+>Name</H2
+>ShowWpl&nbsp;--&nbsp;enable/disable "words per line"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN509"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowWpl = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowWpl="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN511"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can enable the "words per line" column in the
+    "Most Active Nicks" section. It will add a column describing the average
+    words per line for a person.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN514"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowCpl"
+></A
+>ShowCpl</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN520"
+></A
+><H2
+>Name</H2
+>ShowCpl&nbsp;--&nbsp;enable/disable "characters per line"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN523"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowCpl = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowCpl="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN525"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can enable the "characters per line" column in the
+    "Most Active Nicks" section. It will add a column describing the average
+    number of characters per line for a person.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN528"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowWords"
+></A
+>ShowWords</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN534"
+></A
+><H2
+>Name</H2
+>ShowWords&nbsp;--&nbsp;enable/disable "number of words"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN537"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowWords = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowWords="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN539"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The <B
+CLASS="command"
+>ShowWords</B
+> option adds a column to the "Most
+    Active Nicks" list which list the total number of words a user has
+    typed.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN543"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowLastSeen"
+></A
+>ShowLastSeen</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN549"
+></A
+><H2
+>Name</H2
+>ShowLastSeen&nbsp;--&nbsp;show when a user was last seen on a channel</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN552"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowLastSeen = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowLastSeen="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN554"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option enabled, a column will be added to the "Most Active
+    Nicks" section to display when a user was last seen. E.g. "2 days ago".
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN557"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowTime"
+></A
+>ShowTime</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN563"
+></A
+><H2
+>Name</H2
+>ShowTime&nbsp;--&nbsp;show when a nick was active</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN566"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowTime = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowTime="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN568"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The default behaviour is to add a column to the "Most Active Nicks"
+    section displaying a fancy time bar to show when a user was active. With
+    this option it can be disabled.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN571"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowLineTime"
+></A
+>ShowLineTime</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN577"
+></A
+><H2
+>Name</H2
+>ShowLineTime&nbsp;--&nbsp;mIRCStats like behaviour of time bar</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN580"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "bobot"
+         ShowLineTime = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowLineTime="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN582"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The default behaviour is to add a column to the "Most Active Nicks"
+    section displaying a fancy time bar to show when a user was active.
+    With this option it can be done the same way as mIRCStats does it; that
+    is, by putting that time bar next to the number of lines, in the same
+    column.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN585"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowWordTime"
+></A
+>ShowWordTime</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN591"
+></A
+><H2
+>Name</H2
+>ShowWordTime&nbsp;--&nbsp;ShowLineTime like behavior of words column</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN594"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "bobot"
+         ShowWordTime = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowWordTime="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN596"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The default behaviour is to add a column to the "Most Active Nicks"
+    section displaying a fancy time bar to show when a user was active.
+    With this option it can be done similarly to mIRCStats does it and like
+    the ShowLineTime option, but using words instead of lines; that is, by
+    putting that time bar next to the number of words, in the same column.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN599"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowRandQuote"
+></A
+>ShowRandQuote</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN605"
+></A
+><H2
+>Name</H2
+>ShowRandQuote&nbsp;--&nbsp;enable or disable the random quotes</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN608"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "bobot"
+         ShowRandQuote = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowRandQuote="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN610"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The default behaviour is to add a column to the "Most Active Nicks"
+    section displaying a users random quote. With this option it can be
+    disabled.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN613"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowLegend"
+></A
+>ShowLegend</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN619"
+></A
+><H2
+>Name</H2
+>ShowLegend&nbsp;--&nbsp;enable or disable the legend of the time bars</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN622"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "bobot"
+         ShowLegend = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowLegend="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN624"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default, pisg shows a legend below the "Most Active Times" displaying
+    what the different colors means. With this option it can be disabled.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN627"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowKickLine"
+></A
+>ShowKickLine</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN633"
+></A
+><H2
+>Name</H2
+>ShowKickLine&nbsp;--&nbsp;enable or disable the kick line</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN636"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "bobot"
+         ShowKickLine = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowKickLine="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN638"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default, pisg shows an example kick line in the "Most kicked"-stats.
+    With this option it can be disabled.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN641"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowActionLine"
+></A
+>ShowActionLine</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN647"
+></A
+><H2
+>Name</H2
+>ShowActionLine&nbsp;--&nbsp;enable or disable the action line</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN650"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "bobot"
+         ShowActionLine = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowActionLine="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN652"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default, pisg shows an example action line in the "Most actions"-stats.
+    With this option it can be disabled.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN655"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowShoutLine"
+></A
+>ShowShoutLine</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN661"
+></A
+><H2
+>Name</H2
+>ShowShoutLine&nbsp;--&nbsp;enable or disable the shout line</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN664"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "bobot"
+         ShowShoutLine = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowShoutLine="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN666"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default, pisg shows an example shout line in the "Most shouting
+    people"-stats.  With this option it can be disabled.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN669"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowFoulDecimals"
+></A
+>ShowFoulDecimals</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN675"
+></A
+><H2
+>Name</H2
+>ShowFoulDecimals&nbsp;--&nbsp;set how many decimals to show</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN678"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "bobot"
+         ShowFoulDecimals = "2"
+        &#60;/channel&#62;
+
+        &#60;set ShowFoulDecimals="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN680"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default, pisg uses 1 decimal. With this option you could change 
+    it to whatever you like. Negative is treated as the default value.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN683"
+></A
+><H2
+>Default</H2
+><P
+> 1 decimal </P
+></DIV
+><H1
+><A
+NAME="ShowFoulLine"
+></A
+>ShowFoulLine</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN689"
+></A
+><H2
+>Name</H2
+>ShowFoulLine&nbsp;--&nbsp;enable or disable the foul line</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN692"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "bobot"
+         ShowFoulLine = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowFoulLine="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN694"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default, pisg doesn't show an example foul line in the "Most
+    fouls"-stats.  With this option it can be enabled.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN697"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowViolentLines"
+></A
+>ShowViolentLines</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN703"
+></A
+><H2
+>Name</H2
+>ShowViolentLines&nbsp;--&nbsp;enable or disable the violent lines</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN706"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "bobot"
+         ShowViolentLines = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowViolentLines="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN708"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default, pisg shows example violent lines in the "Most aggressive"
+    and "Most attacked"-stats.  With this option it can be disabled.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN711"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowMuw"
+></A
+>ShowMuw</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN717"
+></A
+><H2
+>Name</H2
+>ShowMuw&nbsp;--&nbsp;enable or disable "Most used words"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN720"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowMuw = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowMuw="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN722"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default, pisg adds an "Most used words" section to the stats page.
+    With this option you can disable it from being shown.
+    See also <A
+HREF="#WordHistory"
+>WordHistory</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN726"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowMrn"
+></A
+>ShowMrn</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN732"
+></A
+><H2
+>Name</H2
+>ShowMrn&nbsp;--&nbsp;enable or disable "Most referenced nicks"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN735"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowMrn = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowMrn="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN737"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default,  pisg adds an "Most referenced nicks" section to the stats
+    page.  With this option you can disable it from being shown.
+    See also <A
+HREF="#NickHistory"
+>NickHistory</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN741"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowMru"
+></A
+>ShowMru</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN747"
+></A
+><H2
+>Name</H2
+>ShowMru&nbsp;--&nbsp;enable or disable "Most referenced URLs"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN750"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowMru = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowMru="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN752"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default,  pisg adds an "Most referenced URLs" section to the stats
+    page.  With this option you can disable it from being shown.
+    See also <A
+HREF="#UrlHistory"
+>UrlHistory</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN756"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowCharts"
+></A
+>ShowCharts</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN762"
+></A
+><H2
+>Name</H2
+>ShowCharts&nbsp;--&nbsp;enable or disable channel music charts</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN765"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowCharts = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowCharts="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN767"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option set, pisg creates a chart listing of the top songs played
+    on the channel. See also <A
+HREF="#ChartsHistory"
+>ChartsHistory</A
+> and
+    <A
+HREF="#ChartsRegexp"
+>ChartsRegexp</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN772"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowOps"
+></A
+>ShowOps</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN778"
+></A
+><H2
+>Name</H2
+>ShowOps&nbsp;--&nbsp;enable or disable op statistics</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN781"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowOps = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowOps="0"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN783"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default, pisg has op statistics in the "Most interesting numbers"
+    section. Here you can disable the feature, it's useful if you don't feel
+    that the information is of any value, or your log format doesn't support
+    ops/deops.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN786"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="ShowVoices"
+></A
+>ShowVoices</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN792"
+></A
+><H2
+>Name</H2
+>ShowVoices&nbsp;--&nbsp;enable or disable voice statistics</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN795"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowVoices = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowVoices="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN797"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default, pisg doesn't have voice statistics like it has op
+    statistics. Enabling this option will add a section to the "Most
+    interesting numbers" displaying who got most voices.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN800"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowHalfops"
+></A
+>ShowHalfops</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN806"
+></A
+><H2
+>Name</H2
+>ShowHalfops&nbsp;--&nbsp;enable or disable halfop statistics</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN809"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowHalfops = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowHalfops="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN811"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default, pisg doesn't have halfop statistics (+h on some servers)
+    like it has op statistics. Enabling this option will add a section to
+    the "Most interesting numbers" displaying who gave most half-ops.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN814"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowMostNicks"
+></A
+>ShowMostNicks</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN820"
+></A
+><H2
+>Name</H2
+>ShowMostNicks&nbsp;--&nbsp;show who changed nick most often</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN823"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowMostNicks = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowMostNicks="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN825"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By enabling this option, pisg will add a section to the stats showing
+    who had the most nicks, and what the nicks were. This option only works
+    properly when <A
+HREF="#NickTracking"
+>NickTracking</A
+> is enabled or
+    <A
+HREF="#user-options"
+>user aliases</A
+> have been defined.
+    See also <A
+HREF="#MostNicksHistory"
+>MostNicksHistory</A
+>,
+    <A
+HREF="#MostNicksVerbose"
+>MostNicksVerbose</A
+>, and
+    <A
+HREF="#NickLimit"
+>NickLimit</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN833"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowActiveGenders"
+></A
+>ShowActiveGenders</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN839"
+></A
+><H2
+>Name</H2
+>ShowActiveGenders&nbsp;--&nbsp;show stats on which gender talked most</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN842"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowActiveGenders = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowActiveGenders="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN844"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    Setting this option will make pisg create statistics on which gender
+    (female/male/bot) talked most (see the "sex" option in <A
+HREF="#user-options"
+>Section 2.2</A
+>). See also <A
+HREF="#NickLimit"
+>NickLimit</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN849"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowSmileys"
+></A
+>ShowSmileys</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN855"
+></A
+><H2
+>Name</H2
+>ShowSmileys&nbsp;--&nbsp;show most used smileys</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN858"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowSmileys = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowSmileys="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN860"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option, pisg will make a list of the most used smileys in the
+    channel. See also <A
+HREF="#SmileyHistory"
+>SmileyHistory</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN864"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowKarma"
+></A
+>ShowKarma</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN870"
+></A
+><H2
+>Name</H2
+>ShowKarma&nbsp;--&nbsp;show channel karma</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN873"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowKarma = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowKarma="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN875"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option, pisg will analyze the channel karma. Users can give other
+    users (or things) good or bad karma by saying "nickname++" or "nickname--";
+    "nickname==" resets it to zero. Only the last karma is remembered per
+    nick/nick combination, so there is at most +- 1 karma point.
+    See also <A
+HREF="#KarmaHistory"
+>KarmaHistory</A
+> and <A
+HREF="#NickLimit"
+>NickLimit</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN880"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowMostActiveByHour"
+></A
+>ShowMostActiveByHour</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN886"
+></A
+><H2
+>Name</H2
+>ShowMostActiveByHour&nbsp;--&nbsp;show most active nicks by hour</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN889"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowMostActiveByHour = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowMostActiveByHour="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN891"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By enabling this option, pisg will add a section to the stats showing
+    "Most Active Nicks By Hour" - also look at the
+    <A
+HREF="#ShowMostActiveByHourGraph"
+>ShowMostActiveByHourGraph</A
+> and
+    <A
+HREF="#ActiveNicksByHour"
+>ActiveNicksByHour</A
+> settings.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN896"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowOnlyTop"
+></A
+>ShowOnlyTop</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN902"
+></A
+><H2
+>Name</H2
+>ShowOnlyTop&nbsp;--&nbsp;only count stats for top talkers, ignore less-active users</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN905"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowOnlyTop = "1"
+        &#60;/channel&#62;
+
+        &#60;set ShowOnlyTop="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN907"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By enabling this option, stats in the "Big Numbers" and "Interesting
+    Numbers" section will only be counted for users who were the most
+    active. E.g. users who appear in the "Most Active Nicks" section, as
+    respected by the ActiveNicks and ActiveNicks2 options. See also
+    <A
+HREF="#BigNumbersThreshold"
+>BigNumbersThreshold</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN911"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="ShowMostActiveByHourGraph"
+></A
+>ShowMostActiveByHourGraph</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN917"
+></A
+><H2
+>Name</H2
+>ShowMostActiveByHourGraph&nbsp;--&nbsp;show graphs in most active nicks by hour</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN920"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         ShowMostActiveByHourGraph = "0"
+        &#60;/channel&#62;
+
+        &#60;set ShowMostActiveByHour="1"&#62;
+        &#60;set ShowMostActiveByHourGraph="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN922"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By enabling this option and the <A
+HREF="#ShowMostActiveByHour"
+>ShowMostActiveByHour</A
+>
+    option, pisg will show graphs in the "Most Active Nicks By Hour"
+    section.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN926"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="IgnoreWords"
+></A
+>IgnoreWords</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN932"
+></A
+><H2
+>Name</H2
+>IgnoreWords&nbsp;--&nbsp;ignore specified words</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN935"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set IgnoreWords="there about"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN937"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    Sometimes words in the "most used words" appears which you don't want to
+    see, with this option you can ignore these words. It also applies to the
+    "most referenced nicks" section. It's a space separated list of words.
+    You can use * like in nick aliases.
+    Can not be used in a channel-only context.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN940"
+></A
+><H2
+>Default</H2
+><P
+> unset </P
+></DIV
+><H1
+><A
+NAME="NoIgnoredQuotes"
+></A
+>NoIgnoredQuotes</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN946"
+></A
+><H2
+>Name</H2
+>NoIgnoredQuotes&nbsp;--&nbsp;Control random quote output</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN949"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set NoIgnoredQuotes="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN951"
+></A
+><H2
+>Description</H2
+><P
+>&#13;     When set to "1", pisg will not output quotes containing ignored words.
+     Pisg will output a blank line after trying 20 random quotes if all 20 random quotes were ignored.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN954"
+></A
+><H2
+>Default</H2
+><P
+> 0 </P
+></DIV
+><H1
+><A
+NAME="FoulWords"
+></A
+>FoulWords</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN960"
+></A
+><H2
+>Name</H2
+>FoulWords&nbsp;--&nbsp;specify words considered to be bad/FoulWords language</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN963"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set FoulWords="ass fuck bitch"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN965"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    There is a section in the "Most interesting numbers" which tells who had
+    a "dirty mouth" - here you can define which words are considered being
+    bad/foul. It is a space separated list of words.
+    You can use * like in nick aliases.
+    Can not be used in a channel-only context.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN968"
+></A
+><H2
+>Default</H2
+><P
+> ass fuck bitch shit scheisse kacke arsch ficker ficken schlampe </P
+></DIV
+><H1
+><A
+NAME="ViolentWords"
+></A
+>ViolentWords</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN974"
+></A
+><H2
+>Name</H2
+>ViolentWords&nbsp;--&nbsp;specify words considered to be aggressive/violent</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN977"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set ViolentWords="slaps beats kick"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN979"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    There is a section in the "Most interesting numbers" which tells who is
+    most "aggressive" - here you can define which words are considered being
+    "violent". It is a space separated list of words. You can use * like in
+    nick aliases. Can not be used in a channel-only context.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN982"
+></A
+><H2
+>Default</H2
+><P
+> slaps beats smacks </P
+></DIV
+><H1
+><A
+NAME="MinQuote"
+></A
+>MinQuote</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN988"
+></A
+><H2
+>Name</H2
+>MinQuote&nbsp;--&nbsp;minimum numbers of letters for a random quote</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN991"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         MinQuote = "10"
+        &#60;/channel&#62;
+
+        &#60;set MinQuote="5"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN993"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The random quotes displayed in the "Most Active Nicks" section will be
+    picked from a length range. With this option you can change the minimum
+    number of letters required for a random quote. Also see the
+    <A
+HREF="#MaxQuote"
+>MaxQuote</A
+> option. Note that pisg will still choose a
+    short quote if it cannot find a longer one.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN997"
+></A
+><H2
+>Default</H2
+><P
+> 25 </P
+></DIV
+><H1
+><A
+NAME="MaxQuote"
+></A
+>MaxQuote</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1003"
+></A
+><H2
+>Name</H2
+>MaxQuote&nbsp;--&nbsp;maximum numbers of letters for a random quote</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1006"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         MaxQuote = "70"
+        &#60;/channel&#62;
+
+        &#60;set MaxQuote="100"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1008"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The random quotes displayed in the "Most Active Nicks" section will be
+    picked from a length range. With this option you can change the maximum
+    number of letters required for a random quote. Also see the
+    <A
+HREF="#MinQuote"
+>MinQuote</A
+> option.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1012"
+></A
+><H2
+>Default</H2
+><P
+> 65 </P
+></DIV
+><H1
+><A
+NAME="WordLength"
+></A
+>WordLength</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1018"
+></A
+><H2
+>Name</H2
+>WordLength&nbsp;--&nbsp;minimum number of characters in an interesting word</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1021"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         WordLength = "10"
+        &#60;/channel&#62;
+
+        &#60;set WordLength="2"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1023"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The "Most Used Words" section on the stats page display the most used
+    words. The default is that a word only appears if it is longer than 5
+    characters. With this option you can change that minimum.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1026"
+></A
+><H2
+>Default</H2
+><P
+> 5 </P
+></DIV
+><H1
+><A
+NAME="QuoteWidth"
+></A
+>QuoteWidth</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1032"
+></A
+><H2
+>Name</H2
+>QuoteWidth&nbsp;--&nbsp;maximum allowed length of a "word" with no spaces</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1035"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         QuoteWidth = "48"
+        &#60;/channel&#62;
+
+        &#60;set QuoteWidth="48"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1037"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    Pisg will automatically insert a space in words that have a length
+    over the amount QuoteWidth is set to.  When used in breaking up
+    URLs it will insert a space in the displayed URL, but not in the
+    actual URL referenced by the HREF.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1040"
+></A
+><H2
+>Default</H2
+><P
+> 80</P
+></DIV
+><H1
+><A
+NAME="BigNumbersThreshold"
+></A
+>BigNumbersThreshold</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1046"
+></A
+><H2
+>Name</H2
+>BigNumbersThreshold&nbsp;--&nbsp;Minimum number of lines per user for some "Big Numbers" statistics</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1049"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         BigNumbersThreshold = "10"
+        &#60;/channel&#62;
+
+        &#60;set BigNumbersThreshold="sqrt"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1051"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    Pisg will ignore users with less than this setting lines in the "questions
+    asked", "shouts loudest", "CAPSLOCK", "longest line", "most sad", and "most
+    happy" sections. If the setting is "sqrt" (the default), it will be
+    dynamically replaced with the square root of the number of lines of the
+    most active nick. See also <A
+HREF="#ShowOnlyTop"
+>ShowOnlyTop</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1055"
+></A
+><H2
+>Default</H2
+><P
+> sqrt </P
+></DIV
+><H1
+><A
+NAME="ActiveNicks"
+></A
+>ActiveNicks</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1061"
+></A
+><H2
+>Name</H2
+>ActiveNicks&nbsp;--&nbsp;nicks to show in "Most Active Nicks"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1064"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         ActiveNicks = "50"
+        &#60;/channel&#62;
+
+        &#60;set ActiveNicks="10"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1066"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can define how many nicks you want to appear in the
+    "Most Active Nicks" section on the stats page.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1069"
+></A
+><H2
+>Default</H2
+><P
+> 25 </P
+></DIV
+><H1
+><A
+NAME="ActiveNicks2"
+></A
+>ActiveNicks2</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1075"
+></A
+><H2
+>Name</H2
+>ActiveNicks2&nbsp;--&nbsp;nicks to show in "These didn't make it.."</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1078"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         ActiveNicks2 = "25"
+        &#60;/channel&#62;
+
+        &#60;set ActiveNicks2="10"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1080"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can define how many nicks you want to appear in the
+    "These didn't make it" section on the stats page.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1083"
+></A
+><H2
+>Default</H2
+><P
+> 30 </P
+></DIV
+><H1
+><A
+NAME="ActiveNicksByHour"
+></A
+>ActiveNicksByHour</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1089"
+></A
+><H2
+>Name</H2
+>ActiveNicksByHour&nbsp;--&nbsp;number of nicks to show in "Most Active Nicks By Hour"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1092"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         ActiveNicksByHour = "25"
+        &#60;/channel&#62;
+
+        &#60;set ActiveNicksByHour="10"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1094"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can define how many nicks you want to appear in the
+    "Most Active Nicks By Hour" section on the stats page.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1097"
+></A
+><H2
+>Default</H2
+><P
+> 10 </P
+></DIV
+><H1
+><A
+NAME="MostNicksHistory"
+></A
+>MostNicksHistory</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1103"
+></A
+><H2
+>Name</H2
+>MostNicksHistory&nbsp;--&nbsp;maximum number of nicks to show in "users with most nicknames"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1106"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         MostNicksHistory = "2"
+        &#60;/channel&#62;
+
+        &#60;set MostNicksHistory="10"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1108"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can define how many nicks you want to appear in
+    the "Users with most nicknames" section. See also
+    <A
+HREF="#ShowMostNicks"
+>ShowMostNicks</A
+> and <A
+HREF="#MostNicksVerbose"
+>MostNicksVerbose</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1113"
+></A
+><H2
+>Default</H2
+><P
+> 5 </P
+></DIV
+><H1
+><A
+NAME="MostNicksVerbose"
+></A
+>MostNicksVerbose</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1119"
+></A
+><H2
+>Name</H2
+>MostNicksVerbose&nbsp;--&nbsp;show nicks used in "most nicks"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1122"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         MostNicksVerbose = "0"
+        &#60;/channel&#62;
+
+        &#60;set MostNicksVerbose="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1124"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By disabling this option you can stop pisg from displaying all the nicks
+    a user has had in the "Most used nicks" section.
+    See also <A
+HREF="#ShowMostNicks"
+>ShowMostNicks</A
+>,
+    <A
+HREF="#MostNicksHistory"
+>MostNicksHistory</A
+>, and <A
+HREF="#NickLimit"
+>NickLimit</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1130"
+></A
+><H2
+>Default</H2
+><P
+> 1 (enabled) </P
+></DIV
+><H1
+><A
+NAME="TopicHistory"
+></A
+>TopicHistory</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1136"
+></A
+><H2
+>Name</H2
+>TopicHistory&nbsp;--&nbsp;maximum number of topics to show</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1139"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         TopicHistory = "2"
+        &#60;/channel&#62;
+
+        &#60;set TopicHistory="10"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1141"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can define how many topics you want to appear in
+    the "Latest topics" section.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1144"
+></A
+><H2
+>Default</H2
+><P
+> 3 </P
+></DIV
+><H1
+><A
+NAME="UrlHistory"
+></A
+>UrlHistory</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1150"
+></A
+><H2
+>Name</H2
+>UrlHistory&nbsp;--&nbsp;maximum number of URLs to show</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1153"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         UrlHistory = "2"
+        &#60;/channel&#62;
+
+        &#60;set UrlHistory="10"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1155"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can define how many URLs you want to appear in
+    the "Most referenced URLs" section. See also <A
+HREF="#ShowMru"
+>ShowMru</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1159"
+></A
+><H2
+>Default</H2
+><P
+> 5 </P
+></DIV
+><H1
+><A
+NAME="ChartsHistory"
+></A
+>ChartsHistory</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1165"
+></A
+><H2
+>Name</H2
+>ChartsHistory&nbsp;--&nbsp;number of songs to show</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1168"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         ChartsHistory = "10"
+        &#60;/channel&#62;
+
+        &#60;set ChartsHistory="5"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1170"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    This option sets the number of songs that will be show in the channel music
+    charts. See also <A
+HREF="#ShowCharts"
+>ShowCharts</A
+> and
+    <A
+HREF="#ChartsRegexp"
+>ChartsRegexp</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1175"
+></A
+><H2
+>Default</H2
+><P
+> 5 (the Top Five) </P
+></DIV
+><H1
+><A
+NAME="ChartsRegexp"
+></A
+>ChartsRegexp</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1181"
+></A
+><H2
+>Name</H2
+>ChartsRegexp&nbsp;--&nbsp;how to recognize songs played</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1184"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         ChartsRegexp = "(?:np:|(?:now )?playing:? (?:MPEG stream from)?)\s*(.*)"
+        &#60;/channel&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1186"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    This option is a perl regexp that is used to recognize songs played. Please
+    tell the pisg mailing list if you have a better default. The regexp MUST
+    contain a single () pair to extract the song name. See also the perlre(1)
+    manpage, <A
+HREF="#ShowCharts"
+>ShowCharts</A
+> and <A
+HREF="#ChartsHistory"
+>ChartsHistory</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1191"
+></A
+><H2
+>Default</H2
+><P
+> "(?:np:|(?:now )?playing:? (?:MPEG stream from)?)\s*(.*)" </P
+></DIV
+><H1
+><A
+NAME="WordHistory"
+></A
+>WordHistory</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1197"
+></A
+><H2
+>Name</H2
+>WordHistory&nbsp;--&nbsp;maximum number of words to show</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1200"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         WordHistory = "5"
+        &#60;/channel&#62;
+
+        &#60;set WordHistory="15"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1202"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can define how many words you want to appear in
+    the "Most used words" section. See also <A
+HREF="#ShowMuw"
+>ShowMuw</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1206"
+></A
+><H2
+>Default</H2
+><P
+> 10 </P
+></DIV
+><H1
+><A
+NAME="NickHistory"
+></A
+>NickHistory</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1212"
+></A
+><H2
+>Name</H2
+>NickHistory&nbsp;--&nbsp;maximum number of nicks to show in "Most referenced nicks"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1215"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         logfile = "channel.log"
+         format = "mIRC"
+         NickHistory = "3"
+        &#60;/channel&#62;
+
+        &#60;set NickHistory="15"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1217"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you can define how many nicks you want to appear in
+    the "Most referenced nicks" section. See also <A
+HREF="#ShowMrn"
+>ShowMrn</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1221"
+></A
+><H2
+>Default</H2
+><P
+> 5 </P
+></DIV
+><H1
+><A
+NAME="SmileyHistory"
+></A
+>SmileyHistory</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1227"
+></A
+><H2
+>Name</H2
+>SmileyHistory&nbsp;--&nbsp;maximum number of smileys to show in smiley stats</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1230"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         logfile = "channel.log"
+         format = "mIRC"
+         SmileyHistory = "3"
+        &#60;/channel&#62;
+
+        &#60;set SmileyHistory="15"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1232"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    At most this many smileys will appear in smiley stats.
+    See also <A
+HREF="#ShowSmileys"
+>ShowSmileys</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1236"
+></A
+><H2
+>Default</H2
+><P
+> 10 </P
+></DIV
+><H1
+><A
+NAME="KarmaHistory"
+></A
+>KarmaHistory</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1242"
+></A
+><H2
+>Name</H2
+>KarmaHistory&nbsp;--&nbsp;maximum number of nicks to show in "Karma"</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1245"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         logfile = "channel.log"
+         format = "mIRC"
+         KarmaHistory = "3"
+        &#60;/channel&#62;
+
+        &#60;set KarmaHistory="15"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1247"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    At most this many nicks will appear in the good and bad karma stats.
+    See also <A
+HREF="#ShowKarma"
+>ShowKarma</A
+> and <A
+HREF="#NickLimit"
+>NickLimit</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1252"
+></A
+><H2
+>Default</H2
+><P
+> 5 </P
+></DIV
+><H1
+><A
+NAME="NickTracking"
+></A
+>NickTracking</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1258"
+></A
+><H2
+>Name</H2
+>NickTracking&nbsp;--&nbsp;track nick changes and create aliases</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1261"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set NickTracking="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1263"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    Enabling this option will track nick changes as well as it can. It will
+    then automatically create aliases for these nicks. Useful for
+    <A
+HREF="#ShowMostNicks"
+>ShowMostNicks</A
+> and other stats.
+    Nick tracking does not work for log formats that do not use the nickname
+    for the person running the logger, but only show "You" there.
+    See <A
+HREF="#Maintainer"
+>Maintainer</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1268"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="NickLimit"
+></A
+>NickLimit</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1274"
+></A
+><H2
+>Name</H2
+>NickLimit&nbsp;--&nbsp;maximum number of nicks in lists</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1277"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set NickLimit="0"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1279"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    This option trims lists of nicks to a maximum length, replacing the rest
+    with "...". Setting to 0 disables trimming. Affected are the used nicks in
+    the "Users with most nicknames" section, nicks in "Most active genders",
+    and nicks in the "Good/bad karma by" columns. See
+    <A
+HREF="#ShowMostNicks"
+>ShowMostNicks</A
+>, <A
+HREF="#ShowKarma"
+>ShowKarma</A
+>, and
+    <A
+HREF="#ShowActiveGenders"
+>ShowActiveGenders</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1285"
+></A
+><H2
+>Default</H2
+><P
+> 10 </P
+></DIV
+><H1
+><A
+NAME="SortByWords"
+></A
+>SortByWords</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1291"
+></A
+><H2
+>Name</H2
+>SortByWords&nbsp;--&nbsp;sort "most active nicks" by words</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1294"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         logfile = "channel.log"
+         format = "xchat"
+         SortByWords = "0"
+        &#60;/channel&#62;
+
+        &#60;set SortByWords="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1296"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The default for the "Most Active Nicks" section - is to sort users by
+    lines. Enabling this will sort it by words instead.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1299"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="reference-pictures"
+></A
+>Chapter 5. Picture options</H1
+><H1
+><A
+NAME="PicLocation"
+></A
+>PicLocation</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1307"
+></A
+><H2
+>Name</H2
+>PicLocation&nbsp;--&nbsp;path to images on stats page</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1310"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set PicLocation="gfx/"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1312"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The location to the pictures used on the stats page - not the user
+    pictures but the different bars in "Most Active Times".
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1315"
+></A
+><H2
+>Default</H2
+><P
+> Current directory </P
+></DIV
+><H1
+><A
+NAME="UserPics"
+></A
+>UserPics</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1321"
+></A
+><H2
+>Name</H2
+>UserPics&nbsp;--&nbsp;number of user pictures per row</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1324"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         UserPics = "no"
+        &#60;/channel&#62;
+
+        &#60;set UserPics="3"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1326"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>UserPics</B
+> allows you to configure the number of user
+    pictures per row. Per default, one picture will be shown. Since pictures
+    are usually higher than one line of text, this lets the table grow. With
+    settings greater than 1, several pictures will be placed next to each
+    other. A good setting would be <B
+CLASS="command"
+>UserPics</B
+>=3 and pictures
+    of size 60x60. Set <B
+CLASS="command"
+>UserPics</B
+> to no or 0 to disable user
+    pictures. The latter is useful if you share a user config file between
+    channels and want to disable user pictures for some channels.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1332"
+></A
+><H2
+>Default</H2
+><P
+> yes (1) </P
+></DIV
+><H1
+><A
+NAME="ImagePath"
+></A
+>ImagePath</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1338"
+></A
+><H2
+>Name</H2
+>ImagePath&nbsp;--&nbsp;path to user pictures (HTML page)</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1341"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         ImagePath = "userpics/"
+        &#60;/channel&#62;
+
+        &#60;set ImagePath="users/"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1343"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>ImagePath</B
+> defines the path to where user
+    pictures are located, relative to the HTML page generated. The default is
+    that user pictures is located in the same directory as the HTML page.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1347"
+></A
+><H2
+>Default</H2
+><P
+> current directory </P
+></DIV
+><H1
+><A
+NAME="DefaultPic"
+></A
+>DefaultPic</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1353"
+></A
+><H2
+>Name</H2
+>DefaultPic&nbsp;--&nbsp;use a default user picture</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1356"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         DefaultPic = "not_available.jpg"
+        &#60;/channel&#62;
+
+        &#60;set DefaultPic="unknown.gif"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1358"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>DefaultPic</B
+> defines a picture to be displayed for all
+    users which have no other picture defined in the <B
+CLASS="command"
+>user</B
+>
+    element. This is good for showing "No picture available" or something.
+    May contain globbing patterns, see <A
+HREF="#ImageGlobPath"
+>ImageGlobPath</A
+> below.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1364"
+></A
+><H2
+>Default</H2
+><P
+> unset </P
+></DIV
+><H1
+><A
+NAME="ImageGlobPath"
+></A
+>ImageGlobPath</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1370"
+></A
+><H2
+>Name</H2
+>ImageGlobPath&nbsp;--&nbsp;path to user pictures (output generation)</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1373"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         ImageGlobPath = "users/"
+        &#60;/channel&#62;
+
+        &#60;set ImageGlobPath="/var/www/pisg/"&#62;
+        &#60;set DefaultPic="default-??.gif"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1375"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>ImageGlobPath</B
+> defines the path to the directory where
+    user pictures are located, relative to the current directory. This setting
+    is used to choose random pictures if ? or * (globbing characters) are used
+    in the picture name. ? matches a single character, * matches a (possibly
+    empty) string. The default is the <A
+HREF="#ImagePath"
+>ImagePath</A
+> setting.
+    (NB: This setting will be different from <A
+HREF="#ImagePath"
+>ImagePath</A
+> if
+    the latter is not relative to the current directory, e.g. if you are
+    writing the HTML file outside of the current directory.)
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1381"
+></A
+><H2
+>Default</H2
+><P
+> current <A
+HREF="#ImagePath"
+>ImagePath</A
+> setting </P
+></DIV
+><H1
+><A
+NAME="PicWidth"
+></A
+>PicWidth</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1388"
+></A
+><H2
+>Name</H2
+>PicWidth&nbsp;--&nbsp;define a standard width for user pictures</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1391"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         PicWidth = "500"
+        &#60;/channel&#62;
+
+        &#60;set PicWidth="500"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1393"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>PicWidth</B
+> defines the standard width for user
+    pictures. Setting the 'width' attribute of image-elements on the
+    outputted stats page. See also <A
+HREF="#PicHeight"
+>PicHeight</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1398"
+></A
+><H2
+>Default</H2
+><P
+> unset </P
+></DIV
+><H1
+><A
+NAME="PicHeight"
+></A
+>PicHeight</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1404"
+></A
+><H2
+>Name</H2
+>PicHeight&nbsp;--&nbsp;define a standard height for user pictures</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1407"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         PicHeight = "500"
+        &#60;/channel&#62;
+
+        &#60;set PicHeight="500"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1409"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>PicHeight</B
+> defines the standard height for user
+    pictures. Setting the 'height' attribute of image-elements on the
+    outputted stats page. See also <A
+HREF="#PicWidth"
+>PicWidth</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1414"
+></A
+><H2
+>Default</H2
+><P
+> unset </P
+></DIV
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="reference-misc"
+></A
+>Chapter 6. Misc options</H1
+><H1
+><A
+NAME="Charset"
+></A
+>Charset</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1422"
+></A
+><H2
+>Name</H2
+>Charset&nbsp;--&nbsp;character set to use for stats page</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1425"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         Charset = "utf-8"
+        &#60;/channel&#62;
+
+        &#60;set Charset="iso-8859-15"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1427"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The pisg stats page defines a character set in a meta tag, this can be
+    used if your country is using a different one than the default. Pisg
+    will also use this setting to convert the language templates from
+    <A
+HREF="#LangFile"
+>LangFile</A
+> if the language defines a source charset.
+    Note: you also have to tell your webserver to transmit the charset to
+    the browser. With Apache, use "AddDefaultCharset off" in the server
+    config.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1431"
+></A
+><H2
+>Default</H2
+><P
+> iso-8859-1 </P
+></DIV
+><H1
+><A
+NAME="LogCharset"
+></A
+>LogCharset</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1437"
+></A
+><H2
+>Name</H2
+>LogCharset&nbsp;--&nbsp;character set for logfiles</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1440"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         Charset = "iso-8859-1"
+         LogCharset = "utf-8"
+        &#60;/channel&#62;
+
+        &#60;set Charset="iso-8859-15"&#62;
+        &#60;set LogCharset="iso-8859-15"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1442"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    If <B
+CLASS="command"
+>LogCharset</B
+> is set and different from
+    <A
+HREF="#Charset"
+>Charset</A
+>, pisg will convert the charset using
+    Text::Iconv. Using this option slows down log processing.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1447"
+></A
+><H2
+>Default</H2
+><P
+> empty (no conversion) </P
+></DIV
+><H1
+><A
+NAME="LogCharsetFallback"
+></A
+>LogCharsetFallback</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1453"
+></A
+><H2
+>Name</H2
+>LogCharsetFallback&nbsp;--&nbsp;fallback character set for logfiles</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1456"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "xchat"
+         Charset = "utf-8"
+         LogCharset = "utf-8"
+         LogCharsetFallback = "iso-8859-1"
+        &#60;/channel&#62;
+
+        &#60;set Charset="utf-8"&#62;
+        &#60;set LogCharset="utf-8"&#62;
+        &#60;set LogCharsetFallback="iso-8859-15"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1458"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>LogCharsetFallback</B
+> defines a fallback charset for
+    the <A
+HREF="#LogCharset"
+>LogCharset</A
+> conversion. This is useful if you
+    have mixed unicode/iso-8859-* logs. Pisg will first try the conversion
+    from <A
+HREF="#LogCharset"
+>LogCharset</A
+>. If that fails,
+    <B
+CLASS="command"
+>LogCharsetFallback</B
+> is used. Note that this only works
+    for charsets where certain byte sequences are illegal, like UTF-8. (In
+    short: <B
+CLASS="command"
+>LogCharset</B
+> = utf-8,
+    <B
+CLASS="command"
+>LogCharsetFallback</B
+> = iso-8859-15 works, the other way
+    round does not.)
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1467"
+></A
+><H2
+>Default</H2
+><P
+> empty (no fallback conversion) </P
+></DIV
+><H1
+><A
+NAME="TimeOffset"
+></A
+>TimeOffset</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1473"
+></A
+><H2
+>Name</H2
+>TimeOffset&nbsp;--&nbsp;use a different time zone than the local machine</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1476"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;channel="#channel"&#62;
+         Logfile = "channel.log"
+         Format = "mIRC"
+         Maintainer = "John"
+         TimeOffset = "+5"
+        &#60;/channel&#62;
+
+        &#60;set TimeOffset="+2"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1478"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    By default, pisg uses the time of the local machine to display the time
+    of the generated stats. Sometimes when you have a shell on an external
+    box, and it's in another country, you want to use another time. This is
+    accomplished by the <B
+CLASS="command"
+>TimeOffset</B
+> command.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1482"
+></A
+><H2
+>Default</H2
+><P
+> +0 </P
+></DIV
+><H1
+><A
+NAME="RegexpAliases"
+></A
+>RegexpAliases</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1488"
+></A
+><H2
+>Name</H2
+>RegexpAliases&nbsp;--&nbsp;use regular expressions in user aliases</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1491"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;user nick="Joe" alias="Joe\d+"&#62;
+
+        &#60;set RegexpAliases="1"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1493"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    Enabling this option will make all aliases in &#60;user&#62; lines be
+    parsed as regular expressions; this setting also applies to the
+    <A
+HREF="#IgnoreWords"
+>IgnoreWords</A
+>, <A
+HREF="#FoulWords"
+>FoulWords</A
+>, and
+    <A
+HREF="#ViolentWords"
+>ViolentWords</A
+> settings.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1499"
+></A
+><H2
+>Default</H2
+><P
+> 0 (disabled) </P
+></DIV
+><H1
+><A
+NAME="LangFile"
+></A
+>LangFile</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1505"
+></A
+><H2
+>Name</H2
+>LangFile&nbsp;--&nbsp;filename of language file</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1508"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set LangFile="mylang.txt"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1510"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    With this option you have an alternative way to define the name and/or
+    path to the language file. Usually you don't have to touch this option.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1513"
+></A
+><H2
+>Default</H2
+><P
+> lang.txt </P
+></DIV
+><H1
+><A
+NAME="CssDir"
+></A
+>CssDir</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1519"
+></A
+><H2
+>Name</H2
+>CssDir&nbsp;--&nbsp;path to directory with CSS files</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1522"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set CssDir="/usr/share/pisg/layout/"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1524"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>CssDir</B
+> is used to define the paths to the CSS files
+    (the <A
+HREF="#ColorScheme"
+>ColorScheme</A
+>s). Usually you don't
+    need to change this. This setting is only used when statically including
+    the CSS file.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1529"
+></A
+><H2
+>Default</H2
+><P
+> layout/ (in current directory) </P
+></DIV
+><H1
+><A
+NAME="HiCell"
+></A
+>HiCell, HiCell2</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1535"
+></A
+><H2
+>Name</H2
+>HiCell, HiCell2&nbsp;--&nbsp;colors for color gradient in most active nicks section</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1538"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set HiCell="#BABADD" HiCell2="#CCCCCC"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1540"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    <B
+CLASS="command"
+>HiCell</B
+> and <B
+CLASS="command"
+>HiCell2</B
+> define the colors
+    to be used for the color gradient in the most active nicks section. They should
+    match your <A
+HREF="#ColorScheme"
+>ColorScheme</A
+>.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1546"
+></A
+><H2
+>Default</H2
+><P
+> #BABADD, #CCCCCC </P
+></DIV
+><H1
+><A
+NAME="LogType"
+></A
+>LogType</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1552"
+></A
+><H2
+>Name</H2
+>LogType&nbsp;--&nbsp;type of log (not the format of the log)</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1555"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set LogType="Logfile"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1557"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    The type of logs kept for your channel. Currently only "Logfile" is
+    supported, so you don't need to change this option.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1560"
+></A
+><H2
+>Default</H2
+><P
+> Logfile </P
+></DIV
+><H1
+><A
+NAME="StatsDump"
+></A
+>StatsDump</H1
+><DIV
+CLASS="refnamediv"
+><A
+NAME="AEN1566"
+></A
+><H2
+>Name</H2
+>StatsDump&nbsp;--&nbsp;dump raw statistics into file</DIV
+><DIV
+CLASS="refsynopsisdiv"
+><A
+NAME="AEN1569"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="programlisting"
+>&#13;      
+        &#60;set StatsDump="statsdump"&#62;
+      
+    </PRE
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1571"
+></A
+><H2
+>Description</H2
+><P
+>&#13;    This option is intended for debugging pisg, but might be useful to process
+    the parsed logs with another program. The file contains the %stats and
+    %lines hashes in perl's Data::Dumper format.
+    </P
+></DIV
+><DIV
+CLASS="refsect1"
+><A
+NAME="AEN1574"
+></A
+><H2
+>Default</H2
+><P
+> Unset </P
+></DIV
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="copyright"
+></A
+>Chapter 7. Copyright and License</H1
+><P
+>&#13;    pisg - Perl IRC Statistics Generator
+    </P
+><P
+>&#13;    Copyright (C) 2001-2005  Morten Brix Pedersen - &#60;morten at wtf.dk&#62;
+    </P
+><P
+>&#13;    Copyright (C) 2003-2005  Christoph Berg &#60;cb at df7cb.de&#62;
+    </P
+><P
+>&#13;    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+    </P
+><P
+>&#13;    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    </P
+><P
+>&#13;    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    </P
+></DIV
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,179 @@
+# Config file for pisg (set up all your channels/logfiles here)
+#
+# For a list of all configuration options, see docs/pisg-doc.txt or
+# docs/html/index.html for a HTML version.
+#
+# Here is some basic examples, uncomment them to make them actually do
+# something.
+#
+# <user nick="Joe" alias="Joe^away Joe^work" pic="joe.jpg" link="joe@joe.com">
+#
+# <set FoulWords="ass bitch fuck" Maintainer="SomeMaintainer">
+#
+# <channel="#channel">
+#   Logfile="channel2.log"
+#   Format="mIRC"
+#   Network="SomeIRCNet"
+#   OutputFile="index.html"
+# </channel>
+#
+
+<channel="#compsoc">
+  Logfile="../log.log"
+  Format="irssi"
+  Network="UWCS"
+  OutputFile="OUTFILE"
+</channel>
+
+<set Version="0.67-mod_Faux">
+
+<set Maintainer="Faux">
+<set ShowKarma="1">
+<set ShowMostActiveByHour="1">
+<set ShowMostActiveByHourGraph="1">
+<set ShowSmileys="1">
+<set ShowWords="1">
+
+<set ShowRandQuote="0">
+
+<set IgnoreWords="there seems getting seems about think would really which going could something because still actually should though right being where using before other better things thing wonders again first anyone their might looks doing quite someone anyway enough after around never having again probably stuff anything wrong thats those thought without needs trying rather indeed remember makes already start problem found although while always clearly night sounds until since every maybe either though point another least little through these pretty works working">
+
+<set ShowOps="0">
+<set ShowKickLine="0">
+<set ActiveNicks="30">
+
+<set FoulWords="ass fuck bitch shit goatse sister cok c0k rape">
+
+<set ImageGlobPath="/home/faux/public_html/karma/images/">
+<set ImagePath="/~faux/karma/images/">
+<set UserPics="1">
+
+<user nick="DrWatson" alias="Dr*">
+<user nick="DrWatson" alias="phil">
+<user nick="tom" alias="Tom*">
+<user nick="icStatic" alias="ic*">
+<user nick="Draconas" alias="Drac*">
+<user nick="Draconas" alias="Rurik*">
+<user nick="BigG" alias="*BigG">
+<user nick="Philippa" alias="Philippa*">
+<user nick="ajmiles" alias="aj*">
+<user nick="ajmiles" alias="dev*">
+<user nick="Odd_Bloke" alias="*_Bloke">
+<user nick="ajmiles" alias="AA">
+<user nick="agaeki" alias="agaeki*">
+<user nick="whythehell" alias="davyjones`locker">
+<user nick="Morlark" alias="PiratePantz">
+<user nick="Connorhd" alias="Connor*">
+<user nick="Crazy_Piglet" alias="CP">
+<user nick="bucko" alias="*bucko*">
+<user nick="bucko" alias="*lounge*">
+<user nick="lionfish" alias="*lion*">
+<user nick="lionfish" alias="lin*">
+<user nick="acehole" alias="ac*ho*">
+<user nick="Saratoga" alias="*oga*">
+<user nick="Saratoga" alias="Elwyn">
+<user nick="Chloe" alias="Bob">
+<user nick="Jonatan" alias="bluepa*">
+<user nick="Jonatan" alias="jonatan*">
+<user nick="SilentDave" alias="S*ntDave">
+<user nick="SilentDave" alias="SD">
+<user nick="speakfire" alias="speakfire*">
+<user nick="Kerian" alias="K">
+<user nick="murphy" alias="murphy*">
+<user nick="DrWatson" alias="DW">
+<user nick="Bugz" alias="Bug*">
+<user nick="lionfish" alias="lino*">
+<user nick="lionfish" alias="l*fish">
+<user nick="MFJ" alias="mfj*">
+<user nick="Crazy_Piglet" alias="*Piglet">
+<user nick="Jingles" alias="Jingles*">
+<user nick="Morlark" alias="Zbeynex">
+<user nick="Chloe" alias="Spork">
+<user nick="Nugent" alias="Nujean">
+<user nick="Nugent" alias="NuTov">
+<user nick="Morlark" alias="Morlark*">
+<user nick="Blood_God" alias="Blood_God*">
+<user nick="Blood_God" alias="*Blood*">
+<user nick="Inciner" alias="Inciner*">
+<user nick="sadiq" alias="SeamanSticky">
+<user nick="sadiq" alias="*sadiq">
+<user nick="Kim" alias="Cap`n_Kim">
+<user nick="Faux" alias="ScurvyBotScrubber">
+<user nick="Rakurai" alias="Rakurai*">
+<user nick="db_rat" alias="db_rat*">
+<user nick="Amorya" alias="Amorya*">
+<user nick="Psyco" alias="Psyco*">
+<user nick="Laurence" alias="Laurence*">
+<user nick="murphy" alias="" alias="murph*">
+<user nick="catherine" alias="catherine*">
+<user nick="maUru" alias="maUru*">
+<user nick="Penguin" alias="the_penguin">
+<user nick="Chloe" alias="Cloeeee">
+<user nick="Ynox" alias="Yn*x*">
+<user nick="fred" alias="fred*">
+<user nick="db_rat" alias="davidbya*">
+<user nick="db_rat" alias="db_*rat">
+<user nick="Faux" alias="*Faux*">
+<user nick="icStatic" alias="*Speshul*">
+<user nick="Blood_God" alias="chawley">
+<user nick="murphy" alias="mb">
+<user nick="Dementia" alias="Dementia*">
+<user nick="Sudilos" alias="Sudilos*">
+<user nick="Antz" alias="Ant*">
+<user nick="covbob" alias="covbob*">
+<user nick="db_rat" alias="Queue">
+<user nick="Saratoga" alias="Sarat*">
+<user nick="benji" alias="notbenji">
+<user nick="Sponge" alias="*Sponge*">
+<user nick="Bogomip" alias="bogo*">
+<user nick="superdump" alias="superdu*">
+<user nick="Nugent" alias="N*gent">
+<user nick="Skumby" alias="Skumb*">
+<user nick="Skumby" alias="*Skumby">
+<user nick="Skumby" alias="Multiplay*">
+<user nick="murphy" alias="murph*">
+<user nick="Ian" alias="Ina">
+<user nick="Ian" alias="Eena">
+<user nick="hshah" alias="hshah*">
+<user nick="Penguin" alias="Penguin*">
+<user nick="Morlark" alias="Cxaxukluth">
+<user nick="Smile" alias="Lee">
+<user nick="MXW" alias="Maximum*">
+<user nick="MXW" alias="Oolong">
+<user nick="lamby" alias="lamby*">
+<user nick="Silver" alias="Silver*">
+<user nick="Nexus" alias="Ne*us*">
+<user nick="Nexus" alias="imba">
+<user nick="hoe_lounge" alias="hoe*">
+<user nick="Polar" alias="Polar*">
+<user nick="covbob" alias="covfaux">
+<user nick="NickServ" alias="*Serv*">
+<user nick="molotov.uwcs.co.uk" alias="*uwcs.co.uk">
+<user nick="Tim" alias="Tim*">
+<user nick="alp" alias="alp*">
+<user nick="Lucidion" alias="luc*">
+<user nick="Saul" alias="Saul*">
+<user nick="jg" alias="blah*">
+<user nick="Spooky_Rach" alias="Spooky_Rach*">
+<user nick="Natural20" alias="*Natural*">
+<user nick="Trip" alias="Trip*">
+
+<set BarWidth="276">
+
+<user nick="Q" ignore="y">
+<user nick="NickServ" ignore="y">
+<user nick="molotov.uwcs.co.uk" ignore=y">
+<user nick="self" ignore="y">
+<user nick="his" ignore="y">
+<user nick="her" ignore="y">
+<user nick="the" ignore="y">
+<user nick="can" ignore="y">
+<user nick="people" ignore="y">
+<user nick="A" ignore="y">
+<user nick="Lol" ignore="y">
+<user nick="me" ignore="y">
+<user nick="them" ignore="y">
+<user nick="Everyone" ignore="y">
+<user nick="someone" ignore="y">
+<set ViolentWords="slaps beats kicks smacks stabs">
+

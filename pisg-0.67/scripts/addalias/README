@@ -1,0 +1,60 @@
+#############################################################################
+#                                                                           #
+#  addalias version 2.0 by deadlock (deadlock@cheeseheadz.net)              #
+#                                                                           #
+#  This script can be used on a webpage for users to enter and edit their   #
+#  own info for the pisg ircstats program by mbrix.                         #
+#                                                                           #
+#  addalias v2+ is based on the original addalias program by Doomshammer    #
+#                                                                           # 
+#############################################################################
+
+
+Info:
+--
+This script is intended as an add-on for pisg
+<http://pisg.sourceforge.net/>.  After seeing Addalias.pl by Doomshammer it
+inspired me to write a more powerfull version of it which would also allow
+people to change their information instead of just adding it. This way it
+would allow me to enter some basic nicklinking info for those too lazy to do
+it themselves.  I also decided to make it a script only version which would
+not require additional html files and give it more configuration options.
+
+
+
+Installation:
+--
+Make sure the webserver has read and write access to the pisg.cfg file (the
+script will let you know when it has permissions to read or write).  Change
+the $pisg_config variable to the location of the pisg.cfg file on your
+system.  Put the addalias.pl file in the cgi-bin directory. You can link
+directly to the addalias.pl, no need to add an html file to it.  If you want
+to you can customise the text and layout (colors in the html head tag) of
+the pages to your own liking or language by editing the appropriate
+variables in addalias.pl. The names of the variables and default text should
+explain themselves.
+
+
+
+Release history:
+--
+
+Version 2.2:
+------------
+  Some modifications by icu (me@1cu.de):
+  * added a hardcoded baseurl
+  * added check for nick-field in input
+  * added list botton to get a list of all aliases
+
+Version 2.1:
+------------
+  * Made nicks in config file incasesensitive
+
+Version 2.0:
+------------
+  * Initial release of the improved version
+    by deadlock. 
+
+Version 1.0:
+------------
+  * Initial release by Doomshammer <doomy@doomshammer.yi.org>
