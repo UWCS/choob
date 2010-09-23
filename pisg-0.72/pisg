@@ -1,0 +1,165 @@
+#!/usr/bin/perl -w
+
+use strict;
+use Getopt::Long;
+
+# pisg - Perl IRC Statistics Generator
+#
+# Copyright (C) 2001-2005  <Morten Brix Pedersen> - morten@wtf.dk
+# Copyright (C) 2003-2006  Christoph Berg <cb@df7cb.de>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+sub main
+{
+    my $script_dir = $0;
+
+    # If the script was executed as ./pisg - then we just remove
+    # everything after the last slash, if it was executed as 'perl pisg'
+    # we assume that we are executing in the current dir.
+    if ($script_dir =~ m/\/[^\/]*$/) {
+        $script_dir =~ s/\/[^\/]*$//;
+    } else {
+        $script_dir = ".";
+    }
+
+    if (!-t STDOUT) { # we are not writing to a terminal
+	push @ARGV, "--silent";
+    }
+
+    my $cfg = get_cmdline_options($script_dir);
+    unshift(@INC, $cfg->{modules_dir});
+
+    my $version;
+    if ($cfg->{version}) {
+        $version = 1;
+        undef $cfg->{version};
+    }
+
+    my $pisg;
+    eval <<END;
+
+use Pisg;
+
+\$pisg = new Pisg(
+    use_configfile => '1',
+    override_cfg => \$cfg,
+    search_path => \$script_dir,
+);
+
+if (\$version) {
+    print \$pisg->{cfg}->{version} . "\n";
+} else {
+    \$pisg->run();
+}
+END
+    if ($@) {
+        print STDERR "Could not load pisg! Reason:\n$@\n";
+        return undef;
+    }
+}
+
+sub get_cmdline_options
+{
+    my $script_dir = shift;
+
+    my %cfg = (
+        modules_dir => "$script_dir/modules/",     # Module search path
+        logfile => [],
+        logdir => [],
+    );
+
+    # Commandline options
+    my ($tmp, $help, $silent, $option, @cfg);
+
+my $usage = <<END_USAGE;
+Usage: pisg [-ch channel] [-l logfile] [-o outputfile] [-ma maintainer]
+[-f format] [-ne network] [-d logdir] [-mo moduledir] [-s] [-v] [-h]
+
+-ch --channel=xxx      : Set channel name
+-cc --cchannels=xxx    : Only do this channel from cfg file, give multiple
+                         times to do multiple channels
+-l  --logfile=xxx      : Log file to parse, give multiple times to use
+                         multiple log files.
+-o  --outfile=xxx      : Name of HTML file to create
+-t  --tag=xxx          : Replace \%t in --outfile by xxx
+-ma --maintainer=xxx   : Channel/statistics maintainer
+-f  --format=xxx       : Logfile format [see FORMATS file]
+-ne --network=xxx      : IRC network for the channel
+-d  --dir=xxx          : Analyze all files in this dir. Ignores logfile.
+                         Give multiple times to use multiple directories.
+-nf --nfiles=xxx       : Analyze the last xxx files if used with --dir
+-p  --prefix=xxx       : Analyze only files prefixed by xxx in dir
+                         Only works with --dir
+-cf --cfg opt=value    : Specify configuration options, eg. -cf ShowWpl=1
+-co --configfile=xxx   : Configuration file
+-mo --moduledir=xxx    : Directory containing pisg modules
+-s  --silent           : Suppress output (except error messages)
+-v  --version          : Show version
+-h  --help             : Output this message and exit.
+
+Example:
+
+ \$ pisg -ne IRCnet -f xchat -o suid.html -ch \\#channel -l logfile.log
+
+All options may also be defined by editing the configuration file and
+calling pisg without arguments.
+END_USAGE
+
+    if (GetOptions('channel=s'    => \$cfg{channel},
+                   'cchannels=s@'  => \@{ $cfg{cchannels} },
+                   'logfile=s'    => \@{ $cfg{logfile} },
+                   'format=s'     => \$cfg{format},
+                   'network=s'    => \$cfg{network},
+                   'maintainer=s' => \$cfg{maintainer},
+                   'outfile=s'    => \$cfg{outputfile},
+                   'tag=s'        => \$cfg{outputtag},
+                   'dir=s'        => \@{ $cfg{logdir} },
+                   'nfiles=i'     => \$cfg{nfiles},
+                   'prefix=s'     => \$cfg{logprefix},
+                   'moduledir=s'  => \$cfg{moduledir},
+                   'configfile=s' => \$cfg{configfile},
+                   'ignorefile=s' => \$tmp,
+                   'aliasfile=s'  => \$tmp,
+                   'silent'       => \$silent,
+                   'version'      => \$cfg{version},
+                   'cfg=s'        => \@cfg,
+                   'help|?'       => \$help
+               ) == 0 or $help) {
+                   die($usage);
+               }
+
+    if ($tmp) {
+        die("The aliasfile and ignorefile has been obsoleted by the new
+        pisg.cfg, please use that instead [see pisg.cfg]\n");
+    }
+
+    if ($silent) { $cfg{silent} = 1; }
+
+    if (@cfg) {
+        foreach (@cfg) {
+            if (/(.*)=(.*)/) {
+                $cfg{lc $1} = $2;
+            } else {
+                print STDERR "Warning: Couldn't parse -cfg option\n";
+            }
+        }
+    }
+
+    return \%cfg;
+
+}
+
+main();        # Run the script

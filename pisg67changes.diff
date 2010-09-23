@@ -1,0 +1,25 @@
+diff --git a/pisg-0.67/modules/Pisg.pm b/pisg-0.67/modules/Pisg.pm
+index a8fb43f..d6ddc74 100644
+--- a/pisg-0.67/modules/Pisg.pm
++++ b/pisg-0.67/modules/Pisg.pm
+@@ -88,7 +88,6 @@ sub get_default_config_settings
+ 
+     $self->{cfg} = {
+         channel => '',
+-		barwidth => 40,
+         logtype => 'Logfile',
+         logfile => [],
+         format => '',
+diff --git a/pisg-0.67/modules/Pisg/HTMLGenerator.pm b/pisg-0.67/modules/Pisg/HTMLGenerator.pm
+index b2b1730..1c16835 100644
+--- a/pisg-0.67/modules/Pisg/HTMLGenerator.pm
++++ b/pisg-0.67/modules/Pisg/HTMLGenerator.pm
+@@ -2150,7 +2150,7 @@ sub _user_times
+     for (my $i = 0; $i <= 3; $i++) {
+         my $l = $self->{stats}->{$timestat}{$nick}[$i];
+         next if not defined $l;
+-        my $w = int(($l / $self->{stats}->{$itemstat}{$nick}) * $self->{cfg}->{barwidth});
++        my $w = int(($l / $self->{stats}->{$itemstat}{$nick}) * 40);
+         if ($w) {
+             my $pic = 'pic_h_'.(6*$i);
+             $bar .= "<img src=\"$self->{cfg}->{piclocation}/$self->{cfg}->{$pic}\" border=\"0\" width=\"$w\" height=\"15\" alt=\"$l\" title=\"$l\" />";
