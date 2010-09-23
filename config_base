@@ -19,7 +19,7 @@
 #
 
 <channel="#compsoc">
-  Logfile="../log.log"
+  Logfile="INFILE"
   Format="irssi"
   Network="UWCS"
   OutputFile="OUTFILE"

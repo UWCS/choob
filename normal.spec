@@ -1,2 +1,2 @@
-CHANNEL="#compsoc"
+CHANNEL="='#compsoc'"
 TIME=14
