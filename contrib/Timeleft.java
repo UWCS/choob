@@ -15,7 +15,7 @@ public class Timeleft
 {
 	private final Modules mods;
 	private final IRCInterface irc;
-	TimeParser t;
+
 	public String[] info()
 	{
 		return new String[] { "", "The Choob Team", "choob@uwcs.co.uk",
