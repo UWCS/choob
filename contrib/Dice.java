@@ -3,12 +3,12 @@ import java.util.LinkedList;
 
 /**
  * Dice plugin rolls dice!
- * 
- * 
+ *
+ *
  * @author agaeki/azurit
  */
 
-public class CopyOfMFJ {
+public class Dice {
 
 	/*-------------------------------
 	  Rolls "xdy + z" exploding dice or not
@@ -22,7 +22,7 @@ public class CopyOfMFJ {
 		int keep;
 		if (numbers[1].contains("k")) keep = Integer.parseInt(numbers[1].split("k")[1]);
 		else keep = Integer.parseInt(numbers[1]);
-		
+
 		//if dice is to be taken away, set die to be rolled as -ve
 		if (!numbers[0].contains("-")) {
 			die = Integer.parseInt(numbers[1]);
@@ -47,7 +47,7 @@ public class CopyOfMFJ {
 				values.add(new Integer(curRoll));
 			}
 		}
-		
+
 		if (keep < Integer.parseInt(numbers[0])) {
 			Object[] temp = values.toArray();
 			Arrays.sort(temp);
@@ -56,7 +56,7 @@ public class CopyOfMFJ {
 				values.add((Integer) temp[a]);
 			}
 		}
-		
+
 		return values;
 	}
 
@@ -69,10 +69,10 @@ public class CopyOfMFJ {
 
 	private static LinkedList<Integer> bonus(int bonus) {
 		LinkedList<Integer> out = new LinkedList<Integer>();
-		out.add((Integer) bonus); // Add the bonus as the first roll result
+		out.add(bonus); // Add the bonus as the first roll result
 		return out;
 	}
-	
+
 	public String[] helpCommandRoll = { "Rolls x y-sided dice with the option of exploding dice, using syntax <x>d<y>+<z> <yes/no exploding dice>. Can roll more than one die size at a time (i.e 1d6+1d8)" };
 	public static String commandRoll(String message) {
 		message.replace("-", "+-");
@@ -97,7 +97,7 @@ public class CopyOfMFJ {
 			// pop all elements of dice into a string while gathering the
 			// total
 			while (!dice.isEmpty()) {
-				int temp = (int) dice.poll();
+				int temp = dice.poll();
 				total += temp;
 				out = out.concat(String.valueOf(temp));
 				out = out.concat(" + ");
@@ -145,7 +145,7 @@ public class CopyOfMFJ {
 				// pop all elements of dice into a string while gathering
 				// the total
 				while (!dice.isEmpty()) {
-					temproll = (int) dice.poll();
+					temproll = dice.poll();
 					out = out.concat(String.valueOf(temproll));
 					out = out.concat(" + ");
 				}
@@ -183,7 +183,7 @@ public class CopyOfMFJ {
 		String out = "Rolled ";
 		String out2 = "Attacks: ";
 		while (!dice.isEmpty()) {
-			temproll = (int) dice.poll();
+			temproll = dice.poll();
 			out = out.concat(temproll + ", ");
 			temproll += mod;
 			if (temproll > 0) {
