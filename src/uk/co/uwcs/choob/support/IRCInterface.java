@@ -430,10 +430,10 @@ public final class IRCInterface
 	    bot.unBan(channel, hostmask);
 	}
 
-	public void join(final String channel) throws ChoobException
+	public void join(final String channel)
 	{
 		AccessController.checkPermission(new ChoobPermission("state.join." + channel));
-		bot.joinChannel(channel);
+		bot.sendRawLineViaQueue("JOIN " + channel);
 	}
 
 	public void part(final String channel) throws ChoobException
@@ -473,7 +473,7 @@ public final class IRCInterface
 	public String[] getChannels() {
 		return bot.getChannels();
 	}
-	
+
 	public Set<String> getAllKnownUsers() {
 		final Set<String> users = new HashSet<String>();
 		for(String channel : getChannels()) {
@@ -481,9 +481,14 @@ public final class IRCInterface
 		}
 		return users;
 	}
-	
+
 	public boolean isKnownUser(String name) {
 		return getAllKnownUsers().contains(name);
 	}
-	
+
+	public long getMessageDelay()
+	{
+		return bot.getMessageDelay();
+	}
+
 }

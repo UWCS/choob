@@ -1,3 +1,5 @@
+import static uk.co.uwcs.choob.modules.UtilModule.hrList;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -9,10 +11,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,13 +20,11 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.security.auth.callback.Callback;
 
 import org.jibble.pircbot.ReplyConstants;
 
@@ -157,7 +153,7 @@ public class Where
 		this.irc = irc;
 		this.mods = mods;
 		final String whatRegex = "^BadgerBOT ([^ ]+) (.*)$";
-		
+
 		logFile = new PrintStream(new FileOutputStream(new File(System.getProperty("user.home")+"/where.log"), true));
 		minilog("whatRegex: " + whatRegex);
 		whatExtract = Pattern.compile(whatRegex);
@@ -332,7 +328,7 @@ public class Where
 	{
 		return matches(Pattern.compile("/137\\.205\\.11"), add);
 	}
-	
+
 	Map<String, Set<InetAddress>> lastLoginMap(Map<String, Set<InetAddress>> localMap) {
 		for (Map.Entry<String, Set<InetAddress>> user : localMap.entrySet()) {
 			if(user.getValue().size() > 1) {
@@ -385,27 +381,6 @@ public class Where
 		}
 		minilog("buildLocalMap: exit");
 		return lastLoginMap(ret); // Don't care about part results.
-	}
-
-	<T> String hrList(final List<T> el)
-	{
-		return hrList(el, " and ");
-	}
-
-	<T> String hrList(final List<T> el, final String inclusor)
-	{
-		String ret = "";
-		for (int i=0; i<el.size(); ++i)
-		{
-			ret += el.get(i).toString();
-			if (i == el.size() - 2)
-				ret += inclusor;
-			else if (i == el.size() - 1)
-				ret += "";
-			else
-				ret += ", ";
-		}
-		return ret;
 	}
 
 	// mes only for command line.
@@ -668,7 +643,7 @@ public class Where
 			);
 		}
 	}
-	
+
 	private ContextEvent context(final String channel) {
 		return new ContextEvent() {
 			@Override public String getContext() {
@@ -676,7 +651,7 @@ public class Where
 			}
 		};
 	}
-	
+
 	/**
 	 * TODO: allow user settable hostnames
 	 * Assumes 1..5,6..10,11..15 ...
@@ -697,9 +672,9 @@ public class Where
 		}
 		return cache;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param out
 	 * @param params
 	 * @param user
@@ -709,9 +684,9 @@ public class Where
 		out.println("Content-Type: text/html");
 		out.println();
 		out.println("<html><body><table>");
-		
+
 		final InetAddress[][] cache = buildCache("viglab", out);
-		
+
 		// this internal api really wants closures
 		goDo("#compsoc", new Callback(context("#compsoc")) {
 			@Override
@@ -728,7 +703,7 @@ public class Where
 						people.add(person.getKey());
 					}
 				}
-				
+
 				for (final InetAddress[] row : cache) {
 					out.println("<tr>");
 					for (final InetAddress pc: row) {
@@ -741,7 +716,7 @@ public class Where
 					}
 					out.println("</tr>");
 				}
-				
+
 				//d.localmap
 				out.println("</table></body></html>");
 			}

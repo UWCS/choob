@@ -351,9 +351,19 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		try
 		{
 			final String className = "plugins." + pluginName + "." + pluginName;
-			final Class<?> clazz;
+			Class<?> clazz;
 			clazz = loader.findClass(className);
-//			clazz = Class.forName(className);
+//			do {
+//				try {
+//					clazz = Class.forName(className);
+//				} catch (ClassNotFoundException cfe) {
+//					System.out.println("Still waiting for your IDE to create the class...");
+//					try { Thread.sleep(500); }
+//					catch (InterruptedException e) { throw new ClassNotFoundException("Oh dear"); }
+//					clazz = null;
+//				}
+//			} while (null == clazz);
+
 			return instantiatePlugin(clazz, pluginName);
 		}
 		catch (final ClassNotFoundException e)

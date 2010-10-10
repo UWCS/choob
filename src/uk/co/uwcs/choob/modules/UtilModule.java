@@ -143,4 +143,28 @@ public final class UtilModule
 	{
 		return startTime;
 	}
+
+	public static <T> String hrList(final List<T> el)
+	{
+		return hrList(el, " and ");
+	}
+
+	public static <T> String hrList(final List<T> el, final String inclusor)
+	{
+		final StringBuilder ret = new StringBuilder();
+		for (int i=0; i<el.size(); ++i)
+		{
+			ret.append(el.get(i));
+			if (i == el.size() - 2)
+				ret.append(inclusor);
+			else if (i != el.size() - 1)
+				ret.append(", ");
+		}
+		return ret.toString();
+	}
+
+	public static void main(String[] args)
+	{
+		System.out.println(hrList(Arrays.asList("pony", "badger", "monkey")));
+	}
 }

@@ -36,15 +36,10 @@ public class Admin
 	public void commandJoin( final Message mes )
 	{
 		if ( mods.security.hasNickPerm( new ChoobPermission("state.join"), mes ) )
-			try
-			{
-				irc.join(mods.util.getParamString(mes));
-				irc.sendContextReply(mes, "Okay!");
-			}
-			catch (final ChoobException e)
-			{
-				irc.sendContextReply(mes, "Couldn't join :/");
-			}
+		{
+			irc.join(mods.util.getParamString(mes));
+			irc.sendContextReply(mes, "Okay!");
+		}
 	}
 
 	public String[] helpCommandExit = {

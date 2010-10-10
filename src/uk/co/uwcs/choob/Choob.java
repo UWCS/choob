@@ -28,6 +28,7 @@ import org.jibble.pircbot.PircBot;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobError;
+import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobProtectionDomain;
 import uk.co.uwcs.choob.support.ConfigReader;
 import uk.co.uwcs.choob.support.DbConnectionBroker;
@@ -230,10 +231,16 @@ public final class Choob extends PircBot
 		for (final String command : commands)
 			sendRawLineViaQueue(command);
 
-		// Join the channels.
-		final String[] channels = conf.getSettingFallback("channels","").split("[ ,]");
-		for (final String channel : channels)
-			joinChannel(channel);
+		// Get Autojoin to join us some channels.
+		try
+		{
+			modules.plugin.callAPI("Autojoin", "Join");
+		}
+		catch (ChoobNoSuchCallException ignored)
+		{
+			// No plugin, no joining.
+			ignored.printStackTrace(System.err);
+		}
 	}
 
 	public IRCInterface getIRC()

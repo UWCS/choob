@@ -15,9 +15,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+
 import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
+
 import uk.co.uwcs.choob.ChoobCommand;
 import uk.co.uwcs.choob.ChoobPluginManager;
 import uk.co.uwcs.choob.ChoobTask;
@@ -45,7 +47,7 @@ public class AnnotatedJavaPluginManager extends ChoobPluginManager
 	private final Modules mods;
 	private final IRCInterface irc;
 	private final PluginHolder plugins;
-	
+
 	public AnnotatedJavaPluginManager(final Modules mods, final IRCInterface irc) throws ChoobException
 	{
 		this.mods = mods;
@@ -89,7 +91,7 @@ public class AnnotatedJavaPluginManager extends ChoobPluginManager
 	private Object loadPlugin(final Class newClass, final String pluginName) throws ChoobException
 	{
 		Object plugin = null;
-		
+
 		Constructor<?> c[] = newClass.getConstructors();
 
 		for (int i = 0; i < c.length; i++)
@@ -121,7 +123,7 @@ public class AnnotatedJavaPluginManager extends ChoobPluginManager
 				throw new ChoobException("Plugin " + pluginName + "'s constructor threw an exception: " + e.getCause(), e.getCause());
 			}
 
-		
+
 		for (Field field : newClass.getDeclaredFields())
 		{
 			if (field.isAnnotationPresent(ChoobUtil.class))
@@ -192,7 +194,7 @@ public class AnnotatedJavaPluginManager extends ChoobPluginManager
 		{
 			final ChoobCommandWrapper mpe = plugins.getCommand(pluginName.toLowerCase(), command.toLowerCase());
 			final Object plugin = plugins.getPlugin(pluginName.toLowerCase());
-			return new ChoobTask(pluginName.toLowerCase()) 
+			return new ChoobTask(pluginName.toLowerCase())
 			{
 				@Override
 				public void run()
@@ -256,25 +258,25 @@ class PluginHolder
 {
 	private HashMap<String,Object> plugins = new HashMap<String, Object>();
 	private HashMap<PluginCommand,ChoobCommandWrapper> commands = new HashMap<PluginCommand,ChoobCommandWrapper>();
-	
+
 	public void addPlugin(final String pluginName, final Object plugin)
 	{
 		plugins.put(pluginName.toLowerCase(),plugin);
-		
+
 		Class pluginClass = plugin.getClass();
 		Method[] meths = pluginClass.getMethods();
 		for(Method meth: meths)
 		{
 			if (meth.getDeclaringClass() != pluginClass)
 				continue;
-			
+
 			if (meth.isAnnotationPresent(ChoobCommand.class))
 			{
 				commands.put(new PluginCommand(pluginName,meth.getAnnotation(ChoobCommand.class).name()), new ChoobCommandWrapper(meth));
 			}
 		}
 	}
-	
+
 	public ChoobCommandWrapper getCommand(final String pluginName, final String commandName) throws NoSuchCommandException
 	{
 		ChoobCommandWrapper wrapper = commands.get(new PluginCommand(pluginName, commandName));
@@ -284,12 +286,12 @@ class PluginHolder
 		commands.get(next);
 		commands.get(new PluginCommand("annotatedchoobtest","greet"));
 		next.equals(new PluginCommand("annotatedchoobtest","greet"));
-		
+
 		if (wrapper != null)
 			return wrapper;
 		else throw new NoSuchCommandException(commandName);
 	}
-	
+
 	public Object getPlugin(final String pluginName) throws NoSuchPluginException
 	{
 		Object o = plugins.get(pluginName.toLowerCase());
@@ -298,7 +300,7 @@ class PluginHolder
 		else
 			throw new NoSuchPluginException(pluginName);
 	}
-	
+
 	public void removePlugin(final String pluginName)
 	{
 		plugins.remove(pluginName);
@@ -308,7 +310,7 @@ class PluginHolder
 				commands.remove(pcmd);
 		}
 	}
-}	
+}
 
 
 class PluginCommand
@@ -354,8 +356,8 @@ class PluginCommand
 		hash = 67 * hash + (this.commandName != null ? this.commandName.toLowerCase().hashCode() : 0);
 		return hash;
 	}
-	
-	
-	
-	
+
+
+
+
 }
