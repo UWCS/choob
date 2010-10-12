@@ -29,7 +29,6 @@ import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.ContextEvent;
 import uk.co.uwcs.choob.support.events.Message;
 import uk.co.uwcs.choob.support.events.PrivateEvent;
 
@@ -810,7 +809,7 @@ public class Karma
 						output.append(" unchanged");
 					if (karma.reasons.size() > 1)
 						output.append(" with reasons");
-					else if (karma.reasons.size() == 1)
+					else if (karma.reasons.get(0).reason !=  null)
 						output.append(" with reason");
 					if (karma.change == 0)
 						output.append(" (remains " + karma.karma.value + ")");
