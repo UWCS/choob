@@ -786,7 +786,7 @@ public class Karma
 				// This doesn't mention if there was a reason.
 				irc.sendContextReply(mes, "Fool, that's less karma to you! That leaves you with " + karma.karma.value + ".");
 			else
-				irc.sendContextReply(mes, (karma.change > 0 ? "Given more karma" : karma.change < 0 ? "Given less karma" : "No change") + " to " + formatKarmaNameForIRC(karma.instanceName) + (karma.reasons.size() == 1 ? " and understood your reason" : (karma.reasons.size() > 1 ? " and understood your reasons" : "")) + ". " + (karma.change == 0 ? "Karma remains at " : "New karma is ") + karma.karma.value + ".");
+				irc.sendContextReply(mes, (karma.change > 0 ? "Given more karma" : karma.change < 0 ? "Given less karma" : "No change") + " to " + formatKarmaNameForIRC(karma.instanceName) + (karma.reasons.get(0).reason != null ? " and understood your reason" : (karma.reasons.size() > 1 ? " and understood your reasons" : "")) + ". " + (karma.change == 0 ? "Karma remains at " : "New karma is ") + karma.karma.value + ".");
 		}
 		else
 		{
