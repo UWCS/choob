@@ -317,28 +317,28 @@ public class TimedEvents
 	}
 
 	public long apiDecodePeriod(final String time) throws NumberFormatException {
-		int period = 0;
+		long period = 0;
 
 		int currentPos = -1;
 		int lastPos = 0;
 
 		if ( (currentPos = time.indexOf('d', lastPos)) >= 0 ) {
-			period += 60 * 60 * 24 * Integer.parseInt(time.substring(lastPos, currentPos));
+			period += 60 * 60 * 24 * Long.parseLong(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
 
 		if ( (currentPos = time.indexOf('h', lastPos)) >= 0 ) {
-			period += 60 * 60 * Integer.parseInt(time.substring(lastPos, currentPos));
+			period += 60 * 60 * Long.parseLong(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
 
 		if ( (currentPos = time.indexOf('m', lastPos)) >= 0 ) {
-			period += 60 * Integer.parseInt(time.substring(lastPos, currentPos));
+			period += 60 * Long.parseLong(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
 
 		if ( (currentPos = time.indexOf('s', lastPos)) >= 0 ) {
-			period += Integer.parseInt(time.substring(lastPos, currentPos));
+			period += Long.parseLong(time.substring(lastPos, currentPos));
 			lastPos = currentPos + 1;
 		}
 
@@ -347,6 +347,7 @@ public class TimedEvents
 
 		return period;
 	}
+
 
 	public synchronized void interval( final Object parameter )
 	{
