@@ -48,7 +48,7 @@ cd pisg-0.72
 	CFG=$(mktemp)
 	trap "rm $CFG" EXIT
 
-	sed "s,OUTFILE,$OUTPUT,;s,INFILE,$LOG,;s,CHANNEL,$MSG," < ../config_base > $CFG
+	sed "s#OUTFILE#$OUTPUT#;s#INFILE#$LOG#;s#CHANNEL#$MSG#" < ../config_base > $CFG
 	nice perl pisg --configfile=$CFG
 
 	cp gfx/*.png $BASE
