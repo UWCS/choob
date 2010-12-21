@@ -459,7 +459,7 @@ if ($params{help}) {
 				print qq[			<TD><A HREF="?class=$className;id=$key">X</A></TD>\n];
 				foreach my $col (@columns) {
 					if (defined $objects{$key}{$col}) {
-						print qq[			<TD>] . $objects{$key}{$col} . qq[</TD>\n];
+						print qq[			<TD>] . escapeXML($objects{$key}{$col}) . qq[</TD>\n];
 					} else {
 						print qq[			<TD STYLE="font-weight: bold; color: red;">MISSING</TD>\n];
 					}
