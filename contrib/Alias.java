@@ -201,7 +201,7 @@ public class Alias
 	{
 		AliasObject o = getAlias(alias);
 		if (null == o)
-			throw new IllegalArgumentException("No alias found for: " + alias);
+			return "";
 		return o.converted;
 	}
 
