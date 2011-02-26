@@ -1,12 +1,12 @@
 /** @author rlmw */
 
 import java.net.SocketPermission;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import scala.actors.threadpool.Arrays;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.plugins.RequiresPermission;
 import uk.co.uwcs.choob.support.IRCInterface;
@@ -14,12 +14,12 @@ import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Uses google latitude api to obtain locations for people
- * 
+ *
  * Uses the JSON api
- * 
+ *
  * Requires permission:
  * "security.grant plugin.Latitude Socket www.google.com connect,resolve"
- * 
+ *
  * @author rlmw
  * @see http://www.google.com/latitude/apps/badge
  */
