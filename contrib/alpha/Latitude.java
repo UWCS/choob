@@ -1,15 +1,26 @@
 /** @author rlmw */
 
+import static com.google.common.collect.Lists.newArrayList;
+import static java.util.Collections.sort;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.SocketPermission;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.plugins.RequiresPermission;
@@ -34,7 +45,7 @@ public class Latitude {
 			"Location lookup from Google Latitude",
 			"mulletron",
 			"ALPHA ALPHA",
-			"<3",
+			"<3.2",
 		};
 	}
 
@@ -94,15 +105,72 @@ public class Latitude {
 	public void commandLocation(final Message mes, final Modules mods,
 			final IRCInterface irc) throws Exception {
 
-		String nick = mods.util.getParamString(mes);
-		nick = (nick.length() > 0)?nick:mes.getNick();
+		String nick = getNick(mes, mods);
+		Badge badge = getBadge(mes, mods, irc, nick);
+		if(badge != null) {			
+			irc.sendContextReply(mes, nick+" is believed to be located in "+getLocation(badge.badge_id));
+		}
+	}
+
+	public void commandBuddies(final Message mes, final Modules mods,
+			final IRCInterface irc) throws Exception {
+		String nick = getNick(mes, mods);
+		Badge badge = getBadge(mes, mods, irc, nick);
+		Location loc = getLocation(badge.badge_id);
+		if(badge != null) {
+			System.out.println("where nick != '"+mods.odb.escapeString(nick)+"'");
+			List<Badge> badges = mods.odb.retrieve(Badge.class,"WHERE ! nick = \""+mods.odb.escapeString(nick)+"\"");
+			Map<String,Double> dists = Maps.newHashMap();
+			for (Badge other : badges) {
+				
+				Location otherLoc;
+				try {
+					otherLoc = getLocation(other.badge_id);
+					double dist = Math.sqrt(Math.pow(Math.abs(otherLoc.x.doubleValue() - loc.x.doubleValue()),2) + Math.pow(Math.abs(otherLoc.y.doubleValue() - loc.y.doubleValue()),2));
+					dists.put(other.nick, dist);
+				} catch (Exception e) {
+					//irc.sendContextReply(mes, other.nick+" fails - "+e.getMessage());
+					// TODO: figure out what to do
+				}
+			}
+			
+			ArrayList<Entry<String, Double>> vals = newArrayList(dists.entrySet());
+			sort(vals, new Comparator<Entry<String,Double>>() {
+				@Override
+				public int compare(Entry<String, Double> a,
+						Entry<String, Double> b) {
+					return a.getValue().compareTo(b.getValue());
+				}
+			});
+			for (Entry<String, Double> entry : vals) {
+				// I don't want to be mysterious, but I won't
+				// tell you what this magic number is
+				// and I won't tell you why I won't tell you what this number is.
+				irc.sendContextReply(mes, (83 * entry.getValue())+" from "+entry.getKey());
+			}
+		}
+	}
+
+	private Badge getBadge(final Message mes, final Modules mods,
+			final IRCInterface irc, String nick) {
 		final List<Badge> values = mods.odb.retrieve(Badge.class, "where nick = '"+nick+"'");
+		Badge badge = null;
 		if(values.size() == 0) {
 			irc.sendContextReply(mes, nick+" has no saved Google Latitude badge");
 		} else {
-			irc.sendContextReply(mes, nick+" is believed to be located in "+getLocation(values.get(0).badge_id));
+			badge = values.get(0);
 		}
+		return badge;
 	}
+
+	private String getNick(final Message mes, final Modules mods) {
+		String nick = mods.util.getParamString(mes);
+		nick = (nick.length() > 0)?nick:mes.getNick();
+		return nick;
+	}
+	
+	
+	
 }
 
 /**
@@ -149,3 +217,4 @@ class Badge {
 	}
 
 }
+ 
