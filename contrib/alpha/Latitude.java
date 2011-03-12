@@ -134,7 +134,7 @@ public class Latitude {
 				}
 			}
 			
-			ArrayList<Entry<String, Double>> vals = newArrayList(dists.entrySet());
+			List<Entry<String, Double>> vals = newArrayList(dists.entrySet());
 			sort(vals, new Comparator<Entry<String,Double>>() {
 				@Override
 				public int compare(Entry<String, Double> a,
@@ -142,6 +142,9 @@ public class Latitude {
 					return a.getValue().compareTo(b.getValue());
 				}
 			});
+			if(vals.size() > 5) {
+				vals = vals.subList(0, 4);
+			}
 			for (Entry<String, Double> entry : vals) {
 				// I don't want to be mysterious, but I won't
 				// tell you what this magic number is
