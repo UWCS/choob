@@ -58,7 +58,7 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	/**
 	 * Allocates a word in the dictionary
 	 */
-	@Override public void addWord(final String word) {
+	@Override public boolean addWord(final String word) {
 		final String code = getCode(word);
 		List<String> list = mainDictionary.get(code);
 		if (list == null)
@@ -69,6 +69,10 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 		}
 		else if (!list.contains(word))
 			list.add(word.toLowerCase());
+		else
+			return false;
+
+		return true;
 	}
 
 	/**
