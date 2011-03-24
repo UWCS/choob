@@ -12,3 +12,5 @@ bot.conf
 *.ipr
 *.iws
 *.db
+#sigh
+hs_err_pid*.log
