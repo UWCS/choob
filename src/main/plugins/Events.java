@@ -14,13 +14,14 @@ import java.util.regex.Pattern;
 
 import org.jibble.pircbot.Colors;
 import org.joda.time.DateTime;
-import org.parboiled.google.collect.Lists;
 
 import uk.co.uwcs.choob.modules.DateModule;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobError;
 import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.IRCInterface;
+
+import com.google.common.collect.Lists;
 
 public class Events
 {
@@ -317,6 +318,7 @@ public class Events
 
 	private class DateComparator implements Comparator<EventItem>
 	{
+		@Override
 		public int compare(final EventItem a, final EventItem b)
 		{
 			// Hax. This means that if the events have the same (well, within a few milliseconds of each other) start time, pick the one with the most signups.
