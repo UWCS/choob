@@ -8,6 +8,7 @@ package uk.co.uwcs.choob.modules;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLStreamHandler;
 import java.security.AccessControlException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -17,6 +18,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import uk.co.uwcs.choob.Choob;
 import uk.co.uwcs.choob.ChoobDistributingPluginManager;
@@ -43,6 +45,9 @@ import uk.co.uwcs.choob.support.NoSuchCommandException;
 import uk.co.uwcs.choob.support.NoSuchPluginException;
 import uk.co.uwcs.choob.support.events.Message;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
+
 /**
  * Module that performs functions relating to the plugin architecture of the bot.
  * @author sadiq
@@ -57,6 +62,10 @@ public final class PluginModule
 	private final ChoobPluginManager jsPlugMan;
 	private final Choob bot;
 	private final IRCInterface irc;
+	private static final Map<String, URLStreamHandler> URL_HANDLERS =
+		ImmutableMap.<String, URLStreamHandler>of(
+			"choob-plugin", new ChoobURLStreamHandler()
+		);
 
 	/**
 	 * Creates a new instance of the PluginModule.
@@ -86,20 +95,12 @@ public final class PluginModule
 	 * Adds a plugin to the loaded plugin map but first unloads any plugin already there.
 	 *
 	 * This method also calls the create() method on any new plugin.
-	 * @param URL URL to the source of the plugin.
+	 * @param url URL to the source of the plugin.
 	 * @param pluginName Name for the class of the new plugin.
 	 * @throws ChoobException Thrown if there's a syntactical error in the plugin's source.
 	 */
-	public void addPlugin(final String pluginName, final String URL) throws ChoobException {
-		final URL srcURL;
-		try
-		{
-			srcURL = new URL(URL);
-		}
-		catch (final MalformedURLException e)
-		{
-			throw new ChoobException("URL " + URL + " is malformed: " + e);
-		}
+	public void addPlugin(final String pluginName, final String url) throws ChoobException {
+		final URL srcURL = createUrl(url);
 
 		// Small hack to allow the ChoobTask to return a value.
 		final boolean[] existed = new boolean[] { false };
@@ -138,7 +139,34 @@ public final class PluginModule
 		else
 			bot.onPluginLoaded(pluginName);
 
-		addPluginToDb(pluginName, URL);
+		addPluginToDb(pluginName, url);
+	}
+
+	/** Not using {@link URL#setURLStreamHandlerFactory(java.net.URLStreamHandlerFactory)}
+	 * as it can only be set once and setting interferes with frameworks */
+	static URL createUrl(final String url) throws ChoobException {
+		try
+		{
+			final URLStreamHandler handler = URL_HANDLERS.get(protocolOf(url));
+
+			if (null == handler)
+				return new URL(url);
+			else
+				// context, null by javadoc
+				return new URL(null, url, handler);
+		}
+		catch (final MalformedURLException e)
+		{
+			throw new ChoobException("URL " + url + " is malformed: " + e);
+		}
+	}
+
+	/** Can't use {@link URL#getProtocol()} as URL's constructor barfs on unknown types */
+	@VisibleForTesting static String protocolOf(String url) throws MalformedURLException {
+		final int colon = url.indexOf(':');
+		if (-1 == colon)
+			throw new MalformedURLException(url + " doesn't contain a ':'");
+		return url.substring(0, colon);
 	}
 
 	/**
