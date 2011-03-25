@@ -123,11 +123,6 @@
 		<dependency>
 			<groupId>org.jawk</groupId>
 			<artifactId>jawk</artifactId>
-			<version>1.02-mullet</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jawk</groupId>
-			<artifactId>jawk</artifactId>
 			<version>1.02-mullet20090717</version>
 		</dependency>
 		<dependency>
@@ -141,6 +136,7 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
 				<configuration>
 					<source>1.6</source>
 					<target>1.6</target>
