@@ -85,12 +85,12 @@ ALTER TABLE `UserNodePermissions`
 
 -- These plugins are really required to have a functional bot. More can be loaded once these are.
 
-INSERT INTO `Plugins` VALUES ('Alias', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Alias.java', 1);
-INSERT INTO `Plugins` VALUES ('Help', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Help.java', 1);
-INSERT INTO `Plugins` VALUES ('NickServ', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/NickServ.java', 1);
-INSERT INTO `Plugins` VALUES ('Options', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Options.java', 1);
-INSERT INTO `Plugins` VALUES ('Plugin', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Plugin.java', 1);
-INSERT INTO `Plugins` VALUES ('Security', 'http://svn.uwcs.co.uk/repos/choob/trunk/contrib/Security.java', 1);
+INSERT INTO `Plugins` VALUES ('Alias', 'choob-plugin:/Alias.java', 1);
+INSERT INTO `Plugins` VALUES ('Help', 'choob-plugin:/Help.java', 1);
+INSERT INTO `Plugins` VALUES ('NickServ', 'choob-plugin:/NickServ.java', 1);
+INSERT INTO `Plugins` VALUES ('Options', 'choob-plugin:/Options.java', 1);
+INSERT INTO `Plugins` VALUES ('Plugin', 'choob-plugin:/Plugin.java', 1);
+INSERT INTO `Plugins` VALUES ('Security', 'choob-plugin:/Security.java', 1);
 
 -- Need to give Nickserv enough permissions to be able to talk to nickserv.
 

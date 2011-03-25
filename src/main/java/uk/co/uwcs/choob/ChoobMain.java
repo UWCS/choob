@@ -6,6 +6,8 @@
 
 package uk.co.uwcs.choob;
 
+import java.util.Arrays;
+
 /**
  * Main class in the Choob project, simply creates a Choob instance.
  */
@@ -15,7 +17,14 @@ public final class ChoobMain
 	{
 		try
 		{
-			new Choob();
+			if (0 == args.length) {
+				new Choob();
+			} else if ("setup".equals(args[0])) {
+				ChoobSetupCLI.main(Arrays.copyOfRange(args, 1, args.length));
+			} else {
+				System.out.println("Usage: choob");
+				System.out.println("Usage: choob [setup ...]");
+			}
 		}
 		catch (final Throwable t)
 		{

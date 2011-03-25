@@ -180,7 +180,7 @@ public final class Choob extends PircBot
 		modules = new Modules(broker, intervalList, this, irc);
 
 		// Set the name from the config file.
-		this.setName(conf.getSettingFallback("botName", "Choob" + new Random().nextInt(10000)));
+		this.setName(conf.getSettingFallback("botName", randomName()));
 
 		// Set the bot's hostname.
 		this.setLogin(conf.getSettingFallback("botIdent", "choob"));
@@ -228,6 +228,10 @@ public final class Choob extends PircBot
 			System.out.println("Unhandled IRC Error on connect, exiting: ." + e);
 			System.exit(3);
 		}
+	}
+
+	public static String randomName() {
+		return "Choob" + new Random().nextInt(10000);
 	}
 
 	//* Connect the initialised bot to IRC, and do hard-coded post-connection stuff. */
