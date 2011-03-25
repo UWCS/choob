@@ -31,6 +31,7 @@ import uk.co.uwcs.choob.support.ChoobError;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobProtectionDomain;
 import uk.co.uwcs.choob.support.ConfigReader;
+import uk.co.uwcs.choob.support.ConnectionBroker;
 import uk.co.uwcs.choob.support.DbConnectionBroker;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.Interval;
@@ -71,7 +72,7 @@ final class Choob extends PircBot implements Bot
 {
 	private final ChoobThreadManager ctm;
 	private final ChoobDecoderTaskData cdtd;
-	private DbConnectionBroker broker;
+	private ConnectionBroker broker;
 	private Modules modules;
 	private IRCInterface irc;
 	private String trigger;
@@ -122,13 +123,14 @@ final class Choob extends PircBot implements Bot
 		}
 		try
 		{
-			broker = new DbConnectionBroker("com.mysql.jdbc.Driver", "jdbc:mysql://"
-					+ conf.getSettingFallback("dbServer","localhost")
+			broker = new DbConnectionBroker(conf.getSettingFallback("dbDriver","com.mysql.jdbc.Driver"),
+					conf.getSettingFallback("dbUrl", "jdbc:mysql://" + conf.getSettingFallback("dbServer","localhost")
 					+ "/" + conf.getSettingFallback("database","choob") + "?autoReconnect=true&"
 					+ "autoReconnectForPools=true&initialTimeout=1&"
-					+ "useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8",
+					+ "useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8"),
 						conf.getSettingFallback("dbUser","choob"),
-						conf.getSettingFallback("dbPass",""), 10, 20, logFile, 60);
+						conf.getSettingFallback("dbPass",""), 10, 20, logFile, 60,
+						conf.getSettingFallback("dialect", "org.hibernate.dialect.MySQLInnoDBDialect"));
 		}
 		catch (final SQLException e)
 		{
@@ -270,7 +272,7 @@ final class Choob extends PircBot implements Bot
 			final Connection dbConnection = broker.getConnection();
 			final PreparedStatement coreplugSmt = dbConnection.prepareStatement("SELECT * FROM Plugins WHERE CorePlugin = 1;");
 			final ResultSet coreplugResults = coreplugSmt.executeQuery();
-			if ( coreplugResults.first() )
+			if ( coreplugResults.next() )
 				do
 				{
 					System.out.print("Loading core plugin " + coreplugResults.getString("PluginName") + " from <" + coreplugResults.getString("URL") + ">... ");

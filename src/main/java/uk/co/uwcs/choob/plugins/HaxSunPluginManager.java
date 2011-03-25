@@ -376,7 +376,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			try {
 				clazz = Class.forName(className);
 			} catch (ClassNotFoundException cfe) {
-				System.out.println("Still waiting for your IDE to create the class...");
+				System.out.println("Still waiting for your IDE to create " + className + "...");
 				try { Thread.sleep(500); }
 				catch (InterruptedException e) { throw new ClassNotFoundException("Oh dear"); }
 				clazz = null;
@@ -389,9 +389,13 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	private static boolean useHilariousDebuggerMode() {
 		final String flag = System.getProperty("choobDebuggerHack");
 		if (null == flag) {
-			return ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;
+			return isInDebugger();
 		}
 		return "true".equals(flag);
+	}
+
+	public static boolean isInDebugger() {
+		return ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;
 	}
 
 
@@ -418,17 +422,21 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 				pluginObj = element.newInstance(arg);
 				break;
 			}
+			catch (final IllegalAccessError e)
+			{
+				throw new ChoobException("Plugin " + pluginName + " has transient dependencies that failed to be accessible, probably due to package munging failure", e);
+			}
 			catch (final IllegalAccessException e)
 			{
-				throw new ChoobException("Plugin " + pluginName + " had no constructor (this error shouldn't occour, something serious is wrong): " + e);
+				throw new ChoobException("Plugin " + pluginName + " had no constructor (this error shouldn't occour, something serious is wrong)", e);
 			}
 			catch (final InvocationTargetException e)
 			{
-				throw new ChoobException("Plugin " + pluginName + "'s constructor threw an exception: " + e.getCause(), e.getCause());
+				throw new ChoobException("Plugin " + pluginName + "'s constructor threw an exception", e.getCause());
 			}
 			catch (final InstantiationException e)
 			{
-				throw new ChoobException("Plugin " + pluginName + "'s constructor threw an exception: " + e.getCause(), e.getCause());
+				throw new ChoobException("Plugin " + pluginName + "'s constructor threw an exception", e.getCause());
 			}
 
 		try
