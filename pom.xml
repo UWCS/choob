@@ -20,6 +20,12 @@
 	<name>choob</name>
 	<url>http://maven.apache.org</url>
 
+	<scm>
+		<connection>scm:git:http://choob.uwcs.co.uk/choob.git/</connection>
+		<developerConnection>scm:git:choob@uwcs.co.uk:public_html/choob.git</developerConnection>
+		<url>http://trac.uwcs.co.uk/choob</url>
+	</scm>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
