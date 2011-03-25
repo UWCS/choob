@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -353,17 +354,11 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		{
 			final String className = "plugins." + pluginName + "." + pluginName;
 			Class<?> clazz;
-			clazz = loader.findClass(className);
-//			do {
-//				try {
-//					clazz = Class.forName(className);
-//				} catch (ClassNotFoundException cfe) {
-//					System.out.println("Still waiting for your IDE to create the class...");
-//					try { Thread.sleep(500); }
-//					catch (InterruptedException e) { throw new ClassNotFoundException("Oh dear"); }
-//					clazz = null;
-//				}
-//			} while (null == clazz);
+			if (!useHilariousDebuggerMode()) {
+				clazz = loader.findClass(className);
+			} else {
+				clazz = waitForIDEToCreate(className);
+			}
 
 			return instantiatePlugin(clazz, pluginName);
 		}
@@ -372,6 +367,31 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			throw new ChoobException("Could not find plugin class for " + pluginName + ": " + e, e);
 		}
 	}
+
+	private Class<?> waitForIDEToCreate(final String className) throws ClassNotFoundException {
+		Class<?> clazz;
+		do {
+			try {
+				clazz = Class.forName(className);
+			} catch (ClassNotFoundException cfe) {
+				System.out.println("Still waiting for your IDE to create the class...");
+				try { Thread.sleep(500); }
+				catch (InterruptedException e) { throw new ClassNotFoundException("Oh dear"); }
+				clazz = null;
+			}
+		} while (null == clazz);
+		return clazz;
+	}
+
+	/** If the property isn't set, enable this if we're in a debugger */
+	private static boolean useHilariousDebuggerMode() {
+		final String flag = System.getProperty("choobDebuggerHack");
+		if (null == flag) {
+			return ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;
+		}
+		return "true".equals(flag);
+	}
+
 
 	protected Object instantiatePlugin(final Class<?> newClass, final String pluginName) throws ChoobException
 	{
