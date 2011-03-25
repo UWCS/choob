@@ -6,7 +6,10 @@
 package uk.co.uwcs.choob;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
@@ -65,10 +68,22 @@ public abstract class ChoobPluginManager
 		if (!transFile.exists()) {
 			transFile = new File("../share/en_phonet.dat");
 		}
-
 		try
 		{
-			phoneticCommands = new SpellDictionaryChoob(transFile);
+			Reader reader = null;
+			try {
+				if (transFile.exists()) {
+					reader = new FileReader(transFile);
+				} else {
+					reader = new InputStreamReader(ChoobPluginManager.class.getResourceAsStream("/share/en_phonet.dat"));
+				}
+
+				phoneticCommands = new SpellDictionaryChoob(reader);
+			} finally {
+				if (null != reader) {
+					reader.close();
+				}
+			}
 		}
 		catch (final IOException e)
 		{
@@ -80,17 +95,17 @@ public abstract class ChoobPluginManager
 	protected abstract Object createPlugin(String pluginName, URL fromLocation) throws ChoobException;
 	protected abstract void destroyPlugin(String pluginName);
 
-	
+
 	public String[] getHelp(String pluginName, String commandName) throws NoSuchCommandException
 	{
 		throw new NoSuchCommandException(commandName);
 	}
-	
+
 	public String[] getInfo(String pluginName) throws NoSuchPluginException
 	{
 		throw new NoSuchPluginException(pluginName);
 	}
-	
+
 	/**
 	 * (Re)loads a plugin from an URL and a plugin name. Note that in the case
 	 * of reloading, the old plugin will be disposed of AFTER the new one is
@@ -305,9 +320,9 @@ public abstract class ChoobPluginManager
 	public String getCommandDescription(String pluginName, String commandName) throws HelpNotSpecifiedException
 	{
 		throw new HelpNotSpecifiedException();
-	}	
-	
-		
+	}
+
+
 	/**
 	 * Get the parameters of a command specified in an annotation
 	 * @param pluginName	The plugin name the command is in.
@@ -319,7 +334,7 @@ public abstract class ChoobPluginManager
 	{
 		throw new HelpNotSpecifiedException();
 	}
-	
+
 	/**
 	 * Get the parameter descriptions of a command specified in an annotation
 	 * @param pluginName	The plugin name the command is in.
@@ -330,7 +345,7 @@ public abstract class ChoobPluginManager
 	public String[] getCommandParameterDescriptions(String pluginName, String commandName) throws HelpNotSpecifiedException
 	{
 		throw new HelpNotSpecifiedException();
-	}	
-	
+	}
+
 }
 

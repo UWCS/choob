@@ -25,8 +25,8 @@
 
 package uk.co.uwcs.choob;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,7 +50,7 @@ public final class SpellDictionaryChoob extends SpellDictionaryASpell {
 	 */
 	private final Hashtable<String, List<String>> mainDictionary = new Hashtable<String, List<String>>(INITIAL_CAPACITY);
 
-	public SpellDictionaryChoob(final File phonetics) throws IOException
+	public SpellDictionaryChoob(final Reader phonetics) throws IOException
 	{
 		super(phonetics);
 	}
