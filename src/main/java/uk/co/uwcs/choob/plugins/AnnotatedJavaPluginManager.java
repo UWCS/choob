@@ -42,7 +42,7 @@ import uk.co.uwcs.choob.support.events.Message;
 public class AnnotatedJavaPluginManager extends ChoobPluginManager
 {
 
-	private static final String PLUGIN_DIR = "pluginData";
+	private static final String PLUGIN_DIR = HaxSunPluginManager.PLUGIN_DIR;
 
 	private final Modules mods;
 	private final IRCInterface irc;

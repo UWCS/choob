@@ -67,6 +67,7 @@ import uk.co.uwcs.choob.support.events.UserModes;
  */
 public final class Choob extends PircBot
 {
+	private static final String DEFAULT_TEMP_LOCATION = "tmp";
 	private DbConnectionBroker broker;
 	private Modules modules;
 	private IRCInterface irc;
@@ -77,6 +78,21 @@ public final class Choob extends PircBot
 	private ConfigReader conf;
 	private int exitCode;
 	private int messageLimit;
+
+	public static final File TEMP_FOLDER;
+
+	static {
+		String temp = System.getProperty("choobTempDir");
+		if (null == temp) {
+			temp = DEFAULT_TEMP_LOCATION;
+		}
+
+		TEMP_FOLDER = new File(temp);
+		if (DEFAULT_TEMP_LOCATION == temp) {
+			TEMP_FOLDER.mkdirs();
+		}
+	}
+
 	/**
 	 * Constructor for Choob, initialises vital variables.
 	 */
@@ -108,9 +124,7 @@ public final class Choob extends PircBot
 		PrintWriter logFile;
 		try
 		{
-			final File logLocation = new File("./tmp/");
-			logLocation.mkdirs();
-			logFile=new PrintWriter(new FileOutputStream(logLocation.getPath() + "/db.log"));
+			logFile=new PrintWriter(new FileOutputStream(TEMP_FOLDER.getPath() + "/db.log"));
 		}
 		catch (final IOException e)
 		{
