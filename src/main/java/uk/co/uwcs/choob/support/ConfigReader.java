@@ -46,11 +46,17 @@ public final class ConfigReader
 	 * @param setting Setting you're attempting to get the value of.
 	 * @throws ChoobException Thrown if the setting wasn't found.
 	 */
-	public String getSetting( final String setting ) throws ChoobException
+	private String getSetting( final String setting ) throws ChoobException
 	{
 		final String p=botProps.getProperty(setting);
 		if (p!=null)
 			return p;
-		throw new ChoobException("Setting doesn't exist in config file.");
+
+		final String prop = System.getProperty("choob" + setting);
+		if (null != prop)
+			return prop;
+
+		throw new ChoobException("Setting doesn't exist in config file" +
+				" or system properties (with 'choob' prefix): " + setting);
 	}
 }

@@ -22,6 +22,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.PircBot;
@@ -140,7 +141,8 @@ public final class Choob extends PircBot
 					+ "/" + conf.getSettingFallback("database","choob") + "?autoReconnect=true&"
 					+ "autoReconnectForPools=true&initialTimeout=1&"
 					+ "useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8",
-						conf.getSettingFallback("dbUser","choob"), conf.getSettingFallback("dbPass",""), 10, 20, logFile, 60);
+						conf.getSettingFallback("dbUser","choob"),
+						conf.getSettingFallback("dbPass",""), 10, 20, logFile, 60);
 		}
 		catch (final SQLException e)
 		{
@@ -178,10 +180,10 @@ public final class Choob extends PircBot
 		modules = new Modules(broker, intervalList, this, irc);
 
 		// Set the name from the config file.
-		this.setName(conf.getSettingFallback("botName", "Choob"));
+		this.setName(conf.getSettingFallback("botName", "Choob" + new Random().nextInt(10000)));
 
 		// Set the bot's hostname.
-		this.setLogin(conf.getSettingFallback("botIdent", "Choob"));
+		this.setLogin(conf.getSettingFallback("botIdent", "choob"));
 
 		// Name changed now...
 		modules.util.updateTrigger();
