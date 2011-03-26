@@ -55,6 +55,7 @@ import com.google.common.collect.ImmutableMap;
  */
 public final class PluginModule
 {
+	private final ChoobThreadManager ctm;
 	private final DbConnectionBroker broker;
 	private final Modules mods;
 	private final ChoobPluginManager hsPlugMan;
@@ -73,7 +74,8 @@ public final class PluginModule
 	 * @param pluginMap Map containing currently loaded plugins.
 	 */
 	PluginModule(final DbConnectionBroker broker, final Modules mods,
-			final IRCInterface irc, final Bot bot, final ChoobPluginManagerState state) throws ChoobException {
+			final IRCInterface irc, final Bot bot, final ChoobPluginManagerState state,
+			final ChoobThreadManager ctm) throws ChoobException {
 		this.broker = broker;
 		this.mods = mods;
 		this.hsPlugMan = new HaxSunPluginManager(mods, irc, state);
@@ -82,6 +84,7 @@ public final class PluginModule
 		this.jsPlugMan = new JavaScriptPluginManager(mods, irc, state);
 		this.bot = bot;
 		this.irc = irc;
+		this.ctm = ctm;
 	}
 
 	public ChoobPluginManager getPlugMan()
@@ -326,7 +329,7 @@ public final class PluginModule
 		AccessController.checkPermission(new ChoobPermission("generic.command"));
 		final ChoobTask task = dPlugMan.commandTask(pluginName, command, mes);
 		if (task != null)
-			ChoobThreadManager.queueTask(task);
+			ctm.queueTask(task);
 		else
 			throw new ChoobNoSuchCallException(pluginName, "command " + command);
 	}

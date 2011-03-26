@@ -24,12 +24,14 @@ public final class ChoobWatcherThread extends Thread
 	private final List<Interval> intervalList;
 	private boolean running;
 	private final Modules mods;
+	private final ChoobThreadManager ctm;
 
 	/** Creates a new instance of ChoobWatcherThread */
 	ChoobWatcherThread(final List<Interval> intervalList, final IRCInterface irc,
-			final Modules mods) {
+			final Modules mods, final ChoobThreadManager ctm) {
 		this.intervalList = intervalList;
 		this.mods = mods;
+		this.ctm = ctm;
 	}
 
 	@Override
@@ -60,7 +62,7 @@ public final class ChoobWatcherThread extends Thread
 						{
 							try
 							{
-								ChoobThreadManager.queueTask(t);
+								ctm.queueTask(t);
 							}
 							catch (final RejectedExecutionException e)
 							{

@@ -5,10 +5,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
-import uk.co.uwcs.choob.support.DbConnectionBroker;
-import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.CommandEvent;
 import uk.co.uwcs.choob.support.events.Event;
 import uk.co.uwcs.choob.support.events.FilterEvent;
@@ -19,34 +16,17 @@ import uk.co.uwcs.choob.support.events.UserEvent;
 
 public class ChoobDecoderTask extends ChoobTask
 {
-	private static DbConnectionBroker dbBroker;
-	private static Modules modules;
-	private static IRCInterface irc;
-	private static Pattern triggerPattern;
-	private static Pattern commandPattern;
+	private final ChoobDecoderTaskData data;
 	private final Event event;
 
-	static void initialise(final DbConnectionBroker broker, final Modules mods, final IRCInterface ircinter)
-	{
-		if (ChoobDecoderTask.dbBroker != null)
-			return;
-		ChoobDecoderTask.dbBroker = broker;
-		ChoobDecoderTask.modules = mods;
-		ChoobDecoderTask.irc = ircinter;
-		commandPattern = Pattern.compile("^([a-zA-Z0-9_]+)\\.([a-zA-Z0-9_]+)$");
-		updatePatterns();
-	}
-
-	static void updatePatterns()
-	{
-		triggerPattern = Pattern.compile("^(?:" + irc.getTriggerRegex() + ")", Pattern.CASE_INSENSITIVE);
-	}
+	private static final Pattern commandPattern = Pattern.compile("^([a-zA-Z0-9_]+)\\.([a-zA-Z0-9_]+)$");
 
 	/** Creates a new instance of ChoobThread */
-	ChoobDecoderTask(final Event event)
+	ChoobDecoderTask(final ChoobDecoderTaskData data, final Event event)
 	{
 		super(null, "ChoobDecoderTask:" + event.getMethodName());
 		this.event = event;
+		this.data = data;
 	}
 
 	@Override
@@ -63,10 +43,10 @@ public class ChoobDecoderTask extends ChoobTask
 			final NickChange nc = (NickChange)event;
 			// Note: the IRC library has already handled this message, so we
 			// match the *new* nickname with the bot's.
-			if (nc.getNewNick().equals(irc.getNickname())) {
-				updatePatterns();
+			if (nc.getNewNick().equals(data.irc.getNickname())) {
+				data.updatePatterns();
 				// Make sure the trigger checking code is up-to-date with the current nickname.
-				modules.util.updateTrigger();
+				data.modules.util.updateTrigger();
 			}
 		}
 
@@ -77,7 +57,7 @@ public class ChoobDecoderTask extends ChoobTask
 		{
 			// First, is does it have a trigger?
 			String matchAgainst = mes.getMessage();
-			ma = triggerPattern.matcher(matchAgainst);
+			ma = data.triggerPattern.matcher(matchAgainst);
 
 			mafind = ma.find();
 			if (mafind || mes instanceof PrivateMessage)
@@ -99,7 +79,7 @@ public class ChoobDecoderTask extends ChoobTask
 		}
 
 		// Process event calls first
-		tasks.addAll(modules.plugin.getPlugMan().eventTasks(event));
+		tasks.addAll(data.modules.plugin.getPlugMan().eventTasks(event));
 
 		boolean ignoreTriggers = false;
 		if (event instanceof UserEvent &&
@@ -108,7 +88,7 @@ public class ChoobDecoderTask extends ChoobTask
 		{
 			try
 			{
-				if (1 == (Integer)ChoobDecoderTask.modules.plugin.callAPI("UserTypeCheck", "Status", ((UserEvent)event).getNick(), "bot"))
+				if (1 == (Integer)data.modules.plugin.callAPI("UserTypeCheck", "Status", ((UserEvent)event).getNick(), "bot"))
 					ignoreTriggers = true;
 			}
 			catch (final ChoobNoSuchCallException e)
@@ -127,7 +107,7 @@ public class ChoobDecoderTask extends ChoobTask
 		{
 			if (event instanceof FilterEvent)
 			{
-				tasks.addAll(modules.plugin.getPlugMan().filterTasks(mes));
+				tasks.addAll(data.modules.plugin.getPlugMan().filterTasks(mes));
 			}
 
 			// Now if it's a message, deal with that too
@@ -138,11 +118,11 @@ public class ChoobDecoderTask extends ChoobTask
 				{
 					try
 					{
-						final int ret = (Integer)modules.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
+						final int ret = (Integer)data.modules.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
 						if (ret != 0)
 						{
 							if (ret == 1)
-								irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
+								data.irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
 							return;
 						}
 					}
@@ -156,7 +136,7 @@ public class ChoobDecoderTask extends ChoobTask
 					final String pluginName  = ma.group(1);
 					final String commandName = ma.group(2);
 
-					final ChoobTask task = modules.plugin.getPlugMan().commandTask(pluginName, commandName, mes);
+					final ChoobTask task = data.modules.plugin.getPlugMan().commandTask(pluginName, commandName, mes);
 					if (task != null)
 						tasks.add(task);
 				}
@@ -166,7 +146,7 @@ public class ChoobDecoderTask extends ChoobTask
 		// We now have a neat list of tasks to perform. Queue them all.
 		for(final ChoobTask task: tasks)
 		{
-			ChoobThreadManager.queueTask(task);
+			data.ctm.queueTask(task);
 		}
 
 		// And done.

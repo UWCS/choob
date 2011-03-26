@@ -12,6 +12,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import uk.co.uwcs.choob.modules.Modules;
+import uk.co.uwcs.choob.support.ChoobError;
 import uk.co.uwcs.choob.support.ChoobPermission;
 
 /**
@@ -20,8 +21,7 @@ import uk.co.uwcs.choob.support.ChoobPermission;
  */
 
 public final class ChoobThreadManager extends ThreadPoolExecutor {
-	private static ChoobThreadManager exe;
-	private final Modules mods;
+	private Modules mods;
 	private final long pwoSetupTime;
 	private final Map<String,PluginWaitObject> waitObjects;
 	//private Map<ChoobTask,String> runningTasks;
@@ -46,7 +46,7 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		}
 	}
 
-	private ChoobThreadManager(final Modules mods)
+	ChoobThreadManager()
 	{
 		super(5, 20, 60l, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 		setThreadFactory( new ThreadFactory() {
@@ -56,11 +56,16 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 				return thread;
 			}
 		});
-		this.mods = mods;
 		this.pwoSetupTime = System.currentTimeMillis() + PLUGIN_WAIT_OBJECT_SETUP_TIME;
 		this.waitObjects = new HashMap<String,PluginWaitObject>();
 		//this.runningTasks = new HashMap<ChoobTask,String>();
 		this.queues = new HashMap<String,BlockingQueue<ChoobTask>>();
+	}
+
+	public void setMods(Modules mods) {
+		if (null != this.mods)
+			throw new ChoobError("mods already set");
+		this.mods = mods;
 	}
 
 	@Override
@@ -87,7 +92,7 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		if (next != null)
 		{
 			// If so, just queue that. Don't relinquish the semaphore.
-			exe.execute(next);
+			execute(next);
 		}
 		else
 		{
@@ -127,12 +132,6 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		((ChoobThread)thread).pushPlugin(pluginName);
 	}
 
-	static void initialise(final Modules mods)
-	{
-		if (exe == null)
-			exe = new ChoobThreadManager(mods);
-	}
-
 	private PluginWaitObject getWaitObject(final String pluginName)
 	{
 		// This needs synchronization.
@@ -163,10 +162,10 @@ public final class ChoobThreadManager extends ThreadPoolExecutor {
 		return ret;
 	}
 
-	public static void queueTask(final ChoobTask task) throws RejectedExecutionException
+	public void queueTask(final ChoobTask task) throws RejectedExecutionException
 	{
 		java.security.AccessController.checkPermission(new ChoobPermission("task.queue"));
-		exe.queue(task);
+		queue(task);
 	}
 
 	private void queue(final ChoobTask task) throws RejectedExecutionException

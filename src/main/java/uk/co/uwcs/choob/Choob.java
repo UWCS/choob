@@ -67,6 +67,8 @@ import uk.co.uwcs.choob.support.events.UserModes;
  */
 final class Choob extends PircBot implements Bot
 {
+	private final ChoobThreadManager ctm;
+	private final ChoobDecoderTaskData cdtd;
 	private DbConnectionBroker broker;
 	private Modules modules;
 	private IRCInterface irc;
@@ -92,8 +94,7 @@ final class Choob extends PircBot implements Bot
 		{
 			e.printStackTrace();
 			System.out.println("\n\nError reading config file, exiting.");
-			System.exit(2);
-			return;
+			throw new ExitCodeException(9);
 		}
 
 		trigger = conf.getSettingFallback("botTrigger","~");
@@ -115,8 +116,7 @@ final class Choob extends PircBot implements Bot
 		{
 			e.printStackTrace();
 			System.out.println("Cannot create db log, exiting.");
-			System.exit(6);
-			return;
+			throw new ExitCodeException(7);
 		}
 		try
 		{
@@ -132,8 +132,7 @@ final class Choob extends PircBot implements Bot
 		{
 			e.printStackTrace();
 			System.out.println("Unexpected error in DbConnectionBroker setup, exiting.");
-			System.exit(5);
-			return;
+			throw new ExitCodeException(5);
 		}
 
 		// Use sensible charset, ignoring the platform-default.
@@ -149,8 +148,7 @@ final class Choob extends PircBot implements Bot
 			} catch (final UnsupportedEncodingException ex) {
 				// Really broken
 				System.out.println("Could not set a sensible encoding, exiting.");
-				System.exit(6);
-				return;
+				throw new ExitCodeException(6);
 			}
 		}
 
@@ -163,8 +161,12 @@ final class Choob extends PircBot implements Bot
 		// This is needed to properly initialise a ChoobProtectionDomain.
 		final ChoobPluginManagerState state = new ChoobPluginManagerState(irc);
 
+		ctm = new ChoobThreadManager();
+
 		// Initialise our modules.
-		modules = new Modules(broker, intervalList, this, irc, state);
+		modules = new Modules(broker, intervalList, this, irc, state, ctm);
+
+		ctm.setMods(modules);
 
 		// Set the name from the config file.
 		this.setName(conf.getSettingFallback("botName", randomName()));
@@ -178,17 +180,14 @@ final class Choob extends PircBot implements Bot
 		// Get the modules.
 		irc.grabMods();
 
-		// Set up the threading stuff, load plugins, etc.
-		try
-		{
-			init();
-		}
-		catch (final ChoobError e)
-		{
-			// Uh oh, some serious badness happened.
-			System.err.println("Fatal error, bailing out of Choob constructor.");
-			throw e;
-		}
+		// Create our list of threads
+		watcher = new ChoobWatcherThread(intervalList, irc, modules, ctm);
+
+		watcher.start();
+
+		cdtd = new ChoobDecoderTaskData(modules, irc, ctm);
+
+		loadCorePlugins();
 
 		// Set PircBot's flood protection
 		this.setMessageDelay(messageLimit);
@@ -207,13 +206,13 @@ final class Choob extends PircBot implements Bot
 		{
 			e.printStackTrace();
 			System.out.println("Connection Error, exiting: " + e);
-			System.exit(2);
+			throw new ExitCodeException(2);
 		}
 		catch (final IrcException e)
 		{
 			e.printStackTrace();
 			System.out.println("Unhandled IRC Error on connect, exiting: ." + e);
-			System.exit(3);
+			throw new ExitCodeException(3);
 		}
 	}
 
@@ -261,20 +260,7 @@ final class Choob extends PircBot implements Bot
 		return modules;
 	}
 
-	/**
-	 * Initialises the Choob thread poll as well as loading the few core plugins that ought to be present at start.
-	 */
-	private void init() throws ChoobError
-	{
-		// Create our list of threads
-		watcher = new ChoobWatcherThread(intervalList, irc, modules);
-
-		watcher.start();
-
-		// Initialise the thread manager, too
-		ChoobThreadManager.initialise(modules);
-		ChoobDecoderTask.initialise(broker, modules, irc);
-
+	private void loadCorePlugins() {
 		try
 		{
 			// We need to have an initial set of plugins that ought to be loaded as core.
@@ -635,8 +621,8 @@ final class Choob extends PircBot implements Bot
 		if (securityOK && ev instanceof IRCEvent)
 			((IRCEvent)ev).getFlags().put("_securityOK", "true");
 
-		final ChoobTask task = new ChoobDecoderTask(ev);
+		final ChoobTask task = new ChoobDecoderTask(cdtd, ev);
 
-		ChoobThreadManager.queueTask(task);
+		ctm.queueTask(task);
 	}
 }
