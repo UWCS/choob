@@ -47,9 +47,9 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	{
 		ChoobPluginManager man;
 		ChoobTask task = null;
-		synchronized(pluginMap)
+		synchronized(state.pluginMap)
 		{
-			man = pluginMap.get(plugin.toLowerCase());
+			man = state.pluginMap.get(plugin.toLowerCase());
 		}
 		if (man != null)
 			task = man.commandTask(plugin, command, ev);
@@ -67,11 +67,11 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 					final String notFoundPrefix = "Command " + plugin + "." + command + " not found";
 					try
 					{
-						lcommands = mods.plugin.getPluginCommands(plugin);
+						lcommands = state.mods.plugin.getPluginCommands(plugin);
 						if (lcommands.length == 0)
-							irc.sendContextReply(ev, notFoundPrefix + ", the plugin doesn't have any commands in it!");
+							state.irc.sendContextReply(ev, notFoundPrefix + ", the plugin doesn't have any commands in it!");
 						else if (lcommands.length == 1)
-							irc.sendContextReply(ev, notFoundPrefix + ", you must have meant " + plugin + "." + lcommands[0] + "?");
+							state.irc.sendContextReply(ev, notFoundPrefix + ", you must have meant " + plugin + "." + lcommands[0] + "?");
 						else
 						{
 							final StringBuilder sb = new StringBuilder(notFoundPrefix).append(", did you mean one of ")
@@ -84,12 +84,12 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 								else
 									sb.append(lcommands[i]).append(", ");
 
-							irc.sendContextReply(ev, sb.append(lcommands[lcommands.length - 1]).append("?").toString());
+							state.irc.sendContextReply(ev, sb.append(lcommands[lcommands.length - 1]).append("?").toString());
 						}
 					}
 					catch (final ChoobNoSuchPluginException e)
 					{
-						irc.sendContextReply(ev, notFoundPrefix + ", the plugin doesn't exist or isn't loaded.");
+						state.irc.sendContextReply(ev, notFoundPrefix + ", the plugin doesn't exist or isn't loaded.");
 					}
 				}
 			};
@@ -104,9 +104,9 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	public ChoobTask intervalTask(final String pluginName, final Object param)
 	{
 		ChoobPluginManager man;
-		synchronized(pluginMap)
+		synchronized(state.pluginMap)
 		{
-			man = pluginMap.get(pluginName.toLowerCase());
+			man = state.pluginMap.get(pluginName.toLowerCase());
 		}
 		if (man != null)
 			return man.intervalTask(pluginName, param);
@@ -121,9 +121,9 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	public List<ChoobTask> eventTasks(final Event ev)
 	{
 		ChoobPluginManager[] mans = new ChoobPluginManager[0];
-		synchronized(pluginManagers)
+		synchronized(state.pluginManagers)
 		{
-			mans = pluginManagers.toArray(mans);
+			mans = state.pluginManagers.toArray(mans);
 		}
 		final List<ChoobTask> tasks = new LinkedList<ChoobTask>();
 		for(int i=0; i<mans.length; i++)
@@ -140,9 +140,9 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	public List<ChoobTask> filterTasks(final Message ev)
 	{
 		ChoobPluginManager[] mans = new ChoobPluginManager[0];
-		synchronized(pluginManagers)
+		synchronized(state.pluginManagers)
 		{
-			mans = pluginManagers.toArray(mans);
+			mans = state.pluginManagers.toArray(mans);
 		}
 		final List<ChoobTask> tasks = new LinkedList<ChoobTask>();
 		for(int i=0; i<mans.length; i++)
@@ -160,9 +160,9 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	public Object doAPI(final String pluginName, final String APIName, final Object... params) throws ChoobNoSuchCallException
 	{
 		ChoobPluginManager man;
-		synchronized(pluginMap)
+		synchronized(state.pluginMap)
 		{
-			man = pluginMap.get(pluginName.toLowerCase());
+			man = state.pluginMap.get(pluginName.toLowerCase());
 		}
 		if (man != null)
 			return man.doAPI(pluginName, APIName, params);
@@ -179,9 +179,9 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 	public Object doGeneric(final String pluginName, final String prefix, final String genericName, final Object... params) throws ChoobNoSuchCallException
 	{
 		ChoobPluginManager man;
-		synchronized(pluginMap)
+		synchronized(state.pluginMap)
 		{
-			man = pluginMap.get(pluginName.toLowerCase());
+			man = state.pluginMap.get(pluginName.toLowerCase());
 		}
 		if (man != null)
 			return man.doGeneric(pluginName, prefix, genericName, params);

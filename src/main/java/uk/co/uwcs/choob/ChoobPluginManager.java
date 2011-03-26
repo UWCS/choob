@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,12 +41,7 @@ import uk.co.uwcs.choob.support.events.Message;
  */
 public abstract class ChoobPluginManager
 {
-	static Modules mods;
-	static IRCInterface irc;
-	static Map<String,ChoobPluginManager> pluginMap;
-	static Map<String,List<String>> commands;
-	static List<ChoobPluginManager> pluginManagers;
-	static SpellDictionaryChoob phoneticCommands;
+	static ChoobPluginManagerState state = new ChoobPluginManagerState();
 
 	// Ensure derivative classes have permissions...
 	public ChoobPluginManager()
@@ -57,13 +51,13 @@ public abstract class ChoobPluginManager
 
 	public final static void initialise(final Modules modules, final IRCInterface ircinter)
 	{
-		if (mods != null)
+		if (state.mods != null)
 			return;
-		mods = modules;
-		ChoobPluginManager.irc = ircinter;
-		pluginManagers = new LinkedList<ChoobPluginManager>();
-		pluginMap = new HashMap<String,ChoobPluginManager>();
-		commands = new HashMap<String,List<String>>();
+		state.mods = modules;
+		state.irc = ircinter;
+		state.pluginManagers = new LinkedList<ChoobPluginManager>();
+		state.pluginMap = new HashMap<String,ChoobPluginManager>();
+		state.commands = new HashMap<String,List<String>>();
 		File transFile = new File("share/en_phonet.dat");
 		if (!transFile.exists()) {
 			transFile = new File("../share/en_phonet.dat");
@@ -78,7 +72,7 @@ public abstract class ChoobPluginManager
 					reader = new InputStreamReader(ChoobPluginManager.class.getResourceAsStream("/share/en_phonet.dat"));
 				}
 
-				phoneticCommands = new SpellDictionaryChoob(reader);
+				state.phoneticCommands = new SpellDictionaryChoob(reader);
 			} finally {
 				if (null != reader) {
 					reader.close();
@@ -120,8 +114,8 @@ public abstract class ChoobPluginManager
 		AccessController.checkPermission(new ChoobPermission("plugin.load." + pluginName.toLowerCase()));
 
 		// Make sure we're ready to add commands.
-		if (commands.get(pluginName.toLowerCase()) == null)
-			commands.put(pluginName.toLowerCase(), new ArrayList<String>());
+		if (state.commands.get(pluginName.toLowerCase()) == null)
+			state.commands.put(pluginName.toLowerCase(), new ArrayList<String>());
 
 		createPlugin(pluginName, fromLocation);
 
@@ -131,15 +125,15 @@ public abstract class ChoobPluginManager
 		// though.
 
 		ChoobPluginManager man;
-		synchronized(pluginMap)
+		synchronized(state.pluginMap)
 		{
-			man = pluginMap.remove(pluginName.toLowerCase());
-			pluginMap.put(pluginName.toLowerCase(), this);
+			man = state.pluginMap.remove(pluginName.toLowerCase());
+			state.pluginMap.put(pluginName.toLowerCase(), this);
 		}
-		synchronized(pluginManagers)
+		synchronized(state.pluginManagers)
 		{
-			if (!pluginManagers.contains(this))
-				pluginManagers.add(this);
+			if (!state.pluginManagers.contains(this))
+				state.pluginManagers.add(this);
 		}
 		if (man != null && man != this)
 			man.destroyPlugin(pluginName);
@@ -153,9 +147,9 @@ public abstract class ChoobPluginManager
 		AccessController.checkPermission(new ChoobPermission("plugin.unload." + pluginName.toLowerCase()));
 
 		ChoobPluginManager man;
-		synchronized(pluginMap)
+		synchronized(state.pluginMap)
 		{
-			man = pluginMap.remove(pluginName.toLowerCase());
+			man = state.pluginMap.remove(pluginName.toLowerCase());
 		}
 		if (man != null)
 			man.destroyPlugin(pluginName);
@@ -168,9 +162,9 @@ public abstract class ChoobPluginManager
 	 */
 	public final String[] plugins()
 	{
-		synchronized(pluginMap)
+		synchronized(state.pluginMap)
 		{
-			final Set<String> keys = pluginMap.keySet();
+			final Set<String> keys = state.pluginMap.keySet();
 			final String[] ret = new String[keys.size()];
 			return keys.toArray(ret);
 		}
@@ -181,9 +175,9 @@ public abstract class ChoobPluginManager
 	 */
 	public final String[] commands(final String pluginName)
 	{
-		synchronized(commands)
+		synchronized(state.commands)
 		{
-			final List<String> coms = commands.get(pluginName.toLowerCase());
+			final List<String> coms = state.commands.get(pluginName.toLowerCase());
 			if (coms == null)
 				return null;
 			final String[] ret = new String[coms.size()];
@@ -196,19 +190,19 @@ public abstract class ChoobPluginManager
 	 */
 	public final void addCommand(final String pluginName, final String commandName)
 	{
-		synchronized(phoneticCommands)
+		synchronized(state.phoneticCommands)
 		{
 			if (pluginName != null)
-				phoneticCommands.addWord((pluginName + "." + commandName).toLowerCase());
+				state.phoneticCommands.addWord((pluginName + "." + commandName).toLowerCase());
 			else
-				phoneticCommands.removeWord(commandName.toLowerCase());
+				state.phoneticCommands.removeWord(commandName.toLowerCase());
 		}
-		synchronized(commands)
+		synchronized(state.commands)
 		{
 			if (pluginName != null)
-				commands.get(pluginName.toLowerCase()).add(commandName);
+				state.commands.get(pluginName.toLowerCase()).add(commandName);
 			else
-				commands.get("").add(commandName);
+				state.commands.get("").add(commandName);
 		}
 	}
 
@@ -217,19 +211,19 @@ public abstract class ChoobPluginManager
 	 */
 	public final void removeCommand(final String pluginName, final String commandName)
 	{
-		synchronized(phoneticCommands)
+		synchronized(state.phoneticCommands)
 		{
 			if (pluginName != null)
-				phoneticCommands.removeWord((pluginName + "." + commandName).toLowerCase());
+				state.phoneticCommands.removeWord((pluginName + "." + commandName).toLowerCase());
 			else
-				phoneticCommands.removeWord(commandName.toLowerCase());
+				state.phoneticCommands.removeWord(commandName.toLowerCase());
 		}
-		synchronized(commands)
+		synchronized(state.commands)
 		{
 			if (pluginName != null)
-				commands.get(pluginName.toLowerCase()).remove(commandName);
+				state.commands.get(pluginName.toLowerCase()).remove(commandName);
 			else
-				commands.get("").remove(commandName);
+				state.commands.get("").remove(commandName);
 		}
 	}
 
@@ -261,7 +255,7 @@ public abstract class ChoobPluginManager
 
 	public final static ProtectionDomain getProtectionDomain( final String pluginName )
 	{
-		return mods.security.getProtectionDomain( pluginName );
+		return state.mods.security.getProtectionDomain( pluginName );
 	}
 
 	// TODO make these return ChoobTask[], and implement a spawnCommand
