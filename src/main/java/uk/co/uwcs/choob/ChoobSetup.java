@@ -106,7 +106,6 @@ public class ChoobSetup
 		botConfProperties.setProperty("dbPass", databasePassword);
 		botConfProperties.setProperty("botName", botName);
 		botConfProperties.setProperty("server", ircServer);
-		botConfProperties.setProperty("channels", ircChannel);
 
 		final FileOutputStream fos = new FileOutputStream(BOT_CONF);
 		try {
@@ -125,11 +124,19 @@ public class ChoobSetup
 		{
 			createMinimalDatabaseCreationStatement(conn.createStatement()).executeBatch();
 			putUserInRootGroup(createUserAndReturnId(rootUser,conn),conn);
+			addChannelToAutojoin(conn);
 
 		} finally
 		{
 			conn.close();
 		}
+	}
+
+	private void addChannelToAutojoin(final Connection conn) throws SQLException {
+		final PreparedStatement ps = conn.prepareStatement(ADD_CHANNEL_TO_AUTOJOIN);
+		ps.setString(1, ircChannel);
+		ps.execute();
+		ps.close();
 	}
 
 	private int createUserAndReturnId(final String userName, final Connection conn) throws SQLException
@@ -217,6 +224,11 @@ public class ChoobSetup
 				"1," +
 				"?" +
 			");";
+
+	private final static String ADD_CHANNEL_TO_AUTOJOIN =
+		"INSERT INTO " +
+			"`_objectdb_plugins_autojoin_channelobj` " +
+			"(`name`) VALUES (?);";
 
 	public class ChoobSetupException extends Exception
 	{

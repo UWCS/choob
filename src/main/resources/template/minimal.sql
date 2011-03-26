@@ -24,6 +24,14 @@ CREATE TABLE `_objectdb_plugins_alias_aliasobject` (
   KEY `core__index` (`core`(16))
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+DROP TABLE IF EXISTS `_objectdb_plugins_autojoin_channelobj`;
+CREATE TABLE `_objectdb_plugins_autojoin_channelobj` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` text,
+  PRIMARY KEY (`id`),
+  KEY `name__index` (`name`(16))
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+
 DROP TABLE IF EXISTS `GroupMembers`;
 CREATE TABLE `GroupMembers` (
   `GroupID` int(11) unsigned default NULL,
@@ -85,6 +93,7 @@ ALTER TABLE `UserNodePermissions`
 
 -- These plugins are really required to have a functional bot. More can be loaded once these are.
 
+INSERT INTO `Plugins` VALUES ('Autojoin', 'choob-plugin:/Autojoin.java', 1);
 INSERT INTO `Plugins` VALUES ('Alias', 'choob-plugin:/Alias.java', 1);
 INSERT INTO `Plugins` VALUES ('Help', 'choob-plugin:/Help.java', 1);
 INSERT INTO `Plugins` VALUES ('NickServ', 'choob-plugin:/NickServ.java', 1);

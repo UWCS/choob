@@ -315,7 +315,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			}
 			catch (final IOException e)
 			{
-				throw new ChoobException("Problem opening connection: " + e);
+				throw new ChoobException("Problem opening connection: ", e);
 			}
 			if (sourceConn.getLastModified() > javaFile.lastModified() || sourceConn.getLastModified() == 0)
 			{
