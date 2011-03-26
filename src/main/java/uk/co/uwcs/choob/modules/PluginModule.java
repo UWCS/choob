@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import uk.co.uwcs.choob.Choob;
+import uk.co.uwcs.choob.Bot;
 import uk.co.uwcs.choob.ChoobDistributingPluginManager;
 import uk.co.uwcs.choob.ChoobPluginManager;
 import uk.co.uwcs.choob.ChoobTask;
@@ -60,7 +60,7 @@ public final class PluginModule
 	private final ChoobPluginManager annotatedPlugMan;
 	private final ChoobPluginManager dPlugMan;
 	private final ChoobPluginManager jsPlugMan;
-	private final Choob bot;
+	private final Bot bot;
 	private final IRCInterface irc;
 	private static final Map<String, URLStreamHandler> URL_HANDLERS =
 		ImmutableMap.<String, URLStreamHandler>of(
@@ -72,7 +72,7 @@ public final class PluginModule
 	 * @param pluginMap Map containing currently loaded plugins.
 	 */
 	PluginModule(final DbConnectionBroker broker, final Modules mods,
-			final IRCInterface irc, final Choob bot) throws ChoobException {
+			final IRCInterface irc, final Bot bot) throws ChoobException {
 		this.broker = broker;
 		this.mods = mods;
 		this.hsPlugMan = new HaxSunPluginManager(mods, irc);
@@ -137,7 +137,7 @@ public final class PluginModule
 		if (existed[0])
 			bot.onPluginReLoaded(pluginName);
 		else
-			bot.onPluginLoaded(pluginName);
+			bot.onPluginReLoaded(pluginName);
 
 		addPluginToDb(pluginName, url);
 	}
@@ -192,7 +192,7 @@ public final class PluginModule
 	public void detachPlugin(String pluginName) throws ChoobNoSuchPluginException {
 		pluginName = getPluginName(pluginName); // Fix the case of the param
 		dPlugMan.unloadPlugin(pluginName);
-		bot.onPluginUnLoaded(pluginName);
+		bot.onPluginReLoaded(pluginName);
 	}
 
 	/**

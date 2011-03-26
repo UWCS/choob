@@ -6,6 +6,7 @@
 
 package uk.co.uwcs.choob;
 
+import java.io.File;
 import java.util.Arrays;
 
 /**
@@ -34,4 +35,21 @@ public final class ChoobMain
 		}
 
 	}
+
+	private static final String DEFAULT_TEMP_LOCATION = "tmp";
+	public static final File TEMP_FOLDER;
+
+	static {
+		String temp = System.getProperty("choobTempDir");
+		if (null == temp) {
+			temp = DEFAULT_TEMP_LOCATION;
+		}
+
+		TEMP_FOLDER = new File(temp);
+		if (DEFAULT_TEMP_LOCATION == temp) {
+			TEMP_FOLDER.mkdirs();
+		}
+	}
+
+
 }

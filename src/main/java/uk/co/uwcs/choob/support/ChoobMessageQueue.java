@@ -2,7 +2,8 @@ package uk.co.uwcs.choob.support;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import uk.co.uwcs.choob.Choob;
+
+import uk.co.uwcs.choob.Bot;
 
 /**
  *
@@ -14,9 +15,9 @@ public class ChoobMessageQueue
 	private Handler pm;
 	private Handler cm;
 	private Handler out;
-	private Choob bot;
+	private Bot bot;
 
-	public ChoobMessageQueue(Choob bot)
+	public ChoobMessageQueue(Bot bot)
 	{
 		if (bot == null) throw new IllegalArgumentException("The bot cannot be null.");
 

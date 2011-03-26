@@ -8,7 +8,7 @@ package uk.co.uwcs.choob.modules;
 
 import java.util.List;
 
-import uk.co.uwcs.choob.Choob;
+import uk.co.uwcs.choob.Bot;
 import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.ChoobInternalError;
 import uk.co.uwcs.choob.support.DbConnectionBroker;
@@ -20,7 +20,7 @@ import uk.co.uwcs.choob.support.Interval;
  * passed to the plugins with each call, and is avaliable at most locations in
  * the core, the idea being to provide a consistent set of relevant library
  * functions.
- * 
+ *
  * @author sadiq
  */
 public final class Modules {
@@ -96,7 +96,7 @@ public final class Modules {
 	/**
 	 * Creates a new instance of the Modules.
 	 */
-	public Modules(final DbConnectionBroker dbBroker, final List<Interval> intervalList, final Choob bot, final IRCInterface irc) {
+	public Modules(final DbConnectionBroker dbBroker, final List<Interval> intervalList, final Bot bot, final IRCInterface irc) {
 		try {
 			date = new DateModule();
 			history = new HistoryModule(dbBroker);

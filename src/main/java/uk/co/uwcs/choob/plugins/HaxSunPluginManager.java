@@ -58,7 +58,7 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 
-import uk.co.uwcs.choob.Choob;
+import uk.co.uwcs.choob.ChoobMain;
 import uk.co.uwcs.choob.ChoobPluginManager;
 import uk.co.uwcs.choob.ChoobTask;
 import uk.co.uwcs.choob.modules.Modules;
@@ -78,7 +78,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 	private final JavaCompiler compiler;
 
-	final static String PLUGIN_DIR = Choob.TEMP_FOLDER.getPath() + "/plugins";
+	final static String PLUGIN_DIR = ChoobMain.TEMP_FOLDER.getPath() + "/plugins";
 	private final ChoobPluginMap allPlugins;
 
 	public HaxSunPluginManager(final Modules mods, final IRCInterface irc)

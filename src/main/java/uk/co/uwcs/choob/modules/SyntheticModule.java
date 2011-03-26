@@ -6,7 +6,7 @@
 
 package uk.co.uwcs.choob.modules;
 
-import uk.co.uwcs.choob.Choob;
+import uk.co.uwcs.choob.Bot;
 import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.events.Message;
 
@@ -16,10 +16,10 @@ import uk.co.uwcs.choob.support.events.Message;
  */
 public final class SyntheticModule
 {
-	private final Choob bot;
+	private final Bot bot;
 
 	/** Creates a new instance of IntervalModule */
-	SyntheticModule( final Choob bot )
+	SyntheticModule( final Bot bot )
 	{
 		this.bot = bot;
 	}

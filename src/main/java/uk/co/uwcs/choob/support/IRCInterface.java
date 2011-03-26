@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import uk.co.uwcs.choob.Choob;
+import uk.co.uwcs.choob.Bot;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.events.ContextEvent;
 import uk.co.uwcs.choob.support.events.PrivateEvent;
@@ -23,7 +23,7 @@ import uk.co.uwcs.choob.support.events.UserEvent;
  */
 public final class IRCInterface
 {
-	private final Choob bot;
+	private final Bot bot;
 	private Modules mods;
 	private ChoobMessageQueue outQueue;
 
@@ -32,7 +32,7 @@ public final class IRCInterface
 	public final static int MAX_MESSAGES = 3; // Max messages before /msg is employed instead.
 
 	/** Creates a new instance of IRCInterface */
-	public IRCInterface(final Choob bot)
+	public IRCInterface(final Bot bot)
 	{
 		this.bot = bot;
 		this.outQueue = new ChoobMessageQueue(bot);
@@ -253,7 +253,7 @@ public final class IRCInterface
 	 */
 	public String getTrigger()
 	{
-		return bot.getTrigger();
+		return bot.getTriggerRegex();
 	}
 
 	/**
@@ -401,7 +401,7 @@ public final class IRCInterface
 	public void deVoice(final String channel, final String nick) throws ChoobException
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
-	    bot.deVoice(channel, nick);
+	    bot.voice(channel, nick);
 	}
 
 	public void kick(final String channel, final String nick) throws ChoobException

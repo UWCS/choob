@@ -11,7 +11,6 @@
 
 package uk.co.uwcs.choob;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -66,9 +65,8 @@ import uk.co.uwcs.choob.support.events.UserModes;
 /**
  * Core class of the Choob bot, main interaction with IRC.
  */
-public final class Choob extends PircBot
+final class Choob extends PircBot implements Bot
 {
-	private static final String DEFAULT_TEMP_LOCATION = "tmp";
 	private DbConnectionBroker broker;
 	private Modules modules;
 	private IRCInterface irc;
@@ -79,20 +77,6 @@ public final class Choob extends PircBot
 	private ConfigReader conf;
 	private int exitCode;
 	private int messageLimit;
-
-	public static final File TEMP_FOLDER;
-
-	static {
-		String temp = System.getProperty("choobTempDir");
-		if (null == temp) {
-			temp = DEFAULT_TEMP_LOCATION;
-		}
-
-		TEMP_FOLDER = new File(temp);
-		if (DEFAULT_TEMP_LOCATION == temp) {
-			TEMP_FOLDER.mkdirs();
-		}
-	}
 
 	/**
 	 * Constructor for Choob, initialises vital variables.
@@ -125,7 +109,7 @@ public final class Choob extends PircBot
 		PrintWriter logFile;
 		try
 		{
-			logFile=new PrintWriter(new FileOutputStream(TEMP_FOLDER.getPath() + "/db.log"));
+			logFile=new PrintWriter(new FileOutputStream(ChoobMain.TEMP_FOLDER.getPath() + "/db.log"));
 		}
 		catch (final IOException e)
 		{
@@ -268,6 +252,7 @@ public final class Choob extends PircBot
 		return irc;
 	}
 
+	@Override
 	public Modules getMods()
 	{
 		return modules;
@@ -364,6 +349,7 @@ public final class Choob extends PircBot
 	 * Return a regex that can (and should) be used to match lines for a
 	 * prefix indicating that the line is a command.
 	 */
+	@Override
 	public String getTriggerRegex()
 	{
 		return "^(?i:" + trigger +
@@ -380,10 +366,12 @@ public final class Choob extends PircBot
 		return trigger;
 	}
 
+	@Override
 	public void setExitCode(final int newExitCode) {
 		exitCode = newExitCode;
 	}
 
+	@Override
 	public void onSyntheticMessage(final Event mes) {
 		spinThreadSynthetic( mes );
 	}
@@ -415,10 +403,12 @@ public final class Choob extends PircBot
 		spinThread(new PluginLoaded("onPluginLoaded", pluginName, 1));
 	}
 
+	@Override
 	public void onPluginReLoaded(final String pluginName) {
 		spinThread(new PluginReLoaded("onPluginReLoaded", pluginName, 0));
 	}
 
+	@Override
 	public void onPluginUnLoaded(final String pluginName) {
 		spinThread(new PluginUnLoaded("onPluginUnLoaded", pluginName, -1));
 	}
