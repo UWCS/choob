@@ -9,6 +9,7 @@ package uk.co.uwcs.choob.modules;
 import java.util.List;
 
 import uk.co.uwcs.choob.Bot;
+import uk.co.uwcs.choob.ChoobPluginManagerState;
 import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.ChoobInternalError;
 import uk.co.uwcs.choob.support.DbConnectionBroker;
@@ -96,7 +97,8 @@ public final class Modules {
 	/**
 	 * Creates a new instance of the Modules.
 	 */
-	public Modules(final DbConnectionBroker dbBroker, final List<Interval> intervalList, final Bot bot, final IRCInterface irc) {
+	public Modules(final DbConnectionBroker dbBroker, final List<Interval> intervalList, final Bot bot, final IRCInterface irc,
+			final ChoobPluginManagerState state) {
 		try {
 			date = new DateModule();
 			history = new HistoryModule(dbBroker);
@@ -104,7 +106,7 @@ public final class Modules {
 			nick = new NickModule();
 			odb = new ObjectDbModule(dbBroker, this);
 			pc = new ProtectedChannels();
-			plugin = new PluginModule(dbBroker, this, irc, bot);
+			plugin = new PluginModule(dbBroker, this, irc, bot, state);
 			scrape = new ScraperModule();
 			security = new SecurityModule(dbBroker, this);
 			synthetic = new SyntheticModule(bot);

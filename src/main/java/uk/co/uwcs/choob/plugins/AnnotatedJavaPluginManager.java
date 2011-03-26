@@ -22,6 +22,7 @@ import javax.tools.ToolProvider;
 
 import uk.co.uwcs.choob.ChoobCommand;
 import uk.co.uwcs.choob.ChoobPluginManager;
+import uk.co.uwcs.choob.ChoobPluginManagerState;
 import uk.co.uwcs.choob.ChoobTask;
 import uk.co.uwcs.choob.ChoobUtil;
 import uk.co.uwcs.choob.modules.Modules;
@@ -48,8 +49,10 @@ public class AnnotatedJavaPluginManager extends ChoobPluginManager
 	private final IRCInterface irc;
 	private final PluginHolder plugins;
 
-	public AnnotatedJavaPluginManager(final Modules mods, final IRCInterface irc) throws ChoobException
+	public AnnotatedJavaPluginManager(final Modules mods, final IRCInterface irc,
+			final ChoobPluginManagerState state) throws ChoobException
 	{
+		super(mods, state);
 		this.mods = mods;
 		this.irc = irc;
 		this.plugins = new PluginHolder();

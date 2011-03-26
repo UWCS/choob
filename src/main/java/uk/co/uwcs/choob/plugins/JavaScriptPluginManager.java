@@ -32,6 +32,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.regexp.NativeRegExp;
 
 import uk.co.uwcs.choob.ChoobPluginManager;
+import uk.co.uwcs.choob.ChoobPluginManagerState;
 import uk.co.uwcs.choob.ChoobTask;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobError;
@@ -60,7 +61,8 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 	private final int CALL_WANT_TASK   = 1;
 	private final int CALL_WANT_RESULT = 2;
 
-	public JavaScriptPluginManager(final Modules mods, final IRCInterface irc) {
+	public JavaScriptPluginManager(final Modules mods, final IRCInterface irc, ChoobPluginManagerState state) {
+		super(mods, state);
 		this.mods = mods;
 		this.irc = irc;
 		this.pluginMap = new JavaScriptPluginMap();

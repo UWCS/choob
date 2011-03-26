@@ -60,6 +60,7 @@ import org.eclipse.jface.text.Document;
 
 import uk.co.uwcs.choob.ChoobMain;
 import uk.co.uwcs.choob.ChoobPluginManager;
+import uk.co.uwcs.choob.ChoobPluginManagerState;
 import uk.co.uwcs.choob.ChoobTask;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobError;
@@ -81,8 +82,9 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	final static String PLUGIN_DIR = ChoobMain.TEMP_FOLDER.getPath() + "/plugins";
 	private final ChoobPluginMap allPlugins;
 
-	public HaxSunPluginManager(final Modules mods, final IRCInterface irc)
+	public HaxSunPluginManager(final Modules mods, final IRCInterface irc, final ChoobPluginManagerState state)
 			throws ChoobException {
+		super(mods, state);
 		this.mods = mods;
 		this.irc = irc;
 		this.allPlugins = new ChoobPluginMap();

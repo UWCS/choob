@@ -23,6 +23,7 @@ import java.util.Map;
 import uk.co.uwcs.choob.Bot;
 import uk.co.uwcs.choob.ChoobDistributingPluginManager;
 import uk.co.uwcs.choob.ChoobPluginManager;
+import uk.co.uwcs.choob.ChoobPluginManagerState;
 import uk.co.uwcs.choob.ChoobTask;
 import uk.co.uwcs.choob.ChoobThread;
 import uk.co.uwcs.choob.ChoobThreadManager;
@@ -72,13 +73,13 @@ public final class PluginModule
 	 * @param pluginMap Map containing currently loaded plugins.
 	 */
 	PluginModule(final DbConnectionBroker broker, final Modules mods,
-			final IRCInterface irc, final Bot bot) throws ChoobException {
+			final IRCInterface irc, final Bot bot, final ChoobPluginManagerState state) throws ChoobException {
 		this.broker = broker;
 		this.mods = mods;
-		this.hsPlugMan = new HaxSunPluginManager(mods, irc);
-		this.annotatedPlugMan = new AnnotatedJavaPluginManager(mods, irc);
-		this.dPlugMan = new ChoobDistributingPluginManager();
-		this.jsPlugMan = new JavaScriptPluginManager(mods, irc);
+		this.hsPlugMan = new HaxSunPluginManager(mods, irc, state);
+		this.annotatedPlugMan = new AnnotatedJavaPluginManager(mods, irc, state);
+		this.dPlugMan = new ChoobDistributingPluginManager(mods, state);
+		this.jsPlugMan = new JavaScriptPluginManager(mods, irc, state);
 		this.bot = bot;
 		this.irc = irc;
 	}

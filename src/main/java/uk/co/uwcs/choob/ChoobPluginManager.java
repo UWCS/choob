@@ -5,17 +5,10 @@
  */
 package uk.co.uwcs.choob;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -28,7 +21,6 @@ import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
 import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.HelpNotSpecifiedException;
-import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.NoSuchCommandException;
 import uk.co.uwcs.choob.support.NoSuchPluginException;
 import uk.co.uwcs.choob.support.events.Event;
@@ -41,49 +33,15 @@ import uk.co.uwcs.choob.support.events.Message;
  */
 public abstract class ChoobPluginManager
 {
-	static ChoobPluginManagerState state = new ChoobPluginManagerState();
+	final Modules mods;
+	final ChoobPluginManagerState state;
 
 	// Ensure derivative classes have permissions...
-	public ChoobPluginManager()
+	public ChoobPluginManager(Modules mods, ChoobPluginManagerState state)
 	{
 		AccessController.checkPermission(new ChoobPermission("root"));
-	}
-
-	public final static void initialise(final Modules modules, final IRCInterface ircinter)
-	{
-		if (state.mods != null)
-			return;
-		state.mods = modules;
-		state.irc = ircinter;
-		state.pluginManagers = new LinkedList<ChoobPluginManager>();
-		state.pluginMap = new HashMap<String,ChoobPluginManager>();
-		state.commands = new HashMap<String,List<String>>();
-		File transFile = new File("share/en_phonet.dat");
-		if (!transFile.exists()) {
-			transFile = new File("../share/en_phonet.dat");
-		}
-		try
-		{
-			Reader reader = null;
-			try {
-				if (transFile.exists()) {
-					reader = new FileReader(transFile);
-				} else {
-					reader = new InputStreamReader(ChoobPluginManager.class.getResourceAsStream("/share/en_phonet.dat"));
-				}
-
-				state.phoneticCommands = new SpellDictionaryChoob(reader);
-			} finally {
-				if (null != reader) {
-					reader.close();
-				}
-			}
-		}
-		catch (final IOException e)
-		{
-			System.err.println("Could not load phonetics file: " + transFile);
-			throw new RuntimeException("Couldn't load phonetics file", e);
-		}
+		this.state = state;
+		this.mods = mods;
 	}
 
 	protected abstract Object createPlugin(String pluginName, URL fromLocation) throws ChoobException;
@@ -253,9 +211,9 @@ public abstract class ChoobPluginManager
 			addCommand(null, commandName);
 	}
 
-	public final static ProtectionDomain getProtectionDomain( final String pluginName )
+	public final ProtectionDomain getProtectionDomain( final String pluginName )
 	{
-		return state.mods.security.getProtectionDomain( pluginName );
+		return mods.security.getProtectionDomain( pluginName );
 	}
 
 	// TODO make these return ChoobTask[], and implement a spawnCommand

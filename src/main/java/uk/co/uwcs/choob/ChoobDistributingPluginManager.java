@@ -9,6 +9,7 @@ import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 
+import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
@@ -21,9 +22,9 @@ import uk.co.uwcs.choob.support.events.Message;
  */
 public final class ChoobDistributingPluginManager extends ChoobPluginManager
 {
-	public ChoobDistributingPluginManager()
+	public ChoobDistributingPluginManager(final Modules mods, final ChoobPluginManagerState state)
 	{
-		super();
+		super(mods, state);
 	}
 
 	@Override
@@ -67,7 +68,7 @@ public final class ChoobDistributingPluginManager extends ChoobPluginManager
 					final String notFoundPrefix = "Command " + plugin + "." + command + " not found";
 					try
 					{
-						lcommands = state.mods.plugin.getPluginCommands(plugin);
+						lcommands = mods.plugin.getPluginCommands(plugin);
 						if (lcommands.length == 0)
 							state.irc.sendContextReply(ev, notFoundPrefix + ", the plugin doesn't have any commands in it!");
 						else if (lcommands.length == 1)

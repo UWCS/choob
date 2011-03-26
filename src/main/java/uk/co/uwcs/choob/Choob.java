@@ -160,8 +160,11 @@ final class Choob extends PircBot implements Bot
 		// Create a new IRC interface
 		irc = new IRCInterface( this );
 
+		// This is needed to properly initialise a ChoobProtectionDomain.
+		final ChoobPluginManagerState state = new ChoobPluginManagerState(irc);
+
 		// Initialise our modules.
-		modules = new Modules(broker, intervalList, this, irc);
+		modules = new Modules(broker, intervalList, this, irc, state);
 
 		// Set the name from the config file.
 		this.setName(conf.getSettingFallback("botName", randomName()));
@@ -267,9 +270,6 @@ final class Choob extends PircBot implements Bot
 		watcher = new ChoobWatcherThread(intervalList, irc, modules);
 
 		watcher.start();
-
-		// This is needed to properly initialise a ChoobProtectionDomain.
-		ChoobPluginManager.initialise(modules, irc);
 
 		// Initialise the thread manager, too
 		ChoobThreadManager.initialise(modules);
