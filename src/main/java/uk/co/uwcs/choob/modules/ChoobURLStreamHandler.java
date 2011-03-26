@@ -19,8 +19,8 @@ class ChoobURLStreamHandler extends URLStreamHandler {
 		}
 
 		for (File sourcePath : new File[] {
-				new File("src/main/plugins-alpha"),
-				new File("src/main/plugins"),
+				new File("main/plugins-alpha"),
+				new File("main/plugins"),
 		}) {
 			final File f = new File(sourcePath, u.getPath());
 			if (f.isFile())
