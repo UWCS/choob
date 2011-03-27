@@ -93,6 +93,12 @@
 			<artifactId>slf4j-simple</artifactId>
 			<version>1.6.1</version>
 		</dependency>
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.6.16</version>
+			<scope>test</scope>
+		</dependency>
 
 		<!-- Plugins' dependencies -->
 		<dependency>
