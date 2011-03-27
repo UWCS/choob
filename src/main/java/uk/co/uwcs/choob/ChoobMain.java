@@ -36,7 +36,7 @@ public final class ChoobMain
 
 	}
 
-	private static final String DEFAULT_TEMP_LOCATION = "tmp";
+	public static final String DEFAULT_TEMP_LOCATION = "tmp";
 	public static final File TEMP_FOLDER;
 
 	static {

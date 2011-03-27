@@ -2,6 +2,7 @@ package uk.co.uwcs.choob;
 
 import static junit.framework.Assert.assertEquals;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
@@ -17,8 +18,12 @@ public abstract class AbstractPluginTest {
 
 	@Before
 	public void setup() throws SQLException {
+		// SQLite explodes if you pass a File#createTemporaryFile() in, no idea why
+		String tempFilePath = ChoobMain.DEFAULT_TEMP_LOCATION + "/test" + System.nanoTime() + ".db";
+		new File(tempFilePath).deleteOnExit();
+
 		final DbConnectionBroker broker = new DbConnectionBroker("org.sqlite.JDBC",
-				"jdbc:sqlite:test" + System.nanoTime() + ".db",
+				"jdbc:sqlite:" + tempFilePath,
 				null, null, 0, 10, new PrintWriter(System.err), 60);
 		db = new BrokerUtil(broker);
 
