@@ -62,6 +62,8 @@ import uk.co.uwcs.choob.support.events.ServerResponse;
 import uk.co.uwcs.choob.support.events.UnknownEvent;
 import uk.co.uwcs.choob.support.events.UserModes;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /**
  * Core class of the Choob bot, main interaction with IRC.
  */
@@ -289,7 +291,7 @@ final class Choob extends PircBot implements Bot
 		}
 	}
 
-	private void setupSecurity()
+	@VisibleForTesting static void setupSecurity()
 	{
 		// TODO - make this a proper class
 		java.security.Policy.setPolicy( new java.security.Policy()
@@ -611,6 +613,11 @@ final class Choob extends PircBot implements Bot
 
 	private synchronized void spinThreadInternal(final Event ev, final boolean securityOK)
 	{
+		spinThread(ctm, modules, cdtd, ev, securityOK);
+	}
+
+	public static void spinThread(final ChoobThreadManager ctm, final Modules modules,
+			final ChoobDecoderTaskData cdtd, final Event ev, final boolean securityOK) {
 		// synthLevel is also checked in addLog();
 		if (ev instanceof Message && ((Message)ev).getSynthLevel() == 0)
 			modules.history.addLog((Message)ev);

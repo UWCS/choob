@@ -40,8 +40,7 @@ public final class DbConnectionBroker
 		}
 		catch (final java.beans.PropertyVetoException e)
 		{
-			e.printStackTrace();
-			throw new SQLException("Error setting driver class.");
+			throw new SQLException("Error setting driver class.", e);
 		}
 		cpds.setJdbcUrl(dbServer);
 		cpds.setUser(dbLogin);

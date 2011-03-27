@@ -995,7 +995,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	{
 		System.err.println("ACK! SQL error when " + task + ": " + e);
 		e.printStackTrace();
-		throw new ChoobError("An SQL error occurred when " + task + ". Please ask the bot administrator to check the logs.");
+		throw new ChoobError("An SQL error occurred when " + task + ". Please ask the bot administrator to check the logs.", e);
 	}
 
 	/**
