@@ -2,8 +2,18 @@ package uk.co.uwcs.choob.support;
 
 import java.lang.reflect.Type;
 import java.security.AccessController;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.mozilla.javascript.Function;
 
@@ -31,9 +41,6 @@ import uk.co.uwcs.choob.modules.ObjectDbModule;
  */
 public class ObjectDBTransaction // Needs to be non-final
 {
-	private static final int MAXOR = 50; // Max OR statements in a lumped together objectDB query.
-	private static final boolean USEMANYTABLES = true; // true for one table per object type; false otherwise.
-
 	private Connection dbConn;
 	private Modules mods;
 
@@ -55,7 +62,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	 * if {@link #rollback} is called. {@link #finish} should always be called
 	 * after {@link #commit} or {@link #rollback} is called, and is the mirror
 	 * function to this one.
-	 * 
+	 *
 	 * @throws ObjectDBDeadlockError If the database has detected a deadlock,
 	 *                               this exception is thrown.
 	 * @throws ObjectDBError All other SQL-related exceptions are wrapped as
@@ -79,7 +86,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	 * fail if, for example, the data being modified by this transaction has
 	 * already been modified by another successful transaction.
 	 * {@link #finish} must still be called afterwards.
-	 * 
+	 *
 	 * @throws ObjectDBDeadlockError If the database has detected a deadlock,
 	 *                               this exception is thrown.
 	 * @throws ObjectDBError All other SQL-related exceptions are wrapped as
@@ -101,7 +108,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	 * Cancels the transaction started by {@link #begin}, causing all
 	 * modifications made since then to be discarded.
 	 * {@link #finish} must still be called afterwards.
-	 * 
+	 *
 	 * @throws ObjectDBDeadlockError If the database has detected a deadlock,
 	 *                               this exception is thrown.
 	 * @throws ObjectDBError All other SQL-related exceptions are wrapped as
@@ -123,7 +130,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	 * Finishes off the transaction started by {@link #begin}. If
 	 * {@link #commit} has not been called, an implicit {@link #rollback}
 	 * call is made first.
-	 * 
+	 *
 	 * @throws ObjectDBDeadlockError If the database has detected a deadlock,
 	 *                               this exception is thrown.
 	 * @throws ObjectDBError All other SQL-related exceptions are wrapped as
@@ -228,7 +235,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		dbIndexLenMap.put(TYPE_TEXT, "(16)");
 
 		dbTypeMap.put("longtext", TYPE_TEXT); // Allow longtext in database.
-		
+
 		dbTypeMap.put("mediumtext", TYPE_TEXT); // Allow mediumtext in database. Mysql auto-converts to mediumtext sometimes.
 	}
 
@@ -266,8 +273,6 @@ public class ObjectDBTransaction // Needs to be non-final
 
 	private final void checkTable(ObjectDBObject obj)
 	{
-		if (!USEMANYTABLES)
-			return; // XXX Maybe want to do stuff here.
 		// XXX possibly MySQL specific.
 		Statement stat = null;
 		try
@@ -456,7 +461,7 @@ public class ObjectDBTransaction // Needs to be non-final
 
 	/**
 	 * Loads any number of stored ObjectDB objects.
-	 * 
+	 *
 	 * @param storedClass The class object (decendant of {@link Class} for Java,
 	 *                    {@link Function} for JavaScript) representing the
 	 *                    type of object desired to be retrieved.
@@ -464,22 +469,22 @@ public class ObjectDBTransaction // Needs to be non-final
 	 *               are desired. FIXME: link to docs on format.
 	 * @return {@link List} of objects, typed according to the caller.
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public final List retrieve(Object storedClass, String clause)
 	{
 		return retrieve(NewClassWrapper(storedClass), clause);
 	}
-	
+
 	/**
 	 * Loads any number of stored ObjectDB objects.
-	 * 
+	 *
 	 * @param storedClass The {@link ObjectDBClass} indicating the type of
 	 *                    object desired to be retrieved.
 	 * @param clause The testricting part of the query, specifying which objects
 	 *               are desired. FIXME: link to docs on format.
 	 * @return {@link List} of objects, typed according to the caller.
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public final List retrieve(final ObjectDBClass storedClass, String clause)
 	{
 		String sqlQuery;
@@ -504,24 +509,19 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 		String select;
 		int idFieldIndex = 0;
-		if (USEMANYTABLES)
+		StringBuilder fieldNames = new StringBuilder();
+		for(int i=0; i<fields.length; i++)
 		{
-			StringBuilder fieldNames = new StringBuilder();
-			for(int i=0; i<fields.length; i++)
-			{
-				fieldNames.append("`" + clean("`", fields[i]) + "`");
-				if (i != fields.length - 1)
-					fieldNames.append(", ");
-				if (fields[i].equals("id"))
-					idFieldIndex = i;
-			}
-			select = fieldNames.toString();
+			fieldNames.append("`" + clean("`", fields[i]) + "`");
+			if (i != fields.length - 1)
+				fieldNames.append(", ");
+			if (fields[i].equals("id"))
+				idFieldIndex = i;
 		}
-		else
-			select = "id";
+		select = fieldNames.toString();
 
 		ObjectDBClauseParser parser = new ObjectDBClauseParser("SELECT " + select + " " + clause, storedClass.getName());
-		parser.setUseMany(USEMANYTABLES);
+		parser.setUseMany(true);
 		try
 		{
 			sqlQuery = parser.ODBExpr();
@@ -539,279 +539,107 @@ public class ObjectDBTransaction // Needs to be non-final
 			throw new ObjectDBError("Clause string " + clause + " was not a SELECT clause.");
 
 		// Make sure we can read these classes...
+		@SuppressWarnings("unchecked")
 		List<String> classNames = parser.getUsedClasses();
 		for(String cls: classNames)
 			checkPermission(cls);
 
 		checkTable(storedClass);
 
-		if (USEMANYTABLES)
+		Statement objStat = null;
+		Statement retrieveStat = null;
+		try
 		{
-			Statement objStat = null;
-			Statement retrieveStat = null;
-			try
+			final List<Object> objects = new ArrayList<Object>();
+			final Set<Integer> objectIds = new HashSet<Integer>();
+
+			objStat = dbConn.createStatement();
+			retrieveStat = dbConn.createStatement();
+
+			ResultSet allObjects = objStat.executeQuery( sqlQuery );
+
+			Map<String,Type> fieldTypeCache = new HashMap<String,Type>();
+
+			if( allObjects.first() )
 			{
-				final List<Object> objects = new ArrayList<Object>();
-				final Set<Integer> objectIds = new HashSet<Integer>();
-
-				objStat = dbConn.createStatement();
-				retrieveStat = dbConn.createStatement();
-
-				ResultSet allObjects = objStat.executeQuery( sqlQuery );
-
-				Map<String,Type> fieldTypeCache = new HashMap<String,Type>();
-
-				if( allObjects.first() )
+				do // Loop over all objects
 				{
-					do // Loop over all objects
+					// Ensure we never include an object more than once.
+					int objectId = (int)allObjects.getLong(idFieldIndex + 1);
+					if (objectIds.contains(objectId))
+						continue;
+
+					Object newObject = storedClass.newInstance(); // This will be set immediately, because 0 is not a valid ID.
+					ObjectDBObject tempObject = NewObjectWrapper(newObject);
+
+					for(int i=0; i<fields.length; i++)
 					{
-						// Ensure we never include an object more than once.
-						int objectId = (int)allObjects.getLong(idFieldIndex + 1);
-						if (objectIds.contains(objectId))
-							continue;
-						
-						Object newObject = storedClass.newInstance(); // This will be set immediately, because 0 is not a valid ID.
-						ObjectDBObject tempObject = NewObjectWrapper(newObject);
+						String name = fields[i];
 
-						for(int i=0; i<fields.length; i++)
+						Type fieldType = fieldTypeCache.get(name);
+						if (fieldType == null)
 						{
-							String name = fields[i];
-
-							Type fieldType = fieldTypeCache.get(name);
-							if (fieldType == null)
-							{
-								fieldType = tempObject.getFieldType(name);
-								fieldTypeCache.put(name, fieldType);
-							}
-
-							if (fieldType == String.class)
-							{
-								tempObject.setFieldValue(name, allObjects.getString(i + 1));
-							}
-							else if (fieldType == Integer.TYPE)
-							{
-								tempObject.setFieldValue(name, (int)allObjects.getLong(i + 1));
-							}
-							else if (fieldType == Long.TYPE)
-							{
-								tempObject.setFieldValue(name, allObjects.getLong(i + 1));
-							}
-							else if (fieldType == Boolean.TYPE)
-							{
-								tempObject.setFieldValue(name, allObjects.getLong(i + 1) == 1);
-							}
-							else if (fieldType == Float.TYPE)
-							{
-								tempObject.setFieldValue(name, (float)allObjects.getDouble(i + 1));
-							}
-							else if (fieldType == Double.TYPE)
-							{
-								tempObject.setFieldValue(name, allObjects.getDouble(i + 1));
-							}
+							fieldType = tempObject.getFieldType(name);
+							fieldTypeCache.put(name, fieldType);
 						}
-						objects.add(newObject);
-						objectIds.add((Integer)tempObject.getId());
+
+						if (fieldType == String.class)
+						{
+							tempObject.setFieldValue(name, allObjects.getString(i + 1));
+						}
+						else if (fieldType == Integer.TYPE)
+						{
+							tempObject.setFieldValue(name, (int)allObjects.getLong(i + 1));
+						}
+						else if (fieldType == Long.TYPE)
+						{
+							tempObject.setFieldValue(name, allObjects.getLong(i + 1));
+						}
+						else if (fieldType == Boolean.TYPE)
+						{
+							tempObject.setFieldValue(name, allObjects.getLong(i + 1) == 1);
+						}
+						else if (fieldType == Float.TYPE)
+						{
+							tempObject.setFieldValue(name, (float)allObjects.getDouble(i + 1));
+						}
+						else if (fieldType == Double.TYPE)
+						{
+							tempObject.setFieldValue(name, allObjects.getDouble(i + 1));
+						}
 					}
-					while ( allObjects.next() ); // Looping over blocks of IDs
+					objects.add(newObject);
+					objectIds.add(tempObject.getId());
 				}
+				while ( allObjects.next() ); // Looping over blocks of IDs
+			}
 
-				return objects;
-			}
-			catch (NoSuchFieldException e)
-			{
-				e.printStackTrace();
-				// This should never happen...
-				throw new ObjectDBError("Field that did exist now doesn't. Ooops?");
-			}
-			catch (InstantiationException e)
-			{
-				System.err.println("Error instantiating object of type " + storedClass + ": " + e);
-				throw new ObjectDBError("The object could not be instantiated.");
-			}
-			catch (IllegalAccessException e)
-			{
-				System.err.println("Access error instantiating object of type " + storedClass + ": " + e);
-				throw new ObjectDBError("The object could not be instantiated.");
-			}
-			catch (SQLException e)
-			{
-				throw sqlErr(e);
-			}
-			finally
-			{
-				cleanUp(retrieveStat);
-				cleanUp(objStat);
-			}
+			return objects;
 		}
-		else
+		catch (NoSuchFieldException e)
 		{
-			Statement objStat = null;
-			Statement retrieveStat = null;
-			try
-			{
-				final List<Object> objects = new ArrayList<Object>();
-				final Set<Integer> objectIds = new HashSet<Integer>();
-
-				objStat = dbConn.createStatement();
-				retrieveStat = dbConn.createStatement();
-
-				ResultSet allObjects = objStat.executeQuery( sqlQuery );
-
-				String baseQuery = "SELECT ClassID, FieldName, FieldBigInt, FieldDouble, FieldString FROM ObjectStore LEFT JOIN ObjectStoreData ON ObjectStore.ObjectID = ObjectStoreData.ObjectID WHERE ClassName = '" + storedClass.getName() + "' AND (";
-
-				Map<String,Type> fieldTypeCache = new HashMap<String,Type>();
-
-				//FIXME:Field idField;
-				//FIXME:try
-				//FIXME:{
-				//FIXME:	idField = storedClass.getField( "id" );
-				//FIXME:}
-				//FIXME:catch( NoSuchFieldException e )
-				//FIXME:{
-				//FIXME:	throw new ObjectDBError("Object of type " + storedClass + " has no id field!");
-				//FIXME:}
-
-				if( allObjects.first() )
-				{
-					boolean allObjsNext = false;
-					Map<Integer,Integer> idMap = new HashMap<Integer,Integer>();
-					int blockOffset = 0;
-					do // Loop over all objects
-					{
-						// Eat this and maybe some more elements...
-						int[] ids = new int[MAXOR];
-						int count = 0;
-						do
-						{
-							int thisId = allObjects.getInt(1);
-							// Ensure we never include an object more than once.
-							if (objectIds.contains(thisId))
-								continue;
-							
-							ids[count] = thisId;
-							idMap.put(thisId, blockOffset + count);
-							count++;
-							allObjsNext = allObjects.next();
-							objects.add(null);
-							objectIds.add((Integer)thisId);
-						} while (allObjsNext && count < MAXOR - 1);
-						blockOffset += count;
-
-						// Build a query to get values for them...
-						StringBuffer query = new StringBuffer(baseQuery);
-						for(int i=0; i<count; i++)
-						{
-							query.append("ClassID = " + ids[i]);
-							if (i != count - 1)
-								query.append(" OR ");
-						}
-						query.append(");");
-
-						ResultSet result = retrieveStat.executeQuery(query.toString());
-
-						if (!result.first())
-						{
-							// Ooops. To quote Sadiq: Um, yeah...
-							// Actually, this is rather objects not existing in ObjectStore when they, um, existed in ObjectStore.
-							throw new ObjectDBError ("Inconsistent database state: One or more objects of type " + storedClass.getName() + " in ObjectStore did not exist in ObjectStoreData.");
-						}
-
-						ObjectDBObject tempObject = null; // This will be set immediately, because 0 is not a valid ID.
-						int id = 0;
-
-						try
-						{
-							do // Loop over this block's results
-							{
-								try
-								{
-									// Break if we're in the next object
-									int newId = result.getInt(1);
-									if (newId != id)
-									{
-										Object newObject = storedClass.newInstance();
-										// Store the real object, then...
-										objects.set(idMap.get(newId), newObject);
-										// ...wrap the object so we are able to use it!
-										tempObject = NewObjectWrapper(newObject);
-										tempObject.setId(newId);
-										id = newId;
-									}
-
-									String name = result.getString(2);
-									if (name == null)
-									{
-										// XXX This is forbidden by the schema, yet happens when the DB is broken.
-										// Ie there's a null object.
-										// Since it already got added, we're safe, but the object will now
-										// have all fields initialised to default.
-										continue;
-									}
-
-									Type fieldType = fieldTypeCache.get(name);
-									if (fieldType == null)
-									{
-										fieldType = tempObject.getFieldType(name);
-										fieldTypeCache.put(name, fieldType);
-									}
-
-									if (fieldType == String.class)
-									{
-										tempObject.setFieldValue(name, result.getString(5));
-									}
-									else if (fieldType == Integer.TYPE)
-									{
-										tempObject.setFieldValue(name, (int)result.getLong(3));
-									}
-									else if (fieldType == Long.TYPE)
-									{
-										tempObject.setFieldValue(name, result.getLong(3));
-									}
-									else if (fieldType == Boolean.TYPE)
-									{
-										tempObject.setFieldValue(name, result.getLong(3) == 1);
-									}
-									else if (fieldType == Float.TYPE)
-									{
-										tempObject.setFieldValue(name, (float)result.getDouble(4));
-									}
-									else if (fieldType == Double.TYPE)
-									{
-										tempObject.setFieldValue(name, result.getDouble(4));
-									}
-								}
-								catch (NoSuchFieldException e)
-								{
-									e.printStackTrace();
-									// Ignore this, as per spec.
-								}
-							}
-							while( result.next() ); // Looping over fields
-						}
-						catch (InstantiationException e)
-						{
-							System.err.println("Error instantiating object of type " + storedClass + ": " + e);
-							throw new ObjectDBError("The object could not be instantiated.");
-						}
-						catch (IllegalAccessException e)
-						{
-							System.err.println("Access error instantiating object of type " + storedClass + ": " + e);
-							throw new ObjectDBError("The object could not be instantiated.");
-						}
-					} while ( allObjsNext ); // Looping over blocks of IDs
-				}
-
-				return objects;
-			}
-			catch (SQLException e)
-			{
-				throw sqlErr(e);
-			}
-			finally
-			{
-				cleanUp(retrieveStat);
-				cleanUp(objStat);
-			}
+			e.printStackTrace();
+			// This should never happen...
+			throw new ObjectDBError("Field that did exist now doesn't. Ooops?");
+		}
+		catch (InstantiationException e)
+		{
+			System.err.println("Error instantiating object of type " + storedClass + ": " + e);
+			throw new ObjectDBError("The object could not be instantiated.");
+		}
+		catch (IllegalAccessException e)
+		{
+			System.err.println("Access error instantiating object of type " + storedClass + ": " + e);
+			throw new ObjectDBError("The object could not be instantiated.");
+		}
+		catch (SQLException e)
+		{
+			throw sqlErr(e);
+		}
+		finally
+		{
+			cleanUp(retrieveStat);
+			cleanUp(objStat);
 		}
 	}
 
@@ -819,7 +647,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	{
 		return retrieveInt(NewClassWrapper(storedClass), clause);
 	}
-	
+
 	public final List<Integer> retrieveInt(final ObjectDBClass storedClass, String clause)
 	{
 		String sqlQuery;
@@ -844,6 +672,7 @@ public class ObjectDBTransaction // Needs to be non-final
 				throw new ObjectDBError("Clause string " + clause + " was not a SELECT clause.");
 
 			// Make sure we can read these classes...
+			@SuppressWarnings("unchecked")
 			List<String> classNames = parser.getUsedClasses();
 			for(String cls: classNames)
 				checkPermission(cls);
@@ -907,7 +736,7 @@ public class ObjectDBTransaction // Needs to be non-final
 
 	/**
 	 * Deletes an object from the ObjectDB.
-	 * 
+	 *
 	 * @param strObj The object to be deleted.
 	 */
 	public final void delete(Object strObj)
@@ -917,89 +746,39 @@ public class ObjectDBTransaction // Needs to be non-final
 
 	/**
 	 * Deletes an object from the ObjectDB.
-	 * 
+	 *
 	 * @param strObj The {@link ObjectDBObject} wrapping the real object to be
 	 *               deleted.
 	 */
 	public final void delete(ObjectDBObject strObj)
 	{
 		checkPermission(strObj.getClassName());
-		if (USEMANYTABLES)
+		checkTable(strObj);
+		PreparedStatement delete = null;
+		try
 		{
-			checkTable(strObj);
-			PreparedStatement delete = null;
-			try
-			{
-				int id = strObj.getId();
+			int id = strObj.getId();
 
-				delete = dbConn.prepareStatement("DELETE FROM `" + clean("`", getTableName(strObj)) + "` WHERE id = ?");
+			delete = dbConn.prepareStatement("DELETE FROM `" + clean("`", getTableName(strObj)) + "` WHERE id = ?");
 
-				delete.setInt(1, id);
+			delete.setInt(1, id);
 
-				if (delete.executeUpdate() == 0)
-					throw new ObjectDBError("Object for deletion does not exist.");
-			}
-			catch (SQLException e)
-			{
-				throw sqlErr(e);
-			}
-			finally
-			{
-				cleanUp(delete);
-			}
+			if (delete.executeUpdate() == 0)
+				throw new ObjectDBError("Object for deletion does not exist.");
 		}
-		else
+		catch (SQLException e)
 		{
-			PreparedStatement delete = null, deleteData = null;
-			try
-			{
-				int id = strObj.getId();
-
-				PreparedStatement retrieveID = dbConn.prepareStatement("SELECT ObjectID FROM ObjectStore WHERE ClassName = ? AND ClassID = ?;");
-
-				retrieveID.setString(1, strObj.getClassName());
-				retrieveID.setInt(2, id);
-
-				ResultSet resultID = retrieveID.executeQuery();
-
-				int objectID;
-
-				if( resultID.first() )
-				{
-					objectID = resultID.getInt("ObjectID");
-				}
-				else
-				{
-					throw new ObjectDBError("Object for deletion does not exist.");
-				}
-
-				delete = dbConn.prepareStatement("DELETE FROM ObjectStore WHERE ObjectID = ?");
-
-				delete.setInt(1, objectID);
-
-				deleteData = dbConn.prepareStatement("DELETE FROM ObjectStoreData WHERE ObjectID = ?");
-
-				deleteData.setInt(1, objectID);
-
-				deleteData.executeUpdate();
-
-				delete.executeUpdate();
-			}
-			catch (SQLException e)
-			{
-				throw sqlErr(e);
-			}
-			finally
-			{
-				cleanUp(delete);
-				cleanUp(deleteData);
-			}
+			throw sqlErr(e);
+		}
+		finally
+		{
+			cleanUp(delete);
 		}
 	}
 
 	/**
 	 * Updates the saved data for an ObjectDB object.
-	 * 
+	 *
 	 * @param strObj The object who's saved data is to be updated.
 	 */
 	public final void update(Object strObj)
@@ -1009,7 +788,7 @@ public class ObjectDBTransaction // Needs to be non-final
 
 	/**
 	 * Updates the saved data for an ObjectDB object.
-	 * 
+	 *
 	 * @param strObj The {@link ObjectDBObject} wrapping the real object who's
 	 *               saved data is to be updated.
 	 */
@@ -1020,7 +799,7 @@ public class ObjectDBTransaction // Needs to be non-final
 
 	/**
 	 * Method to be override in code that wishes to use the transaction support.
-	 * 
+	 *
 	 * This method is run when passed to {@link ObjectDbModule#runTransaction},
 	 * inside calls to {@link #begin} and {@link #commit}. If this method throws
 	 * an exception, {@link #rollback} is called instead.
@@ -1032,17 +811,17 @@ public class ObjectDBTransaction // Needs to be non-final
 
 	/**
 	 * Saves a new ObjectDB object.
-	 * 
+	 *
 	 * @param strObj The object to be saved.
 	 */
 	public final void save(Object strObj)
 	{
 		save(NewObjectWrapper(strObj));
 	}
-	
+
 	/**
 	 * Saves a new ObjectDB object.
-	 * 
+	 *
 	 * @param strObj The {@link ObjectDBObject} wrapping the real object
 	 *               to be saved.
 	 */
@@ -1054,288 +833,113 @@ public class ObjectDBTransaction // Needs to be non-final
 	private final void _store(ObjectDBObject strObj, boolean replace)
 	{
 		checkPermission(strObj.getClassName());
-		if (USEMANYTABLES)
+		checkTable(strObj);
+		PreparedStatement stat = null;
+		try
 		{
-			checkTable(strObj);
-			PreparedStatement stat = null;
-			try
+			int id = strObj.getId();
+
+			String idVal = id == 0 ? "DEFAULT" : String.valueOf(id);
+
+			StringBuilder values = new StringBuilder();
+			String[] fields = strObj.getFields();
+			for(int i=0; i<fields.length; i++)
 			{
-				int id = strObj.getId();
-
-				String idVal = id == 0 ? "DEFAULT" : String.valueOf(id);
-
-				StringBuilder values = new StringBuilder();
-				String[] fields = strObj.getFields();
-				for(int i=0; i<fields.length; i++)
-				{
-					if (fields[i].equals("id"))
-						values.append("`" + clean("`", fields[i]) + "` = " + idVal);
-					else
-						values.append("`" + clean("`", fields[i]) + "` = ?");
-					if (i != fields.length - 1)
-						values.append(", ");
-				}
-
-				if (replace)
-					stat = dbConn.prepareStatement("REPLACE INTO `" + clean("`", getTableName(strObj)) + "` SET " + values);
+				if (fields[i].equals("id"))
+					values.append("`" + clean("`", fields[i]) + "` = " + idVal);
 				else
-					stat = dbConn.prepareStatement("INSERT INTO `" + clean("`", getTableName(strObj)) + "` SET " + values);
+					values.append("`" + clean("`", fields[i]) + "` = ?");
+				if (i != fields.length - 1)
+					values.append(", ");
+			}
 
-				int offset = 1; // 0 after id set
-				for( int c = 0 ; c < fields.length ; c++ )
+			if (replace)
+				stat = dbConn.prepareStatement("REPLACE INTO `" + clean("`", getTableName(strObj)) + "` SET " + values);
+			else
+				stat = dbConn.prepareStatement("INSERT INTO `" + clean("`", getTableName(strObj)) + "` SET " + values);
+
+			int offset = 1; // 0 after id set
+			for( int c = 0 ; c < fields.length ; c++ )
+			{
+				String fieldName = fields[c];
+
+				if( fieldName.equals("id") )
 				{
-					String fieldName = fields[c];
-
-					if( fieldName.equals("id") )
+					// Skip...
+					offset = 0;
+				}
+				else
+				{
+					try
 					{
-						// Skip...
-						offset = 0;
+						Type theType = strObj.getFieldType(fieldName);
+
+						if( theType == java.lang.Integer.TYPE )
+						{
+							int theVal = ((Integer)strObj.getFieldValue(fieldName)).intValue();
+							stat.setInt(c + offset, theVal);
+						}
+						else if( theType == java.lang.Long.TYPE )
+						{
+							long theVal = ((Long)strObj.getFieldValue(fieldName)).longValue();
+							stat.setLong(c + offset, theVal);
+						}
+						else if( theType == java.lang.Boolean.TYPE )
+						{
+							boolean theVal = ((Boolean)strObj.getFieldValue(fieldName)).booleanValue();
+							stat.setByte(c + offset, theVal ? (byte)1 : (byte)0);
+						}
+						else if( theType == java.lang.Float.TYPE )
+						{
+							float theVal = ((Float)strObj.getFieldValue(fieldName)).floatValue();
+							stat.setFloat(c + offset, theVal);
+						}
+						else if( theType == java.lang.Double.TYPE )
+						{
+							double theVal = ((Double)strObj.getFieldValue(fieldName)).doubleValue();
+							stat.setDouble(c + offset, theVal);
+						}
+						else if( theType == String.class )
+						{
+							stat.setString(c + offset, (String)strObj.getFieldValue(fieldName));
+						}
+						else
+						{
+							// Urgh.
+							throw new ObjectDBError("Don't know type for variable " + fieldName);
+						}
 					}
-					else
+					catch (NoSuchFieldException e)
 					{
-						try
-						{
-							Type theType = strObj.getFieldType(fieldName);
-
-							if( theType == java.lang.Integer.TYPE )
-							{
-								int theVal = ((Integer)strObj.getFieldValue(fieldName)).intValue();
-								stat.setInt(c + offset, theVal);
-							}
-							else if( theType == java.lang.Long.TYPE )
-							{
-								long theVal = ((Long)strObj.getFieldValue(fieldName)).longValue();
-								stat.setLong(c + offset, theVal);
-							}
-							else if( theType == java.lang.Boolean.TYPE )
-							{
-								boolean theVal = ((Boolean)strObj.getFieldValue(fieldName)).booleanValue();
-								stat.setByte(c + offset, theVal ? (byte)1 : (byte)0);
-							}
-							else if( theType == java.lang.Float.TYPE )
-							{
-								float theVal = ((Float)strObj.getFieldValue(fieldName)).floatValue();
-								stat.setFloat(c + offset, theVal);
-							}
-							else if( theType == java.lang.Double.TYPE )
-							{
-								double theVal = ((Double)strObj.getFieldValue(fieldName)).doubleValue();
-								stat.setDouble(c + offset, theVal);
-							}
-							else if( theType == String.class )
-							{
-								stat.setString(c + offset, (String)strObj.getFieldValue(fieldName));
-							}
-							else
-							{
-								// Urgh.
-								throw new ObjectDBError("Don't know type for variable " + fieldName);
-							}
-						}
-						catch (NoSuchFieldException e)
-						{
-							// Should never happen, but if it does, just ignore.
-						}
-						catch (IllegalAccessException e)
-						{
-							// Should never happen, but if it does, just ignore.
-						}
+						// Should never happen, but if it does, just ignore.
+					}
+					catch (IllegalAccessException e)
+					{
+						// Should never happen, but if it does, just ignore.
 					}
 				}
-
-				stat.executeUpdate();
-
-				// Set the ID only AFTER we store!
-				if (id == 0)
-				{
-					stat = dbConn.prepareStatement("SELECT LAST_INSERT_ID()");
-					ResultSet results = stat.executeQuery();
-					if (results.first())
-						strObj.setId(results.getInt(1));
-					else
-						throw new ObjectDBError("Couldn't get the ID of the object which was saved...");
-				}
 			}
-			catch (SQLException e)
+
+			stat.executeUpdate();
+
+			// Set the ID only AFTER we store!
+			if (id == 0)
 			{
-				throw sqlErr(e);
-			}
-			finally
-			{
-				cleanUp(stat);
+				stat = dbConn.prepareStatement("SELECT LAST_INSERT_ID()");
+				ResultSet results = stat.executeQuery();
+				if (results.first())
+					strObj.setId(results.getInt(1));
+				else
+					throw new ObjectDBError("Couldn't get the ID of the object which was saved...");
 			}
 		}
-		else
+		catch (SQLException e)
 		{
-			PreparedStatement stat = null, field;
-			try
-			{
-				int id = strObj.getId();
-				
-				boolean setId = false;
-				
-				if( id == 0 )
-				{
-					stat = dbConn.prepareStatement("SELECT MAX(ClassID) FROM ObjectStore WHERE ClassName = ?;");
-					
-					stat.setString(1, strObj.getClassName());
-					
-					ResultSet ids = stat.executeQuery();
-					
-					if( ids.first() )
-						id = ids.getInt(1)+1;
-					else
-						id = 1;
-					
-					stat.close();
-					
-					setId = true;
-				}
-				
-				int objId = 0;
-				
-				// If there might be a collision, we need the old object ID.
-				if (replace)
-				{
-					stat = dbConn.prepareStatement("SELECT ObjectID FROM ObjectStore WHERE ClassName = ? AND ClassID = ?;");
-					
-					stat.setString(1, strObj.getClassName());
-					stat.setInt(2, id);
-					
-					stat.execute();
-					
-					ResultSet ids = stat.executeQuery();
-					
-					if( ids.first() )
-						objId = ids.getInt(1);
-					
-					stat.close();
-				}
-				
-				// There's no collision (more specifically, if there is one, we're boned).
-				if (objId == 0)
-				{
-					stat = dbConn.prepareStatement("INSERT INTO ObjectStore VALUES(NULL,?,?);");
-					
-					stat.setString(1, strObj.getClassName());
-					stat.setInt(2, id);
-					
-					stat.execute();
-					
-					ResultSet generatedKeys = stat.getGeneratedKeys();
-					
-					generatedKeys.first();
-					
-					objId = generatedKeys.getInt(1);
-				}
-				
-				stat.close();
-				
-				if (replace)
-					stat = dbConn.prepareStatement("REPLACE INTO ObjectStoreData VALUES(?,?,?,?,?);");
-				else
-					stat = dbConn.prepareStatement("INSERT INTO ObjectStoreData VALUES(?,?,?,?,?);");
-				
-				String[] fields = strObj.getFields();
-				
-				for( int c = 0 ; c < fields.length ; c++ )
-				{
-					String fieldName = fields[c];
-					
-					if( !fieldName.equals("id") )
-					{
-						boolean foundType = true;
-						
-						stat.setInt(1, objId);
-						
-						try
-						{
-							Type theType = strObj.getFieldType(fieldName);
-							
-							if( theType == java.lang.Integer.TYPE )
-							{
-								int theVal = ((Integer)strObj.getFieldValue(fieldName)).intValue();
-								stat.setString(2, fieldName);
-								stat.setLong(3, theVal);
-								stat.setDouble(4, theVal);
-								stat.setString(5, Integer.toString(theVal));
-							}
-							else if( theType == java.lang.Long.TYPE )
-							{
-								long theVal = ((Long)strObj.getFieldValue(fieldName)).longValue();
-								stat.setString(2, fieldName);
-								stat.setLong(3, theVal);
-								stat.setDouble(4, theVal);
-								stat.setString(5, Long.toString(theVal));
-							}
-							else if( theType == java.lang.Boolean.TYPE )
-							{
-								boolean theVal = ((Boolean)strObj.getFieldValue(fieldName)).booleanValue();
-								stat.setString(2, fieldName);
-								stat.setLong(3, theVal ? 1 : 0);
-								stat.setDouble(4, theVal ? 1 : 0);
-								stat.setString(5, theVal ? "1" : "0");
-							}
-							else if( theType == java.lang.Float.TYPE )
-							{
-								float theVal = ((Float)strObj.getFieldValue(fieldName)).floatValue();
-								stat.setString(2, fieldName);
-								stat.setLong(3, (long)theVal);
-								stat.setDouble(4, theVal);
-								stat.setString(5, Float.toString(theVal));
-							}
-							else if( theType == java.lang.Double.TYPE )
-							{
-								double theVal = ((Double)strObj.getFieldValue(fieldName)).doubleValue();
-								stat.setString(2, fieldName);
-								stat.setLong(3, (long)theVal);
-								stat.setDouble(4, theVal);
-								stat.setString(5, Double.toString(theVal));
-							}
-							else if( theType == String.class )
-							{
-								stat.setString(2, fieldName);
-								stat.setLong(3, 0); // XXX - parse these or not parse these?
-								stat.setDouble(4, 0);
-								stat.setString(5, (String)strObj.getFieldValue(fieldName));
-							}
-							else
-								foundType = false;
-
-							if( foundType )
-							{
-								stat.executeUpdate();
-							}
-						}
-						catch (NoSuchFieldException e)
-						{
-							// Should never happen, but if it does, just ignore.
-						}
-						catch (IllegalAccessException e)
-						{
-							// Should never happen, but if it does, just ignore.
-						}
-						catch (ClassCastException e)
-						{
-							System.err.println("ERROR: Cast exception saving object class '" + strObj.getClassName() + "' property '" + fieldName + "', check ObjectDB wrapper implementation.");
-							System.err.println(e);
-							e.printStackTrace();
-						}
-					}
-				}
-
-				// Set the ID only AFTER we store!
-				if (setId)
-					strObj.setId(id);
-			}
-			catch (SQLException e)
-			{
-				throw sqlErr(e);
-			}
-			finally
-			{
-				cleanUp(stat);
-			}
+			throw sqlErr(e);
+		}
+		finally
+		{
+			cleanUp(stat);
 		}
 	}
 
