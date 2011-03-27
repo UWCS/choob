@@ -60,8 +60,15 @@ final class MinimalBot extends UnsupportedOperationBot implements Closeable {
 	public void onPluginReLoaded(String pluginName) {
 	}
 
-	public String sentMessage() throws InterruptedException {
-		return queue.poll(5, TimeUnit.SECONDS);
+	public String sentMessage() {
+		try {
+			final String polled = queue.poll(5, TimeUnit.SECONDS);
+			if (null == polled)
+				throw new RuntimeException("Expecting message to arrive, received nothing");
+			return polled;
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public void spinChannelMessage(String message) {
