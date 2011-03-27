@@ -33,7 +33,7 @@ public class ChoobSetup
 
 	private final InputStream BOT_CONF_EXAMPLE = ChoobSetup.class.getResourceAsStream("/template/bot.conf.example");
 	private final File BOT_CONF = new File("bot.conf");
-	private static final String DATABASE_DUMP_NAME = "/template/minimal.sql";
+	public static final String DATABASE_DUMP_NAME = "/template/minimal.sql";
 	private final InputStream MINIMAL_DATABASE_DUMP = ChoobSetup.class.getResourceAsStream(DATABASE_DUMP_NAME);
 
 	public ChoobSetup

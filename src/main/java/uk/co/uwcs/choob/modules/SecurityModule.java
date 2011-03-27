@@ -1338,7 +1338,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setString(1, group.getName());
 				stat.setInt(2, group.getType());
 				final ResultSet results = stat.executeQuery();
-				if ( results.first() )
+				if ( results.next() )
 				{
 					throw new ChoobException("Group " + groupName + " already exists!");
 				}

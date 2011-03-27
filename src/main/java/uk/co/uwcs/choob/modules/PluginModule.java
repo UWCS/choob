@@ -104,6 +104,11 @@ public final class PluginModule
 	 * @throws ChoobException Thrown if there's a syntactical error in the plugin's source.
 	 */
 	public void addPlugin(final String pluginName, final String url) throws ChoobException {
+		addPluginWithoutAddingToDb(pluginName, url);
+		addPluginToDb(pluginName, url);
+	}
+
+	public void addPluginWithoutAddingToDb(final String pluginName, final String url) throws ChoobException {
 		final URL srcURL = createUrl(url);
 
 		// Small hack to allow the ChoobTask to return a value.
@@ -142,8 +147,6 @@ public final class PluginModule
 			bot.onPluginReLoaded(pluginName);
 		else
 			bot.onPluginReLoaded(pluginName);
-
-		addPluginToDb(pluginName, url);
 	}
 
 	/** Not using {@link URL#setURLStreamHandlerFactory(java.net.URLStreamHandlerFactory)}
@@ -581,8 +584,7 @@ public final class PluginModule
 
 			pluginReplace.executeUpdate();
 		} catch (final SQLException e) {
-			e.printStackTrace();
-			throw new ChoobInternalError("SQL Exception while adding the plugin to the database...");
+			throw new ChoobInternalError("SQL Exception while adding the plugin to the database...", e);
 		} finally {
 			broker.freeConnection(dbCon);
 		}
