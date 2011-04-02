@@ -19,6 +19,7 @@ public abstract class AbstractPluginTest {
 	@Before
 	public void setup() throws SQLException {
 		// SQLite explodes if you pass a File#createTemporaryFile() in, no idea why
+		new File(ChoobMain.DEFAULT_TEMP_LOCATION).mkdir();
 		String tempFilePath = ChoobMain.DEFAULT_TEMP_LOCATION + "/test" + System.nanoTime() + ".db";
 		new File(tempFilePath).deleteOnExit();
 
