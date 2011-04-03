@@ -13,7 +13,7 @@ import java.util.List;
 
 import uk.co.uwcs.choob.support.ChoobError;
 import uk.co.uwcs.choob.support.ChoobPermission;
-import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.ConnectionBroker;
 import uk.co.uwcs.choob.support.ObjectDBDeadlockError;
 import uk.co.uwcs.choob.support.ObjectDBTransaction;
 
@@ -52,11 +52,11 @@ import uk.co.uwcs.choob.support.ObjectDBTransaction;
  */
 public final class ObjectDbModule
 {
-	private final DbConnectionBroker broker;
+	private final ConnectionBroker broker;
 	private final Modules mods;
 
 	/** Creates a new instance of ObjectDbModule */
-	ObjectDbModule(final DbConnectionBroker broker, final Modules mods)
+	ObjectDbModule(final ConnectionBroker broker, final Modules mods)
 	{
 		this.broker = broker;
 		this.mods = mods;

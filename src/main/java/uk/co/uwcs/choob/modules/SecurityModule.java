@@ -43,7 +43,7 @@ import uk.co.uwcs.choob.support.ChoobPluginAuthError;
 import uk.co.uwcs.choob.support.ChoobProtectionDomain;
 import uk.co.uwcs.choob.support.ChoobSpecialStackPermission;
 import uk.co.uwcs.choob.support.ChoobUserAuthError;
-import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.ConnectionBroker;
 import uk.co.uwcs.choob.support.UserNode;
 import uk.co.uwcs.choob.support.events.IRCEvent;
 import uk.co.uwcs.choob.support.events.MessageEvent;
@@ -59,7 +59,7 @@ import uk.co.uwcs.choob.support.events.UserEvent;
  */
 public final class SecurityModule extends SecurityManager // For getClassContext(). Heh.
 {
-	private final DbConnectionBroker dbBroker;
+	private final ConnectionBroker dbBroker;
 	private final Map<Integer,PermissionCollection> nodeMap;
 	private final Map<Integer,List<Integer>> nodeTree;
 	private final ArrayList<Map<String, Integer>> nodeIDCache;
@@ -70,7 +70,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 * Creates a new instance of SecurityModule
 	 * @param dbBroker Database connection pool/broker.
 	 */
-	SecurityModule(final DbConnectionBroker dbBroker, final Modules mods)
+	SecurityModule(final ConnectionBroker dbBroker, final Modules mods)
 	{
 		this.dbBroker = dbBroker;
 		this.mods = mods;
@@ -197,69 +197,67 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 			final ResultSet permissionsResults = permissionsSmt.executeQuery();
 
-			if ( permissionsResults.first() ) {
-				do
+			while ( permissionsResults.next() )
+			{
+				final String className = permissionsResults.getString(1);
+				final String permissionName = permissionsResults.getString(2);
+				final String actions = permissionsResults.getString(3);
+
+				Class <?> clas;
+				try
 				{
-					final String className = permissionsResults.getString(1);
-					final String permissionName = permissionsResults.getString(2);
-					final String actions = permissionsResults.getString(3);
+					clas = Class.forName( className );
+				}
+				catch (final ClassNotFoundException e)
+				{
+					System.err.println("Permission class not found: " + className);
+					continue; // XXX I guess this is OK?
+				}
 
-					Class <?> clas;
-					try
-					{
-						clas = Class.forName( className );
-					}
-					catch (final ClassNotFoundException e)
-					{
-						System.err.println("Permission class not found: " + className);
-						continue; // XXX I guess this is OK?
-					}
+				// Perhaps more strict checking here?
+				// TODO - is this check enough to be secure?
+				if (!Permission.class.isAssignableFrom(clas))
+				{
+					System.err.println("Class " + className + " is not a Permission!");
+					continue; // XXX
+				}
 
-					// Perhaps more strict checking here?
-					// TODO - is this check enough to be secure?
-					if (!Permission.class.isAssignableFrom(clas))
-					{
-						System.err.println("Class " + className + " is not a Permission!");
-						continue; // XXX
-					}
+				Constructor<?> con;
+				try
+				{
+					con = clas.getDeclaredConstructor(String.class, String.class);
+				}
+				catch (final NoSuchMethodException e)
+				{
+					System.err.println("Permission class had no valid constructor: " + className);
+					continue; // XXX I guess this is OK?
+				}
 
-					Constructor<?> con;
-					try
-					{
-						con = clas.getDeclaredConstructor(String.class, String.class);
-					}
-					catch (final NoSuchMethodException e)
-					{
-						System.err.println("Permission class had no valid constructor: " + className);
-						continue; // XXX I guess this is OK?
-					}
+				Permission perm;
+				try
+				{
+					perm = (Permission)con.newInstance(permissionName, actions);
+				}
+				catch (final IllegalAccessException e)
+				{
+					System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
+					e.printStackTrace();
+					continue; // XXX
+				}
+				catch (final InstantiationException e)
+				{
+					System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
+					e.printStackTrace();
+					continue; // XXX
+				}
+				catch (final InvocationTargetException e)
+				{
+					System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
+					e.printStackTrace();
+					continue; // XXX
+				}
 
-					Permission perm;
-					try
-					{
-						perm = (Permission)con.newInstance(permissionName, actions);
-					}
-					catch (final IllegalAccessException e)
-					{
-						System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
-						e.printStackTrace();
-						continue; // XXX
-					}
-					catch (final InstantiationException e)
-					{
-						System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
-						e.printStackTrace();
-						continue; // XXX
-					}
-					catch (final InvocationTargetException e)
-					{
-						System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
-						e.printStackTrace();
-						continue; // XXX
-					}
-
-					permissions.add(perm);
-				} while ( permissionsResults.next() );
+				permissions.add(perm);
 			}
 		}
 		catch ( final SQLException e )
@@ -373,17 +371,14 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 				final ResultSet results = stat.executeQuery();
 
-				if ( results.first() )
+				while ( results.next() )
 				{
-					do
+					final int newNode = results.getInt(1);
+					if ( !list.contains( newNode ) )
 					{
-						final int newNode = results.getInt(1);
-						if ( !list.contains( newNode ) )
-						{
-							list.add( newNode );
-						}
-						things.add( newNode );
-					} while ( results.next() );
+						list.add( newNode );
+					}
+					things.add( newNode );
 				}
 			}
 			catch (final SQLException e)

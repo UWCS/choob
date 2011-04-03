@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobException;
-import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.ConnectionBroker;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.Interval;
 import uk.co.uwcs.choob.support.events.ChannelMessage;
@@ -21,9 +21,9 @@ final class MinimalBot extends UnsupportedOperationBot implements Closeable {
 	private final Modules mods;
 	private final ChoobDecoderTaskData cdtd;
 	private final ChoobThreadManager ctm;
-	private final DbConnectionBroker broker;
+	private final ConnectionBroker broker;
 
-	MinimalBot(DbConnectionBroker broker) {
+	MinimalBot(ConnectionBroker broker) {
 		this.broker = broker;
 		Choob.setupSecurity();
 		ctm = new ChoobThreadManager();

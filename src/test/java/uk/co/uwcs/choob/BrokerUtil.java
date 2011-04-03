@@ -1,17 +1,19 @@
 package uk.co.uwcs.choob;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.ConnectionBroker;
 
-public class BrokerUtil {
-	public BrokerUtil(final DbConnectionBroker broker) {
+public class BrokerUtil implements Closeable {
+	public BrokerUtil(final ConnectionBroker broker) {
 		this.broker = broker;
 	}
 
-	private final DbConnectionBroker broker;
+	private final ConnectionBroker broker;
 
 	public void sql(String sql) throws SQLException {
 		final Connection conn = broker.getConnection();
@@ -28,11 +30,15 @@ public class BrokerUtil {
 	}
 
 	public void table(String name, String fields) throws SQLException {
-		try {
-			sql("drop table " + name);
-		} catch (SQLException ignored) {
-		}
-
 		sql("create table " + name + " (" + fields + ")");
+	}
+
+	@Override
+	public void close() throws IOException {
+		try {
+			broker.destroy();
+		} catch (SQLException e) {
+			throw new IOException(e);
+		}
 	}
 }

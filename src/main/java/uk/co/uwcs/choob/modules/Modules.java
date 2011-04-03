@@ -13,7 +13,7 @@ import uk.co.uwcs.choob.ChoobPluginManagerState;
 import uk.co.uwcs.choob.ChoobThreadManager;
 import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.ChoobInternalError;
-import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.ConnectionBroker;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.Interval;
 
@@ -98,7 +98,7 @@ public final class Modules {
 	/**
 	 * Creates a new instance of the Modules.
 	 */
-	public Modules(final DbConnectionBroker dbBroker, final List<Interval> intervalList, final Bot bot, final IRCInterface irc,
+	public Modules(final ConnectionBroker dbBroker, final List<Interval> intervalList, final Bot bot, final IRCInterface irc,
 			final ChoobPluginManagerState state, final ChoobThreadManager ctm) {
 		try {
 			date = new DateModule();

@@ -18,7 +18,7 @@ import java.util.List;
 
 import uk.co.uwcs.choob.support.ChoobError;
 import uk.co.uwcs.choob.support.ChoobPermission;
-import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.ConnectionBroker;
 import uk.co.uwcs.choob.support.events.ChannelAction;
 import uk.co.uwcs.choob.support.events.ChannelEvent;
 import uk.co.uwcs.choob.support.events.ChannelKick;
@@ -35,10 +35,10 @@ import uk.co.uwcs.choob.support.events.PrivateMessage;
  */
 public final class HistoryModule
 {
-	private final DbConnectionBroker dbBroker;
+	private final ConnectionBroker dbBroker;
 
 	/** Creates a new instance of LoggerModule */
-	HistoryModule(final DbConnectionBroker dbBroker)
+	HistoryModule(final ConnectionBroker dbBroker)
 	{
 		this.dbBroker = dbBroker;
 	}

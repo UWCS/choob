@@ -40,7 +40,7 @@ import uk.co.uwcs.choob.support.ChoobInvocationError;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobNoSuchPluginException;
 import uk.co.uwcs.choob.support.ChoobPermission;
-import uk.co.uwcs.choob.support.DbConnectionBroker;
+import uk.co.uwcs.choob.support.ConnectionBroker;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.NoSuchCommandException;
 import uk.co.uwcs.choob.support.NoSuchPluginException;
@@ -56,7 +56,7 @@ import com.google.common.collect.ImmutableMap;
 public final class PluginModule
 {
 	private final ChoobThreadManager ctm;
-	private final DbConnectionBroker broker;
+	private final ConnectionBroker broker;
 	private final Modules mods;
 	private final ChoobPluginManager hsPlugMan;
 	private final ChoobPluginManager annotatedPlugMan;
@@ -73,7 +73,7 @@ public final class PluginModule
 	 * Creates a new instance of the PluginModule.
 	 * @param pluginMap Map containing currently loaded plugins.
 	 */
-	PluginModule(final DbConnectionBroker broker, final Modules mods,
+	PluginModule(final ConnectionBroker broker, final Modules mods,
 			final IRCInterface irc, final Bot bot, final ChoobPluginManagerState state,
 			final ChoobThreadManager ctm) throws ChoobException {
 		this.broker = broker;

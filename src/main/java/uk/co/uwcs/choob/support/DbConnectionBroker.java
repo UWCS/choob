@@ -11,7 +11,7 @@ import java.sql.SQLException;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
 
-public final class DbConnectionBroker
+public final class DbConnectionBroker implements ConnectionBroker
 {
 	ComboPooledDataSource cpds;
 
@@ -65,6 +65,7 @@ public final class DbConnectionBroker
 	}
 
 	/** Checkout a Connection. */
+	@Override
 	public Connection getConnection() throws SQLException
 	{
 		// Switch to the 2nd line to get per-SQL-statement logging.
@@ -73,6 +74,7 @@ public final class DbConnectionBroker
 	}
 
 	/** Free (check-back-in) a checked-out Connection. */
+	@Override
 	public void freeConnection(final Connection conn)
 	{
 		if (conn != null) {
@@ -85,6 +87,7 @@ public final class DbConnectionBroker
 	}
 
 	/** Free all of the resources allocated by this DbConnectionBroker */
+	@Override
 	public void destroy() throws SQLException
 	{
 		DataSources.destroy(cpds);
