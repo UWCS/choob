@@ -1,7 +1,5 @@
 package uk.co.uwcs.choob;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,20 +11,18 @@ public class AliasTest extends AbstractPluginTest {
 	public void loadPlugin() throws ChoobException {
 		b.addPlugin("Talk");
 		b.addPlugin("Alias");
+
+		assertGetsResposne("#chan user: Aliased 'say' to 'talk.say'.", "~alias.alias say talk.say");
 	}
 
 	@Test
 	public void testSay() {
-		b.spinChannelMessage("~alias.alias say talk.say");
-		assertEquals("#chan user: Aliased 'say' to 'talk.say'.", b.sentMessage());
 		assertGetsResposne("#chan hi", "~say hi");
 	}
 
 	@Test
-	public void testDb() {
-		final PersistedObj obj = new PersistedObj();
-		obj.name = "john";
-		b.getMods().odb.save(obj);
-		assertEquals("john", b.getMods().odb.retrieve(PersistedObj.class, "WHERE id=" + obj.id).get(0).name);
+	public void testReAlias() {
+		assertGetsResposne("#chan user: Aliased 'say' to 'talk.reply' (was 'talk.say').",
+				"~alias.alias say talk.reply");
 	}
 }

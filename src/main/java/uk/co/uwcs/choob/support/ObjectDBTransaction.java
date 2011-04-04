@@ -624,20 +624,15 @@ public class ObjectDBTransaction // Needs to be non-final
 	 *
 	 * @param strObj The object who's saved data is to be updated.
 	 */
-	public final void update(Object strObj)
+	public final void update(final Object strObj)
 	{
-		update(newObjectWrapper(strObj));
-	}
-
-	/**
-	 * Updates the saved data for an ObjectDB object.
-	 *
-	 * @param strObj The {@link ObjectDBObject} wrapping the real object who's
-	 *               saved data is to be updated.
-	 */
-	public final void update(ObjectDBObject strObj)
-	{
-		_store(strObj, true);
+		withHibernate(newObjectWrapper(strObj), new WithSession<Void>() {
+			@Override
+			public Void use(Session sess) {
+				sess.update(strObj);
+				return null;
+			}
+		});
 	}
 
 	/**
@@ -669,6 +664,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	}
 
 	private <T> T withHibernate(ObjectDBObject clazz, WithSession<T> lambda) {
+		checkPermission(clazz.getClassName());
 		final Session sess = sessionFor(clazz);
 		try {
 			final Transaction tran = sess.beginTransaction();
@@ -707,119 +703,6 @@ public class ObjectDBTransaction // Needs to be non-final
 			return new DOMWriter().write(doc);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
-		}
-	}
-
-	private final void _store(ObjectDBObject strObj, boolean replace)
-	{
-		checkPermission(strObj.getClassName());
-		checkTable(strObj);
-		PreparedStatement stat = null;
-		try
-		{
-			int id = strObj.getId();
-
-			String idVal = id == 0 ? "DEFAULT" : String.valueOf(id);
-
-			StringBuilder values = new StringBuilder();
-			String[] fields = strObj.getFields();
-			for(int i=0; i<fields.length; i++)
-			{
-				if (fields[i].equals("id"))
-					values.append("`" + clean("`", fields[i]) + "` = " + idVal);
-				else
-					values.append("`" + clean("`", fields[i]) + "` = ?");
-				if (i != fields.length - 1)
-					values.append(", ");
-			}
-
-			if (replace)
-				stat = dbConn.prepareStatement("REPLACE INTO `" + clean("`", getTableName(strObj)) + "` SET " + values);
-			else
-				stat = dbConn.prepareStatement("INSERT INTO `" + clean("`", getTableName(strObj)) + "` SET " + values);
-
-			int offset = 1; // 0 after id set
-			for( int c = 0 ; c < fields.length ; c++ )
-			{
-				String fieldName = fields[c];
-
-				if( fieldName.equals("id") )
-				{
-					// Skip...
-					offset = 0;
-				}
-				else
-				{
-					try
-					{
-						Type theType = strObj.getFieldType(fieldName);
-
-						if( theType == java.lang.Integer.TYPE )
-						{
-							int theVal = ((Integer)strObj.getFieldValue(fieldName)).intValue();
-							stat.setInt(c + offset, theVal);
-						}
-						else if( theType == java.lang.Long.TYPE )
-						{
-							long theVal = ((Long)strObj.getFieldValue(fieldName)).longValue();
-							stat.setLong(c + offset, theVal);
-						}
-						else if( theType == java.lang.Boolean.TYPE )
-						{
-							boolean theVal = ((Boolean)strObj.getFieldValue(fieldName)).booleanValue();
-							stat.setByte(c + offset, theVal ? (byte)1 : (byte)0);
-						}
-						else if( theType == java.lang.Float.TYPE )
-						{
-							float theVal = ((Float)strObj.getFieldValue(fieldName)).floatValue();
-							stat.setFloat(c + offset, theVal);
-						}
-						else if( theType == java.lang.Double.TYPE )
-						{
-							double theVal = ((Double)strObj.getFieldValue(fieldName)).doubleValue();
-							stat.setDouble(c + offset, theVal);
-						}
-						else if( theType == String.class )
-						{
-							stat.setString(c + offset, (String)strObj.getFieldValue(fieldName));
-						}
-						else
-						{
-							// Urgh.
-							throw new ObjectDBError("Don't know type for variable " + fieldName);
-						}
-					}
-					catch (NoSuchFieldException e)
-					{
-						// Should never happen, but if it does, just ignore.
-					}
-					catch (IllegalAccessException e)
-					{
-						// Should never happen, but if it does, just ignore.
-					}
-				}
-			}
-
-			stat.executeUpdate();
-
-			// Set the ID only AFTER we store!
-			if (id == 0)
-			{
-				stat = dbConn.prepareStatement("SELECT LAST_INSERT_ID()");
-				ResultSet results = stat.executeQuery();
-				if (results.first())
-					strObj.setId(results.getInt(1));
-				else
-					throw new ObjectDBError("Couldn't get the ID of the object which was saved...");
-			}
-		}
-		catch (SQLException e)
-		{
-			throw sqlErr(e);
-		}
-		finally
-		{
-			cleanUp(stat);
 		}
 	}
 
