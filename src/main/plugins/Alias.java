@@ -577,9 +577,9 @@ public class Alias
 
 	private AliasObject getAlias( final String name )
 	{
-		final String alias = mods.odb.escapeString(name).toLowerCase();
+		final String alias = mods.odb.escapeString(name.trim()).toLowerCase();
 
-		final List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE name = \"" + alias + "\"" );
+		final List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE name = '" + alias + "'" );
 
 		if (results.size() == 0)
 			return null;

@@ -18,6 +18,7 @@ public class AliasTest extends AbstractPluginTest {
 	@Test
 	public void testSay() {
 		b.spinChannelMessage("~alias.alias say talk.say");
+		assertEquals("#chan user: Aliased 'say' to 'talk.say'.", b.sentMessage());
 		assertGetsResposne("#chan hi", "~say hi");
 	}
 

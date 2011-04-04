@@ -60,9 +60,13 @@ public class ObjectDBTransaction // Needs to be non-final
 	}
 
 	private Session sessionFor(ObjectDBObject clazz) {
+		final Object ident = clazz.getIdentity();
+		// XXX HAAAAAAAAAAACK
+		Thread.currentThread().setContextClassLoader(((Class<?>)ident).getClassLoader());
+
 		synchronized (SESSION_FACTORIES) {
 			{
-				final SessionFactory sess = SESSION_FACTORIES.get(clazz.getIdentity());
+				final SessionFactory sess = SESSION_FACTORIES.get(ident);
 				if (null != sess)
 					return sess.openSession(dbConn);
 			}
@@ -83,7 +87,7 @@ public class ObjectDBTransaction // Needs to be non-final
 				.addDocument(configFor(packageName, simpleName, fields));
 			new SchemaExport(cfg, dbConn).execute(false, true, false, false);
 			SessionFactory sess = cfg.buildSessionFactory();
-			SESSION_FACTORIES.put(clazz.getIdentity(), sess);
+			SESSION_FACTORIES.put(ident, sess);
 			return sess.openSession(dbConn);
 		}
 	}

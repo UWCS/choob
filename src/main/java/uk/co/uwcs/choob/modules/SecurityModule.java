@@ -1211,7 +1211,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			stat = dbConn.prepareStatement("SELECT NodeID FROM UserNodes WHERE NodeName = ? AND NodeClass = 0");
 			stat.setString(1, userName);
 			ResultSet results = stat.executeQuery();
-			if ( !results.first() )
+			if ( !results.next() )
 				//throw new ChoobException ("User " + userName + " does not exist!");
 				return null;
 				//return userName;
@@ -1221,7 +1221,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			stat = dbConn.prepareStatement("SELECT GroupID FROM GroupMembers WHERE MemberID = ?");
 			stat.setInt(1, userID);
 			results = stat.executeQuery();
-			if ( !results.first() )
+			if ( !results.next() )
 				throw new ChoobError ("Consistency error: User " + userName + " is in no group!");
 			final int groupID = results.getInt(1);
 			if ( results.next() )
