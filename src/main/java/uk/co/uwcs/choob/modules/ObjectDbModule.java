@@ -106,7 +106,7 @@ public final class ObjectDbModule
 			throw new ChoobError("Sql Exception", e);
 		}
 		final ObjectDBTransaction trans = new ObjectDBTransaction();
-		trans.setConn(dbConn);
+		trans.setConn(dbConn, broker.getFactories());
 		trans.setMods(mods);
 		try
 		{
@@ -209,7 +209,7 @@ public final class ObjectDbModule
 			throw new ChoobError("Sql Exception", e);
 		}
 
-		trans.setConn(dbConn);
+		trans.setConn(dbConn, broker.getFactories());
 		trans.setMods(mods);
 		try
 		{
@@ -256,7 +256,7 @@ public final class ObjectDbModule
 			throw new ChoobError("Sql Exception", e);
 		}
 
-		trans.setConn(dbConn);
+		trans.setConn(dbConn, broker.getFactories());
 		trans.setMods(mods);
 		try
 		{

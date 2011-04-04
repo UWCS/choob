@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
@@ -52,7 +51,7 @@ import com.google.common.collect.Iterables;
  */
 public class ObjectDBTransaction // Needs to be non-final
 {
-	private static Map<Object, SessionFactory> SESSION_FACTORIES = new WeakHashMap<Object, SessionFactory>();
+	private Map<Object, SessionFactory> sessionFactories;
 
 	private static interface WithSession<T> {
 		T use(Session sess);
@@ -63,9 +62,9 @@ public class ObjectDBTransaction // Needs to be non-final
 		// XXX HAAAAAAAAAAACK
 		Thread.currentThread().setContextClassLoader(((Class<?>)ident).getClassLoader());
 
-		synchronized (SESSION_FACTORIES) {
+		synchronized (sessionFactories) {
 			{
-				final SessionFactory sess = SESSION_FACTORIES.get(ident);
+				final SessionFactory sess = sessionFactories.get(ident);
 				if (null != sess)
 					return sess.openSession(dbConn);
 			}
@@ -86,7 +85,7 @@ public class ObjectDBTransaction // Needs to be non-final
 				.addDocument(configFor(packageName, simpleName, fields));
 			new SchemaExport(cfg, dbConn).execute(false, true, false, false);
 			SessionFactory sess = cfg.buildSessionFactory();
-			SESSION_FACTORIES.put(ident, sess);
+			sessionFactories.put(ident, sess);
 			return sess.openSession(dbConn);
 		}
 	}
@@ -107,9 +106,10 @@ public class ObjectDBTransaction // Needs to be non-final
 		this.mods = mods;
 	}
 
-	public final void setConn(Connection dbConn)
+	public final void setConn(Connection dbConn, Map<Object, SessionFactory> factories)
 	{
 		this.dbConn = dbConn;
+		this.sessionFactories = factories;
 	}
 
 	/**

@@ -9,8 +9,11 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
+import org.hibernate.SessionFactory;
 import org.junit.After;
 import org.junit.Before;
 
@@ -29,6 +32,8 @@ public abstract class AbstractPluginTest {
 
 		Class.forName("org.sqlite.JDBC");
 		final String url = "jdbc:sqlite:" + tempFilePath;
+
+		final Map<Object, SessionFactory> sessionFactories = new WeakHashMap<Object, SessionFactory>();
 		final ConnectionBroker broker = new ConnectionBroker() {
 			final Set<Connection> open = Collections.newSetFromMap(new IdentityHashMap<Connection, Boolean>());
 
@@ -53,6 +58,11 @@ public abstract class AbstractPluginTest {
 			@Override
 			public void destroy() throws SQLException {
 				assertEquals(Collections.emptySet(), open);
+			}
+
+			@Override
+			public Map<Object, SessionFactory> getFactories() {
+				return sessionFactories;
 			}
 		};
 

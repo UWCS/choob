@@ -7,6 +7,10 @@ package uk.co.uwcs.choob.support;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Map;
+import java.util.WeakHashMap;
+
+import org.hibernate.SessionFactory;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
@@ -14,6 +18,7 @@ import com.mchange.v2.c3p0.DataSources;
 public final class DbConnectionBroker implements ConnectionBroker
 {
 	ComboPooledDataSource cpds;
+	private final Map<Object, SessionFactory> sessionFactories = new WeakHashMap<Object, SessionFactory>();
 
 	/**
 	 * Create a new DbConnectionBroker.
@@ -91,6 +96,11 @@ public final class DbConnectionBroker implements ConnectionBroker
 	public void destroy() throws SQLException
 	{
 		DataSources.destroy(cpds);
+	}
+
+	@Override
+	public Map<Object, SessionFactory> getFactories() {
+		return sessionFactories;
 	}
 
 }

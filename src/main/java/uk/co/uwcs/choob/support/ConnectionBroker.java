@@ -2,6 +2,9 @@ package uk.co.uwcs.choob.support;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Map;
+
+import org.hibernate.SessionFactory;
 
 public interface ConnectionBroker {
 
@@ -13,5 +16,7 @@ public interface ConnectionBroker {
 
 	/** Free all of the resources allocated by this DbConnectionBroker */
 	public abstract void destroy() throws SQLException;
+
+	public abstract Map<Object, SessionFactory> getFactories();
 
 }
