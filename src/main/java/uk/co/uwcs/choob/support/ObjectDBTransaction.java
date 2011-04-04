@@ -542,32 +542,19 @@ public class ObjectDBTransaction // Needs to be non-final
 	 *               are desired. FIXME: link to docs on format.
 	 * @return {@link List} of objects, typed according to the caller.
 	 */
-	public final <T> List<T> retrieve(final ObjectDBClass<T> storedClass, final String clause)
+	public final <T> List<T> retrieve(final ObjectDBClass<T> storedClass, String whereClause)
 	{
-		String sqlQuery;
+		final String clause;
 
-//		if ( clause == null )
-//		{
-//			clause = "WHERE 1";
-//		}
+		if (whereClause == null)
+			clause = "WHERE 1";
+		else
+			clause = whereClause;
 
-		final String[] fields;
-		final ObjectDBObject ow;
-		try
-		{
-			ow = newObjectWrapper(storedClass.newInstance());
-			fields = ow.getFields();
-		}
-		catch (InstantiationException e)
-		{
-			throw new ObjectDBError("Could not instanciate object of type: " + storedClass.getName());
-		}
-		catch (IllegalAccessException e)
-		{
-			throw new ObjectDBError("Could not instanciate object of type: " + storedClass.getName());
-		}
+		final ObjectDBObject ow = fakeObject(storedClass);
 
 		return withHibernate(ow, new WithSession<List<T>>() {
+			@SuppressWarnings("unchecked")
 			@Override
 			public List<T> use(Session sess) {
 				final String query = "from " + storedClass.getName() + " " + clause;
@@ -576,94 +563,13 @@ public class ObjectDBTransaction // Needs to be non-final
 		});
 	}
 
-	public final List<Integer> retrieveInt(Object storedClass, String clause)
-	{
-		return retrieveInt(newClassWrapper(storedClass), clause);
-	}
-
-	public final List<Integer> retrieveInt(final ObjectDBClass<?> storedClass, String clause)
-	{
-		String sqlQuery;
-
-		if ( clause != null )
-		{
-			ObjectDBClauseParser parser = new ObjectDBClauseParser(clause, storedClass.getName());
-			try
-			{
-				sqlQuery = parser.ParseSelect(null);
-			}
-			catch (ParseException e)
-			{
-				// TODO there's some public properties we can use to make a better error message.
-				System.err.println("Parse error in string: " + clause);
-				System.err.println("Error was: " + e);
-				throw new ObjectDBError("Parse error in clause string: " + clause);
-			}
-
-			// Make sure it's the right query type... (XXX Do we need to?)
-			if (parser.getType() != ObjectDBClauseParser.TYPE_SELECT)
-				throw new ObjectDBError("Clause string " + clause + " was not a SELECT clause.");
-
-			// Make sure we can read these classes...
-			@SuppressWarnings("unchecked")
-			List<String> classNames = parser.getUsedClasses();
-			for(String cls: classNames)
-				checkPermission(cls);
-		}
-		else
-		{
-			checkPermission(storedClass.getName());
-			sqlQuery = "SELECT ObjectStore.ClassID FROM ObjectStore WHERE ClassName = '" + storedClass.getName() + "';";
-		}
-
-		checkTable(storedClass);
-
-		if ( clause != null )
-		{
-			try
-			{
-				sqlQuery = ObjectDBClauseParser.getSQL(clause, storedClass.getName());
-			}
-			catch (ParseException e)
-			{
-				// TODO there's some public properties we can use to make a better error message.
-				System.err.println("Parse error in string: " + clause);
-				System.err.println("Error was: " + e);
-				throw new ObjectDBError("Parse error in clause string.");
-			}
-		}
-		else
-		{
-			sqlQuery = "SELECT ObjectStore.ClassID FROM ObjectStore WHERE ClassName = '" + storedClass.getName() + "';";
-		}
-
-		Statement objStat = null;
-		try
-		{
-			ArrayList<Integer> objects = new ArrayList<Integer>();
-
-			objStat = dbConn.createStatement();
-
-			ResultSet results = objStat.executeQuery( sqlQuery );
-
-			if( results.first() )
-			{
-				do
-				{
-					objects.add( results.getInt(1) );
-				}
-				while(results.next());
-			}
-
-			return objects;
-		}
-		catch (SQLException e)
-		{
-			throw sqlErr(e);
-		}
-		finally
-		{
-			cleanUp(objStat);
+	private <T> ObjectDBObject fakeObject(final ObjectDBClass<T> storedClass) {
+		try {
+			return newObjectWrapper(storedClass.newInstance());
+		} catch (InstantiationException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
