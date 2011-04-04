@@ -75,4 +75,9 @@ public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 	@Override public void setFieldValue(String name, Object value) throws NoSuchFieldException, IllegalAccessException {
 		obj.getClass().getField(name).set(obj, value);
 	}
+
+	@Override
+	public Object getIdentity() {
+		return obj.getClass();
+	}
 }

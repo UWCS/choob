@@ -42,4 +42,7 @@ public interface ObjectDBObject {
 	 * Sets the value of a single property/field. The type of the value should match the type returned by getFieldType.
 	 */
 	void setFieldValue(String name, Object value) throws NoSuchFieldException, IllegalAccessException;
+
+	/** Some representation of the uniqueness of the Object's type, i.e. it's underlying Class<?> */
+	Object getIdentity();
 }

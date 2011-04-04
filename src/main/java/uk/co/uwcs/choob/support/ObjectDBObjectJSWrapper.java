@@ -32,16 +32,19 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 	}
 
 	@Override public String getClassName() {
+		return makeObjetDbClass().getName();
+	}
+
+	private ObjectDBClass makeObjetDbClass() {
 		try {
 			Object ctor = getFieldValue("constructor");
 			if (ctor instanceof Function) {
-				ObjectDBClass cls = new ObjectDBClassJSWrapper(ctor);
-				return cls.getName();
+				return new ObjectDBClassJSWrapper(ctor);
 			}
 		} catch (NoSuchFieldException e) {
-			// Do nothing.
+			throw new RuntimeException("This used to just return the empty string", e);
 		}
-		return ""; // XXX ?!
+		throw new RuntimeException("This used to just return the empty string");
 	}
 
 	@Override public int getId() {
@@ -132,5 +135,10 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 
 	@Override public void setFieldValue(String name, Object value) throws NoSuchFieldException {
 		JSUtils.setProperty(obj, name, JSUtils.mapJavaToJS(value));
+	}
+
+	@Override
+	public Object getIdentity() {
+		return makeObjetDbClass().getIdentity();
 	}
 }

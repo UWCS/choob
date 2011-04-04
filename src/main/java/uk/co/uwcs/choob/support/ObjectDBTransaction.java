@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
@@ -30,7 +31,6 @@ import uk.co.uwcs.choob.modules.ObjectDbModule;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.MapMaker;
 
 /**
  * Wraps up the database in an ObjectDB-friendly way, which can be used to
@@ -53,43 +53,39 @@ import com.google.common.collect.MapMaker;
  */
 public class ObjectDBTransaction // Needs to be non-final
 {
-	private static Map<ObjectDBObject, SessionFactory> SESSION_FACTORIES = new MapMaker()
-		.weakKeys().makeComputingMap(new com.google.common.base.Function<ObjectDBObject, SessionFactory>() {
-			@Override
-			public SessionFactory apply(ObjectDBObject clazz) {
-				final String name = clazz.getClassName();
-				final String packageName = packageOf(name);
-				final String simpleName = simpleNameOf(name);
-				final Iterable<String> fields = Iterables.filter(Arrays.asList(clazz.getFields()),
-						new Predicate<String>() {
-							@Override
-							public boolean apply(String input) {
-								return !input.equals("id");
-							}
-						});
-
-				final Configuration cfg = new Configuration()
-					.setProperty("hibernate.dialect", "com.google.code.hibernatesqlite.dialect.SQLiteDialect")
-					.addDocument(configFor(packageName, simpleName, fields));
-				new SchemaExport(cfg, CONNECTIONS.get()).execute(false, true, false, false);
-				return cfg.buildSessionFactory();
-			}
-		});
-
-	private static final ThreadLocal<Connection> CONNECTIONS = new ThreadLocal<Connection>() {
-		@Override
-		protected Connection initialValue() {
-			throw new AssertionError();
-		}
-	};
+	private static Map<Object, SessionFactory> SESSION_FACTORIES = new WeakHashMap<Object, SessionFactory>();
 
 	private static interface WithSession<T> {
 		T use(Session sess);
 	}
 
 	private Session sessionFor(ObjectDBObject clazz) {
-		CONNECTIONS.set(dbConn);
-		return SESSION_FACTORIES.get(clazz).openSession(dbConn);
+		synchronized (SESSION_FACTORIES) {
+			{
+				final SessionFactory sess = SESSION_FACTORIES.get(clazz.getIdentity());
+				if (null != sess)
+					return sess.openSession(dbConn);
+			}
+
+			final String name = clazz.getClassName();
+			final String packageName = packageOf(name);
+			final String simpleName = simpleNameOf(name);
+			final Iterable<String> fields = Iterables.filter(Arrays.asList(clazz.getFields()),
+					new Predicate<String>() {
+						@Override
+						public boolean apply(String input) {
+							return !input.equals("id");
+						}
+					});
+
+			final Configuration cfg = new Configuration()
+				.setProperty("hibernate.dialect", "com.google.code.hibernatesqlite.dialect.SQLiteDialect")
+				.addDocument(configFor(packageName, simpleName, fields));
+			new SchemaExport(cfg, dbConn).execute(false, true, false, false);
+			SessionFactory sess = cfg.buildSessionFactory();
+			SESSION_FACTORIES.put(clazz.getIdentity(), sess);
+			return sess.openSession(dbConn);
+		}
 	}
 
 	private static String simpleNameOf(String name) {
