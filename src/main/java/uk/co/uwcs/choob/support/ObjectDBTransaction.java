@@ -318,22 +318,6 @@ public class ObjectDBTransaction // Needs to be non-final
 		return "_objectdb_" + fullClassName.toLowerCase().replaceAll("\\.", "_");
 	}
 
-	private final <T> void checkTable(ObjectDBClass<T> cls)
-	{
-		try
-		{
-			checkTable(newObjectWrapper(cls.newInstance()));
-		}
-		catch (InstantiationException e)
-		{
-			throw new ObjectDBError("Could not instanciate object of type: " + cls.getName());
-		}
-		catch (IllegalAccessException e)
-		{
-			throw new ObjectDBError("Could not instanciate object of type: " + cls.getName());
-		}
-	}
-
 	private final void checkTable(ObjectDBObject obj)
 	{
 		// XXX possibly MySQL specific.
@@ -551,7 +535,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		final String clause;
 
 		if (whereClause == null)
-			clause = "WHERE 1";
+			clause = "WHERE 1=1";
 		else
 			clause = whereClause;
 
@@ -729,20 +713,6 @@ public class ObjectDBTransaction // Needs to be non-final
 	private final <T> ObjectDBClass<T> newClassWrapper(Class<T> obj)
 	{
 		return new ObjectDBClassJavaWrapper<T>(obj);
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private final <T> ObjectDBClass<T> newClassWrapper(Object obj)
-	{
-		// Create the correct wrapper here.
-		if (obj instanceof Class) {
-			return newClassWrapper((Class)obj);
-		}
-
-		if (obj instanceof Function) {
-			return new ObjectDBClassJSWrapper(obj);
-		}
-		return null;
 	}
 
 	private final ObjectDBObject newObjectWrapper(Object obj)
