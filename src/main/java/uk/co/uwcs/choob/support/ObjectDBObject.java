@@ -3,10 +3,6 @@ package uk.co.uwcs.choob.support;
 import java.lang.reflect.Type;
 
 public interface ObjectDBObject {
-	/**
-	 * Gets the ObjectDBClass from which this object descends.
-	 */
-	ObjectDBClass getODBClass();
 
 	/**
 	 * Gets the class name of the object in a ObjectDB-compatible format.

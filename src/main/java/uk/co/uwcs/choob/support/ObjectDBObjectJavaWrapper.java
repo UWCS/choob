@@ -2,7 +2,9 @@ package uk.co.uwcs.choob.support;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
-import java.security.*;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,10 +18,6 @@ public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 
 	@Override public String getClassName() {
 		return obj.getClass().getName();
-	}
-
-	@Override public ObjectDBClass getODBClass() {
-		return new ObjectDBClassJavaWrapper(getClass());
 	}
 
 	@Override public int getId() {

@@ -4,15 +4,17 @@ import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
 
 public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 	private Scriptable obj;
-	
+
 	public int dummy() {
 		return 0;
 	}
-	
+
 	public ObjectDBObjectJSWrapper(Object obj) throws ChoobException, NoSuchFieldException {
 		if (obj == null) {
 			throw new ChoobException("Can't wrap a null object!");
@@ -28,31 +30,18 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		// property is missing, which we want.
 		getFieldValue("id");
 	}
-	
+
 	@Override public String getClassName() {
 		try {
 			Object ctor = getFieldValue("constructor");
 			if (ctor instanceof Function) {
-				ObjectDBClass cls = new ObjectDBClassJSWrapper((Function)ctor);
+				ObjectDBClass cls = new ObjectDBClassJSWrapper(ctor);
 				return cls.getName();
 			}
 		} catch (NoSuchFieldException e) {
 			// Do nothing.
 		}
 		return ""; // XXX ?!
-	}
-
-	@Override public ObjectDBClass getODBClass() {
-		try {
-			Object ctor = getFieldValue("constructor");
-			if (ctor instanceof Function) {
-				ObjectDBClass cls = new ObjectDBClassJSWrapper((Function)ctor);
-				return cls;
-			}
-		} catch (NoSuchFieldException e) {
-			// Do nothing.
-		}
-		return null; // XXX ?!
 	}
 
 	@Override public int getId() {
@@ -63,7 +52,7 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		}
 		return 0; // XXX ?!
 	}
-	
+
 	@Override public void setId(int id) {
 		try {
 			setFieldValue("id", new Integer(id));
@@ -71,14 +60,14 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 			// Should not occur (we check for "id" on creation).
 		}
 	}
-	
+
 	@Override public String[] getFields() {
 		List<String> fields = new LinkedList<String>();
-		
+
 		Scriptable proto = obj;
 		while (proto != null) {
 			Object[] props = proto.getIds();
-			
+
 			for (int i = 0; i < props.length; i++) {
 				if (props[i] instanceof String) {
 					String name = (String)props[i];
@@ -100,22 +89,22 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 					System.err.println("WARNING: [ObjectDBObjectJSWrapper.getFields] Unexpected property type: " + props[i].getClass().getName());
 				}
 			}
-			
+
 			proto = proto.getPrototype();
 		}
-		
+
 		String[] sFields = new String[0];
 		return fields.toArray(sFields);
 	}
-	
+
 	@Override public Type getFieldType(String name) throws NoSuchFieldException {
 		Object val = getFieldValue(name);
 		if (val == null) {
 			return null;
 		}
-		
+
 		String type = ScriptRuntime.typeof(val);
-		
+
 		if (type.equals("undefined") || type.equals("object") || type.equals("function") || type.equals("xml")) {
 			return null;
 		}
@@ -136,11 +125,11 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		}
 		return null;
 	}
-	
+
 	@Override public Object getFieldValue(String name) throws NoSuchFieldException {
 		return JSUtils.mapJSToJava(JSUtils.getProperty(obj, name));
 	}
-	
+
 	@Override public void setFieldValue(String name, Object value) throws NoSuchFieldException {
 		JSUtils.setProperty(obj, name, JSUtils.mapJavaToJS(value));
 	}

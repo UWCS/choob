@@ -94,14 +94,7 @@ public final class ObjectDbModule
 	 * @param storedClass The .class of the object you want to retrieve.
 	 * @param clause The clause specifying which objects you want to select.
 	 */
-	@SuppressWarnings("unchecked")
 	public <T> List<T> retrieve(final Class<T> storedClass, final String clause)
-	{
-		return retrieve((Object)storedClass, clause);
-	}
-
-	@SuppressWarnings("unchecked")
-	public List retrieve(final Object storedClass, final String clause)
 	{
 		Connection dbConn = null;
 		try

@@ -15,6 +15,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.io.DOMWriter;
+import org.hibernate.FlushMode;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.mozilla.javascript.Function;
 
 import uk.co.uwcs.choob.modules.Modules;
@@ -255,11 +265,11 @@ public class ObjectDBTransaction // Needs to be non-final
 		return "_objectdb_" + obj.getClassName().toLowerCase().replaceAll("\\.", "_");
 	}
 
-	private final void checkTable(ObjectDBClass cls)
+	private final <T> void checkTable(ObjectDBClass<T> cls)
 	{
 		try
 		{
-			checkTable(NewObjectWrapper(cls.newInstance()));
+			checkTable(newObjectWrapper(cls.newInstance()));
 		}
 		catch (InstantiationException e)
 		{
@@ -469,10 +479,9 @@ public class ObjectDBTransaction // Needs to be non-final
 	 *               are desired. FIXME: link to docs on format.
 	 * @return {@link List} of objects, typed according to the caller.
 	 */
-	@SuppressWarnings("rawtypes")
-	public final List retrieve(Object storedClass, String clause)
+	public final <T> List<T> retrieve(Class<T> storedClass, String clause)
 	{
-		return retrieve(NewClassWrapper(storedClass), clause);
+		return retrieve(newClassWrapper(storedClass), clause);
 	}
 
 	/**
@@ -484,8 +493,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	 *               are desired. FIXME: link to docs on format.
 	 * @return {@link List} of objects, typed according to the caller.
 	 */
-	@SuppressWarnings("rawtypes")
-	public final List retrieve(final ObjectDBClass storedClass, String clause)
+	public final <T> List<T> retrieve(final ObjectDBClass<T> storedClass, String clause)
 	{
 		String sqlQuery;
 
@@ -497,7 +505,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		String[] fields;
 		try
 		{
-			fields = NewObjectWrapper(storedClass.newInstance()).getFields();
+			fields = newObjectWrapper(storedClass.newInstance()).getFields();
 		}
 		catch (InstantiationException e)
 		{
@@ -550,7 +558,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		Statement retrieveStat = null;
 		try
 		{
-			final List<Object> objects = new ArrayList<Object>();
+			final List<T> objects = new ArrayList<T>();
 			final Set<Integer> objectIds = new HashSet<Integer>();
 
 			objStat = dbConn.createStatement();
@@ -569,8 +577,8 @@ public class ObjectDBTransaction // Needs to be non-final
 					if (objectIds.contains(objectId))
 						continue;
 
-					Object newObject = storedClass.newInstance(); // This will be set immediately, because 0 is not a valid ID.
-					ObjectDBObject tempObject = NewObjectWrapper(newObject);
+					T newObject = storedClass.newInstance(); // This will be set immediately, because 0 is not a valid ID.
+					ObjectDBObject tempObject = newObjectWrapper(newObject);
 
 					for(int i=0; i<fields.length; i++)
 					{
@@ -645,10 +653,10 @@ public class ObjectDBTransaction // Needs to be non-final
 
 	public final List<Integer> retrieveInt(Object storedClass, String clause)
 	{
-		return retrieveInt(NewClassWrapper(storedClass), clause);
+		return retrieveInt(newClassWrapper(storedClass), clause);
 	}
 
-	public final List<Integer> retrieveInt(final ObjectDBClass storedClass, String clause)
+	public final List<Integer> retrieveInt(final ObjectDBClass<?> storedClass, String clause)
 	{
 		String sqlQuery;
 
@@ -741,7 +749,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	 */
 	public final void delete(Object strObj)
 	{
-		delete(NewObjectWrapper(strObj));
+		delete(newObjectWrapper(strObj));
 	}
 
 	/**
@@ -783,7 +791,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	 */
 	public final void update(Object strObj)
 	{
-		update(NewObjectWrapper(strObj));
+		update(newObjectWrapper(strObj));
 	}
 
 	/**
@@ -816,7 +824,34 @@ public class ObjectDBTransaction // Needs to be non-final
 	 */
 	public final void save(Object strObj)
 	{
-		save(NewObjectWrapper(strObj));
+		// you are kidding, right
+		final Class<? extends Object> clazz = strObj.getClass();
+		Document doc = DocumentHelper.createDocument();
+		Element eRoot = doc.addElement("hibernate-mapping")
+			.addAttribute("package", clazz.getPackage().getName())
+			.addAttribute("default-access", "field");
+		Element eClass = eRoot.addElement("class")
+			.addAttribute("name", clazz.getSimpleName());
+		eClass.addElement("id").addAttribute("name", "id")
+			.addElement("generator").addAttribute("class", "native");
+		eClass.addElement("property").addAttribute("name", "name");
+		SessionFactory fac;
+		final Configuration cfg;
+		try {
+			cfg = new Configuration()
+			.setProperty("hibernate.dialect", "com.google.code.hibernatesqlite.dialect.SQLiteDialect")
+			.addDocument(new DOMWriter().write(doc));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		fac = cfg.buildSessionFactory();
+		new SchemaExport(cfg, dbConn).execute(false, true, false, false);
+		Session sess = fac.openSession(dbConn);
+		sess.setFlushMode(FlushMode.ALWAYS);
+		Transaction tran = sess.beginTransaction();
+		sess.persist(strObj);
+		tran.commit();
+		sess.disconnect();
 	}
 
 	/**
@@ -963,19 +998,26 @@ public class ObjectDBTransaction // Needs to be non-final
 		// Non-null cache ==> we passed this check before.
 	}
 
-	private final ObjectDBClass NewClassWrapper(Object obj)
+	private final <T> ObjectDBClass<T> newClassWrapper(Class<T> obj)
+	{
+		return new ObjectDBClassJavaWrapper<T>(obj);
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private final <T> ObjectDBClass<T> newClassWrapper(Object obj)
 	{
 		// Create the correct wrapper here.
 		if (obj instanceof Class) {
-			return new ObjectDBClassJavaWrapper(obj);
+			return newClassWrapper((Class)obj);
 		}
+
 		if (obj instanceof Function) {
 			return new ObjectDBClassJSWrapper(obj);
 		}
 		return null;
 	}
 
-	private final ObjectDBObject NewObjectWrapper(Object obj)
+	private final ObjectDBObject newObjectWrapper(Object obj)
 	{
 		// Create the correct wrapper here.
 		try {

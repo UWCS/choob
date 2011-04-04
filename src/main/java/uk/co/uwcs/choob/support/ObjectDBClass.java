@@ -1,6 +1,6 @@
 package uk.co.uwcs.choob.support;
 
-public interface ObjectDBClass {
+public interface ObjectDBClass<T> {
 	/**
 	 * Gets the name of the class, in an ObjectDB compatible format.
 	 * @return The full class name, e.g. "plugin.MyPlugin.SomeClass".
@@ -10,5 +10,5 @@ public interface ObjectDBClass {
 	/**
 	 * Constructs a new instance of the represented class, and returns it.
 	 */
-	Object newInstance() throws InstantiationException, IllegalAccessException;
+	T newInstance() throws InstantiationException, IllegalAccessException;
 }

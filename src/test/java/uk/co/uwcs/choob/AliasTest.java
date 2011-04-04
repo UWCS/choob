@@ -18,4 +18,12 @@ public class AliasTest extends AbstractPluginTest {
 		b.spinChannelMessage("~alias.alias say talk.say");
 		assertGetsResposne("#chan hi", "~say hi");
 	}
+
+	@Test
+	public void testDb() {
+		final PersistedObj obj = new PersistedObj();
+		obj.name = "john";
+		b.getMods().odb.save(obj);
+		System.out.println(obj.id);
+	}
 }
