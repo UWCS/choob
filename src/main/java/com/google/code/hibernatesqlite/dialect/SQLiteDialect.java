@@ -1,20 +1,16 @@
-package dialect;
-/*
- * The author disclaims copyright to this source code. In place of
- * a legal notice, here is a blessing:
- *
- * May you do good and not evil.
- * May you find forgiveness for yourself and forgive others.
- * May you share freely, never taking more than you give.
- *
+package com.google.code.hibernatesqlite.dialect;
+
+/**
+ * Taken from http://code.google.com/p/hibernate-sqlite/ under Apache License 2.0.
  */
+
 import java.sql.Types;
 
-import org.hibernate.Hibernate;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.dialect.function.SQLFunctionTemplate;
 import org.hibernate.dialect.function.StandardSQLFunction;
 import org.hibernate.dialect.function.VarArgsSQLFunction;
+import org.hibernate.type.StandardBasicTypes;
 
 public class SQLiteDialect extends Dialect {
 	public SQLiteDialect() {
@@ -43,14 +39,14 @@ public class SQLiteDialect extends Dialect {
 		registerColumnType(Types.CLOB, "clob");
 		registerColumnType(Types.BOOLEAN, "integer");
 
-		registerFunction("concat", new VarArgsSQLFunction(Hibernate.STRING, "",
+		registerFunction("concat", new VarArgsSQLFunction(StandardBasicTypes.STRING, "",
 				"||", ""));
-		registerFunction("mod", new SQLFunctionTemplate(Hibernate.INTEGER,
+		registerFunction("mod", new SQLFunctionTemplate(StandardBasicTypes.INTEGER,
 				"?1 % ?2"));
 		registerFunction("substr", new StandardSQLFunction("substr",
-				Hibernate.STRING));
+				StandardBasicTypes.STRING));
 		registerFunction("substring", new StandardSQLFunction("substr",
-				Hibernate.STRING));
+				StandardBasicTypes.STRING));
 	}
 
 	@Override
@@ -58,29 +54,13 @@ public class SQLiteDialect extends Dialect {
 		return true;
 	}
 
-	/*
-	 public boolean supportsInsertSelectIdentity() {
-	 return true; // As specify in NHibernate dialect
-	 }
-	 */
-
 	@Override
 	public boolean hasDataTypeInIdentityColumn() {
-		return false; // As specify in NHibernate dialect
+		return false;
 	}
-
-	/*
-	 public String appendIdentitySelectToInsert(String insertString) {
-	 return new StringBuffer(insertString.length()+30). // As specify in NHibernate dialect
-	 append(insertString).
-	 append("; ").append(getIdentitySelectString()).
-	 toString();
-	 }
-	 */
 
 	@Override
 	public String getIdentityColumnString() {
-		// return "integer primary key autoincrement";
 		return "integer";
 	}
 
@@ -137,7 +117,7 @@ public class SQLiteDialect extends Dialect {
 
 	@Override
 	public boolean hasAlterTable() {
-		return false; // As specify in NHibernate dialect
+		return false;
 	}
 
 	@Override
