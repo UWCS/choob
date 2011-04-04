@@ -1,5 +1,10 @@
 package uk.co.uwcs.choob.support;
 
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Lists.transform;
+import static java.util.Arrays.asList;
+
+import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.security.AccessController;
 import java.sql.Connection;
@@ -30,6 +35,8 @@ import org.mozilla.javascript.Function;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.modules.ObjectDbModule;
 
+import com.google.common.base.Predicate;
+
 /**
  * Wraps up the database in an ObjectDB-friendly way, which can be used to
  * perform various operations, such as adding, replacing and deleting items
@@ -51,6 +58,15 @@ import uk.co.uwcs.choob.modules.ObjectDbModule;
  */
 public class ObjectDBTransaction // Needs to be non-final
 {
+	private static class FieldNamer implements com.google.common.base.Function<Field, String> {
+		@Override
+		public String apply(Field input) {
+			return input.getName();
+		}
+	}
+
+	private static final FieldNamer FIELD_NAMER = new FieldNamer();
+
 	private Connection dbConn;
 	private Modules mods;
 
@@ -262,7 +278,11 @@ public class ObjectDBTransaction // Needs to be non-final
 
 	private final String getTableName(ObjectDBObject obj)
 	{
-		return "_objectdb_" + obj.getClassName().toLowerCase().replaceAll("\\.", "_");
+		return getTableName(obj.getClassName());
+	}
+
+	private static String getTableName(final String fullClassName) {
+		return "_objectdb_" + fullClassName.toLowerCase().replaceAll("\\.", "_");
 	}
 
 	private final <T> void checkTable(ObjectDBClass<T> cls)
@@ -824,27 +844,21 @@ public class ObjectDBTransaction // Needs to be non-final
 	 */
 	public final void save(Object strObj)
 	{
-		// you are kidding, right
 		final Class<? extends Object> clazz = strObj.getClass();
-		Document doc = DocumentHelper.createDocument();
-		Element eRoot = doc.addElement("hibernate-mapping")
-			.addAttribute("package", clazz.getPackage().getName())
-			.addAttribute("default-access", "field");
-		Element eClass = eRoot.addElement("class")
-			.addAttribute("name", clazz.getSimpleName());
-		eClass.addElement("id").addAttribute("name", "id")
-			.addElement("generator").addAttribute("class", "native");
-		eClass.addElement("property").addAttribute("name", "name");
-		SessionFactory fac;
-		final Configuration cfg;
-		try {
-			cfg = new Configuration()
+		final String packageName = clazz.getPackage().getName();
+		final String simpleName = clazz.getSimpleName();
+		final Iterable<String> fields = filter(transform(asList(clazz.getFields()), FIELD_NAMER),
+				new Predicate<String>() {
+					@Override
+					public boolean apply(String input) {
+						return !input.equals("id");
+					}
+				});
+
+		final Configuration cfg = new Configuration()
 			.setProperty("hibernate.dialect", "com.google.code.hibernatesqlite.dialect.SQLiteDialect")
-			.addDocument(new DOMWriter().write(doc));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		fac = cfg.buildSessionFactory();
+			.addDocument(configFor(packageName, simpleName, fields));
+		SessionFactory fac = cfg.buildSessionFactory();
 		new SchemaExport(cfg, dbConn).execute(false, true, false, false);
 		Session sess = fac.openSession(dbConn);
 		sess.setFlushMode(FlushMode.ALWAYS);
@@ -854,15 +868,29 @@ public class ObjectDBTransaction // Needs to be non-final
 		sess.disconnect();
 	}
 
-	/**
-	 * Saves a new ObjectDB object.
-	 *
-	 * @param strObj The {@link ObjectDBObject} wrapping the real object
-	 *               to be saved.
-	 */
-	public final void save(ObjectDBObject strObj)
-	{
-		_store(strObj, false);
+
+	/** You are kidding, right? */
+	private static org.w3c.dom.Document configFor(String packageName, String simpleName, Iterable<String> fields) {
+		final Document doc = DocumentHelper.createDocument();
+		final Element eClass =
+			doc.addElement("hibernate-mapping")
+				.addAttribute("package", packageName)
+				.addAttribute("default-access", "field")
+			.addElement("class")
+				.addAttribute("name", simpleName)
+				.addAttribute("table", getTableName(packageName + "." + simpleName));
+
+		eClass.addElement("id").addAttribute("name", "id")
+			.addElement("generator").addAttribute("class", "native");
+
+		for (String name : fields)
+			eClass.addElement("property")
+				.addAttribute("name", name);
+		try {
+			return new DOMWriter().write(doc);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private final void _store(ObjectDBObject strObj, boolean replace)
