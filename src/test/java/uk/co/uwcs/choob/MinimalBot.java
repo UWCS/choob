@@ -1,6 +1,7 @@
 package uk.co.uwcs.choob;
 
 import static junit.framework.Assert.assertTrue;
+import static uk.co.uwcs.choob.plugins.HaxSunPluginManager.isInDebugger;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -62,7 +63,7 @@ final class MinimalBot extends UnsupportedOperationBot implements Closeable {
 
 	public String sentMessage() {
 		try {
-			final String polled = queue.poll(5, TimeUnit.SECONDS);
+			final String polled = queue.poll(5, isInDebugger() ? TimeUnit.DAYS : TimeUnit.SECONDS);
 			if (null == polled)
 				throw new RuntimeException("Expecting message to arrive, received nothing");
 			return polled;
