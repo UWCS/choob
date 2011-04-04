@@ -11,4 +11,6 @@ public interface ObjectDBClass<T> {
 	 * Constructs a new instance of the represented class, and returns it.
 	 */
 	T newInstance() throws InstantiationException, IllegalAccessException;
+
+	Object getIdentity();
 }

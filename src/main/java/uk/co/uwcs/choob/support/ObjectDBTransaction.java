@@ -1,10 +1,5 @@
 package uk.co.uwcs.choob.support;
 
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Lists.transform;
-import static java.util.Arrays.asList;
-
-import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.security.AccessController;
 import java.sql.Connection;
@@ -13,18 +8,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.io.DOMWriter;
-import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -36,6 +29,8 @@ import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.modules.ObjectDbModule;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.MapMaker;
 
 /**
  * Wraps up the database in an ObjectDB-friendly way, which can be used to
@@ -58,14 +53,52 @@ import com.google.common.base.Predicate;
  */
 public class ObjectDBTransaction // Needs to be non-final
 {
-	private static class FieldNamer implements com.google.common.base.Function<Field, String> {
+	private static Map<ObjectDBObject, SessionFactory> SESSION_FACTORIES = new MapMaker()
+		.weakKeys().makeComputingMap(new com.google.common.base.Function<ObjectDBObject, SessionFactory>() {
+			@Override
+			public SessionFactory apply(ObjectDBObject clazz) {
+				final String name = clazz.getClassName();
+				final String packageName = packageOf(name);
+				final String simpleName = simpleNameOf(name);
+				final Iterable<String> fields = Iterables.filter(Arrays.asList(clazz.getFields()),
+						new Predicate<String>() {
+							@Override
+							public boolean apply(String input) {
+								return !input.equals("id");
+							}
+						});
+
+				final Configuration cfg = new Configuration()
+					.setProperty("hibernate.dialect", "com.google.code.hibernatesqlite.dialect.SQLiteDialect")
+					.addDocument(configFor(packageName, simpleName, fields));
+				new SchemaExport(cfg, CONNECTIONS.get()).execute(false, true, false, false);
+				return cfg.buildSessionFactory();
+			}
+		});
+
+	private static final ThreadLocal<Connection> CONNECTIONS = new ThreadLocal<Connection>() {
 		@Override
-		public String apply(Field input) {
-			return input.getName();
+		protected Connection initialValue() {
+			throw new AssertionError();
 		}
+	};
+
+	private static interface WithSession<T> {
+		T use(Session sess);
 	}
 
-	private static final FieldNamer FIELD_NAMER = new FieldNamer();
+	private Session sessionFor(ObjectDBObject clazz) {
+		CONNECTIONS.set(dbConn);
+		return SESSION_FACTORIES.get(clazz).openSession(dbConn);
+	}
+
+	private static String simpleNameOf(String name) {
+		return name.replaceFirst("^.*\\.", "");
+	}
+
+	private static String packageOf(String name) {
+		return name.replaceAll("\\.[^\\.]*$", "");
+	}
 
 	private Connection dbConn;
 	private Modules mods;
@@ -513,19 +546,21 @@ public class ObjectDBTransaction // Needs to be non-final
 	 *               are desired. FIXME: link to docs on format.
 	 * @return {@link List} of objects, typed according to the caller.
 	 */
-	public final <T> List<T> retrieve(final ObjectDBClass<T> storedClass, String clause)
+	public final <T> List<T> retrieve(final ObjectDBClass<T> storedClass, final String clause)
 	{
 		String sqlQuery;
 
-		if ( clause == null )
-		{
-			clause = "WHERE 1";
-		}
+//		if ( clause == null )
+//		{
+//			clause = "WHERE 1";
+//		}
 
-		String[] fields;
+		final String[] fields;
+		final ObjectDBObject ow;
 		try
 		{
-			fields = newObjectWrapper(storedClass.newInstance()).getFields();
+			ow = newObjectWrapper(storedClass.newInstance());
+			fields = ow.getFields();
 		}
 		catch (InstantiationException e)
 		{
@@ -535,140 +570,14 @@ public class ObjectDBTransaction // Needs to be non-final
 		{
 			throw new ObjectDBError("Could not instanciate object of type: " + storedClass.getName());
 		}
-		String select;
-		int idFieldIndex = 0;
-		StringBuilder fieldNames = new StringBuilder();
-		for(int i=0; i<fields.length; i++)
-		{
-			fieldNames.append("`" + clean("`", fields[i]) + "`");
-			if (i != fields.length - 1)
-				fieldNames.append(", ");
-			if (fields[i].equals("id"))
-				idFieldIndex = i;
-		}
-		select = fieldNames.toString();
 
-		ObjectDBClauseParser parser = new ObjectDBClauseParser("SELECT " + select + " " + clause, storedClass.getName());
-		parser.setUseMany(true);
-		try
-		{
-			sqlQuery = parser.ODBExpr();
-		}
-		catch (ParseException e)
-		{
-			// TODO there's some public properties we can use to make a better error message.
-			System.err.println("Parse error in string: " + clause);
-			System.err.println("Error was: " + e);
-			throw new ObjectDBError("Parse error in clause string: " + clause);
-		}
-
-		// Make sure it's the right query type... (XXX Do we need to?)
-		if (parser.getType() != ObjectDBClauseParser.TYPE_SELECT)
-			throw new ObjectDBError("Clause string " + clause + " was not a SELECT clause.");
-
-		// Make sure we can read these classes...
-		@SuppressWarnings("unchecked")
-		List<String> classNames = parser.getUsedClasses();
-		for(String cls: classNames)
-			checkPermission(cls);
-
-		checkTable(storedClass);
-
-		Statement objStat = null;
-		Statement retrieveStat = null;
-		try
-		{
-			final List<T> objects = new ArrayList<T>();
-			final Set<Integer> objectIds = new HashSet<Integer>();
-
-			objStat = dbConn.createStatement();
-			retrieveStat = dbConn.createStatement();
-
-			ResultSet allObjects = objStat.executeQuery( sqlQuery );
-
-			Map<String,Type> fieldTypeCache = new HashMap<String,Type>();
-
-			if( allObjects.first() )
-			{
-				do // Loop over all objects
-				{
-					// Ensure we never include an object more than once.
-					int objectId = (int)allObjects.getLong(idFieldIndex + 1);
-					if (objectIds.contains(objectId))
-						continue;
-
-					T newObject = storedClass.newInstance(); // This will be set immediately, because 0 is not a valid ID.
-					ObjectDBObject tempObject = newObjectWrapper(newObject);
-
-					for(int i=0; i<fields.length; i++)
-					{
-						String name = fields[i];
-
-						Type fieldType = fieldTypeCache.get(name);
-						if (fieldType == null)
-						{
-							fieldType = tempObject.getFieldType(name);
-							fieldTypeCache.put(name, fieldType);
-						}
-
-						if (fieldType == String.class)
-						{
-							tempObject.setFieldValue(name, allObjects.getString(i + 1));
-						}
-						else if (fieldType == Integer.TYPE)
-						{
-							tempObject.setFieldValue(name, (int)allObjects.getLong(i + 1));
-						}
-						else if (fieldType == Long.TYPE)
-						{
-							tempObject.setFieldValue(name, allObjects.getLong(i + 1));
-						}
-						else if (fieldType == Boolean.TYPE)
-						{
-							tempObject.setFieldValue(name, allObjects.getLong(i + 1) == 1);
-						}
-						else if (fieldType == Float.TYPE)
-						{
-							tempObject.setFieldValue(name, (float)allObjects.getDouble(i + 1));
-						}
-						else if (fieldType == Double.TYPE)
-						{
-							tempObject.setFieldValue(name, allObjects.getDouble(i + 1));
-						}
-					}
-					objects.add(newObject);
-					objectIds.add(tempObject.getId());
-				}
-				while ( allObjects.next() ); // Looping over blocks of IDs
+		return withHibernate(ow, new WithSession<List<T>>() {
+			@Override
+			public List<T> use(Session sess) {
+				final String query = "from " + storedClass.getName() + " " + clause;
+				return sess.createQuery(query).list();
 			}
-
-			return objects;
-		}
-		catch (NoSuchFieldException e)
-		{
-			e.printStackTrace();
-			// This should never happen...
-			throw new ObjectDBError("Field that did exist now doesn't. Ooops?");
-		}
-		catch (InstantiationException e)
-		{
-			System.err.println("Error instantiating object of type " + storedClass + ": " + e);
-			throw new ObjectDBError("The object could not be instantiated.");
-		}
-		catch (IllegalAccessException e)
-		{
-			System.err.println("Access error instantiating object of type " + storedClass + ": " + e);
-			throw new ObjectDBError("The object could not be instantiated.");
-		}
-		catch (SQLException e)
-		{
-			throw sqlErr(e);
-		}
-		finally
-		{
-			cleanUp(retrieveStat);
-			cleanUp(objStat);
-		}
+		});
 	}
 
 	public final List<Integer> retrieveInt(Object storedClass, String clause)
@@ -842,32 +751,34 @@ public class ObjectDBTransaction // Needs to be non-final
 	 *
 	 * @param strObj The object to be saved.
 	 */
-	public final void save(Object strObj)
+	public final void save(final Object strObj)
 	{
-		final Class<? extends Object> clazz = strObj.getClass();
-		final String packageName = clazz.getPackage().getName();
-		final String simpleName = clazz.getSimpleName();
-		final Iterable<String> fields = filter(transform(asList(clazz.getFields()), FIELD_NAMER),
-				new Predicate<String>() {
-					@Override
-					public boolean apply(String input) {
-						return !input.equals("id");
-					}
-				});
-
-		final Configuration cfg = new Configuration()
-			.setProperty("hibernate.dialect", "com.google.code.hibernatesqlite.dialect.SQLiteDialect")
-			.addDocument(configFor(packageName, simpleName, fields));
-		SessionFactory fac = cfg.buildSessionFactory();
-		new SchemaExport(cfg, dbConn).execute(false, true, false, false);
-		Session sess = fac.openSession(dbConn);
-		sess.setFlushMode(FlushMode.ALWAYS);
-		Transaction tran = sess.beginTransaction();
-		sess.persist(strObj);
-		tran.commit();
-		sess.disconnect();
+		withHibernate(newObjectWrapper(strObj), new WithSession<Void>() {
+			@Override
+			public Void use(Session sess) {
+				sess.persist(strObj);
+				return null;
+			}
+		});
 	}
 
+	private <T> T withHibernate(ObjectDBObject clazz, WithSession<T> lambda) {
+		final Session sess = sessionFor(clazz);
+		try {
+			final Transaction tran = sess.beginTransaction();
+			try {
+				final T res = lambda.use(sess);
+				tran.commit();
+				return res;
+			} finally {
+				if (tran.isActive()) {
+					tran.rollback();
+				}
+			}
+		} finally {
+			sess.disconnect();
+		}
+	}
 
 	/** You are kidding, right? */
 	private static org.w3c.dom.Document configFor(String packageName, String simpleName, Iterable<String> fields) {

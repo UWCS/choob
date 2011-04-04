@@ -1,5 +1,7 @@
 package uk.co.uwcs.choob;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,6 +26,6 @@ public class AliasTest extends AbstractPluginTest {
 		final PersistedObj obj = new PersistedObj();
 		obj.name = "john";
 		b.getMods().odb.save(obj);
-		System.out.println(obj.id);
+		assertEquals("john", b.getMods().odb.retrieve(PersistedObj.class, "WHERE id=" + obj.id).get(0).name);
 	}
 }

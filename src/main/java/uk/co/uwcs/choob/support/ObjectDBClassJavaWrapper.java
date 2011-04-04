@@ -14,4 +14,9 @@ final class ObjectDBClassJavaWrapper<T> implements ObjectDBClass<T> {
 	@Override public T newInstance() throws InstantiationException, IllegalAccessException {
 		return cls.newInstance();
 	}
+
+	@Override
+	public Class<?> getIdentity() {
+		return cls;
+	}
 }
