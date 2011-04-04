@@ -3,7 +3,6 @@ package uk.co.uwcs.choob.support;
 import java.lang.reflect.Type;
 import java.security.AccessController;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -566,41 +565,15 @@ public class ObjectDBTransaction // Needs to be non-final
 	 *
 	 * @param strObj The object to be deleted.
 	 */
-	public final void delete(Object strObj)
+	public final void delete(final Object strObj)
 	{
-		delete(newObjectWrapper(strObj));
-	}
-
-	/**
-	 * Deletes an object from the ObjectDB.
-	 *
-	 * @param strObj The {@link ObjectDBObject} wrapping the real object to be
-	 *               deleted.
-	 */
-	public final void delete(ObjectDBObject strObj)
-	{
-		checkPermission(strObj.getClassName());
-		checkTable(strObj);
-		PreparedStatement delete = null;
-		try
-		{
-			int id = strObj.getId();
-
-			delete = dbConn.prepareStatement("DELETE FROM `" + clean("`", getTableName(strObj)) + "` WHERE id = ?");
-
-			delete.setInt(1, id);
-
-			if (delete.executeUpdate() == 0)
-				throw new ObjectDBError("Object for deletion does not exist.");
-		}
-		catch (SQLException e)
-		{
-			throw sqlErr(e);
-		}
-		finally
-		{
-			cleanUp(delete);
-		}
+		withHibernate(newObjectWrapper(strObj), new WithSession<Void>() {
+			@Override
+			public Void use(Session sess) {
+				sess.delete(strObj);
+				return null;
+			}
+		});
 	}
 
 	/**
