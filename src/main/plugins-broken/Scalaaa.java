@@ -1,13 +1,12 @@
 /** @author rlmw */
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.security.AllPermission;
 
 import scala.tools.nsc.Interpreter;
-import scala.tools.nsc.Settings;
 import scala.tools.nsc.InterpreterResults.Result;
+import scala.tools.nsc.Settings;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.plugins.RequiresPermission;
 import uk.co.uwcs.choob.support.IRCInterface;
