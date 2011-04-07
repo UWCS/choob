@@ -146,6 +146,21 @@
 			<artifactId>lobobrowser</artifactId>
 			<version>0.98.4</version>
 		</dependency>
+		<dependency>
+			<groupId>net.sf.jcfd</groupId>
+			<artifactId>jcfd</artifactId>
+			<version>0.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jawk</groupId>
+			<artifactId>jawk</artifactId>
+			<version>1.02-mullet20090717</version>
+		</dependency>
+		<dependency>
+			<groupId>uk.co.uwcs.mulletron.interrupter</groupId>
+			<artifactId>interrupter</artifactId>
+			<version>0.1-r6</version>
+		</dependency>
 	</dependencies>
 
 	<build>
