@@ -17,7 +17,7 @@ import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.Interval;
 import uk.co.uwcs.choob.support.events.ChannelMessage;
 
-final class MinimalBot extends UnsupportedOperationBot implements Closeable {
+public final class MinimalBot extends UnsupportedOperationBot implements Closeable {
 	private final BlockingQueue<String> queue = new ArrayBlockingQueue<String>(500);
 	private final Modules mods;
 	private final ChoobDecoderTaskData cdtd;

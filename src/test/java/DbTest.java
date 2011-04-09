@@ -1,10 +1,9 @@
-package uk.co.uwcs.choob;
-
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.co.uwcs.choob.AbstractPluginTest;
 import uk.co.uwcs.choob.modules.ObjectDbModule;
 
 public class DbTest extends AbstractPluginTest {

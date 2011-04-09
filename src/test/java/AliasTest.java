@@ -1,8 +1,7 @@
-package uk.co.uwcs.choob;
-
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.co.uwcs.choob.AbstractPluginTest;
 import uk.co.uwcs.choob.support.ChoobException;
 
 public class AliasTest extends AbstractPluginTest {

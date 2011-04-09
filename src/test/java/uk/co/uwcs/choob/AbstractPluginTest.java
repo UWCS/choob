@@ -93,7 +93,7 @@ public abstract class AbstractPluginTest {
 		db.close();
 	}
 
-	void assertGetsResposne(String expected, String command) {
+	public void assertGetsResposne(String expected, String command) {
 		b.spinChannelMessage(command);
 		assertEquals(expected, b.sentMessage());
 	}
