@@ -12,12 +12,6 @@ class ChoobURLStreamHandler extends URLStreamHandler {
 	protected URLConnection openConnection(URL u) throws IOException {
 		final String path = u.getPath();
 
-		{
-			final URL resource = ChoobURLStreamHandler.class.getResource(path);
-			if (null != resource)
-				return resource.openConnection();
-		}
-
 		for (File sourcePath : new File[] {
 				new File("main/plugins-alpha"),
 				new File("main/plugins"),
@@ -29,6 +23,11 @@ class ChoobURLStreamHandler extends URLStreamHandler {
 				return new URL("file:///" + f.getAbsolutePath()).openConnection();
 		}
 
+		{
+			final URL resource = ChoobURLStreamHandler.class.getResource(path);
+			if (null != resource)
+				return resource.openConnection();
+		}
 		throw new FileNotFoundException("Couldn't resolve '" + path + "' from the classpath or source directories");
 	}
 }
