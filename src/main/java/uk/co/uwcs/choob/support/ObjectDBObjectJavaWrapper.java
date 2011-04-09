@@ -80,4 +80,17 @@ public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 	public Object getIdentity() {
 		return obj.getClass();
 	}
+
+	@Override
+	public String getPackageName() {
+		final Package pkg = obj.getClass().getPackage();
+		if (null == pkg)
+			return "";
+		return pkg.getName();
+	}
+
+	@Override
+	public String getSimpleName() {
+		return obj.getClass().getSimpleName();
+	}
 }

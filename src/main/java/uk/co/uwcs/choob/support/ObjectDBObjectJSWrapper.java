@@ -141,4 +141,14 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 	public Object getIdentity() {
 		return makeObjetDbClass().getIdentity();
 	}
+
+	@Override
+	public String getPackageName() {
+		throw new UnsupportedOperationException("not implemented");
+	}
+
+	@Override
+	public String getSimpleName() {
+		throw new UnsupportedOperationException("not implemented");
+	}
 }

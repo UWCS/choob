@@ -45,4 +45,7 @@ public interface ObjectDBObject {
 
 	/** Some representation of the uniqueness of the Object's type, i.e. it's underlying Class<?> */
 	Object getIdentity();
+
+	String getPackageName();
+	String getSimpleName();
 }

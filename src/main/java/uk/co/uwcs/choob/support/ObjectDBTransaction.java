@@ -64,9 +64,8 @@ public class ObjectDBTransaction // Needs to be non-final
 					return sess.openSession(dbConn);
 			}
 
-			final String name = clazz.getClassName();
-			final String packageName = packageOf(name);
-			final String simpleName = simpleNameOf(name);
+			final String packageName = clazz.getPackageName();
+			final String simpleName = clazz.getSimpleName();
 			final Iterable<String> fields = Iterables.filter(Arrays.asList(clazz.getFields()),
 					new Predicate<String>() {
 						@Override
@@ -83,14 +82,6 @@ public class ObjectDBTransaction // Needs to be non-final
 			sessionFactories.put(ident, sess);
 			return sess.openSession(dbConn);
 		}
-	}
-
-	private static String simpleNameOf(String name) {
-		return name.replaceFirst("^.*\\.", "");
-	}
-
-	private static String packageOf(String name) {
-		return name.replaceAll("\\.[^\\.]*$", "");
 	}
 
 	private Connection dbConn;
@@ -362,13 +353,16 @@ public class ObjectDBTransaction // Needs to be non-final
 	/** You are kidding, right? */
 	private static org.w3c.dom.Document configFor(String packageName, String simpleName, Iterable<String> fields) {
 		final Document doc = DocumentHelper.createDocument();
+		final Element mapping = doc.addElement("hibernate-mapping");
+		if (!packageName.equals(""))
+			mapping.addAttribute("package", packageName);
+
 		final Element eClass =
-			doc.addElement("hibernate-mapping")
-				.addAttribute("package", packageName)
+			mapping
 				.addAttribute("default-access", "field")
 			.addElement("class")
 				.addAttribute("name", simpleName)
-				.addAttribute("table", getTableName(packageName + "." + simpleName));
+				.addAttribute("table", getTableName(fullName(packageName, simpleName)));
 
 		eClass.addElement("id").addAttribute("name", "id")
 			.addElement("generator").addAttribute("class", "native");
@@ -381,6 +375,12 @@ public class ObjectDBTransaction // Needs to be non-final
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private static String fullName(String packageName, String simpleName) {
+		if (packageName.equals(""))
+			return simpleName;
+		return packageName + "." + simpleName;
 	}
 
 	private final Map<String,Object> permCache = new HashMap<String,Object>(); // Doesn't need sync.
