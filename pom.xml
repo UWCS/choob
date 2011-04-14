@@ -106,12 +106,6 @@
 			<version>2.1.12</version>
 		</dependency>
 		<dependency>
-			<groupId>org.scala-lang</groupId>
-			<artifactId>scala-compiler</artifactId>
-			<version>2.8.1</version>
-		</dependency>
-
-		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-server</artifactId>
 			<version>1.6</version>
@@ -125,22 +119,6 @@
 			<groupId>org.lobobrowser</groupId>
 			<artifactId>lobobrowser</artifactId>
 			<version>0.98.4</version>
-		</dependency>
-
-		<dependency>
-			<groupId>net.sf.jcfd</groupId>
-			<artifactId>jcfd</artifactId>
-			<version>0.3</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jawk</groupId>
-			<artifactId>jawk</artifactId>
-			<version>1.02-mullet20090717</version>
-		</dependency>
-		<dependency>
-			<groupId>net.launchpad.interrupter</groupId>
-			<artifactId>interrupter</artifactId>
-			<version>20090625</version>
 		</dependency>
 	</dependencies>
 
