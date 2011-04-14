@@ -1297,7 +1297,7 @@ public class Karma
 			karmaObjects = retrieveKarmaObjects("WHERE string RLIKE \"" + mods.odb.escapeForRLike(karmaSearch) + "\" AND NOT (up = 0 AND down = 0 AND value = 0) SORT INTEGER value");
 			out.println("<H1>" + karmaObjects.size() + " karma item" + (karmaObjects.size() == 1 ? "" : "s") + " matching /" + mods.scrape.escapeForHTML(karmaSearch) + "/i</H1>");
 		} else {
-			karmaObjects = retrieveKarmaObjects("WHERE 1 SORT INTEGER value");
+			karmaObjects = retrieveKarmaObjects("WHERE 1=1 SORT INTEGER value");
 			out.println("<H1>All Karma items</H1>");
 		}
 		Collections.sort(karmaObjects, new KarmaSortByAbsValue());

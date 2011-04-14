@@ -404,7 +404,7 @@ public class Alias
 	{
 		final Matcher params = listArgs.matcher(mes);
 
-		String clause = "1";
+		String clause = "1=1";
 		String namereg = null;
 		String bodyreg = null;
 
