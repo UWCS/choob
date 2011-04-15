@@ -1,3 +1,4 @@
+import org.jibble.pircbot.Colors;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -23,5 +24,17 @@ public class AliasTest extends AbstractPluginTest {
 	public void testReAlias() {
 		assertGetsResposne("#chan user: Aliased 'say' to 'talk.reply' (was 'talk.say').",
 				"~alias.alias say talk.reply");
+	}
+
+	@Test
+	public void testAliasSearch() {
+		assertGetsResposne("#chan user: Aliases matching /say/: \"say" + Colors.NORMAL + "\". (1 result)",
+				"~alias.list /say/");
+	}
+
+	@Test
+	public void testAliasSearchRegex() {
+		assertGetsResposne("#chan user: Aliases matching /^say$/: \"say" + Colors.NORMAL + "\". (1 result)",
+				"~alias.list /^say$/");
 	}
 }

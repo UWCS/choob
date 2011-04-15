@@ -1,8 +1,12 @@
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.hibernate.property.PropertyAccessor;
+import org.hibernate.property.PropertyAccessorFactory;
 import org.jibble.pircbot.Colors;
 
 import uk.co.uwcs.choob.modules.Modules;
@@ -14,6 +18,10 @@ import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.IRCEvent;
 import uk.co.uwcs.choob.support.events.Message;
 import uk.co.uwcs.choob.support.events.PrivateEvent;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 class AliasObject
 {
@@ -392,6 +400,49 @@ public class Alias
 	}
 
 
+	private static final Pattern REGEXED_TERM = Pattern.compile("/(.+?)/");
+
+	/** XXX Shockingly terrible definition */
+	private static final Pattern NO_SPECIAL_CHARACTERS = Pattern.compile("[a-zA-Z0-9_]+");
+
+	<T> List<T> regexSearchSupport(Class<T> entity, Map<String, String> fieldToRegex) {
+		final Map<String, String> m = Maps.newHashMap(fieldToRegex);
+
+		for (Entry<String, String> entry : m.entrySet()) {
+			final Matcher ma = REGEXED_TERM.matcher(entry.getValue());
+			if (ma.find())
+				entry.setValue(ma.group(1));
+		}
+
+		final StringBuilder hql = new StringBuilder("WHERE 1=1");
+		for (Iterator<Entry<String, String>> it = m.entrySet().iterator(); it.hasNext();) {
+			final Entry<String, String> en = it.next();
+			if (NO_SPECIAL_CHARACTERS.matcher(en.getValue()).matches()) {
+				hql.append(" AND ").append(en.getKey()).append(" LIKE '%")
+					.append(mods.odb.escapeForLike(en.getValue()))
+					.append("%'");
+			}
+		}
+
+		final PropertyAccessor pa = PropertyAccessorFactory.getPropertyAccessor("field");
+
+		final List<T> objs = Lists.newArrayList();
+		for (T t : mods.odb.retrieve(entity, hql.toString())) {
+			boolean matches = true;
+			for (Entry<String, String> entry : m.entrySet()) {
+				final CharSequence value = (CharSequence) pa.getGetter(entity, entry.getKey()).get(t);
+
+				matches &= Pattern.compile(entry.getValue()).matcher(value).find();
+				if (!matches)
+					break;
+			}
+			if (matches)
+				objs.add(t);
+		}
+
+		return objs;
+	}
+
 	//final static Pattern listArgs = Pattern.compile("(?:\\s+(.)(.*?)\\1(?:\\s+(?:\\s+(.)(.*?)\\3))?)?.*");
 	final static Pattern listArgs = Pattern.compile("/(.+?)/(?:\\s+/(.+?)/)?");
 
@@ -404,7 +455,6 @@ public class Alias
 	{
 		final Matcher params = listArgs.matcher(mes);
 
-		String clause = "1=1";
 		String namereg = null;
 		String bodyreg = null;
 
@@ -412,16 +462,10 @@ public class Alias
 		{
 			namereg = params.group(1);
 			bodyreg = params.group(2);
-
-			if (namereg != null)
-			{
-				clause = "name RLIKE \"" + mods.odb.escapeForRLike(namereg) + "\"";
-				if (bodyreg != null)
-					clause += " AND converted RLIKE \"" + mods.odb.escapeForRLike(bodyreg) + "\"";
-			}
 		}
 
-		final List<AliasObject> results = mods.odb.retrieve( AliasObject.class, "WHERE " + clause );
+
+		final List<AliasObject> results = regexSearchSupport(AliasObject.class, ImmutableMap.of("name", namereg));
 
 		if (results.size() == 0)
 			return "No aliases match.";
