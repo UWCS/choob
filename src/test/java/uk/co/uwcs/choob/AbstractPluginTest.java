@@ -17,14 +17,20 @@ import org.hibernate.SessionFactory;
 import org.junit.After;
 import org.junit.Before;
 
+import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.ConnectionBroker;
 
 public abstract class AbstractPluginTest {
 	public MinimalBot b;
 	public BrokerUtil db;
+	private final String[] requiredPlugins;
+
+	public AbstractPluginTest(String... requiredPlugins) {
+		this.requiredPlugins = requiredPlugins;
+	}
 
 	@Before
-	public void setup() throws SQLException, ClassNotFoundException {
+	public void setup() throws SQLException, ClassNotFoundException, ChoobException {
 		// SQLite explodes if you pass a File#createTemporaryFile() in, no idea why
 		new File(ChoobMain.DEFAULT_TEMP_LOCATION).mkdir();
 		String tempFilePath = ChoobMain.DEFAULT_TEMP_LOCATION + "/test" + System.nanoTime() + ".db";
@@ -64,6 +70,11 @@ public abstract class AbstractPluginTest {
 			public Map<Object, SessionFactory> getFactories() {
 				return sessionFactories;
 			}
+
+			@Override
+			public String getDialect() {
+				return "com.google.code.hibernatesqlite.dialect.SQLiteDialect";
+			}
 		};
 
 		db = new BrokerUtil(broker);
@@ -77,14 +88,17 @@ public abstract class AbstractPluginTest {
 		db.sql("insert into UserNodes (NodeID, NodeName, NodeClass) values (0, 'root', 3)");
 		db.sql("insert into UserNodes (NodeID, NodeName, NodeClass) values (1, 'anonymous', 3)");
 		db.sql("insert into UserNodes (NodeID, NodeName, NodeClass) values (2, 'Alias', 2)");
+		db.sql("insert into UserNodes (NodeID, NodeName, NodeClass) values (3, 'Karma', 2)");
+		db.sql("insert into UserNodes (NodeID, NodeName, NodeClass) values (3, 'Pipes', 2)");
 
 		db.sql("insert into UserNodePermissions (NodeID, Type) values (0, 'java.security.AllPermission')");
 
 		db.sql("insert into GroupMembers values (0,2)");
+		db.sql("insert into GroupMembers values (0,3)");
 
 		b = new MinimalBot(broker);
-
-		System.setProperty("choobDebuggerHack", "false");
+		for (String plugin : requiredPlugins)
+			b.addPlugin(plugin);
 	}
 
 	@After
@@ -94,8 +108,17 @@ public abstract class AbstractPluginTest {
 	}
 
 	public void assertGetsResposne(String expected, String command) {
-		b.spinChannelMessage(command);
+		send(command);
 		assertEquals(expected, b.sentMessage());
+	}
+
+	protected void sendAndIgnoreReply(String command) {
+		send(command);
+		System.out.println(b.sentMessage());
+	}
+
+	protected void send(String command) {
+		b.spinChannelMessage(command);
 	}
 
 }

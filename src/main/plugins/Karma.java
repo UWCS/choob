@@ -368,13 +368,13 @@ public class Karma
 
 	public String[] apiReasonEnum(final String enumSource, final String name)
 	{
-		final List<KarmaReasonObject> results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\"");
+		final List<KarmaReasonObject> results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = '" + mods.odb.escapeString(name) + "'");
 		return getReasonResult(results, enumSource + "::" + name);
 	}
 
 	public String[] apiReasonEnum(final String enumSource, final String name, final int direction)
 	{
-		final List<KarmaReasonObject> results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\" AND direction = " + direction);
+		final List<KarmaReasonObject> results = mods.odb.retrieve(KarmaReasonObject.class, "WHERE string = '" + mods.odb.escapeString(name) + "' AND direction = " + direction);
 		return getReasonResult(results, enumSource + ":" + (direction == 1 ? "up" : (direction == -1 ? "down" : "unchanged")) + ":" + name);
 	}
 
@@ -891,7 +891,7 @@ public class Karma
 	private KarmaObject retrieveKarmaObject(String name)
 	{
 		name = normalise(name);
-		final List<KarmaObject> results = mods.odb.retrieve(KarmaObject.class, "WHERE string = \"" + mods.odb.escapeString(name) + "\"");
+		final List<KarmaObject> results = mods.odb.retrieve(KarmaObject.class, "WHERE string = '" + mods.odb.escapeString(name) + "'");
 		if (results.size() == 0)
 		{
 			final KarmaObject newObj = new KarmaObject();

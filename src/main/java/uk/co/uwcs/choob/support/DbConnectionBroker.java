@@ -19,6 +19,7 @@ public final class DbConnectionBroker implements ConnectionBroker
 {
 	ComboPooledDataSource cpds;
 	private final Map<Object, SessionFactory> sessionFactories = new WeakHashMap<Object, SessionFactory>();
+	private final String dialect;
 
 	/**
 	 * Create a new DbConnectionBroker.
@@ -32,12 +33,15 @@ public final class DbConnectionBroker implements ConnectionBroker
 	 * @param logFile		PrintWriter to log to.
 	 * @param maxCheckoutSeconds	Max time a connection can be checked out before being recycled. Zero value turns option off, default is 60 seconds.
 	 */
-	public DbConnectionBroker(final String dbDriver, final String dbServer, final String dbLogin, final String dbPassword, final int minConns, final int maxConns, final PrintWriter logFile, final int maxCheckoutSeconds) throws SQLException
+	public DbConnectionBroker(final String dbDriver, final String dbServer, final String dbLogin, final String dbPassword, final int minConns,
+			final int maxConns, final PrintWriter logFile, final int maxCheckoutSeconds, final String dialect) throws SQLException
 	{
+		this.dialect = dialect;
 		setupBroker(dbDriver, dbServer, dbLogin, dbPassword, minConns, maxConns, logFile, maxCheckoutSeconds);
 	}
 
-	private void setupBroker(final String dbDriver, final String dbServer, final String dbLogin, final String dbPassword, final int minConns, final int maxConns, final PrintWriter logFile, final int maxCheckoutSeconds) throws SQLException	{
+	private void setupBroker(final String dbDriver, final String dbServer, final String dbLogin, final String dbPassword, final int minConns,
+			final int maxConns, final PrintWriter logFile, final int maxCheckoutSeconds) throws SQLException {
 		cpds = new ComboPooledDataSource();
 		try
 		{
@@ -101,6 +105,11 @@ public final class DbConnectionBroker implements ConnectionBroker
 	@Override
 	public Map<Object, SessionFactory> getFactories() {
 		return sessionFactories;
+	}
+
+	@Override
+	public String getDialect() {
+		return dialect;
 	}
 
 }

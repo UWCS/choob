@@ -19,4 +19,6 @@ public interface ConnectionBroker {
 
 	public abstract Map<Object, SessionFactory> getFactories();
 
+	public abstract String getDialect();
+
 }

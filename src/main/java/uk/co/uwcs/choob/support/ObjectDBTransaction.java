@@ -75,7 +75,7 @@ public class ObjectDBTransaction // Needs to be non-final
 					});
 
 			final Configuration cfg = new Configuration()
-				.setProperty("hibernate.dialect", "com.google.code.hibernatesqlite.dialect.SQLiteDialect")
+				.setProperty("hibernate.dialect", mods.odb.getDialect())
 				.addDocument(configFor(packageName, simpleName, fields));
 			new SchemaExport(cfg, dbConn).execute(false, true, false, false);
 			SessionFactory sess = cfg.buildSessionFactory();
@@ -244,7 +244,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	{
 		final String clause;
 
-		if (whereClause == null)
+		if (whereClause == null || whereClause.isEmpty())
 			clause = "WHERE 1=1";
 		else
 			clause = whereClause;

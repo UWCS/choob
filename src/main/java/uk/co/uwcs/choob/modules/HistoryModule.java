@@ -355,7 +355,7 @@ public final class HistoryModule
 
 			final List<Message> results = new ArrayList<Message>(count);
 
-			if ( result.first() )
+			if ( result.next() )
 			{
 				do
 				{

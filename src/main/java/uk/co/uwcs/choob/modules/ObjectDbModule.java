@@ -68,7 +68,7 @@ public final class ObjectDbModule
 	 */
 	public String escapeString(final String text)
 	{
-		return text.replaceAll("(\\W)", "\\\\$1");
+		return text.replaceAll("'", "''");
 	}
 
 	/**
@@ -289,5 +289,9 @@ public final class ObjectDbModule
 	{
 		AccessController.checkPermission(new ChoobPermission("db.connection.checkin"));
 		broker.freeConnection( c );
+	}
+
+	public String getDialect() {
+		return broker.getDialect();
 	}
 }
