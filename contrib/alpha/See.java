@@ -109,8 +109,8 @@ public class See
 
 			final int cur_hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
 			final int hour = (int) Math.floor(bodyclock) % 24;
-			final String[] candidateZones = TimeZone.getAvailableIDs((cur_hour - hour + 24) % 24
-					* -3600000);
+			final int thingie = (((cur_hour - hour + 36) % 24) - 12) * -3600000;
+			final String[] candidateZones = TimeZone.getAvailableIDs(thingie);
 			String following = "";
 			if (candidateZones.length > 0)
 			{
@@ -119,6 +119,8 @@ public class See
 						+ " and may be located in "
 						+ candidateZones[new Random().nextInt(candidateZones.length)];
 			}
+			else
+				following = ", and I have /no idea/ where " + thingie + " represents";
 			ret += nick
 					+ " probably got up "
 					+ timeStamp(gotup)
@@ -203,7 +205,7 @@ public class See
 		try
 		{
 			final PreparedStatement s = conn
-					.prepareStatement("select distinct Nick from History where Time > ? group by Nick having count(Time) > 50");
+					.prepareStatement("select distinct Nick from History where Time > ? group by Nick having count(Time) > 1");
 			try
 			{
 				s.setLong(1, testdate.getTime().getTime());
