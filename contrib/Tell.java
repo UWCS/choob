@@ -508,9 +508,13 @@ public class Tell
 				if (authStatus != 3)
 					continue;
 			}
-			irc.sendMessage(nick,
-					"Your " + dsnObj.type + " sent to " + dsnObj.from + " at " +
-					new Date(dsnObj.date) + " has been delivered.");
+			
+			// Only send the notification if the person who requested the tell is not the recipient
+			if (!dsnObj.target.equals(dsnObj.from)) {
+				irc.sendMessage(nick,
+				                "Your " + dsnObj.type + " sent to " + dsnObj.from + " at " +
+				                new Date(dsnObj.date) + " has been delivered.");
+			}
 			mods.odb.delete(dsnObj);
 		}
 
@@ -531,7 +535,8 @@ public class Tell
 					"At " + new Date(tellObj.date) + ", " + tellObj.from +
 					" told me to " + tellObj.type + " you: " + tellObj.message);
 
-			if (tellObj.requestDSN)
+			// Only send a delivery response if the target isn't the recipient.
+			if (tellObj.requestDSN && (!tellObj.target.equals(tellObj.from)))
 			{
 				final TellDSNObject dsn = new TellDSNObject();
 				dsn.type = tellObj.type;
