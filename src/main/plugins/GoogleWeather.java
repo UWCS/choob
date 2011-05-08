@@ -17,6 +17,7 @@ import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.namespace.QName;
 import javax.xml.transform.Source;
+import javax.xml.ws.BindingProvider;
 import javax.xml.ws.Dispatch;
 import javax.xml.ws.Service;
 import javax.xml.ws.handler.MessageContext;
@@ -34,7 +35,7 @@ import uk.co.uwcs.choob.support.events.Message;
 public class GoogleWeather
 {
 	private static final String baseURL = "http://www.google.com/ig/api?weather=";
-	private static final Class[] DATA_TYPES = {GoogleMapsResponse.class,Weather.class,CurrentConditions.class,ForecastConditions.class,DataItem.class};
+	private static final Class<?>[] DATA_TYPES = {GoogleMapsResponse.class,Weather.class,CurrentConditions.class,ForecastConditions.class,DataItem.class};
 
 	private GoogleWeather()
 	{
@@ -61,7 +62,9 @@ public class GoogleWeather
 		put("Light Rain","☂");
 	}};
 
-	public <T> T getXmlFromHTTP(final String url, final Class... dataTypes) throws IOException, JAXBException
+
+	@SuppressWarnings("unchecked")
+	public <T> T getXmlFromHTTP(final String url, final Class<?>... dataTypes) throws IOException, JAXBException
 	{
 		final QName qname = new QName("", "");
 		final Service service = Service.create(qname);
@@ -70,7 +73,7 @@ public class GoogleWeather
 		final Map<String, Object> requestContext = dispatcher.getRequestContext();
 		requestContext.put(MessageContext.HTTP_REQUEST_METHOD, "GET");
 		requestContext.put(MessageContext.HTTP_REQUEST_HEADERS,new HashMap<String,List<String>>(){{put("User-Agent",Arrays.asList("Opera/8.51 (X11; Linux x86_64; U; en)"));}});
-		requestContext.put(Dispatch.ENDPOINT_ADDRESS_PROPERTY, url);
+		requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, url);
 		final Source got = dispatcher.invoke(null);
 		final JAXBContext context = JAXBContext.newInstance(dataTypes);
 		final Unmarshaller u = context.createUnmarshaller();

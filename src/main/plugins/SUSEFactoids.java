@@ -80,12 +80,12 @@ class Fact
 		lang = "";
 	}
 
-	public void addConfirmedFact(final String info, final String author)
+	public void addConfirmedFact(final String info, final String newAuthor)
 	{
 		confirmedFact = info;
 
-		this.author = author;
-		this.lastRequestedBy = author;
+		this.author = newAuthor;
+		this.lastRequestedBy = newAuthor;
 
 		final Date now = new Date();
 		final java.text.SimpleDateFormat niceDate = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

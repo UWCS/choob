@@ -436,7 +436,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	{
 		// Create the correct wrapper here.
 		if (obj instanceof Class) {
-			return newClassWrapper((Class)obj);
+			return newClassWrapper((Class<?>)obj);
 		}
 
 		if (obj instanceof Function) {

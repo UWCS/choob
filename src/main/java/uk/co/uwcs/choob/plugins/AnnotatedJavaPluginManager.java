@@ -91,7 +91,7 @@ public class AnnotatedJavaPluginManager extends ChoobPluginManager
 		}
 	}
 
-	private Object loadPlugin(final Class newClass, final String pluginName) throws ChoobException
+	private Object loadPlugin(final Class<?> newClass, final String pluginName) throws ChoobException
 	{
 		Object plugin = null;
 
@@ -266,7 +266,7 @@ class PluginHolder
 	{
 		plugins.put(pluginName.toLowerCase(),plugin);
 
-		Class pluginClass = plugin.getClass();
+		Class<?> pluginClass = plugin.getClass();
 		Method[] meths = pluginClass.getMethods();
 		for(Method meth: meths)
 		{

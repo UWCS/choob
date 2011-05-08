@@ -497,31 +497,31 @@ class FalseInterpreter
 
 	class FalseStack
 	{
-		private Stack<Object> stack;
+		private Stack<Object> st;
 
 		public FalseStack()
 		{
-			stack = new Stack<Object>();
+			st = new Stack<Object>();
 		}
 
 		public Object Push(Object val)
 		{
-			return stack.push(val);
+			return st.push(val);
 		}
 
 		public Object PushValue(int val)
 		{
-			return stack.push(new FalseValue(val));
+			return st.push(new FalseValue(val));
 		}
 
 		public Object PushFunc(FalseTokenList val)
 		{
-			return stack.push(new FalseFunction(val));
+			return st.push(new FalseFunction(val));
 		}
 
 		public FalseValue PopValue() throws FalseException
 		{
-			Object val = stack.pop();
+			Object val = st.pop();
 
 			if(val instanceof FalseValue)
 			{
@@ -535,7 +535,7 @@ class FalseInterpreter
 
 		public FalseFunction PopFunction() throws FalseException
 		{
-			Object val = stack.pop();
+			Object val = st.pop();
 
 			if(val instanceof FalseFunction)
 			{
@@ -549,12 +549,12 @@ class FalseInterpreter
 
 		public Object Peek()
 		{
-			return stack.peek();
+			return st.peek();
 		}
 
 		public Object Pop()
 		{
-			return stack.pop();
+			return st.pop();
 		}
 	}
 

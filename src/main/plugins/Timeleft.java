@@ -845,7 +845,7 @@ class CalendarParser
 	 */
 	private static final String[] loadTimeZoneNames()
 	{
-		Class zoneInfo;
+		Class<?> zoneInfo;
 		try
 		{
 			zoneInfo = Class.forName("sun.util.calendar.ZoneInfo");

@@ -37,7 +37,7 @@ public final class ObjectDBClassJSWrapper implements ObjectDBClass {
 				// Do nothing.
 			}
 		} finally {
-			cx.exit();
+			Context.exit();
 		}
 		return "";
 	}
@@ -48,7 +48,7 @@ public final class ObjectDBClassJSWrapper implements ObjectDBClass {
 			Scriptable scope = cls.getParentScope();
 			return cls.construct(cx, scope, new Object[0]);
 		} finally {
-			cx.exit();
+			Context.exit();
 		}
 	}
 
