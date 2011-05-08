@@ -3,6 +3,7 @@
  * @author bucko
  */
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -18,6 +19,8 @@ import java.util.regex.Pattern;
 
 public final class HorriblePerlScript
 {
+	private static String prefix;
+
 	// Inheritance map
 	private final Map<String,String[]> inheritance = new HashMap<String,String[]>();
 	private final Map<String,String[]> interfaces = new HashMap<String,String[]>();
@@ -154,7 +157,25 @@ public final class HorriblePerlScript
 
 	public static void main(String[] args)
 	{
+		switch (args.length) {
+		case 0:
+			prefix = "";
+			break;
+		case 1:
+			if (!new File(args[0]).isDirectory())
+				usage();
+			prefix = args[0] + File.separatorChar;
+			break;
+		default:
+			usage();
+		}
 		(new HorriblePerlScript()).run();
+	}
+
+	private static void usage() {
+		System.err.println("Usage: [working directory]");
+		System.exit(1);
+		throw new AssertionError();
 	}
 
 	public String getConstructorOrder(String className, Map<String,String> paramValueMap)
@@ -293,7 +314,7 @@ public final class HorriblePerlScript
 	{
 		try
 		{
-			OutputStream stream = new FileOutputStream("uk/co/uwcs/choob/support/events/" + className + ".java");
+			OutputStream stream = new FileOutputStream(prefix + "uk/co/uwcs/choob/support/events/" + className + ".java");
 			PrintWriter writer = new PrintWriter(stream);
 			writer.print(classContent);
 			writer.close();
@@ -407,7 +428,7 @@ public final class HorriblePerlScript
 		{
 			// Sigh, Java makes this so complicated...
 			StringBuffer choob = new StringBuffer();
-			FileReader input = new FileReader("uk/co/uwcs/choob/Choob.java");
+			FileReader input = new FileReader(prefix + "uk/co/uwcs/choob/Choob.java");
 			// Read it all!
 			char[] buffer = new char[16384];
 			int found;
@@ -419,7 +440,7 @@ public final class HorriblePerlScript
 			choobData = Pattern.compile("(?<=// BEGIN PASTE!).*?(?=// END PASTE!)", Pattern.DOTALL).matcher(choobData).replaceFirst("\n\n" + eventHandlers + "\t");
 
 			// Yet I can write the file like this...
-			OutputStream stream = new FileOutputStream("uk/co/uwcs/choob/Choob.java");
+			OutputStream stream = new FileOutputStream(prefix + "uk/co/uwcs/choob/Choob.java");
 			PrintWriter writer = new PrintWriter(stream);
 			writer.print(choobData);
 			writer.close();
