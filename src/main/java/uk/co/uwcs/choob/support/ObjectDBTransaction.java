@@ -55,7 +55,9 @@ public class ObjectDBTransaction // Needs to be non-final
 	private Session sessionFor(ObjectDBObject clazz) {
 		final Object ident = clazz.getIdentity();
 		// XXX HAAAAAAAAAAACK
-		Thread.currentThread().setContextClassLoader(((Class<?>)ident).getClassLoader());
+		if (ident instanceof Class) {
+			Thread.currentThread().setContextClassLoader(((Class<?>)ident).getClassLoader());
+		}
 
 		synchronized (sessionFactories) {
 			{
@@ -234,6 +236,23 @@ public class ObjectDBTransaction // Needs to be non-final
 	/**
 	 * Loads any number of stored ObjectDB objects.
 	 *
+	 * @param storedClass The class object (decendant of {@link Class} for Java,
+	 *		    {@link Function} for JavaScript) representing the
+	 *		    type of object desired to be retrieved.
+	 * @param clause The testricting part of the query, specifying which objects
+	 *	       are desired. FIXME: link to docs on format.
+	 * @return {@link List} of objects, typed according to the caller.
+	 */
+	@SuppressWarnings("unchecked")
+	public final List retrieve(Object storedClass, String clause)
+	{
+		return retrieve(newClassWrapper(storedClass), clause);
+	}
+
+
+	/**
+	 * Loads any number of stored ObjectDB objects.
+	 *
 	 * @param storedClass The {@link ObjectDBClass} indicating the type of
 	 *                    object desired to be retrieved.
 	 * @param clause The testricting part of the query, specifying which objects
@@ -361,14 +380,19 @@ public class ObjectDBTransaction // Needs to be non-final
 			mapping
 				.addAttribute("default-access", "field")
 			.addElement("class")
-				.addAttribute("name", simpleName)
+//				.addAttribute("name", simpleName)
+				.addAttribute("entity-name", packageName + "." + simpleName)
 				.addAttribute("table", getTableName(fullName(packageName, simpleName)));
 
-		eClass.addElement("id").addAttribute("name", "id")
+		eClass
+			.addElement("id")
+				.addAttribute("name", "id")
+				.addAttribute("type", "java.lang.Integer")
 			.addElement("generator").addAttribute("class", "native");
 
 		for (String name : fields)
 			eClass.addElement("property")
+				.addAttribute("type", "java.lang.String")
 				.addAttribute("name", name);
 		try {
 			return new DOMWriter().write(doc);
@@ -401,6 +425,19 @@ public class ObjectDBTransaction // Needs to be non-final
 			permCache.put(clsName, new Object());
 		}
 		// Non-null cache ==> we passed this check before.
+	}
+
+	private final ObjectDBClass newClassWrapper(Object obj)
+	{
+		// Create the correct wrapper here.
+		if (obj instanceof Class) {
+			return newClassWrapper((Class)obj);
+		}
+
+		if (obj instanceof Function) {
+			return new ObjectDBClassJSWrapper(obj);
+		}
+		return null;
 	}
 
 	private final <T> ObjectDBClass<T> newClassWrapper(Class<T> obj)

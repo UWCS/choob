@@ -89,12 +89,15 @@ public abstract class AbstractPluginTest {
 		db.sql("insert into UserNodes (NodeID, NodeName, NodeClass) values (1, 'anonymous', 3)");
 		db.sql("insert into UserNodes (NodeID, NodeName, NodeClass) values (2, 'Alias', 2)");
 		db.sql("insert into UserNodes (NodeID, NodeName, NodeClass) values (3, 'Karma', 2)");
-		db.sql("insert into UserNodes (NodeID, NodeName, NodeClass) values (3, 'Pipes', 2)");
+		db.sql("insert into UserNodes (NodeID, NodeName, NodeClass) values (4, 'Pipes', 2)");
+		db.sql("insert into UserNodes (NodeID, NodeName, NodeClass) values (5, 'Feeds', 2)");
 
 		db.sql("insert into UserNodePermissions (NodeID, Type) values (0, 'java.security.AllPermission')");
 
 		db.sql("insert into GroupMembers values (0,2)");
 		db.sql("insert into GroupMembers values (0,3)");
+		db.sql("insert into GroupMembers values (0,4)");
+		db.sql("insert into GroupMembers values (0,5)");
 
 		b = new MinimalBot(broker);
 		for (String plugin : requiredPlugins)

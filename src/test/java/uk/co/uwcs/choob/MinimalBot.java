@@ -53,6 +53,7 @@ public final class MinimalBot extends UnsupportedOperationBot implements Closeab
 
 	/** DO NOT CALL THIS FROM TESTS */
 	@Override
+	@Deprecated
 	public void sendMessage(String target, String data) {
 		queue.add(target + " " + data);
 	}
@@ -90,7 +91,15 @@ public final class MinimalBot extends UnsupportedOperationBot implements Closeab
 	}
 
 	public void addPlugin(String name) throws ChoobException {
-		getMods().plugin.addPluginWithoutAddingToDb(name, "choob-plugin:/" + name + ".java");
+		addPlugin(name, "java");
+	}
+
+	public void addPluginJs(String name) throws ChoobException {
+		addPlugin(name, "js");
+	}
+
+	private void addPlugin(String name, final String ext) throws ChoobException {
+		getMods().plugin.addPluginWithoutAddingToDb(name, "choob-plugin:/" + name + "." + ext);
 	}
 
 }

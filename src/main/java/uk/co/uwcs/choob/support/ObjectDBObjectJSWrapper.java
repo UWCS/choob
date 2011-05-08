@@ -144,11 +144,11 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 
 	@Override
 	public String getPackageName() {
-		throw new UnsupportedOperationException("not implemented");
+		return getClassName().replaceAll("\\.?[^.]*$", "");
 	}
 
 	@Override
 	public String getSimpleName() {
-		throw new UnsupportedOperationException("not implemented");
+		return getClassName().replaceFirst(".*\\.", "");
 	}
 }

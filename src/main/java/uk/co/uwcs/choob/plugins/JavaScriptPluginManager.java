@@ -751,10 +751,9 @@ final class JavaScriptPlugin {
 			}
 
 		} catch (final EvaluatorException e) {
-			throw new ChoobException(e.details() + " at line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
-
+			throw new ChoobException(e.details() + " at line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".", e);
 		} catch (final RhinoException e) {
-			throw new ChoobException(e.details() + " Line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
+			throw new ChoobException(e.details() + " Line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".", e);
 
 		} finally {
 			Context.exit();

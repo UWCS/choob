@@ -118,6 +118,30 @@ public final class ObjectDbModule
 		}
 	}
 
+	public List retrieve(final Object storedClass, final String clause) {
+		Connection dbConn = null;
+		try
+		{
+			dbConn = broker.getConnection();
+		}
+		catch (final SQLException e)
+		{
+			throw new ChoobError("Sql Exception", e);
+		}
+		final ObjectDBTransaction trans = new ObjectDBTransaction();
+		trans.setConn(dbConn, broker.getFactories());
+		trans.setMods(mods);
+		try
+		{
+			return trans.retrieve(storedClass, clause);
+		}
+		finally
+		{
+			broker.freeConnection(dbConn);
+		}
+	}
+
+
 	/**
 	 * This doesn't work.
 
