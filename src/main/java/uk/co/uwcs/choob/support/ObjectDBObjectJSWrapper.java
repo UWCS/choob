@@ -1,12 +1,16 @@
 package uk.co.uwcs.choob.support;
 
+import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+
+import com.google.common.collect.MapMaker;
 
 public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 	private Scriptable obj;
@@ -150,5 +154,25 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 	@Override
 	public String getSimpleName() {
 		return getClassName().replaceFirst(".*\\.", "");
+	}
+
+	@Override
+	public String getNameField() {
+		return "entity-name";
+	}
+
+	@Override
+	public String getNameValue() {
+		return getPackageName() + "." + getSimpleName();
+	}
+
+	@Override
+	public Map<String, String> getTypeOverloads() {
+		return new MapMaker().makeComputingMap(new com.google.common.base.Function<String, String>() {
+			@Override
+			public String apply(String input) {
+				return Serializable.class.getName();
+			}
+		});
 	}
 }

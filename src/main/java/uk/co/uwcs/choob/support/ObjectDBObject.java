@@ -1,6 +1,7 @@
 package uk.co.uwcs.choob.support;
 
 import java.lang.reflect.Type;
+import java.util.Map;
 
 public interface ObjectDBObject {
 
@@ -48,4 +49,12 @@ public interface ObjectDBObject {
 
 	String getPackageName();
 	String getSimpleName();
+
+	/** <hibernate-mapping ${getNameField}=${getNameValue} .../>
+	 * Using 'name' instead of 'entity-name' causes introspection. */
+	String getNameField();
+	String getNameValue();
+
+	/** If a mapping exists, <property name="${key}" will get type="${value}" */
+	Map<String, String> getTypeOverloads();
 }

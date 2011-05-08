@@ -5,8 +5,10 @@ import java.lang.reflect.Type;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 	private Object obj;
@@ -92,5 +94,20 @@ public final class ObjectDBObjectJavaWrapper implements ObjectDBObject {
 	@Override
 	public String getSimpleName() {
 		return obj.getClass().getSimpleName();
+	}
+
+	@Override
+	public String getNameField() {
+		return "name";
+	}
+
+	@Override
+	public String getNameValue() {
+		return getSimpleName();
+	}
+
+	@Override
+	public Map<String, String> getTypeOverloads() {
+		return Collections.emptyMap();
 	}
 }

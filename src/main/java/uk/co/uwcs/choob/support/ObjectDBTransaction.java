@@ -78,7 +78,8 @@ public class ObjectDBTransaction // Needs to be non-final
 
 			final Configuration cfg = new Configuration()
 				.setProperty("hibernate.dialect", mods.odb.getDialect())
-				.addDocument(configFor(packageName, simpleName, fields));
+				.addDocument(configFor(packageName, simpleName, fields,
+						clazz.getNameField(), clazz.getNameValue(), clazz.getTypeOverloads()));
 			new SchemaExport(cfg, dbConn).execute(false, true, false, false);
 			SessionFactory sess = cfg.buildSessionFactory();
 			sessionFactories.put(ident, sess);
@@ -369,8 +370,10 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 	}
 
+	//packageName + "." + simpleName
 	/** You are kidding, right? */
-	private static org.w3c.dom.Document configFor(String packageName, String simpleName, Iterable<String> fields) {
+	private static org.w3c.dom.Document configFor(String packageName, String simpleName, Iterable<String> fields,
+			String nameField, String nameValue, Map<String, String> typeOverloads) {
 		final Document doc = DocumentHelper.createDocument();
 		final Element mapping = doc.addElement("hibernate-mapping");
 		if (!packageName.equals(""))
@@ -380,8 +383,7 @@ public class ObjectDBTransaction // Needs to be non-final
 			mapping
 				.addAttribute("default-access", "field")
 			.addElement("class")
-//				.addAttribute("name", simpleName)
-				.addAttribute("entity-name", packageName + "." + simpleName)
+				.addAttribute(nameField, nameValue)
 				.addAttribute("table", getTableName(fullName(packageName, simpleName)));
 
 		eClass
@@ -390,10 +392,13 @@ public class ObjectDBTransaction // Needs to be non-final
 				.addAttribute("type", "java.lang.Integer")
 			.addElement("generator").addAttribute("class", "native");
 
-		for (String name : fields)
-			eClass.addElement("property")
-				.addAttribute("type", "java.lang.String")
-				.addAttribute("name", name);
+		for (String name : fields) {
+			final Element el = eClass.addElement("property");
+			el.addAttribute("name", name);
+			final String overload = typeOverloads.get(name);
+			if (null != overload)
+				el.addAttribute("type", overload);
+		}
 		try {
 			return new DOMWriter().write(doc);
 		} catch (Exception e) {
