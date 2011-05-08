@@ -380,50 +380,50 @@ public final class IRCInterface
 		bot.sendRawLineViaQueue(line);
 	}
 
-	public void op(final String channel, final String nick) throws ChoobException
+	public void op(final String channel, final String nick)
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
 	    bot.op(channel, nick);
 	}
 
-	public void deOp(final String channel, final String nick) throws ChoobException
+	public void deOp(final String channel, final String nick)
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
 	    bot.deOp(channel, nick);
 	}
 
-	public void voice(final String channel, final String nick) throws ChoobException
+	public void voice(final String channel, final String nick)
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
 	    bot.voice(channel, nick);
 	}
 
-	public void deVoice(final String channel, final String nick) throws ChoobException
+	public void deVoice(final String channel, final String nick)
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
 	    bot.voice(channel, nick);
 	}
 
-	public void kick(final String channel, final String nick) throws ChoobException
+	public void kick(final String channel, final String nick)
     {
         AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
         bot.kick(channel, nick);
     }
 
-	public void kick(final String channel, final String nick, final String reason) throws ChoobException
+	public void kick(final String channel, final String nick, final String reason)
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
 	    bot.kick(channel, nick, reason);
 	}
 
-	public void ban(final String channel, final String nick) throws ChoobException
+	public void ban(final String channel, final String nick)
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
 	    final String hostmask = nick + "!*@*";
 	    bot.ban(channel, hostmask);
 	}
 
-	public void unban(final String channel, final String nick) throws ChoobException
+	public void unban(final String channel, final String nick)
 	{
 	    AccessController.checkPermission(new ChoobPermission("channel.admin." + channel));
 	    final String hostmask = nick + "!*@*";
@@ -436,20 +436,20 @@ public final class IRCInterface
 		bot.sendRawLineViaQueue("JOIN " + channel);
 	}
 
-	public void part(final String channel) throws ChoobException
+	public void part(final String channel)
 	{
 		AccessController.checkPermission(new ChoobPermission("state.part." + channel));
 		bot.partChannel(channel);
 	}
 
-	public void quit(final String message) throws ChoobException
+	public void quit(final String message)
 	{
 		AccessController.checkPermission(new ChoobPermission("state.quit"));
 		bot.setExitCode(0);
 		bot.quitServer(message);
 	}
 
-	public void restart(final String message) throws ChoobException
+	public void restart(final String message)
 	{
 		AccessController.checkPermission(new ChoobPermission("state.quit"));
 		bot.setExitCode(1);

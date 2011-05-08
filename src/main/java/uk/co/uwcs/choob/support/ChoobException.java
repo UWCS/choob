@@ -6,7 +6,7 @@
 package uk.co.uwcs.choob.support;
 
 
-public class ChoobException extends Exception
+public class ChoobException extends RuntimeException
 {
 	private static final long serialVersionUID = 5447830036241630751L;
 	public ChoobException(final String text)
@@ -17,7 +17,7 @@ public class ChoobException extends Exception
 	{
 		super(text, e);
 	}
-	public ChoobException(final Throwable t) 
+	public ChoobException(final Throwable t)
 	{
 		super(t);
 	}

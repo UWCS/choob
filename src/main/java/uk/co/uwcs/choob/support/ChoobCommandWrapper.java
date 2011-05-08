@@ -16,18 +16,18 @@ import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Extracts parameters from a Message for a given method.
- * 
+ *
  * @author benji
  */
 public class ChoobCommandWrapper
 {
 	private final Method meth;
-	
+
 	public ChoobCommandWrapper(final Method meth)
 	{
 		this.meth = meth;
 	}
-	
+
 	public String call(Object o,Message mes) throws ChoobException, CommandUsageException
 	{
 		try
@@ -37,10 +37,10 @@ public class ChoobCommandWrapper
 				params.add(str);
 			if (params.size() > 0)
 				params.remove(0);
-			
-			
+
+
 			Annotation[][] annotations = meth.getParameterAnnotations();
-			Class[] paramTypes = meth.getParameterTypes();
+			Class<?>[] paramTypes = meth.getParameterTypes();
 			int numParams = 0;
 			for (int i = 0; i < paramTypes.length; i++)
 			{
@@ -60,7 +60,7 @@ public class ChoobCommandWrapper
 					}
 				}
 			}
-			
+
 			if (numParams == params.size())
 			{
 				Object result = meth.invoke(o, params.toArray());
@@ -88,14 +88,14 @@ public class ChoobCommandWrapper
 			ex.getCause().printStackTrace();
 			throw new ChoobException("Illegal Target Exception encountered when invoking command.",ex.getCause());
 		}
-			
+
 	}
-	
+
 	public String getName()
 	{
 		return meth.getAnnotation(ChoobCommand.class).name();
 	}
-	
+
 	/**
 	 * @return help in Choob's format.
 	 */
@@ -112,13 +112,13 @@ public class ChoobCommandWrapper
 		for (ChoobParam param : paramAnnotations)
 			builder.append("<").append(param.name()).append(">").append(" ");
 		helpLines.add(builder.toString());
-		
+
 		for (ChoobParam param : paramAnnotations)
 			helpLines.add("<" + param.name() + "> " + param.description());
-		
+
 		return helpLines.toArray(new String[]{});
 	}
-	
+
 	private String getUsage(Method m)
 	{
 		StringBuilder builder = new StringBuilder();
@@ -140,6 +140,6 @@ public class ChoobCommandWrapper
 		}
 		return builder.toString();
 	}
-	
-	
+
+
 }
