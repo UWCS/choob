@@ -79,9 +79,9 @@ public class HttpModule {
 		params.setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 15000);
 		params.setParameter(CoreConnectionPNames.STALE_CONNECTION_CHECK, false);
 		SchemeRegistry schemeRegistry = new SchemeRegistry();
-		schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-		schemeRegistry.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
-		ThreadSafeClientConnManager cm = new ThreadSafeClientConnManager(params, schemeRegistry);
+		schemeRegistry.register(new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));
+		schemeRegistry.register(new Scheme("https", 443, SSLSocketFactory.getSocketFactory()));
+		ThreadSafeClientConnManager cm = new ThreadSafeClientConnManager(schemeRegistry);
 		client = new DefaultHttpClient(cm, params);
 		// add gzip decompressor to handle gzipped content in responses
 		// (default we *do* always send accept encoding gzip header in request)
@@ -103,15 +103,7 @@ public class HttpModule {
 		});
 	}
 
-	private final ResponseHandler<String> responseHandler;
-
-	/**
-	 * Constructor.
-	 *
-	 */
-	public HttpModule() {
-		responseHandler = new BasicResponseHandler();
-	}
+	private final ResponseHandler<String> responseHandler = new BasicResponseHandler();
 
 	/**
 	 * Perform a simple HTTP GET operation.
