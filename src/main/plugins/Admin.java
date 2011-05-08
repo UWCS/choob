@@ -49,7 +49,7 @@ public class Admin
 	};
 	public void commandExit(final Message mes)
 	{
-		if (!mods.security.hasPerm(new ChoobPermission("exit"), mes)) {
+		if (!mods.security.hasNickPerm((new ChoobPermission("exit")), mes)) {
 			irc.sendContextReply(mes, "You don't have permission to do that!");
 			return;
 		}
@@ -75,7 +75,7 @@ public class Admin
 	};
 	public void commandRestart(final Message mes)
 	{
-		if (!mods.security.hasPerm(new ChoobPermission("exit"), mes)) {
+		if (!mods.security.hasNickPerm((new ChoobPermission("exit")), mes)) {
 			irc.sendContextReply(mes, "You don't have permission to do that!");
 			return;
 		}

@@ -762,17 +762,6 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	}
 
 	/**
-	 * Check if the given userName has permission. Better to use checkNickPerm.
-	 * @deprecated Please use hasNickPerm to ensure compatability with non-nickserv authentication methods.
-	 * @param permission The permission to check.
-	 * @param userEvent The event to validate and check the permission on.
-	 */
-	@Deprecated
-	public boolean hasPerm(final Permission permission, final UserEvent userEvent) {
-		return hasNickPerm(permission, userEvent);
-	}
-
-	/**
 	 *
 	 * @param permission
 	 * @param userEvent

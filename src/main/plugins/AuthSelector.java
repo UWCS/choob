@@ -62,7 +62,7 @@ public class AuthSelector {
 			return;
 		}
 
-		final String authType = mods.util.getParamString(mes).toLowerCase();;
+		final String authType = mods.util.getParamString(mes).toLowerCase();
 		if (authType.length() == 0) {
 			irc.sendContextReply(mes, "Please provide an authentication method to use.");
 		}

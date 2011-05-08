@@ -118,7 +118,7 @@ public final class ObjectDbModule
 		}
 	}
 
-	public List retrieve(final Object storedClass, final String clause) {
+	public List<?> retrieve(final Object storedClass, final String clause) {
 		Connection dbConn = null;
 		try
 		{

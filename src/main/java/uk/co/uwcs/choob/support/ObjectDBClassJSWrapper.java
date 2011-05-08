@@ -4,7 +4,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 
-public final class ObjectDBClassJSWrapper implements ObjectDBClass {
+public final class ObjectDBClassJSWrapper implements ObjectDBClass<Object> {
 	private Function cls;
 
 	public ObjectDBClassJSWrapper(Object obj) {

@@ -18,7 +18,7 @@ public class Conversions {
 
 	enum conversionTypes {
 		LENGTH, VOLUME, MASS, VELOCITY, TEMPERATURE
-	};
+	}
 
 	// TODO: Having all of this data just hard coded is dirty.
 	private static final HashMap<String, conversionTypes> typeMapping = new HashMap<String, conversionTypes>() {

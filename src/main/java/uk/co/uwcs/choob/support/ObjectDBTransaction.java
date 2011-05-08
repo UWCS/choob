@@ -245,7 +245,7 @@ public class ObjectDBTransaction // Needs to be non-final
 	 * @return {@link List} of objects, typed according to the caller.
 	 */
 	@SuppressWarnings("unchecked")
-	public final List retrieve(Object storedClass, String clause)
+	public final List<?> retrieve(Object storedClass, String clause)
 	{
 		return retrieve(newClassWrapper(storedClass), clause);
 	}
@@ -432,7 +432,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		// Non-null cache ==> we passed this check before.
 	}
 
-	private final ObjectDBClass newClassWrapper(Object obj)
+	private final ObjectDBClass<?> newClassWrapper(Object obj)
 	{
 		// Create the correct wrapper here.
 		if (obj instanceof Class) {

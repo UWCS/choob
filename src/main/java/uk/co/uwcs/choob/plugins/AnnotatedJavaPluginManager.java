@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
@@ -72,7 +73,7 @@ public class AnnotatedJavaPluginManager extends ChoobPluginManager
 
 			JavaCompiler jc = ToolProvider.getSystemJavaCompiler();
 			StandardJavaFileManager sjfm = jc.getStandardFileManager(null, null, null);
-			Iterable fileObjects = sjfm.getJavaFileObjects(pluginFile);
+			Iterable<? extends JavaFileObject> fileObjects = sjfm.getJavaFileObjects(pluginFile);
 			jc.getTask(null, sjfm, null, null, null, fileObjects).call();
 			sjfm.close();
 

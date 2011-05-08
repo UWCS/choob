@@ -39,7 +39,7 @@ public final class ObjectDBObjectJSWrapper implements ObjectDBObject {
 		return makeObjetDbClass().getName();
 	}
 
-	private ObjectDBClass makeObjetDbClass() {
+	private ObjectDBClass<Object> makeObjetDbClass() {
 		try {
 			Object ctor = getFieldValue("constructor");
 			if (ctor instanceof Function) {

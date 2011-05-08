@@ -64,7 +64,7 @@ public class GoogleWeather
 
 
 	@SuppressWarnings("unchecked")
-	public <T> T getXmlFromHTTP(final String url, final Class<?>... dataTypes) throws IOException, JAXBException
+	public <T> T getXmlFromHTTP(final String url, final Class<?>... dataTypes) throws JAXBException
 	{
 		final QName qname = new QName("", "");
 		final Service service = Service.create(qname);

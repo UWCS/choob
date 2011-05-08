@@ -376,7 +376,7 @@ public class SUSEFactoids
 		 *
 		 */
 		private static final long serialVersionUID = 2747650133533345970L;
-	};
+	}
 
 	private static final int MAX_DEPTH = 5;
 	/**
