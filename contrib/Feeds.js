@@ -166,107 +166,87 @@ Feeds.prototype.commandRemove.help = [
 // Command: List
 Feeds.prototype.commandList = function(mes, mods, irc) {
 	if (this._feedList.length == 0) {
-		irc.sendContextReply(mes, "No feeds set up.");
+		irc.sendContextReply(mes, "No feeds are set up.");
 		return;
 	}
-	
-	function displayFeedItemLine(i, feed) {
-		var dests = feed._outputTo.join(", ");
-		var error = feed.getError();
-		irc.sendContextReply(mes, "Feed " + feed.getDisplayName()
-				+ " owned by " + (feed.owner ? feed.owner : "<unknown>")
-				+ (feed.isPrivate ? " (\x02private\x02)" : "") + ", "
-				+ (error ?
-					(error) :
-					(feed._lastItemCount + " items (" + feed.getLastLoaded() + ")")
-				) + ", "
-				+ "TTL of " + feed.ttl + "s, source <" + feed.url + ">."
-				+ (dests ? " Notifications to: " + dests + "." : ""));
-	};
-	
-	function getFeedItemString(feed) {
-		return feed.getDisplayName() + " (" + feed._lastItemCount + (feed.isPrivate ? ", \x02private\x02" : "") + ")";
-	};
-	
-	function getFeedErrorLine(feed) {
-		return "Feed " + feed.getDisplayName() + ": " + feed.getError() + ".";
-	};
 	
 	var params = mods.util.getParams(mes, 1);
 	if (params.size() > 1) {
 		var findName = String(params.get(1)).trim();
 		var findIO = "," + findName.toLowerCase() + ",";
-		var foundIO = false;
+		var feedsIO = new Array();
+		var feeds = new Array();
 		
 		for (var i = 0; i < this._feedList.length; i++) {
 			// Skip private feeds that user can't control.
 			if (this._feedList[i].isPrivate && !this._canAdminFeed(this._feedList[i], mes)) {
 				continue;
 			}
-			if (this._feedList[i].name.toLowerCase() == findName.toLowerCase()) {
-				displayFeedItemLine(i, this._feedList[i]);
-				return;
-			} else if (("," + this._feedList[i]._outputTo.join(",") + ",").toLowerCase().indexOf(findIO) != -1) {
-				displayFeedItemLine(i, this._feedList[i]);
-				foundIO = true;
-			} else if (findName == "*") {
-				displayFeedItemLine(i, this._feedList[i]);
+			
+			if (("," + (this._feedList[i]._outputTo.join(",") || "*nowhere*") + ",").toLowerCase().indexOf(findIO) != -1) {
+				var error = this._feedList[i].getError();
+				feedsIO.push(this._feedList[i].getDisplayName() + " (" + (error ? "error" : this._feedList[i]._lastItemCount) + ")");
+			} else if (this._feedList[i].name.toLowerCase() == findName.toLowerCase()) {
+				var dests = this._feedList[i]._outputTo.join(", ");
+				var error = this._feedList[i].getError();
+				feeds.push("Feed " + this._feedList[i].getDisplayName()
+						+ " owned by " + (this._feedList[i].owner ? this._feedList[i].owner : "<unknown>")
+						+ (this._feedList[i].isPrivate ? " (\x02private\x02)" : "") + ", "
+						+ (error ?
+							(error) :
+							(this._feedList[i]._lastItemCount + " items (" + this._feedList[i].getLastLoaded() + ")")
+						) + ", "
+						+ "TTL of " + this._feedList[i].ttl + "s, source <" + this._feedList[i].url + ">."
+						+ (dests ? " Notifications to: " + dests + "." : ""));
 			}
 		}
-		if ((findName != "*") && !foundIO) {
+		if (feedsIO.length > 0) {
+			irc.sendContextReply(mes, "Feeds for " + findName + ": " + feedsIO.sort().join(", ") + ".");
+		}
+		for (var i = 0; i < feeds.sort().length; i++) {
+			irc.sendContextReply(mes, feeds[i]);
+		}
+		if (feedsIO.length + feeds.length == 0) {
 			irc.sendContextReply(mes, "Feed or target '" + findName + "' not found.");
 		}
-		return;
-	}
-	
-	var outputs = new Object();
-	var errs = new Array();
-	
-	for (var i = 0; i < this._feedList.length; i++) {
-		// Skip private feeds that user can't control.
-		if (this._feedList[i].isPrivate && !this._canAdminFeed(this._feedList[i], mes)) {
-			continue;
+	} else {
+		var outputs = new Object();
+		var errs = new Array();
+		
+		for (var i = 0; i < this._feedList.length; i++) {
+			// Skip private feeds that user can't control.
+			if (this._feedList[i].isPrivate && !this._canAdminFeed(this._feedList[i], mes)) {
+				continue;
+			}
+			
+			var st = this._feedList[i].getSendTo();
+			
+			for (var j = 0; j < st.length; j++) {
+				if (!(st[j] in outputs)) {
+					outputs[st[j]] = 0;
+				}
+				outputs[st[j]]++;
+			}
+			if (st.length == 0) {
+				if (!("*nowhere*" in outputs)) {
+					outputs["*nowhere*"] = 0;
+				}
+				outputs["*nowhere*"]++;
+			}
+			
+			if (this._feedList[i].getError()) {
+				errs.push(this._feedList[i]);
+			}
 		}
 		
-		var st = this._feedList[i].getSendTo();
-		
-		for (var j = 0; j < st.length; j++) {
-			if (!(st[j] in outputs)) {
-				outputs[st[j]] = new Array();
-			}
-			outputs[st[j]].push(this._feedList[i]);
+		var outputList = new Array();
+		for (var o in outputs) {
+			outputList.push(o + " (" + outputs[o]  +")");
 		}
-		if (st.length == 0) {
-			if (!("nowhere" in outputs)) {
-				outputs["nowhere"] = new Array();
-			}
-			outputs["nowhere"].push(this._feedList[i]);
+		irc.sendContextReply(mes, "Feeds: " + outputList.sort().join(", ") + ".");
+		for (var i = 0; i < errs.length; i++) {
+			irc.sendContextReply(mes, "Feed " + errs[i].getDisplayName() + ": " + errs[i].getError() + ".");
 		}
-		
-		if (this._feedList[i].getError()) {
-			errs.push(this._feedList[i]);
-		}
-	}
-	
-	var outputList = new Array();
-	for (var o in outputs) {
-		outputList.push(o);
-	}
-	outputList.sort();
-	
-	for (o = 0; o < outputList.length; o++) {
-		var str = "For " + outputList[o] + ": ";
-		for (var i = 0; i < outputs[outputList[o]].length; i++) {
-			if (i > 0) {
-				str += ", ";
-			}
-			str += getFeedItemString(outputs[outputList[o]][i]);
-		}
-		str += ".";
-		irc.sendContextReply(mes, str);
-	}
-	for (var i = 0; i < errs.length; i++) {
-		irc.sendContextReply(mes, getFeedErrorLine(errs[i]));
 	}
 }
 Feeds.prototype.commandList.help = [
