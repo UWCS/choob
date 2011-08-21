@@ -2,7 +2,6 @@ import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,12 +11,12 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobError;
-import uk.co.uwcs.choob.support.ChoobException;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.IRCInterface;
@@ -29,6 +28,9 @@ import uk.co.uwcs.choob.support.events.ChannelJoin;
 import uk.co.uwcs.choob.support.events.ChannelMessage;
 import uk.co.uwcs.choob.support.events.Message;
 import uk.co.uwcs.choob.support.events.NickChange;
+import uk.co.uwcs.choob.support.events.UserEvent;
+
+import com.google.common.collect.Maps;
 
 class QuoteObject
 {
@@ -135,7 +137,36 @@ public class Quote
 	private static int THRESHOLD = -3; // Lowest karma of displayed quote.
 	private static long ENUM_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
+	private static final int QUOTES_PER_SPEAKING = 2;
+
 	private final HashMap<String,List<RecentQuote>> recentQuotes;
+
+	class ChannelNick {
+		final String channel;
+		final String nick;
+
+		ChannelNick(String channel, String nick) {
+			this.channel = channel;
+			this.nick = mods.nick.getBestPrimaryNick(nick);
+		}
+
+		public <T extends ChannelEvent & UserEvent> ChannelNick(T mes) {
+			this(mes.getChannel(), mes.getNick());
+		}
+
+		@Override
+		public int hashCode() {
+			return channel.hashCode() * 31 + nick.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			final ChannelNick other = (ChannelNick) obj;
+			return other.nick.equals(nick) && other.channel.equals(channel);
+		}
+	}
+
+	private final Map<ChannelNick, AtomicInteger> joinQuotesSinceLastSpoke = Maps.newHashMap();
 
 	private final Modules mods;
 	private final IRCInterface irc;
@@ -203,6 +234,7 @@ public class Quote
 		}
 
 		// Compare to another ScoreTracker.
+		@Override
 		public int compareTo(final ScoreTracker o)
 		{
 			// Ignore the "null" case.
@@ -1584,6 +1616,19 @@ public class Quote
 		return checkOption( ev, "JoinQuote" );
 	}
 
+	private boolean isSpammingJoins(final ChannelJoin ev)
+	{
+		final ChannelNick cn = new ChannelNick(ev.getChannel(), ev.getNick());
+		final AtomicInteger ai = joinQuotesSinceLastSpoke.get(cn);
+		if (null == ai)
+		{
+			joinQuotesSinceLastSpoke.put(cn, new AtomicInteger());
+			return false;
+		}
+
+		return ai.incrementAndGet() >= QUOTES_PER_SPEAKING;
+	}
+
 	private boolean checkOption( final ChannelJoin ev, final String name )
 	{
 		return checkOption(ev, name, true) && checkOption(ev, name, false);
@@ -1727,6 +1772,9 @@ public class Quote
 		if (ev.getLogin().endsWith("Choob") || ev.getLogin().endsWith("choob")) // XXX
 			return;
 
+		if (isSpammingJoins(ev))
+			return;
+
 		try
 		{
 			final int ret = ((Integer)mods.plugin.callAPI("Flood", "IsFlooding", ev.getChannel(), Integer.valueOf(2000), Integer.valueOf(4))).intValue();
@@ -1764,6 +1812,17 @@ public class Quote
 			return;
 		}
 	}
+
+	public void onMessage( final ChannelMessage mes )
+	{
+		joinQuotesSinceLastSpoke.remove(new ChannelNick(mes));
+	}
+
+	public void onAction( final ChannelAction mes )
+	{
+		joinQuotesSinceLastSpoke.remove(new ChannelNick(mes));
+	}
+
 
 	public void onNickChange(final NickChange ev)
 	{
