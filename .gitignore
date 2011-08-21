@@ -1,0 +1,16 @@
+.project
+.classpath
+.idea
+.settings
+tmp/
+bin/
+src/bot.conf
+src/plugins/
+target/
+bot.conf
+*.iml
+*.ipr
+*.iws
+*.db
+#sigh
+hs_err_pid*.log
