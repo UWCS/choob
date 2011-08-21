@@ -14,6 +14,6 @@ public class FeedsTest extends AbstractPluginTest {
 
 	@Test
 	public void testList() {
-		assertGetsResposne("#chan user: No feeds set up.", "~feeds.list");
+		assertGetsResposne("#chan user: No feeds are set up.", "~feeds.list");
 	}
 }
