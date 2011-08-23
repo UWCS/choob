@@ -165,7 +165,7 @@ public class Help
 			irc.sendContextReply(mes, apiGetSyntax(params[0]));
 	}
 
-	enum HelpMode
+	public enum HelpMode
 	{
 		MODE_ALL,
 		MODE_SYNTAX,
