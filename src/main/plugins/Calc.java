@@ -1,6 +1,5 @@
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.Message;
 
 public class Calc
 {

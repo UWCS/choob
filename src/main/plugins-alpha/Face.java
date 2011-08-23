@@ -3,10 +3,8 @@ import java.util.regex.Pattern;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
-import uk.co.uwcs.choob.support.events.ChannelAction;
 import uk.co.uwcs.choob.support.events.ChannelMessage;
 import uk.co.uwcs.choob.support.events.Message;
-import uk.co.uwcs.choob.support.events.PrivateAction;
 
 public class Face
 {

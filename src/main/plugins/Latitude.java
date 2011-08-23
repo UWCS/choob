@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.SocketPermission;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -19,13 +17,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.plugins.RequiresPermission;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
+
+import com.google.common.collect.Maps;
 
 /**
  * Uses google latitude api to obtain locations for people

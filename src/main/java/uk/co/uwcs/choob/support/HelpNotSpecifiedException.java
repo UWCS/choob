@@ -5,7 +5,6 @@
 
 package uk.co.uwcs.choob.support;
 
-import uk.co.uwcs.choob.support.ChoobException;
 
 /**
  *

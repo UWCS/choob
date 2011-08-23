@@ -2,9 +2,9 @@ import uk.co.uwcs.choob.ChoobCommand;
 import uk.co.uwcs.choob.ChoobParam;
 import uk.co.uwcs.choob.ChoobPlugin;
 import uk.co.uwcs.choob.ChoobUtil;
-import uk.co.uwcs.choob.support.events.Message;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.Message;
 
 @ChoobPlugin
 (

@@ -3,9 +3,6 @@ import java.util.EmptyStackException;
 import java.util.List;
 import java.util.Stack;
 
-import uk.co.uwcs.choob.modules.Modules;
-import uk.co.uwcs.choob.support.IRCInterface;
-
 /**
  * Brainfuck interpreter.
  *
