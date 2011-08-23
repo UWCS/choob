@@ -29,6 +29,7 @@ class EntityStat
 
 class StatSortByValue implements Comparator<EntityStat>
 {
+	@Override
 	public int compare(EntityStat o1, EntityStat o2) {
 		if (o1.value > o2.value) {
 			return -1;

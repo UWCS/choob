@@ -475,6 +475,7 @@ public class Tell
 
 		final Comparator<TellObject> tellSorter = new Comparator<TellObject>()
 		{
+			@Override
 			public int compare(final TellObject l, final TellObject r)
 			{
 				return new Date(l.date).compareTo(new Date(r.date));
@@ -484,6 +485,7 @@ public class Tell
 		// Grr, Java you suck, wtb real templates.
 		final Comparator<TellDSNObject> tellDSNSorter = new Comparator<TellDSNObject>()
 		{
+			@Override
 			public int compare(final TellDSNObject l, final TellDSNObject r)
 			{
 				return new Date(l.date).compareTo(new Date(r.date));

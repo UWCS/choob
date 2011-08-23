@@ -214,6 +214,7 @@ class Programme implements Comparable<Programme>
 
 	public long start=0, end=Integer.MAX_VALUE;
 
+	@Override
 	public int compareTo(final Programme other) throws ClassCastException
 	{
 		return new Date(this.end).compareTo(new Date(other.end));

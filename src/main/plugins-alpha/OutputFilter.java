@@ -25,6 +25,7 @@ class OutputFilterObject implements Comparable<OutputFilterObject>
 		// Unhide
 	}
 
+	@Override
 	public int compareTo(OutputFilterObject other)
 	{
 		return Integer.valueOf(id).compareTo(Integer.valueOf(other.id));

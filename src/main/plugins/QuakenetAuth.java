@@ -235,6 +235,7 @@ public class QuakenetAuth {
 			if (user != null && pass != null) {
 				final String authmessage = "auth " + user + " " + pass;
 				AccessController.doPrivileged(new PrivilegedAction<Object>() {
+					@Override
 					public Object run() {
 						irc.sendMessage("Q@CServe.quakenet.org", authmessage);
 						return null;
@@ -345,6 +346,7 @@ public class QuakenetAuth {
 				result.account = null;
 
 				AccessController.doPrivileged(new PrivilegedAction<Object>() {
+					@Override
 					public Object run() {
 						irc.sendMessage("Q", "whois " + nick);
 						return null;

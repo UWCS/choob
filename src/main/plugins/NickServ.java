@@ -159,12 +159,14 @@ public class NickServ
 		return cache.get(nick, new Invokable<AuthStatus>()
 		{
 			//If we missed te cache we'll...
+			@Override
 			public AuthStatus invoke()
 			{
 				//Update the cache with the directly retrieved result
 				return cache.put(nick,checkDirectly(nick), new InvokableI<AuthStatus, Boolean>()
 				{
 					//Except where the result is unknown
+					@Override
 					public Boolean invoke(AuthStatus t)
 					{
 						return t instanceof UnknownStatus;
@@ -238,6 +240,7 @@ public class NickServ
 		{
 			return commands.put(new CanProvideAuthReplyHandler(nickserv)).doThis(new Action<Void>()
 			{
+				@Override
 				public void doWith(Void t)
 				{
 					nickserv.sendRequest(nick);
@@ -486,6 +489,7 @@ abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
 	//We can only have one Future result
 	private final BlockingQueue<AuthStatus> queue = new ArrayBlockingQueue<AuthStatus>(1);
 
+	@Override
 	public abstract AuthStatus replyToStatus(Message reply) throws NotInterestedInReplyException;
 	public abstract AuthStatus replyToStatus(ServerResponse response) throws NotInterestedInReplyException;
 
@@ -494,6 +498,7 @@ abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
 	 * @param reply	The reply to handle
 	 * @throws NotInterestedInReplyException	If the implementation is not interested in this reply.
 	 */
+	@Override
 	public void handle(Message reply) throws NotInterestedInReplyException
 	{
 		try
@@ -524,6 +529,7 @@ abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
 	/**
 	 * @{@inheritDoc}
 	 */
+	@Override
 	public boolean cancel(boolean mayInterrupt)
 	{
 		if (this.isDone())
@@ -538,6 +544,7 @@ abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
 	/**
 	 * @{@inheritDoc}
 	 */
+	@Override
 	public boolean isCancelled()
 	{
 		synchronized(cancelledLock)
@@ -549,6 +556,7 @@ abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
 	/**
 	 * @{@inheritDoc}
 	 */
+	@Override
 	public boolean isDone()
 	{
 		return queue.peek() != null;
@@ -557,6 +565,7 @@ abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
 	/**
 	 * @{@inheritDoc}
 	 */
+	@Override
 	public AuthStatus get() throws InterruptedException, ExecutionException
 	{
 		return queue.poll();
@@ -565,6 +574,7 @@ abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
 	/**
 	 * @{@inheritDoc}
 	 */
+	@Override
 	public AuthStatus get(long timeout , TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException
 	{
 		return queue.poll(timeout, unit);
@@ -573,6 +583,7 @@ abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
 	/**
 	 * @{@inheritDoc}
 	 */
+	@Override
 	public AuthStatus get(long timeout, TimeUnit unit, AuthStatus defaultStatus) throws InterruptedException, ExecutionException, TimeoutException
 	{
 		AuthStatus status = get(timeout,unit);
@@ -668,6 +679,7 @@ class UWCSNickServInterpreter implements CanProvideAuth
 	 * Ask Nickserv for info on a user.
 	 * @param nick	The user to request info for
 	 */
+	@Override
 	public void sendRequest(final String nick)
 	{
 		irc.sendMessage("NickServ", "INFO " + nick);
@@ -679,6 +691,7 @@ class UWCSNickServInterpreter implements CanProvideAuth
 	 * @return	The determined authentication status
 	 * @throws NotInterestedInReplyException	If we couldn't determine the authentication status from this message.
 	 */
+	@Override
 	public AuthStatus receiveReply(final Message mes) throws NotInterestedInReplyException
 	{
 		if ( ! (mes instanceof PrivateNotice) )
@@ -711,6 +724,7 @@ class UWCSNickServInterpreter implements CanProvideAuth
 	 * @return	Never
 	 * @throws NotInterestedInReplyException	Always
 	 */
+	@Override
 	public AuthStatus receiveReply(ServerResponse resp) throws NotInterestedInReplyException
 	{
 		throw new NotInterestedInReplyException();
@@ -739,12 +753,14 @@ class AllAuthMethods implements CanProvideAuth
 
 	private final List<CanProvideAuth> authMethods;
 
+	@Override
 	public void sendRequest(final String nick)
 	{
 		for (CanProvideAuth auth : authMethods)
 			auth.sendRequest(nick);
 	}
 
+	@Override
 	public AuthStatus receiveReply(final Message mes) throws NotInterestedInReplyException
 	{
 		return new WithMultipleAuthProviders(authMethods)
@@ -756,6 +772,7 @@ class AllAuthMethods implements CanProvideAuth
 		}.getResult();
 	}
 
+	@Override
 	public AuthStatus receiveReply(final ServerResponse resp) throws NotInterestedInReplyException
 	{
 		return new WithMultipleAuthProviders(authMethods)
@@ -834,6 +851,7 @@ class MoznetNickServInterpreter implements CanProvideAuth
 	 * Ask Nickserv for info on a user.
 	 * @param nick	The user to request info for
 	 */
+	@Override
 	public void sendRequest(final String nick)
 	{
 		irc.sendMessage("NickServ", "STATUS " + nick);
@@ -845,6 +863,7 @@ class MoznetNickServInterpreter implements CanProvideAuth
 	 * @return	The determined authentication status
 	 * @throws NotInterestedInReplyException	If we couldn't determine the authentication status from this message.
 	 */
+	@Override
 	public AuthStatus receiveReply(final Message mes) throws NotInterestedInReplyException
 	{
 		if ( ! (mes instanceof PrivateNotice) )
@@ -877,6 +896,7 @@ class MoznetNickServInterpreter implements CanProvideAuth
 	 * @return	Never
 	 * @throws NotInterestedInReplyException	Always
 	 */
+	@Override
 	public AuthStatus receiveReply(ServerResponse resp) throws NotInterestedInReplyException
 	{
 		throw new NotInterestedInReplyException();
@@ -905,6 +925,7 @@ class UserFileAuthProvider implements CanProvideAuth
 	 * Request both the USERIP and USERHOST of the user
 	 * @param nick	The user to request details for
 	 */
+	@Override
 	public void sendRequest(final String nick)
 	{
 		irc.sendRawLine("USERIP " + nick);
@@ -917,6 +938,7 @@ class UserFileAuthProvider implements CanProvideAuth
 	 * @return	Never
 	 * @throws NotInterestedInReplyException	Always
 	 */
+	@Override
 	public AuthStatus receiveReply(final Message mes) throws NotInterestedInReplyException
 	{
 		throw new NotInterestedInReplyException();
@@ -928,6 +950,7 @@ class UserFileAuthProvider implements CanProvideAuth
 	 * @return	The determined authentication status
 	 * @throws NotInterestedInReplyException	If this server response does not allow us to determine the authentication status
 	 */
+	@Override
 	public AuthStatus receiveReply(ServerResponse resp) throws NotInterestedInReplyException
 	{
 		if (!(resp.getCode()==340 || resp.getCode()==302)) // USERIP (and USERHOST) response, not avaliable through PircBOT, gogo magic numbers.
@@ -1021,12 +1044,14 @@ class ChoobSucksScope
 			return new AndThen<T>()
 			{
 
+				@Override
 				public T doThis(Action<Void> action)
 				{
 					action.doWith(null);
 					return t;
 				}
 
+				@Override
 				public T value()
 				{
 					return t;
