@@ -44,15 +44,15 @@ import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 
 /**
- * 
+ *
  * Totally taken from
  * http://code.google.com/p/and-bookworm/source/browse/trunk/src
  * /com/totsp/bookworm/data/HttpHelper.java
- * 
+ *
  * NB: original code under Apache License
- * 
+ *
  * Apache HttpClient helper class for performing HTTP requests.
- * 
+ *
  */
 public class HttpModule {
 
@@ -107,7 +107,7 @@ public class HttpModule {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 */
 	public HttpModule() {
 		responseHandler = new BasicResponseHandler();
@@ -115,7 +115,7 @@ public class HttpModule {
 
 	/**
 	 * Perform a simple HTTP GET operation.
-	 * 
+	 *
 	 */
 	public String performGet(final String url) {
 		return performRequest(null, url, null, null, null, null, HttpModule.GET_TYPE);
@@ -123,7 +123,7 @@ public class HttpModule {
 
 	/**
 	 * Perform an HTTP GET operation with user/pass and headers.
-	 * 
+	 *
 	 */
 	public String performGet(final String url, final String user, final String pass, final Map<String, String> additionalHeaders) {
 		return performRequest(null, url, user, pass, additionalHeaders, null, HttpModule.GET_TYPE);
@@ -131,7 +131,7 @@ public class HttpModule {
 
 	/**
 	 * Perform a simplified HTTP POST operation.
-	 * 
+	 *
 	 */
 	public String performPost(final String url, final Map<String, String> params) {
 		return performRequest(HttpModule.MIME_FORM_ENCODED, url, null, null, null, params, HttpModule.POST_TYPE);
@@ -141,7 +141,7 @@ public class HttpModule {
 	 * Perform an HTTP POST operation with user/pass, headers, request
 	 * parameters, and a default content-type of
 	 * "application/x-www-form-urlencoded."
-	 * 
+	 *
 	 */
 	public String performPost(final String url, final String user, final String pass, final Map<String, String> additionalHeaders,
 			final Map<String, String> params) {
@@ -151,7 +151,7 @@ public class HttpModule {
 	/**
 	 * Perform an HTTP POST operation with flexible parameters (the
 	 * complicated/flexible version of the method).
-	 * 
+	 *
 	 */
 	public String performPost(final String contentType, final String url, final String user, final String pass,
 			final Map<String, String> additionalHeaders, final Map<String, String> params) {

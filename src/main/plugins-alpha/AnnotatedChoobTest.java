@@ -26,7 +26,7 @@ public class AnnotatedChoobTest
 	{
 		return "Hello World " + name;
 	}
-	
+
 	@ChoobCommand
 	(
 		name="greet",
@@ -42,4 +42,3 @@ public class AnnotatedChoobTest
 	}
 
 }
-										

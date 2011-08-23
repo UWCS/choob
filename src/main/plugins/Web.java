@@ -25,7 +25,7 @@ public class Web
 		};
 	}
 
-	public String commandGetAndSelect(final String paramString) 
+	public String commandGetAndSelect(final String paramString)
 	{
 		try {
 			final int splitAt = paramString.indexOf(" ");

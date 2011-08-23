@@ -25,7 +25,7 @@ public class Face
 
 	public final String filterReplaceRegex = "([^\\s]+)face";
 	private final Pattern compiledFilterReplaceRegex = Pattern.compile(filterReplaceRegex);
-	
+
 	public void filterReplace(final Message mes)
 	{
 		if (!(mes instanceof ChannelMessage))

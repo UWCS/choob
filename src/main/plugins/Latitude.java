@@ -104,7 +104,7 @@ public class Latitude {
 
 		String nick = getNick(mes, mods);
 		Badge badge = getBadge(mes, mods, irc, nick);
-		if(badge != null) {			
+		if(badge != null) {
 			irc.sendContextReply(mes, nick+" is believed to be located in "+getLocation(badge.badge_id));
 		}
 	}
@@ -119,7 +119,7 @@ public class Latitude {
 			List<Badge> badges = mods.odb.retrieve(Badge.class,"WHERE ! nick = \""+mods.odb.escapeString(nick)+"\"");
 			Map<String,Double> dists = Maps.newHashMap();
 			for (Badge other : badges) {
-				
+
 				Location otherLoc;
 				try {
 					otherLoc = getLocation(other.badge_id);
@@ -130,7 +130,7 @@ public class Latitude {
 					// TODO: figure out what to do
 				}
 			}
-			
+
 			List<Entry<String, Double>> vals = newArrayList(dists.entrySet());
 			sort(vals, new Comparator<Entry<String,Double>>() {
 				@Override
@@ -168,9 +168,9 @@ public class Latitude {
 		nick = (nick.length() > 0)?nick:mes.getNick();
 		return nick;
 	}
-	
-	
-	
+
+
+
 }
 
 /**
@@ -217,4 +217,3 @@ class Badge {
 	}
 
 }
- 

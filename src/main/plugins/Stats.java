@@ -248,10 +248,10 @@ public class Stats
 		if ((params.length < 3) || (params.length > 3)) {
 			throw new ChoobBadSyntaxError();
 		}
-		
+
 		String channel = params[1];
 		String stat = params[2].toLowerCase();
-		
+
 		List<String> channelMembers = irc.getUsersList(channel);
 		List<EntityStat> stats = new ArrayList<EntityStat>();
 		for (int i = 0; i < channelMembers.size(); i++) {
@@ -259,18 +259,18 @@ public class Stats
 			if (datas.size() == 0) continue;
 			stats.add(datas.get(0));
 		}
-		
+
 		if (stats.size() == 0) {
 			irc.sendContextReply(mes, "No data found for \"" + stat + "\" in \"" + channel + "\".");
 			return;
 		}
-		
+
 		Collections.sort(stats, new StatSortByValue());
 		final int space = 400;
 		StringBuffer text1 = new StringBuffer();
 		StringBuffer text2 = new StringBuffer();
 		boolean addToStart = true;
-		
+
 		text1.append("\"");
 		text1.append(stat);
 		text1.append("\" in \"");

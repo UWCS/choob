@@ -300,13 +300,13 @@ public class Plugin
 			irc.sendContextReply(mes, "Plugin " + pluginName + " had invalid info!");
 			return;
 		}
-		
+
 		if(info.length == 0) {
 			irc.sendContextReply(mes, pluginName + " has no information available");
 		} else {
-			irc.sendContextReply(mes, pluginName + ": " + info[0] + " By " + info[1] + " <" + info[2] + ">; version is " + info[3] + ".");			
+			irc.sendContextReply(mes, pluginName + ": " + info[0] + " By " + info[1] + " <" + info[2] + ">; version is " + info[3] + ".");
 		}
-		
+
 	}
 
 	public String[] helpCommandSource = {

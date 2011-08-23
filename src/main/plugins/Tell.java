@@ -510,7 +510,7 @@ public class Tell
 				if (authStatus != 3)
 					continue;
 			}
-			
+
 			// Only send the notification if the person who requested the tell is not the recipient
 			if (!dsnObj.target.equals(dsnObj.from)) {
 				irc.sendMessage(nick,

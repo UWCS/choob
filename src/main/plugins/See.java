@@ -385,7 +385,7 @@ public class See
 	public void commandBang(final Message mes) throws SQLException
 	{
 		final float diff = 1f;
-		
+
 		final Connection conn = mods.odb.getConnection();
 		try
 		{

@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface ChoobPlugin 
+public @interface ChoobPlugin
 {
 	String description();
 	String author();

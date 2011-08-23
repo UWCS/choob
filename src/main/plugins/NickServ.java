@@ -57,7 +57,7 @@ public class NickServ
 
 	//List of providers that can be configured to provider authentication
 	private Map<String, CanProvideAuth> authProviders = new HashMap<String, CanProvideAuth>();
-	
+
 	public NickServ(final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
@@ -99,7 +99,7 @@ public class NickServ
 		AuthStatus status = checkCached(nick);
 		if (status.getId() == -1)
 			return assumption;
-		
+
 		return status.getId() >= 3;
 	}
 
@@ -170,7 +170,7 @@ public class NickServ
 					public Boolean invoke(AuthStatus t)
 					{
 						return t instanceof UnknownStatus;
-					}	
+					}
 				});
 			}
 		});
@@ -258,7 +258,7 @@ public class NickServ
 		{
 			return new UnknownStatus();
 		}
-		
+
 	}
 
 
@@ -334,7 +334,7 @@ public class NickServ
  * Interface auth providers need to implement.
  * sendRequest will be called to send message off to nickserv/userip/whatever
  * recieveReply overloads will be called with responses.
- * 
+ *
  * @author benji
  */
 interface CanProvideAuth
@@ -366,12 +366,12 @@ interface CanProvideAuth
  * An exception to indicate that we're not interested
  * in a particular server reply or message. So our handler
  * should stay in the queue
- * 
+ *
  * @author benji
  */
 class NotInterestedInReplyException extends Exception
 {
-	
+
 }
 
 
@@ -478,7 +478,7 @@ interface DefaultFuture<T> extends Future<T>
  * Handle replies from the server, delegating to abstract methods.
  *
  * Implements Future so that we can retreive the result of the authentication.
- * 
+ *
  * @author benji
  */
 abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
@@ -509,7 +509,7 @@ abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
 			//meh
 		}
 	}
-	
+
 	/**
 	 * Handles a message reply, converting the implemented handler to a Future result.
 	 * @param resp	The reply to handle
@@ -579,7 +579,7 @@ abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
 	{
 		return queue.poll(timeout, unit);
 	}
-	
+
 	/**
 	 * @{@inheritDoc}
 	 */
@@ -599,7 +599,7 @@ abstract class AbstractReplyHandler implements ReplyHandler, CanGetStatus
 /**
  * Implementation of AbstractReplyHandler that delegates
  * authentication to an auth provider
- * 
+ *
  * @author benji
  */
 class CanProvideAuthReplyHandler extends AbstractReplyHandler
@@ -650,7 +650,7 @@ class PatternStatusPair
  * Default implementation of CanProvideAuth.
  *
  * Talks to UWCS Nickserv or Freenode Nickserv
- * 
+ *
  * @author benji
  */
 class UWCSNickServInterpreter implements CanProvideAuth
@@ -708,7 +708,7 @@ class UWCSNickServInterpreter implements CanProvideAuth
 		{
 			System.out.println("Checking " + status.getPattern().pattern());
 			if (status.getPattern().matcher(reply).matches())
-			{	
+			{
 				System.out.println("Matched! returning " + status.getStatus().getId());
 				return status.getStatus();
 			}
@@ -822,7 +822,7 @@ class AllAuthMethods implements CanProvideAuth
  * Mozilla implementation of CanProvideAuth.
  *
  * Talks to Mozilla Nickserv
- * 
+ *
  * @author benji
  */
 class MoznetNickServInterpreter implements CanProvideAuth
@@ -880,7 +880,7 @@ class MoznetNickServInterpreter implements CanProvideAuth
 		{
 			System.out.println("Checking " + status.getPattern().pattern());
 			if (status.getPattern().matcher(reply).matches())
-			{	
+			{
 				System.out.println("Matched! returning " + status.getStatus().getId());
 				return status.getStatus();
 			}
@@ -907,7 +907,7 @@ class MoznetNickServInterpreter implements CanProvideAuth
  * Implementation of authentication provider backed onto a userip.list file.
  *
  * Useful when Nickserv is unavailable.
- * 
+ *
  * @author benji
  */
 class UserFileAuthProvider implements CanProvideAuth
@@ -1013,7 +1013,7 @@ class ChoobSucksScope
 	/**
 	 * A blocking queue with a capacity of 1
 	 * Items in the queue time out and are removed after the specified timeout.
-	 * 
+	 *
 	 * @param <T>
 	 */
 	class SingleBlockingQueueWithTimeOut<T>
@@ -1086,7 +1086,7 @@ class ChoobSucksScope
 
 	/**
 	 * A cache that caches items for the fixed time, with no sliding window.
-	 * 
+	 *
 	 */
 	class CacheWithTimeout<T>
 	{

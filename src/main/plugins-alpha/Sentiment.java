@@ -23,20 +23,20 @@ import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * @author mulletron
- * 
+ *
  *         Performs trivial sentiment analysis on choob history
- * 
+ *
  *         Calculates average ANEW scores for all words for a person/channel
  *         (suggested by whythehell).
- * 
+ *
  *         TODO:
- * 
+ *
  *         add gender values to choob'
- * 
+ *
  *         add more history/time options to search
- * 
+ *
  *         normalise a period over an extended period - eg a day or a year
- * 
+ *
  *         nick linking
  */
 public class Sentiment {
@@ -144,7 +144,7 @@ public class Sentiment {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param mes
 	 * @throws SQLException
 	 */
@@ -191,11 +191,11 @@ public class Sentiment {
 }
 
 /**
- * 
+ *
  * @author rlmw
- * 
+ *
  *         Represents a single word to odb, storing its score
- * 
+ *
  */
 class Anew {
 	public int id;

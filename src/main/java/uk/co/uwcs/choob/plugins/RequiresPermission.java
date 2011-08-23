@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package uk.co.uwcs.choob.plugins;
 

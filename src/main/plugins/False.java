@@ -16,7 +16,7 @@ public class False
 			"choob@uwcs.co.uk",
 			"$Rev$$Date$"
 		};
-	
+
 	}
 	public String[] helpCommandEval = {
 		"Evaluates a False program.",
@@ -79,7 +79,7 @@ class FalseInterpreter
 	{
 		return eval(new FalseTokenList(expr));
 	}
-	
+
 	public String eval(final FalseTokenList tokens) throws FalseException
 	{
 		FalseTokenList func, cond;
@@ -89,11 +89,11 @@ class FalseInterpreter
 		int tmp, n;
 
 		Iterator<FalseToken> it = tokens.iterator();
-		
+
 		while(it.hasNext())
 		{
 			tok = it.next();
-		
+
 			switch(tok.type)
 			{
 			case Value:
@@ -104,7 +104,7 @@ class FalseInterpreter
 				{
 					throw new FalseException("Expected ';' or ':' after variable");
 				}
-				
+
 				tok2 = it.next();
 				if(tok2.type == FalseTokenType.Set)
 				{
@@ -117,7 +117,7 @@ class FalseInterpreter
 						throw new FalseException("Used uninitialised variable '" +
 							(char)(tok.GetInt() + 'a') + "'");
 					}
-					
+
 					stack.Push(vars[tok.GetInt()]);
 				}
 				else
@@ -209,7 +209,7 @@ class FalseInterpreter
 			case While:
 				func = stack.PopFunction().func;
 				cond = stack.PopFunction().func;
-				
+
 				eval(cond);
 				while(stack.PopValue().val != 0)
 				{
@@ -235,20 +235,20 @@ class FalseInterpreter
 			default:
 				throw new FalseException("Internal Error: Invalid token");
 			}
-			
+
 			count++;
 
 			if(count == max_instructions)
 			{
 				throw new FalseException("Instruction count exceeded");
 			}
-			
+
 			if(output.length() >= max_output)
 			{
 				throw new FalseException("Maximum output exceeded");
 			}
 		}
-		
+
 		return output.toString();
 	}
 
@@ -262,45 +262,45 @@ class FalseInterpreter
 		PrintInt, PrintChar, Read, Flush,
 		Asm,
 	}
-	
+
 	class FalseToken
 	{
 		public FalseTokenType type;
 		public Object val;
-		
+
 		public FalseToken(FalseTokenType type, Object val)
 		{
 			this.type = type;
 			this.val = val;
 		}
-		
+
 		public int GetInt()
 		{
 			return ((Integer)(this.val)).intValue();
 		}
-		
+
 		public FalseTokenList GetFunc()
 		{
 			return ((FalseTokenList)(this.val));
 		}
 	}
-	
+
 	class FalseTokenList implements Iterable<FalseToken>
 	{
 		private LinkedList<FalseToken> tokens;
-		
+
 		public FalseTokenList(final String expr) throws FalseException
 		{
 			int pos = 0;
 			int nest = 0;
-			
+
 			tokens = new LinkedList<FalseToken>();
-			
+
 			while(pos < expr.length())
 			{
 				StringBuilder s = new StringBuilder();
 				char c;
-				
+
 				switch(expr.charAt(pos))
 				{
 				case '+':
@@ -386,7 +386,7 @@ class FalseInterpreter
 					try
 					{
 						pos++;
-					
+
 						while((c = expr.charAt(pos)) != '}')
 						{
 							s.append(c);
@@ -397,12 +397,12 @@ class FalseInterpreter
 					{
 						throw new FalseException("Missing closing '}'");
 					}
-					
+
 					tokens.offer(new FalseToken(FalseTokenType.Comment, s.toString()));
 					break;
 				case '"':
 					pos++;
-					
+
 					try
 					{
 						while((c = expr.charAt(pos)) != '"')
@@ -415,13 +415,13 @@ class FalseInterpreter
 					{
 						throw new FalseException("Missing closing '\"'");
 					}
-				
+
 					tokens.offer(new FalseToken(FalseTokenType.String, s.toString()));
 					break;
 				case '[':
 					nest = 0;
 					pos++;
-					
+
 					try
 					{
 						while((c = expr.charAt(pos)) != ']' || nest != 0)
@@ -434,7 +434,7 @@ class FalseInterpreter
 							{
 								nest--;
 							}
-							
+
 							s.append(c);
 							pos++;
 						}
@@ -443,7 +443,7 @@ class FalseInterpreter
 					{
 						throw new FalseException("Missing closing ']'");
 					}
-					
+
 					tokens.offer(new FalseToken(FalseTokenType.Function,
 						new FalseTokenList(s.toString())));
 					break;
@@ -461,18 +461,18 @@ class FalseInterpreter
 						while(c >= '0' && c <= '9')
 						{
 							s.append(c);
-							
+
 							if(++pos >= expr.length() - 1)
 							{
 								break;
 							}
-							
+
 							c = expr.charAt(pos);
 						}
-							
+
 						tokens.offer(new FalseToken(FalseTokenType.Value,
 							Integer.parseInt(s.toString())));
-						
+
 						if(pos < expr.length())
 						{
 							pos--;
@@ -483,22 +483,22 @@ class FalseInterpreter
 						throw new FalseException("Invalid token '" + c + "'");
 					}
 				}
-				
+
 				pos++;
 			}
 		}
-		
+
 		@Override
 		public Iterator<FalseToken> iterator()
 		{
 			return tokens.iterator();
 		}
 	}
-	
+
 	class FalseStack
 	{
 		private Stack<Object> stack;
-		
+
 		public FalseStack()
 		{
 			stack = new Stack<Object>();
@@ -508,70 +508,70 @@ class FalseInterpreter
 		{
 			return stack.push(val);
 		}
-		
+
 		public Object PushValue(int val)
 		{
 			return stack.push(new FalseValue(val));
 		}
-		
+
 		public Object PushFunc(FalseTokenList val)
 		{
 			return stack.push(new FalseFunction(val));
 		}
-		
+
 		public FalseValue PopValue() throws FalseException
 		{
 			Object val = stack.pop();
-			
+
 			if(val instanceof FalseValue)
 			{
 				return (FalseValue)val;
 			}
 			else
 			{
-				throw new FalseException("Expected value on stack"); 
+				throw new FalseException("Expected value on stack");
 			}
 		}
 
 		public FalseFunction PopFunction() throws FalseException
 		{
 			Object val = stack.pop();
-			
+
 			if(val instanceof FalseFunction)
 			{
 				return (FalseFunction)val;
 			}
 			else
 			{
-				throw new FalseException("Expected function on stack"); 
+				throw new FalseException("Expected function on stack");
 			}
 		}
-		
+
 		public Object Peek()
 		{
 			return stack.peek();
 		}
-		
+
 		public Object Pop()
 		{
 			return stack.pop();
 		}
 	}
-	
+
 	class FalseValue
 	{
 		public int val;
-		
+
 		public FalseValue(final int val)
 		{
 			this.val = val;
 		}
 	}
-	
+
 	class FalseFunction
 	{
 		public FalseTokenList func;
-		
+
 		public FalseFunction(final FalseTokenList func)
 		{
 			this.func = func;
