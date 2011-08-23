@@ -32,6 +32,10 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.eclipse.equinox</groupId>
+			<artifactId>org.eclipse.equinox.app</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>rhino</groupId>
 			<artifactId>js</artifactId>
 			<version>1.7R2</version>
