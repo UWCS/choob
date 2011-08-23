@@ -349,6 +349,7 @@ final class Choob extends PircBot implements Bot
 	 * Return a string which can (and should) be prepended onto a line to
 	 * make it into a command.
 	 */
+	@Override
 	public String getTrigger()
 	{
 		return trigger;

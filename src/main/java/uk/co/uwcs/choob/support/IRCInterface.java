@@ -253,7 +253,7 @@ public final class IRCInterface
 	 */
 	public String getTrigger()
 	{
-		return bot.getTriggerRegex();
+		return bot.getTrigger();
 	}
 
 	/**

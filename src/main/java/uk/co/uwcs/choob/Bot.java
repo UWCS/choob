@@ -10,6 +10,7 @@ public interface Bot {
 	Modules getMods();
 	String getName();
 	String getNick();
+	String getTrigger();
 	String getTriggerRegex();
 
 	long getMessageDelay();

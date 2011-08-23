@@ -22,6 +22,11 @@ class UnsupportedOperationBot implements Bot {
 	}
 
 	@Override
+	public String getTrigger() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public String getTriggerRegex() {
 		throw new UnsupportedOperationException();
 	}
