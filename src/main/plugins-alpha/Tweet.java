@@ -12,7 +12,9 @@ import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
 import twitter4j.User;
+import twitter4j.auth.BasicAuthorization;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.plugins.RequiresPermission;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
@@ -21,9 +23,9 @@ import uk.co.uwcs.choob.support.events.Message;
 
 /**
  * Client for Twitter implemented in choob
- * 
+ *
  * Issue - sends people tells if they're online but not in a common channel with choob.
- * 
+ *
  * @author rlmw
  * @see http://www.twitter.com
  * @see http://twitter4j.org/en/index.html
@@ -41,7 +43,7 @@ public class Tweet {
 			"<3",
 		};
 	}
-	
+
 	public final String[] helpTopics = { "Using" };
 
 	public final String[] helpUsing = {
@@ -56,16 +58,16 @@ public class Tweet {
 
 	// 150 requests per hour MAX
 	private final int _5_MINUTES = 5*60*1000;
-	
+
 	public Tweet(final Modules mods, final IRCInterface irc) throws TwitterException {
 		super();
 		this.mods = mods;
 		this.irc = irc;
 		this.loginCache = new HashMap<String, Twitter>();
-		
+
 		mods.interval.callBack(null, _5_MINUTES);
 	}
-	
+
 	private void tell(final String nick, final String msg) {
 		try {
 			int ret = (Integer)mods.plugin.callAPI("Tell","Inject",irc.getNickname(), new String[]{nick}, msg,"tell");
@@ -74,12 +76,12 @@ public class Tweet {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void interval(final Object param) {
 		// Get Updates
 		long id = (param == null) ? 1 : (Long) param;
 		Paging p = new Paging(id);
-		
+
 		for(Map.Entry<String, Twitter> entry:loginCache.entrySet()) {
 			final Twitter twitter = entry.getValue();
 			final String username = entry.getKey();
@@ -87,6 +89,7 @@ public class Tweet {
 			try {
 				final ResponseList<Status> timeline = twitter.getHomeTimeline(p);
 				Collections.sort(timeline, new Comparator<Status>() {
+					@Override
 					public int compare(Status o1, Status o2) {
 						return o1.getCreatedAt().compareTo(o2.getCreatedAt());
 					}
@@ -105,17 +108,17 @@ public class Tweet {
 				e.printStackTrace();
 			}
 		}
-		
+
 		mods.interval.callBack(new Long(id), _5_MINUTES);
 	}
-	
+
 	/**
 	 * Logs user in
 	 */
 	public void commandLogout(final Message mes) {
-		
+
 		final String nick = mes.getNick();
-		
+
 		final Twitter remove = loginCache.remove(nick);
 		if(remove == null) {
 			irc.sendContextReply(mes, "You aren't logged in");
@@ -123,18 +126,19 @@ public class Tweet {
 			irc.sendContextReply(mes, "Logged out");
 		}
 	}
-	
+
 	public void commandLogin(final Message mes) {
-		
+
 		final List<String> params = mods.util.getParams(mes);
 		final String nick = mes.getNick();
-		
+
 		if(params.size() != 3) {
 			irc.sendContextReply(mes, "This requires two arguments - a username and a password, received: " + params);
 			return;
 		}
-		
-		loginCache.put(nick, new Twitter(params.get(1), params.get(2)));
+
+
+		loginCache.put(nick, new TwitterFactory().getInstance(new BasicAuthorization(params.get(1), params.get(2))));
 		irc.sendContextReply(mes, "Saved "+nick+"'s login");
 	}
 
@@ -145,7 +149,7 @@ public class Tweet {
 			irc.sendContextReply(mes, "You aren't logged in, see !help TwitterClient.Using");
 			return;
 		}
-		
+
 		final String status = mods.util.getParamString(mes);
 		try {
 			twitter.updateStatus(status);
@@ -155,7 +159,7 @@ public class Tweet {
 			irc.sendContextReply(mes,"Internal Problem: "+e.getMessage());
 		}
 	}
-	
+
 }
 
 /**

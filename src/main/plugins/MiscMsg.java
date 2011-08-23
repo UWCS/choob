@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.ProduceMime;
+import javax.ws.rs.Produces;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobBadSyntaxError;
@@ -62,7 +62,7 @@ public class MiscMsg
 	 * Example usage of Jersey plugin.
 	 */
 	@GET
-	@ProduceMime("text/plain")
+	@Produces("text/plain")
 	@Path("ct")
 	public String ct()
 	{
@@ -307,21 +307,21 @@ public class MiscMsg
 	{
 		final List<String> params = mods.util.getParams(mes);
 		final DateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy");
-		
+
 		if (params.size() == 1) {
 			return "It is " + getWeekString() + ".";
 		}
-		
+
 		if ((params.size() == 2) && isNumber(params.get(1))) {
 			final int tWeek = Integer.parseInt(params.get(1));
 			if ((tWeek < 1) || (tWeek > 30))
 				return "Error: <week> must be between 1 and 30 inclusive.";
-			
+
 			final int rbWeek = tWeek > 20 ? tWeek + 9 : tWeek > 10 ? tWeek + 4 : tWeek;
 			final Date time = new Date(getYearStart().getTime() + (rbWeek - 1) * 7 * 86400 * 1000L);
 			return "Week " + tWeek + " is " + getWeekDates(time) + ", " + getWeekString(time) + ".";
 		}
-		
+
 		if (((params.size() == 4) && isNumber(params.get(1)) && params.get(2).equalsIgnoreCase("term") && isNumber(params.get(3)))
 				|| ((params.size() == 5) && isNumber(params.get(1)) && params.get(2).equalsIgnoreCase("of") && params.get(3).equalsIgnoreCase("term") && isNumber(params.get(4)))) {
 			final int week = Integer.parseInt(params.get(1));
@@ -330,21 +330,21 @@ public class MiscMsg
 				return "Error: term <week> must be between 1 and 10 inclusive.";
 			if ((term < 1) || (term > 3))
 				return "Error: <term> must be between 1 and 3 inclusive.";
-			
+
 			final int rbWeek = (term == 3 ? 29 : term == 2 ? 14 : 0) + week;
 			final Date time = new Date(getYearStart().getTime() + (rbWeek - 1) * 7 * 86400 * 1000L);
 			return "Week " + week + " of term " + term + " is " + getWeekDates(time) + ", " + getWeekString(time) + ".";
 		}
-		
+
 		if ((params.size() == 3) && params.get(1).equalsIgnoreCase("rbw") && isNumber(params.get(2))) {
 			final int rbWeek = Integer.parseInt(params.get(2));
 			if ((rbWeek < 1) || (rbWeek > 39))
 				return "Error: room booking <week> must be between 1 and 39 inclusive.";
-			
+
 			final Date time = new Date(getYearStart().getTime() + (rbWeek - 1) * 7 * 86400 * 1000L);
 			return "Room Booking Week " + rbWeek + " is " + getWeekDates(time) + ", " + getWeekString(time) + ".";
 		}
-		
+
 		if (((params.size() == 3) && params.get(1).equalsIgnoreCase("year") && isNumber(params.get(2)))
 				|| ((params.size() == 4) && params.get(1).equalsIgnoreCase("year") && isNumber(params.get(2)) && isNumber(params.get(3)))
 				|| ((params.size() == 5) && params.get(1).equalsIgnoreCase("year") && isNumber(params.get(2)) && params.get(3).equalsIgnoreCase("of") && isNumber(params.get(4)))) {
@@ -352,7 +352,7 @@ public class MiscMsg
 			final int year = params.size() > 3 ? Integer.parseInt(params.get(params.size() - 1)) : 0;
 			if ((yWeek < 1) || (yWeek > 53))
 				return "Error: <week> of year must be between 1 and 53 inclusive.";
-			
+
 			final Calendar cal = new GregorianCalendar();
 			final int endYear = year > 0 ? year : cal.get(Calendar.YEAR) + 1;
 			if (year > 0) {
@@ -367,10 +367,10 @@ public class MiscMsg
 				cal.add(Calendar.DAY_OF_MONTH, 1);
 			if (cal.get(Calendar.YEAR) > endYear)
 				return "Error: week " + yWeek + " was not found in " + (year > 0 ? year : endYear - 1) + ".";
-			
+
 			return "Week " + yWeek + " of " + cal.get(Calendar.YEAR) + " is " + getWeekDates(cal.getTime()) + ", " + getWeekString(cal.getTime()) + ".";
 		}
-		
+
 		Matcher dateMatcher = Pattern.compile(
 				"^(?:(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)" +
 				"|(\\d\\d?)/(\\d\\d?)/(\\d\\d?\\d?\\d?)" +
@@ -400,13 +400,13 @@ public class MiscMsg
 			} else {
 				return "Error: <date> is invalid in some unexpected way.";
 			}
-			
+
 			return dateFormat.format(now) + " is " + getWeekString(now) + ".";
 		}
-		
+
 		throw new ChoobBadSyntaxError();
 	}
-	
+
 	boolean isNumber(final String item) {
 		try {
 			return item.equals(Integer.valueOf(item).toString());
@@ -414,7 +414,7 @@ public class MiscMsg
 			return false;
 		}
 	}
-	
+
 	int nameToMonth(String name) {
 		if (name.equalsIgnoreCase("jan")) return 0;
 		if (name.equalsIgnoreCase("feb")) return 1;
@@ -430,7 +430,7 @@ public class MiscMsg
 		if (name.equalsIgnoreCase("dec")) return 11;
 		return -1;
 	}
-	
+
 	Date getYearStart() {
 		// We're shifting the date forwards by 13 weeks, the length of the
 		// summary holidays, so that the default year during those holidays is
@@ -438,7 +438,7 @@ public class MiscMsg
 		final Date now = new Date();
 		return getYearStart(new Date(now.getTime() + 13 * 7 * 86400 * 1000L));
 	}
-	
+
 	Date getYearStart(final Date date) {
 		final int time = (int)Math.floor(date.getTime() / 1000);
 		for (int i = 1; i < yearStarts.length; i++)
@@ -446,36 +446,36 @@ public class MiscMsg
 				return new Date(yearStarts[i - 1] * 1000L);
 		return new Date(yearStarts[yearStarts.length - 1] * 1000L);
 	}
-	
+
 	int getTermDay(final Date date) {
 		return (int)Math.floor((date.getTime() - getYearStart(date).getTime()) / 1000 / 86400);
 	}
-	
+
 	int getTermWeek(final int day) {
 		// Term 1 (day 0 - 67)
 		if ((day >= 0) && (day <= 67))
 			return (int)Math.floor(day / 7) + 1;
-		
+
 		// Christmas Holiday (day 68 - 97)
 		if ((day >= 68) && (day <= 97))
 			return 0;
-		
+
 		// Term 2 (day 98 - 165)
 		if ((day >= 98) && (day <= 165))
 			return (int)Math.floor(day / 7) - 3;
-		
+
 		// Easter Holiday (day 166 - 202)
 		if ((day >= 166) && (day <= 202))
 			return 0;
-		
+
 		// Term 3 (day 203 - 270)
 		if ((day >= 203) && (day <= 270))
 			return (int)Math.floor(day / 7) - 8;
-		
+
 		// Anything else within 13 weeks before or 53 weeks after the start is "in range".
 		if ((day >= -91) && (day <= 371))
 			return 0;
-		
+
 		return -1;
 	}
 
@@ -487,11 +487,11 @@ public class MiscMsg
 		// Term 3            (day 203 - 270)
 		if ((day >= 0) && (day <= 270))
 			return (int)Math.floor(day / 7) + 1;
-		
+
 		// Anything else within 13 weeks before or 53 weeks after the start is "in range".
 		if ((day >= -91) && (day <= 371))
 			return 0;
-		
+
 		return -1;
 	}
 
@@ -513,7 +513,7 @@ public class MiscMsg
 		final String yWeek = getYearWeek(date);
 		return getWeekString(tWeek, rbWeek, yWeek);
 	}
-	
+
 	String getWeekString(final int tWeek, final int rbWeek, final String yWeek) {
 		//          Christmas           Easter              Summer
 		// <term 1> <4 weeks> <term 2 > <5 weeks> <term 3 > <~13 weeks>
@@ -533,11 +533,11 @@ public class MiscMsg
 			return "week " + (tWeek - 10) + " of term 2 (room booking week " + rbWeek + ", " + yWeek + ")";
 		return "week " + (tWeek - 20) + " of term 3 (room booking week " + rbWeek + ", " + yWeek + ")";
 	}
-	
+
 	String getWeekDates(final Date date) {
 		final DateFormat dateFormat = new SimpleDateFormat("EEE d MMM yyyy");
 		final Date date2 = new Date(date.getTime() + 6 * 86400 * 1000L);
-		
+
 		return dateFormat.format(date) + " - " + dateFormat.format(date2);
 	}
 
