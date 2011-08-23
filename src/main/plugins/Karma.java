@@ -48,7 +48,7 @@ class KarmaObject
 	}
 }
 
-class KarmaReasonObject 
+class KarmaReasonObject
 {
 	public int id;
 	public String string;
@@ -132,6 +132,7 @@ class KarmaReasonEnumerator
 
 class KarmaSortByAbsValue implements Comparator<KarmaObject>
 {
+	@Override
 	public int compare(final KarmaObject o1, final KarmaObject o2) {
 		if (Math.abs(o1.value) > Math.abs(o2.value)) {
 			return -1;
@@ -162,6 +163,7 @@ class KarmaSortByAbsValue implements Comparator<KarmaObject>
 
 class KarmaSortByValue implements Comparator<KarmaObject>
 {
+	@Override
 	public int compare(final KarmaObject o1, final KarmaObject o2) {
 		if (o1.value > o2.value) {
 			return -1;
@@ -185,7 +187,7 @@ class DelayedKarmaReasonObject implements Delayed
 	public String reason;
 	public String nick;
 	public Date time;
-	
+
 	@Override
 	public long getDelay(TimeUnit unit) {
 		Date currenttime = new Date(System.currentTimeMillis());
@@ -194,7 +196,7 @@ class DelayedKarmaReasonObject implements Delayed
 			case MILLISECONDS: return delay;
 			case MICROSECONDS: return delay * 1000;
 			case NANOSECONDS: return delay * 1000000;
-			case SECONDS: return (long) delay / 1000;
+			case SECONDS: return delay / 1000;
 			default: return delay;
 		}
 	}
@@ -206,7 +208,7 @@ class DelayedKarmaReasonObject implements Delayed
 		else if (compare > 0)	return 1;
 		else	return -1;
 	}
-	
+
 	public KarmaReasonObject getReason() {
 		KarmaReasonObject temp = new KarmaReasonObject();
 		temp.string = this.string;
@@ -248,7 +250,7 @@ public class Karma
 	final Modules mods;
 	private final IRCInterface irc;
 	private DelayQueue<DelayedKarmaReasonObject> inqueue = new DelayQueue<DelayedKarmaReasonObject>();
-	
+
 	public Karma (final Modules mods, final IRCInterface irc)
 	{
 		this.mods = mods;
@@ -563,7 +565,7 @@ public class Karma
 		+ "(?: ^ | (?<=[\\s\\(]) )" // Anchor at start of string, whitespace or open bracket.
 		+ karma_item
 		+ plusplus_or_minusminus
-		+ "[\\)\\.,]?" // Allowed to terminate with full stop/close bracket etc.
+		+ "[\\)\\.,;]?" // Allowed to terminate with full stop/close bracket etc.
 		+ "(?: (?=\\s) | $ )" // Need either whitespace or end-of-string now.
 		+ ")"
 	);
@@ -761,8 +763,8 @@ public class Karma
 			mods.odb.update(karma.karma);
 
 			/*
-			 *  Now add the reason(s) to the queue. 
-			 *  Reasons are held in the queue for 1 
+			 *  Now add the reason(s) to the queue.
+			 *  Reasons are held in the queue for 1
 			 *  minute, then added to the database
 			 *  next time filterKarma() is called.
 			 */
@@ -1555,8 +1557,8 @@ public class Karma
 		return sc;
 	}
 	/*
-	 * addKarma method polls the list of saved reasons for any that have been 
-	 * active for a minute and adds them to the database. Called whenever someone 
+	 * addKarma method polls the list of saved reasons for any that have been
+	 * active for a minute and adds them to the database. Called whenever someone
 	 * adds karma.
 	 */
 	private void addKarma() {
@@ -1566,16 +1568,16 @@ public class Karma
 			temp = inqueue.poll();
 		}
 	}
-	
+
 	public String[] helpCommandReasonMod = {
 			"Change or add a reason to something you have karmaed in the last minute.",
 	};
 	public void commandReasonMod( final Message mes ) {
-		
+
 		String[] arg = mes.getMessage().split(" ", 3);
 		String string = "You have not karmaed " + arg[1] + " in the last minute";
 		Iterator<DelayedKarmaReasonObject> iterator = inqueue.iterator();
-		
+
 		while(iterator.hasNext()){
 			DelayedKarmaReasonObject temp = iterator.next();
 			if(temp.string.compareTo(arg[1]) == 0 && mes.getNick().compareTo(temp.nick) == 0) {
