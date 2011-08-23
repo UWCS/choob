@@ -113,6 +113,10 @@ public abstract class ChoobPluginManager
 			man.destroyPlugin(pluginName);
 		else
 			throw new ChoobNoSuchPluginException(pluginName, "UNLOAD");
+
+		synchronized (state.commands) {
+			state.commands.remove(pluginName.toLowerCase());
+		}
 	}
 
 	/**
