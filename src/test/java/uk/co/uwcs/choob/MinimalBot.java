@@ -37,6 +37,11 @@ public final class MinimalBot extends UnsupportedOperationBot implements Closeab
 	}
 
 	@Override
+	public String getTrigger() {
+		return "~";
+	}
+
+	@Override
 	public String getTriggerRegex() {
 		return "~";
 	}
