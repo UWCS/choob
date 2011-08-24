@@ -7,6 +7,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.IRCInterface;
@@ -57,6 +60,8 @@ class TellData
 
 public class Tell
 {
+	private static final Logger logger = LoggerFactory.getLogger(Tell.class);
+
 	private static int MAXTARGETS = 7;
 	private static long CACHEEXPIRE = 60 * 60 * 1000; // 5 mins
 
@@ -425,7 +430,7 @@ public class Tell
 		}
 		catch (final Exception e)
 		{
-			System.err.println("Tell.spew suppressed error:");
+			logger.error("Tell.spew suppressed error:");
 			e.printStackTrace();
 		}
 	}

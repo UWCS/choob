@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mozilla.javascript.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.modules.ObjectDbModule;
@@ -41,6 +43,8 @@ import uk.co.uwcs.choob.modules.ObjectDbModule;
  */
 public class ObjectDBTransaction // Needs to be non-final
 {
+	private static final Logger logger = LoggerFactory.getLogger(ObjectDBTransaction.class);
+
 	private Connection dbConn;
 	private Modules mods;
 
@@ -176,7 +180,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		{
 			throw new ObjectDBDeadlockError();
 		}
-		System.err.println("Ack! SQL Exception: " + e);
+		logger.error("Ack! SQL Exception: " + e);
 		e.printStackTrace();
 		return new ObjectDBError("An SQL exception occurred while processing this operation.", e);
 	}
@@ -529,8 +533,8 @@ public class ObjectDBTransaction // Needs to be non-final
 		catch (ParseException e)
 		{
 			// TODO there's some public properties we can use to make a better error message.
-			System.err.println("Parse error in string: " + clause);
-			System.err.println("Error was: " + e);
+			logger.error("Parse error in string: " + clause);
+			logger.error("Error was: " + e);
 			throw new ObjectDBError("Parse error in clause string: " + clause);
 		}
 
@@ -624,12 +628,12 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 		catch (InstantiationException e)
 		{
-			System.err.println("Error instantiating object of type " + storedClass + ": " + e);
+			logger.error("Error instantiating object of type " + storedClass + ": " + e);
 			throw new ObjectDBError("The object could not be instantiated.");
 		}
 		catch (IllegalAccessException e)
 		{
-			System.err.println("Access error instantiating object of type " + storedClass + ": " + e);
+			logger.error("Access error instantiating object of type " + storedClass + ": " + e);
 			throw new ObjectDBError("The object could not be instantiated.");
 		}
 		catch (SQLException e)
@@ -662,8 +666,8 @@ public class ObjectDBTransaction // Needs to be non-final
 			catch (ParseException e)
 			{
 				// TODO there's some public properties we can use to make a better error message.
-				System.err.println("Parse error in string: " + clause);
-				System.err.println("Error was: " + e);
+				logger.error("Parse error in string: " + clause);
+				logger.error("Error was: " + e);
 				throw new ObjectDBError("Parse error in clause string: " + clause);
 			}
 
@@ -694,8 +698,8 @@ public class ObjectDBTransaction // Needs to be non-final
 			catch (ParseException e)
 			{
 				// TODO there's some public properties we can use to make a better error message.
-				System.err.println("Parse error in string: " + clause);
-				System.err.println("Error was: " + e);
+				logger.error("Parse error in string: " + clause);
+				logger.error("Error was: " + e);
 				throw new ObjectDBError("Parse error in clause string.");
 			}
 		}

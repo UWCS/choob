@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.IRCEvent;
@@ -29,6 +32,8 @@ class TimedEvent
  */
 public class TimedEvents
 {
+	private static final Logger logger = LoggerFactory.getLogger(TimedEvents.class);
+
 	public String[] info()
 	{
 		return new String[] {
@@ -359,7 +364,7 @@ public class TimedEvents
 			final Message mes = mods.history.getMessage(timedEvent.mesID);
 			if (mes == null)
 			{
-				System.err.println("Event number " + timedEvent.mesID + " appears to have gone!");
+				logger.error("Event number " + timedEvent.mesID + " appears to have gone!");
 				return;
 			}
 

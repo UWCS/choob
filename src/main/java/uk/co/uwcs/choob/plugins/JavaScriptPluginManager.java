@@ -30,6 +30,8 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.regexp.NativeRegExp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.co.uwcs.choob.ChoobPluginManager;
 import uk.co.uwcs.choob.ChoobPluginManagerState;
@@ -49,6 +51,8 @@ import uk.co.uwcs.choob.support.events.Message;
  * @author silver
  */
 public final class JavaScriptPluginManager extends ChoobPluginManager {
+	private static final Logger logger = LoggerFactory.getLogger(JavaScriptPluginManager.class);
+
 	/*
 	 * The plugin map tracks which plugin instances have which commands, and
 	 * keeps a command name --> function map in particular.
@@ -286,7 +290,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 					if (params.length > 0 && params[0] instanceof Message) {
 						irc.sendContextReply((Message)params[0], e.details() + " Line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
 					} else {
-						System.err.println("Exception calling export " + export.getName() + ":");
+						logger.error("Exception calling export " + export.getName() + ":");
 					}
 					e.printStackTrace();
 					throw e;
@@ -295,7 +299,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 					if (params.length > 0 && params[0] instanceof Message) {
 						mods.plugin.exceptionReply((Message)params[0], e, pluginName);
 					} else {
-						System.err.println("Exception calling export " + export.getName() + ":");
+						logger.error("Exception calling export " + export.getName() + ":");
 					}
 					e.printStackTrace();
 					throw e;
@@ -330,6 +334,8 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 }
 
 final class JavaScriptPluginMap {
+	private static final Logger logger = LoggerFactory.getLogger(JavaScriptPluginMap.class);
+
 	/* Naming for items loaded from plugins:
 	 *
 	 * TYPE      NAME IN PLUGIN  RELATION  NAME IN MAP
@@ -383,7 +389,7 @@ final class JavaScriptPluginMap {
 						// Looks like a command definition.
 						final Object propVal = inst.get(propString, inst);
 						if (!(propVal instanceof Function)) {
-							System.err.println("  WARNING: Command-like property that is not a function: " + propString);
+							logger.error("  WARNING: Command-like property that is not a function: " + propString);
 							continue;
 						}
 						// It's a function, yay!
@@ -419,7 +425,7 @@ final class JavaScriptPluginMap {
 						// Looks like an event handler definition.
 						final Object propVal = inst.get(propString, inst);
 						if (!(propVal instanceof Function)) {
-							System.err.println("  WARNING: Event-like property that is not a function: " + propString);
+							logger.error("  WARNING: Event-like property that is not a function: " + propString);
 							continue;
 						}
 						// It's a function, yay!
@@ -438,7 +444,7 @@ final class JavaScriptPluginMap {
 						// Looks like a filter definition.
 						final Object propVal = inst.get(propString, inst);
 						if (!(propVal instanceof Function)) {
-							System.err.println("  WARNING: Filter-like property that is not a function: " + propString);
+							logger.error("  WARNING: Filter-like property that is not a function: " + propString);
 							continue;
 						}
 						// It's a function, yay!
@@ -446,11 +452,11 @@ final class JavaScriptPluginMap {
 
 						final Object regexpVal = func.get("regexp", func);
 						if (regexpVal == Scriptable.NOT_FOUND) {
-							System.err.println("  WARNING: Filter function (" + propString + ") missing 'regexp' property.");
+							logger.error("  WARNING: Filter function (" + propString + ") missing 'regexp' property.");
 							continue;
 						}
 						if (!(regexpVal instanceof NativeRegExp)) {
-							System.err.println("  WARNING: Filter function (" + propString + ") property 'regexp' is not a Regular Expression: " + regexpVal.getClass().getName());
+							logger.error("  WARNING: Filter function (" + propString + ") property 'regexp' is not a Regular Expression: " + regexpVal.getClass().getName());
 							continue;
 						}
 
@@ -465,7 +471,7 @@ final class JavaScriptPluginMap {
 						// Looks like an interval callback.
 						final Object propVal = inst.get(propString, inst);
 						if (!(propVal instanceof Function)) {
-							System.err.println("  WARNING: Interval-like property that is not a function: " + propString);
+							logger.error("  WARNING: Interval-like property that is not a function: " + propString);
 							continue;
 						}
 						// It's a function, yay!
@@ -701,6 +707,8 @@ final class JavaScriptPluginProperty extends JavaScriptPluginExport {
 }
 
 final class JavaScriptPlugin {
+	private static final Logger logger = LoggerFactory.getLogger(JavaScriptPlugin.class);
+
 	private final String pluginName;
 	private Scriptable scope;
 	private Scriptable inst;
@@ -718,7 +726,7 @@ final class JavaScriptPlugin {
 				ScriptableObject.defineProperty(scope, "dump", new FunctionObject("dump", JavaScriptPluginManager.class.getMethod("dump", String.class), scope), flags);
 				ScriptableObject.defineProperty(scope, "dumpln", new FunctionObject("dumpln", JavaScriptPluginManager.class.getMethod("dumpln", String.class), scope), flags);
 			} catch(final NoSuchMethodException e) {
-				System.err.println("Method not found: " + e);
+				logger.error("Method not found: " + e);
 				// Ignore for now.
 			}
 

@@ -24,6 +24,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jibble.pircbot.Colors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
@@ -220,6 +222,8 @@ class DelayedKarmaReasonObject implements Delayed
 
 public class Karma
 {
+	private static final Logger logger = LoggerFactory.getLogger(Karma.class);
+
 	// Non-null == ignore.
 	private final static Set<String> exceptions = new HashSet<String>();
 	private final static Set<String> reasonExceptions = new HashSet<String>();
@@ -332,25 +336,25 @@ public class Karma
 
 	public String[] apiReason()
 	{
-		System.err.println("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
+		logger.error("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
 		return apiReasonEnum(null);
 	}
 
 	public String[] apiReason(final int direction)
 	{
-		System.err.println("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
+		logger.error("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
 		return apiReasonEnum(null, direction);
 	}
 
 	public String[] apiReason(final String name)
 	{
-		System.err.println("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
+		logger.error("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
 		return apiReasonEnum(null, name);
 	}
 
 	public String[] apiReason(final String name, final int direction)
 	{
-		System.err.println("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
+		logger.error("WARNING: Karma.apiReason called with no enumSource. No enumeration supported with this call.");
 		return apiReasonEnum(null, name, direction);
 	}
 
@@ -605,7 +609,7 @@ public class Karma
 
 		final String nick = mods.nick.getBestPrimaryNick(mes.getNick());
 
-		//System.err.println("LINE       : <" + message + ">");
+		//logger.error("LINE       : <" + message + ">");
 		final List<Integer> matchStarts = new ArrayList<Integer>();
 		final Matcher karmaScan = karmaPattern.matcher(message);
 		while (karmaScan.find())
@@ -615,9 +619,9 @@ public class Karma
 		final List<List<String>> matches = new ArrayList<List<String>>();
 		for (int matchIndex = 1; matchIndex < matchStarts.size(); matchIndex++)
 		{
-			//System.err.println("");
+			//logger.error("");
 			final String submessage = message.substring(matchStarts.get(matchIndex - 1), matchStarts.get(matchIndex));
-			//System.err.println("  SEGMENT  : <" + submessage + ">");
+			//logger.error("  SEGMENT  : <" + submessage + ">");
 
 			Matcher karmaMatch = karmaPatternWithReason.matcher(submessage);
 			if (!karmaMatch.find())
@@ -626,9 +630,9 @@ public class Karma
 				karmaMatch.find();
 			}
 
-			//System.err.println("  MATCH    : <" + karmaMatch.group() + ">");
+			//logger.error("  MATCH    : <" + karmaMatch.group() + ">");
 			//for (int i = 1; i <= karmaMatch.groupCount(); i++)
-			//	System.err.println("    GROUP " + i + ": <" + karmaMatch.group(i) + ">");
+			//	logger.error("    GROUP " + i + ": <" + karmaMatch.group(i) + ">");
 
 			List<String> groups = new ArrayList<String>();
 			for (int i = 0; i <= karmaMatch.groupCount(); i++)
@@ -733,7 +737,7 @@ public class Karma
 			{ } // ignore
 			catch (final Throwable e)
 			{
-				System.err.println("Couldn't do antiflood call: " + e);
+				logger.error("Couldn't do antiflood call: " + e);
 			}
 		}
 

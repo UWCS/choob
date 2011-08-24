@@ -7,6 +7,9 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.modules.DateModule;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
@@ -547,6 +550,8 @@ class ParserState
  */
 class CalendarParser
 {
+	private static final Logger logger = LoggerFactory.getLogger(CalendarParser.class);
+
 	/** bit indicating that the year comes before the month. */
 	public static final int YEAR_BEFORE_MONTH = ParserState.YEAR_BEFORE_MONTH;
 	/** bit indicating that the year comes before the day. */
@@ -1046,7 +1051,7 @@ class CalendarParser
 		{
 			if (DEBUG)
 			{
-				System.err.println("IGNORE \"" + token + "\" (weekday)");
+				logger.error("IGNORE \"" + token + "\" (weekday)");
 			}
 			return;
 		}
@@ -1085,7 +1090,7 @@ class CalendarParser
 				state.setMonth(tmpMon);
 				if (DEBUG)
 				{
-					System.err.println("MONTH=" + MONTHS[state.getMonth() - 1][0] + " (" + token
+					logger.error("MONTH=" + MONTHS[state.getMonth() - 1][0] + " (" + token
 							+ ") name");
 				}
 				return;
@@ -1100,7 +1105,7 @@ class CalendarParser
 					state.setMonth(tmpMon);
 					if (DEBUG)
 					{
-						System.err.println("MONTH=" + MONTHS[state.getMonth() - 1][0] + ", YEAR="
+						logger.error("MONTH=" + MONTHS[state.getMonth() - 1][0] + ", YEAR="
 								+ state.getYear() + " (" + token + ") name swap");
 					}
 				}
@@ -1110,7 +1115,7 @@ class CalendarParser
 					state.setMonth(tmpMon);
 					if (DEBUG)
 					{
-						System.err.println("MONTH=" + MONTHS[state.getMonth() - 1][0] + ", DAY="
+						logger.error("MONTH=" + MONTHS[state.getMonth() - 1][0] + ", DAY="
 								+ state.getDate() + " (" + token + ") name swap");
 					}
 				}
@@ -1125,7 +1130,7 @@ class CalendarParser
 				state.setMonth(tmpMon);
 				if (DEBUG)
 				{
-					System.err.println("MONTH=" + MONTHS[state.getMonth() - 1][0] + ", DAY="
+					logger.error("MONTH=" + MONTHS[state.getMonth() - 1][0] + ", DAY="
 							+ state.getDate() + " (" + token + ") name swap 2");
 				}
 
@@ -1135,7 +1140,7 @@ class CalendarParser
 			// can't move month value to year or day ... PUKE
 			if (DEBUG)
 			{
-				System.err.println("*** Too many numbers in \"" + dateStr + "\"");
+				logger.error("*** Too many numbers in \"" + dateStr + "\"");
 			}
 			throw new CalendarParserException("Too many numbers in" + " date \"" + dateStr + "\"");
 		}
@@ -1151,7 +1156,7 @@ class CalendarParser
 				// don't need to do anything
 				if (DEBUG)
 				{
-					System.err.println("TIME=AM (" + token + ")");
+					logger.error("TIME=AM (" + token + ")");
 				}
 				return;
 			}
@@ -1168,7 +1173,7 @@ class CalendarParser
 
 				if (DEBUG)
 				{
-					System.err.println("TIME=PM (" + token + ")");
+					logger.error("TIME=PM (" + token + ")");
 				}
 				return;
 			}
@@ -1191,7 +1196,7 @@ class CalendarParser
 
 			if (DEBUG)
 			{
-				System.err.println("*** Unknown string \"" + token + "\"");
+				logger.error("*** Unknown string \"" + token + "\"");
 			}
 			throw new CalendarParserException("Unknown string \"" + token + "\" in date \""
 					+ dateStr + "\"");
@@ -1203,7 +1208,7 @@ class CalendarParser
 			state.setDate(val);
 			if (DEBUG)
 			{
-				System.err.println("DAY=" + state.getDate() + " (" + token + ") ord");
+				logger.error("DAY=" + state.getDate() + " (" + token + ") ord");
 			}
 			return;
 		}
@@ -1221,7 +1226,7 @@ class CalendarParser
 					state.setDate(val);
 					if (DEBUG)
 					{
-						System.err.println("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
+						logger.error("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
 								+ " (" + token + ") ord>12 swap");
 					}
 					return;
@@ -1236,7 +1241,7 @@ class CalendarParser
 
 					if (DEBUG)
 					{
-						System.err.println("YEAR=" + state.getYear() + ", MONTH="
+						logger.error("YEAR=" + state.getYear() + ", MONTH="
 								+ state.getMonth() + ", DAY=" + state.getDate() + " (" + token
 								+ ") ord megaswap");
 					}
@@ -1254,7 +1259,7 @@ class CalendarParser
 					state.setDate(val);
 					if (DEBUG)
 					{
-						System.err.println("MONTH=" + state.getMonth() + ", DAY=" + state.getDate()
+						logger.error("MONTH=" + state.getMonth() + ", DAY=" + state.getDate()
 								+ " (" + token + ") ord swap");
 					}
 					return;
@@ -1264,7 +1269,7 @@ class CalendarParser
 				state.setDate(val);
 				if (DEBUG)
 				{
-					System.err.println("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
+					logger.error("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
 							+ " (" + token + ") ord swap");
 				}
 				return;
@@ -1278,7 +1283,7 @@ class CalendarParser
 				state.setDate(val);
 				if (DEBUG)
 				{
-					System.err.println("MONTH=" + state.getMonth() + ", DAY=" + state.getDate()
+					logger.error("MONTH=" + state.getMonth() + ", DAY=" + state.getDate()
 							+ " (" + token + ") ord swap#2");
 				}
 				return;
@@ -1287,7 +1292,7 @@ class CalendarParser
 
 		if (DEBUG)
 		{
-			System.err.println("*** Extra number \"" + token + "\"");
+			logger.error("*** Extra number \"" + token + "\"");
 		}
 		throw new CalendarParserException("Cannot assign ordinal in \"" + dateStr + "\"");
 	}
@@ -1385,7 +1390,7 @@ class CalendarParser
 
 		if (DEBUG)
 		{
-			System.err.println("YEAR=" + state.getYear() + " MONTH=" + state.getMonth() + " DAY="
+			logger.error("YEAR=" + state.getYear() + " MONTH=" + state.getMonth() + " DAY="
 					+ state.getDate() + " (" + val + ") blob");
 		}
 	}
@@ -1411,7 +1416,7 @@ class CalendarParser
 		{
 			if (DEBUG)
 			{
-				System.err.println("*** Extra number " + val);
+				logger.error("*** Extra number " + val);
 			}
 			throw new CalendarParserException("Extra value \"" + val + "\" in date \"" + dateStr
 					+ "\"");
@@ -1422,7 +1427,7 @@ class CalendarParser
 		{
 			if (DEBUG)
 			{
-				System.err.println("*** Negative number " + val);
+				logger.error("*** Negative number " + val);
 			}
 			throw new CalendarParserException("Found negative number in" + " date \"" + dateStr
 					+ "\"");
@@ -1444,7 +1449,7 @@ class CalendarParser
 				state.setYear(val);
 				if (DEBUG)
 				{
-					System.err.println("YEAR=" + state.getYear() + " (" + val + ") >31");
+					logger.error("YEAR=" + state.getYear() + " (" + val + ") >31");
 				}
 				return;
 			}
@@ -1454,7 +1459,7 @@ class CalendarParser
 			{
 				if (DEBUG)
 				{
-					System.err.println("*** Ambiguous year " + state.getYear() + " vs. " + val);
+					logger.error("*** Ambiguous year " + state.getYear() + " vs. " + val);
 				}
 				String errMsg = "Couldn't decide on year number in date \"" + dateStr + "\"";
 				throw new CalendarParserException(errMsg);
@@ -1472,7 +1477,7 @@ class CalendarParser
 
 					if (DEBUG)
 					{
-						System.err.println("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
+						logger.error("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
 								+ " (" + val + ") >31 swap");
 					}
 
@@ -1491,7 +1496,7 @@ class CalendarParser
 
 					if (DEBUG)
 					{
-						System.err.println("YEAR=" + state.getYear() + ", MONTH="
+						logger.error("YEAR=" + state.getYear() + ", MONTH="
 								+ state.getMonth() + ", DAY=" + state.getDate() + " (" + val
 								+ ") >31 megaswap");
 					}
@@ -1501,7 +1506,7 @@ class CalendarParser
 
 				if (DEBUG)
 				{
-					System.err.println("*** Unassignable year-like" + " number " + val);
+					logger.error("*** Unassignable year-like" + " number " + val);
 				}
 				throw new CalendarParserException("Bad number " + val + " found in date \""
 						+ dateStr + "\"");
@@ -1517,7 +1522,7 @@ class CalendarParser
 					state.setYear(val);
 					if (DEBUG)
 					{
-						System.err.println("YEAR=" + state.getYear() + ", MONTH="
+						logger.error("YEAR=" + state.getYear() + ", MONTH="
 								+ state.getMonth() + " (" + val + ") >31 swap");
 					}
 				}
@@ -1527,7 +1532,7 @@ class CalendarParser
 					state.setYear(val);
 					if (DEBUG)
 					{
-						System.err.println("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
+						logger.error("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
 								+ " (" + val + ") >31 swap#2");
 					}
 				}
@@ -1541,7 +1546,7 @@ class CalendarParser
 				state.setYear(val);
 				if (DEBUG)
 				{
-					System.err.println("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
+					logger.error("YEAR=" + state.getYear() + ", DAY=" + state.getDate()
 							+ " (" + val + ") >31 day swap");
 				}
 				return;
@@ -1553,7 +1558,7 @@ class CalendarParser
 
 			if (DEBUG)
 			{
-				System.err.println("YEAR=" + state.getYear() + ", MONTH=" + state.getMonth() + " ("
+				logger.error("YEAR=" + state.getYear() + ", MONTH=" + state.getMonth() + " ("
 						+ val + ") >31 mon swap");
 			}
 
@@ -1574,7 +1579,7 @@ class CalendarParser
 					state.setYear(val);
 					if (DEBUG)
 					{
-						System.err.println("YEAR=" + state.getYear() + " (" + val + ") >12");
+						logger.error("YEAR=" + state.getYear() + " (" + val + ") >12");
 					}
 				}
 				else
@@ -1582,7 +1587,7 @@ class CalendarParser
 					state.setDate(val);
 					if (DEBUG)
 					{
-						System.err.println("DAY=" + state.getDate() + " (" + val + ") >12");
+						logger.error("DAY=" + state.getDate() + " (" + val + ") >12");
 					}
 				}
 
@@ -1598,7 +1603,7 @@ class CalendarParser
 
 				if (DEBUG)
 				{
-					System.err.println("DAY=" + state.getDate() + " (" + val + ") >12 !yr");
+					logger.error("DAY=" + state.getDate() + " (" + val + ") >12 !yr");
 				}
 
 				return;
@@ -1610,7 +1615,7 @@ class CalendarParser
 
 			if (DEBUG)
 			{
-				System.err.println("*** Unassignable year/day number " + val);
+				logger.error("*** Unassignable year/day number " + val);
 			}
 			throw new CalendarParserException("Bad number " + val + " found in date \"" + dateStr
 					+ "\"");
@@ -1626,7 +1631,7 @@ class CalendarParser
 				state.setDate(val);
 				if (DEBUG)
 				{
-					System.err.println("DAY=" + state.getDate() + " (" + val + ") ambig!yr");
+					logger.error("DAY=" + state.getDate() + " (" + val + ") ambig!yr");
 				}
 			}
 			else
@@ -1634,7 +1639,7 @@ class CalendarParser
 				state.setMonth(val);
 				if (DEBUG)
 				{
-					System.err.println("MONTH=" + state.getMonth() + " (" + val + ") ambig!yr");
+					logger.error("MONTH=" + state.getMonth() + " (" + val + ") ambig!yr");
 				}
 			}
 
@@ -1651,7 +1656,7 @@ class CalendarParser
 				state.setYear(val);
 				if (DEBUG)
 				{
-					System.err.println("YEAR=" + state.getYear() + " (" + val + ") ambig!mo");
+					logger.error("YEAR=" + state.getYear() + " (" + val + ") ambig!mo");
 				}
 			}
 			else
@@ -1659,7 +1664,7 @@ class CalendarParser
 				state.setDate(val);
 				if (DEBUG)
 				{
-					System.err.println("DAY=" + state.getDate() + " (" + val + ") ambig!mo");
+					logger.error("DAY=" + state.getDate() + " (" + val + ") ambig!mo");
 				}
 			}
 
@@ -1676,7 +1681,7 @@ class CalendarParser
 				state.setYear(val);
 				if (DEBUG)
 				{
-					System.err.println("YEAR=" + state.getYear() + " (" + val + ") ambig!day");
+					logger.error("YEAR=" + state.getYear() + " (" + val + ") ambig!day");
 				}
 			}
 			else
@@ -1684,7 +1689,7 @@ class CalendarParser
 				state.setMonth(val);
 				if (DEBUG)
 				{
-					System.err.println("MONTH=" + state.getMonth() + " (" + val + ") ambig!day");
+					logger.error("MONTH=" + state.getMonth() + " (" + val + ") ambig!day");
 				}
 			}
 
@@ -1699,7 +1704,7 @@ class CalendarParser
 				state.setYear(val);
 				if (DEBUG)
 				{
-					System.err.println("YEAR=" + state.getYear() + " (" + val + ") YM|YD");
+					logger.error("YEAR=" + state.getYear() + " (" + val + ") YM|YD");
 				}
 			}
 			else
@@ -1707,7 +1712,7 @@ class CalendarParser
 				state.setDate(val);
 				if (DEBUG)
 				{
-					System.err.println("DAY=" + state.getDate() + " (" + val + ") YM!YD");
+					logger.error("DAY=" + state.getDate() + " (" + val + ") YM!YD");
 				}
 			}
 		}
@@ -1716,7 +1721,7 @@ class CalendarParser
 			state.setMonth(val);
 			if (DEBUG)
 			{
-				System.err.println("MONTH=" + state.getMonth() + " (" + val + ") !YM|MD");
+				logger.error("MONTH=" + state.getMonth() + " (" + val + ") !YM|MD");
 			}
 		}
 		else
@@ -1724,7 +1729,7 @@ class CalendarParser
 			state.setDate(val);
 			if (DEBUG)
 			{
-				System.err.println("DAY=" + state.getDate() + " (" + val + ") !YM!MD");
+				logger.error("DAY=" + state.getDate() + " (" + val + ") !YM!MD");
 			}
 		}
 	}
@@ -1780,7 +1785,7 @@ class CalendarParser
 
 			if (DEBUG)
 			{
-				System.err.println("YEAR "
+				logger.error("YEAR "
 						+ (state.isYearSet() ? Integer.toString(state.getYear()) : "UNSET")
 						+ ", MONTH "
 						+ (state.isMonthSet() ? Integer.toString(state.getMonth()) : "UNSET")
@@ -1861,7 +1866,7 @@ class CalendarParser
 
 		if (DEBUG)
 		{
-			System.err.println("Y" + state.getYear() + " M" + state.getMonth() + " D"
+			logger.error("Y" + state.getYear() + " M" + state.getMonth() + " D"
 					+ state.getDate() + " H" + state.getHour() + " M" + state.getMinute() + " S"
 					+ state.getSecond() + " L" + state.getMillisecond() + " => " + toString(cal));
 		}
@@ -1894,7 +1899,7 @@ class CalendarParser
 		{
 			if (DEBUG)
 			{
-				System.err.println("No AM/PM in \"" + timeStr + "\" (time)");
+				logger.error("No AM/PM in \"" + timeStr + "\" (time)");
 			}
 			tmpTime = timeStr;
 		}
@@ -1918,7 +1923,7 @@ class CalendarParser
 			tmpTime = timeStr.substring(0, timeStr.length() - 2);
 			if (DEBUG)
 			{
-				System.err.println("Found " + (state.isTimePostMeridian() ? "PM" : "AM")
+				logger.error("Found " + (state.isTimePostMeridian() ? "PM" : "AM")
 						+ ". now \"" + tmpTime + "\" (time)");
 			}
 		}
@@ -1930,7 +1935,7 @@ class CalendarParser
 
 			if (DEBUG)
 			{
-				System.err.println("HOUR "
+				logger.error("HOUR "
 						+ (state.isHourSet() ? Integer.toString(state.getHour()) : "UNSET")
 						+ ", MINUTE "
 						+ (state.isMinuteSet() ? Integer.toString(state.getMinute()) : "UNSET")
@@ -1965,7 +1970,7 @@ class CalendarParser
 				}
 				if (DEBUG)
 				{
-					System.err.println("Set hour to " + val);
+					logger.error("Set hour to " + val);
 				}
 				place = PLACE_MINUTE;
 				break;
@@ -1980,7 +1985,7 @@ class CalendarParser
 				}
 				if (DEBUG)
 				{
-					System.err.println("Set minute to " + val);
+					logger.error("Set minute to " + val);
 				}
 				place = PLACE_SECOND;
 				break;
@@ -1995,7 +2000,7 @@ class CalendarParser
 				}
 				if (DEBUG)
 				{
-					System.err.println("Set second to " + val);
+					logger.error("Set second to " + val);
 				}
 				place = PLACE_MILLI;
 				break;
@@ -2010,7 +2015,7 @@ class CalendarParser
 				}
 				if (DEBUG)
 				{
-					System.err.println("Set millisecond to " + val);
+					logger.error("Set millisecond to " + val);
 				}
 				place = PLACE_UNKNOWN;
 				break;
@@ -2055,7 +2060,7 @@ class CalendarParser
 
 			if (DEBUG)
 			{
-				System.err.println("TZ_HOUR " + (hour != UNSET ? Integer.toString(hour) : "UNSET")
+				logger.error("TZ_HOUR " + (hour != UNSET ? Integer.toString(hour) : "UNSET")
 						+ ", TZ_MINUTE " + (minute != UNSET ? Integer.toString(minute) : "UNSET")
 						+ ", TOKEN=\"" + token + "\"");
 			}
@@ -2077,7 +2082,7 @@ class CalendarParser
 				hour = val;
 				if (DEBUG)
 				{
-					System.err.println("Set time zone offset hour to " + val);
+					logger.error("Set time zone offset hour to " + val);
 				}
 				place = PLACE_MINUTE;
 				break;
@@ -2085,7 +2090,7 @@ class CalendarParser
 				minute = val;
 				if (DEBUG)
 				{
-					System.err.println("Set time zone offset minute to " + val);
+					logger.error("Set time zone offset minute to " + val);
 				}
 				place = PLACE_UNKNOWN;
 				break;

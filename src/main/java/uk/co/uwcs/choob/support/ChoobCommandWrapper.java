@@ -11,6 +11,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.ChoobCommand;
 import uk.co.uwcs.choob.ChoobParam;
 import uk.co.uwcs.choob.support.events.Message;
@@ -22,6 +25,8 @@ import uk.co.uwcs.choob.support.events.Message;
  */
 public class ChoobCommandWrapper
 {
+	private static final Logger logger = LoggerFactory.getLogger(ChoobCommandWrapper.class);
+
 	private final Method meth;
 
 	public ChoobCommandWrapper(final Method meth)
@@ -75,17 +80,17 @@ public class ChoobCommandWrapper
 			}
 		} catch (IllegalAccessException ex)
 		{
-			System.err.println(ex.getMessage());
+			logger.error(ex.getMessage());
 			ex.printStackTrace();
 			throw new ChoobException("Illegal Access Exception encountered when invoking command.",ex);
 		} catch (IllegalArgumentException ex)
 		{
-			System.err.println(ex.getMessage());
+			logger.error(ex.getMessage());
 			ex.printStackTrace();
 			throw new ChoobException("Illegal Argument Exception encountered when invoking command.",ex);
 		} catch (InvocationTargetException ex)
 		{
-			System.err.println(ex.getCause().getMessage());
+			logger.error(ex.getCause().getMessage());
 			ex.getCause().printStackTrace();
 			throw new ChoobException("Illegal Target Exception encountered when invoking command.",ex.getCause());
 		}

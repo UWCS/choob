@@ -11,6 +11,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.support.ChoobError;
 import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.DbConnectionBroker;
@@ -52,6 +55,8 @@ import uk.co.uwcs.choob.support.ObjectDBTransaction;
  */
 public final class ObjectDbModule
 {
+	private static final Logger logger = LoggerFactory.getLogger(ObjectDbModule.class);
+
 	private final DbConnectionBroker broker;
 	private final Modules mods;
 
@@ -238,7 +243,7 @@ public final class ObjectDbModule
 						throw new ObjectDBDeadlockError();
 
 					trans.rollback();
-					System.err.println("SQL Deadlock occurred. Rolling back and backing off for " + delay + "ms.");
+					logger.error("SQL Deadlock occurred. Rolling back and backing off for " + delay + "ms.");
 					try { synchronized(trans) { trans.wait(delay); } } catch (final InterruptedException ie) { }
 					delay *= 1.3; // XXX Makes baby LucidIon cry.
 				}

@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.events.CommandEvent;
 import uk.co.uwcs.choob.support.events.Event;
@@ -16,6 +19,8 @@ import uk.co.uwcs.choob.support.events.UserEvent;
 
 public class ChoobDecoderTask extends ChoobTask
 {
+	private static final Logger logger = LoggerFactory.getLogger(ChoobDecoderTask.class);
+
 	private final ChoobDecoderTaskData data;
 	private final Event event;
 
@@ -98,7 +103,7 @@ public class ChoobDecoderTask extends ChoobTask
 			catch (final Throwable e)
 			{
 				// This isn't.
-				System.err.println("EXCEPTION: " + e.toString());
+				logger.error("EXCEPTION: " + e.toString());
 			}
 		}
 
@@ -130,7 +135,7 @@ public class ChoobDecoderTask extends ChoobTask
 					{ } // Ignore
 					catch (final Throwable e)
 					{
-						System.err.println("Couldn't do antiflood call: " + e);
+						logger.error("Couldn't do antiflood call: " + e);
 					}
 
 					final String pluginName  = ma.group(1);

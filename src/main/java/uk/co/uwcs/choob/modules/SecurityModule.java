@@ -30,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.PropertyPermission;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.support.ChoobAuthError;
 import uk.co.uwcs.choob.support.ChoobError;
 import uk.co.uwcs.choob.support.ChoobEventExpired;
@@ -59,6 +62,8 @@ import uk.co.uwcs.choob.support.events.UserEvent;
  */
 public final class SecurityModule extends SecurityManager // For getClassContext(). Heh.
 {
+	private static final Logger logger = LoggerFactory.getLogger(SecurityModule.class);
+
 	private final DbConnectionBroker dbBroker;
 	private final Map<Integer,PermissionCollection> nodeMap;
 	private final Map<Integer,List<Integer>> nodeTree;
@@ -211,7 +216,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					}
 					catch (final ClassNotFoundException e)
 					{
-						System.err.println("Permission class not found: " + className);
+						logger.error("Permission class not found: " + className);
 						continue; // XXX I guess this is OK?
 					}
 
@@ -219,7 +224,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					// TODO - is this check enough to be secure?
 					if (!Permission.class.isAssignableFrom(clas))
 					{
-						System.err.println("Class " + className + " is not a Permission!");
+						logger.error("Class " + className + " is not a Permission!");
 						continue; // XXX
 					}
 
@@ -230,7 +235,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					}
 					catch (final NoSuchMethodException e)
 					{
-						System.err.println("Permission class had no valid constructor: " + className);
+						logger.error("Permission class had no valid constructor: " + className);
 						continue; // XXX I guess this is OK?
 					}
 
@@ -241,19 +246,19 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					}
 					catch (final IllegalAccessException e)
 					{
-						System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
+						logger.error("Permission class constructor for " + className + " failed: " + e.getMessage());
 						e.printStackTrace();
 						continue; // XXX
 					}
 					catch (final InstantiationException e)
 					{
-						System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
+						logger.error("Permission class constructor for " + className + " failed: " + e.getMessage());
 						e.printStackTrace();
 						continue; // XXX
 					}
 					catch (final InvocationTargetException e)
 					{
-						System.err.println("Permission class constructor for " + className + " failed: " + e.getMessage());
+						logger.error("Permission class constructor for " + className + " failed: " + e.getMessage());
 						e.printStackTrace();
 						continue; // XXX
 					}
@@ -264,7 +269,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 		catch ( final SQLException e )
 		{
-			System.err.println("Could not load DB permissions for user node " + nodeID + " (probably now incomplete permissions): " + e.getMessage());
+			logger.error("Could not load DB permissions for user node " + nodeID + " (probably now incomplete permissions): " + e.getMessage());
 			e.printStackTrace();
 		}
 		finally
@@ -329,7 +334,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			catch (final SQLException e)
 			{
 				e.printStackTrace();
-				System.err.println("Couldn't get a connection for getAllNodes()");
+				logger.error("Couldn't get a connection for getAllNodes()");
 				return new ArrayList<Integer>().iterator(); // XXX
 			}
 			final List <Integer>list = new ArrayList<Integer>();
@@ -356,7 +361,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	{
 		if (recurseDepth >= 5)
 		{
-			System.err.println("Ack! Recursion depth exceeded when trying to process user node " + nodeID);
+			logger.error("Ack! Recursion depth exceeded when trying to process user node " + nodeID);
 			return;
 		}
 
@@ -464,7 +469,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				nodeIDCache.get(nodeType).put(nodeName.toLowerCase(), idGot);
 				return idGot;
 			}
-			System.err.println("Ack! Node name " + nodeName + "(" + nodeType + ") not found!");
+			logger.error("Ack! Node name " + nodeName + "(" + nodeType + ") not found!");
 		}
 		catch (final SQLException e)
 		{
@@ -494,11 +499,11 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			{
 				return new UserNode(results.getString(1), results.getInt(2));
 			}
-			System.err.println("Ack! Node " + nodeID + " not found!");
+			logger.error("Ack! Node " + nodeID + " not found!");
 		}
 		catch (final SQLException e)
 		{
-			System.err.println("Ack! SQL exception when getting node from node ID " + nodeID + ": " + e);
+			logger.error("Ack! SQL exception when getting node from node ID " + nodeID + ": " + e);
 		}
 		finally
 		{
@@ -635,7 +640,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			return false;
 		} catch (final ChoobException e) {
 			// Oh. Bugger
-			System.err.println("Authentication broken:");
+			logger.error("Authentication broken:");
 			e.printStackTrace(System.err);
 			return false;
 		}
@@ -663,7 +668,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		catch (final ChoobException e)
 		{
 			// OMFG!
-			System.err.println("Error calling NickServ check! Details:");
+			logger.error("Error calling NickServ check! Details:");
 			e.printStackTrace();
 			return false;
 		}
@@ -690,7 +695,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			return false;
 		} catch (final ChoobException e) {
 			// Aieeeeee!
-			System.err.println("Error getting QuakenetAuth account! Details:");
+			logger.error("Error getting QuakenetAuth account! Details:");
 			e.printStackTrace(System.err);
 			return false;
 		}
@@ -729,7 +734,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			authPlugin.toLowerCase();
 		} catch (final ChoobNoSuchCallException e) {
 			// No idea what auth method to use... do them all
-			System.err.println("No authentication method specified. Trying everything.");
+			logger.error("No authentication method specified. Trying everything.");
 		}
 
 		if (authPlugin.equals("nickserv") || authPlugin.equals("unknown")) {
@@ -746,7 +751,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				}
 			} catch (final ChoobNoSuchCallException e) {
 				// Oh dear. We can't do Q auth.
-				System.err.println("Can not perform quakenet authentication. Please load QuakenetAuth plugin.");
+				logger.error("Can not perform quakenet authentication. Please load QuakenetAuth plugin.");
 			}
 		}
 
@@ -993,7 +998,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	private void sqlErr(final String task, final SQLException e)
 	{
-		System.err.println("ACK! SQL error when " + task + ": " + e);
+		logger.error("ACK! SQL error when " + task + ": " + e);
 		e.printStackTrace();
 		throw new ChoobError("An SQL error occurred when " + task + ". Please ask the bot administrator to check the logs.", e);
 	}
@@ -1026,7 +1031,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setInt(1, userID);
 				stat.setString(2, pluginName);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in plugin bind!");
+					logger.error("Ack! No rows updated in plugin bind!");
 
 				// Done!
 				dbConn.commit();
@@ -1073,7 +1078,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setString(1, userName);
 				stat.setInt(2, 0);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user insert!");
+					logger.error("Ack! No rows updated in user insert!");
 				final int userID = getLastInsertID(dbConn);
 				stat.close();
 
@@ -1094,7 +1099,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					stat.setString(1, userName);
 					stat.setInt(2, 1);
 					if (stat.executeUpdate() == 0)
-						System.err.println("Ack! No rows updated in user group insert!");
+						logger.error("Ack! No rows updated in user group insert!");
 					groupID = getLastInsertID(dbConn);
 					stat.close();
 				}
@@ -1104,7 +1109,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setInt(1, groupID);
 				stat.setInt(2, userID);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user group member insert!");
+					logger.error("Ack! No rows updated in user group member insert!");
 
 				// Done!
 				dbConn.commit();
@@ -1176,7 +1181,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setString(1, leaf);
 				stat.setInt(2, 0);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user insert!");
+					logger.error("Ack! No rows updated in user insert!");
 				final int userID = getLastInsertID(dbConn);
 				stat.close();
 
@@ -1185,7 +1190,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setInt(1, rootID);
 				stat.setInt(2, userID);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user group member insert!");
+					logger.error("Ack! No rows updated in user group member insert!");
 
 				// Done!
 				dbConn.commit();
@@ -1283,13 +1288,13 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat = dbConn.prepareStatement("DELETE FROM GroupMembers WHERE MemberID = ?");
 				stat.setInt(1, userID);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user member delete!");
+					logger.error("Ack! No rows updated in user member delete!");
 
 				// Delete user.
 				stat = dbConn.prepareStatement("DELETE FROM UserNodes WHERE NodeID = ?");
 				stat.setInt(1, userID);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user delete!");
+					logger.error("Ack! No rows updated in user delete!");
 				stat.close();
 
 				// Done!
@@ -1348,7 +1353,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setString(1, group.getName());
 				stat.setInt(2, group.getType());
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in group " + groupName + " insert!");
+					logger.error("Ack! No rows updated in group " + groupName + " insert!");
 				dbConn.commit();
 			}
 			catch (final SQLException e)
@@ -1418,7 +1423,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
 				if ( stat.executeUpdate() == 0 )
-					System.err.println("Ack! Group member add did nothing: " + parent + ", member " + child);
+					logger.error("Ack! Group member add did nothing: " + parent + ", member " + child);
 
 				dbConn.commit();
 			}
@@ -1490,7 +1495,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
 				if ( stat.executeUpdate() == 0 )
-					System.err.println("Ack! Group member remove did nothing: " + parent + ", member " + child);
+					logger.error("Ack! Group member remove did nothing: " + parent + ", member " + child);
 			}
 			catch (final SQLException e)
 			{
@@ -1515,7 +1520,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			// OK, that's all fine, BUT:
 			if (!hasPluginPerm(permission))
 			{
-				System.err.println("Plugin " + pluginName + " tried to grant permission " + permission + " it didn't have!");
+				logger.error("Plugin " + pluginName + " tried to grant permission " + permission + " it didn't have!");
 				throw new ChoobException("A plugin may only grant permssions which it is entitled to.");
 			}
 		}
@@ -1574,7 +1579,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					stat.setString(4, permission.getActions());
 				}
 				if ( stat.executeUpdate() == 0 )
-					System.err.println("Ack! Permission add did nothing: " + group + " " + permission);
+					logger.error("Ack! Permission add did nothing: " + group + " " + permission);
 
 				invalidateNodePermissions(groupID);
 			}

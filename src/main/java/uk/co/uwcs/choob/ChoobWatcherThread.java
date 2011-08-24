@@ -12,6 +12,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.Interval;
@@ -21,6 +24,8 @@ import uk.co.uwcs.choob.support.Interval;
  */
 public final class ChoobWatcherThread extends Thread
 {
+	private static final Logger logger = LoggerFactory.getLogger(ChoobWatcherThread.class);
+
 	private final List<Interval> intervalList;
 	private boolean running;
 	private final Modules mods;
@@ -72,14 +77,13 @@ public final class ChoobWatcherThread extends Thread
 							}
 							catch (final Exception e)
 							{
-								System.err.println("Plugin " + tempInterval.getPlugin() + " got exception queuing task.");
-								System.err.println(e);
+								logger.error("Plugin " + tempInterval.getPlugin() + " got exception queuing task.", e);
 								e.printStackTrace();
 							}
 						}
 						else
 						{
-							System.err.println("Plugin manager for plugin " + tempInterval.getPlugin() + " returned a null doInterval ChoobTask.");
+							logger.error("Plugin manager for plugin " + tempInterval.getPlugin() + " returned a null doInterval ChoobTask.");
 						}
 					}
 					else if (next > tempInterval.getTrigger())

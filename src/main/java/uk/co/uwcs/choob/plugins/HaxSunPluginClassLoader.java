@@ -11,8 +11,13 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.ProtectionDomain;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class HaxSunPluginClassLoader extends ClassLoader
 {
+	private static final Logger logger = LoggerFactory.getLogger(HaxSunPluginClassLoader.class);
+
 	private final String path;
 	private final ProtectionDomain domain;
 
@@ -28,11 +33,8 @@ public final class HaxSunPluginClassLoader extends ClassLoader
 		}
 		catch (IllegalArgumentException e)
 		{
-			e.printStackTrace();
-			System.err.println();
-			System.err.println("Couldn't create plugins package.  " +
-					"This is probably because your debugger is interfering.  Your plugin probably hasn't been reloaded.");
-			System.err.println();
+			logger.error("Couldn't create plugins package.  " +
+					"This is probably because your debugger is interfering.  Your plugin probably hasn't been reloaded.", e);
 		}
 	}
 
@@ -79,17 +81,17 @@ public final class HaxSunPluginClassLoader extends ClassLoader
 							}
 							catch (final IOException e)
 							{
-								System.err.println("Could not open class URL: " + e);
+								logger.error("Could not open class URL: " + e);
 								throw new ClassNotFoundException("Class " + name + " not found!", e);
 							}
 							catch (final ClassFormatError e)
 							{
-								System.err.println("Could not open class URL: " + e);
+								logger.error("Could not open class URL: " + e);
 								throw new ClassNotFoundException("Class " + name + " not valid.", e);
 							}
 							catch (final NoClassDefFoundError e)
 							{
-								System.err.println("n class URL: " + e);
+								logger.error("n class URL: " + e);
 								throw new ClassNotFoundException("Class " + name + " contained no class.", e);
 							}
 						}

@@ -20,6 +20,9 @@ import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.ChoobCommand;
 import uk.co.uwcs.choob.ChoobPluginManager;
 import uk.co.uwcs.choob.ChoobPluginManagerState;
@@ -42,6 +45,7 @@ import uk.co.uwcs.choob.support.events.Message;
  */
 public class AnnotatedJavaPluginManager extends ChoobPluginManager
 {
+	private static final Logger logger = LoggerFactory.getLogger(AnnotatedJavaPluginManager.class);
 
 	private static final String PLUGIN_DIR = HaxSunPluginManager.PLUGIN_DIR;
 
@@ -147,14 +151,14 @@ public class AnnotatedJavaPluginManager extends ChoobPluginManager
 					}
 				} catch (IllegalArgumentException ex)
 				{
-					System.err.println("IllegalArgumentException");
-					System.err.println(ex.getMessage());
+					logger.error("IllegalArgumentException");
+					logger.error(ex.getMessage());
 					ex.printStackTrace();
 					throw new ChoobException("Unable to inject " + field.getType() + ".", ex.getCause());
 				} catch (IllegalAccessException ex)
 				{
-					System.err.println("IllegalAccessException");
-					System.err.println(ex.getMessage());
+					logger.error("IllegalAccessException");
+					logger.error(ex.getMessage());
 					ex.printStackTrace();
 					throw new ChoobException("Unable to inject " + field.getType() + ".", ex.getCause());
 				}

@@ -15,6 +15,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobError;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
@@ -125,6 +128,8 @@ class QuoteEnumerator
 
 public class Quote
 {
+	private static final Logger logger = LoggerFactory.getLogger(Quote.class);
+
 	private static int MINLENGTH = 7; // Minimum length of a line to be quotable using simple syntax.
 	private static int MINWORDS = 2; // Minimum words in a line to be quotable using simple syntax.
 	private static int HISTORY = 100; // Lines of history to search.
@@ -892,7 +897,7 @@ public class Quote
 
 		if (lines.size() == 0)
 		{
-			System.err.println("Found quote " + quote.id + " but it was empty!" );
+			logger.error("Found quote " + quote.id + " but it was empty!" );
 			return null;
 		}
 
@@ -1693,7 +1698,7 @@ public class Quote
 			} catch (final ObjectDBError e)
 			{
 				//We'll just have no join quote if there is an error reading the database.
-				System.err.println(e.getMessage());
+				logger.error(e.getMessage());
 				e.printStackTrace();
 			}
 		}
@@ -1788,7 +1793,7 @@ public class Quote
 		}
 		catch (final Throwable e)
 		{
-			System.err.println("Couldn't do antiflood call: " + e);
+			logger.error("Couldn't do antiflood call", e);
 		}
 
 		try

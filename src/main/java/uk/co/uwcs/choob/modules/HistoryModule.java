@@ -16,6 +16,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.support.ChoobError;
 import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.DbConnectionBroker;
@@ -35,6 +38,8 @@ import uk.co.uwcs.choob.support.events.PrivateMessage;
  */
 public final class HistoryModule
 {
+	private static final Logger logger = LoggerFactory.getLogger(HistoryModule.class);
+
 	private final DbConnectionBroker dbBroker;
 
 	/** Creates a new instance of LoggerModule */
@@ -104,7 +109,7 @@ public final class HistoryModule
 		}
 		catch( final SQLException e )
 		{
-			System.err.println("Could not write history line to database: " + e);
+			logger.error("Could not write history line to database", e);
 			// I think this exception doesn't need to be propogated... --bucko
 		}
 		finally
@@ -116,7 +121,7 @@ public final class HistoryModule
 			}
 			catch (final SQLException e)
 			{
-				System.err.println("Could not close SQL connection: " + e);
+				logger.error("Could not close SQL connection: ", e);
 			}
 			finally
 			{
@@ -163,8 +168,8 @@ public final class HistoryModule
 		}
 		catch( final SQLException e )
 		{
-			System.err.println("Could not read history line from database: " + e);
-			throw new ChoobError("SQL Error reading from database.");
+			logger.error("Could not read history line from database", e);
+			throw new ChoobError("SQL Error reading from database.", e);
 		}
 		finally
 		{
@@ -175,8 +180,8 @@ public final class HistoryModule
 			}
 			catch (final SQLException e)
 			{
-				System.err.println("Could not read history line from database: " + e);
-				throw new ChoobError("SQL Error reading from database.");
+				logger.error("Could not read history line from database: ", e);
+				throw new ChoobError("SQL Error reading from database.", e);
 			}
 			finally
 			{
@@ -239,7 +244,7 @@ public final class HistoryModule
 				}
 
 				if (mes == null)
-					System.err.println("Invalid event type: " + type);
+					logger.error("Invalid event type: " + type);
 
 				return mes;
 			}
@@ -248,8 +253,8 @@ public final class HistoryModule
 		}
 		catch( final SQLException e )
 		{
-			System.err.println("Could not read history line from database: " + e);
-			throw new ChoobError("SQL Error reading from database.");
+			logger.error("Could not read history line from database: ", e);
+			throw new ChoobError("SQL Error reading from database.", e);
 		}
 		finally
 		{
@@ -260,8 +265,8 @@ public final class HistoryModule
 			}
 			catch (final SQLException e)
 			{
-				System.err.println("Could not read history line from database: " + e);
-				throw new ChoobError("SQL Error reading from database.");
+				logger.error("Could not read history line from database: ", e);
+				throw new ChoobError("SQL Error reading from database.", e);
 			}
 			finally
 			{
@@ -386,7 +391,7 @@ public final class HistoryModule
 
 					if (mes == null)
 					{
-						System.err.println("Invalid event type: " + type);
+						logger.error("Invalid event type: " + type);
 						continue;
 					}
 
@@ -405,8 +410,8 @@ public final class HistoryModule
 		}
 		catch( final SQLException e )
 		{
-			System.err.println("Could not read history line from database: " + e);
-			throw new ChoobError("SQL Error reading from database.");
+			logger.error("Could not read history line from database: ", e);
+			throw new ChoobError("SQL Error reading from database.", e);
 		}
 		finally
 		{
@@ -417,8 +422,8 @@ public final class HistoryModule
 			}
 			catch (final SQLException e)
 			{
-				System.err.println("Could not read history line from database: " + e);
-				throw new ChoobError("SQL Error reading from database.");
+				logger.error("Could not read history line from database: ", e);
+				throw new ChoobError("SQL Error reading from database.", e);
 			}
 			finally
 			{

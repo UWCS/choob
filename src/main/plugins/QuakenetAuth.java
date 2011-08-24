@@ -6,6 +6,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jibble.pircbot.Colors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobException;
@@ -36,6 +38,8 @@ class QAuthResult {
  *
  */
 public class QuakenetAuth {
+
+	private static final Logger logger = LoggerFactory.getLogger(QuakenetAuth.class);
 
 	private static int TIMEOUT = 10000;
 
@@ -227,7 +231,7 @@ public class QuakenetAuth {
 				user = (String)mods.plugin.callAPI("Options", "GetGeneralOption", "qusername");
 				pass = (String)mods.plugin.callAPI("Options", "GetGeneralOption", "qpassword");
 			} catch (final ChoobNoSuchCallException e) {
-				System.err.println("Options plugin not loaded; can't get Q auth details.");
+				logger.error("Options plugin not loaded; can't get Q auth details.");
 				whoisfallback = true;
 				return;
 			}
@@ -244,7 +248,7 @@ public class QuakenetAuth {
 
 				hadToAuth = true;
 			} else {
-				System.err.println("Q auth details not set...");
+				logger.error("Q auth details not set...");
 				whoisfallback = true;
 			}
 
@@ -262,7 +266,7 @@ public class QuakenetAuth {
 					if (result == null) {
 						// Hmm, this shouldn't have happened. May be that the reply wasn't
 						// what we wanted or the user is not authed
-						System.err.println("Can't find nick check. :(");
+						logger.error("Can't find nick check. :(");
 						return;
 					}
 					synchronized(result) {
@@ -286,7 +290,7 @@ public class QuakenetAuth {
 					if (result == null) {
 						// Hmm, this shouldn't have happened. May be that the reply wasn't
 						// what we wanted or the user is not authed
-						System.err.println("Can't find nick check. :(");
+						logger.error("Can't find nick check. :(");
 						return;
 					}
 					synchronized(result) {

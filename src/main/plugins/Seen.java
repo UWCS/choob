@@ -3,6 +3,9 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.ChannelAction;
@@ -38,6 +41,8 @@ class SeenObj
 
 public class Seen
 {
+	private static final Logger logger = LoggerFactory.getLogger(Seen.class);
+
 	public String[] info()
 	{
 		return new String[] {
@@ -169,7 +174,7 @@ public class Seen
 		catch (final Exception e)
 		{
 			lockedUntil=new GregorianCalendar().getTimeInMillis()+2*60*1000;
-			System.err.println("Seen suppressed error:");
+			logger.error("Seen suppressed error:");
 			e.printStackTrace();
 			objs=new ArrayList<SeenObj>();
 		}
@@ -210,7 +215,7 @@ public class Seen
 		catch (final Exception e)
 		{
 			lockedUntil=new GregorianCalendar().getTimeInMillis()+2*60*1000;
-			System.err.println("Seen suppressed error:");
+			logger.error("Seen suppressed error:");
 			e.printStackTrace();
 		}
 	}

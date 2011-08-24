@@ -22,6 +22,9 @@ import javax.xml.ws.Service;
 import javax.xml.ws.handler.MessageContext;
 import javax.xml.ws.http.HTTPBinding;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobNoSuchCallException;
 import uk.co.uwcs.choob.support.IRCInterface;
@@ -33,6 +36,8 @@ import uk.co.uwcs.choob.support.events.Message;
  */
 public class GoogleWeather
 {
+	private static final Logger logger = LoggerFactory.getLogger(GoogleWeather.class);
+
 	private static final String baseURL = "http://www.google.com/ig/api?weather=";
 	private static final Class[] DATA_TYPES = {GoogleMapsResponse.class,Weather.class,CurrentConditions.class,ForecastConditions.class,DataItem.class};
 
@@ -165,12 +170,12 @@ public class GoogleWeather
 			irc.sendContextReply(mes,getWeather(location));
 		} catch (final IOException e)
 		{
-			System.err.println(e.getMessage());
+			logger.error(e.getMessage());
 			e.printStackTrace();
 			irc.sendContextReply(mes,"Could not contact the site to obtain weather information");
 		} catch (final JAXBException e)
 		{
-			System.err.println(e.getMessage());
+			logger.error(e.getMessage());
 			e.printStackTrace();
 			irc.sendContextReply(mes,"Could not understand the weather information");
 		} catch (final LocationNotFoundException e)
@@ -181,7 +186,7 @@ public class GoogleWeather
 			Throwable ex = e;
 			while (ex != null)
 			{
-				System.err.println(ex.getMessage());
+				logger.error(ex.getMessage());
 				ex.printStackTrace();
 				System.out.println("Cause is " + ex.getCause());
 				ex = ex.getCause();
@@ -193,7 +198,7 @@ public class GoogleWeather
 	{
 		if (args.length != 1)
 		{
-			System.err.println("Usage: <Location>");
+			logger.error("Usage: <Location>");
 			System.exit(-1);
 		}
 		final GoogleWeather m = new GoogleWeather();

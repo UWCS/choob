@@ -10,6 +10,9 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.support.Interval;
 
 /**
@@ -17,6 +20,8 @@ import uk.co.uwcs.choob.support.Interval;
  */
 public final class IntervalModule
 {
+	private static final Logger logger = LoggerFactory.getLogger(IntervalModule.class);
+
 	private final List <Interval> intervalList;
 	private final Modules mods;
 
@@ -74,7 +79,7 @@ public final class IntervalModule
 		final String plugin = mods.security.getPluginName(0);
 		if (plugin == null)
 		{
-			System.err.println("A plugin tried to call callBack, but wasn't on the stack...");
+			logger.error("A plugin tried to call callBack, but wasn't on the stack...");
 			return;
 		}
 		final Interval newInt = new Interval( plugin, parameter, when, id );
@@ -103,7 +108,7 @@ public final class IntervalModule
 		final String plugin = mods.security.getPluginName(0);
 		if (plugin == null)
 		{
-			System.err.println("A plugin tried to call reset, but wasn't on the stack...");
+			logger.error("A plugin tried to call reset, but wasn't on the stack...");
 			return;
 		}
 		synchronized(intervalList)

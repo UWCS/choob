@@ -25,6 +25,8 @@ import java.util.Random;
 
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.PircBot;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobError;
@@ -69,6 +71,8 @@ import com.google.common.annotations.VisibleForTesting;
  */
 final class Choob extends PircBot implements Bot
 {
+	private static final Logger logger = LoggerFactory.getLogger(Choob.class);
+
 	private final ChoobThreadManager ctm;
 	private final ChoobDecoderTaskData cdtd;
 	private DbConnectionBroker broker;
@@ -246,8 +250,7 @@ final class Choob extends PircBot implements Bot
 		}
 		catch (ChoobNoSuchCallException ignored)
 		{
-			// No plugin, no joining.
-			ignored.printStackTrace(System.err);
+			logger.error("No Autojoin plugin, can't join anything", ignored);
 		}
 	}
 

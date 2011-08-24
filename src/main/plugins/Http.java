@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.ChoobThread;
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobException;
@@ -30,6 +33,8 @@ class HashedStringObject
 
 public class Http
 {
+	private static final Logger logger = LoggerFactory.getLogger(Http.class);
+
 	int portNumber = 8023;
 
 	// If this is null, the local machine's ip will be used.
@@ -169,7 +174,7 @@ public class Http
 		catch (final IOException e)
 		{
 			// Oh dear...
-			System.err.println("Ooops, some problem while attempting to accept a socket:");
+			logger.error("Ooops, some problem while attempting to accept a socket:");
 			e.printStackTrace();
 			return;
 		}
@@ -225,7 +230,7 @@ public class Http
 					}
 					catch (final Throwable e)
 					{
-						System.err.println("Error retreiving object ID from database:");
+						logger.error("Error retreiving object ID from database:");
 						e.printStackTrace();
 						out.println("Error retreiving object ID " + hash);
 					}
@@ -265,7 +270,7 @@ public class Http
 		}
 		catch (final IOException e)
 		{
-			System.err.println("IO Exception while processing HTTP request:");
+			logger.error("IO Exception while processing HTTP request:");
 			e.printStackTrace();
 		}
 		finally

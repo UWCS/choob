@@ -9,11 +9,16 @@ package uk.co.uwcs.choob;
 import java.io.File;
 import java.util.Arrays;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Main class in the Choob project, simply creates a Choob instance.
  */
 public final class ChoobMain
 {
+	private static final Logger logger = LoggerFactory.getLogger(ChoobMain.class);
+
 	public static void main(final String[] args)
 	{
 		try
@@ -29,8 +34,7 @@ public final class ChoobMain
 		}
 		catch (final Throwable t)
 		{
-			System.err.println("Fatal error in Choob, exiting.");
-			t.printStackTrace();
+			logger.error("Fatal error in Choob, exiting.", t);
 			System.exit(1);
 		}
 

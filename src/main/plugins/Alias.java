@@ -4,6 +4,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jibble.pircbot.Colors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.co.uwcs.choob.modules.Modules;
 import uk.co.uwcs.choob.support.ChoobBadSyntaxError;
@@ -40,6 +42,8 @@ class AliasObject
 
 public class Alias
 {
+	private static final Logger logger = LoggerFactory.getLogger(Alias.class);
+
 	public String[] info()
 	{
 		return new String[] {
@@ -668,7 +672,7 @@ public class Alias
 		}
 		catch (final Throwable e)
 		{
-			System.err.println("Couldn't do antiflood call: " + e);
+			logger.error("Couldn't do antiflood call: " + e);
 		}
 
 		if (mesFlags.containsKey("_securityOK"))

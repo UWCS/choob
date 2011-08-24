@@ -10,9 +10,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.support.IRCInterface;
 
 public class ChoobPluginManagerState {
+	private static final Logger logger = LoggerFactory.getLogger(ChoobPluginManagerState.class);
+
 	public final IRCInterface irc;
 	public final Map<String, ChoobPluginManager> pluginMap;
 	public final Map<String, List<String>> commands;
@@ -47,7 +52,7 @@ public class ChoobPluginManagerState {
 		}
 		catch (final IOException e)
 		{
-			System.err.println("Could not load phonetics file: " + transFile);
+			logger.error("Could not load phonetics file: " + transFile, e);
 			throw new RuntimeException("Couldn't load phonetics file", e);
 		}
 	}
