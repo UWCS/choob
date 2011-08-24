@@ -98,8 +98,7 @@ final class Choob extends PircBot implements Bot
 		}
 		catch (final IOException e)
 		{
-			e.printStackTrace();
-			System.out.println("\n\nError reading config file, exiting.");
+			logger.error("Error reading config file, exiting.", e);
 			throw new ExitCodeException(9);
 		}
 
@@ -120,8 +119,7 @@ final class Choob extends PircBot implements Bot
 		}
 		catch (final IOException e)
 		{
-			e.printStackTrace();
-			System.out.println("Cannot create db log, exiting.");
+			logger.error("Cannot create db log, exiting.", e);
 			throw new ExitCodeException(7);
 		}
 		try
@@ -136,8 +134,7 @@ final class Choob extends PircBot implements Bot
 		}
 		catch (final SQLException e)
 		{
-			e.printStackTrace();
-			System.out.println("Unexpected error in DbConnectionBroker setup, exiting.");
+			logger.error("Unexpected error in DbConnectionBroker setup, exiting.", e);
 			throw new ExitCodeException(5);
 		}
 
@@ -210,14 +207,12 @@ final class Choob extends PircBot implements Bot
 		}
 		catch (final IOException e)
 		{
-			e.printStackTrace();
-			System.out.println("Connection Error, exiting: " + e);
+			logger.error("Connection Error, exiting: ", e);
 			throw new ExitCodeException(2);
 		}
 		catch (final IrcException e)
 		{
-			e.printStackTrace();
-			System.out.println("Unhandled IRC Error on connect, exiting: ." + e);
+			logger.error("Unhandled IRC Error on connect, exiting: .", e);
 			throw new ExitCodeException(3);
 		}
 	}
@@ -288,7 +283,7 @@ final class Choob extends PircBot implements Bot
 		}
 		catch (final Throwable t)
 		{
-			t.printStackTrace();
+			logger.error("Failed to load core plugin list!", t);
 			// If we failed to load the core plugins, we've got issues.
 			throw new ChoobError("Failed to load core plugin list!", t);
 		}

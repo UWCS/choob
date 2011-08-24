@@ -57,6 +57,8 @@ import org.eclipse.jdt.core.dom.Modifier.ModifierKeyword;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.co.uwcs.choob.ChoobMain;
 import uk.co.uwcs.choob.ChoobPluginManager;
@@ -74,6 +76,8 @@ import uk.co.uwcs.choob.support.events.Message;
 
 public final class HaxSunPluginManager extends ChoobPluginManager
 {
+	private static final Logger logger = LoggerFactory.getLogger(HaxSunPluginManager.class);
+
 	private final Modules mods;
 	private final IRCInterface irc;
 
@@ -633,13 +637,11 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 						mods.plugin.exceptionReply((Message)param, cause, pluginName);
 					}
-					System.err.println("Exception invoking method " + meth);
-					e.getCause().printStackTrace();
+					logger.error("Exception invoking method " + meth, e);
 				}
 				catch (final IllegalAccessException e)
 				{
-					System.err.println("Could not access method " + meth);
-					e.printStackTrace();
+					logger.error("Could not access method " + meth, e);
 				}
 			}
 		};
@@ -864,6 +866,8 @@ public final class HaxSunPluginManager extends ChoobPluginManager
  */
 final class ChoobPluginMap
 {
+	private static final Logger logger = LoggerFactory.getLogger(ChoobPluginMap.class);
+
 	// Name -> Plugin object
 	private final Map<String,Object> plugins;
 
@@ -1011,7 +1015,7 @@ final class ChoobPluginMap
 				}
 				else
 				{
-					System.err.println("Command " + commandName + " had invalid signature.");
+					logger.error("Command " + commandName + " had invalid signature.");
 				}
 			}
 /*			else if (name.startsWith("api"))
@@ -1026,7 +1030,7 @@ final class ChoobPluginMap
 				}
 				else
 				{
-					System.err.println("API call " + apiName + " had invalid signature.");
+					logger.error("API call " + apiName + " had invalid signature.");
 				}
 			} API == generic */
 			else if (name.startsWith("filter"))
@@ -1038,17 +1042,17 @@ final class ChoobPluginMap
 				}
 				catch (final NoSuchFieldException e)
 				{
-					System.err.println("Plugin " + pluginName + " had filter " + name + " with no regex.");
+					logger.error("Plugin " + pluginName + " had filter " + name + " with no regex.");
 					continue;
 				}
 				catch (final ClassCastException e)
 				{
-					System.err.println("Plugin " + pluginName + " had filter " + name + " with no non-String regex.");
+					logger.error("Plugin " + pluginName + " had filter " + name + " with no non-String regex.");
 					continue;
 				}
 				catch (final IllegalAccessException e)
 				{
-					System.err.println("Plugin " + pluginName + " had non-public filter " + name + ".");
+					logger.error("Plugin " + pluginName + " had non-public filter " + name + ".");
 					continue;
 				}
 				Pattern pattern;
@@ -1058,7 +1062,7 @@ final class ChoobPluginMap
 				}
 				catch (final PatternSyntaxException e)
 				{
-					System.err.println("Plugin " + pluginName + " had invalid filter " + filter + ": " + e);
+					logger.error("Plugin " + pluginName + " had invalid filter " + filter + ": " + e);
 					continue;
 				}
 				if (HaxSunPluginManager.checkCommandSignature(meth))
@@ -1070,7 +1074,7 @@ final class ChoobPluginMap
 				}
 				else
 				{
-					System.err.println("Filter " + lname + "." + name + " had invalid signature.");
+					logger.error("Filter " + lname + "." + name + " had invalid signature.");
 				}
 			}
 			else if (name.startsWith("on"))
@@ -1084,7 +1088,7 @@ final class ChoobPluginMap
 				}
 				else
 				{
-					System.err.println("Event " + lname + "." + name + " had invalid signature.");
+					logger.error("Event " + lname + "." + name + " had invalid signature.");
 				}
 			}
 			else if (name.startsWith("interval"))
@@ -1095,7 +1099,7 @@ final class ChoobPluginMap
 				}
 				else
 				{
-					System.err.println("Interval " + lname + "." + name + " had invalid signature.");
+					logger.error("Interval " + lname + "." + name + " had invalid signature.");
 				}
 			}
 			else
@@ -1117,12 +1121,12 @@ final class ChoobPluginMap
 					}
 					else
 					{
-						System.err.println("Generic call " + fullName + " had invalid signature.");
+						logger.error("Generic call " + fullName + " had invalid signature.");
 					}
 				}
 				else
 				{
-					System.err.println("Ignoring method " + name + ".");
+					logger.error("Ignoring method " + name + ".");
 				}
 			}
 		}
@@ -1167,7 +1171,7 @@ final class ChoobPluginMap
 				}
 				else
 				{
-					System.err.println("Ignoring field " + name + ".");
+					logger.error("Ignoring field " + name + ".");
 				}
 			}
 		}

@@ -80,19 +80,16 @@ public class ChoobCommandWrapper
 			}
 		} catch (IllegalAccessException ex)
 		{
-			logger.error(ex.getMessage());
-			ex.printStackTrace();
+			logger.error("couldn't invoke command", ex);
 			throw new ChoobException("Illegal Access Exception encountered when invoking command.",ex);
 		} catch (IllegalArgumentException ex)
 		{
-			logger.error(ex.getMessage());
-			ex.printStackTrace();
+			logger.error("couldn't invoke command", ex);
 			throw new ChoobException("Illegal Argument Exception encountered when invoking command.",ex);
 		} catch (InvocationTargetException ex)
 		{
-			logger.error(ex.getCause().getMessage());
-			ex.getCause().printStackTrace();
-			throw new ChoobException("Illegal Target Exception encountered when invoking command.",ex.getCause());
+			logger.error("couldn't invoke command", ex);
+			throw new ChoobException("Illegal Target Exception encountered when invoking command.", ex.getCause());
 		}
 
 	}

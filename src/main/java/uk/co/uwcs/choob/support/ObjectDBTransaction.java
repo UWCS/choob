@@ -180,8 +180,7 @@ public class ObjectDBTransaction // Needs to be non-final
 		{
 			throw new ObjectDBDeadlockError();
 		}
-		logger.error("Ack! SQL Exception: " + e);
-		e.printStackTrace();
+		logger.error("Ack! SQL Exception: ", e);
 		return new ObjectDBError("An SQL exception occurred while processing this operation.", e);
 	}
 
@@ -622,18 +621,18 @@ public class ObjectDBTransaction // Needs to be non-final
 		}
 		catch (NoSuchFieldException e)
 		{
-			e.printStackTrace();
+			logger.error("Field that did exist now doesn't. Ooops?", e);
 			// This should never happen...
-			throw new ObjectDBError("Field that did exist now doesn't. Ooops?");
+			throw new ObjectDBError("Field that did exist now doesn't. Ooops?", e);
 		}
 		catch (InstantiationException e)
 		{
-			logger.error("Error instantiating object of type " + storedClass + ": " + e);
+			logger.error("Error instantiating object of type " + storedClass + ": ", e);
 			throw new ObjectDBError("The object could not be instantiated.");
 		}
 		catch (IllegalAccessException e)
 		{
-			logger.error("Access error instantiating object of type " + storedClass + ": " + e);
+			logger.error("Access error instantiating object of type " + storedClass + ": ", e);
 			throw new ObjectDBError("The object could not be instantiated.");
 		}
 		catch (SQLException e)

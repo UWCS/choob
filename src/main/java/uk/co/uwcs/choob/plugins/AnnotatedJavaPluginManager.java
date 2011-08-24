@@ -151,15 +151,11 @@ public class AnnotatedJavaPluginManager extends ChoobPluginManager
 					}
 				} catch (IllegalArgumentException ex)
 				{
-					logger.error("IllegalArgumentException");
-					logger.error(ex.getMessage());
-					ex.printStackTrace();
+					logger.error("IllegalArgumentException", ex);
 					throw new ChoobException("Unable to inject " + field.getType() + ".", ex.getCause());
 				} catch (IllegalAccessException ex)
 				{
-					logger.error("IllegalAccessException");
-					logger.error(ex.getMessage());
-					ex.printStackTrace();
+					logger.error("IllegalAccessException", ex);
 					throw new ChoobException("Unable to inject " + field.getType() + ".", ex.getCause());
 				}
 			}

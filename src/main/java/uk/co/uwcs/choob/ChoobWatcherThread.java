@@ -78,7 +78,6 @@ public final class ChoobWatcherThread extends Thread
 							catch (final Exception e)
 							{
 								logger.error("Plugin " + tempInterval.getPlugin() + " got exception queuing task.", e);
-								e.printStackTrace();
 							}
 						}
 						else

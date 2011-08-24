@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.co.uwcs.choob.Bot;
 import uk.co.uwcs.choob.ChoobDistributingPluginManager;
 import uk.co.uwcs.choob.ChoobPluginManager;
@@ -55,6 +58,8 @@ import com.google.common.collect.ImmutableMap;
  */
 public final class PluginModule
 {
+	private static final Logger logger = LoggerFactory.getLogger(PluginModule.class);
+
 	private final ChoobThreadManager ctm;
 	private final DbConnectionBroker broker;
 	private final Modules mods;
@@ -490,8 +495,8 @@ public final class PluginModule
 			if (sqlSetCore.executeUpdate() == 0)
 				throw new ChoobNoSuchPluginException(pluginName);
 		} catch (final SQLException e) {
-			e.printStackTrace();
-			throw new ChoobInternalError("SQL Exception while setting core status on the plugin.");
+			logger.error("SQL Exception while setting core status on the plugin.", e);
+			throw new ChoobInternalError("SQL Exception while setting core status on the plugin.", e);
 		} finally {
 			if (dbCon != null)
 				broker.freeConnection(dbCon);
@@ -522,8 +527,8 @@ public final class PluginModule
 			while(names.next());
 			return plugList.toArray(plugins);
 		} catch (final SQLException e) {
-			e.printStackTrace();
-			throw new ChoobInternalError("SQL Exception while setting core status on the plugin.");
+			logger.error("SQL Exception while setting core status on the plugin.", e);
+			throw new ChoobInternalError("SQL Exception while setting core status on the plugin.", e);
 		} finally {
 			if (dbCon != null)
 				broker.freeConnection(dbCon);
@@ -543,8 +548,8 @@ public final class PluginModule
 
 			return url.getString("URL");
 		} catch (final SQLException e) {
-			e.printStackTrace();
-			throw new ChoobInternalError("SQL Exception while finding the plugin in the database.");
+			logger.error("SQL Exception while finding the plugin in the database.", e);
+			throw new ChoobInternalError("SQL Exception while finding the plugin in the database.", e);
 		} finally {
 			if (dbCon != null)
 				broker.freeConnection(dbCon);
@@ -564,8 +569,8 @@ public final class PluginModule
 
 			return name.getString("PluginName");
 		} catch (final SQLException e) {
-			e.printStackTrace();
-			throw new ChoobInternalError("SQL Exception while finding the plugin in the database.");
+			logger.error("SQL Exception while finding the plugin in the database.", e);
+			throw new ChoobInternalError("SQL Exception while finding the plugin in the database.", e);
 		} finally {
 			if (dbCon != null)
 				broker.freeConnection(dbCon);

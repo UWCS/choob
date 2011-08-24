@@ -96,8 +96,8 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 			// First thing's first; we must connect to the identified resource.
 			con = fromLocation.openConnection();
 		} catch(final IOException e) {
-			e.printStackTrace();
-			throw new ChoobException("Unable to open a connection to the source location <" + fromLocation + ">.");
+			logger.error("Unable to open connection", e);
+			throw new ChoobException("Unable to open a connection to the source location <" + fromLocation + ">.", e);
 		}
 		try {
 			/*
@@ -115,7 +115,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 				code += line + "\n";
 			}
 		} catch(final IOException e) {
-			e.printStackTrace();
+			logger.error("Unable to fetch", e);
 			throw new ChoobException("Unable to fetch the source from <" + fromLocation + ">.");
 		}
 
@@ -288,20 +288,20 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 
 				} catch (final RhinoException e) {
 					if (params.length > 0 && params[0] instanceof Message) {
+						logger.error("Exception calling export", e);
 						irc.sendContextReply((Message)params[0], e.details() + " Line " + e.lineNumber() + ", col " + e.columnNumber() + " of " + e.sourceName() + ".");
 					} else {
-						logger.error("Exception calling export " + export.getName() + ":");
+						logger.error("Exception calling export " + export.getName() + ":", e);
 					}
-					e.printStackTrace();
 					throw e;
 
 				} catch (final Exception e) {
 					if (params.length > 0 && params[0] instanceof Message) {
+						logger.error("Exception calling export 2", e);
 						mods.plugin.exceptionReply((Message)params[0], e, pluginName);
 					} else {
-						logger.error("Exception calling export " + export.getName() + ":");
+						logger.error("Exception calling export " + export.getName() + ":", e);
 					}
-					e.printStackTrace();
 					throw e;
 
 				} finally {

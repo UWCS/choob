@@ -246,20 +246,17 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					}
 					catch (final IllegalAccessException e)
 					{
-						logger.error("Permission class constructor for " + className + " failed: " + e.getMessage());
-						e.printStackTrace();
+						logger.error("Permission class constructor for " + className + " failed: ", e);
 						continue; // XXX
 					}
 					catch (final InstantiationException e)
 					{
-						logger.error("Permission class constructor for " + className + " failed: " + e.getMessage());
-						e.printStackTrace();
+						logger.error("Permission class constructor for " + className + " failed: ", e);
 						continue; // XXX
 					}
 					catch (final InvocationTargetException e)
 					{
-						logger.error("Permission class constructor for " + className + " failed: " + e.getMessage());
-						e.printStackTrace();
+						logger.error("Permission class constructor for " + className + " failed: ", e);
 						continue; // XXX
 					}
 
@@ -269,8 +266,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}
 		catch ( final SQLException e )
 		{
-			logger.error("Could not load DB permissions for user node " + nodeID + " (probably now incomplete permissions): " + e.getMessage());
-			e.printStackTrace();
+			logger.error("Could not load DB permissions for user node " + nodeID + " (probably now incomplete permissions): ", e);
 		}
 		finally
 		{
@@ -333,8 +329,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			}
 			catch (final SQLException e)
 			{
-				e.printStackTrace();
-				logger.error("Couldn't get a connection for getAllNodes()");
+				logger.error("Couldn't get a connection for getAllNodes()", e);
 				return new ArrayList<Integer>().iterator(); // XXX
 			}
 			final List <Integer>list = new ArrayList<Integer>();
@@ -640,8 +635,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			return false;
 		} catch (final ChoobException e) {
 			// Oh. Bugger
-			logger.error("Authentication broken:");
-			e.printStackTrace(System.err);
+			logger.error("Authentication broken:", e);
 			return false;
 		}
 	}
@@ -668,8 +662,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		catch (final ChoobException e)
 		{
 			// OMFG!
-			logger.error("Error calling NickServ check! Details:");
-			e.printStackTrace();
+			logger.error("Error calling NickServ check! Details:", e);
 			return false;
 		}
 	}
@@ -695,8 +688,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			return false;
 		} catch (final ChoobException e) {
 			// Aieeeeee!
-			logger.error("Error getting QuakenetAuth account! Details:");
-			e.printStackTrace(System.err);
+			logger.error("Error getting QuakenetAuth account! Details:", e);
 			return false;
 		}
 	}
@@ -998,8 +990,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	private void sqlErr(final String task, final SQLException e)
 	{
-		logger.error("ACK! SQL error when " + task + ": " + e);
-		e.printStackTrace();
+		logger.error("ACK! SQL error when " + task + ": ", e);
 		throw new ChoobError("An SQL error occurred when " + task + ". Please ask the bot administrator to check the logs.", e);
 	}
 

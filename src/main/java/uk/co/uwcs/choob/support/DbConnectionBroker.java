@@ -8,11 +8,16 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
 
 public final class DbConnectionBroker
 {
+	private static final Logger logger = LoggerFactory.getLogger(DbConnectionBroker.class);
+
 	ComboPooledDataSource cpds;
 
 	/**
@@ -79,7 +84,7 @@ public final class DbConnectionBroker
 			try {
 				conn.close();
 			} catch (final SQLException e) {
-				e.printStackTrace();
+				logger.warn("Couldn't close connection", e);
 			}
 		}
 	}

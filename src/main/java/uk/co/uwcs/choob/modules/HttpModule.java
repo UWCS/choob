@@ -230,10 +230,8 @@ public class HttpModule {
 			response = HttpModule.client.execute(method, responseHandler);
 		} catch (ClientProtocolException e) {
 			response = HttpModule.HTTP_RESPONSE_ERROR + " - " + e.getClass().getSimpleName() + " " + e.getMessage();
-			// e.printStackTrace();
 		} catch (IOException e) {
 			response = HttpModule.HTTP_RESPONSE_ERROR + " - " + e.getClass().getSimpleName() + " " + e.getMessage();
-			// e.printStackTrace();
 		}
 		return response;
 	}
