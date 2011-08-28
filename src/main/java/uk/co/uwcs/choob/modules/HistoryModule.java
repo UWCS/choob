@@ -197,7 +197,7 @@ public final class HistoryModule
 	 */
 	public Message getMessage( final int messageID )
 	{
-		System.out.println("getMessage");
+		logger.debug("getMessage: entry");
 		Connection dbCon = null;
 		PreparedStatement stat = null;
 		try
@@ -210,7 +210,7 @@ public final class HistoryModule
 
 			if ( result.first() )
 			{
-				System.out.println("resultfirst");
+				logger.debug("getMessage: resultfirst");
 
 				final String type = result.getString(2);
 				final int pos = result.getString(4).indexOf('@');
@@ -224,7 +224,7 @@ public final class HistoryModule
 					// Need privs to create events...
 					mes = AccessController.doPrivileged( new PrivilegedExceptionAction<Message>() {
 						@Override public Message run() throws SQLException {
-							System.out.println("run");
+							logger.debug("getMessage: run");
 							if (type.equals(ChannelAction.class.getName()))
 								return new ChannelAction("onAction", result.getLong(7), result.getInt(8), result.getString(6), result.getString(3), login, host, channel, channel);
 							else if (type.equals(ChannelMessage.class.getName()))

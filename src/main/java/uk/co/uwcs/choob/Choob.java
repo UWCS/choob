@@ -150,8 +150,8 @@ final class Choob extends PircBot implements Bot
 				setEncoding("UTF-8");
 			} catch (final UnsupportedEncodingException ex) {
 				// Really broken
-				System.out.println("Could not set a sensible encoding, exiting.");
-				throw new ExitCodeException(6);
+				logger.error("Could not set a sensible encoding, exiting.", ex);
+				throw new ExitCodeException(6, ex);
 			}
 		}
 
@@ -271,9 +271,8 @@ final class Choob extends PircBot implements Bot
 			if ( coreplugResults.first() )
 				do
 				{
-					System.out.print("Loading core plugin " + coreplugResults.getString("PluginName") + " from <" + coreplugResults.getString("URL") + ">... ");
+					logger.info("Loading core plugin " + coreplugResults.getString("PluginName") + " from <" + coreplugResults.getString("URL") + ">...");
 					modules.plugin.addPlugin(coreplugResults.getString("PluginName"), coreplugResults.getString("URL"));
-					System.out.println("done.");
 				}
 				while ( coreplugResults.next() );
 
@@ -367,13 +366,13 @@ final class Choob extends PircBot implements Bot
 	protected void onDisconnect()
 	{
 		if (exitCode >= 0) {
-			System.out.println("Disconnected as planned.");
+			logger.info("Disconnected as planned.");
 			System.exit(exitCode);
 		}
 
 		// Exit code 1 (technically, any non-zero code) will cause the wrapper
 		// to restart us.
-		System.out.println("Connection lost!");
+		logger.error("Connection lost!");
 		System.exit(1);
 	}
 

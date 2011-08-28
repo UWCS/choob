@@ -298,7 +298,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 		if ( ! allNodes.hasNext() )
 		{
-			System.out.println("User node " + userNode + " has no subnodes!");
+			logger.info("User node " + userNode + " has no subnodes!");
 			return false;
 		}
 
@@ -797,7 +797,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 
 		final int userNode = getNodeIDFromUserName(userEvent);
 
-		System.out.println("Checking permission on user " + userEvent.getNick() + "(" + userNode + ")" + ": " + permission);
+		logger.info("Checking permission on user " + userEvent.getNick() + "(" + userNode + ")" + ": " + permission);
 
 		if (userNode == -1)
 			if (anonID != -1)
@@ -926,7 +926,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 		}).booleanValue();
 
 		if (!rv) {
-			System.out.println("Plugin " + plugin + " lacks permission " + permission + ".");
+			logger.info("Plugin " + plugin + " lacks permission " + permission + ".");
 		}
 		return rv;
 	}

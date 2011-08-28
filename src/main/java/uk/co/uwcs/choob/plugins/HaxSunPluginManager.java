@@ -141,7 +141,8 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 
 		if (success)
 			return baosts; // success
-		System.out.println(baosts);
+
+		logger.warn("compile failed {}", baosts);
 
 		String excep="Compile failed.";
 
@@ -150,7 +151,9 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			final String url=(String)mods.plugin.callAPI("Http", "StoreString", baosts);
 			excep="Compile failed, see: " + url + " for details.";
 		}
-		catch (final Exception e) {}
+		catch (final Exception e) {
+			logger.warn("Couldn't register compile failure with Http plugin", e);
+		}
 		throw new ChoobException(excep);
 	}
 
@@ -380,7 +383,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 			try {
 				clazz = Class.forName(className);
 			} catch (ClassNotFoundException cfe) {
-				System.out.println("Still waiting for your IDE to create the class...");
+				logger.warn("Still waiting for your IDE to create the class...");
 				try { Thread.sleep(500); }
 				catch (InterruptedException e) { throw new ClassNotFoundException("Oh dear"); }
 				clazz = null;
@@ -506,7 +509,7 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 		final String action = perm.action();
 		final String group = "plugin." + newClass.getSimpleName();
 		final Class<? extends Permission> pClass = perm.value();
-		System.out.println(name+"+"+action);
+		logger.debug("grantPermission: {} + {}", new Object[] { name, action });
 		try {
 			if("".equals(name)) {
 				// empty constructor

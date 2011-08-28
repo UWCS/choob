@@ -21,12 +21,17 @@ import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class ChoobConnectionWrapper implements Connection
 {
+	private static final Logger logger = LoggerFactory.getLogger(ChoobConnectionWrapper.class);
+
 	Connection conn;
 
 	static void logSQL(final String sql) {
-		System.out.println(System.currentTimeMillis() + " " + sql);
+		logger.debug(sql);
 	}
 
 	public ChoobConnectionWrapper(final Connection conn) {

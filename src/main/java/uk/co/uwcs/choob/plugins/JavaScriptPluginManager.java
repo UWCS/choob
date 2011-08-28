@@ -85,7 +85,7 @@ public final class JavaScriptPluginManager extends ChoobPluginManager {
 	 * easily.
 	 */
 	public static void dumpln(final String text) {
-		System.out.println("JS dump: " + text);
+		logger.debug("JS dump: " + text);
 	}
 
 	@Override

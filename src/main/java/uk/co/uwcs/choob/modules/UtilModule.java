@@ -162,9 +162,4 @@ public final class UtilModule
 		}
 		return ret.toString();
 	}
-
-	public static void main(String[] args)
-	{
-		System.out.println(hrList(Arrays.asList("pony", "badger", "monkey")));
-	}
 }

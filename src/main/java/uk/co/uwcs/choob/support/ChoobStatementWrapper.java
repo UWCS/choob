@@ -9,12 +9,17 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class ChoobStatementWrapper implements Statement
 {
+	private static final Logger logger = LoggerFactory.getLogger(ChoobStatementWrapper.class);
+
 	Statement stat;
 
 	static void logSQL(final String sql) {
-		System.out.println(System.currentTimeMillis() + " " + sql);
+		logger.debug(sql);
 	}
 
 	public ChoobStatementWrapper(final Statement stat) {
