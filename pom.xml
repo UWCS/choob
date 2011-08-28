@@ -18,12 +18,12 @@
 	<packaging>jar</packaging>
 
 	<name>choob</name>
-	<url>http://maven.apache.org</url>
+	<url>https://github.com/UWCS/choob</url>
 
 	<scm>
-		<connection>scm:git:http://choob.uwcs.co.uk/choob.git/</connection>
-		<developerConnection>scm:git:choob@uwcs.co.uk:public_html/choob.git</developerConnection>
-		<url>http://trac.uwcs.co.uk/choob</url>
+		<connection>scm:git:git://github.com/UWCS/choob.git</connection>
+		<developerConnection>scm:git:git@github.com:UWCS/choob.git</developerConnection>
+		<url>https://github.com/UWCS/choob</url>
 	</scm>
 
 	<properties>
