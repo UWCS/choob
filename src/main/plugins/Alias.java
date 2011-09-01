@@ -111,6 +111,14 @@ public class Alias
 	 */
 	public String apiCreateAlias(final Message mes, final String innick, String context, String param)
 	{
+		return apiCreateAlias(mes, innick, context, param, false);
+	}
+	
+	/** Fake API returning String message result for pipes
+	 * @param mes MAY BE NULL, access checks will be skipped
+	 */
+	public String apiCreateAlias(final Message mes, final String innick, String context, String param, Boolean locked)
+	{
 		String[] params = mods.util.getParamArray(param, 2);
 		final String name = params[1];
 		String conv = params[2];
@@ -192,9 +200,13 @@ public class Alias
 			mods.odb.update(alias);
 		}
 		else
-			mods.odb.save(new AliasObject(name, conv, nick));
+		{
+			final AliasObject newAlias = new AliasObject(name, conv, nick);
+			newAlias.locked = locked;
+			mods.odb.save(newAlias);
+		}
 
-		return "Aliased '" + name + "' to '" + conv + "'" + oldAlias + ".";
+		return "Aliased '" + name + (locked ? "' (LOCKED) to '" : "' to '") + conv + "'" + oldAlias + ".";
 	}
 
 	public String commandShowAlias(String alias)
@@ -493,15 +505,16 @@ public class Alias
 	}
 
 	public String[] helpCommandLock = {
-		"Lock an alias so that no-one but its owner can change it.",
-		"<Name>",
-		"<Name> is the name of the alias to lock"
+		"Lock an alias (optionally creating it at the same time) so that no-one but its owner can change it.",
+		"<Name> [<Alias>]",
+		"<Name> is the name of the alias to lock/add",
+		"<Alias> is the alias content. See Alias.Syntax"
 	};
 	public void commandLock( final Message mes )
 	{
-		final String[] params = mods.util.getParamArray(mes);
+		final String[] params = mods.util.getParamArray(mes, 2);
 
-		if (params.length != 2)
+		if (params.length <= 1)
 		{
 			throw new ChoobBadSyntaxError();
 		}
@@ -509,6 +522,12 @@ public class Alias
 		final String name = params[1];
 
 		final AliasObject alias = getAlias(name);
+
+		if (params.length == 3)
+		{
+			irc.sendContextReply(mes, apiCreateAlias(mes, mes.getNick(), mes.getContext(), mes.getMessage(), true));
+			return;
+		}
 
 		if (alias != null)
 		{
@@ -518,15 +537,15 @@ public class Alias
 			}
 			else
 			{
-					// No need to NS check here.
+				// No need to NS check here.
 
-					final String originalOwner=alias.owner;
+				final String originalOwner=alias.owner;
 
-					alias.locked = true;
-					alias.owner = mods.security.getUserAuthName(mes.getNick());
+				alias.locked = true;
+				alias.owner = mods.security.getUserAuthName(mes.getNick());
 
-					mods.odb.update(alias);
-					irc.sendContextReply(mes, "Locked " + (!originalOwner.equals(alias.owner) ? "and taken ownership of alias by " + originalOwner + ": " : "") + "'" + name + "': " + alias.converted);
+				mods.odb.update(alias);
+				irc.sendContextReply(mes, "Locked " + (!originalOwner.equals(alias.owner) ? "and taken ownership of alias by " + originalOwner + ": " : "") + "'" + name + "': " + alias.converted);
 			}
 		}
 		else
