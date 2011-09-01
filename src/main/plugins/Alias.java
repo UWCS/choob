@@ -93,7 +93,7 @@ public class Alias
 			if (alias == null)
 				irc.sendContextReply(mes, "Alias not found.");
 			else
-				irc.sendContextReply(mes, "'" + alias.name + "'" + (alias.locked ? " (LOCKED)" : "") + " was aliased to '" + alias.converted + "' by '" + alias.owner + "'.");
+				irc.sendContextReply(mes, "'" + alias.name + "'" + (alias.locked ? " (LOCKED)" : "") + " was aliased to '" + alias.converted + "' by '" + alias.owner + "'.");
 
 			return;
 		}
@@ -156,7 +156,7 @@ public class Alias
 
 			final String newText = applyAlias(alias.converted, aliasParams, actualParams, innick, context);
 			if (newText == null)
-				return "Sorry, you tried to use a recursive alias to '" + subAlias + "' - but the alias text ('" + alias.converted + "') is invalid!";
+				return "Sorry, you tried to use a recursive alias to '" + subAlias + "' - but the alias text ('" + alias.converted + "') is invalid!";
 			conv = newText;
 		}
 
@@ -184,7 +184,7 @@ public class Alias
 					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
 			}
 
-			oldAlias = " (was '" + alias.converted + "')";
+			oldAlias = " (was '" + alias.converted + "')";
 
 			alias.converted = conv;
 			alias.owner = nick;
@@ -194,7 +194,7 @@ public class Alias
 		else
 			mods.odb.save(new AliasObject(name, conv, nick));
 
-		return "Aliased '" + name + "' to '" + conv + "'" + oldAlias + ".";
+		return "Aliased '" + name + "' to '" + conv + "'" + oldAlias + ".";
 	}
 
 	public String commandShowAlias(String alias)
@@ -385,7 +385,7 @@ public class Alias
 
 			mods.odb.delete(alias);
 
-			irc.sendContextReply(mes, "Deleted '" + alias.name + "', was aliased to '" + alias.converted + "'.");
+			irc.sendContextReply(mes, "Deleted '" + alias.name + "', was aliased to '" + alias.converted + "'.");
 		}
 		else
 			irc.sendContextReply(mes, "Alias not found.");
@@ -721,7 +721,7 @@ public class Alias
 		}
 		catch (final ChoobNoSuchCallException e)
 		{
-			irc.sendContextReply(mes, "Sorry, that command is an alias ('" + alias.converted + "', made by '" + alias.owner + "') that points to an invalid command!");
+			irc.sendContextReply(mes, "Sorry, that command is an alias ('" + alias.converted + "', made by '" + alias.owner + "') that points to an invalid command!");
 		}
 	}
 
