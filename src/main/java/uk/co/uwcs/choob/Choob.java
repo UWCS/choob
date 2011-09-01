@@ -195,7 +195,7 @@ final class Choob extends PircBot implements Bot
 		this.setMessageDelay(messageLimit);
 
 		// Set Version (the comment).
-		this.setVersion("Choob SVN - http://svn.uwcs.co.uk/repos/choob/");
+		this.setVersion("Choob - https://github.com/UWCS/choob");
 
 		// Enable debugging output.
 		setVerbose(true);
