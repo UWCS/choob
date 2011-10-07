@@ -5,7 +5,6 @@ import java.net.URL;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 
-import org.lobobrowser.html.UserAgentContext;
 import org.lobobrowser.html.parser.DocumentBuilderImpl;
 import org.lobobrowser.html.parser.InputSourceImpl;
 import org.lobobrowser.html.test.SimpleUserAgentContext;
@@ -50,7 +49,8 @@ public class Web
 
 	private HTMLDocument getDocument(final InputStream input, final String uri) throws SAXException, IOException
 	{
-		final UserAgentContext context = new SimpleUserAgentContext();
+		final SimpleUserAgentContext context = new SimpleUserAgentContext();
+		context.setScriptingEnabled(false);
 		final DocumentBuilderImpl dbi = new DocumentBuilderImpl(context);
 		final InputSource source = new InputSourceImpl(input,uri,"UTF-8");
 		return (HTMLDocument) dbi.parse(source);
