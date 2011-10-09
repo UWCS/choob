@@ -161,20 +161,41 @@ public class Timezone
 
 		if (params.size() != 2 && input == null)
 		{
-			irc.sendContextReply(mes,"Usage timein <timezone>");
+			irc.sendContextReply(mes, "Usage timein <timezone>");
 			return;
 		}
 
 		if (params.size() == 2 || input == null)
 			input = fixZone(params.get(1));
 
+		/* Unfortunately, Java's TimeZone.getTimeZone(String) method below does
+		 * not distinguish between the GMT time-zone and an unknown input. This
+		 * forces us to do a manual double-check when it returns GMT.
+		 */
+		final TimeZone timeZone = TimeZone.getTimeZone(input);
+		if (timeZone.getRawOffset() == 0)
+		{
+			boolean found = false;
+			for (final String id : TimeZone.getAvailableIDs(timeZone.getRawOffset()))
+			{
+				if (input.equalsIgnoreCase(id))
+				{
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+			{
+				irc.sendContextReply(mes, "Timezone was not found.");
+				return;
+			}
+		}
 
 		final SimpleDateFormat df = new SimpleDateFormat(PATTERN);
 		final GregorianCalendar now = new GregorianCalendar();
-		final TimeZone timeZone = TimeZone.getTimeZone(input);
 		final boolean dst = timeZone.inDaylightTime(now.getTime());
 		df.setTimeZone(timeZone);
-		irc.sendContextReply(mes,"Current time in " + timeZone.getDisplayName(dst,TimeZone.LONG) + " is: " + df.format(now.getTime()));
+		irc.sendContextReply(mes,"Current time in " + timeZone.getDisplayName(dst, TimeZone.LONG) + " is " + df.format(now.getTime()) + ".");
 
 	}
 
