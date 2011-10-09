@@ -826,8 +826,11 @@ Feed.prototype.showRecent = function(target, offset, count) {
 		start = items.length - 1;
 	}
 	for (var i = start; i >= offset; i--) {
-		this._sendTo(target, "[" + new Date(items[i].date) + "] \x1F" + items[i].title + "\x1F " + items[i].desc,
-		             (items[i].link ? " <" + items[i].link + ">" : ""));
+		if (items[i].desc.indexOf(items[i].title) > -1) {
+			this._sendTo(target, "[" + new Date(items[i].date) + "] " + items[i].desc, (items[i].link ? " <" + items[i].link + ">" : ""));
+		} else {
+			this._sendTo(target, "[" + new Date(items[i].date) + "] \x1F" + items[i].title + "\x1F " + items[i].desc, (items[i].link ? " <" + items[i].link + ">" : ""));
+		}
 	}
 }
 
@@ -865,12 +868,12 @@ Feed.prototype.checkForNewItems = function() {
 		this._sendToAll(this.getDisplayName() + " has too many (" + newItems.length + ") new items to display.");
 	} else {
 		for (var i = newItems.length - 1; i >= 0; i--) {
-			if (newItems[i].updated) {
-				this._sendToAll("\x1F" + newItems[i].title + "\x1F " + newItems[i].desc,
-				                (newItems[i].link ? " <" + newItems[i].link + ">" : ""));
+			if (newItems[i].desc.indexOf(newItems[i].title) > -1) {
+				this._sendToAll(newItems[i].desc, (newItems[i].link ? " <" + newItems[i].link + ">" : ""));
+			} else if (newItems[i].updated) {
+				this._sendToAll("\x1F" + newItems[i].title + "\x1F " + newItems[i].desc, (newItems[i].link ? " <" + newItems[i].link + ">" : ""));
 			} else {
-				this._sendToAll("\x1F\x02" + newItems[i].title + "\x02\x1F " + newItems[i].desc,
-				                (newItems[i].link ? " <" + newItems[i].link + ">" : ""));
+				this._sendToAll("\x1F\x02" + newItems[i].title + "\x02\x1F " + newItems[i].desc, (newItems[i].link ? " <" + newItems[i].link + ">" : ""));
 			}
 		}
 	}
