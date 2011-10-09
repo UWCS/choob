@@ -43,7 +43,7 @@ public class Timeleft
 		}
 		long diff = d.getTime() - new Date().getTime();
 		return (DateModule.absoluteDateFormat(d)
-				+ (diff <= 0 ? " was " : " is in ") + mods.date.timeLongStamp(diff, 3)
+				+ (diff <= 0 ? " was " : " is in ") + mods.date.timeLongStamp(Math.abs(diff), 3)
 				+ (diff <= 0 ? " ago" : "") + ".");
 	}
 

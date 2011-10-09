@@ -18,7 +18,7 @@ public final class DateModule {
 	 */
 	public static enum TimeUnit {
 		YEAR("y", 365l * 24 * 60 * 60 * 1000),
-		MONTH("m", 4l * 7 * 24 * 60 * 60 * 1000),
+		MONTH("m", 365l * 24 * 60 * 60 * 1000 / 12),
 		WEEK("w", 7 * 24 * 60 * 60 * 1000),
 		DAY("d", 24 * 60 * 60 * 1000),
 		HOUR("h", 60 * 60 * 1000),
@@ -65,7 +65,13 @@ public final class DateModule {
 		for (final TimeUnit unit : EnumSet.allOf(TimeUnit.class)) {
 			final long quantity = interval / unit.duration();
 			map.put(unit, quantity);
-			interval -= quantity * unit.duration();
+			/* Months, bloody months. This is because the duration of a month
+			 * does not equal an exact number of days.
+			 */
+			if (unit == TimeUnit.MONTH)
+				interval -= Math.round(quantity * unit.duration() / TimeUnit.DAY.duration()) * TimeUnit.DAY.duration();
+			else
+				interval -= quantity * unit.duration();
 		}
 
 		return map;
