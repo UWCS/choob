@@ -748,6 +748,21 @@ public class Vote {
 			return;
 		}
 
+		try
+		{
+			final int ret = ((Integer)mods.plugin.callAPI("Flood", "IsFlooding", ev.getChannel(), Integer.valueOf(2000), Integer.valueOf(4))).intValue();
+			if (ret != 0)
+				return;
+		}
+		catch (final ChoobNoSuchCallException e)
+		{
+			// ignore
+		}
+		catch (final Throwable e)
+		{
+			System.err.println("Couldn't do antiflood call: " + e);
+		}
+
 		//Check if the user has specified the option to have the notification enabled.
 		if (checkOption(ev.getNick(),"VoteJoinNotify", false)) {
 			//Get the active votes
