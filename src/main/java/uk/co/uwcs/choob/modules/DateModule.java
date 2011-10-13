@@ -10,6 +10,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 /** Some functions to help with time and date manipulation. */
 public final class DateModule {
@@ -248,5 +249,23 @@ public final class DateModule {
 			return "afternoon";
 
 		return "evening";
+	}
+
+	/** Parse a possible timezone string without screwing up. */
+	public final static TimeZone parseTimeZone(final String name)
+	{
+		/* Unfortunately, Java's TimeZone.getTimeZone(String) method below does
+		 * not distinguish between the GMT time-zone and an unknown input. This
+		 * forces us to do a manual double-check when it returns GMT.
+		 */
+		final TimeZone timeZone = TimeZone.getTimeZone(name);
+		if (timeZone.getRawOffset() == 0)
+		{
+			for (final String id : TimeZone.getAvailableIDs(timeZone.getRawOffset()))
+				if (name.equalsIgnoreCase(id))
+					return timeZone;
+			return null;
+		}
+		return timeZone;
 	}
 }

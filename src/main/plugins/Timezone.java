@@ -68,8 +68,11 @@ public class Timezone
 		if (params.size() == 5 && params.get(3).equals("in"))
 		{
 			final String input = fixZone(params.get(4));
-			targetTimeZone = TimeZone.getTimeZone(input);
-		} else if (params.size() != 3)
+			targetTimeZone = mods.date.parseTimeZone(input);
+			if (null == targetTimeZone)
+				return "Timezone '" + input + "' was not found.";
+		}
+		else if (params.size() != 3)
 		{
 			return "Usage whenis <time> <timezone> [in <timezone>]";
 		}
@@ -79,7 +82,9 @@ public class Timezone
 			final SimpleDateFormat df = new SimpleDateFormat(PATTERN);
 			final GregorianCalendar cal = new GregorianCalendar();
 			final String zone = fixZone(params.get(2));
-			final TimeZone sourceTimeZone = TimeZone.getTimeZone(zone);
+			final TimeZone sourceTimeZone = mods.date.parseTimeZone(zone);
+			if (null == sourceTimeZone)
+				return "Timezone '" + zone + "' was not found.";
 			cal.setTimeZone(sourceTimeZone);
 			final String[] splitTime = params.get(1).split(":");
 
@@ -168,27 +173,11 @@ public class Timezone
 		if (params.size() == 2 || input == null)
 			input = fixZone(params.get(1));
 
-		/* Unfortunately, Java's TimeZone.getTimeZone(String) method below does
-		 * not distinguish between the GMT time-zone and an unknown input. This
-		 * forces us to do a manual double-check when it returns GMT.
-		 */
-		final TimeZone timeZone = TimeZone.getTimeZone(input);
-		if (timeZone.getRawOffset() == 0)
+		final TimeZone timeZone = mods.date.parseTimeZone(input);
+		if (null == timeZone)
 		{
-			boolean found = false;
-			for (final String id : TimeZone.getAvailableIDs(timeZone.getRawOffset()))
-			{
-				if (input.equalsIgnoreCase(id))
-				{
-					found = true;
-					break;
-				}
-			}
-			if (!found)
-			{
-				irc.sendContextReply(mes, "Timezone was not found.");
-				return;
-			}
+			irc.sendContextReply(mes, "Timezone '" + input + "' was not found.");
+			return;
 		}
 
 		final SimpleDateFormat df = new SimpleDateFormat(PATTERN);
@@ -196,7 +185,5 @@ public class Timezone
 		final boolean dst = timeZone.inDaylightTime(now.getTime());
 		df.setTimeZone(timeZone);
 		irc.sendContextReply(mes,"Current time in " + timeZone.getDisplayName(dst, TimeZone.LONG) + " is " + df.format(now.getTime()) + ".");
-
 	}
-
 }
