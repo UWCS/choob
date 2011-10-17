@@ -167,8 +167,10 @@
 							<outputDirectory>${basedir}/target/classes</outputDirectory>
 							<resources>
 								<resource>
-									<directory>src/main/plugins-alpha</directory>
 									<directory>src/main/plugins</directory>
+								</resource>
+								<resource>
+									<directory>src/main/plugins-alpha</directory>
 								</resource>
 							</resources>
 						</configuration>
