@@ -198,4 +198,12 @@ public final class ChoobStatementWrapper implements Statement
 	@Override public <T> T unwrap(final Class<T> iface) throws SQLException {
 		return stat.unwrap(iface);
 	}
+
+	public void closeOnCompletion() throws SQLException {
+		throw new SQLException("Method stub; not available in Java 6 and not supported: closeOnCompletion");
+	}
+
+	public boolean isCloseOnCompletion() throws SQLException {
+		return false;
+	}
 }

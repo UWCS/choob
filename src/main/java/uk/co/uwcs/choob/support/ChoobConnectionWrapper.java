@@ -20,6 +20,7 @@ import java.sql.Statement;
 import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Executor;
 
 public final class ChoobConnectionWrapper implements Connection
 {
@@ -236,5 +237,28 @@ public final class ChoobConnectionWrapper implements Connection
 
 	@Override public <T> T unwrap(final Class<T> iface) throws SQLException {
 		return conn.unwrap(iface);
+	}
+
+	public void setSchema(String schema) throws SQLException {
+		// silently ignoring is fine
+	}
+
+	public String getSchema() throws SQLException {
+		// null is an acceptable return value
+		return null;
+	}
+
+	public void abort(Executor executor) throws SQLException {
+		throw new SQLException("Method stub; not available in Java 6 and not supported: abort");
+	}
+
+	public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
+		throw new SQLException("Method stub; not available in Java 6 and not supported: setNetworkTimeout");
+
+	}
+
+	public int getNetworkTimeout() throws SQLException {
+		// no timeout; acceptable
+		return 0;
 	}
 }
