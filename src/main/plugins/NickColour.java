@@ -453,7 +453,7 @@ public class NickColour
 
 		out.println("<style type='text/css'>\n" +
 				".m{color:rgb(187,187,187)}\n" +
-				"body{background-color: black;font-family: Consolas,Code2000,\"Lucida Console\",fixed}");
+				"body{background-color: black;font-family: Consolas,Code2000,\"Lucida Console\",monospace}");
 		for (Entry<String, String> a : colours.entrySet())
 			out.println(".c" + a.getKey() + "{color:rgb(" + a.getValue() + ")}");
 		out.println("</style>");
