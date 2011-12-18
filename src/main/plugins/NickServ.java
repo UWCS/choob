@@ -244,7 +244,6 @@ public class NickServ
 				public void doWith(Void t)
 				{
 					nickserv.sendRequest(nick);
-					System.out.println("Sent request to auth handler");
 				}
 			}).get(TIMEOUT_SECONDS, TimeUnit.SECONDS, new UnknownStatus());
 
@@ -702,19 +701,14 @@ class UWCSNickServInterpreter implements CanProvideAuth
 
 		final String reply = mes.getMessage();
 
-		System.out.println("receiveReply " + reply);
-
 		for (PatternStatusPair status : statuses)
 		{
-			System.out.println("Checking " + status.getPattern().pattern());
 			if (status.getPattern().matcher(reply).matches())
 			{
-				System.out.println("Matched! returning " + status.getStatus().getId());
 				return status.getStatus();
 			}
 		}
 
-		System.out.println("None matched, ignoring");
 		throw new NotInterestedInReplyException();
 	}
 
@@ -874,19 +868,14 @@ class MoznetNickServInterpreter implements CanProvideAuth
 
 		final String reply = mes.getMessage();
 
-		System.out.println("receiveReply " + reply);
-
 		for (PatternStatusPair status : statuses)
 		{
-			System.out.println("Checking " + status.getPattern().pattern());
 			if (status.getPattern().matcher(reply).matches())
 			{
-				System.out.println("Matched! returning " + status.getStatus().getId());
 				return status.getStatus();
 			}
 		}
 
-		System.out.println("None matched, ignoring");
 		throw new NotInterestedInReplyException();
 	}
 
