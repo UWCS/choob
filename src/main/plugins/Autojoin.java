@@ -11,6 +11,7 @@ import uk.co.uwcs.choob.plugins.RequiresPermission;
 import uk.co.uwcs.choob.support.ChoobBadSyntaxError;
 import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.IRCInterface;
+import uk.co.uwcs.choob.support.events.ChannelInvite;
 import uk.co.uwcs.choob.support.events.Message;
 
 import com.google.common.base.Function;
@@ -67,6 +68,14 @@ class Autojoin
 	{
 		if (0 == irc.getMessageDelay())
 			Thread.sleep(DELAY_MS);
+	}
+
+	public void onInvite(final ChannelInvite ev)
+	{
+		final String chan = ev.getChannel();
+		final List<ChannelObj> ret = getObjs(chan);
+		if (!ret.isEmpty())
+			irc.join(chan);
 	}
 
 	public String[] helpCommandList = {
