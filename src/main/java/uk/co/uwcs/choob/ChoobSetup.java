@@ -123,7 +123,7 @@ public class ChoobSetup
 		try
 		{
 			createMinimalDatabaseCreationStatement(conn.createStatement()).executeBatch();
-			putUserInRootGroup(createUserAndReturnId(rootUser,conn),conn);
+			putNodeIntoGroup(ROOT_GROUP, putNodeIntoGroup(createUserGroupAndReturnId(rootUser, conn), createUserAndReturnId(rootUser, conn), conn), conn);
 			addChannelToAutojoin(conn);
 
 		} finally
@@ -152,11 +152,26 @@ public class ChoobSetup
 		throw new SQLException("Created user had no id");
 	}
 
-	private void putUserInRootGroup(final int userId, final Connection conn) throws SQLException
+	private int createUserGroupAndReturnId(final String userName, final Connection conn) throws SQLException
 	{
-		final PreparedStatement makeRootUserStmt = conn.prepareStatement(PUT_USER_INTO_ROOT_GROUP_SQL);
-		makeRootUserStmt.setInt(1, userId);
-		makeRootUserStmt.execute();
+		final PreparedStatement addUserGroupStmt = conn.prepareStatement(ADD_USER_GROUP_SQL, Statement.RETURN_GENERATED_KEYS);
+		addUserGroupStmt.setString(1, userName);
+		addUserGroupStmt.executeUpdate();
+		final ResultSet idSet = addUserGroupStmt.getGeneratedKeys();
+		while (idSet.next())
+		{
+			return idSet.getInt(1);
+		}
+		throw new SQLException("Created user group had no id");
+	}
+
+	private int putNodeIntoGroup(final int groupId, final int nodeId, final Connection conn) throws SQLException
+	{
+		final PreparedStatement putNodeInGroupStmt = conn.prepareStatement(PUT_NODE_INTO_GROUP_SQL);
+		putNodeInGroupStmt.setInt(1, groupId);
+		putNodeInGroupStmt.setInt(2, nodeId);
+		putNodeInGroupStmt.execute();
+		return groupId;
 	}
 
 	private Connection getConnection() throws SQLException, ClassNotFoundException, InstantiationException,
@@ -212,7 +227,20 @@ public class ChoobSetup
 				"0" +
 			");";
 
-	private final static String PUT_USER_INTO_ROOT_GROUP_SQL =
+	private final static String ADD_USER_GROUP_SQL =
+		"INSERT INTO " +
+			"UserNodes" +
+			"(" +
+				"NodeName," +
+				"NodeClass" +
+			") " +
+		"VALUES" +
+			"(" +
+				"?," +
+				"1" +
+			");";
+
+	private final static String PUT_NODE_INTO_GROUP_SQL =
 		"INSERT INTO " +
 			"GroupMembers " +
 			"(" +
@@ -221,9 +249,11 @@ public class ChoobSetup
 			") " +
 		"VALUES " +
 			"(" +
-				"1," +
+				"?," +
 				"?" +
 			");";
+
+	private final static int ROOT_GROUP = 1;
 
 	private final static String ADD_CHANNEL_TO_AUTOJOIN =
 		"INSERT INTO " +
