@@ -28,7 +28,16 @@ class Pipes
 
 	public void commandEval(final Message mes) throws Exception
 	{
-		String eval = eval(mods.util.getParamString(mes), new LoopbackExeculator(mes));
+		final String eval;
+		try
+		{
+			eval = eval(mods.util.getParamString(mes), new LoopbackExeculator(mes));
+		}
+		catch (PipesIllegalArgumentException e)
+		{
+			irc.sendContextReply(mes, e.getMessage());
+			return;
+		}
 
 		List<String> messes = irc.cutString(eval, mes.getNick().length() + 2 + 25);
 		irc.sendContextReply(mes, messes.get(0) + (messes.size() > 1 ?
@@ -108,7 +117,7 @@ class Pipes
 			}
 			catch (ChoobNoSuchCallException e)
 			{
-				return "Pipe built-in '" + cmd + "' is missing required components. " + e.toString();
+				throw new PipesIllegalArgumentException("Pipe built-in '" + cmd + "' is missing required components. " + e.toString());
 			}
 
 			if ("xargs".equals(cmd))
@@ -140,7 +149,7 @@ class Pipes
 			String[] cmds = alis[0].split("\\.", 2);
 
 			if (cmds.length != 2)
-				return "Command '" + cmd + "' is not a pipes built-in or an alias.";
+				throw new PipesIllegalArgumentException("Command '" + cmd + "' is not a pipes built-in or an alias.");
 
 			// Fiddle talk.say -> talk.reply, which is pipable and does the same thing (well, close enough)
 			if ("talk".equalsIgnoreCase(cmds[0]) && "say".equalsIgnoreCase(cmds[1]))
@@ -167,14 +176,22 @@ class Pipes
 			{
 				cmd = cmds[0] + "." + cmds[1];
 				if (mods.plugin.validCommand(cmd))
-					return "Command '" + cmd + "' cannot be called in a pipeline.";
-				return "Command '" + cmd + "' does not exist.";
+					throw new PipesIllegalArgumentException("Command '" + cmd + "' cannot be called in a pipeline.");
+				throw new PipesIllegalArgumentException("Command '" + cmd + "' does not exist.");
 			}
 		}
 	}
 
 	static String nullToEmpty(String s) {
 		return s == null ? "" : s;
+	}
+
+	static class PipesIllegalArgumentException extends IllegalArgumentException
+	{
+		public PipesIllegalArgumentException(String message)
+		{
+			super(message);
+		}
 	}
 
 	static class ParseException extends Exception
