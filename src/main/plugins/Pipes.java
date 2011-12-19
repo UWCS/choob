@@ -70,37 +70,46 @@ class Pipes
 			// Restrict size of input to all commands.
 			arg = arg.substring(0, Math.min(arg.length(), 1024));
 
-			if ("sed".equals(cmd))
-				return (String)mods.plugin.callAPI("MiscUtils", "Sed", arg, stdin);
-
-			if ("java".equals(cmd))
-				return (String)mods.plugin.callAPI("Executor", "ran", stdin);
-
-			if ("tr".equals(cmd))
-				return (String)mods.plugin.callAPI("MiscUtils", "Trans", arg, stdin);
-
-			if ("pick".equals(cmd))
+			try
 			{
-				// If something's been provided on stdin, we'll use it instead of the history.
-				// This allows piping into commands that are rooted in !pick.
-				if (!"".equals(stdin))
-					return stdin;
 
-				// Let's just pray this won't be reached with a null mes! \o/
-				final List<Message> history = mods.history.getLastMessages(mes, 20);
-				final Pattern picker = (Pattern)mods.plugin.callAPI("MiscUtils", "LinePicker", arg);
-				for (Message m : history)
-					if (picker.matcher(m.getMessage()).find())
-						return m.getMessage();
-				throw new IllegalArgumentException("Couldn't pick anything with " + arg);
+				if ("sed".equals(cmd))
+					return (String)mods.plugin.callAPI("MiscUtils", "Sed", arg, stdin);
+
+				if ("java".equals(cmd))
+					return (String)mods.plugin.callAPI("Executor", "ran", stdin);
+
+				if ("tr".equals(cmd))
+					return (String)mods.plugin.callAPI("MiscUtils", "Trans", arg, stdin);
+
+				if ("pick".equals(cmd))
+				{
+					// If something's been provided on stdin, we'll use it instead of the history.
+					// This allows piping into commands that are rooted in !pick.
+					if (!"".equals(stdin))
+						return stdin;
+
+					// Let's just pray this won't be reached with a null mes! \o/
+					final List<Message> history = mods.history.getLastMessages(mes, 20);
+					final Pattern picker = (Pattern)mods.plugin.callAPI("MiscUtils", "LinePicker", arg);
+					for (Message m : history)
+						if (picker.matcher(m.getMessage()).find())
+							return m.getMessage();
+					throw new IllegalArgumentException("Couldn't pick anything with " + arg);
+				}
+
+				if ("nick".equals(cmd))
+					return nick;
+
+				if ("export".equals(cmd))
+					// mes
+					return (String)mods.plugin.callAPI("Alias", "CreateAlias", mes, nick, nullToEmpty(target), "fakelias "+ arg);
+
 			}
-
-			if ("nick".equals(cmd))
-				return nick;
-
-			if ("export".equals(cmd))
-				// mes
-				return (String)mods.plugin.callAPI("Alias", "CreateAlias", mes, nick, nullToEmpty(target), "fakelias "+ arg);
+			catch (ChoobNoSuchCallException e)
+			{
+				return "Pipe built-in '" + cmd + "' is missing required components. " + e.toString();
+			}
 
 			if ("xargs".equals(cmd))
 			{
@@ -131,8 +140,7 @@ class Pipes
 			String[] cmds = alis[0].split("\\.", 2);
 
 			if (cmds.length != 2)
-				throw new IllegalArgumentException("Tried to exec '" + alis[0]
-		                	+ "', which doesn't even have a dot in it!");
+				return "Command '" + cmd + "' is not a pipes built-in or an alias.";
 
 			// Fiddle talk.say -> talk.reply, which is pipable and does the same thing (well, close enough)
 			if ("talk".equalsIgnoreCase(cmds[0]) && "say".equalsIgnoreCase(cmds[1]))
@@ -151,7 +159,17 @@ class Pipes
 				return eval(arg, this, stdin);
 			}
 
-			return (String) mods.plugin.callGeneric(cmds[0], "command", cmds[1], arg);
+			try
+			{
+				return (String) mods.plugin.callGeneric(cmds[0], "command", cmds[1], arg);
+			}
+			catch (ChoobNoSuchCallException e)
+			{
+				cmd = cmds[0] + "." + cmds[1];
+				if (mods.plugin.validCommand(cmd))
+					return "Command '" + cmd + "' cannot be called in a pipeline.";
+				return "Command '" + cmd + "' does not exist.";
+			}
 		}
 	}
 
