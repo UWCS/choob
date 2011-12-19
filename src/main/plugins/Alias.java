@@ -1,7 +1,10 @@
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.common.base.Joiner;
 
 import org.jibble.pircbot.Colors;
 
@@ -93,7 +96,7 @@ public class Alias
 			if (alias == null)
 				irc.sendContextReply(mes, "Alias not found.");
 			else
-				irc.sendContextReply(mes, "'" + alias.name + "'" + (alias.locked ? " (LOCKED)" : "") + " was aliased to '" + alias.converted + "' by '" + alias.owner + "'.");
+				irc.sendContextReply(mes, "Alias '" + alias.name + "' is" + (alias.locked ? " locked and" : "") + " owned by " + alias.owner + ": " + alias.converted);
 
 			return;
 		}
@@ -103,7 +106,14 @@ public class Alias
 			throw new ChoobBadSyntaxError();
 		}
 
-		irc.sendContextReply(mes, apiCreateAlias(mes, mes.getNick(), mes.getContext(), mes.getMessage()));
+		try
+		{
+			irc.sendContextReply(mes, apiCreateAlias(mes, mes.getNick(), mes.getContext(), mes.getMessage()));
+		}
+		catch (AliasSecurityException e)
+		{
+			irc.sendContextReply(mes, e.getMessage());
+		}
 	}
 
 	/** Fake API returning String message result for pipes
@@ -181,18 +191,13 @@ public class Alias
 		String oldAlias = ""; // Set to content of old alias, if there was one.
 		if (alias != null)
 		{
-			if (alias.locked)
-			{
-				if (null == mes)
-					throw new ChoobGeneralAuthError();
+			if (alias.locked && !alias.owner.toLowerCase().equals(nick.toLowerCase()))
+				throw new AliasSecurityException("Alias '" + name + "' is locked and owned by " + alias.owner + "; only the owner can change a locked alias.");
 
-				if (alias.owner.toLowerCase().equals(nick.toLowerCase()))
-					mods.security.checkAuth(mes);
-				else
-					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
-			}
+			// Check nickname auth.
+			mods.security.checkAuth(mes);
 
-			oldAlias = " (was '" + alias.converted + "')";
+			oldAlias = " (was: " + alias.converted + ")";
 
 			alias.converted = conv;
 			alias.owner = nick;
@@ -206,7 +211,15 @@ public class Alias
 			mods.odb.save(newAlias);
 		}
 
-		return "Aliased '" + name + (locked ? "' (LOCKED) to '" : "' to '") + conv + "'" + oldAlias + ".";
+		return (locked ? "Locked alias '" : "Alias '") + name + "' created: " + conv + "" + oldAlias;
+	}
+
+	static class AliasSecurityException extends SecurityException
+	{
+		public AliasSecurityException(String message)
+		{
+			super(message);
+		}
 	}
 
 	public String commandShowAlias(String alias)
@@ -384,7 +397,6 @@ public class Alias
 		if (nick == null)
 			nick = mods.security.getUserAuthName(mes.getNick());
 
-
 		if (alias != null)
 		{
 			if (alias.locked)
@@ -397,7 +409,7 @@ public class Alias
 
 			mods.odb.delete(alias);
 
-			irc.sendContextReply(mes, "Deleted '" + alias.name + "', was aliased to '" + alias.converted + "'.");
+			irc.sendContextReply(mes, "Alias '" + alias.name + "' deleted: " + alias.converted);
 		}
 		else
 			irc.sendContextReply(mes, "Alias not found.");
@@ -525,28 +537,47 @@ public class Alias
 
 		if (params.length == 3)
 		{
-			irc.sendContextReply(mes, apiCreateAlias(mes, mes.getNick(), mes.getContext(), mes.getMessage(), true));
+			try
+			{
+				irc.sendContextReply(mes, apiCreateAlias(mes, mes.getNick(), mes.getContext(), mes.getMessage(), true));
+			}
+			catch (AliasSecurityException e)
+			{
+				irc.sendContextReply(mes, e.getMessage());
+			}
 			return;
 		}
 
 		if (alias != null)
 		{
-			if (alias.locked == true)
+			String nick = mods.security.getUserAuthName(mes.getNick());
+			nick = mods.security.getRootUser(nick);
+			if (nick == null)
+				nick = mods.security.getUserAuthName(mes.getNick());
+
+			if (alias.locked)
 			{
-				irc.sendContextReply(mes, "'" + name + "' is already locked!");
+				if (nick.toLowerCase().equals(alias.owner.toLowerCase()))
+					mods.security.checkAuth(mes);
+				else
+					mods.security.checkNickPerm(new ChoobPermission("plugin.alias.unlock"), mes);
 			}
-			else
-			{
-				// No need to NS check here.
 
-				final String originalOwner=alias.owner;
+			// No need to NS check here.
 
-				alias.locked = true;
-				alias.owner = mods.security.getUserAuthName(mes.getNick());
+			final boolean originalLocked = alias.locked;
+			final String originalOwner = alias.owner;
+			final List<String> actions = new ArrayList<String>(2);
+			if (!originalLocked)
+				actions.add(" locked");
+			if (!originalOwner.equals(nick))
+				actions.add(" taken ownership from " + originalOwner);
 
-				mods.odb.update(alias);
-				irc.sendContextReply(mes, "Locked " + (!originalOwner.equals(alias.owner) ? "and taken ownership of alias by " + originalOwner + ": " : "") + "'" + name + "': " + alias.converted);
-			}
+			alias.locked = true;
+			alias.owner = nick;
+
+			mods.odb.update(alias);
+			irc.sendContextReply(mes, "Alias '" + name + "'" + Joiner.on(",").join(actions) + ": " + alias.converted);
 		}
 		else
 		{
@@ -586,7 +617,7 @@ public class Alias
 
 			alias.locked = false;
 			mods.odb.update(alias);
-			irc.sendContextReply(mes, "Unlocked '" + name + "'!");
+			irc.sendContextReply(mes, "Alias '" + name + "' unlocked: " + alias.converted);
 		}
 		else
 		{
