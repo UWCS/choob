@@ -608,6 +608,20 @@ public class Tell
 
 	public void onJoin( final ChannelJoin ev )
 	{
+		try
+		{
+			final int ret = ((Integer)mods.plugin.callAPI("Flood", "IsFlooding", ev.getChannel(), Integer.valueOf(2000), Integer.valueOf(4))).intValue();
+			if (ret != 0)
+				return;
+		}
+		catch (final ChoobNoSuchCallException e)
+		{
+			// ignore
+		}
+		catch (final Throwable e)
+		{
+			System.err.println("Couldn't do antiflood call: " + e);
+		}
 		spew(ev.getNick());
 	}
 
