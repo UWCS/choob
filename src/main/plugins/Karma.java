@@ -1580,7 +1580,7 @@ public class Karma
 
 		while(iterator.hasNext()){
 			DelayedKarmaReasonObject temp = iterator.next();
-			if(temp.string.compareTo(arg[1]) == 0 && mes.getNick().compareTo(temp.nick) == 0) {
+			if(temp.string.equalsIgnoreCase(arg[1]) && mes.getNick().equals(temp.nick)) {
 				temp.reason = arg[2];
 				string = "Reason modified.";
 			}
