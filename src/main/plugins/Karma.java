@@ -1577,10 +1577,10 @@ public class Karma
 		String[] arg = mes.getMessage().split(" ", 3);
 		String string = "You have not karmaed " + arg[1] + " in the last minute";
 		Iterator<DelayedKarmaReasonObject> iterator = inqueue.iterator();
-
+		
 		while(iterator.hasNext()){
 			DelayedKarmaReasonObject temp = iterator.next();
-			if(temp.string.compareTo(arg[1]) == 0 && mes.getNick().compareTo(temp.nick) == 0) {
+			if(temp.string.toLowerCase().compareTo(arg[1].toLowerCase()) == 0 && mes.getNick().compareTo(temp.nick) == 0) {
 				temp.reason = arg[2];
 				string = "Reason modified.";
 			}
