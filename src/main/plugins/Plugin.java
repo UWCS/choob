@@ -249,12 +249,17 @@ public class Plugin
 			coreSet.add(corePlugin.toLowerCase());
 
 		final StringBuilder buf = new StringBuilder();
-		buf.append("Plugin list (core marked with *): ");
+		buf.append("Plugin list (\u0002core\u000F, \u001Finternal\u000F): ");
 		for(int i=0; i<plugins.length; i++)
 		{
+			final String pluginName = plugins[i].toLowerCase();
+			final String source = mods.plugin.getPluginSource(pluginName);
+			if (coreSet.contains(pluginName))
+				buf.append("\u0002");
+			if (source.startsWith("choob-plugin:"))
+				buf.append("\u001F");
 			buf.append(plugins[i]);
-			if (coreSet.contains(plugins[i].toLowerCase()))
-				buf.append("*");
+			buf.append("\u000F");
 			if (i == plugins.length - 2)
 				buf.append(" and ");
 			else if (i != plugins.length - 1)
