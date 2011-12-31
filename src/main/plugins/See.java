@@ -170,11 +170,11 @@ public class See
 
 	public String commandFirstSeen(final String mes) throws SQLException
 	{
-		final String nick = mes.trim();
+		final String nick = mods.nick.getBestPrimaryNick(mes.trim());
 		final Connection conn = mods.odb.getConnection();
 		try
 		{
-			final Date rel = firstSeen(conn, nick);
+			final Date rel = firstSeen(conn, nick + "%");
 			if (rel == null)
 				return "Never seen " + nick + ".";
 			return nick + " was first seen on " + format(rel) + ", "
