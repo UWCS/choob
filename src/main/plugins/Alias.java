@@ -702,23 +702,26 @@ public class Alias
 			return;
 		}
 
-		try
+		if (!mesFlags.containsKey("flood.skip"))
 		{
-			final int ret = ((Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), Integer.valueOf(1500), Integer.valueOf(4))).intValue();
-			if (ret != 0)
+			try
 			{
-				if (ret == 1)
-					irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
-				return;
+				final int ret = ((Integer)mods.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), Integer.valueOf(1500), Integer.valueOf(4))).intValue();
+				if (ret != 0)
+				{
+					if (ret == 1)
+						irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
+					return;
+				}
 			}
-		}
-		catch (final ChoobNoSuchCallException e)
-		{
-			// ignore
-		}
-		catch (final Throwable e)
-		{
-			System.err.println("Couldn't do antiflood call: " + e);
+			catch (final ChoobNoSuchCallException e)
+			{
+				// ignore
+			}
+			catch (final Throwable e)
+			{
+				System.err.println("Couldn't do antiflood call: " + e);
+			}
 		}
 
 		if (mesFlags.containsKey("_securityOK"))

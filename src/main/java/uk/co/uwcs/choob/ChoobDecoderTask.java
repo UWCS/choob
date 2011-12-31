@@ -116,21 +116,24 @@ public class ChoobDecoderTask extends ChoobTask
 				ma = commandPattern.matcher(mes.getFlags().get("command"));
 				if (ma.matches())
 				{
-					try
+					if (!mes.getFlags().containsKey("flood.skip"))
 					{
-						final int ret = (Integer)data.modules.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
-						if (ret != 0)
+						try
 						{
-							if (ret == 1)
-								data.irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
-							return;
+							final int ret = (Integer)data.modules.plugin.callAPI("Flood", "IsFlooding", mes.getNick(), 1500, 4);
+							if (ret != 0)
+							{
+								if (ret == 1)
+									data.irc.sendContextReply(mes, "You're flooding, ignored. Please wait at least 1.5s between your messages.");
+								return;
+							}
 						}
-					}
-					catch (final ChoobNoSuchCallException e)
-					{ } // Ignore
-					catch (final Throwable e)
-					{
-						System.err.println("Couldn't do antiflood call: " + e);
+						catch (final ChoobNoSuchCallException e)
+						{ } // Ignore
+						catch (final Throwable e)
+						{
+							System.err.println("Couldn't do antiflood call: " + e);
+						}
 					}
 
 					final String pluginName  = ma.group(1);

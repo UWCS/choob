@@ -374,6 +374,9 @@ public class TimedEvents
 			final Map<String,String> mesFlags = ((IRCEvent)newMes).getFlags();
 			decodeFlags(mesFlags, timedEvent.flags);
 
+			// Also set the don't-do-flood-checking flag.
+			mesFlags.put("flood.skip", "");
+
 			lastDelivery.put(mes.getContext(), timedEvent);
 
 			// Get the plugin/command.
