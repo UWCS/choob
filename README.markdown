@@ -29,6 +29,7 @@ License: LGPL (don't ask why)
     GRANT ALL PRIVILEGES ON choob.* TO choob@localhost;
 
 ## # Setup database and config
+ # (Windows doesn't support this \ syntax, so you need to do it all on one line, with no backslashes.)
     java -jar target/choob-1.0-SNAPSHOT.jar setup \
        dbServer=localhost dbUser=choob dbPass=choob database=choob \
        ircServer=irc.uwcs.co.uk ircChannel=#bots \
