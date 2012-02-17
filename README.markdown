@@ -11,7 +11,7 @@ License: LGPL (don't ask why)
 
 ## # On Debian/Ubuntu, that'd be:
     sudo apt-get install mysql-server default-jdk git curl
-    curl http://mirror.lividpenguin.com/pub/apache/maven/binaries/apache-maven-3.0.3-bin.tar.gz | tar zxv # http://maven.apache.org/download.html
+    curl http://mirror.lividpenguin.com/pub/apache/maven/binaries/apache-maven-3.0.4-bin.tar.gz | tar zxv # http://maven.apache.org/download.html
     export PATH=$(pwd)/apache-maven-3.0.3/bin:$PATH
 
 ## # Download and compile
