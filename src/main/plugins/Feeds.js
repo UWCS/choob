@@ -1001,7 +1001,7 @@ Feed.prototype.getNewItems = function() {
 			for (var i = 0; i < this._items.length; i++) {
 				if (this._items[i].uniqueKey == item.uniqueKey) {
 					if (this._parent._debug_store) {
-						log("Feed Store: " + this.name + ": DEL <" + this._items[i].uniqueKey + "><" + this._items[i].date + ">");
+						log("Feed Store: " + this.name + ": DEL <" + this._items[i].uniqueKey + "><" + this._items[i].date + ">(" + this._items[i].desc.length + " characters)");
 					}
 					this._items.splice(i, 1);
 					break;
@@ -1009,7 +1009,7 @@ Feed.prototype.getNewItems = function() {
 			}
 		}
 		if (this._parent._debug_store) {
-			log("Feed Store: " + this.name + ": ADD <" + item.uniqueKey + "><" + item.date + ">");
+			log("Feed Store: " + this.name + ": ADD <" + item.uniqueKey + "><" + item.date + ">(" + item.desc.length + " characters)");
 		}
 		this._items.push(item);
 	}
@@ -1020,7 +1020,7 @@ Feed.prototype.getNewItems = function() {
 			for (var i = 0; i < this._items.length; i++) {
 				if (this._items[i].uniqueKey == d) {
 					if (this._parent._debug_store) {
-						log("Feed Store: " + this.name + ": DEL <" + this._items[i].uniqueKey + "><" + this._items[i].date + ">");
+						log("Feed Store: " + this.name + ": DEL <" + this._items[i].uniqueKey + "><" + this._items[i].date + ">(" + this._items[i].desc.length + " characters)");
 					}
 					this._items.splice(i, 1);
 					break;
@@ -1090,8 +1090,6 @@ var entityMap = {
 };
 
 function _decodeEntities(data) {
-	profile.enterFn("", "_decodeEntities");
-	
 	// Decode XML into HTML...
 	data = data.replace(/&(?:(\w+)|#(\d+)|#x([0-9a-f]{2}));/gi,
 	function _decodeEntity(match, name, decnum, hexnum) {
@@ -1106,12 +1104,9 @@ function _decodeEntities(data) {
 		}
 		return match; //"[unknown entity '" + (name || decnum || hexnum) + "']";
 	});
-	
 	// Done as a special-case, last, so that it doesn't bugger up
 	// doubly-escaped things.
 	data = data.replace(/&(amp|#0*38|#x0*26);/g, "&");
-	
-	profile.leaveFn("_decodeEntities");
 	return data;
 }
 
@@ -1164,20 +1159,13 @@ var htmlInlineTags = {
 };
 
 function _decodeRSSHTML(data) {
-	profile.enterFn("", "_decodeRSSHTML");
-	
-	// Decode XML into HTML...
-	data = _decodeEntities(data);
 	// Remove all tags.
 	data = data.replace(/<\/?(\w+)[^>]*>/g, function (text, tag) { return tag.toUpperCase() in htmlInlineTags ? "" : " " });
 	// Decode HTML into text...
 	data = _decodeEntities(data);
-	// Remove all entities.
-	//data = data.replace(/&[^;]+;/g, "");
+	// Collapse whitespace.
 	data = data.replace(/\s+/g, " ");
-	
-	profile.leaveFn("_decodeRSSHTML");
-	return data;
+	return data.trim();
 }
 
 function _decodeRSSDate(element) {
@@ -1198,10 +1186,10 @@ function _decodeAtomText(element) {
 	var type = element.attribute("type");
 	
 	if (type && (type.value == "html")) {
-		return _decodeRSSHTML(content);
+		return _decodeRSSHTML(_decodeEntities(content));
 	}
 	
-	return _decodeEntities(content);
+	return _decodeEntities(content).trim();
 }
 
 function _decodeAtomDate(element) {
@@ -1264,7 +1252,9 @@ FeedParser.prototype._parse = function(feedsOwner) {
 		var child = elt.childByName(name, namespace);
 		if (child) {
 			profile.leaveFn("getChildContents");
-			return child.contents();
+			if (child.type == "XMLCData")
+				return child.contents().trim();
+			return _decodeEntities(child.contents()).trim();
 		}
 		profile.leaveFn("getChildContents");
 		return "";
@@ -1277,46 +1267,21 @@ FeedParser.prototype._parse = function(feedsOwner) {
 		if (rssVersion && ((rssVersion.value == 0.91) || (rssVersion.value == 2.0))) {
 			// RSS 0.91 or 2.0 code.
 			var channel = this._xmlData.rootElement.childByName("channel");
-			
-			this.title       = getChildContents(channel, "title").trim();
-			this.link        = getChildContents(channel, "link").trim();
-			this.description = getChildContents(channel, "description").trim();
-			this.language    = getChildContents(channel, "language").trim();
-			this.ttl         = getChildContents(channel, "ttl").trim();
+			this.title       = getChildContents(channel, "title");
+			this.link        = getChildContents(channel, "link");
+			this.description = getChildContents(channel, "description");
+			this.language    = getChildContents(channel, "language");
+			this.ttl         = getChildContents(channel, "ttl");
 			
 			var items = channel.childrenByName("item");
-			
 			for (var i = 0; i < items.length; i++) {
 				var item = items[i];
-				
-				var pubDate = _decodeRSSDate(item.childByName("pubDate"));
-				
-				var guid  = item.childByName("guid") || "";
-				if (guid) {
-					guid = guid.contents();
-				}
-				
-				var title = item.childByName("title") || "";
-				if (title) {
-					title = title.contents();
-				}
-				
-				var link  = item.childByName("link") || "";
-				if (link) {
-					link = link.contents();
-				}
-				
-				var desc = item.childByName("description") || "";
-				if (desc) {
-					desc = desc.contents();
-				}
-				
 				this.items.push({
-						date:    pubDate,
-						guid:    guid.trim(),
-						title:   _decodeRSSHTML(title).trim(),
-						link:    _decodeEntities(link).trim(),
-						desc:    _decodeRSSHTML(desc).trim(),
+						date:    _decodeRSSDate(item.childByName("pubDate")),
+						guid:    getChildContents(item, "guid"),
+						title:   _decodeRSSHTML(getChildContents(item, "title")),
+						link:    getChildContents(item, "link"),
+						desc:    _decodeRSSHTML(getChildContents(item, "encoded", "http://purl.org/rss/1.0/modules/content/") || getChildContents(item, "description")),
 						updated: false
 					});
 			}
@@ -1331,42 +1296,21 @@ FeedParser.prototype._parse = function(feedsOwner) {
 	} else if (this._xmlData.rootElement.localName == "RDF") {
 		// RSS 1.0 probably.
 		if (this._xmlData.rootElement.namespace == "http://www.w3.org/1999/02/22-rdf-syntax-ns#") {
-			
 			var channel = this._xmlData.rootElement.childByName("channel", "http://purl.org/rss/1.0/");
-			
-			this.title       = getChildContents(channel, "title",       "http://purl.org/rss/1.0/").trim();
-			this.link        = getChildContents(channel, "link",        "http://purl.org/rss/1.0/").trim();
-			this.description = getChildContents(channel, "description", "http://purl.org/rss/1.0/").trim();
-			this.language    = getChildContents(channel, "language",    "http://purl.org/rss/1.0/").trim();
-			this.ttl         = getChildContents(channel, "ttl",         "http://purl.org/rss/1.0/").trim();
+			this.title       = getChildContents(channel, "title",       "http://purl.org/rss/1.0/");
+			this.link        = getChildContents(channel, "link",        "http://purl.org/rss/1.0/");
+			this.description = getChildContents(channel, "description", "http://purl.org/rss/1.0/");
+			this.language    = getChildContents(channel, "language",    "http://purl.org/rss/1.0/");
+			this.ttl         = getChildContents(channel, "ttl",         "http://purl.org/rss/1.0/");
 			
 			var items = this._xmlData.rootElement.childrenByName("item", "http://purl.org/rss/1.0/");
-			
 			for (var i = 0; i < items.length; i++) {
 				var item = items[i];
-				
-				var pubDate = _decodeRSSDate(item.childByName("pubDate", "http://purl.org/rss/1.0/"));
-				
-				var title = item.childByName("title", "http://purl.org/rss/1.0/") || "";
-				if (title) {
-					title = title.contents();
-				}
-				
-				var link  = item.childByName("link", "http://purl.org/rss/1.0/") || "";
-				if (link) {
-					link = link.contents();
-				}
-				
-				var desc = item.childByName("description", "http://purl.org/rss/1.0/") || "";
-				if (desc) {
-					desc = desc.contents();
-				}
-				
 				this.items.push({
-						date:    pubDate,
-						title:   _decodeRSSHTML(title).trim(),
-						link:    _decodeEntities(link).trim(),
-						desc:    _decodeRSSHTML(desc).trim(),
+						date:    _decodeRSSDate(item.childByName("pubDate", "http://purl.org/rss/1.0/")),
+						title:   _decodeRSSHTML(getChildContents(item, "title", "http://purl.org/rss/1.0/")),
+						link:    getChildContents(item, "link", "http://purl.org/rss/1.0/"),
+						desc:    _decodeRSSHTML(getChildContents(item, "desc", "http://purl.org/rss/1.0/")),
 						updated: false
 					});
 			}
@@ -1378,41 +1322,28 @@ FeedParser.prototype._parse = function(feedsOwner) {
 		
 	} else if (this._xmlData.rootElement.is("feed", ATOM_1_0_NS)) {
 		// Atom 1.0.
-		
-		// Text decoder: _decodeAtomText(element)
-		// Date decoder: _decodeAtomDate(element);
-		
 		var feed = this._xmlData.rootElement;
 		this.title = _decodeAtomText(feed.childByName("title", ATOM_1_0_NS)).trim();
 		
 		var items = feed.childrenByName("entry", ATOM_1_0_NS);
-		
 		for (var i = 0; i < items.length; i++) {
 			var item = items[i];
-			
-			var updated = _decodeAtomDate(item.childByName("updated", ATOM_1_0_NS));
-			
-			var title = _decodeAtomText(item.childByName("title", ATOM_1_0_NS));
-			
 			var link  = item.childByName("link", ATOM_1_0_NS);
 			if (link) {
 				link = link.attribute("href");
 				if (link) {
-					link = link.value;
+					link = _decodeEntities(link.value);
 				} else {
 					link = "";
 				}
 			} else {
 				link = "";
 			}
-			
-			var desc  = _decodeAtomText(item.childByName("content", ATOM_1_0_NS));
-			
 			this.items.push({
-					date:    updated,
-					title:   title.trim(),
-					link:    link.trim(),
-					desc:    desc.trim(),
+					date:    _decodeAtomDate(item.childByName("updated", ATOM_1_0_NS)),
+					title:   _decodeAtomText(item.childByName("title", ATOM_1_0_NS)),
+					link:    link,
+					desc:    _decodeAtomText(item.childByName("content", ATOM_1_0_NS)),
 					updated: false
 				});
 		}
@@ -1477,8 +1408,7 @@ XMLParser.prototype._parse = function() {
 		this.data = this.data.substr(3);
 	}
 	
-	// Process all entities here.
-	this._processEntities();
+	// TODO: Process all entities here?
 	
 	// Head off for the <?xml PI.
 	while (this.data.length > 0) {
@@ -1599,23 +1529,6 @@ XMLParser.prototype._parse = function() {
 	if (this.data.length > 0) {
 		throw new Error("Expected EOF, found " + this.data.substr(0, 10) + "...");
 	}
-}
-
-XMLParser.prototype._processEntities = function() {}
-XMLParser.prototype._processEntities_TODO = function(string) {
-	var i = 0;
-	while (i < string.length) {
-		// Find next &...
-		i = string.indexOf("&", i);
-		
-		//if (string.substr(i, 4) == "&lt;") {
-		//	this.data = string.substr(0, i - 1) + "<" + 
-		
-		// Make sure we skip over the character we just inserted.
-		i++;
-	}
-	
-	return string;
 }
 
 XMLParser.prototype._eatWhitespace = function() {
