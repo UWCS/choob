@@ -1,5 +1,6 @@
 package uk.co.uwcs.choob.support;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -19,7 +20,7 @@ public final class ConfigReader
 	public ConfigReader(final String configFile) throws IOException
 	{
 		botProps = new Properties();
-		final FileInputStream r = new FileInputStream(configFile);
+		final FileInputStream r = new FileInputStream(new File(configFile).getAbsolutePath());
 		botProps.load(r);
 	}
 
