@@ -11,8 +11,9 @@ License: LGPL (don't ask why)
 
 ## # On Debian/Ubuntu, that'd be:
     sudo apt-get install mysql-server default-jdk git curl
-    curl http://mirror.lividpenguin.com/pub/apache/maven/binaries/apache-maven-3.0.4-bin.tar.gz | tar zxv # http://maven.apache.org/download.html
-    export PATH=$(pwd)/apache-maven-3.0.3/bin:$PATH
+    # http://maven.apache.org/download.html
+    curl http://mirror.lividpenguin.com/pub/apache/maven/binaries/apache-maven-3.0.4-bin.tar.gz | tar zxv
+    export PATH=$(pwd)/apache-maven-3.0.4/bin:$PATH
 
 ## # Download and compile
     git clone https://github.com/UWCS/choob.git choob
@@ -20,7 +21,7 @@ License: LGPL (don't ask why)
 
     # this will download literally the entire Internet, and take _over four minutes_.
     mvn package
-    java -jar target/choob-1.0-SNAPSHOT.jar setup
+    java -jar target/choob-*.jar setup
 
 ## # Create the MySQL user
     mysql -uroot -p
@@ -38,7 +39,7 @@ License: LGPL (don't ask why)
        rootNick=YourNick
 
 ## # Start the bot
-    java -jar target/choob-1.0-SNAPSHOT.jar
+    java -jar target/choob-*.jar
 
 ## # Set-up the bot for use in Eclipse
  # if you've never used mvn eclipse before, you need to:
