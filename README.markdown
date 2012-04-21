@@ -7,12 +7,14 @@ License: LGPL (don't ask why)
 ## Ensure you're using the right software
  * MySQL 5.1+
  * Java 6.  Java 7 should work but is mostly untested (we have to work around some things: [1d5ad0a91](https://github.com/UWCS/choob/commit/1d5ad0a91db78f4b7f8b483f099c486d6ac50e69)).
- * Maven **3**.  Maven 2 (2.2.1 tested) fails to resolve the dependencies that it creates.  Worst.  Maven3 isn't packaged for [Debian](http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=592218) or [Ubuntu](https://bugs.launchpad.net/ubuntu/+source/maven2/+bug/672971) right now.
+ * Maven **3**.  Maven 2 (2.2.1 tested) fails to resolve the dependencies that it creates.  Worst.  Maven3 is packaged for Ubuntu (as of Precise (2012-04-28)) and Debian (as of Wheezy (testing as of 2012-04)), both in the `maven` package.
 
 ## # On Debian/Ubuntu, that'd be:
+    
     sudo apt-get install mysql-server default-jdk git curl
     # http://maven.apache.org/download.html
-    curl http://mirror.lividpenguin.com/pub/apache/maven/binaries/apache-maven-3.0.4-bin.tar.gz | tar zxv
+    sudo apt-get install maven || \
+      curl http://mirror.lividpenguin.com/pub/apache/maven/binaries/apache-maven-3.0.4-bin.tar.gz | tar zxv
     export PATH=$(pwd)/apache-maven-3.0.4/bin:$PATH
 
 ## # Download and compile
