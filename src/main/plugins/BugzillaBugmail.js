@@ -1,6 +1,6 @@
 // JavaScript plugin for BugzillaBugmail bugmail reporting.
 // 
-// Copyright 2006, 2007, 2008, 2009, James G. Ross
+// Copyright 2006, 2007, 2008, 2009, 2011, James G. Ross
 // 
 
 var BufferedReader    = Packages.java.io.BufferedReader;
@@ -56,7 +56,8 @@ function BugzillaBugmail(mods, irc) {
 	this._targetList       = new Object();
 	this._seenFileNames    = new Object();
 	this._rebuilding       = false;
-	this._updateSpeed      = 10 * 1000; // 10 seconds
+	this._lineLengthLimit  = 390;
+	this._updateSpeed      = 60 * 1000; // 60 seconds
 	this._updateMax        = 1;
 	
 	var targets = this._mods.odb.retrieve(BugmailTarget, "");
@@ -127,7 +128,7 @@ BugzillaBugmail.prototype._bugmailCheckInterval = function(param, mods, irc) {
 	
 	var count = 0;
 	var store = new File(this._mailStore);
-	var files = store.listFiles();
+	var files = store.listFiles().sort();
 	for (var i = 0; i < files.length; i++) {
 		if (!files[i].getName().endsWith(".eml")) continue;
 		if (files[i].getName() in this._seenFileNames) continue;
@@ -293,7 +294,7 @@ BugzillaBugmail.prototype.commandLog = function(mes, mods, irc) {
 	}
 	var bugNum = Number(params.get(1));
 	
-	var bugs = this._mods.odb.retrieve(BugzillaActivityGroup, "WHERE bug = " + Number(bugNum));
+	var bugs = this._mods.odb.retrieve(BugzillaActivityGroup, "WHERE bug = " + Number(bugNum) + " SORT ASC time");
 	
 	if (bugs.size() == 0) {
 		irc.sendContextReply(mes, "Nothing found in log for bug " + bugNum);
@@ -613,7 +614,7 @@ BugzillaBugmail.prototype.commandRebuildDB = function(mes, mods, irc) {
 		try {
 			var currentFile = "";
 			var store = new File(this._mailStore);
-			var files = store.listFiles();
+			var files = store.listFiles().sort();
 			for (var i = 0; i < files.length; i++) {
 				if (!files[i].getName().endsWith(".eml")) continue;
 				if (files[i].getName() in this._seenFileNames) continue;
@@ -772,14 +773,16 @@ BugzillaBugmail.prototype._checkMail = function(callbackFn) {
 	var pop3account  = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Account",  ""]);
 	var pop3password = this._mods.plugin.callAPI("Options", "GetGeneralOption", ["POP3Password", ""]);
 	
-	var pop3 = new POP3Server(pop3host, pop3port, pop3account, pop3password);
-	var messageList = pop3.getMessageIdList();
-	for (var i = 0; i < messageList.length; i++) {
-		if (!callbackFn(pop3, messageList[i].number, messageList[i].id)) {
-			break;
+	try {
+		var pop3 = new POP3Server(pop3host, pop3port, pop3account, pop3password);
+		var messageList = pop3.getMessageIdList();
+		for (var i = 0; i < messageList.length; i++) {
+			if (!callbackFn(pop3, messageList[i].number, messageList[i].id)) {
+				break;
+			}
 		}
-	}
-	pop3.close();
+		pop3.close();
+	} catch(ex) {}
 }
 
 
@@ -953,9 +956,7 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 		// Changed
 		list = new Array();
 		for (var j = 0; j < s.length; j++) {
-			if (s[j].done) continue;
-			if (/^Flag[-+?]?$/.test(s[j].field)) continue;
-			if (!s[j].oldValue || !s[j].newValue) continue;
+			if (s[j].done || /^Flag[-+?]?$/.test(s[j].field) || !s[j].oldValue || !s[j].newValue) continue;
 			list.push(fmtField(s[j]) + (s[j].oldValue ? " from '" + this._fmtUser(s[j].oldValue) + "'" : "") + " to '" + this._fmtUser(s[j].newValue) + "'");
 			s[j].done = true;
 		}
@@ -966,9 +967,7 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 		// Removed
 		list = new Array();
 		for (var j = 0; j < s.length; j++) {
-			if (s[j].done) continue;
-			if (/^Flag[-+?]?$/.test(s[j].field)) continue;
-			if (!s[j].oldValue || s[j].newValue) continue;
+			if (s[j].done || /^Flag[-+?]?$/.test(s[j].field) || !s[j].oldValue || s[j].newValue) continue;
 			list.push(fmtField(s[j]) + " '" + this._fmtUser(s[j].oldValue) + "'");
 			s[j].done = true;
 		}
@@ -979,9 +978,7 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 		// Added
 		list = new Array();
 		for (var j = 0; j < s.length; j++) {
-			if (s[j].done) continue;
-			if (/^Flag[-+?]?$/.test(s[j].field)) continue;
-			if (s[j].oldValue || !s[j].newValue) continue;
+			if (s[j].done || /^Flag[-+?]?$/.test(s[j].field) || s[j].oldValue || !s[j].newValue) continue;
 			list.push(fmtField(s[j]) + " '" + this._fmtUser(s[j].newValue) + "'");
 			s[j].done = true;
 		}
@@ -996,8 +993,7 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 		// Flags: cleared
 		list = new Array();
 		for (var j = 0; j < s.length; j++) {
-			if (s[j].done) continue;
-			if (s[j].field != "Flag") continue;
+			if (s[j].done || (s[j].field != "Flag")) continue;
 			list.push(fmtFlag(s[j]));
 		}
 		if (list.length > 0) {
@@ -1007,8 +1003,7 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 		// Flags: requested
 		list = new Array();
 		for (var j = 0; j < s.length; j++) {
-			if (s[j].done) continue;
-			if (s[j].field != "Flag?") continue;
+			if (s[j].done || (s[j].field != "Flag?")) continue;
 			list.push(fmtFlag(s[j]));
 		}
 		if (list.length > 0) {
@@ -1018,8 +1013,7 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 		// Flags: granted
 		list = new Array();
 		for (var j = 0; j < s.length; j++) {
-			if (s[j].done) continue;
-			if (s[j].field != "Flag+") continue;
+			if (s[j].done || (s[j].field != "Flag+")) continue;
 			list.push(fmtFlag(s[j]));
 		}
 		if (list.length > 0) {
@@ -1029,8 +1023,7 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 		// Flags: denied
 		list = new Array();
 		for (var j = 0; j < s.length; j++) {
-			if (s[j].done) continue;
-			if (s[j].field != "Flag-") continue;
+			if (s[j].done || (s[j].field != "Flag-")) continue;
 			list.push(fmtFlag(s[j]));
 		}
 		if (list.length > 0) {
@@ -1049,7 +1042,7 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 		
 		var prefix = "Bug " + g.bug;
 		//prefix += " [" + g.product + ": " + g.component + "]";
-		var spaceLeft = 400 - prefix.length - msg.length;
+		var spaceLeft = this._lineLengthLimit - prefix.length - msg.length;
 		
 		if (isNew) {
 			spaceLeft -= 4;
@@ -1064,8 +1057,8 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 		msg = prefix + msg;
 		log("SPAM  " + msg);
 		
-		if (msg.length > 400) {
-			msg = msg.substr(0, 395) + (comment ? "»\"." : "»");
+		if (msg.length > this._lineLengthLimit) {
+			msg = msg.substr(0, this._lineLengthLimit - 5) + (comment ? "»\"." : "»");
 		}
 		
 		if (mes) {
@@ -1274,7 +1267,7 @@ function _dummy2() {
 		
 		var prefix = "Bug " + bugs[i].bugNumber;
 		//prefix += " [" + bugs[i].product + ": " + bugs[i].component + "]";
-		var spaceLeft = 400 - msg.length;
+		var spaceLeft = this._lineLengthLimit - msg.length;
 		
 		if (bugs[i].isNew) {
 			spaceLeft -= 4;
@@ -1661,7 +1654,7 @@ BugmailParser.fields = [
 	{ name: "OtherBugsDependingOnThis", list: true, rename: "blocked bug" },
 	{ name: "Blocks",                   list: true, rename: "blocked bug" },
 	{ name: "Flag",                     flag: true },
-	{ name: /Attachment #\d+ Flag/,     flag: true },
+	{ name: "Flags",                    flag: true },
 	{ name: "ReportedBy",               ignore: true },
 	{ name: "Ever Confirmed",           ignore: true }
 ];
@@ -1689,6 +1682,14 @@ BugmailParser.prototype._parse = function(lines) {
 			// Output is actually a UTF-8 stream anyway, so don't convert to Unicode.
 		}
 		return text;
+	};
+	
+	function _tidy_up_comment(comment) {
+		comment = comment.replace(/ +/g, " ").trim();
+		comment = comment.replace(/^\(From update of attachment (\d+)\)\s*/, " ");
+		comment = comment.replace(/\(In reply to comment #(\d+)\)\s*/, " ");
+		comment = comment.replace(/ +/g, " ").trim();
+		return comment;
 	};
 	
 	if (debug > 0) log("");
@@ -1739,14 +1740,14 @@ BugmailParser.prototype._parse = function(lines) {
 	}
 	
 	var bugmailFormats = [
-		"date from message-id received return-path subject to x-bugzilla-component x-bugzilla-product x-bugzilla-reason x-originalarrivaltime",
-		"content-type date from message-id received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime",
-		"content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime",
-		"content-type date from message-id mime-version received return-path subject to x-authentication-warning x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime",
-		"content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime",
-		"content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-classification x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime",
-		"auto-submitted content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-classification x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime",
-		"auto-submitted content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-classification x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who x-originalarrivaltime x-virus-scanned",
+		"date from message-id received return-path subject to x-bugzilla-component x-bugzilla-product x-bugzilla-reason",
+		"content-type date from message-id received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who",
+		"content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who",
+		"content-type date from message-id mime-version received return-path subject to x-authentication-warning x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who",
+		"content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who",
+		"content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-classification x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who",
+		"auto-submitted content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-classification x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-watch-reason x-bugzilla-who",
+		"auto-submitted content-type date from message-id mime-version received return-path subject to x-bugzilla-assigned-to x-bugzilla-changed-fields x-bugzilla-classification x-bugzilla-component x-bugzilla-keywords x-bugzilla-priority x-bugzilla-product x-bugzilla-reason x-bugzilla-severity x-bugzilla-status x-bugzilla-target-milestone x-bugzilla-type x-bugzilla-url x-bugzilla-watch-reason x-bugzilla-who",
 	];
 	var bugmailNewWrapFormat = 5;
 	
@@ -1754,8 +1755,13 @@ BugmailParser.prototype._parse = function(lines) {
 	for (var i = 0; i < headers.length; i++) {
 		ary = headers[i].split(":");
 		if (ary[0].toLowerCase() == "content-transfer-encoding") continue;
+		if (ary[0].toLowerCase() == "delivered-to") continue;
+		if (ary[0].toLowerCase() == "delivery-date") continue;
+		if (ary[0].toLowerCase() == "envelope-to") continue;
 		if (ary[0].toLowerCase() == "in-reply-to") continue;
 		if (ary[0].toLowerCase() == "references") continue;
+		if (ary[0].toLowerCase() == "x-originalarrivaltime") continue;
+		if (ary[0].toLowerCase() == "x-virus-scanned") continue;
 		headerHash[ary[0].toLowerCase()] = true;
 	}
 	var headerList = new Array();
@@ -1917,7 +1923,7 @@ BugmailParser.prototype._parse = function(lines) {
 			var comment = "";
 			for (var j = i + 1; j < lines.length; j++) {
 				if (lines[j] == "-- ") break;
-				if (lines[j].match(/^Created an attachment \(id=(\d+)\)$/)) {
+				if (lines[j].match(/^(Created an attachment \(id=\d+\)|Created attachment \d+|Comment on attachment \d+)$/)) {
 					j += 2;
 					continue;
 				}
@@ -1925,14 +1931,12 @@ BugmailParser.prototype._parse = function(lines) {
 				if (lines[j][0] == ">") continue;
 				comment += " " + lines[j].trim();
 			}
-			comment = comment.replace(/ +/g, " ").trim();
-			comment = comment.replace(/^\(From update of attachment \d+\)\s*/, "");
-			//comment = comment.replace(/\(In reply to comment #\d+\)\s*/, "");
+			comment = _tidy_up_comment(comment);
 			
 			this.changeSet.push(new BugzillaActivity(0, "COMMENT", 0, "", comment));
 			if (debug > 1) log("COMMENT   : " + comment);
 			
-		} else if ((ary = lines[i].match(/^Created an attachment \(id=(\d+)\)$/))) {
+		} else if ((ary = lines[i].match(/^Created an attachment \(id=(\d+)\)$/)) || (ary = lines[i].match(/^Created attachment (\d+)$/))) {
 			if (debug > 1) log("ATTACHMENT: " + ary[1]);
 			
 			if ((i < lines.length - 2) && lines[i + 1].match(/^ --> \(/)) {
@@ -1951,9 +1955,7 @@ BugmailParser.prototype._parse = function(lines) {
 					if (lines[j][0] == ">") continue;
 					comment += " " + lines[j].trim();
 				}
-				comment = comment.replace(/ +/g, " ").trim();
-				comment = comment.replace(/^\(From update of attachment \d+\)\s*/, "");
-				//comment = comment.replace(/\(In reply to comment #\d+\)\s*/, "");
+				comment = _tidy_up_comment(comment);
 				
 				this.changeSet.push(new BugzillaActivity(0, "COMMENT", 0, "", comment));
 				if (debug > 1) log("COMMENT   : " + comment);
@@ -1968,9 +1970,7 @@ BugmailParser.prototype._parse = function(lines) {
 				if (lines[j][0] == ">") continue;
 				comment += " " + lines[j].trim();
 			}
-			comment = comment.replace(/ +/g, " ").trim();
-			comment = comment.replace(/^\(From update of attachment \d+\)\s*/, "");
-			//comment = comment.replace(/\(In reply to comment #\d+\)\s*/, "");
+			comment = _tidy_up_comment(comment);
 			
 			this.changeSet.push(new BugzillaActivity(0, "COMMENT", 0, "", comment));
 			if (debug > 1) log("COMMENT   : " + comment);
