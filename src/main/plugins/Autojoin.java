@@ -28,7 +28,7 @@ class ChannelObj {
  */
 
 @RequiresPermission(value=ChoobPermission.class, permission="state.join.*", action="")
-class Autojoin
+public class Autojoin
 {
 	private static final int DELAY_MS = 1000;
 	private static final int FAST_JOIN = 10;
