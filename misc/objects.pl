@@ -62,7 +62,7 @@ if ($web) {
 	print "\015\012";
 }
 
-my ($dbhost, $dbuser, $dbpass) = ("", "", "");
+my ($dbhost, $dbname, $dbuser, $dbpass) = ("", "choob", "", "");
 if (open(CFG, "bot.conf") || open(CFG, "../bot.conf")) {
 	my @conf = <CFG>;
 	close(CFG);
@@ -70,6 +70,8 @@ if (open(CFG, "bot.conf") || open(CFG, "../bot.conf")) {
 	foreach my $conf (@conf) {
 		if ($conf =~ /^dbServer=(.*?)[\r\n]+$/) {
 			$dbhost = $1;
+		} elsif ($conf =~ /^database=(.*?)[\r\n]+$/) {
+			$dbname = $1;
 		} elsif ($conf =~ /^dbUser=(.*?)[\r\n]+$/) {
 			$dbuser = $1;
 		} elsif ($conf =~ /^dbPass=(.*?)[\r\n]+$/) {
@@ -81,7 +83,7 @@ if (open(CFG, "bot.conf") || open(CFG, "../bot.conf")) {
 }
 
 use DBI;
-my $dbh = DBI->connect("DBI:mysql:database=choob;host=$dbhost;port=3306", $dbuser, $dbpass, { RaiseError => 1});
+my $dbh = DBI->connect("DBI:mysql:database=$dbname;host=$dbhost;port=3306", $dbuser, $dbpass, { RaiseError => 1});
 
 sub getData() {
 	my ($sql, $params) = @_;
@@ -459,7 +461,7 @@ if ($params{help}) {
 				print qq[			<TD><A HREF="?class=$className;id=$key">X</A></TD>\n];
 				foreach my $col (@columns) {
 					if (defined $objects{$key}{$col}) {
-						print qq[			<TD>] . escapeXML($objects{$key}{$col}) . qq[</TD>\n];
+						print qq[			<TD>] . $objects{$key}{$col} . qq[</TD>\n];
 					} else {
 						print qq[			<TD STYLE="font-weight: bold; color: red;">MISSING</TD>\n];
 					}

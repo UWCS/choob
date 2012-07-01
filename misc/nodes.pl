@@ -32,7 +32,7 @@ if ($web) {
 	print "\015\012";
 }
 
-my ($dbhost, $dbuser, $dbpass) = ("", "", "");
+my ($dbhost, $dbname, $dbuser, $dbpass) = ("", "choob", "", "");
 if (open(CFG, "bot.conf") || open(CFG, "../bot.conf")) {
 	my @conf = <CFG>;
 	close(CFG);
@@ -40,6 +40,8 @@ if (open(CFG, "bot.conf") || open(CFG, "../bot.conf")) {
 	foreach my $conf (@conf) {
 		if ($conf =~ /^dbServer=(.*?)[\r\n]+$/) {
 			$dbhost = $1;
+		} elsif ($conf =~ /^database=(.*?)[\r\n]+$/) {
+			$dbname = $1;
 		} elsif ($conf =~ /^dbUser=(.*?)[\r\n]+$/) {
 			$dbuser = $1;
 		} elsif ($conf =~ /^dbPass=(.*?)[\r\n]+$/) {
@@ -51,7 +53,7 @@ if (open(CFG, "bot.conf") || open(CFG, "../bot.conf")) {
 }
 
 use DBI;
-my $dbh = DBI->connect("DBI:mysql:database=choob;host=$dbhost;port=3306", $dbuser, $dbpass, { RaiseError => 1});
+my $dbh = DBI->connect("DBI:mysql:database=$dbname;host=$dbhost;port=3306", $dbuser, $dbpass, { RaiseError => 1});
 
 sub getData() {
 	my ($sql, $params) = @_;
