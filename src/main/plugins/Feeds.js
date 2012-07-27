@@ -1328,16 +1328,16 @@ FeedParser.prototype._parse = function(feedsOwner) {
 		var items = feed.childrenByName("entry", ATOM_1_0_NS);
 		for (var i = 0; i < items.length; i++) {
 			var item = items[i];
-			var link  = item.childByName("link", ATOM_1_0_NS);
-			if (link) {
-				link = link.attribute("href");
-				if (link) {
-					link = _decodeEntities(link.value);
-				} else {
-					link = "";
+			var link = "";
+			var links = item.childrenByName("link", ATOM_1_0_NS);
+			for (var j = 0; j < links.length; j++) {
+				var rel = links[j].attribute("rel") || {value: 'alternate'};
+				var type = links[j].attribute("type") || {value: 'text/html'};
+				var href = links[j].attribute("href");
+				if (/ alternate /i.test(' ' + rel.value + ' ') && (type.value == 'text/html' || type.value == 'application/xhtml+xml') && href) {
+					link = _decodeEntities(href.value);
+					break;
 				}
-			} else {
-				link = "";
 			}
 			this.items.push({
 					date:    _decodeAtomDate(item.childByName("updated", ATOM_1_0_NS)),
