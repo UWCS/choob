@@ -87,14 +87,15 @@ public class Tweet {
 			final String username = entry.getKey();
 			final boolean known = irc.isKnownUser(username);
 			try {
-				final ResponseList<Status> timeline = twitter.getHomeTimeline(p);
-				Collections.sort(timeline, new Comparator<Status>() {
+				final ResponseList timeline = twitter.getHomeTimeline(p);
+				Collections.sort(timeline, new Comparator<Object>() {
 					@Override
-					public int compare(Status o1, Status o2) {
-						return o1.getCreatedAt().compareTo(o2.getCreatedAt());
+					public int compare(Object o1, Object o2) {
+						return ((Status) o1).getCreatedAt().compareTo(((Status) o2).getCreatedAt());
 					}
 				});
-				for(Status status:timeline) {
+				for(Object argh:timeline) {
+					Status status = (Status)argh;
 					id = Math.max(status.getId(),id);
 					final User user = status.getUser();
 					final String from = user.getName();
