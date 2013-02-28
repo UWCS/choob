@@ -12,7 +12,7 @@ LOG=$(mktemp)
 
 . $SPEC.spec
 
-trap "rm $LOG" EXIT
+trap "rm -f $LOG" EXIT
 
 if [ -z "$CHANNEL" ]; then
 	CHANNEL='IS NOT NULL'
@@ -46,7 +46,7 @@ fi
 cd pisg-0.72
 
 	CFG=$(mktemp)
-	trap "rm $CFG" EXIT
+	trap "rm -f $CFG" EXIT
 
 	sed "s\OUTFILE\\$OUTPUT\;s\INFILE\\$LOG\;s\CHANNEL\\$MSG\\" < ../config_base > $CFG
 	nice perl pisg --configfile=$CFG
@@ -62,4 +62,7 @@ if [ -n "$ARCHIVE" ]; then
 	ln -s $OUTPUT $CURRENT
 	chmod a+r $CURRENT
 fi
+
+rm -f $LOG
+rm -f $CFG
 
