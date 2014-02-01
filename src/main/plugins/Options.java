@@ -58,77 +58,9 @@ public class Options
 		"[ <Plugin> ]",
 		"<Plugin> is the optional name of the plugin to list for (default: All)"
 	};
-	public void commandList( final Message mes )
+	public void commandList(final Message mes)
 	{
-		final String[] params = mods.util.getParamArray( mes );
-
-		// Parse input
-		if (params.length > 2)
-		{
-			throw new ChoobBadSyntaxError();
-		}
-		else if (params.length == 1)
-		{
-			// List all.
-			final StringBuilder output = new StringBuilder("Options: ");
-
-			final String[] plugins = mods.plugin.getLoadedPlugins();
-			boolean first = true;
-			for (final String plugin : plugins)
-			{
-				final String[] options = _getUserOptions(plugin);
-				final String[] defaults = _getUserOptionDefaults(plugin);
-
-				if (options == null)
-					continue;
-
-				if (!first)
-					output.append("; ");
-				first = false;
-				output.append(plugin + ": ");
-
-				for(int i=0; i<options.length; i++)
-				{
-					output.append(options[i]);
-					if (defaults != null && defaults[i] != null)
-						output.append(" (default: " + defaults[i] + ")");
-					if (i == options.length - 2)
-						output.append(" and ");
-					else if (i != options.length - 1)
-						output.append(", ");
-				}
-			}
-			output.append(".");
-			irc.sendContextReply(mes, output.toString());
-		}
-		else
-		{
-			// Passed plugin name.
-			final String pluginName = params[1];
-
-			final String[] options = _getUserOptions(pluginName);
-			final String[] defaults = _getUserOptionDefaults(pluginName);
-
-			if (options == null)
-			{
-				irc.sendContextReply(mes, "Either plugin " + pluginName + " did not exist, or it has no options!");
-				return;
-			}
-
-			final StringBuilder output = new StringBuilder("Options for " + pluginName + ": ");
-			for(int i=0; i<options.length; i++)
-			{
-				output.append(options[i]);
-				if (defaults != null && defaults[i] != null)
-					output.append(" (default: " + defaults[i] + ")");
-				if (i == options.length - 2)
-					output.append(" and ");
-				else if (i != options.length - 1)
-					output.append(", ");
-			}
-			output.append(".");
-			irc.sendContextReply(mes, output.toString());
-		}
+		_listOptions(mes, false);
 	}
 
 	public String[] helpCommandListGeneral = {
@@ -136,26 +68,27 @@ public class Options
 		"[ <Plugin> ]",
 		"<Plugin> is the optional name of the plugin to list for (default: All)"
 	};
-	public void commandListGeneral( final Message mes )
+	public void commandListGeneral(final Message mes)
 	{
-		final String[] params = mods.util.getParamArray( mes );
+		_listOptions(mes, true);
+	}
 
-		// Parse input
+	private void _listOptions(final Message mes, final boolean general)
+	{
+		final String[] params = mods.util.getParamArray(mes);
 		if (params.length > 2)
-		{
 			throw new ChoobBadSyntaxError();
-		}
-		else if (params.length == 1)
-		{
-			// List all.
-			final StringBuilder output = new StringBuilder("Options: ");
 
-			final String[] plugins = mods.plugin.getLoadedPlugins();
+		if (params.length == 1)
+		{
+			// List all options.
 			boolean first = true;
-			for (final String plugin : plugins)
+			final String[] plugins = mods.plugin.getLoadedPlugins();
+			final StringBuilder output = new StringBuilder(general ? "General options: " : "User options: ");
+			for (final String pluginName : plugins)
 			{
-				final String[] options = _getGeneralOptions(plugin);
-				final String[] defaults = _getGeneralOptionDefaults(plugin);
+				final String[] options = general ? _getGeneralOptions(pluginName) : _getUserOptions(pluginName);
+				final String[] defaults = general ? _getGeneralOptionDefaults(pluginName) : _getUserOptionDefaults(pluginName);
 
 				if (options == null)
 					continue;
@@ -163,65 +96,64 @@ public class Options
 				if (!first)
 					output.append("; ");
 				first = false;
-				output.append(plugin + ": ");
 
-				for(int i=0; i<options.length; i++)
-				{
-					output.append(options[i]);
-					if (defaults != null && defaults[i] != null)
-						output.append(" (default: " + defaults[i] + ")");
-					if (i == options.length - 2)
-						output.append(" and ");
-					else if (i != options.length - 1)
-						output.append(", ");
-				}
+				_listOptions(output, pluginName, options, defaults);
 			}
 			output.append(".");
 			irc.sendContextReply(mes, output.toString());
 		}
 		else
 		{
-			// Passed plugin name.
+			// List one plugin's options.
 			final String pluginName = params[1];
-
-			final String[] options = _getGeneralOptions(pluginName);
-			final String[] defaults = _getGeneralOptionDefaults(pluginName);
+			final String[] options = general ? _getGeneralOptions(pluginName) : _getUserOptions(pluginName);
+			final String[] defaults = general ? _getGeneralOptionDefaults(pluginName) : _getUserOptionDefaults(pluginName);
 
 			if (options == null)
 			{
-				irc.sendContextReply(mes, "Either plugin " + pluginName + " did not exist, or it has no options!");
+				irc.sendContextReply(mes, "Plugin " + pluginName + " does not exist or has no options.");
 				return;
 			}
 
-			final StringBuilder output = new StringBuilder("Options for " + pluginName + ": ");
-			for(int i=0; i<options.length; i++)
-			{
-				output.append(options[i]);
-				if (defaults != null && defaults[i] != null)
-					output.append(" (default: " + defaults[i] + ")");
-				if (i == options.length - 2)
-					output.append(" and ");
-				else if (i != options.length - 1)
-					output.append(", ");
-			}
+			final StringBuilder output = new StringBuilder(general ? "General options for " : "User options for ");
+			output.append(pluginName);
+			output.append(": ");
+			_listOptions(output, pluginName, options, defaults);
 			output.append(".");
 			irc.sendContextReply(mes, output.toString());
 		}
 	}
 
+	private void _listOptions(final StringBuilder output, final String pluginName, final String[] options, final String[] defaults)
+	{
+		for (int i = 0; i < options.length; i++)
+		{
+			output.append(pluginName);
+			output.append(".");
+			output.append(options[i]);
+			if (defaults != null && defaults[i] != null)
+			{
+				output.append(" (default: ");
+				output.append(defaults[i]);
+				output.append(")");
+			}
+			if (i == options.length - 2)
+				output.append(" and ");
+			else if (i != options.length - 1)
+				output.append(", ");
+		}
+	}
+
 	public String[] helpCommandSet = {
 		"Set an option for a plugin for just you.",
-		"<Plugin> <Name>=[<Value>]",
+		"<Plugin>.<Name>=[<Value>]",
 		"<Plugin> is the name of the plugin to set for",
 		"<Name> is the name of the option to set",
 		"<Value> is the value to set the option to (omit to unset)"
 	};
-	public void commandSet( final Message mes )
+	public void commandSet(final Message mes)
 	{
-		final String[] params = mods.util.getParamArray( mes, 2 );
-
 		final String nickName = mes.getNick();
-
 		mods.security.checkAuth(mes);
 		String userName = mods.security.getUserAuthName(nickName);
 		userName = mods.security.getRootUser(userName);
@@ -230,178 +162,176 @@ public class Options
 		{
 			final String primaryNick = mods.nick.getBestPrimaryNick(nickName);
 			final String rootNick = mods.security.getRootUser(primaryNick);
-			if (nickName.equals( primaryNick ))
+			if (nickName.equals(primaryNick))
 				// They can't have registered their nick at all.
-				irc.sendContextReply( mes, "Sorry, you need to register your username with the bot first. See Help.Help Security.AddUser." );
-
-			else if ( rootNick != null )
+				irc.sendContextReply(mes, "Sorry, you need to register your username with the bot first. See Help.Help Security.AddUser.");
+			else if (rootNick != null)
 				// Registered but not linked.
-				irc.sendContextReply( mes, "Sorry, you need to link your username with " + rootNick + " first. See Help.Help Security.UsingLink." );
-
+				irc.sendContextReply(mes, "Sorry, you need to link your username with " + rootNick + " first. See Help.Help Security.UsingLink.");
 			else
 				// Not registered, and not primary.
-				irc.sendContextReply( mes, "Sorry, you need to register your username (" + primaryNick + ") with the bot first. See Help.Help Security.AddUser." );
-
+				irc.sendContextReply(mes, "Sorry, you need to register your username (" + primaryNick + ") with the bot first. See Help.Help Security.AddUser.");
 			return;
 		}
 
-		// Parse input
-		if (params.length != 3)
-		{
+		final String[] params = mods.util.getParamArray(mes);
+		if (params.length != 2)
 			throw new ChoobBadSyntaxError();
-		}
 
-		final String[] vals = params[2].split("=", -1);
+		final String[] option = params[1].split("\\.", 2);
+		if (option.length != 2)
+			throw new ChoobBadSyntaxError();
+
+		final String[] vals = option[1].split("=", 2);
 		if (vals.length != 2)
-		{
 			throw new ChoobBadSyntaxError();
-		}
 
+		final String[] opts = _getUserOptions(option[0]);
+		boolean found = false;
+		if (opts != null)
+		{
+			final String opt = vals[0].toLowerCase();
+			for (final String opt2 : opts)
+			{
+				if (opt2.toLowerCase().equals(opt))
+					found = true;
+			}
+		}
+		if (!found)
+		{
+			irc.sendContextReply(mes, "User option " + option[0] + "." + vals[0] + " is not known.");
+			return;
+		}
+		
 		// Check the option is OK
 		if (vals[1].length() > 0)
 		{
-			final String err = _checkUserOption( params[1], vals[0].toLowerCase(), vals[1], userName );
+			final String err = _checkUserOption(option[0], vals[0].toLowerCase(), vals[1], userName);
 			if (err != null)
 			{
-				irc.sendContextReply( mes, "Could not set the option! Error: " + err );
-				return;
-			}
-		}
-		else
-		{
-			final String[] opts = _getUserOptions( params[1] );
-			boolean found = false;
-			if (opts != null)
-			{
-				final String opt = vals[0].toLowerCase();
-				for (final String opt2 : opts)
-				{
-					if (opt2.toLowerCase().equals(opt))
-						found = true;
-				}
-			}
-			if (!found)
-			{
-				irc.sendContextReply( mes, "Unknown option: " + params[1] + "." + vals[0] );
+				irc.sendContextReply(mes, "Error setting the user option " + option[0] + "." + vals[0] + ": " + err);
 				return;
 			}
 		}
 
 		// OK, have an option.
-		final List<UserOption> options = mods.odb.retrieve( UserOption.class,
-			  "WHERE optionName = '" + mods.odb.escapeString(vals[0]) + "' AND "
-			+ " userName = '" + mods.odb.escapeString(userName) + "' AND "
-			+ " pluginName = '" + mods.odb.escapeString(params[1]) + "'");
+		final List<UserOption> options = mods.odb.retrieve(UserOption.class,
+			"WHERE userName = '" + mods.odb.escapeString(userName) + "' AND"
+			+ " pluginName = '" + mods.odb.escapeString(option[0]) + "' AND"
+			+ " optionName = '" + mods.odb.escapeString(vals[0]) + "'");
 
-		if ( options.size() >= 1 )
+		if (options.size() >= 1)
 		{
-			final UserOption option = options.get(0);
+			final UserOption userOption = options.get(0);
 			if (vals[1].length() > 0)
 			{
-				option.optionValue = vals[1];
-				mods.odb.update(option);
+				userOption.optionValue = vals[1];
+				mods.odb.update(userOption);
 			}
 			else
 			{
-				mods.odb.delete(option);
+				mods.odb.delete(userOption);
 			}
 		}
 		else if (vals[1].length() > 0)
 		{
-			final UserOption option = new UserOption();
-			option.pluginName = params[1];
-			option.userName = userName;
-			option.optionName = vals[0];
-			option.optionValue = vals[1];
-			mods.odb.save(option);
+			final UserOption userOption = new UserOption();
+			userOption.userName = userName;
+			userOption.pluginName = option[0];
+			userOption.optionName = vals[0];
+			userOption.optionValue = vals[1];
+			mods.odb.save(userOption);
 		}
 
-		irc.sendContextReply( mes, "OK, set " + vals[0] + " in " + params[1] + " for " + userName + " to '" + vals[1] + "'." );
+		if (vals[1].length() > 0)
+			irc.sendContextReply(mes, "Set user option " + option[0] + "." + vals[0] + " to '" + vals[1] + "'.");
+		else
+			irc.sendContextReply(mes, "Unset user option " + option[0] + "." + vals[0] + ".");
 	}
 
 	public String[] helpCommandSetGeneral = {
 		"Set an option for a plugin that will apply to the plugin itself.",
-		"<Plugin> <Name>=<Value>",
+		"<Plugin>.<Name>=[<Value>]",
 		"<Plugin> is the name of the plugin to set for",
 		"<Name> is the name of the option to set",
-		"<Value> is the value to set the option to"
+		"<Value> is the value to set the option to (omit to unset)"
 	};
-	public void commandSetGeneral( final Message mes )
+	public void commandSetGeneral(final Message mes)
 	{
-		final String[] params = mods.util.getParamArray( mes, 2 );
-
-		// Parse input
-		if (params.length != 3)
-		{
+		final String[] params = mods.util.getParamArray(mes);
+		if (params.length != 2)
 			throw new ChoobBadSyntaxError();
-		}
 
-		final String[] vals = params[2].split("=", -1);
+		final String[] option = params[1].split("\\.", 2);
+		if (option.length != 2)
+			throw new ChoobBadSyntaxError();
+
+		final String[] vals = option[1].split("=", 2);
 		if (vals.length != 2)
-		{
 			throw new ChoobBadSyntaxError();
-		}
 
 		// TODO - make plugin owners always able to set this. Or something.
-		mods.security.checkNickPerm(new ChoobPermission("plugin.options.set." + params[1]), mes);
+		mods.security.checkNickPerm(new ChoobPermission("plugin.options.set." + option[0]), mes);
 
-		if (vals[1].length() > 0)
+		final String[] opts = _getGeneralOptions(option[0]);
+		boolean found = false;
+		if (opts != null)
 		{
-			final String err = _checkGeneralOption( params[1], vals[0].toLowerCase(), vals[1] );
-			if (err != null)
+			final String opt = vals[0].toLowerCase();
+			for (final String opt2 : opts)
 			{
-				irc.sendContextReply( mes, "Could not set the option! Error: " + err );
-				return;
+				if (opt2.toLowerCase().equals(opt))
+					found = true;
 			}
 		}
-		else
+		if (!found)
 		{
-			final String[] opts = _getGeneralOptions( params[1] );
-			boolean found = false;
-			if ( opts != null )
+			irc.sendContextReply(mes, "General option " + option[0] + "." + vals[0] + " is not known.");
+			return;
+		}
+		
+		// Check the option is OK
+		if (vals[1].length() > 0)
+		{
+			final String err = _checkGeneralOption(option[0], vals[0].toLowerCase(), vals[1]);
+			if (err != null)
 			{
-				final String opt = vals[0].toLowerCase();
-				for (final String opt2 : opts)
-				{
-					if (opt2.toLowerCase().equals(opt))
-						found = true;
-				}
-			}
-			if (!found)
-			{
-				irc.sendContextReply( mes, "Unknown option: " + params[1] + "." + vals[0] );
+				irc.sendContextReply(mes, "Error setting the general option " + option[0] + "." + vals[0] + ": " + err);
 				return;
 			}
 		}
 
 		// OK, have an option.
-		final List<GeneralOption> options = mods.odb.retrieve( GeneralOption.class,
-			  "WHERE optionName = '" + mods.odb.escapeString(vals[0]) + "' AND "
-			+ " pluginName = '" + mods.odb.escapeString(params[1]) + "'");
+		final List<GeneralOption> options = mods.odb.retrieve(GeneralOption.class,
+			"WHERE pluginName = '" + mods.odb.escapeString(option[0]) + "' AND"
+			+ " optionName = '" + mods.odb.escapeString(vals[0]) + "'");
 
-		if ( options.size() >= 1 )
+		if (options.size() >= 1)
 		{
-			final GeneralOption option = options.get(0);
+			final GeneralOption generalOption = options.get(0);
 			if (vals[1].length() > 0)
 			{
-				option.optionValue = vals[1];
-				mods.odb.update(option);
+				generalOption.optionValue = vals[1];
+				mods.odb.update(generalOption);
 			}
 			else
 			{
-				mods.odb.delete(option);
+				mods.odb.delete(generalOption);
 			}
 		}
 		else if (vals[1].length() > 0)
 		{
-			final GeneralOption option = new GeneralOption();
-			option.pluginName = params[1];
-			option.optionName = vals[0];
-			option.optionValue = vals[1];
-			mods.odb.save(option);
+			final GeneralOption generalOption = new GeneralOption();
+			generalOption.pluginName = option[0];
+			generalOption.optionName = vals[0];
+			generalOption.optionValue = vals[1];
+			mods.odb.save(generalOption);
 		}
 
-		irc.sendContextReply( mes, "OK, set " + vals[0] + " in " + params[1] + " to '" + vals[1] + "'." );
+		if (vals[1].length() > 0)
+			irc.sendContextReply(mes, "Set general option " + option[0] + "." + vals[0] + " to '" + vals[1] + "'.");
+		else
+			irc.sendContextReply(mes, "Unset general option " + option[0] + "." + vals[0] + ".");
 	}
 
 	public String[] helpCommandGet = {
@@ -409,86 +339,80 @@ public class Options
 		"[ <Plugin> ]",
 		"<Plugin> is the plugin to limit options to (default: All)"
 	};
-	public void commandGet( final Message mes )
+	public void commandGet(final Message mes)
 	{
 		final String[] params = mods.util.getParamArray(mes);
 
-		String pluginName;
 		if (params.length > 2)
-		{
 			throw new ChoobBadSyntaxError();
-		}
-		else if (params.length == 2)
-		{
-			pluginName = params[1];
-		}
-		else
-		{
-			pluginName = null;
-		}
 
-		String userName = null;
+		final String pluginName;
+		if (params.length == 2)
+			pluginName = params[1];
+		else
+			pluginName = null;
+
+		String userName;
 		if (mods.security.hasAuth(mes)) {
 			userName = mods.security.getRootUser(mods.security.getUserAuthName(mes.getNick()));
 		} else {
-			userName = mods.security.getRootUser( mods.nick.getBestPrimaryNick( mes.getNick() ) );
+			userName = mods.security.getRootUser(mods.nick.getBestPrimaryNick(mes.getNick()));
 		}
-
 		if (userName == null)
 			userName = mes.getNick();
 
-		List<UserOption> options;
+		final List<UserOption> options;
 		if (pluginName != null)
-			options = mods.odb.retrieve( UserOption.class,
-			  "WHERE userName = '" + mods.odb.escapeString(userName) + "'"
-			+ " AND pluginName = '" + mods.odb.escapeString(pluginName) + "'");
-		else
-			options = mods.odb.retrieve( UserOption.class,
-			  "WHERE userName = '" + mods.odb.escapeString(userName) + "'");
-
-		if (options.size() == 0)
 		{
-			irc.sendContextReply( mes, "No options set!" );
+			options = mods.odb.retrieve(UserOption.class,
+				"WHERE userName = '" + mods.odb.escapeString(userName) + "'"
+				+ " AND pluginName = '" + mods.odb.escapeString(pluginName) + "'");
 		}
 		else
 		{
-			final StringBuilder out = new StringBuilder();
-			if (pluginName == null)
-				out.append("Options:");
-			else
-				out.append("Options for " + pluginName + ":");
+			options = mods.odb.retrieve(UserOption.class,
+				"WHERE userName = '" + mods.odb.escapeString(userName) + "'");
+		}
 
-			for(final UserOption option: options)
+		if (options.size() == 0)
+		{
+			irc.sendContextReply(mes, "No user options set.");
+		}
+		else
+		{
+			final StringBuilder output = new StringBuilder();
+			if (pluginName == null)
+				output.append("User options:");
+			else
+				output.append("User options for " + pluginName + ":");
+
+			for (final UserOption option: options)
 			{
 				if (pluginName == null)
-					out.append(" " + option.pluginName + "." + option.optionName + "=" + option.optionValue);
+					output.append(" " + option.pluginName + "." + option.optionName + "=" + option.optionValue);
 				else
-					out.append(" " + option.optionName + "=" + option.optionValue);
+					output.append(" " + option.optionName + "=" + option.optionValue);
 			}
-			irc.sendContextReply( mes, out.toString() );
+			irc.sendContextReply(mes, output.toString());
 		}
 	}
 
 	public String[] helpCommandGetGeneral = {
 		"Get all global option values for all plugins.",
-		"<Plugin>",
+		"[ <Plugin> ]",
 		"<Plugin> is the plugin to limit options to (warning: some plugins contain passwords!)"
 	};
-	public void commandGetGeneral( final Message mes )
+	public void commandGetGeneral(final Message mes)
 	{
 		final String[] params = mods.util.getParamArray(mes);
 
-		String pluginName;
+		final String pluginName;
 		if (params.length != 2)
 		{
-			if (params.length == 1 && mes instanceof PrivateEvent)
-			{
-				pluginName = null;
-			}
-			else
-			{
+			// Make sure we only show ALL plugin general options in private.
+			if (params.length != 1 || !(mes instanceof PrivateEvent))
 				throw new ChoobBadSyntaxError();
-			}
+			pluginName = null;
 		}
 		else
 		{
@@ -498,63 +422,60 @@ public class Options
 		// TODO - make plugin owners always able to set this. Or something.
 		mods.security.checkNickPerm(new ChoobPermission("plugin.options.get"), mes);
 
-		List<GeneralOption> options;
+		final List<GeneralOption> options;
 		if (pluginName != null)
-			options = mods.odb.retrieve( GeneralOption.class,
-			  "WHERE pluginName = '" + mods.odb.escapeString(pluginName) + "'");
-		else
-			options = mods.odb.retrieve( GeneralOption.class, "WHERE 1");
-
-		if (options.size() == 0)
 		{
-			irc.sendContextReply( mes, "No options set!" );
+			options = mods.odb.retrieve(GeneralOption.class,
+				"WHERE pluginName = '" + mods.odb.escapeString(pluginName) + "'");
 		}
 		else
 		{
-			final StringBuilder out = new StringBuilder();
+			options = mods.odb.retrieve(GeneralOption.class,
+				"WHERE 1");
+		}
+
+		if (options.size() == 0)
+		{
+			irc.sendContextReply(mes, "No general options set.");
+		}
+		else
+		{
+			final StringBuilder output = new StringBuilder();
 			if (pluginName == null)
-				out.append("Options:");
+				output.append("General options:");
 			else
-				out.append("Options for " + pluginName + ":");
+				output.append("General options for " + pluginName + ":");
 
 			for(final GeneralOption option: options)
 			{
 				if (pluginName == null)
-					out.append(" " + option.pluginName + "." + option.optionName + "=" + option.optionValue);
+					output.append(" " + option.pluginName + "." + option.optionName + "=" + option.optionValue);
 				else
-					out.append(" " + option.optionName + "=" + option.optionValue);
+					output.append(" " + option.optionName + "=" + option.optionValue);
 			}
-			irc.sendContextReply( mes, out.toString() );
+			irc.sendContextReply(mes, output.toString());
 		}
 	}
 
 	public String[] helpCommandHelp = {
 		"Get help on an option.",
-		"<Plugin> <Name>",
+		"<Plugin>.<Name>",
 		"<Plugin> is the name of the plugin the option lives in",
 		"<Name> is the name of the option"
 	};
-	public void commandHelp( final Message mes )
+	public void commandHelp(final Message mes)
 	{
 		final String[] params = mods.util.getParamArray(mes);
 
-		String pluginName, optionName;
-		if (params.length == 2)
-		{
-			final String[] bits = params[1].split("\\.");
-			if (bits.length != 2)
-				throw new ChoobBadSyntaxError();
-
-			pluginName = bits[0];
-			optionName = bits[1];
-		}
-		else if (params.length == 3)
-		{
-			pluginName = params[1];
-			optionName = params[2];
-		}
-		else
+		if (params.length != 2)
 			throw new ChoobBadSyntaxError();
+
+		final String[] bits = params[1].split("\\.", 2);
+		if (bits.length != 2)
+			throw new ChoobBadSyntaxError();
+
+		final String pluginName = bits[0];
+		final String optionName = bits[1];
 
 		try
 		{
@@ -562,7 +483,7 @@ public class Options
 		}
 		catch (final ChoobNoSuchCallException e)
 		{
-			irc.sendContextReply(mes, "Sorry, the help plugin isn't loaded!");
+			irc.sendContextReply(mes, "Sorry, the Help plugin isn't loaded!");
 		}
 	}
 
