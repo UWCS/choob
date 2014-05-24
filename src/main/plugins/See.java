@@ -112,7 +112,7 @@ public class See
 			String following = "";
 			if (candidateZones.length > 0)
 			{
-				following = " and implies that he or she is following "
+				following = " and implies that they are following "
 						+ TimeZone.getTimeZone(candidateZones[0]).getDisplayName()
 						+ " and may be located in "
 						+ candidateZones[new Random().nextInt(candidateZones.length)];
@@ -125,7 +125,7 @@ public class See
 					+ " ago after "
 					+ mods.date.timeStamp(diff, false, 2,
 							uk.co.uwcs.choob.modules.DateModule.TimeUnit.HOUR)
-					+ " of sleep, making his or her body-clock time about " + hour + ":"
+					+ " of sleep, making their body-clock time about " + hour + ":"
 					+ (minutes < 10 ? "0" : "") + minutes + following;
 
 			return ret + ".";
