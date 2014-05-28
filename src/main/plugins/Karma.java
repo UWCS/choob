@@ -6,7 +6,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.Normalizer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
@@ -1598,7 +1608,6 @@ public class Karma
         String string = "No matching items!";
 		while(iterator.hasNext()){
 			DelayedKarmaReasonObject temp = iterator.next();
-            System.out.println(temp.string);
 			if(temp.string.equalsIgnoreCase(bits.get(1)) && mes.getNick().equals(temp.nick)) {
                 temp.string = bits.get(2).trim();
 				string = "Reason modified.";
