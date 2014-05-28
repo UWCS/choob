@@ -1,4 +1,6 @@
 import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.List;
 
 import uk.co.uwcs.choob.modules.Modules;
@@ -132,6 +134,11 @@ public class Admin
 			bytesString(Runtime.getRuntime().maxMemory()) +
 		"). " + Runtime.getRuntime().availableProcessors() + " \"processors\".");
 	}
+
+    public void commandThreadCount(final Message mes) {
+        ThreadMXBean mxBean =  ManagementFactory.getThreadMXBean();
+        irc.sendContextReply(mes, "Current number of threads in use: " + mxBean.getThreadCount());
+    }
 
 	public void commandGCs( final Message mes )
 	{
