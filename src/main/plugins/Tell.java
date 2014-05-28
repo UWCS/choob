@@ -98,7 +98,7 @@ public class Tell
 		+ " he is identified with NickServ, on a name that the bot both"
 		+ " considers equivalent normally to 'bob' (like, say, 'bob|awake')"
 		+ " AND considers securely equivalent, too (ie. is linked to bob).",
-		  "You should note that this means, in particular, that people who's"
+		  "You should note that this means, in particular, that people whose"
 		+ " root username is not equal to their base nickname can't receive"
 		+ " tells at all! That is, if 'bob|bot' is bob's root username, he"
 		+ " will never receive tells."
@@ -271,7 +271,7 @@ public class Tell
 			} else {
 				// rootNick is NOT set. Since Secure
 				// operates on bot users, and the user
-				// hasn't registered his, we tell him to
+				// hasn't registered, we tell them to
 				// bugger off.
 				return -3;
 			}
