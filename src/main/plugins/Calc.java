@@ -239,8 +239,18 @@ class MathParser
 			return Math.log10(param);
 		else if (name.equals("ln"))
 			return Math.log(param);
+        else if(name.equals("lg"))
+            return Math.log10(param);
 		else if (name.equals("exp"))
 			return Math.exp(param);
+        else if (name.equals("floor"))
+            return Math.floor(param);
+        else if (name.equals("ceiling"))
+            return Math.ceil(param);
+        else if (name.equals("abs"))
+            return Math.abs(param);
+        else if (name.equals("sqrt"))
+            return Math.sqrt(param);
 		else
 			throw new BadMathException("Unknown function: " + name);
 	}

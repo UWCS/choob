@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +32,7 @@ import uk.co.uwcs.choob.support.ChoobPermission;
 import uk.co.uwcs.choob.support.IRCInterface;
 import uk.co.uwcs.choob.support.events.Message;
 import uk.co.uwcs.choob.support.events.PrivateEvent;
+import uk.co.uwcs.choob.util.ArgParse;
 
 
 class KarmaObject
@@ -1572,16 +1574,42 @@ public class Karma
 	public String[] helpCommandReasonMod = {
 			"Change or add a reason to something you have karmaed in the last minute.",
 	};
+
+    /**
+     * Debugging method to get reccent karmaed objects.
+     * @ChoobPluginCommand getRecent
+     * @param mes
+     */
+    public void commandGetRecent(final Message mes) {
+        String karmas = "";
+        for (DelayedKarmaReasonObject dkrm : inqueue) {
+            karmas += dkrm.string;
+        }
+        irc.sendContextReply(mes, karmas);
+    }
+
+    /**
+     * Modify the reason
+     * @ChoobPluginCommand reasonmod
+     * @param mes
+     */
 	public void commandReasonMod( final Message mes ) {
 
-		String[] arg = mes.getMessage().split(" ", 3);
-		String string = "You have not karmaed " + arg[1] + " in the last minute";
+        ArgParse parser = new ArgParse(mes.getMessage());
+        parser.setParseMode(ArgParse.MODE_QUOTED_SPACE_TO_UNDERSCORE);
+        boolean parsed = parser.parse();
+        if (!parsed) {
+            irc.sendContextReply(mes, "Sorry, I could not parse that string, perhaps you have an unmatched \"");
+        }
+        LinkedList<String> bits = parser.getParts();
+
 		Iterator<DelayedKarmaReasonObject> iterator = inqueue.iterator();
 
+        String string = "No matching items!";
 		while(iterator.hasNext()){
 			DelayedKarmaReasonObject temp = iterator.next();
-			if(temp.string.equalsIgnoreCase(arg[1]) && mes.getNick().equals(temp.nick)) {
-				temp.reason = arg[2];
+			if(temp.string.equalsIgnoreCase(bits.get(1)) && mes.getNick().equals(temp.nick)) {
+                temp.string = bits.get(2).trim();
 				string = "Reason modified.";
 			}
 		}
