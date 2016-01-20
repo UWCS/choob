@@ -835,10 +835,10 @@ class MoznetNickServInterpreter implements CanProvideAuth
 	 */
 	private final List<PatternStatusPair> statuses = Arrays.asList
 	(
-		new PatternStatusPair("^STATUS.*0$", new NotRegisteredStatus()),
-		new PatternStatusPair("^STATUS.*3$", new AuthenticatedStatus()),
-		new PatternStatusPair("^STATUS.*2$", new NotIdentifiedStatus()),
-		new PatternStatusPair("^STATUS.*1$", new UnknownStatus())
+		new PatternStatusPair("^STATUS.* 0.*$", new NotRegisteredStatus()),
+		new PatternStatusPair("^STATUS.* 3.*$", new AuthenticatedStatus()),
+		new PatternStatusPair("^STATUS.* 2.*$", new NotIdentifiedStatus()),
+		new PatternStatusPair("^STATUS.* 1.*$", new UnknownStatus())
 	);
 
 	/**
