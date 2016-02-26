@@ -31,20 +31,20 @@ public class TalkTest {
 		final int boxLetter2 = 133337;
 		assertEquals(stringOf(boxLetter2, boxLetter1), Talk.commandReverse(stringOf(boxLetter1, boxLetter2)));
 
-		assertEquals(stringOf("omg", boxLetter1, "ponies"), Talk.commandReverse(stringOf("seinop", boxLetter1, "gmo")));
+		assertEquals(stringOfPoints("omg", boxLetter1, "ponies"), Talk.commandReverse(stringOfPoints("seinop", boxLetter1, "gmo")));
 	}
 
 	@Test public void testTest() {
-		assertEquals("cat", stringOf('c', (int)'a', "t"));
+		assertEquals("cat", stringOfPoints('c', (int)'a', "t"));
 		assertEquals("cat", stringOf('c', 'a', 't'));
-		assertEquals("ca116", stringOf('c', 'a', (long)'t'));
+		assertEquals("ca116", stringOfPoints('c', 'a', (long)'t'));
 	}
 
 	private static String stringOf(int... points) {
 		return new String(points, 0, points.length);
 	}
 
-	private static String stringOf(Object... points) {
+	private static String stringOfPoints(Object... points) {
 		final StringBuilder ret = new StringBuilder();
 		for (Object o : points)
 			if (o instanceof Integer)

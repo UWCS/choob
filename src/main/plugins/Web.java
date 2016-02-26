@@ -5,6 +5,7 @@ import java.net.URL;
 import java.text.ParseException;
 
 import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.lobobrowser.html.parser.DocumentBuilderImpl;
@@ -20,7 +21,7 @@ import org.json.simple.parser.JSONParser;
 
 public class Web
 {
-	private final int MAXIMUM_DATA_LENGTH = 400;
+	private static final int MAXIMUM_DATA_LENGTH = 400;
 
 	private final JSONParser jsonParser = new JSONParser();
 
@@ -39,29 +40,35 @@ public class Web
 		return commandXML(paramString);
 	}
 
-	public String commandXML(final String paramString)
+	public static String commandXML(final String paramString)
 	{
 		try {
 			final int splitAt = paramString.indexOf(" ");
 			final String uri = paramString.substring(0, splitAt);
 			final String xpathIn = paramString.substring(splitAt + 1, paramString.length());
-			final HTMLDocument doc = getDocument(new URL(uri).openConnection().getInputStream(), uri);
-
-			final XPath xpath = XPathFactory.newInstance().newXPath();
-			final StringBuilder result = new StringBuilder();
-
-			for (final String xpathOr : xpathIn.split("\\|")) {
-				result.append(xpath.evaluate(xpathOr.trim(), doc).toString().replaceAll("\\s+", " "));
-			}
-
-			if (result.length() > MAXIMUM_DATA_LENGTH)
-				return result.substring(0, MAXIMUM_DATA_LENGTH);
-			return result.toString();
+			final InputStream inputStream = new URL(uri).openConnection().getInputStream();
+			return process(inputStream, uri, xpathIn);
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	static String process(InputStream inputStream, String uri, String xpathString) throws SAXException, IOException, XPathExpressionException
+	{
+		final HTMLDocument doc = getDocument(inputStream, uri);
+
+		final XPath xpath = XPathFactory.newInstance().newXPath();
+		final StringBuilder result = new StringBuilder();
+
+		for (final String xpathOr : xpathString.split("\\|")) {
+			result.append(xpath.evaluate(xpathOr.trim(), doc).replaceAll("\\s+", " "));
+		}
+
+		if (result.length() > MAXIMUM_DATA_LENGTH)
+			return result.substring(0, MAXIMUM_DATA_LENGTH);
+		return result.toString();
 	}
 
 	public String commandJSON(final String paramString)
@@ -92,7 +99,7 @@ public class Web
 		}
 	}
 
-	private HTMLDocument getDocument(final InputStream input, final String uri) throws SAXException, IOException
+	private static HTMLDocument getDocument(final InputStream input, final String uri) throws SAXException, IOException
 	{
 		final SimpleUserAgentContext context = new SimpleUserAgentContext();
 		context.setScriptingEnabled(false);
