@@ -116,9 +116,9 @@
 			<version>1.1-ea</version>
 		</dependency>
 		<dependency>
-			<groupId>org.lobobrowser</groupId>
-			<artifactId>lobobrowser</artifactId>
-			<version>0.98.4</version>
+			<groupId>us.codecraft</groupId>
+			<artifactId>xsoup</artifactId>
+			<version>0.3.1</version>
 		</dependency>
 	</dependencies>
 

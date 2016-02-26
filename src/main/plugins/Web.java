@@ -1,23 +1,17 @@
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.xml.sax.SAXException;
+import us.codecraft.xsoup.Xsoup;
+
+import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.text.ParseException;
-
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
-import org.lobobrowser.html.parser.DocumentBuilderImpl;
-import org.lobobrowser.html.parser.InputSourceImpl;
-import org.lobobrowser.html.test.SimpleUserAgentContext;
-import org.w3c.dom.html2.HTMLDocument;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 public class Web
 {
@@ -57,13 +51,11 @@ public class Web
 
 	static String process(InputStream inputStream, String uri, String xpathString) throws SAXException, IOException, XPathExpressionException
 	{
-		final HTMLDocument doc = getDocument(inputStream, uri);
-
-		final XPath xpath = XPathFactory.newInstance().newXPath();
+		final Document doc = Jsoup.parse(inputStream, null, uri);
 		final StringBuilder result = new StringBuilder();
 
 		for (final String xpathOr : xpathString.split("\\|")) {
-			result.append(xpath.evaluate(xpathOr.trim(), doc).replaceAll("\\s+", " "));
+			result.append(Xsoup.compile(xpathOr).evaluate(doc).get().replaceAll("\\s+", " "));
 		}
 
 		if (result.length() > MAXIMUM_DATA_LENGTH)
@@ -97,15 +89,6 @@ public class Web
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	private static HTMLDocument getDocument(final InputStream input, final String uri) throws SAXException, IOException
-	{
-		final SimpleUserAgentContext context = new SimpleUserAgentContext();
-		context.setScriptingEnabled(false);
-		final DocumentBuilderImpl dbi = new DocumentBuilderImpl(context);
-		final InputSource source = new InputSourceImpl(input,uri,"UTF-8");
-		return (HTMLDocument) dbi.parse(source);
 	}
 
 	private Object jsonqEvaluate(final Object json, final String query) throws ParseException, PropertyException
