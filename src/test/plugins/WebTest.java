@@ -16,4 +16,14 @@ public class WebTest
 						"https://en.wikipedia.org/wiki/Birthday_attack",
 						"//div[@class='mw-content-ltr']/p[1]"));
 	}
+
+	@org.junit.Test
+	public void testWtImgur() throws Exception
+	{
+		assertEquals("New video from Boston Dynamics - GIF on Imgur",
+				Web.process(
+						WebTest.class.getResourceAsStream("/imgur-item.html"),
+						"https://imgur.com/gallery/efuf46W",
+						"//title/text()"));
+	}
 }
