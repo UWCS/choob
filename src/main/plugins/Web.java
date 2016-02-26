@@ -40,8 +40,9 @@ public class Web
 			final int splitAt = paramString.indexOf(" ");
 			final String uri = paramString.substring(0, splitAt);
 			final String xpathIn = paramString.substring(splitAt + 1, paramString.length());
-			final InputStream inputStream = new URL(uri).openConnection().getInputStream();
-			return process(inputStream, uri, xpathIn);
+			try (final InputStream inputStream = new URL(uri).openConnection().getInputStream()) {
+				return process(inputStream, uri, xpathIn);
+			}
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
