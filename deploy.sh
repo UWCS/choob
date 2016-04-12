@@ -1,5 +1,7 @@
 #!/bin/bash
-mvn package
+set -eu
+mvn package -Dmaven.test.skip=true
+
 rm ../working/choob-*.jar
 
 # For reference, the "crazy git command" is so that we can work out what

@@ -24,6 +24,6 @@ public class WebTest
 				Web.process(
 						WebTest.class.getResourceAsStream("/imgur-item.html"),
 						"https://imgur.com/gallery/efuf46W",
-						"//title/text()"));
+						"//title/text()").trim());
 	}
 }
