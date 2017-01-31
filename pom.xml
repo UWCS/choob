@@ -1,13 +1,3 @@
-<!--
-   - This pom has two profiles.
-   -
-   - choob-default (the default): Uses the Choob repository to source jars not in Central.
-   - 	Build output is Choob.
-   -
-   - online: Uses various repositories from the Internet, and your locally installed Eclipse (see mvneclipse.bat).
-   - 	Build output is repository.  This is unjarred over "the Choob repository".
-  -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
@@ -43,8 +33,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jdt</groupId>
-			<artifactId>core</artifactId>
-			<version>[3.5.0-v00000000,3.7.0-v00000000)</version>
+			<artifactId>org.eclipse.jdt.core</artifactId>
+			<version>3.12.2</version>
 		</dependency>
 		<dependency>
 			<groupId>c3p0</groupId>
@@ -122,16 +112,6 @@
 		</dependency>
 	</dependencies>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.eclipse.equinox</groupId>
-				<artifactId>app</artifactId>
-				<version>1.3.1</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -187,75 +167,29 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>uk.co.uwcs.choob.ChoobMain</mainClass>
+						</manifest>
+					</archive>
+					<appendAssemblyId>false</appendAssemblyId>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
-
-	<profiles>
-		<profile>
-			<id>choob-default</id>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<artifactId>maven-assembly-plugin</artifactId>
-						<configuration>
-							<descriptorRefs>
-								<descriptorRef>jar-with-dependencies</descriptorRef>
-							</descriptorRefs>
-							<archive>
-								<manifest>
-									<mainClass>uk.co.uwcs.choob.ChoobMain</mainClass>
-								</manifest>
-							</archive>
-							<appendAssemblyId>false</appendAssemblyId>
-						</configuration>
-						<executions>
-							<execution>
-								<phase>package</phase>
-								<goals>
-									<goal>single</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-			<repositories>
-				<repository>
-					<id>choob-mirror</id>
-					<name>Choob mirror of required jars</name>
-					<url>http://choob.uwcs.co.uk/maven/</url>
-				</repository>
-			</repositories>
-		</profile>
-		<profile>
-			<id>online</id>
-			<build>
-				<plugins>
-					<plugin>
-						<artifactId>maven-assembly-plugin</artifactId>
-						<configuration>
-							<descriptors>
-								<descriptor>src/assemble/repository.xml</descriptor>
-							</descriptors>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-			<repositories>
-				<repository>
-					<id>maven2-repository.dev.java.net</id>
-					<name>slow.java.net Maven repository</name>
-					<url>http://download.java.net/maven/2/</url>
-				</repository>
-				<repository>
-					<id>nbpwr.kenai.com</id>
-					<name>NetBeans Platform Wrapper Repository</name>
-					<url>http://nbpwr.kenai.com/maven-repository/releases/</url>
-				</repository>
-			</repositories>
-		</profile>
-	</profiles>
 </project>
