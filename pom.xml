@@ -44,12 +44,12 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>19.0</version>
+			<version>21.0</version>
 		</dependency>
 		<dependency>
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>
-			<version>2.9.2</version>
+			<version>2.9.7</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -60,17 +60,17 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
-			<version>4.1.2</version>
+			<version>4.5.2</version>
 		</dependency>
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>5.1.38</version>
+			<version>6.0.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>sqlite-jdbc</artifactId>
-			<version>3.8.11.2</version>
+			<version>3.16.1</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -83,7 +83,7 @@
 		<dependency>
 			<groupId>net.sf.jazzy</groupId>
 			<artifactId>jazzy</artifactId>
-			<version>0.5.2-rtext-1.4.1</version>
+			<version>0.5.2-rtext-1.4.1-2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.googlecode.json-simple</groupId>
@@ -98,7 +98,7 @@
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-server</artifactId>
-			<version>1.19</version>
+			<version>1.19.3</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.ws.rs</groupId>
@@ -116,7 +116,7 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
+				<version>3.6.1</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
@@ -126,7 +126,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>1.1</version>
+				<version>1.12</version>
 				<executions>
 					<execution>
 						<id>add-source</id>
@@ -145,7 +145,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-resources-plugin</artifactId>
-				<version>2.5</version>
+				<version>3.0.2</version>
 				<executions>
 					<execution>
 						<id>copy-resources</id>
