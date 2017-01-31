@@ -22,9 +22,9 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>rhino</groupId>
-			<artifactId>js</artifactId>
-			<version>1.7R2</version>
+			<groupId>org.mozilla</groupId>
+			<artifactId>rhino</artifactId>
+			<version>1.7.7.1</version>
 		</dependency>
 		<dependency>
 			<groupId>pircbot</groupId>
@@ -189,7 +189,6 @@
 					</execution>
 				</executions>
 			</plugin>
-
 		</plugins>
 	</build>
 </project>
