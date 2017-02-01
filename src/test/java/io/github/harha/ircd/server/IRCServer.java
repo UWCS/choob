@@ -118,7 +118,8 @@ public class IRCServer implements Runnable
                     /* Send MOTD to the client */
 					c.sendMsg(new ServMessage(this, CMDs.RPL_MOTDSTART, c.getNick(), "- Message of the day -"));
 
-					c.sendMsgAndFlush(new ServMessage(this, CMDs.RPL_ENDOFMOTD, c.getNick(), "End of /MOTD command."));
+					c.sendMsg(new ServMessage(this, CMDs.RPL_ENDOFMOTD, c.getNick(), "End of /MOTD command."));
+					c.sendMsgAndFlush(new ServMessage(this, "004", c.getNick(), "some.thing UnrealIRCd-4.0.10 iowrsxzdHtIDRqpWGTSB lvhopsmntikraqbeIzMQNRTOVKDdGLPZSCcf."));
 				}
 
                 /* Handle connected client connections */

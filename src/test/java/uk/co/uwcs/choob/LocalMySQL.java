@@ -16,7 +16,8 @@ import java.sql.Statement;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class LocalMySQL implements Closeable {
+public class LocalMySQL implements Closeable
+{
 	private static final String SERVER_BINARY_PATH = findWorkingExecutable("/usr/sbin/mysqld");
 	private static final String CLIENT_BINARY_PATH = findWorkingExecutable("/usr/bin/mysql");
 	@Nullable
@@ -39,7 +40,8 @@ public class LocalMySQL implements Closeable {
 
 	private final Process server;
 
-	public LocalMySQL(String dumpResource) throws IOException, InterruptedException, SQLException {
+	public LocalMySQL(String dumpResource) throws IOException, InterruptedException, SQLException
+	{
 		final String basePath = base.getAbsolutePath();
 		runAndAwait(SERVER_BINARY_PATH,
 			"--no-defaults",
@@ -71,7 +73,7 @@ public class LocalMySQL implements Closeable {
 			}
 		});
 
-		try (InputStream data = Choob.class.getResourceAsStream(dumpResource)) {
+		try (InputStream data = LocalMySQL.class.getResourceAsStream(dumpResource)) {
 			final Process loader = buildProcess(CLIENT_BINARY_PATH,
 				"--socket=" + socketPath,
 				"--user=choob",
@@ -85,7 +87,8 @@ public class LocalMySQL implements Closeable {
 		}
 	}
 
-	private void setRootPasswordOn(String socketPath) throws IOException, InterruptedException {
+	private void setRootPasswordOn(String socketPath) throws IOException, InterruptedException
+	{
 		for (int retry = 0; retry < 5; retry++) {
 			final Process client = buildProcess(CLIENT_BINARY_PATH,
 				"--socket=" + socketPath,
@@ -109,11 +112,13 @@ public class LocalMySQL implements Closeable {
 		throw new IllegalStateException("couldn't change root password");
 	}
 
-	interface SqlConsumer {
+	interface SqlConsumer
+	{
 		void accept(Connection connection) throws SQLException;
 	}
 
-	public void runAsRoot(SqlConsumer code) throws SQLException {
+	public void runAsRoot(SqlConsumer code) throws SQLException
+	{
 		try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:" + port + "/",
 			"root", ROOT_PASSWORD)) {
 			code.accept(conn);
@@ -121,12 +126,14 @@ public class LocalMySQL implements Closeable {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() throws IOException
+	{
 		server.destroyForcibly();
 		TestTemps.deleteInBackground(base);
 	}
 
-	private static String findWorkingExecutable(String... candidates) {
+	private static String findWorkingExecutable(String... candidates)
+	{
 		for (String candidate : candidates) {
 			if (new File(candidate).canExecute()) {
 				return candidate;
@@ -135,13 +142,15 @@ public class LocalMySQL implements Closeable {
 		throw new IllegalStateException("Couldn't find a working binary in: " + Arrays.toString(candidates));
 	}
 
-	static int findAPort() throws IOException {
+	static int findAPort() throws IOException
+	{
 		try (ServerSocket socket = new ServerSocket(0)) {
 			return socket.getLocalPort();
 		}
 	}
 
-	static void runAndAwait(String... args) throws InterruptedException, IOException {
+	static void runAndAwait(String... args) throws InterruptedException, IOException
+	{
 		final Process proc = buildProcess(args).start();
 		proc.getOutputStream().close();
 		if (0 != proc.waitFor()) {
@@ -149,7 +158,8 @@ public class LocalMySQL implements Closeable {
 		}
 	}
 
-	static ProcessBuilder buildProcess(String... args) {
+	static ProcessBuilder buildProcess(String... args)
+	{
 		final ArrayList<String> newArgs = new ArrayList<>();
 		if (null != EAT_MY_DATA_PATH) {
 			newArgs.add(EAT_MY_DATA_PATH);
