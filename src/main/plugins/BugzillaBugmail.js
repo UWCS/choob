@@ -753,7 +753,7 @@ BugzillaBugmail.prototype.apiFormatBugList = function(bugs, space) {
 			var summ = "";
 			if (space > 0) {
 				if (bug.summary.length > space) {
-					summ = " [" + bug.summary.substr(0, space - 2) + "»]";
+					summ = " [" + bug.summary.substr(0, space - 2) + "Â»]";
 				} else {
 					summ = " [" + bug.summary + "]";
 				}
@@ -1058,7 +1058,7 @@ BugzillaBugmail.prototype._spam = function(changesList, mes) {
 		log("SPAM  " + msg);
 		
 		if (msg.length > this._lineLengthLimit) {
-			msg = msg.substr(0, this._lineLengthLimit - 5) + (comment ? "»\"." : "»");
+			msg = msg.substr(0, this._lineLengthLimit - 5) + (comment ? "Â»\"." : "Â»");
 		}
 		
 		if (mes) {
@@ -1092,7 +1092,7 @@ var entityMap = {
 	"lsaquo": "<<", "#8249":  "<<",
 	"rsaquo": ">>", "#8250":  ">>",
 	"times":   "x",
-	"#163":    "£",
+	"#163":    "Â£",
 	"#8230":   "...",
 	"dummy":   ""
 };
