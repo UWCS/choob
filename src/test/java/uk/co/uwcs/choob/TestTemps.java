@@ -24,7 +24,7 @@ public class TestTemps
 		Runtime.getRuntime().addShutdownHook(newThread(deleting::join));
 	}
 
-	private static Thread newThread(final CallableVoid code) {
+	public static Thread newThread(final CallableVoid code) {
 		return new Thread(() -> {
 			try {
 				code.run();

@@ -1,13 +1,15 @@
 package io.github.harha.ircd.server;
 
 import io.github.harha.ircd.util.CaseIMap;
-import io.github.harha.ircd.util.Macros;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
 public class Client {
+	private static final Logger logger = LoggerFactory.getLogger(Client.class);
 
 	private Connection m_connection;
 	private Map<String, Channel> m_channels;
@@ -38,7 +40,7 @@ public class Client {
 		}
 
         /* Log the input to console */
-		Macros.LOG("Input from %s: %s", m_connection, input_data);
+		logger.info("Input from {}: {}", m_connection, input_data);
 
         /* Parse input and handle it appropriately */
 		for (String l : input_data) {

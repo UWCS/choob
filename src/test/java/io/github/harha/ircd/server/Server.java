@@ -1,12 +1,14 @@
 package io.github.harha.ircd.server;
 
-import io.github.harha.ircd.util.Macros;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Server {
+	private static final Logger logger = LoggerFactory.getLogger(Server.class);
 
 	private Connection m_connection;
 
@@ -33,7 +35,7 @@ public class Server {
 		}
 
         /* Log the input to console */
-		Macros.LOG("Input from %s: %s", m_connection, input_data);
+		logger.info("Input from {}: {}", m_connection, input_data);
 
         /* Parse input and handle it appropriately */
 		for (String l : input_data) {

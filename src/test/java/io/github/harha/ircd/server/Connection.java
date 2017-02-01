@@ -1,6 +1,7 @@
 package io.github.harha.ircd.server;
 
-import io.github.harha.ircd.util.Macros;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Connection {
+	private static final Logger logger = LoggerFactory.getLogger(Connection.class);
 
 	private IRCServer m_ircserver;
 	private Socket m_socket;
@@ -24,7 +26,6 @@ public class Connection {
 	private ConnState m_state;
 	private int m_identTime;
 	private Client m_parent_client;
-	private Server m_parent_server;
 
 	public Connection(IRCServer ircserver, Socket socket, BufferedReader input, PrintWriter output) {
 		/* Initialize all member variables and objects */
@@ -40,7 +41,6 @@ public class Connection {
 		m_state = ConnState.UNIDENTIFIED;
 		m_identTime = -1;
 		m_parent_client = null;
-		m_parent_server = null;
 	}
 
 	@Override
@@ -49,7 +49,7 @@ public class Connection {
 	}
 
 	public void updateUnidentified() {
-        /* Read input from client */
+		/* Read input from client */
 		List<String> input_data = new ArrayList<String>();
 
 		try {
@@ -67,7 +67,7 @@ public class Connection {
 		}
 
         /* Log the input to console */
-		Macros.LOG("Input from %s: %s", this, input_data);
+		logger.info("Input from {}: {}", this, input_data);
 
         /* Parse input and handle it appropriately */
 		for (String l : input_data) {
@@ -120,26 +120,6 @@ public class Connection {
             /* Accept the connection as identified client */
 			m_state = ConnState.IDENTIFIED_AS_CLIENT;
 		}
-
-        /* Have we received enough info in order to try server identification? */
-		if (!m_server.getName().equals("*")) {
-            /* Server name length must be in-between 5 and 32 characters */
-			if (m_server.getName().length() < 5 || m_server.getName().length() > 32) {
-				sendMsgAndFlush(new ServMessage(m_ircserver, "NOTICE", m_server.getName(), "*** SERVER <servername> length must be in-between 5 and 32 characters. Disconnecting."));
-				m_state = ConnState.DISCONNECTED;
-				return;
-			}
-
-            /* Server name must not exist on the server */
-			if (m_ircserver.getServers().containsKey(m_server.getName())) {
-				sendMsgAndFlush(new ServMessage(m_ircserver, "NOTICE", m_server.getName(), "*** SERVER <servername> already exists on this server. Disconnecting."));
-				m_state = ConnState.DISCONNECTED;
-				return;
-			}
-
-            /* Accept the connection as identified server */
-			m_state = ConnState.IDENTIFIED_AS_SERVER;
-		}
 	}
 
 	public void sendMsg(ServMessage message) {
@@ -177,24 +157,12 @@ public class Connection {
 		m_parent_client = client;
 	}
 
-	public void setParentServer(Server server) {
-		m_parent_server = server;
-	}
-
 	public IRCServer getIRCServer() {
 		return m_ircserver;
 	}
 
 	public InetAddress getHost() {
 		return m_host;
-	}
-
-	public String getHostName() {
-		return m_host.getHostName();
-	}
-
-	public String getIpAddr() {
-		return m_host.getHostAddress();
 	}
 
 	public Socket getSocket() {
@@ -221,10 +189,6 @@ public class Connection {
 		return m_server;
 	}
 
-	public String getPass() {
-		return m_pass;
-	}
-
 	public ConnState getState() {
 		return m_state;
 	}
@@ -235,10 +199,6 @@ public class Connection {
 
 	public Client getParentClient() {
 		return m_parent_client;
-	}
-
-	public Server getParentServer() {
-		return m_parent_server;
 	}
 
 }

@@ -1,10 +1,12 @@
 package io.github.harha.ircd.server;
 
-import io.github.harha.ircd.util.Macros;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class ServerInfo {
+	private static final Logger logger = LoggerFactory.getLogger(ServerInfo.class);
 
 	private String m_name;
 	private int m_hopcount;
@@ -16,7 +18,7 @@ public class ServerInfo {
 		try {
 			m_hopcount = Integer.parseInt(hopcount);
 		} catch (NumberFormatException e) {
-			Macros.ERR("Failed to format the hopcount number that other connected server published, set it to 0.");
+			logger.error("Failed to format the hopcount number that other connected server published, set it to 0.");
 
 			m_hopcount = 0;
 		}
@@ -35,7 +37,7 @@ public class ServerInfo {
 			try {
 				m_hopcount = Integer.parseInt(parameters.get(1));
 			} catch (NumberFormatException e) {
-				Macros.ERR("Failed to format the hopcount number that other connected server published, set it to 0.");
+				logger.error("Failed to format the hopcount number that other connected server published, set it to 0.");
 
 				m_hopcount = 0;
 			}
