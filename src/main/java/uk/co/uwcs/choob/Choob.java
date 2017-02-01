@@ -82,15 +82,16 @@ final class Choob extends PircBot implements Bot
 	private int exitCode;
 	private int messageLimit;
 
-	/**
-	 * Constructor for Choob, initialises vital variables.
-	 */
-	Choob() throws ChoobError
+	Choob() throws ChoobError {
+		this("bot.conf");
+	}
+
+	Choob(String configFile) throws ChoobError
 	{
 
 		try
 		{
-			conf=new ConfigReader("bot.conf");
+			conf=new ConfigReader(configFile);
 		}
 		catch (final IOException e)
 		{
