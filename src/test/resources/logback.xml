@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration debug="true">
+<configuration>
 
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
@@ -9,6 +9,9 @@
 
 	<logger name="com.mchange.v2.c3p0.C3P0Registry" level="WARN"/>
 	<logger name="com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource" level="WARN"/>
+	<!-- this logs any instantiated SQLException at INFO.
+	  There's a chain of hacks, via. DriverManager.setLogWriter, to get this to us. -->
+	<logger name="java.sql.DriverManager" level="WARN"/>
 
 	<root level="INFO">
 		<appender-ref ref="STDOUT"/>

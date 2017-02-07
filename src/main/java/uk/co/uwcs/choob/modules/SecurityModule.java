@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.PropertyPermission;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.co.uwcs.choob.support.ChoobAuthError;
 import uk.co.uwcs.choob.support.ChoobError;
 import uk.co.uwcs.choob.support.ChoobEventExpired;
@@ -59,6 +61,8 @@ import uk.co.uwcs.choob.support.events.UserEvent;
  */
 public final class SecurityModule extends SecurityManager // For getClassContext(). Heh.
 {
+	private static final Logger logger = LoggerFactory.getLogger(SecurityModule.class);
+
 	private final DbConnectionBroker dbBroker;
 	private final Map<Integer,PermissionCollection> nodeMap;
 	private final Map<Integer,List<Integer>> nodeTree;
@@ -211,7 +215,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					}
 					catch (final ClassNotFoundException e)
 					{
-						System.err.println("Permission class not found: " + className);
+						logger.warn("Permission class not found: " + className);
 						continue; // XXX I guess this is OK?
 					}
 
@@ -219,7 +223,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					// TODO - is this check enough to be secure?
 					if (!Permission.class.isAssignableFrom(clas))
 					{
-						System.err.println("Class " + className + " is not a Permission!");
+						logger.warn("Class " + className + " is not a Permission!");
 						continue; // XXX
 					}
 
@@ -356,7 +360,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	{
 		if (recurseDepth >= 5)
 		{
-			System.err.println("Ack! Recursion depth exceeded when trying to process user node " + nodeID);
+			logger.warn("Ack! Recursion depth exceeded when trying to process user node " + nodeID);
 			return;
 		}
 
@@ -464,7 +468,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				nodeIDCache.get(nodeType).put(nodeName.toLowerCase(), idGot);
 				return idGot;
 			}
-			System.err.println("Ack! Node name " + nodeName + "(" + nodeType + ") not found!");
+			logger.warn("Ack! Node name " + nodeName + "(" + nodeType + ") not found!");
 		}
 		catch (final SQLException e)
 		{
@@ -494,11 +498,11 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 			{
 				return new UserNode(results.getString(1), results.getInt(2));
 			}
-			System.err.println("Ack! Node " + nodeID + " not found!");
+			logger.warn("Ack! Node " + nodeID + " not found!");
 		}
 		catch (final SQLException e)
 		{
-			System.err.println("Ack! SQL exception when getting node from node ID " + nodeID + ": " + e);
+			logger.warn("Ack! SQL exception when getting node from node ID " + nodeID + ": " + e);
 		}
 		finally
 		{
@@ -993,7 +997,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 	 */
 	private void sqlErr(final String task, final SQLException e)
 	{
-		System.err.println("ACK! SQL error when " + task + ": " + e);
+		logger.warn("Ack! SQL error when " + task + ": " + e);
 		e.printStackTrace();
 		throw new ChoobError("An SQL error occurred when " + task + ". Please ask the bot administrator to check the logs.", e);
 	}
@@ -1026,7 +1030,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setInt(1, userID);
 				stat.setString(2, pluginName);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in plugin bind!");
+					logger.warn("Ack! No rows updated in plugin bind!");
 
 				// Done!
 				dbConn.commit();
@@ -1073,7 +1077,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setString(1, userName);
 				stat.setInt(2, 0);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user insert!");
+					logger.warn("Ack! No rows updated in user insert!");
 				final int userID = getLastInsertID(dbConn);
 				stat.close();
 
@@ -1094,7 +1098,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					stat.setString(1, userName);
 					stat.setInt(2, 1);
 					if (stat.executeUpdate() == 0)
-						System.err.println("Ack! No rows updated in user group insert!");
+						logger.warn("Ack! No rows updated in user group insert!");
 					groupID = getLastInsertID(dbConn);
 					stat.close();
 				}
@@ -1104,7 +1108,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setInt(1, groupID);
 				stat.setInt(2, userID);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user group member insert!");
+					logger.warn("Ack! No rows updated in user group member insert!");
 
 				// Done!
 				dbConn.commit();
@@ -1176,7 +1180,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setString(1, leaf);
 				stat.setInt(2, 0);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user insert!");
+					logger.warn("Ack! No rows updated in user insert!");
 				final int userID = getLastInsertID(dbConn);
 				stat.close();
 
@@ -1185,7 +1189,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setInt(1, rootID);
 				stat.setInt(2, userID);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user group member insert!");
+					logger.warn("Ack! No rows updated in user group member insert!");
 
 				// Done!
 				dbConn.commit();
@@ -1283,13 +1287,13 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat = dbConn.prepareStatement("DELETE FROM GroupMembers WHERE MemberID = ?");
 				stat.setInt(1, userID);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user member delete!");
+					logger.warn("Ack! No rows updated in user member delete!");
 
 				// Delete user.
 				stat = dbConn.prepareStatement("DELETE FROM UserNodes WHERE NodeID = ?");
 				stat.setInt(1, userID);
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in user delete!");
+					logger.warn("Ack! No rows updated in user delete!");
 				stat.close();
 
 				// Done!
@@ -1348,7 +1352,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setString(1, group.getName());
 				stat.setInt(2, group.getType());
 				if (stat.executeUpdate() == 0)
-					System.err.println("Ack! No rows updated in group " + groupName + " insert!");
+					logger.warn("Ack! No rows updated in group " + groupName + " insert!");
 				dbConn.commit();
 			}
 			catch (final SQLException e)
@@ -1418,7 +1422,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
 				if ( stat.executeUpdate() == 0 )
-					System.err.println("Ack! Group member add did nothing: " + parent + ", member " + child);
+					logger.warn("Ack! Group member add did nothing: " + parent + ", member " + child);
 
 				dbConn.commit();
 			}
@@ -1490,7 +1494,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 				stat.setInt(1, parentID);
 				stat.setInt(2, childID);
 				if ( stat.executeUpdate() == 0 )
-					System.err.println("Ack! Group member remove did nothing: " + parent + ", member " + child);
+					logger.warn("Ack! Group member remove did nothing: " + parent + ", member " + child);
 			}
 			catch (final SQLException e)
 			{
@@ -1574,7 +1578,7 @@ public final class SecurityModule extends SecurityManager // For getClassContext
 					stat.setString(4, permission.getActions());
 				}
 				if ( stat.executeUpdate() == 0 )
-					System.err.println("Ack! Permission add did nothing: " + group + " " + permission);
+					logger.warn("Ack! Permission add did nothing: " + group + " " + permission);
 
 				invalidateNodePermissions(groupID);
 			}

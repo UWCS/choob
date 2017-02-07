@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -42,7 +43,16 @@ public class IRCServer implements Runnable
 		while (m_socket.isBound() && !m_socket.isClosed()) {
 			try {
 				/* Accept connection, create i/o, create connection object */
-				Socket socket = m_socket.accept();
+				Socket socket;
+				try {
+					socket = m_socket.accept();
+				} catch (SocketException acceptProblem) {
+					if (acceptProblem.getMessage().equals("Socket closed")) {
+						logger.info("clean shutdown >.<");
+						return;
+					}
+					throw acceptProblem;
+				}
 				BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
 				Connection connection = new Connection(this, socket, input, output);
