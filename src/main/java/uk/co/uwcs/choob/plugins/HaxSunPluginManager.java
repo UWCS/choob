@@ -389,6 +389,9 @@ public final class HaxSunPluginManager extends ChoobPluginManager
 	private static boolean useHilariousDebuggerMode() {
 		final String flag = System.getProperty("choobDebuggerHack");
 		if (null == flag) {
+			return false;
+		}
+		if ("auto".equals(flag)) {
 			return ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;
 		}
 		return "true".equals(flag);
