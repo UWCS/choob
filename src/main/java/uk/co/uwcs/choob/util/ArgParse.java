@@ -1,83 +1,83 @@
 package uk.co.uwcs.choob.util;
 
-import java.util.LinkedList;
+import com.google.common.collect.Lists;
+import uk.co.uwcs.choob.exceptions.UnmatchedBracketException;
+
+import java.util.EnumSet;
+import java.util.List;
 
 /**
- * Provides parsing functionality for choob commands.
- * At this point in time splits strings based on spaces unless quoted.
- * Created by rayhaan on 28/05/14.
+ * Utility class for parsing arguments to Choob commands.
+ * @author rayhaan
  */
 public class ArgParse {
 
-    public static final int MODE_QUOTED_SPACE_TO_UNDERSCORE = 0x01;
-
-    private String message;
-    private LinkedList<String> parts;
-    private boolean quotedSpaceToUnderscore = false;
-
-    public ArgParse(String message) {
-        this.message = message;
-        this.parts = new LinkedList<String>();
+    /**
+     * Tweak how commands are parsed.
+     */
+    public enum ParseMode {
+        // Convert any spaces between quotes to underscores.
+        SPACE_IN_QUOTE_TO_UNDERSCORE;
     }
 
-    public void setParseMode(int parseMode) {
-        if (parseMode == ArgParse.MODE_QUOTED_SPACE_TO_UNDERSCORE) {
-            quotedSpaceToUnderscore = true;
-        }
+    private ArgParse() {}
+
+    private static boolean isQuotationCharacter(char c) {
+        return (c == '"') || (c == '\'') || (c == '«') || (c == '»');
     }
 
-    public boolean parse() {
-        char[] msg = this.message.toCharArray();
+    public static List<String> split(String message, EnumSet<ParseMode> modes) throws UnmatchedBracketException {
+        final char[] chars = message.toCharArray();
 
-        StringBuilder currentWord = new StringBuilder(msg.length);
+        List<String> result = Lists.newArrayList();
+        StringBuilder currentWord = new StringBuilder();
 
+        boolean containsNonEmpty = false;
         boolean modeInQuote = false;
 
-        for (int pos = 0; pos<msg.length; pos++) {
-
-            // If we are not in a quote
-            if (msg[pos] == '"' && !modeInQuote) {
+        for (int pos = 0; pos < chars.length; pos++) {
+            boolean quoteChar = isQuotationCharacter(chars[pos]);
+            if (quoteChar && !modeInQuote) {
+                // We are now entering a quotation, everything in here is a new string
                 modeInQuote = true;
-                continue; // We are done at this character
-            } else if (msg[pos] == '"' && modeInQuote) {
-                // exit from the quote
-                modeInQuote = false;
-                continue;
-            } else if (msg[pos] == '\\' && msg[pos+1] == '"') {
-                // skip the next character as it is an escaped quote
-                pos++;
-                continue;
-            } else if (msg[pos] == ' ' && modeInQuote && quotedSpaceToUnderscore) {
-                currentWord.append('_');
-                continue;
-            } else if (msg[pos] == ' ' && !modeInQuote) {
-                // add currentWord to parts and reset currentWord
-                parts.add(currentWord.toString());
-                currentWord = new StringBuilder(msg.length);
                 continue;
             }
-
-            // add the character to the current word
-            currentWord.append(msg[pos]);
+            if (quoteChar && modeInQuote) {
+                // Exit the quote and move on to the next word.
+                modeInQuote = false;
+                result.add(currentWord.toString());
+                currentWord = new StringBuilder();
+                containsNonEmpty = false;
+                continue;
+            }
+            if (chars[pos] == '\\' && isQuotationCharacter(chars[pos + 1])) {
+                // skip over the next character
+                pos++;
+                continue;
+            }
+            // If we are in quote mode then convert spaces to underscores.
+            if (modes.contains(ParseMode.SPACE_IN_QUOTE_TO_UNDERSCORE) && modeInQuote && chars[pos] == ' ') {
+                currentWord.append('_');
+                continue;
+            }
+            if (chars[pos] == ' ' && !modeInQuote && containsNonEmpty) {
+                result.add(currentWord.toString());
+                currentWord = new StringBuilder();
+                containsNonEmpty = false;
+                continue;
+            }
+            if (chars[pos] != ' ') containsNonEmpty = true;
+            if (chars[pos] == ' ' && !containsNonEmpty) continue;
+            currentWord.append(chars[pos]);
         }
-        // flush the last word
-        parts.add(currentWord.toString());
-        // assert that we are not in quote mode at the end of the string
-        return (!modeInQuote);
-    }
 
-    public LinkedList<String> getParts () { return parts; }
-
-    public static void main(String... args) {
-        ArgParse ap = new ArgParse("lorem ipsum \"foo's bar\" \"foo's second bar\" this is a test");
-        ap.setParseMode(ArgParse.MODE_QUOTED_SPACE_TO_UNDERSCORE);
-        boolean success = ap.parse();
-        System.out.println((success) ? "worked" : "failed");
-        for (String s : ap.getParts()) {
-            System.out.println(s);
+        // If we are still in a quote at the end something has gone wrong.
+        if (modeInQuote) {
+            throw new UnmatchedBracketException();
         }
+
+        // Append the last word.
+        result.add(currentWord.toString());
+        return result;
     }
-
-
-
 }
